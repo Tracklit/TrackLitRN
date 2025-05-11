@@ -28,12 +28,15 @@ export function useLocationSearch() {
       return;
     }
 
-    const controller = new AbortController();
-    const signal = controller.signal;
-
+    let controller: AbortController | null = null;
+    
     const fetchLocations = async () => {
       setIsLoading(true);
       setError(null);
+      
+      // Create a new controller for this request
+      controller = new AbortController();
+      const signal = controller.signal;
       
       try {
         if (!API_KEY) {
@@ -96,7 +99,14 @@ export function useLocationSearch() {
     const timeoutId = setTimeout(fetchLocations, 300);
     
     return () => {
-      controller.abort();
+      // Only abort if controller exists
+      if (controller) {
+        try {
+          controller.abort();
+        } catch (e) {
+          console.error('Error aborting controller:', e);
+        }
+      }
       clearTimeout(timeoutId);
     };
   }, [searchTerm, toast]);

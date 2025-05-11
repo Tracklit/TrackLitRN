@@ -192,7 +192,10 @@ export function CreateMeetModal({ isOpen, onClose }: CreateMeetModalProps) {
         events,
         warmupTime,
         arrivalTime,
-        coordinates: coordinates
+        coordinates: coordinates ? {
+          latitude: coordinates.latitude,
+          longitude: coordinates.longitude
+        } : undefined
       };
       
       console.log('Submitting meet data:', meetData);
