@@ -16,6 +16,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // API Routes - prefix all routes with /api
   
+  // Proxy route for external API calls - no auth required
+  app.get("/api/proxy", async (req: Request, res: Response) => {
+    try {
+      const url = req.query.url as string;
+      
+      if (!url) {
+        return res.status(400).json({ error: "URL parameter is required" });
+      }
+      
+      // Validate that this is a Google API URL for security
+      if (!url.startsWith('https://maps.googleapis.com/')) {
+        return res.status(403).json({ error: "Only Google APIs are allowed" });
+      }
+      
+      console.log(`Proxying request to: ${url.substring(0, 100)}...`);
+      
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error(`External API responded with status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      res.json(data);
+    } catch (error) {
+      console.error("Error in proxy request:", error);
+      res.status(500).json({ error: "Failed to fetch data from external API" });
+    }
+  });
+  
   // Meet routes
   app.get("/api/meets", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
