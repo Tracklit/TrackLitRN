@@ -60,7 +60,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     try {
-      const meetData = insertMeetSchema.parse(req.body);
+      console.log('Creating meet with data:', JSON.stringify(req.body, null, 2));
+      
+      // Ensure date is properly formatted
+      const rawData = req.body;
+      if (rawData.date && rawData.date instanceof Date === false) {
+        rawData.date = new Date(rawData.date);
+      }
+      
+      const meetData = insertMeetSchema.parse(rawData);
       
       // Override userId with authenticated user
       meetData.userId = req.user!.id;

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
+// Log the API key presence but not the actual key value for security
 const API_KEY = import.meta.env.VITE_GEOAPIFY_API_KEY || '';
+console.log('Geoapify API Key available:', !!API_KEY);
 
 export interface LocationSearchResult {
   name: string;

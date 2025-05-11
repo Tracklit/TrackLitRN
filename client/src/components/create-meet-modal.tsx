@@ -104,11 +104,15 @@ export function CreateMeetModal({ isOpen, onClose }: CreateMeetModalProps) {
       // Combine date and time
       const dateTime = new Date(`${date}T${time}`);
       
-      // Create meet data
+      if (isNaN(dateTime.getTime())) {
+        throw new Error('Invalid date or time format');
+      }
+
+      // Create meet data with properly formatted date
       const meetData = {
         userId: user.id,
         name,
-        date: dateTime.toISOString(), // Convert to ISO string for proper serialization
+        date: dateTime,
         location,
         events,
         warmupTime,
