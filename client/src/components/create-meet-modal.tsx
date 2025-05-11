@@ -166,10 +166,10 @@ export function CreateMeetModal({ isOpen, onClose }: CreateMeetModalProps) {
       return;
     }
 
-    if (!location) {
+    if (!location || !coordinates) {
       toast({
         title: 'Missing Information',
-        description: 'Please select a location',
+        description: 'Please select a location from the dropdown',
         variant: 'destructive',
       });
       return;

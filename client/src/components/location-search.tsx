@@ -33,11 +33,14 @@ export function LocationSearch({ onLocationSelect, defaultValue = '' }: Location
   
   // Initialize search results when component mounts
   useEffect(() => {
-    if (!searchTerm) {
-      setSearchTerm('track');
-      setTimeout(() => setSearchTerm(''), 100);
+    // Load default search results immediately
+    setSearchTerm('');
+    
+    // Don't show validation errors for empty location during initialization
+    if (defaultValue) {
+      setValue(defaultValue);
     }
-  }, []);
+  }, [defaultValue]);
 
   const handleLocationSelect = useCallback((selectedLocation: LocationSearchResult) => {
     console.log('Location selected:', selectedLocation);
