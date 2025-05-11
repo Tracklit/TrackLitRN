@@ -1,52 +1,22 @@
-import { useState } from 'react';
-import { MapPin } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useState, useCallback } from 'react';
+import { useLocationSearch, LocationSearchResult } from '@/hooks/use-location-search';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Loader2, MapPin, Search } from 'lucide-react';
+import { 
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { useToast } from '@/hooks/use-toast';
-import { LocationSearchResult } from '@/hooks/use-location-search';
-
-// Pre-defined locations to avoid API integration issues
-const PREDEFINED_LOCATIONS: LocationSearchResult[] = [
-  {
-    name: "Stockholm Olympic Stadium",
-    city: "Stockholm",
-    country: "Sweden",
-    formatted: "Stockholm Olympic Stadium, Stockholm, Sweden",
-    latitude: 59.3435,
-    longitude: 18.0825
-  },
-  {
-    name: "Los Angeles Memorial Coliseum",
-    city: "Los Angeles",
-    country: "USA",
-    formatted: "Los Angeles Memorial Coliseum, Los Angeles, USA",
-    latitude: 34.0141,
-    longitude: -118.2879
-  },
-  {
-    name: "London Olympic Stadium",
-    city: "London",
-    country: "UK",
-    formatted: "London Olympic Stadium, London, UK",
-    latitude: 51.5387,
-    longitude: -0.0166
-  },
-  {
-    name: "Berlin Olympic Stadium",
-    city: "Berlin",
-    country: "Germany",
-    formatted: "Berlin Olympic Stadium, Berlin, Germany",
-    latitude: 52.5146,
-    longitude: 13.2391
-  },
-  {
-    name: "Tokyo Olympic Stadium",
-    city: "Tokyo",
-    country: "Japan",
-    formatted: "Tokyo Olympic Stadium, Tokyo, Japan",
-    latitude: 35.6778,
-    longitude: 139.7142
-  }
-];
 
 interface LocationSearchProps {
   onLocationSelect: (location: LocationSearchResult) => void;
@@ -54,18 +24,15 @@ interface LocationSearchProps {
 }
 
 export function LocationSearch({ onLocationSelect, defaultValue = '' }: LocationSearchProps) {
+  const [open, setOpen] = useState(false);
   const [value, setValue] = useState(defaultValue);
+  const { searchTerm, setSearchTerm, results, isLoading, error } = useLocationSearch();
   const { toast } = useToast();
 
-  const handleLocationSelect = (locationId: string) => {
-    const selectedLocation = PREDEFINED_LOCATIONS.find(
-      loc => loc.formatted === locationId
-    );
-    
-    if (!selectedLocation) return;
-    
+  const handleLocationSelect = useCallback((selectedLocation: LocationSearchResult) => {
     console.log('Location selected:', selectedLocation);
     setValue(selectedLocation.formatted);
+    setOpen(false);
     
     try {
       onLocationSelect(selectedLocation);
@@ -82,36 +49,78 @@ export function LocationSearch({ onLocationSelect, defaultValue = '' }: Location
         variant: "destructive"
       });
     }
-  };
+  }, [onLocationSelect, setValue, setOpen, toast]);
 
   return (
     <div className="flex flex-col space-y-2 w-full">
-      <Select 
-        onValueChange={handleLocationSelect}
-        defaultValue={value || undefined}
-      >
-        <SelectTrigger>
-          <div className="flex items-center">
-            <MapPin className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-            <SelectValue placeholder="Select a location..." />
-          </div>
-        </SelectTrigger>
-        <SelectContent>
-          {PREDEFINED_LOCATIONS.map((location) => (
-            <SelectItem 
-              key={`${location.latitude}-${location.longitude}`}
-              value={location.formatted}
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <div className="flex w-full">
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={open}
+              className="w-full justify-between"
             >
-              <div className="flex flex-col">
-                <span>{location.name}</span>
-                <span className="text-xs text-muted-foreground">
-                  {location.city}, {location.country}
+              <div className="flex items-center">
+                <MapPin className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                <span className="truncate">
+                  {value || "Search for a location..."}
                 </span>
               </div>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+              <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </div>
+        </PopoverTrigger>
+        <PopoverContent className="w-full p-0" align="start">
+          <Command shouldFilter={false}>
+            <CommandInput 
+              placeholder="Search for a location..." 
+              value={searchTerm}
+              onValueChange={setSearchTerm}
+              className="h-9"
+            />
+            <CommandList>
+              {isLoading ? (
+                <div className="flex items-center justify-center py-6">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : error ? (
+                <CommandEmpty>Error: {error.message}</CommandEmpty>
+              ) : results.length === 0 ? (
+                <CommandEmpty>No locations found</CommandEmpty>
+              ) : (
+                <CommandGroup>
+                  {results.map((location, index) => (
+                    <CommandItem
+                      key={`${location.formatted}-${index}`}
+                      value={location.formatted}
+                      onSelect={() => handleLocationSelect(location)}
+                      className="cursor-pointer"
+                    >
+                      <MapPin className="mr-2 h-4 w-4" />
+                      <div className="flex flex-col">
+                        <span>{location.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {location.city}
+                          {location.state ? `, ${location.state}` : ''} 
+                          {location.country ? `, ${location.country}` : ''}
+                        </span>
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
+              
+              {!isLoading && !error && results.length > 0 && (
+                <div className="px-2 py-2 text-center text-xs text-muted-foreground">
+                  {results.length} locations found
+                </div>
+              )}
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
