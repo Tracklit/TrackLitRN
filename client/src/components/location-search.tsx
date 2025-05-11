@@ -1,68 +1,24 @@
-import { useState, useRef, useEffect, memo } from 'react';
-import { MapPin } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
+import { useState, useEffect, useCallback } from 'react';
+import { useLocationSearch, LocationSearchResult } from '@/hooks/use-location-search';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Loader2, MapPin, X, Search } from 'lucide-react';
+import { 
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
-import { LocationSearchResult } from '@/hooks/use-location-search';
-import { LoadScript, Autocomplete } from '@react-google-maps/api';
-
-const libraries: ("places" | "drawing" | "geometry" | "localContext" | "visualization")[] = ['places'];
-const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-
-// The form container for the autocomplete input that correctly handles controlled behavior
-const AutocompleteField = memo(({ 
-  value, 
-  onPlaceSelect 
-}: { 
-  value: string;
-  onPlaceSelect: (place: google.maps.places.PlaceResult) => void;
-}) => {
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
-  const inputRef = useRef<HTMLInputElement | null>(null);
-
-  const onLoad = (autocomplete: google.maps.places.Autocomplete) => {
-    autocompleteRef.current = autocomplete;
-    
-    // Bias towards stadiums and sports venues
-    autocomplete.setOptions({
-      types: ['establishment'],
-      fields: ['address_components', 'geometry', 'name', 'formatted_address']
-    });
-  };
-
-  const onPlaceChanged = () => {
-    if (autocompleteRef.current) {
-      const place = autocompleteRef.current.getPlace();
-      onPlaceSelect(place);
-    }
-  };
-
-  // Reset the input value when external value changes
-  useEffect(() => {
-    if (inputRef.current && value !== inputRef.current.value) {
-      inputRef.current.value = value;
-    }
-  }, [value]);
-
-  return (
-    <Autocomplete
-      onLoad={onLoad}
-      onPlaceChanged={onPlaceChanged}
-      options={{
-        componentRestrictions: { country: [] } // No restrictions
-      }}
-    >
-      <Input
-        ref={inputRef}
-        defaultValue={value}
-        placeholder="Search for track venues, stadiums, or schools..."
-        className="w-full"
-        autoComplete="off"
-      />
-    </Autocomplete>
-  );
-});
 
 interface LocationSearchProps {
   onLocationSelect: (location: LocationSearchResult) => void;
@@ -70,65 +26,30 @@ interface LocationSearchProps {
 }
 
 export function LocationSearch({ onLocationSelect, defaultValue = '' }: LocationSearchProps) {
-  const [displayValue, setDisplayValue] = useState(defaultValue);
-  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState(defaultValue);
+  const { searchTerm, setSearchTerm, results, isLoading, error } = useLocationSearch();
   const { toast } = useToast();
-
-  const handlePlaceSelect = (place: google.maps.places.PlaceResult) => {
-    if (!place.geometry || !place.geometry.location) {
-      toast({
-        title: "Location Error",
-        description: "Failed to get location details. Please try a different search.",
-        variant: "destructive"
-      });
-      return;
+  
+  // Initialize search results when component mounts
+  useEffect(() => {
+    if (!searchTerm) {
+      setSearchTerm('track');
+      setTimeout(() => setSearchTerm(''), 100);
     }
+  }, []);
 
-    const lat = place.geometry.location.lat();
-    const lng = place.geometry.location.lng();
+  const handleLocationSelect = useCallback((selectedLocation: LocationSearchResult) => {
+    console.log('Location selected:', selectedLocation);
+    setValue(selectedLocation.formatted);
+    setOpen(false);
     
-    setLoading(true);
-
     try {
-      // Extract address components
-      let city = "";
-      let state = "";
-      let country = "";
-      
-      if (place.address_components) {
-        for (const component of place.address_components) {
-          const types = component.types;
-          
-          if (types.includes('locality')) {
-            city = component.long_name;
-          } else if (types.includes('administrative_area_level_1')) {
-            state = component.long_name;
-          } else if (types.includes('country')) {
-            country = component.long_name;
-          }
-        }
-      }
-
-      const locationResult: LocationSearchResult = {
-        name: place.name || '',
-        city: city,
-        state: state,
-        country: country,
-        formatted: place.formatted_address || `${place.name}, ${city || state || country}`,
-        latitude: lat,
-        longitude: lng
-      };
-
-      // Update display value
-      setDisplayValue(locationResult.formatted);
-      
-      console.log('Location selected:', locationResult);
-      
-      onLocationSelect(locationResult);
+      onLocationSelect(selectedLocation);
       
       toast({
         title: "Location Selected",
-        description: `Selected ${locationResult.formatted}`,
+        description: `Selected ${selectedLocation.formatted}`,
       });
     } catch (err) {
       console.error('Error selecting location:', err);
@@ -137,13 +58,13 @@ export function LocationSearch({ onLocationSelect, defaultValue = '' }: Location
         description: "Failed to set location",
         variant: "destructive"
       });
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [onLocationSelect, setValue, setOpen, toast]);
 
-  const handleReset = () => {
-    setDisplayValue('');
+  const handleClear = useCallback(() => {
+    setValue('');
+    setSearchTerm('');
+    
     // Create a blank location to clear the parent component
     const emptyLocation: LocationSearchResult = {
       name: '',
@@ -152,48 +73,123 @@ export function LocationSearch({ onLocationSelect, defaultValue = '' }: Location
       latitude: 0,
       longitude: 0
     };
+    
     onLocationSelect(emptyLocation);
-  };
+    
+    // Focus the input after clearing
+    setTimeout(() => {
+      const input = document.querySelector('[data-location-search-input]') as HTMLInputElement;
+      if (input) input.focus();
+    }, 0);
+  }, [onLocationSelect, setValue, setSearchTerm]);
 
   return (
-    <LoadScript
-      googleMapsApiKey={API_KEY}
-      libraries={libraries}
-      loadingElement={<div>Loading Google Maps...</div>}
-    >
-      <div className="space-y-2">
-        <Label htmlFor="location-search">Location</Label>
-        <div className="relative">
-          <AutocompleteField
-            value={displayValue}
-            onPlaceSelect={handlePlaceSelect}
-          />
-          
-          {displayValue && (
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="absolute right-2 top-1/2 -translate-y-1/2"
-              onClick={handleReset}
-              title="Clear location"
-            >
-              ✕
-            </Button>
-          )}
-          
-          {!displayValue && (
-            <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          )}
-        </div>
-        
-        {loading && (
-          <div className="text-sm text-muted-foreground">Loading location details...</div>
-        )}
-        
-        <div className="text-xs text-muted-foreground mt-1">
-          Search for track and field venues, stadiums, or schools
-        </div>
+    <div className="space-y-2">
+      <Label>Location</Label>
+      <div className="relative">
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <div className="flex w-full">
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={open}
+                className="w-full justify-between relative"
+                onClick={() => setOpen(true)}
+              >
+                <div className="flex items-center">
+                  <MapPin className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                  <span className="truncate">
+                    {value || "Search for a location..."}
+                  </span>
+                </div>
+                {value ? (
+                  <X 
+                    className="ml-2 h-4 w-4 shrink-0 opacity-70 hover:opacity-100 cursor-pointer" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleClear();
+                    }}
+                  />
+                ) : (
+                  <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                )}
+              </Button>
+            </div>
+          </PopoverTrigger>
+          <PopoverContent className="w-[300px] p-0" align="start" sideOffset={5}>
+            <Command shouldFilter={false} className="rounded-lg border shadow-md">
+              <CommandInput 
+                placeholder="Type to search locations..." 
+                value={searchTerm}
+                onValueChange={setSearchTerm}
+                className="h-9"
+                data-location-search-input
+              />
+              <CommandList className="max-h-[300px] overflow-auto">
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-6">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                ) : error ? (
+                  <CommandEmpty>Error: {error.message}</CommandEmpty>
+                ) : results.length === 0 ? (
+                  <CommandEmpty>No locations found</CommandEmpty>
+                ) : (
+                  <>
+                    <CommandGroup heading="Search Results">
+                      {results.map((location, index) => {
+                        // Create a display name and location info
+                        const displayName = location.name || "Location";
+                        const locationString = [
+                          location.city,
+                          location.state,
+                          location.country
+                        ].filter(Boolean).join(", ");
+                        
+                        return (
+                          <CommandItem
+                            key={`${location.name}-${location.latitude}-${location.longitude}-${index}`}
+                            onSelect={() => handleLocationSelect(location)}
+                            className="cursor-pointer py-3 px-2"
+                            value={`${location.name} ${locationString}`}
+                          >
+                            <div className="flex items-start">
+                              <MapPin className="mr-2 h-4 w-4 mt-0.5 flex-shrink-0" />
+                              <div>
+                                <div className="font-medium">{displayName}</div>
+                                {locationString && (
+                                  <div className="text-xs text-muted-foreground mt-0.5">
+                                    {locationString}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </CommandItem>
+                        );
+                      })}
+                    </CommandGroup>
+                    
+                    <CommandSeparator />
+                    
+                    <div className="p-2 text-xs text-center text-muted-foreground">
+                      {searchTerm ? (
+                        <span>
+                          {results.length} results for "{searchTerm}"
+                        </span>
+                      ) : (
+                        <span>
+                          Search for track venues, stadiums, or schools
+                        </span>
+                      )}
+                    </div>
+                  </>
+                )}
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
       </div>
-    </LoadScript>
+    </div>
   );
 }
