@@ -28,6 +28,7 @@ export function LocationSearch({ onLocationSelect, defaultValue = '' }: Location
   const { searchTerm, setSearchTerm, results, isLoading, error } = useLocationSearch();
 
   const handleLocationSelect = (location: LocationSearchResult) => {
+    console.log('Location selected:', location);
     setValue(location.formatted);
     setOpen(false);
     onLocationSelect(location);

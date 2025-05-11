@@ -49,8 +49,29 @@ export function CreateMeetModal({ isOpen, onClose }: CreateMeetModalProps) {
 
   const createMeetMutation = useMutation({
     mutationFn: async (meetData: InsertMeet) => {
-      const res = await apiRequest('POST', '/api/meets', meetData);
-      return res.json();
+      try {
+        const res = await apiRequest('POST', '/api/meets', meetData);
+        
+        // Log the raw response for debugging
+        console.log('API Response status:', res.status);
+        
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error('Error response:', errorText);
+          
+          try {
+            const errorJson = JSON.parse(errorText);
+            throw new Error(errorJson.error || 'Failed to create meet');
+          } catch (e) {
+            throw new Error(`Server error: ${errorText}`);
+          }
+        }
+        
+        return res.json();
+      } catch (error) {
+        console.error('Mutation error:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/meets'] });
@@ -61,8 +82,9 @@ export function CreateMeetModal({ isOpen, onClose }: CreateMeetModalProps) {
       onClose();
     },
     onError: (error: Error) => {
+      console.error('Error details:', error);
       toast({
-        title: 'Error',
+        title: 'Error Creating Meet',
         description: error.message,
         variant: 'destructive',
       });
@@ -100,6 +122,43 @@ export function CreateMeetModal({ isOpen, onClose }: CreateMeetModalProps) {
       return;
     }
 
+    // Form validation
+    if (!name.trim()) {
+      toast({
+        title: 'Missing Information',
+        description: 'Please enter a meet name',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!date) {
+      toast({
+        title: 'Missing Information',
+        description: 'Please select a date',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!time) {
+      toast({
+        title: 'Missing Information',
+        description: 'Please select a time',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!location) {
+      toast({
+        title: 'Missing Information',
+        description: 'Please select a location',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       // Combine date and time
       const dateTime = new Date(`${date}T${time}`);
@@ -120,11 +179,13 @@ export function CreateMeetModal({ isOpen, onClose }: CreateMeetModalProps) {
         coordinates: coordinates
       };
       
+      console.log('Submitting meet data:', meetData);
       createMeetMutation.mutate(meetData);
     } catch (error) {
+      console.error('Form submission error:', error);
       toast({
         title: 'Validation Error',
-        description: 'Please check the form and try again',
+        description: error instanceof Error ? error.message : 'Please check the form and try again',
         variant: 'destructive',
       });
     }

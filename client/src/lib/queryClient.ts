@@ -12,15 +12,28 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(url, {
-    method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
-
-  await throwIfResNotOk(res);
-  return res;
+  console.log(`Making ${method} request to ${url}`, data);
+  
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: data ? { "Content-Type": "application/json" } : {},
+      body: data ? JSON.stringify(data) : undefined,
+      credentials: "include",
+    });
+    
+    console.log(`Response status: ${res.status}`);
+    
+    if (res.status === 401) {
+      console.error('Authentication error - user not authenticated');
+      throw new Error('You must be logged in to perform this action');
+    }
+    
+    return res;
+  } catch (error) {
+    console.error('API request error:', error);
+    throw error;
+  }
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
