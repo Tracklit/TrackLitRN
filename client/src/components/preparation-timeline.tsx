@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { cn, formatDistanceToNow, formatRelativeTime } from '@/lib/utils';
+import { cn, formatRelativeTime } from '@/lib/utils';
+import { formatDistanceToNow as formatDistanceToNowFn } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { 
   CheckIcon, 
@@ -23,7 +24,7 @@ import { CreateReminderDialog } from './create-reminder-dialog';
 interface TimelineItem {
   id: string;
   title: string;
-  description?: string;
+  description?: string | null;
   timeDescription: string;
   icon: React.ReactNode;
   status: 'completed' | 'current' | 'upcoming';
@@ -133,10 +134,10 @@ const generateDefaultReminders = (meet: Meet): TimelineItem[] => {
       id: 'default-5',
       title: 'Meet day warmup',
       description: 'Complete warmup routine including drills and strides',
-      timeDescription: `${meet.warmupTime} min before event`,
+      timeDescription: `${meet.warmupTime || 60} min before event`,
       icon: <Timer className="h-4 w-4" />,
-      status: getReminderStatus(new Date(meetDate.getTime() - meet.warmupTime * 60 * 1000), false),
-      date: new Date(meetDate.getTime() - meet.warmupTime * 60 * 1000),
+      status: getReminderStatus(new Date(meetDate.getTime() - (meet.warmupTime || 60) * 60 * 1000), false),
+      date: new Date(meetDate.getTime() - (meet.warmupTime || 60) * 60 * 1000),
       category: 'warmup'
     },
   ];
@@ -179,7 +180,7 @@ export function PreparationTimeline({ meet, reminders: initialReminders, onCusto
         reminderId: reminder.id,
         title: reminder.title,
         description: reminder.description,
-        timeDescription: formatDistanceToNow(reminderDate, { addSuffix: true }),
+        timeDescription: formatDistanceToNowFn(reminderDate, { addSuffix: true }),
         icon: getCategoryIcon(reminder.category),
         status: getReminderStatus(reminderDate, reminder.isCompleted || false),
         date: reminderDate,
