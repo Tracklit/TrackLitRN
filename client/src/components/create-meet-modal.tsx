@@ -108,7 +108,7 @@ export function CreateMeetModal({ isOpen, onClose }: CreateMeetModalProps) {
       const meetData = {
         userId: user.id,
         name,
-        date: dateTime,
+        date: dateTime.toISOString(), // Convert to ISO string for proper serialization
         location,
         events,
         warmupTime,

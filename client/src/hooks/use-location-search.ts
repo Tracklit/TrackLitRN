@@ -34,10 +34,17 @@ export function useLocationSearch() {
       setError(null);
       
       try {
+        if (!API_KEY) {
+          throw new Error('API key is missing. Please provide a valid Geoapify API key.');
+        }
+      
+        console.log('Searching for location:', searchTerm, 'API Key present:', !!API_KEY);
+        
         const url = `https://api.geoapify.com/v1/geocode/autocomplete?text=${encodeURIComponent(searchTerm)}&limit=5&apiKey=${API_KEY}`;
         const response = await fetch(url, { signal });
 
         if (!response.ok) {
+          console.error('Location API error:', response.status, await response.text());
           throw new Error(`Failed to fetch location data: ${response.status}`);
         }
 
