@@ -168,6 +168,13 @@ export function useLocationSearch() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
+  
+  // Always ensure we have default locations loaded
+  useEffect(() => {
+    if (results.length === 0) {
+      setResults(DEFAULT_LOCATIONS);
+    }
+  }, []);
 
   // Search function combining local search and API if available
   const searchLocations = useCallback(async (term: string) => {

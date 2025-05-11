@@ -31,17 +31,6 @@ export function LocationSearch({ onLocationSelect, defaultValue = '' }: Location
   const { searchTerm, setSearchTerm, results, isLoading, error } = useLocationSearch();
   const { toast } = useToast();
   
-  // Initialize search results when component mounts
-  useEffect(() => {
-    // Load default search results immediately
-    setSearchTerm('');
-    
-    // Don't show validation errors for empty location during initialization
-    if (defaultValue) {
-      setValue(defaultValue);
-    }
-  }, [defaultValue]);
-
   const handleLocationSelect = useCallback((selectedLocation: LocationSearchResult) => {
     console.log('Location selected:', selectedLocation);
     setValue(selectedLocation.formatted);
@@ -85,6 +74,14 @@ export function LocationSearch({ onLocationSelect, defaultValue = '' }: Location
       if (input) input.focus();
     }, 0);
   }, [onLocationSelect, setValue, setSearchTerm]);
+  
+  // Initialize component with default values
+  useEffect(() => {
+    // Set initial display value
+    if (defaultValue) {
+      setValue(defaultValue);
+    }
+  }, [defaultValue]);
 
   return (
     <div className="space-y-2">
@@ -98,7 +95,10 @@ export function LocationSearch({ onLocationSelect, defaultValue = '' }: Location
                 role="combobox"
                 aria-expanded={open}
                 className="w-full justify-between relative"
-                onClick={() => setOpen(true)}
+                onClick={() => {
+                  setOpen(true);
+                  setSearchTerm('');
+                }}
               >
                 <div className="flex items-center">
                   <MapPin className="mr-2 h-4 w-4 shrink-0 opacity-50" />
@@ -128,6 +128,7 @@ export function LocationSearch({ onLocationSelect, defaultValue = '' }: Location
                 onValueChange={setSearchTerm}
                 className="h-9"
                 data-location-search-input
+                autoFocus
               />
               <CommandList className="max-h-[300px] overflow-auto">
                 {isLoading ? (
