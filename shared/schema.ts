@@ -43,10 +43,11 @@ export const reminders = pgTable("reminders", {
   id: serial("id").primaryKey(),
   meetId: integer("meet_id").notNull().references(() => meets.id),
   userId: integer("user_id").notNull().references(() => users.id),
-  type: text("type").notNull(), // nutrition, equipment, sleep, warmup, etc.
-  message: text("message").notNull(),
-  dueDate: timestamp("due_date").notNull(),
-  completed: boolean("completed").default(false),
+  title: text("title").notNull(),
+  description: text("description"),
+  category: text("category").notNull(), // nutrition, warmup, rest, exercise, hydration, meal
+  date: timestamp("date").notNull(), // When the reminder should occur
+  isCompleted: boolean("is_completed").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
