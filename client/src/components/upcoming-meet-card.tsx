@@ -87,7 +87,7 @@ export function UpcomingMeetCard({ meet, onViewPreparation }: UpcomingMeetCardPr
             <Calendar className="h-4 w-4 text-darkGray" />
             <span className="text-sm">{formatDateTime(meet.date)}</span>
           </div>
-          <Badge variant="accent">
+          <Badge variant="secondary">
             {formatRelativeTime(meet.date)}
           </Badge>
         </div>

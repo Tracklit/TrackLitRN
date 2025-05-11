@@ -11,7 +11,8 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import { InsertMeet } from '@shared/schema';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { LocationSearch, LocationSearchResult } from '@/components/location-search';
+import { LocationSearch } from '@/components/location-search';
+import { LocationSearchResult } from '@/hooks/use-location-search';
 
 interface CreateMeetModalProps {
   isOpen: boolean;
