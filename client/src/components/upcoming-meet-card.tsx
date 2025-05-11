@@ -4,7 +4,7 @@ import { Meet, Weather } from '@shared/schema';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { WeatherDisplay } from '@/components/weather-display';
-import { useWeather } from '@/hooks/use-weather';
+import { useMeetForecast } from '@/hooks/use-meet-forecast';
 import { formatDateTime, formatRelativeTime } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 

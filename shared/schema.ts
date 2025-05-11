@@ -117,4 +117,10 @@ export type Weather = {
   windSpeed: number;
   windDirection: string;
   humidity: number;
+  // Flag for when weather cannot be forecasted (e.g., too far in future)
+  isForecastUnavailable?: boolean;
+  // Timestamp for when forecast was generated
+  forecastTime?: number;
+  // Timestamp for target forecast time
+  targetTime?: number;
 };
