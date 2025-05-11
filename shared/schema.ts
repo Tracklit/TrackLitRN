@@ -81,7 +81,7 @@ export const insertResultSchema = createInsertSchema(results).omit({
 export const insertReminderSchema = createInsertSchema(reminders).omit({
   id: true,
   createdAt: true,
-  completed: true,
+  isCompleted: true,
 });
 
 export const insertCoachSchema = createInsertSchema(coaches).omit({

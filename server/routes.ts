@@ -8,7 +8,10 @@ import {
   insertResultSchema, 
   insertReminderSchema, 
   insertCoachSchema,
-  InsertReminder
+  InsertMeet,
+  InsertResult,
+  InsertReminder,
+  InsertCoach
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
