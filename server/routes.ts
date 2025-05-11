@@ -57,77 +57,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/meets", async (req: Request, res: Response) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+    // Check authentication
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
     
     try {
-      console.log('Creating meet with data:', JSON.stringify(req.body, null, 2));
-      
-      // Ensure date is properly formatted
+      // Get the raw data
       const rawData = req.body;
-      if (rawData.date && rawData.date instanceof Date === false) {
-        rawData.date = new Date(rawData.date);
+      
+      // Validate required fields
+      if (!rawData.name || !rawData.date || !rawData.location) {
+        return res.status(400).json({ 
+          error: 'Missing required fields'
+        });
       }
       
+      // Parse date if it's a string
+      if (rawData.date && typeof rawData.date === 'string') {
+        rawData.date = new Date(rawData.date);
+        
+        // Check if date is valid
+        if (isNaN(rawData.date.getTime())) {
+          return res.status(400).json({ error: 'Invalid date format' });
+        }
+      }
+      
+      // Parse and validate the data
       const meetData = insertMeetSchema.parse(rawData);
       
       // Override userId with authenticated user
       meetData.userId = req.user!.id;
       
+      // Create the meet
       const meet = await storage.createMeet(meetData);
       
-      // Automatically create reminders for the meet
-      const meetDate = new Date(meet.date);
+      // Create automatic reminders
+      try {
+        const meetDate = new Date(meet.date);
+        
+        // 5 days before reminder
+        const fiveDaysBefore = new Date(meetDate);
+        fiveDaysBefore.setDate(fiveDaysBefore.getDate() - 5);
+        await storage.createReminder({
+          meetId: meet.id,
+          userId: req.user!.id,
+          type: "equipment",
+          message: "Prepare your equipment for the upcoming meet",
+          dueDate: fiveDaysBefore
+        });
+        
+        // 3 days before reminder
+        const threeDaysBefore = new Date(meetDate);
+        threeDaysBefore.setDate(threeDaysBefore.getDate() - 3);
+        await storage.createReminder({
+          meetId: meet.id,
+          userId: req.user!.id,
+          type: "nutrition",
+          message: "Start following your pre-meet nutrition plan",
+          dueDate: threeDaysBefore
+        });
+        
+        // 1 day before reminder
+        const dayBefore = new Date(meetDate);
+        dayBefore.setDate(dayBefore.getDate() - 1);
+        await storage.createReminder({
+          meetId: meet.id,
+          userId: req.user!.id,
+          type: "sleep",
+          message: "Get at least 8 hours of sleep tonight",
+          dueDate: dayBefore
+        });
+        
+        // Warmup reminder on meet day
+        const warmupTime = new Date(meetDate);
+        warmupTime.setMinutes(warmupTime.getMinutes() - (meet.warmupTime || 60));
+        await storage.createReminder({
+          meetId: meet.id,
+          userId: req.user!.id,
+          type: "warmup",
+          message: "Time to start your warmup routine",
+          dueDate: warmupTime
+        });
+      } catch (reminderError) {
+        console.error('Error creating reminders:', reminderError);
+        // Continue execution - don't fail the meet creation if reminders fail
+      }
       
-      // Create 5 days before reminder
-      const fiveDaysBefore = new Date(meetDate);
-      fiveDaysBefore.setDate(fiveDaysBefore.getDate() - 5);
-      await storage.createReminder({
-        meetId: meet.id,
-        userId: req.user!.id,
-        type: "equipment",
-        message: "Prepare your equipment for the upcoming meet",
-        dueDate: fiveDaysBefore
-      });
+      // Return the created meet
+      return res.status(201).json(meet);
       
-      // Create 3 days before reminder
-      const threeDaysBefore = new Date(meetDate);
-      threeDaysBefore.setDate(threeDaysBefore.getDate() - 3);
-      await storage.createReminder({
-        meetId: meet.id,
-        userId: req.user!.id,
-        type: "nutrition",
-        message: "Start following your pre-meet nutrition plan",
-        dueDate: threeDaysBefore
-      });
-      
-      // Create day before reminder
-      const dayBefore = new Date(meetDate);
-      dayBefore.setDate(dayBefore.getDate() - 1);
-      await storage.createReminder({
-        meetId: meet.id,
-        userId: req.user!.id,
-        type: "sleep",
-        message: "Get at least 8 hours of sleep tonight",
-        dueDate: dayBefore
-      });
-      
-      // Create meet day warmup reminder
-      const warmupTime = new Date(meetDate);
-      warmupTime.setMinutes(warmupTime.getMinutes() - (meet.warmupTime || 60));
-      await storage.createReminder({
-        meetId: meet.id,
-        userId: req.user!.id,
-        type: "warmup",
-        message: "Time to start your warmup routine",
-        dueDate: warmupTime
-      });
-      
-      res.status(201).json(meet);
     } catch (error) {
+      console.error('Error in POST /api/meets:', error);
+      
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.errors });
       }
-      res.status(500).send("Error creating meet");
+      
+      return res.status(500).json({ error: 'Server error' });
     }
   });
 

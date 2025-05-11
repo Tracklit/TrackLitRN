@@ -92,11 +92,27 @@ export function CreateMeetModal({ isOpen, onClose }: CreateMeetModalProps) {
   });
 
   const handleLocationSelect = (selectedLocation: LocationSearchResult) => {
-    setLocation(selectedLocation.formatted);
-    setCoordinates({
-      latitude: selectedLocation.latitude,
-      longitude: selectedLocation.longitude
-    });
+    console.log('Selected location in create-meet-modal:', selectedLocation);
+    
+    try {
+      // Set the location name
+      setLocation(selectedLocation.formatted);
+      
+      // Set coordinates
+      setCoordinates({
+        latitude: selectedLocation.latitude,
+        longitude: selectedLocation.longitude
+      });
+      
+      console.log('Location and coordinates set successfully');
+    } catch (error) {
+      console.error('Error handling location selection:', error);
+      toast({
+        title: "Error",
+        description: "Failed to set location data",
+        variant: "destructive"
+      });
+    }
   };
 
   const addEvent = () => {

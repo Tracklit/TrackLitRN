@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useLocationSearch, LocationSearchResult } from '@/hooks/use-location-search';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { useToast } from '@/hooks/use-toast';
 
 interface LocationSearchProps {
   onLocationSelect: (location: LocationSearchResult) => void;
@@ -26,13 +27,29 @@ export function LocationSearch({ onLocationSelect, defaultValue = '' }: Location
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(defaultValue);
   const { searchTerm, setSearchTerm, results, isLoading, error } = useLocationSearch();
+  const { toast } = useToast();
 
-  const handleLocationSelect = (location: LocationSearchResult) => {
-    console.log('Location selected:', location);
-    setValue(location.formatted);
+  const handleLocationSelect = useCallback((selectedLocation: LocationSearchResult) => {
+    console.log('Location selected:', selectedLocation);
+    setValue(selectedLocation.formatted);
     setOpen(false);
-    onLocationSelect(location);
-  };
+    
+    try {
+      onLocationSelect(selectedLocation);
+      
+      toast({
+        title: "Location Selected",
+        description: `Selected ${selectedLocation.formatted}`,
+      });
+    } catch (err) {
+      console.error('Error selecting location:', err);
+      toast({
+        title: "Error",
+        description: "Failed to set location",
+        variant: "destructive"
+      });
+    }
+  }, [onLocationSelect, setValue, setOpen, toast]);
 
   return (
     <div className="flex flex-col space-y-2 w-full">
@@ -78,7 +95,11 @@ export function LocationSearch({ onLocationSelect, defaultValue = '' }: Location
                     <CommandItem
                       key={`${location.latitude}-${location.longitude}-${index}`}
                       value={location.formatted}
-                      onSelect={() => handleLocationSelect(location)}
+                      onSelect={() => {
+                        console.log('CommandItem selected for location:', location);
+                        handleLocationSelect(location);
+                      }}
+                      className="cursor-pointer hover:bg-accent"
                     >
                       <MapPin className="mr-2 h-4 w-4" />
                       <div className="flex flex-col">
