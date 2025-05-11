@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react';
-import { useMutation } from '@tanstack/react-query';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { X, Plus } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { insertMeetSchema, InsertMeet } from '@shared/schema';
+import { useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
+import { InsertMeet } from '@shared/schema';
 import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
+import { LocationSearch, LocationSearchResult } from '@/components/location-search';
 
 interface CreateMeetModalProps {
   isOpen: boolean;
@@ -24,6 +25,7 @@ export function CreateMeetModal({ isOpen, onClose }: CreateMeetModalProps) {
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [location, setLocation] = useState('');
+  const [coordinates, setCoordinates] = useState<{ latitude: number; longitude: number } | null>(null);
   const [events, setEvents] = useState<string[]>([]);
   const [newEvent, setNewEvent] = useState('');
   const [warmupTime, setWarmupTime] = useState(60);
@@ -36,6 +38,7 @@ export function CreateMeetModal({ isOpen, onClose }: CreateMeetModalProps) {
       setDate('');
       setTime('');
       setLocation('');
+      setCoordinates(null);
       setEvents([]);
       setNewEvent('');
       setWarmupTime(60);
@@ -64,6 +67,14 @@ export function CreateMeetModal({ isOpen, onClose }: CreateMeetModalProps) {
       });
     },
   });
+
+  const handleLocationSelect = (selectedLocation: LocationSearchResult) => {
+    setLocation(selectedLocation.formatted);
+    setCoordinates({
+      latitude: selectedLocation.latitude,
+      longitude: selectedLocation.longitude
+    });
+  };
 
   const addEvent = () => {
     if (newEvent.trim() && !events.includes(newEvent.trim())) {
@@ -101,7 +112,7 @@ export function CreateMeetModal({ isOpen, onClose }: CreateMeetModalProps) {
         events,
         warmupTime,
         arrivalTime,
-        coordinates: null, // This would be fetched via a geocoding service
+        coordinates: coordinates
       };
       
       createMeetMutation.mutate(meetData);
@@ -119,6 +130,7 @@ export function CreateMeetModal({ isOpen, onClose }: CreateMeetModalProps) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold">Create New Meet</DialogTitle>
+          <p className="text-sm text-muted-foreground">Fill in the details to create a new track meet</p>
         </DialogHeader>
         
         <form onSubmit={handleSubmit}>
@@ -158,14 +170,16 @@ export function CreateMeetModal({ isOpen, onClose }: CreateMeetModalProps) {
             </div>
             
             <div>
-              <Label htmlFor="meet-location">Location</Label>
-              <Input 
-                id="meet-location" 
-                placeholder="Search for stadium or track"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                required
+              <Label>Location</Label>
+              <LocationSearch 
+                onLocationSelect={handleLocationSelect}
+                defaultValue={location}
               />
+              {coordinates && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Coordinates: {coordinates.latitude.toFixed(4)}, {coordinates.longitude.toFixed(4)}
+                </p>
+              )}
             </div>
             
             <div>
@@ -174,7 +188,7 @@ export function CreateMeetModal({ isOpen, onClose }: CreateMeetModalProps) {
                 {events.map((event) => (
                   <Badge 
                     key={event} 
-                    variant="event"
+                    variant="outline"
                     className="flex items-center gap-1"
                   >
                     {event}
@@ -210,7 +224,7 @@ export function CreateMeetModal({ isOpen, onClose }: CreateMeetModalProps) {
             
             <div>
               <Label>Preparation Settings</Label>
-              <div className="bg-lightGray p-3 rounded-lg space-y-3 mt-2">
+              <div className="bg-gray-50 p-3 rounded-lg space-y-3 mt-2">
                 <div>
                   <div className="flex justify-between items-center">
                     <Label htmlFor="warmup-time" className="text-xs">When to start warm-up</Label>
