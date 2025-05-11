@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { LocationSearchResult } from '@/hooks/use-location-search';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { MapPin } from 'lucide-react';
+import { MapPin, X, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
 
 // Predefined locations
 const LOCATIONS: LocationSearchResult[] = [
@@ -108,26 +108,41 @@ interface LocationSearchProps {
 }
 
 export function LocationSearch({ onLocationSelect, defaultValue = '' }: LocationSearchProps) {
-  const [selectedLocationValue, setSelectedLocationValue] = useState<string>('');
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [filteredLocations, setFilteredLocations] = useState(LOCATIONS);
+  const [inputValue, setInputValue] = useState(defaultValue);
+  const [isSearching, setIsSearching] = useState(false);
+  const [filteredLocations, setFilteredLocations] = useState<LocationSearchResult[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState<LocationSearchResult | null>(null);
+  const [resultsVisible, setResultsVisible] = useState(false);
   const { toast } = useToast();
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  
+  // Find location by formatted name
+  const findLocationByFormatted = (formatted: string) => {
+    return LOCATIONS.find(loc => loc.formatted === formatted) || null;
+  };
 
-  // Update selected value if defaultValue is provided
+  // Set default value if provided
   useEffect(() => {
     if (defaultValue) {
-      setSelectedLocationValue(defaultValue);
+      setInputValue(defaultValue);
+      const location = findLocationByFormatted(defaultValue);
+      if (location) {
+        setSelectedLocation(location);
+      }
     }
   }, [defaultValue]);
 
-  // Filter locations when search term changes
-  useEffect(() => {
-    if (!searchTerm) {
-      setFilteredLocations(LOCATIONS);
+  // Filter locations based on input value
+  const filterLocations = (value: string) => {
+    setIsSearching(true);
+    
+    if (!value.trim()) {
+      setFilteredLocations(LOCATIONS.slice(0, 5)); // Show top 5 locations when empty
+      setIsSearching(false);
       return;
     }
-
-    const term = searchTerm.toLowerCase();
+    
+    const term = value.toLowerCase();
     const filtered = LOCATIONS.filter(loc => 
       loc.name.toLowerCase().includes(term) || 
       (loc.city && loc.city.toLowerCase().includes(term)) ||
@@ -136,23 +151,27 @@ export function LocationSearch({ onLocationSelect, defaultValue = '' }: Location
     );
     
     setFilteredLocations(filtered);
-  }, [searchTerm]);
+    setIsSearching(false);
+  };
 
-  const handleSelectLocation = (value: string) => {
-    const selectedLocation = LOCATIONS.find(loc => loc.formatted === value);
+  // Handle input change
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputValue(value);
+    setResultsVisible(true);
+    filterLocations(value);
+  };
+
+  // Handle location selection
+  const handleLocationSelect = (location: LocationSearchResult) => {
+    setSelectedLocation(location);
+    setInputValue(location.formatted);
+    setResultsVisible(false);
     
-    if (!selectedLocation) return;
-    
-    setSelectedLocationValue(value);
-    console.log('Location selected:', selectedLocation);
+    console.log('Location selected:', location);
     
     try {
-      onLocationSelect(selectedLocation);
-      
-      toast({
-        title: "Location Selected",
-        description: `Selected ${selectedLocation.formatted}`,
-      });
+      onLocationSelect(location);
     } catch (err) {
       console.error('Error selecting location:', err);
       toast({
@@ -163,57 +182,130 @@ export function LocationSearch({ onLocationSelect, defaultValue = '' }: Location
     }
   };
 
+  // Handle clear button click
+  const handleClear = () => {
+    setInputValue('');
+    setSelectedLocation(null);
+    setResultsVisible(false);
+    
+    // Create a blank location to clear the parent component
+    const emptyLocation: LocationSearchResult = {
+      name: '',
+      country: '',
+      formatted: '',
+      latitude: 0,
+      longitude: 0
+    };
+    
+    onLocationSelect(emptyLocation);
+  };
+
+  // Close results when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+        setResultsVisible(false);
+      }
+    }
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [wrapperRef]);
+
+  // Immediately show some results when input is focused
+  const handleInputFocus = () => {
+    if (!inputValue) {
+      setFilteredLocations(LOCATIONS.slice(0, 5)); // Show top 5 locations
+    } else {
+      filterLocations(inputValue);
+    }
+    setResultsVisible(true);
+  };
+
   return (
     <div className="space-y-2">
       <Label>Location</Label>
       
-      <div>
-        <Input
-          type="text"
-          placeholder="Search locations..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="mb-2"
-        />
+      <div className="relative" ref={wrapperRef}>
+        <div className="relative">
+          <Input
+            type="text"
+            placeholder="Search track venues, stadiums, or cities..."
+            value={inputValue}
+            onChange={handleInputChange}
+            onFocus={handleInputFocus}
+            className="pr-8"
+          />
+          
+          {inputValue ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-0 top-0 h-full w-9"
+              onClick={handleClear}
+              type="button"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          ) : (
+            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          )}
+        </div>
         
-        <Select value={selectedLocationValue} onValueChange={handleSelectLocation}>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select a location" />
-          </SelectTrigger>
-          <SelectContent>
-            {filteredLocations.length === 0 ? (
-              <div className="px-2 py-2 text-sm text-center text-muted-foreground">
+        {/* Results dropdown */}
+        {resultsVisible && (
+          <div className="absolute z-10 mt-1 w-full bg-white rounded-md border shadow-lg max-h-56 overflow-auto">
+            {isSearching ? (
+              <div className="px-3 py-2 text-sm text-center text-muted-foreground">
+                Searching...
+              </div>
+            ) : filteredLocations.length === 0 ? (
+              <div className="px-3 py-2 text-sm text-center text-muted-foreground">
                 No locations found
               </div>
             ) : (
-              filteredLocations.map((location, index) => {
-                const locationString = [
-                  location.city,
-                  location.state,
-                  location.country
-                ].filter(Boolean).join(", ");
-                
-                return (
-                  <SelectItem 
-                    key={`${location.name}-${index}`}
-                    value={location.formatted}
-                    className="cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <div className="font-medium">{location.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {locationString}
+              <>
+                {filteredLocations.map((location, index) => {
+                  const locationString = [
+                    location.city,
+                    location.state,
+                    location.country
+                  ].filter(Boolean).join(", ");
+                  
+                  return (
+                    <div
+                      key={`${location.name}-${index}`}
+                      className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                      onClick={() => handleLocationSelect(location)}
+                    >
+                      <div className="flex items-start">
+                        <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground mr-2 flex-shrink-0" />
+                        <div>
+                          <div className="font-medium">{location.name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {locationString}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </SelectItem>
-                );
-              })
+                  );
+                })}
+              </>
             )}
-          </SelectContent>
-        </Select>
+          </div>
+        )}
+        
+        {/* Selected location indicator */}
+        {selectedLocation && (
+          <div className="mt-1.5 text-xs text-muted-foreground flex items-center">
+            <MapPin className="h-3 w-3 mr-1" />
+            <span>
+              {selectedLocation.latitude.toFixed(4)}, {selectedLocation.longitude.toFixed(4)}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
