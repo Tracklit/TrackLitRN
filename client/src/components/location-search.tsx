@@ -72,43 +72,55 @@ export function LocationSearch({ onLocationSelect, defaultValue = '' }: Location
             </Button>
           </div>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0" align="start">
-          <Command shouldFilter={false}>
+        <PopoverContent className="w-[350px] p-0" align="start" sideOffset={4}>
+          <Command shouldFilter={false} className="rounded-lg border shadow-md">
             <CommandInput 
               placeholder="Search for a location..." 
               value={searchTerm}
               onValueChange={setSearchTerm}
-              className="h-9"
+              className="h-11"
             />
-            <CommandList>
+            <CommandList className="max-h-[300px] overflow-auto">
               {isLoading ? (
                 <div className="flex items-center justify-center py-6">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 </div>
               ) : error ? (
                 <CommandEmpty>Error: {error.message}</CommandEmpty>
               ) : results.length === 0 ? (
                 <CommandEmpty>No locations found</CommandEmpty>
               ) : (
-                <CommandGroup>
-                  {results.map((location, index) => (
-                    <CommandItem
-                      key={`${location.formatted}-${index}`}
-                      value={location.formatted}
-                      onSelect={() => handleLocationSelect(location)}
-                      className="cursor-pointer"
-                    >
-                      <MapPin className="mr-2 h-4 w-4" />
-                      <div className="flex flex-col">
-                        <span>{location.name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {location.city}
-                          {location.state ? `, ${location.state}` : ''} 
-                          {location.country ? `, ${location.country}` : ''}
-                        </span>
-                      </div>
-                    </CommandItem>
-                  ))}
+                <CommandGroup heading="Locations">
+                  {results.map((location, index) => {
+                    const displayName = location.name || "Location";
+                    const locationString = [
+                      location.city, 
+                      location.state, 
+                      location.country
+                    ].filter(Boolean).join(", ");
+                    
+                    return (
+                      <CommandItem
+                        key={`${location.name}-${location.latitude}-${location.longitude}-${index}`}
+                        onSelect={() => {
+                          handleLocationSelect(location);
+                        }}
+                        className="cursor-pointer flex flex-col py-3 px-2 hover:bg-accent"
+                      >
+                        <div className="flex items-start">
+                          <MapPin className="mr-2 h-4 w-4 mt-0.5" />
+                          <div className="flex-1">
+                            <span className="font-medium">{displayName}</span>
+                            {locationString && (
+                              <p className="text-xs text-muted-foreground">
+                                {locationString}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </CommandItem>
+                    );
+                  })}
                 </CommandGroup>
               )}
               
