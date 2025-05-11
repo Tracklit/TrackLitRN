@@ -32,10 +32,11 @@ export const results = pgTable("results", {
   meetId: integer("meet_id").notNull().references(() => meets.id),
   userId: integer("user_id").notNull().references(() => users.id),
   event: text("event").notNull(),
-  result: real("result").notNull(), // Time in seconds or distance in meters
-  windSpeed: real("wind_speed"), // For events affected by wind
+  performance: real("performance").notNull(), // Time in seconds or distance in meters
+  wind: real("wind"), // Wind speed in m/s for affected events
   place: integer("place"), // 1st, 2nd, 3rd, etc.
   notes: text("notes"),
+  date: timestamp("date").notNull(), // Date of the result (same as meet date)
   createdAt: timestamp("created_at").defaultNow(),
 });
 
