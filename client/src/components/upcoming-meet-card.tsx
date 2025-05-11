@@ -28,10 +28,7 @@ export function UpcomingMeetCard({ meet, onViewPreparation }: UpcomingMeetCardPr
       if (coords && typeof coords === 'object' && 
           'latitude' in coords && typeof coords.latitude === 'number' &&
           'longitude' in coords && typeof coords.longitude === 'number') {
-        return {
-          lat: coords.latitude,
-          lon: coords.longitude
-        };
+        return coords;
       }
     } catch (e) {
       console.error('Failed to parse coordinates', e);
@@ -39,7 +36,11 @@ export function UpcomingMeetCard({ meet, onViewPreparation }: UpcomingMeetCardPr
     return null;
   }, [meet.coordinates]);
   
-  const { weather, isLoading, error } = useWeather(coordinates);
+  // Use our forecast hook with both coordinates and meet date
+  const { weather, isLoading, error } = useMeetForecast({
+    coordinates,
+    meetDate: meet.date
+  });
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -99,7 +100,12 @@ export function UpcomingMeetCard({ meet, onViewPreparation }: UpcomingMeetCardPr
           </div>
         </div>
         
-        <WeatherDisplay weather={weather} isLoading={isLoading} error={error} />
+        <WeatherDisplay 
+          weather={weather} 
+          isLoading={isLoading} 
+          error={error} 
+          meetDate={meet.date} 
+        />
         
         <div className="flex space-x-3">
           <Button 
