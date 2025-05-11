@@ -171,16 +171,21 @@ export class MemStorage implements IStorage {
     const id = this.meetIdCounter++;
     const createdAt = new Date();
     
-    // Fix for the events type issue
-    const events = insertMeet.events || [];
-    
-    const meet: Meet = { 
-      ...insertMeet, 
-      events,
-      id, 
-      status: 'upcoming', 
-      createdAt 
+    // Handle required and optional fields
+    const meet: Meet = {
+      id,
+      userId: insertMeet.userId,
+      name: insertMeet.name,
+      date: insertMeet.date,
+      location: insertMeet.location,
+      coordinates: insertMeet.coordinates || null,
+      events: insertMeet.events || null,
+      warmupTime: insertMeet.warmupTime || null,
+      arrivalTime: insertMeet.arrivalTime || null,
+      status: 'upcoming',
+      createdAt
     };
+    
     this.meets.set(id, meet);
     return meet;
   }

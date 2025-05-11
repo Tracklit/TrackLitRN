@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { Calendar, MapPin, Share2 } from 'lucide-react';
 import { Meet, Weather } from '@shared/schema';
 import { Button } from '@/components/ui/button';
@@ -15,12 +15,31 @@ interface UpcomingMeetCardProps {
 
 export function UpcomingMeetCard({ meet, onViewPreparation }: UpcomingMeetCardProps) {
   const { toast } = useToast();
-  const { weather, isLoading, error } = useWeather(meet.coordinates ? {
-    lat: typeof meet.coordinates === 'object' && 'latitude' in meet.coordinates ? 
-      meet.coordinates.latitude : 0,
-    lon: typeof meet.coordinates === 'object' && 'longitude' in meet.coordinates ? 
-      meet.coordinates.longitude : 0
-  } : null);
+  
+  // Parse coordinates from meet object
+  const coordinates = useMemo(() => {
+    if (!meet.coordinates) return null;
+    
+    try {
+      const coords = typeof meet.coordinates === 'string' 
+        ? JSON.parse(meet.coordinates) 
+        : meet.coordinates;
+        
+      if (coords && typeof coords === 'object' && 
+          'latitude' in coords && typeof coords.latitude === 'number' &&
+          'longitude' in coords && typeof coords.longitude === 'number') {
+        return {
+          lat: coords.latitude,
+          lon: coords.longitude
+        };
+      }
+    } catch (e) {
+      console.error('Failed to parse coordinates', e);
+    }
+    return null;
+  }, [meet.coordinates]);
+  
+  const { weather, isLoading, error } = useWeather(coordinates);
 
   const handleShare = async () => {
     if (navigator.share) {
