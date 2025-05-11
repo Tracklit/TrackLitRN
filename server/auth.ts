@@ -23,10 +23,15 @@ async function hashPassword(password: string) {
 }
 
 async function comparePasswords(supplied: string, stored: string) {
-  const [hashed, salt] = stored.split(".");
-  const hashedBuf = Buffer.from(hashed, "hex");
-  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  return timingSafeEqual(hashedBuf, suppliedBuf);
+  try {
+    const [hashed, salt] = stored.split(".");
+    const hashedBuf = Buffer.from(hashed, "hex");
+    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+    return timingSafeEqual(hashedBuf, suppliedBuf);
+  } catch (error) {
+    console.error("Error comparing passwords:", error);
+    return false;
+  }
 }
 
 export function setupAuth(app: Express) {
@@ -53,12 +58,7 @@ export function setupAuth(app: Express) {
           return done(null, false);
         }
         
-        // Special case for test user
-        if (username === 'testuser' && password === 'password123') {
-          return done(null, user);
-        }
-        
-        // For regular users, use secure password comparison
+        // Just use regular password comparison for all users
         if (await comparePasswords(password, user.password)) {
           return done(null, user);
         } else {

@@ -94,11 +94,11 @@ export class MemStorage implements IStorage {
     this.reminderIdCounter = 1;
     this.coachIdCounter = 1;
     
-    // Create test user - with a simple password format for login
+    // Create test user with properly hashed password
     this.users.set(1, {
       id: 1,
       username: 'testuser',
-      password: 'testpassword', // Special format that will be handled in auth.ts
+      password: '52cad11596bb5b93baf755035ed6166fd07961616878615288d5119e5b766d0d02b697956a1ecc36e00dba9c86c65c8e7c31b219ec17a0a1d1db066d787151f2.ef9c12cce344b3925024420f5b8f37f2', // hashed 'password123'
       name: 'Test User',
       email: 'test@example.com',
       events: ['100m', '200m', 'Long Jump'],
