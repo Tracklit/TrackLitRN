@@ -11,6 +11,7 @@ import { PerformanceAnalytics } from '@/components/performance-analytics';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { formatDate, formatResult } from '@/lib/utils';
+import { CreateResultDialog } from '@/components/create-result-dialog';
 
 export default function ResultsPage() {
   const [isAddResultOpen, setIsAddResultOpen] = useState(false);

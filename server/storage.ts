@@ -20,9 +20,6 @@ import createMemoryStore from "memorystore";
 
 const MemoryStore = createMemoryStore(session);
 
-// modify the interface with any CRUD methods
-// you might need
-
 export interface IStorage {
   // User operations
   getUser(id: number): Promise<User | undefined>;
@@ -238,11 +235,11 @@ export class MemStorage implements IStorage {
     const id = this.resultIdCounter++;
     const createdAt = new Date();
     
-    // Ensure windSpeed, place, and notes are properly set with null values if undefined
+    // Ensure wind, place, and notes are properly set with null values if undefined
     const result: Result = { 
       ...insertResult, 
       id, 
-      windSpeed: insertResult.windSpeed || null,
+      wind: insertResult.wind || null,
       place: insertResult.place || null,
       notes: insertResult.notes || null,
       createdAt 
@@ -284,11 +281,18 @@ export class MemStorage implements IStorage {
   async createReminder(insertReminder: InsertReminder): Promise<Reminder> {
     const id = this.reminderIdCounter++;
     const createdAt = new Date();
+    
+    // Reminder object with all required fields from the schema
     const reminder: Reminder = { 
-      ...insertReminder, 
-      id, 
-      completed: false, 
-      createdAt 
+      id,
+      meetId: insertReminder.meetId,
+      userId: insertReminder.userId,
+      title: insertReminder.title,
+      category: insertReminder.category,
+      date: insertReminder.date,
+      description: insertReminder.description || null,
+      isCompleted: false,
+      createdAt
     };
     this.reminders.set(id, reminder);
     return reminder;

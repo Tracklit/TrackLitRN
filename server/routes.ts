@@ -7,7 +7,8 @@ import {
   insertMeetSchema, 
   insertResultSchema, 
   insertReminderSchema, 
-  insertCoachSchema 
+  insertCoachSchema,
+  InsertReminder
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -370,10 +371,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     try {
-      const reminderData = insertReminderSchema.parse(req.body);
+      const parsedData = insertReminderSchema.parse(req.body);
       
-      // Override userId with authenticated user
-      reminderData.userId = req.user!.id;
+      // Create a new object with the user ID from the authenticated user
+      const reminderData: InsertReminder = {
+        ...parsedData,
+        userId: req.user!.id
+      };
       
       // Verify meet exists and user owns it
       const meet = await storage.getMeet(reminderData.meetId);
