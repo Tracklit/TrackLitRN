@@ -1,0 +1,98 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 0 0% 94%;
+  --foreground: 240 14.3% 18.1%;
+  --muted: 60 4.8% 95.9%;
+  --muted-foreground: 25 5.3% 44.7%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 14.3% 18.1%;
+  --card: 0 0% 100%;
+  --card-foreground: 240 14.3% 18.1%;
+  --border: 240 5.9% 90%;
+  --input: 240 5.9% 90%;
+  --primary: 357 89% 67%;
+  --primary-foreground: 357 100% 99%;
+  --secondary: 217 90% 62%;
+  --secondary-foreground: 217 100% 99%;
+  --accent: 40 100% 50%;
+  --accent-foreground: 40 100% 12%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 60 9.1% 97.8%;
+  --ring: 240 14.3% 18.1%;
+  --radius: 0.5rem;
+  --chart-1: 357 89% 67%;
+  --chart-2: 217 90% 62%;
+  --chart-3: 40 100% 50%;
+  --chart-4: 120 100% 40%;
+  --chart-5: 280 100% 60%;
+  --sidebar-background: 0 0% 100%;
+  --sidebar-foreground: 240 14.3% 18.1%;
+  --sidebar-primary: 357 89% 67%;
+  --sidebar-primary-foreground: 357 100% 99%;
+  --sidebar-accent: 40 100% 50%;
+  --sidebar-accent-foreground: 40 100% 12%;
+  --sidebar-border: 240 5.9% 90%;
+  --sidebar-ring: 240 14.3% 18.1%;
+  --success: 142 71% 45%;
+  --warning: 38 93% 54%;
+  --darkNavy: 240 21% 15%;
+  --darkGray: 240 16% 24%;
+  --lightGray: 0 0% 94%;
+}
+
+.dark {
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  --popover: 240 10% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  --card: 240 10% 3.9%;
+  --card-foreground: 0 0% 98%;
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  --primary: 357 89% 67%;
+  --primary-foreground: 357 100% 99%;
+  --secondary: 217 90% 62%;
+  --secondary-foreground: 217 100% 99%;
+  --accent: 40 100% 50%;
+  --accent-foreground: 40 100% 12%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --ring: 240 4.9% 83.9%;
+  --radius: 0.5rem;
+  --sidebar-background: 240 10% 3.9%;
+  --sidebar-foreground: 0 0% 98%;
+  --sidebar-primary: 357 89% 67%;
+  --sidebar-primary-foreground: 357 100% 99%;
+  --sidebar-accent: 40 100% 50%;
+  --sidebar-accent-foreground: 40 100% 12%;
+  --sidebar-border: 240 3.7% 15.9%;
+  --sidebar-ring: 240 4.9% 83.9%;
+  --success: 142 71% 45%;
+  --warning: 38 93% 54%;
+  --darkNavy: 240 21% 15%;
+  --darkGray: 240 16% 24%;
+  --lightGray: 240 3.7% 15.9%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+.weather-icon {
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.1));
+}
+
+.wind-arrow {
+  transition: transform 0.3s ease;
+}

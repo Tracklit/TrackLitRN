@@ -1,0 +1,265 @@
+import { useState, useEffect } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Slider } from '@/components/ui/slider';
+import { Badge } from '@/components/ui/badge';
+import { X, Plus } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { insertMeetSchema, InsertMeet } from '@shared/schema';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useAuth } from '@/hooks/use-auth';
+
+interface CreateMeetModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export function CreateMeetModal({ isOpen, onClose }: CreateMeetModalProps) {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [name, setName] = useState('');
+  const [date, setDate] = useState('');
+  const [time, setTime] = useState('');
+  const [location, setLocation] = useState('');
+  const [events, setEvents] = useState<string[]>([]);
+  const [newEvent, setNewEvent] = useState('');
+  const [warmupTime, setWarmupTime] = useState(60);
+  const [arrivalTime, setArrivalTime] = useState(90);
+
+  // Reset form when modal is opened
+  useEffect(() => {
+    if (isOpen) {
+      setName('');
+      setDate('');
+      setTime('');
+      setLocation('');
+      setEvents([]);
+      setNewEvent('');
+      setWarmupTime(60);
+      setArrivalTime(90);
+    }
+  }, [isOpen]);
+
+  const createMeetMutation = useMutation({
+    mutationFn: async (meetData: InsertMeet) => {
+      const res = await apiRequest('POST', '/api/meets', meetData);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/meets'] });
+      toast({
+        title: 'Meet Created',
+        description: 'Your track meet has been successfully created',
+      });
+      onClose();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const addEvent = () => {
+    if (newEvent.trim() && !events.includes(newEvent.trim())) {
+      setEvents([...events, newEvent.trim()]);
+      setNewEvent('');
+    }
+  };
+
+  const removeEvent = (eventToRemove: string) => {
+    setEvents(events.filter(event => event !== eventToRemove));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!user) {
+      toast({
+        title: 'Error',
+        description: 'You must be logged in to create a meet',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      // Combine date and time
+      const dateTime = new Date(`${date}T${time}`);
+      
+      // Create meet data
+      const meetData = {
+        userId: user.id,
+        name,
+        date: dateTime,
+        location,
+        events,
+        warmupTime,
+        arrivalTime,
+        coordinates: null, // This would be fetched via a geocoding service
+      };
+      
+      createMeetMutation.mutate(meetData);
+    } catch (error) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please check the form and try again',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-bold">Create New Meet</DialogTitle>
+        </DialogHeader>
+        
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label htmlFor="meet-name">Meet Name</Label>
+              <Input 
+                id="meet-name" 
+                placeholder="e.g. City Championships"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="meet-date">Date</Label>
+                <Input 
+                  id="meet-date" 
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="meet-time">Time</Label>
+                <Input 
+                  id="meet-time" 
+                  type="time"
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+            
+            <div>
+              <Label htmlFor="meet-location">Location</Label>
+              <Input 
+                id="meet-location" 
+                placeholder="Search for stadium or track"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                required
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="meet-events">Events</Label>
+              <div className="flex flex-wrap gap-2 mt-2 mb-2">
+                {events.map((event) => (
+                  <Badge 
+                    key={event} 
+                    variant="event"
+                    className="flex items-center gap-1"
+                  >
+                    {event}
+                    <button 
+                      type="button" 
+                      onClick={() => removeEvent(event)}
+                      className="ml-1 focus:outline-none"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+                <div className="flex">
+                  <Input 
+                    id="new-event"
+                    placeholder="Add event"
+                    value={newEvent}
+                    onChange={(e) => setNewEvent(e.target.value)}
+                    className="rounded-r-none border-r-0 h-8 min-w-[100px] max-w-[150px]"
+                  />
+                  <Button 
+                    type="button" 
+                    variant="secondary"
+                    size="sm"
+                    onClick={addEvent}
+                    className="rounded-l-none h-8"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <Label>Preparation Settings</Label>
+              <div className="bg-lightGray p-3 rounded-lg space-y-3 mt-2">
+                <div>
+                  <div className="flex justify-between items-center">
+                    <Label htmlFor="warmup-time" className="text-xs">When to start warm-up</Label>
+                    <span className="text-sm font-medium">{warmupTime} min</span>
+                  </div>
+                  <Slider 
+                    id="warmup-time"
+                    min={30} 
+                    max={120} 
+                    step={5}
+                    value={[warmupTime]}
+                    onValueChange={(value) => setWarmupTime(value[0])}
+                    className="my-2"
+                  />
+                </div>
+                
+                <div>
+                  <div className="flex justify-between items-center">
+                    <Label htmlFor="arrival-time" className="text-xs">Arrival time before event</Label>
+                    <span className="text-sm font-medium">{arrivalTime} min</span>
+                  </div>
+                  <Slider 
+                    id="arrival-time"
+                    min={60} 
+                    max={180} 
+                    step={5}
+                    value={[arrivalTime]}
+                    onValueChange={(value) => setArrivalTime(value[0])}
+                    className="my-2"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter className="mt-6">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              className="bg-primary text-white"
+              disabled={createMeetMutation.isPending}
+            >
+              {createMeetMutation.isPending ? 'Creating...' : 'Create Meet'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
