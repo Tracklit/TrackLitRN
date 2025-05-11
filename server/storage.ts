@@ -94,6 +94,20 @@ export class MemStorage implements IStorage {
     this.reminderIdCounter = 1;
     this.coachIdCounter = 1;
     
+    // Create test user
+    this.users.set(1, {
+      id: 1,
+      username: 'testuser',
+      password: '5a5b896c68d3056f841a0fef0121546d382d6dbed4cc9d16d50b8713f8112d5225e4fe85d46aeb54524b41950723642d199e93d86aaf9efa36e482a84c8297a.9ce0c2c3ef8a48d4f05975dcabd9d5e9', // hashed 'password123'
+      name: 'Test User',
+      email: 'test@example.com',
+      events: ['100m', '200m', 'Long Jump'],
+      isPremium: false,
+      createdAt: new Date()
+    });
+    
+    this.userIdCounter = 2; // Increment counter since we added a user
+    
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000, // 24 hours
     });
