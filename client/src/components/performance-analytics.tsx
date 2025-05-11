@@ -122,7 +122,9 @@ const isPerformanceConsistent = (results: Result[], event: string) => {
 
 // Get distinct events from results
 const getDistinctEvents = (results: Result[]) => {
-  return [...new Set(results.map(r => r.event))];
+  const eventSet = new Set<string>();
+  results.forEach(r => eventSet.add(r.event));
+  return Array.from(eventSet);
 };
 
 // Format data for charts

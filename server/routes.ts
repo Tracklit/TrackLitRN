@@ -136,9 +136,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createReminder({
           meetId: meet.id,
           userId: req.user!.id,
-          type: "equipment",
-          message: "Prepare your equipment for the upcoming meet",
-          dueDate: fiveDaysBefore
+          title: "Prepare your equipment",
+          description: "Prepare your equipment for the upcoming meet",
+          category: "equipment",
+          date: fiveDaysBefore
         });
         
         // 3 days before reminder
@@ -147,9 +148,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createReminder({
           meetId: meet.id,
           userId: req.user!.id,
-          type: "nutrition",
-          message: "Start following your pre-meet nutrition plan",
-          dueDate: threeDaysBefore
+          title: "Pre-meet nutrition plan",
+          description: "Start following your pre-meet nutrition plan",
+          category: "nutrition",
+          date: threeDaysBefore
         });
         
         // 1 day before reminder
@@ -158,9 +160,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createReminder({
           meetId: meet.id,
           userId: req.user!.id,
-          type: "sleep",
-          message: "Get at least 8 hours of sleep tonight",
-          dueDate: dayBefore
+          title: "Sleep preparation",
+          description: "Get at least 8 hours of sleep tonight",
+          category: "rest",
+          date: dayBefore
         });
         
         // Warmup reminder on meet day
@@ -169,9 +172,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createReminder({
           meetId: meet.id,
           userId: req.user!.id,
-          type: "warmup",
-          message: "Time to start your warmup routine",
-          dueDate: warmupTime
+          title: "Warmup time",
+          description: "Time to start your warmup routine",
+          category: "warmup",
+          date: warmupTime
         });
       } catch (reminderError) {
         console.error('Error creating reminders:', reminderError);
