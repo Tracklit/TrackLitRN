@@ -105,22 +105,22 @@ export default function HomePage() {
           </p>
         </section>
         
-        {/* Main Category Cards - 2 column layout with fixed size */}
+        {/* Main Category Cards - 3 column layout with fixed size */}
         <section className="mb-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mx-auto" style={{ maxWidth: "900px" }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mx-auto" style={{ maxWidth: "700px" }}>
             {categoryCards.map((card, index) => (
               <Link href={card.href} key={index}>
-                <Card className="cursor-pointer hover:shadow-md transition-all duration-300 border border-muted hover:border-primary h-[140px] w-[380px] mx-auto">
-                  <CardContent className="p-5 relative h-full flex items-center">
-                    <div className="flex items-center gap-5 w-full">
-                      <div className="p-3 rounded-full bg-primary/15 border border-primary/20 shrink-0">
+                <Card className="cursor-pointer hover:shadow-md transition-all duration-300 border border-muted hover:border-primary h-[200px] w-[200px] mx-auto overflow-hidden group">
+                  <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <CardContent className="p-4 relative h-full flex flex-col justify-center">
+                    <div className="flex flex-col items-center text-center gap-5">
+                      <div className="p-4 rounded-full bg-primary/15 border border-primary/20 group-hover:bg-primary/25 transition-colors duration-300">
                         {card.icon}
                       </div>
-                      <div className="flex-1">
-                        <h2 className="text-xl font-bold mb-2">{card.title}</h2>
+                      <div>
+                        <h2 className="text-xl font-bold mb-3">{card.title}</h2>
                         <p className="text-muted-foreground text-sm">{card.description}</p>
                       </div>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
                     </div>
                   </CardContent>
                 </Card>
