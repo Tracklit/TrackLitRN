@@ -4,22 +4,13 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
-  Dumbbell, 
-  Calendar, 
-  Clock, 
-  Activity,
   Upload, 
   Camera, 
-  Check, 
-  PauseCircle, 
-  BarChart,
   ChevronLeft,
   ChevronRight,
-  Timer,
   TrendingUp,
   Percent,
   Home
@@ -30,15 +21,6 @@ import { useState, useEffect } from "react";
 
 export default function PracticePage() {
   const { user } = useAuth();
-  // Session feedback sliders
-  const [intensity, setIntensity] = useState<number[]>([60]);
-  const [effort, setEffort] = useState<number[]>([70]);
-  const [enjoyment, setEnjoyment] = useState<number[]>([80]);
-  
-  // Timer state
-  const [duration, setDuration] = useState<number>(0);
-  const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
-  const [sessionTimerInterval, setSessionTimerInterval] = useState<number | null>(null);
   
   // Swipe navigation
   const [currentDay, setCurrentDay] = useState<string>("today");
@@ -82,36 +64,6 @@ export default function PracticePage() {
     setCurrentDay("tomorrow");
   };
   
-  // Timer functions
-  const toggleTimer = () => {
-    if (isTimerRunning) {
-      pauseTimer();
-    } else {
-      startTimer();
-    }
-  };
-  
-  const startTimer = () => {
-    setIsTimerRunning(true);
-    const interval = window.setInterval(() => {
-      setDuration(prev => prev + 1);
-    }, 1000);
-    setSessionTimerInterval(interval);
-  };
-  
-  const pauseTimer = () => {
-    if (sessionTimerInterval) {
-      clearInterval(sessionTimerInterval);
-      setSessionTimerInterval(null);
-      setIsTimerRunning(false);
-    }
-  };
-  
-  const resetTimer = () => {
-    pauseTimer();
-    setDuration(0);
-  };
-  
   // Calculate goal time based on percentage and distance
   useEffect(() => {
     // Find the closest distance mark
@@ -127,12 +79,6 @@ export default function PracticePage() {
     
     setCalculatedTime(parseFloat(targetTime.toFixed(2)));
   }, [percentage, distance]);
-  
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
   
   return (
     <div className="container max-w-3xl mx-auto p-4 pt-20 md:pt-24 pb-20">
@@ -191,18 +137,20 @@ export default function PracticePage() {
         <div>
           <Card className="mb-6">
             <CardHeader className="pb-3 border-b">
-              <div className="flex flex-col items-center">
-                <div className="flex items-center gap-4 mb-4">
-                  <Avatar className="h-14 w-14 border-2 border-primary/20">
-                    <AvatarFallback>{user?.name?.split(' ').map(n => n[0]).join('') || user?.username?.[0]}</AvatarFallback>
-                  </Avatar>
-                  <div className="text-center">
+              <div className="flex justify-between items-start">
+                <div className="flex flex-col">
+                  <Badge className="mb-2 bg-primary/20 text-primary hover:bg-primary/30">Track Session</Badge>
+                  <CardTitle className="text-2xl font-semibold">Speed Workout</CardTitle>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
                     <div className="text-lg font-medium">{user?.name || user?.username}</div>
                     <Badge className="bg-primary/20 text-primary hover:bg-primary/30">Track Athlete</Badge>
                   </div>
+                  <Avatar className="h-14 w-14 border-2 border-primary/20">
+                    <AvatarFallback>{user?.name?.split(' ').map(n => n[0]).join('') || user?.username?.[0]}</AvatarFallback>
+                  </Avatar>
                 </div>
-                <Badge className="mb-2 bg-primary/20 text-primary hover:bg-primary/30">Track Session</Badge>
-                <CardTitle className="text-2xl font-semibold">Speed Workout</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="p-0">
@@ -284,85 +232,18 @@ export default function PracticePage() {
             </CardContent>
           </Card>
           
-          {/* Feedback section */}
-          <Card>
-            <CardHeader className="border-b">
-              <CardTitle className="text-xl text-center">Session Feedback</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 space-y-8">
-              <div className="mb-8">
-                <div className="text-center mb-3">
-                  <span className="text-3xl font-bold text-primary">{intensity}%</span>
-                </div>
-                <div className="flex items-center gap-3" style={{ maxWidth: "200px", margin: "0 auto" }}>
-                  <label className="text-sm font-medium whitespace-nowrap">Intensity:</label>
-                  <Slider
-                    value={intensity}
-                    min={0}
-                    max={100}
-                    step={1}
-                    onValueChange={setIntensity}
-                    className="py-2 flex-1"
-                  />
-                </div>
-                <div className="text-center text-xs text-muted-foreground mt-1">
-                  <span>Low — High</span>
-                </div>
-              </div>
-              
-              <div className="pt-4 border-t mb-8">
-                <div className="text-center mb-3">
-                  <span className="text-3xl font-bold text-primary">{effort}%</span>
-                </div>
-                <div className="flex items-center gap-3" style={{ maxWidth: "200px", margin: "0 auto" }}>
-                  <label className="text-sm font-medium whitespace-nowrap">Effort:</label>
-                  <Slider
-                    value={effort}
-                    min={0}
-                    max={100}
-                    step={1}
-                    onValueChange={setEffort}
-                    className="py-2 flex-1"
-                  />
-                </div>
-                <div className="text-center text-xs text-muted-foreground mt-1">
-                  <span>Easy — Maximum</span>
-                </div>
-              </div>
-              
-              <div className="pt-4 border-t">
-                <div className="text-center mb-3">
-                  <span className="text-3xl font-bold text-primary">{enjoyment}%</span>
-                </div>
-                <div className="flex items-center gap-3" style={{ maxWidth: "200px", margin: "0 auto" }}>
-                  <label className="text-sm font-medium whitespace-nowrap">Enjoyment:</label>
-                  <Slider
-                    value={enjoyment}
-                    min={0}
-                    max={100}
-                    step={1}
-                    onValueChange={setEnjoyment}
-                    className="py-2 flex-1"
-                  />
-                </div>
-                <div className="text-center text-xs text-muted-foreground mt-1">
-                  <span>Bad — Great</span>
-                </div>
-              </div>
-              
-              <div className="pt-6 border-t flex flex-col gap-3">
-                <Button className="w-full">
-                  <Upload className="h-4 w-4 mr-2" />
-                  <span>Save Feedback</span>
-                </Button>
-                
-                <Button variant="outline" className="w-full">
-                  <Camera className="h-4 w-4 mr-2" />
-                  <span>Add Media</span>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Media Upload Section */}
+          <div className="flex justify-center mt-8">
+            <Button size="lg" className="mr-4 py-6 px-8">
+              <Upload className="h-5 w-5 mr-3" />
+              <span className="text-base">Upload Results</span>
+            </Button>
+            
+            <Button variant="outline" size="lg" className="py-6 px-8">
+              <Camera className="h-5 w-5 mr-3" />
+              <span className="text-base">Add Media</span>
+            </Button>
+          </div>
         </div>
       </div>
     </div>
