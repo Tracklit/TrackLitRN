@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { HamburgerMenu } from '@/components/layout/hamburger-menu';
 import { Meet, Result } from '@shared/schema';
@@ -43,44 +43,38 @@ export default function HomePage() {
     {
       title: "Practice",
       description: "Training sessions and programs",
-      icon: <Dumbbell className="h-8 w-8 text-primary" />,
+      icon: <Dumbbell className="h-12 w-12 text-primary" />,
       href: "/practice",
-      color: "from-primary/10 to-transparent"
     },
     {
       title: "Programs",
       description: "Training plans and schedules",
-      icon: <Clipboard className="h-8 w-8 text-primary" />,
+      icon: <Clipboard className="h-12 w-12 text-primary" />,
       href: "/practice",
-      color: "from-primary/10 to-transparent"
     },
     {
       title: "Competitions",
       description: "Meets, results and analytics",
-      icon: <Trophy className="h-8 w-8 text-primary" />,
+      icon: <Trophy className="h-12 w-12 text-primary" />,
       href: "/meets",
-      color: "from-primary/10 to-transparent"
     },
     {
       title: "Clubs & Groups",
       description: "Find a new home",
-      icon: <Users className="h-8 w-8 text-primary" />,
+      icon: <Users className="h-12 w-12 text-primary" />,
       href: "/clubs",
-      color: "from-primary/10 to-transparent"
     },
     {
       title: "Tools",
       description: "Stopwatch, start gun, and more",
-      icon: <Clock className="h-8 w-8 text-primary" />,
+      icon: <Clock className="h-12 w-12 text-primary" />,
       href: "/training-tools",
-      color: "from-primary/10 to-transparent"
     },
     {
       title: "Calendar",
       description: "Schedule and upcoming events",
-      icon: <Calendar className="h-8 w-8 text-primary" />,
+      icon: <Calendar className="h-12 w-12 text-primary" />,
       href: "/calendar",
-      color: "from-primary/10 to-transparent"
     }
   ];
 
@@ -105,21 +99,23 @@ export default function HomePage() {
           </p>
         </section>
         
-        {/* Main Category Cards - 3 column layout with fixed size */}
-        <section className="mb-12">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mx-auto" style={{ maxWidth: "700px" }}>
+        {/* Main Category Cards - 2 column layout with fixed size */}
+        <section className="mb-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-10 mx-auto" style={{ maxWidth: "640px", margin: "0 auto" }}>
             {categoryCards.map((card, index) => (
               <Link href={card.href} key={index}>
-                <Card className="cursor-pointer hover:shadow-md transition-all duration-300 border border-muted hover:border-primary h-[200px] w-[200px] mx-auto overflow-hidden group">
+                <Card className="cursor-pointer hover:shadow-md transition-all duration-300 border border-muted hover:border-primary h-[280px] w-[280px] mx-auto mt-5 mb-10 overflow-hidden group">
                   <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <CardContent className="p-4 relative h-full flex flex-col justify-center">
-                    <div className="flex flex-col items-center text-center gap-5">
-                      <div className="p-4 rounded-full bg-primary/15 border border-primary/20 group-hover:bg-primary/25 transition-colors duration-300">
-                        {card.icon}
+                  <CardContent className="p-6 relative h-full flex flex-col justify-center">
+                    <div className="flex flex-col items-center text-center gap-7">
+                      <div className="p-5 rounded-full bg-primary/15 border border-primary/20 group-hover:bg-primary/25 transition-colors duration-300">
+                        <div className="h-12 w-12 flex items-center justify-center text-primary">
+                          {card.icon}
+                        </div>
                       </div>
                       <div>
-                        <h2 className="text-xl font-bold mb-3">{card.title}</h2>
-                        <p className="text-muted-foreground text-sm">{card.description}</p>
+                        <h2 className="text-2xl font-bold mb-3">{card.title}</h2>
+                        <p className="text-muted-foreground text-sm px-2">{card.description}</p>
                       </div>
                     </div>
                   </CardContent>
