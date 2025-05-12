@@ -3,8 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { HamburgerMenu } from '@/components/layout/hamburger-menu';
 import { Meet, Result } from '@shared/schema';
 import { Link } from 'wouter';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { 
   Dumbbell, 
   Trophy, 
@@ -13,7 +14,11 @@ import {
   Clipboard, 
   ArrowRight,
   Calendar,
-  Coins
+  Coins,
+  ChevronRight,
+  Timer,
+  LineChart,
+  ArrowUpRight
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { MotivationalQuote } from '@/components/motivational-quote';
@@ -96,32 +101,26 @@ export default function HomePage() {
             Hello, {user?.name?.split(' ')[0] || user?.username}
           </h1>
           <p className="text-muted-foreground">
-            Welcome to Track Elite - your complete training platform
+            Welcome to Track Elite - your track and field companion
           </p>
         </section>
         
-        {/* Main Category Cards */}
+        {/* Main Category Cards - 2 column layout */}
         <section className="mb-12">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {categoryCards.map((card, index) => (
               <Link href={card.href} key={index}>
-                <Card className="h-full cursor-pointer hover:shadow-md transition-all duration-300 overflow-hidden border border-muted hover:border-primary">
-                  <div className={cn("absolute inset-0 bg-gradient-to-br opacity-10", card.color)} />
-                  <CardContent className="p-6 relative">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h2 className="text-xl font-bold mb-2">{card.title}</h2>
-                        <p className="text-muted-foreground text-sm mb-6">{card.description}</p>
-                      </div>
-                      <div className="p-3 rounded-full bg-primary/10 border border-primary/20">
+                <Card className="h-full cursor-pointer hover:shadow-md transition-all duration-300 border border-muted hover:border-primary">
+                  <CardContent className="p-5 relative">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 rounded-full bg-primary/10 border border-primary/20 shrink-0 mt-1">
                         {card.icon}
                       </div>
-                    </div>
-                    <div className="absolute bottom-6 left-6">
-                      <Button variant="ghost" className="pl-0 group hover:bg-transparent">
-                        <span className="text-primary">Explore</span>
-                        <ArrowRight className="ml-1 h-4 w-4 text-primary transition-transform group-hover:translate-x-1" />
-                      </Button>
+                      <div className="flex-1">
+                        <h2 className="text-xl font-bold mb-1">{card.title}</h2>
+                        <p className="text-muted-foreground text-sm">{card.description}</p>
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground self-center" />
                     </div>
                   </CardContent>
                 </Card>
@@ -130,77 +129,98 @@ export default function HomePage() {
           </div>
         </section>
         
-        {/* Quick Stats */}
+        {/* Today's Session Preview */}
         <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-4">Quick Stats</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="border-primary/20 hover:border-primary transition-colors overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-60" />
-              <CardContent className="p-6 relative">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Upcoming Meets</p>
-                    <h3 className="text-3xl font-bold">2</h3>
-                  </div>
-                  <div className="p-2 rounded-full bg-primary/10">
-                    <Trophy className="h-6 w-6 text-primary" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="border-primary/20 hover:border-primary transition-colors overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-transparent opacity-60" />
-              <CardContent className="p-6 relative">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Practice Sessions</p>
-                    <h3 className="text-3xl font-bold">5</h3>
-                  </div>
-                  <div className="p-2 rounded-full bg-secondary/10">
-                    <Dumbbell className="h-6 w-6 text-secondary" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="border-primary/20 hover:border-primary transition-colors overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-60" />
-              <CardContent className="p-6 relative">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Clubs Joined</p>
-                    <h3 className="text-3xl font-bold">1</h3>
-                  </div>
-                  <div className="p-2 rounded-full bg-primary/10">
-                    <Users className="h-6 w-6 text-primary" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="border-primary/20 hover:border-primary transition-colors overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-transparent opacity-60" />
-              <CardContent className="p-6 relative">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Spikes Balance</p>
-                    <h3 className="text-3xl font-bold">{user?.spikes || 0}</h3>
-                  </div>
-                  <div className="p-2 rounded-full bg-secondary/10">
-                    <Coins className="h-6 w-6 text-secondary" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold">Today's Session</h2>
+            <Link href="/practice">
+              <Button variant="link" className="text-primary p-0 h-auto">
+                <span>View All Sessions</span>
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Button>
+            </Link>
           </div>
+          
+          <Card className="border-primary/20">
+            <CardHeader className="pb-3">
+              <div className="flex justify-between items-start">
+                <div>
+                  <Badge className="mb-2 bg-primary/20 text-primary hover:bg-primary/30">Track Session</Badge>
+                  <CardTitle className="text-xl">Speed Endurance</CardTitle>
+                  <CardDescription className="flex items-center gap-3 mt-1">
+                    <span>4:00 PM</span>
+                    <span>•</span>
+                    <span>Main Track</span>
+                    <span>•</span>
+                    <span>Intensity: High</span>
+                  </CardDescription>
+                </div>
+                <Button variant="outline" size="sm" className="border-primary/20 text-primary hover:bg-primary/10">
+                  Start Session
+                </Button>
+              </div>
+            </CardHeader>
+            
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex items-center gap-3 p-2 rounded-md hover:bg-muted/30">
+                  <div className="flex-shrink-0 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <LineChart className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium">Dynamic Warmup</p>
+                    <p className="text-sm text-muted-foreground">Duration: 15 min</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3 p-2 rounded-md hover:bg-muted/30">
+                  <div className="flex-shrink-0 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Timer className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium">6 × 200m</p>
+                    <p className="text-sm text-muted-foreground">Pace: 32s • Rest: 2 min</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3 p-2 rounded-md hover:bg-muted/30">
+                  <div className="flex-shrink-0 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Timer className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium">4 × 300m</p>
+                    <p className="text-sm text-muted-foreground">Pace: 48s • Rest: 3 min</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3 p-2 rounded-md hover:bg-muted/30">
+                  <div className="flex-shrink-0 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <LineChart className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium">Cool Down</p>
+                    <p className="text-sm text-muted-foreground">Duration: 10 min</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            
+            <CardFooter className="border-t pt-3 flex justify-between text-sm text-muted-foreground">
+              <div>Coach: Coach Williams</div>
+              <div className="flex items-center">
+                <span className="text-primary font-medium">Details</span>
+                <ArrowUpRight className="ml-1 h-3 w-3 text-primary" />
+              </div>
+            </CardFooter>
+          </Card>
         </section>
         
         {/* Motivational Quote */}
         <section className="mb-12">
-          <Card className="border-primary/20 bg-gradient-to-r from-muted to-background">
-            <CardContent className="p-8">
-              <MotivationalQuote quote={quote.text} author={quote.author} />
+          <Card className="border-primary/20 bg-primary/5">
+            <CardContent className="p-6">
+              <p className="italic text-lg mb-2">&ldquo;{quote.text}&rdquo;</p>
+              <p className="text-right text-muted-foreground">— {quote.author}</p>
             </CardContent>
           </Card>
         </section>
