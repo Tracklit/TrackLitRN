@@ -5,6 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   Upload, 
@@ -161,92 +166,96 @@ export default function PracticePage() {
                 </ul>
               </div>
               
-              {/* Calculator toggle */}
+              {/* Calculator toggle with animation */}
               <div className="px-6 pt-4">
                 <Separator className="bg-primary/10 h-[2px]" />
-                <button 
-                  onClick={() => setShowCalculator(!showCalculator)}
-                  className="flex items-center justify-center gap-2 w-full mt-4 mb-2 p-2 hover:bg-muted rounded-md transition-colors"
+                <Collapsible
+                  open={showCalculator}
+                  onOpenChange={setShowCalculator}
+                  className="w-full"
                 >
-                  <Calculator className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                    Performance Calculator
-                  </span>
-                  {showCalculator ? 
-                    <ChevronUp className="h-4 w-4 text-muted-foreground" /> : 
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                  }
-                </button>
-              </div>
-              
-              {/* Calculator content - conditionally rendered */}
-              {showCalculator && (
-                <>
-                  {/* Percentage and distance sliders */}
-                  <div className="p-6 border-b">
-                    <div className="mb-8">
-                      <div className="text-center mb-3">
-                        <span className="text-3xl font-bold text-primary">{percentage}%</span>
+                  <CollapsibleTrigger asChild>
+                    <button 
+                      className="flex items-center justify-center gap-2 w-full mt-4 mb-2 p-2 hover:bg-muted rounded-md transition-colors"
+                    >
+                      <Calculator className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                        Performance Calculator
+                      </span>
+                      {showCalculator ? 
+                        <ChevronUp className="h-4 w-4 text-muted-foreground transition-transform duration-200" /> : 
+                        <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
+                      }
+                    </button>
+                  </CollapsibleTrigger>
+                  
+                  <CollapsibleContent className="overflow-hidden data-[state=open]:animate-expand data-[state=closed]:animate-collapse">
+                    {/* Percentage and distance sliders */}
+                    <div className="p-6 border-b">
+                      <div className="mb-8">
+                        <div className="text-center mb-3">
+                          <span className="text-3xl font-bold text-primary">{percentage}%</span>
+                        </div>
+                        <div className="flex items-center gap-3" style={{ maxWidth: "275px", margin: "0 auto" }}>
+                          <label className="text-sm font-medium whitespace-nowrap">
+                            <Percent className="h-4 w-4 mr-1 inline-block" />
+                            Intensity:
+                          </label>
+                          <Slider
+                            value={percentage}
+                            min={0}
+                            max={100}
+                            step={1}
+                            onValueChange={setPercentage}
+                            className="py-2 flex-1"
+                          />
+                        </div>
+                        <div className="text-center text-xs text-muted-foreground mt-1">
+                          <span>Recovery (0%) — Maximum (100%)</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3" style={{ maxWidth: "275px", margin: "0 auto" }}>
-                        <label className="text-sm font-medium whitespace-nowrap">
-                          <Percent className="h-4 w-4 mr-1 inline-block" />
-                          Intensity:
-                        </label>
-                        <Slider
-                          value={percentage}
-                          min={0}
-                          max={100}
-                          step={1}
-                          onValueChange={setPercentage}
-                          className="py-2 flex-1"
-                        />
-                      </div>
-                      <div className="text-center text-xs text-muted-foreground mt-1">
-                        <span>Recovery (0%) — Maximum (100%)</span>
+                      
+                      <div>
+                        <div className="text-center mb-3">
+                          <span className="text-3xl font-bold text-primary">{distance[0]}m</span>
+                        </div>
+                        <div className="flex items-center gap-3" style={{ maxWidth: "275px", margin: "0 auto" }}>
+                          <label className="text-sm font-medium whitespace-nowrap">
+                            <TrendingUp className="h-4 w-4 mr-1 inline-block" />
+                            Distance:
+                          </label>
+                          <Slider
+                            value={distance}
+                            min={50}
+                            max={600}
+                            step={1}
+                            onValueChange={setDistance}
+                            className="py-2 flex-1"
+                          />
+                        </div>
+                        <div className="text-center text-xs text-muted-foreground mt-1">
+                          <span>50m — 600m</span>
+                        </div>
                       </div>
                     </div>
                     
-                    <div>
-                      <div className="text-center mb-3">
-                        <span className="text-3xl font-bold text-primary">{distance[0]}m</span>
-                      </div>
-                      <div className="flex items-center gap-3" style={{ maxWidth: "275px", margin: "0 auto" }}>
-                        <label className="text-sm font-medium whitespace-nowrap">
-                          <TrendingUp className="h-4 w-4 mr-1 inline-block" />
-                          Distance:
-                        </label>
-                        <Slider
-                          value={distance}
-                          min={50}
-                          max={600}
-                          step={1}
-                          onValueChange={setDistance}
-                          className="py-2 flex-1"
-                        />
-                      </div>
-                      <div className="text-center text-xs text-muted-foreground mt-1">
-                        <span>50m — 600m</span>
+                    {/* Goal time calculation */}
+                    <div className="p-6 bg-primary/5">
+                      <div className="bg-primary/10 p-6 rounded-lg text-center max-w-sm mx-auto">
+                        <div className="mb-2">
+                          <span className="text-base font-medium">Goal Time ({percentage}% of Best)</span>
+                        </div>
+                        <div className="text-5xl font-bold text-primary mb-2">
+                          {calculatedTime.toFixed(2)}s
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Based on your best time of {bestTimes["100"]}s for 100m
+                        </p>
                       </div>
                     </div>
-                  </div>
-                  
-                  {/* Goal time calculation */}
-                  <div className="p-6 bg-primary/5">
-                    <div className="bg-primary/10 p-6 rounded-lg text-center max-w-sm mx-auto">
-                      <div className="mb-2">
-                        <span className="text-base font-medium">Goal Time ({percentage}% of Best)</span>
-                      </div>
-                      <div className="text-5xl font-bold text-primary mb-2">
-                        {calculatedTime.toFixed(2)}s
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Based on your best time of {bestTimes["100"]}s for 100m
-                      </p>
-                    </div>
-                  </div>
-                </>
-              )}
+                  </CollapsibleContent>
+                </Collapsible>
+              </div>
             </CardContent>
           </Card>
           
