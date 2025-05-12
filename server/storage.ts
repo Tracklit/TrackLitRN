@@ -1,24 +1,35 @@
 import { 
-  users, 
-  meets, 
-  results, 
-  reminders, 
-  coaches, 
-  type User, 
-  type InsertUser, 
-  type Meet, 
-  type InsertMeet,
-  type Result,
-  type InsertResult,
-  type Reminder,
-  type InsertReminder,
-  type Coach,
-  type InsertCoach
+  User, 
+  InsertUser, 
+  Meet, 
+  InsertMeet,
+  Result,
+  InsertResult,
+  Reminder,
+  InsertReminder,
+  Coach,
+  InsertCoach,
+  AthleteGroup,
+  InsertAthleteGroup,
+  GroupMember,
+  InsertGroupMember,
+  CoachNote,
+  InsertCoachNote,
+  users,
+  meets,
+  results,
+  reminders,
+  coaches,
+  athleteGroups,
+  groupMembers,
+  coachNotes,
 } from "@shared/schema";
+import { db, pool } from "./db";
+import { eq, and, lt, gte, desc } from "drizzle-orm";
 import session from "express-session";
-import createMemoryStore from "memorystore";
+import connectPg from "connect-pg-simple";
 
-const MemoryStore = createMemoryStore(session);
+const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
   // User operations
@@ -59,271 +70,344 @@ export interface IStorage {
   createCoach(coach: InsertCoach): Promise<Coach>;
   updateCoach(id: number, coachData: Partial<Coach>): Promise<Coach | undefined>;
   deleteCoach(id: number): Promise<boolean>;
+  
+  // Athlete Group operations
+  getAthleteGroup(id: number): Promise<AthleteGroup | undefined>;
+  getAthleteGroupsByCoachId(coachId: number): Promise<AthleteGroup[]>;
+  createAthleteGroup(group: InsertAthleteGroup): Promise<AthleteGroup>;
+  updateAthleteGroup(id: number, groupData: Partial<AthleteGroup>): Promise<AthleteGroup | undefined>;
+  deleteAthleteGroup(id: number): Promise<boolean>;
+  
+  // Group Member operations
+  getGroupMember(id: number): Promise<GroupMember | undefined>;
+  getGroupMembersByGroupId(groupId: number): Promise<GroupMember[]>;
+  getGroupMembersByAthleteId(athleteId: number): Promise<GroupMember[]>;
+  createGroupMember(member: InsertGroupMember): Promise<GroupMember>;
+  deleteGroupMember(id: number): Promise<boolean>;
+  
+  // Coach Note operations
+  getCoachNote(id: number): Promise<CoachNote | undefined>;
+  getCoachNotesByCoachId(coachId: number): Promise<CoachNote[]>;
+  getCoachNotesByAthleteId(athleteId: number, includePrivate?: boolean): Promise<CoachNote[]>;
+  getCoachNotesByMeetId(meetId: number): Promise<CoachNote[]>;
+  getCoachNotesByResultId(resultId: number): Promise<CoachNote[]>;
+  createCoachNote(note: InsertCoachNote): Promise<CoachNote>;
+  updateCoachNote(id: number, noteData: Partial<CoachNote>): Promise<CoachNote | undefined>;
+  deleteCoachNote(id: number): Promise<boolean>;
 
   // Session store
   sessionStore: session.Store;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private meets: Map<number, Meet>;
-  private results: Map<number, Result>;
-  private reminders: Map<number, Reminder>;
-  private coaches: Map<number, Coach>;
+export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
-  
-  private userIdCounter: number;
-  private meetIdCounter: number;
-  private resultIdCounter: number;
-  private reminderIdCounter: number;
-  private coachIdCounter: number;
 
   constructor() {
-    this.users = new Map();
-    this.meets = new Map();
-    this.results = new Map();
-    this.reminders = new Map();
-    this.coaches = new Map();
-    
-    this.userIdCounter = 1;
-    this.meetIdCounter = 1;
-    this.resultIdCounter = 1;
-    this.reminderIdCounter = 1;
-    this.coachIdCounter = 1;
-    
-    // Create test user with properly hashed password
-    this.users.set(1, {
-      id: 1,
-      username: 'testuser',
-      password: '52cad11596bb5b93baf755035ed6166fd07961616878615288d5119e5b766d0d02b697956a1ecc36e00dba9c86c65c8e7c31b219ec17a0a1d1db066d787151f2.ef9c12cce344b3925024420f5b8f37f2', // hashed 'password123'
-      name: 'Test User',
-      email: 'test@example.com',
-      events: ['100m', '200m', 'Long Jump'],
-      isPremium: false,
-      createdAt: new Date()
-    });
-    
-    this.userIdCounter = 2; // Increment counter since we added a user
-    
-    this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000, // 24 hours
+    this.sessionStore = new PostgresSessionStore({
+      pool,
+      createTableIfMissing: true,
     });
   }
 
   // User operations
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.userIdCounter++;
-    const createdAt = new Date();
-    const user: User = { 
-      ...insertUser, 
-      id, 
-      isPremium: false, 
-      createdAt 
-    };
-    this.users.set(id, user);
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
 
   async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {
-    const user = await this.getUser(id);
-    if (!user) return undefined;
-    
-    const updatedUser = { ...user, ...userData };
-    this.users.set(id, updatedUser);
-    return updatedUser;
+    const [user] = await db
+      .update(users)
+      .set(userData)
+      .where(eq(users.id, id))
+      .returning();
+    return user;
   }
 
   // Meet operations
   async getMeet(id: number): Promise<Meet | undefined> {
-    return this.meets.get(id);
+    const [meet] = await db.select().from(meets).where(eq(meets.id, id));
+    return meet;
   }
 
   async getMeetsByUserId(userId: number): Promise<Meet[]> {
-    return Array.from(this.meets.values()).filter(
-      (meet) => meet.userId === userId
-    );
+    return db.select().from(meets).where(eq(meets.userId, userId));
   }
 
   async getUpcomingMeetsByUserId(userId: number): Promise<Meet[]> {
     const now = new Date();
-    return Array.from(this.meets.values()).filter(
-      (meet) => meet.userId === userId && new Date(meet.date) >= now
-    );
+    return db
+      .select()
+      .from(meets)
+      .where(and(eq(meets.userId, userId), gte(meets.date, now)))
+      .orderBy(meets.date);
   }
 
   async getPastMeetsByUserId(userId: number): Promise<Meet[]> {
     const now = new Date();
-    return Array.from(this.meets.values()).filter(
-      (meet) => meet.userId === userId && new Date(meet.date) < now
-    );
+    return db
+      .select()
+      .from(meets)
+      .where(and(eq(meets.userId, userId), lt(meets.date, now)))
+      .orderBy(desc(meets.date));
   }
 
   async createMeet(insertMeet: InsertMeet): Promise<Meet> {
-    const id = this.meetIdCounter++;
-    const createdAt = new Date();
-    const meet: Meet = {
-      ...insertMeet,
-      id,
-      createdAt
-    };
-    this.meets.set(id, meet);
+    const [meet] = await db.insert(meets).values(insertMeet).returning();
     return meet;
   }
 
   async updateMeet(id: number, meetData: Partial<Meet>): Promise<Meet | undefined> {
-    const meet = await this.getMeet(id);
-    if (!meet) return undefined;
-    
-    const updatedMeet = { ...meet, ...meetData };
-    this.meets.set(id, updatedMeet);
-    return updatedMeet;
+    const [meet] = await db
+      .update(meets)
+      .set(meetData)
+      .where(eq(meets.id, id))
+      .returning();
+    return meet;
   }
 
   async deleteMeet(id: number): Promise<boolean> {
-    return this.meets.delete(id);
+    const result = await db.delete(meets).where(eq(meets.id, id));
+    return !!result;
   }
 
   // Result operations
   async getResult(id: number): Promise<Result | undefined> {
-    return this.results.get(id);
+    const [result] = await db.select().from(results).where(eq(results.id, id));
+    return result;
   }
 
   async getResultsByUserId(userId: number): Promise<Result[]> {
-    return Array.from(this.results.values()).filter(
-      (result) => result.userId === userId
-    );
+    return db.select().from(results).where(eq(results.userId, userId));
   }
 
   async getResultsByMeetId(meetId: number): Promise<Result[]> {
-    return Array.from(this.results.values()).filter(
-      (result) => result.meetId === meetId
-    );
+    return db.select().from(results).where(eq(results.meetId, meetId));
   }
 
   async createResult(insertResult: InsertResult): Promise<Result> {
-    const id = this.resultIdCounter++;
-    const createdAt = new Date();
-    const result: Result = { 
-      ...insertResult, 
-      id, 
-      createdAt 
-    };
-    this.results.set(id, result);
+    const [result] = await db.insert(results).values(insertResult).returning();
     return result;
   }
 
   async updateResult(id: number, resultData: Partial<Result>): Promise<Result | undefined> {
-    const result = await this.getResult(id);
-    if (!result) return undefined;
-    
-    const updatedResult = { ...result, ...resultData };
-    this.results.set(id, updatedResult);
-    return updatedResult;
+    const [result] = await db
+      .update(results)
+      .set(resultData)
+      .where(eq(results.id, id))
+      .returning();
+    return result;
   }
 
   async deleteResult(id: number): Promise<boolean> {
-    return this.results.delete(id);
+    const result = await db.delete(results).where(eq(results.id, id));
+    return !!result;
   }
 
   // Reminder operations
   async getReminder(id: number): Promise<Reminder | undefined> {
-    return this.reminders.get(id);
+    const [reminder] = await db.select().from(reminders).where(eq(reminders.id, id));
+    return reminder;
   }
 
   async getRemindersByUserId(userId: number): Promise<Reminder[]> {
-    return Array.from(this.reminders.values()).filter(
-      (reminder) => reminder.userId === userId
-    );
+    return db.select().from(reminders).where(eq(reminders.userId, userId));
   }
 
   async getRemindersByMeetId(meetId: number): Promise<Reminder[]> {
-    return Array.from(this.reminders.values()).filter(
-      (reminder) => reminder.meetId === meetId
-    );
+    return db.select().from(reminders).where(eq(reminders.meetId, meetId));
   }
 
   async createReminder(insertReminder: InsertReminder): Promise<Reminder> {
-    const id = this.reminderIdCounter++;
-    const createdAt = new Date();
-    const reminder: Reminder = { 
-      ...insertReminder, 
-      id, 
-      completed: false, 
-      createdAt 
-    };
-    this.reminders.set(id, reminder);
+    const [reminder] = await db.insert(reminders).values(insertReminder).returning();
     return reminder;
   }
 
   async updateReminder(id: number, reminderData: Partial<Reminder>): Promise<Reminder | undefined> {
-    const reminder = await this.getReminder(id);
-    if (!reminder) return undefined;
-    
-    const updatedReminder = { ...reminder, ...reminderData };
-    this.reminders.set(id, updatedReminder);
-    return updatedReminder;
+    const [reminder] = await db
+      .update(reminders)
+      .set(reminderData)
+      .where(eq(reminders.id, id))
+      .returning();
+    return reminder;
   }
 
   async deleteReminder(id: number): Promise<boolean> {
-    return this.reminders.delete(id);
+    const result = await db.delete(reminders).where(eq(reminders.id, id));
+    return !!result;
   }
 
   // Coach operations
   async getCoach(id: number): Promise<Coach | undefined> {
-    return this.coaches.get(id);
+    const [coach] = await db.select().from(coaches).where(eq(coaches.id, id));
+    return coach;
   }
 
   async getCoachesByUserId(userId: number): Promise<Coach[]> {
-    return Array.from(this.coaches.values()).filter(
-      (coach) => coach.userId === userId
-    );
+    return db.select().from(coaches).where(eq(coaches.userId, userId));
   }
 
   async getAthletesByCoachId(coachId: number): Promise<User[]> {
-    const athletes = Array.from(this.coaches.values())
-      .filter((coach) => coach.userId === coachId && coach.status === 'accepted')
-      .map((coach) => coach.athleteId);
+    const coachRelations = await db
+      .select()
+      .from(coaches)
+      .where(and(eq(coaches.userId, coachId), eq(coaches.status, 'accepted')));
     
-    return Array.from(this.users.values()).filter(
-      (user) => athletes.includes(user.id)
-    );
+    const athleteIds = coachRelations.map(relation => relation.athleteId);
+    
+    if (!athleteIds.length) return [];
+    
+    return db
+      .select()
+      .from(users)
+      .where(
+        eq(users.id, athleteIds[0])
+      );
   }
 
   async createCoach(insertCoach: InsertCoach): Promise<Coach> {
-    const id = this.coachIdCounter++;
-    const createdAt = new Date();
-    const coach: Coach = { 
-      ...insertCoach, 
-      id, 
-      status: 'pending', 
-      createdAt 
-    };
-    this.coaches.set(id, coach);
+    const [coach] = await db.insert(coaches).values(insertCoach).returning();
     return coach;
   }
 
   async updateCoach(id: number, coachData: Partial<Coach>): Promise<Coach | undefined> {
-    const coach = await this.getCoach(id);
-    if (!coach) return undefined;
-    
-    const updatedCoach = { ...coach, ...coachData };
-    this.coaches.set(id, updatedCoach);
-    return updatedCoach;
+    const [coach] = await db
+      .update(coaches)
+      .set(coachData)
+      .where(eq(coaches.id, id))
+      .returning();
+    return coach;
   }
 
   async deleteCoach(id: number): Promise<boolean> {
-    return this.coaches.delete(id);
+    const result = await db.delete(coaches).where(eq(coaches.id, id));
+    return !!result;
+  }
+
+  // Athlete Group operations
+  async getAthleteGroup(id: number): Promise<AthleteGroup | undefined> {
+    const [group] = await db.select().from(athleteGroups).where(eq(athleteGroups.id, id));
+    return group;
+  }
+
+  async getAthleteGroupsByCoachId(coachId: number): Promise<AthleteGroup[]> {
+    return db.select().from(athleteGroups).where(eq(athleteGroups.coachId, coachId));
+  }
+
+  async createAthleteGroup(insertGroup: InsertAthleteGroup): Promise<AthleteGroup> {
+    const [group] = await db.insert(athleteGroups).values(insertGroup).returning();
+    return group;
+  }
+
+  async updateAthleteGroup(id: number, groupData: Partial<AthleteGroup>): Promise<AthleteGroup | undefined> {
+    const [group] = await db
+      .update(athleteGroups)
+      .set(groupData)
+      .where(eq(athleteGroups.id, id))
+      .returning();
+    return group;
+  }
+
+  async deleteAthleteGroup(id: number): Promise<boolean> {
+    const result = await db.delete(athleteGroups).where(eq(athleteGroups.id, id));
+    return !!result;
+  }
+
+  // Group Member operations
+  async getGroupMember(id: number): Promise<GroupMember | undefined> {
+    const [member] = await db.select().from(groupMembers).where(eq(groupMembers.id, id));
+    return member;
+  }
+
+  async getGroupMembersByGroupId(groupId: number): Promise<GroupMember[]> {
+    return db.select().from(groupMembers).where(eq(groupMembers.groupId, groupId));
+  }
+
+  async getGroupMembersByAthleteId(athleteId: number): Promise<GroupMember[]> {
+    return db.select().from(groupMembers).where(eq(groupMembers.athleteId, athleteId));
+  }
+
+  async createGroupMember(insertMember: InsertGroupMember): Promise<GroupMember> {
+    const [member] = await db.insert(groupMembers).values(insertMember).returning();
+    return member;
+  }
+
+  async deleteGroupMember(id: number): Promise<boolean> {
+    const result = await db.delete(groupMembers).where(eq(groupMembers.id, id));
+    return !!result;
+  }
+
+  // Coach Note operations
+  async getCoachNote(id: number): Promise<CoachNote | undefined> {
+    const [note] = await db.select().from(coachNotes).where(eq(coachNotes.id, id));
+    return note;
+  }
+
+  async getCoachNotesByCoachId(coachId: number): Promise<CoachNote[]> {
+    return db.select().from(coachNotes).where(eq(coachNotes.coachId, coachId));
+  }
+
+  async getCoachNotesByAthleteId(athleteId: number, includePrivate: boolean = false): Promise<CoachNote[]> {
+    if (includePrivate) {
+      return db
+        .select()
+        .from(coachNotes)
+        .where(eq(coachNotes.athleteId, athleteId));
+    } else {
+      return db
+        .select()
+        .from(coachNotes)
+        .where(
+          and(
+            eq(coachNotes.athleteId, athleteId),
+            eq(coachNotes.isPrivate, false)
+          )
+        );
+    }
+  }
+
+  async getCoachNotesByMeetId(meetId: number): Promise<CoachNote[]> {
+    return db
+      .select()
+      .from(coachNotes)
+      .where(eq(coachNotes.meetId, meetId));
+  }
+
+  async getCoachNotesByResultId(resultId: number): Promise<CoachNote[]> {
+    return db
+      .select()
+      .from(coachNotes)
+      .where(eq(coachNotes.resultId, resultId));
+  }
+
+  async createCoachNote(insertNote: InsertCoachNote): Promise<CoachNote> {
+    const [note] = await db.insert(coachNotes).values(insertNote).returning();
+    return note;
+  }
+
+  async updateCoachNote(id: number, noteData: Partial<CoachNote>): Promise<CoachNote | undefined> {
+    const [note] = await db
+      .update(coachNotes)
+      .set(noteData)
+      .where(eq(coachNotes.id, id))
+      .returning();
+    return note;
+  }
+
+  async deleteCoachNote(id: number): Promise<boolean> {
+    const result = await db.delete(coachNotes).where(eq(coachNotes.id, id));
+    return !!result;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
