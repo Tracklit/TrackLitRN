@@ -105,12 +105,12 @@ export default function HomePage() {
           </p>
         </section>
         
-        {/* Main Category Cards - 2 column layout */}
+        {/* Main Category Cards - 2 column layout with fixed size */}
         <section className="mb-12">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mx-auto" style={{ maxWidth: "900px" }}>
             {categoryCards.map((card, index) => (
               <Link href={card.href} key={index}>
-                <Card className="cursor-pointer hover:shadow-md transition-all duration-300 border border-muted hover:border-primary h-[140px]">
+                <Card className="cursor-pointer hover:shadow-md transition-all duration-300 border border-muted hover:border-primary h-[140px] w-[380px] mx-auto">
                   <CardContent className="p-5 relative h-full flex items-center">
                     <div className="flex items-center gap-5 w-full">
                       <div className="p-3 rounded-full bg-primary/15 border border-primary/20 shrink-0">
