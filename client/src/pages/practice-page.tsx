@@ -1,6 +1,5 @@
 import { ProtectedRoute } from "@/lib/protected-route";
 import { useAuth } from "@/hooks/use-auth";
-import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -82,17 +81,18 @@ export default function PracticePage() {
   
   return (
     <div className="container max-w-3xl mx-auto p-4 pt-20 md:pt-24 pb-20">
-      <div className="text-center">
+      <div className="text-center mx-auto max-w-md">
         <Link href="/" className="inline-flex items-center text-muted-foreground mb-4 hover:text-primary transition-colors">
           <Home className="h-4 w-4 mr-1" />
           <span>Back to Dashboard</span>
         </Link>
         
-        <PageHeader
-          title={currentDay === "today" ? "Today's Practice" : currentDay === "yesterday" ? "Yesterday's Practice" : "Tomorrow's Practice"}
-          description="Track your training sessions and progress"
-          className="text-center"
-        />
+        <h1 className="text-3xl font-bold tracking-tight">
+          {currentDay === "today" ? "Today's Practice" : currentDay === "yesterday" ? "Yesterday's Practice" : "Tomorrow's Practice"}
+        </h1>
+        <p className="text-muted-foreground mt-2 mb-6">
+          Track your training sessions and progress
+        </p>
       </div>
       
       <div className="mt-6 relative">
@@ -137,11 +137,7 @@ export default function PracticePage() {
         <div>
           <Card className="mb-6">
             <CardHeader className="pb-3 border-b">
-              <div className="flex justify-between items-start">
-                <div className="flex flex-col">
-                  <Badge className="mb-2 bg-primary/20 text-primary hover:bg-primary/30">Track Session</Badge>
-                  <CardTitle className="text-2xl font-semibold">Speed Workout</CardTitle>
-                </div>
+              <div className="flex justify-end items-center">
                 <div className="flex items-center gap-3">
                   <div className="text-right">
                     <div className="text-lg font-medium">{user?.name || user?.username}</div>
