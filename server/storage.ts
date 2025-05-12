@@ -61,7 +61,7 @@ export interface IStorage {
   deleteCoach(id: number): Promise<boolean>;
 
   // Session store
-  sessionStore: any; // Using any to avoid the SessionStore type error
+  sessionStore: session.Store;
 }
 
 export class MemStorage implements IStorage {
@@ -70,7 +70,7 @@ export class MemStorage implements IStorage {
   private results: Map<number, Result>;
   private reminders: Map<number, Reminder>;
   private coaches: Map<number, Coach>;
-  sessionStore: any; // Using any to avoid the SessionStore type error
+  sessionStore: session.Store;
   
   private userIdCounter: number;
   private meetIdCounter: number;
@@ -117,20 +117,15 @@ export class MemStorage implements IStorage {
 
   async getUserByUsername(username: string): Promise<User | undefined> {
     return Array.from(this.users.values()).find(
-      (user) => user.username === username,
+      (user) => user.username === username
     );
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.userIdCounter++;
     const createdAt = new Date();
-    
-    // Fix for the events type issue
-    const events = insertUser.events || [];
-    
     const user: User = { 
       ...insertUser, 
-      events,
       id, 
       isPremium: false, 
       createdAt 
@@ -162,41 +157,25 @@ export class MemStorage implements IStorage {
   async getUpcomingMeetsByUserId(userId: number): Promise<Meet[]> {
     const now = new Date();
     return Array.from(this.meets.values()).filter(
-      (meet) => meet.userId === userId && 
-                new Date(meet.date) > now && 
-                meet.status === 'upcoming'
+      (meet) => meet.userId === userId && new Date(meet.date) >= now
     );
   }
 
   async getPastMeetsByUserId(userId: number): Promise<Meet[]> {
     const now = new Date();
     return Array.from(this.meets.values()).filter(
-      (meet) => meet.userId === userId && 
-               (new Date(meet.date) <= now || 
-                meet.status === 'completed' || 
-                meet.status === 'cancelled')
+      (meet) => meet.userId === userId && new Date(meet.date) < now
     );
   }
 
   async createMeet(insertMeet: InsertMeet): Promise<Meet> {
     const id = this.meetIdCounter++;
     const createdAt = new Date();
-    
-    // Handle required and optional fields
     const meet: Meet = {
+      ...insertMeet,
       id,
-      userId: insertMeet.userId,
-      name: insertMeet.name,
-      date: insertMeet.date,
-      location: insertMeet.location,
-      coordinates: insertMeet.coordinates || null,
-      events: insertMeet.events || null,
-      warmupTime: insertMeet.warmupTime || null,
-      arrivalTime: insertMeet.arrivalTime || null,
-      status: 'upcoming',
       createdAt
     };
-    
     this.meets.set(id, meet);
     return meet;
   }
@@ -234,14 +213,9 @@ export class MemStorage implements IStorage {
   async createResult(insertResult: InsertResult): Promise<Result> {
     const id = this.resultIdCounter++;
     const createdAt = new Date();
-    
-    // Ensure wind, place, and notes are properly set with null values if undefined
     const result: Result = { 
       ...insertResult, 
       id, 
-      wind: insertResult.wind || null,
-      place: insertResult.place || null,
-      notes: insertResult.notes || null,
       createdAt 
     };
     this.results.set(id, result);
@@ -281,18 +255,11 @@ export class MemStorage implements IStorage {
   async createReminder(insertReminder: InsertReminder): Promise<Reminder> {
     const id = this.reminderIdCounter++;
     const createdAt = new Date();
-    
-    // Reminder object with all required fields from the schema
     const reminder: Reminder = { 
-      id,
-      meetId: insertReminder.meetId,
-      userId: insertReminder.userId,
-      title: insertReminder.title,
-      category: insertReminder.category,
-      date: insertReminder.date,
-      description: insertReminder.description || null,
-      isCompleted: false,
-      createdAt
+      ...insertReminder, 
+      id, 
+      completed: false, 
+      createdAt 
     };
     this.reminders.set(id, reminder);
     return reminder;
