@@ -63,7 +63,7 @@ export default function HomePage() {
     },
     {
       title: "Clubs & Groups",
-      description: "Connect with other athletes",
+      description: "Find a new home",
       icon: <Users className="h-8 w-8 text-primary" />,
       href: "/clubs",
       color: "from-primary/10 to-transparent"
@@ -101,7 +101,7 @@ export default function HomePage() {
             Hello, {user?.name?.split(' ')[0] || user?.username}
           </h1>
           <p className="text-muted-foreground">
-            Welcome to Track Elite - your track and field companion
+            Welcome to Track Elite - Your Track and Field Companion
           </p>
         </section>
         
