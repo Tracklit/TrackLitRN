@@ -1,208 +1,196 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Header } from '@/components/layout/header';
-import { SidebarNavigation } from '@/components/layout/sidebar-navigation';
-import { BottomNavigation } from '@/components/layout/bottom-navigation';
-import { UpcomingMeetCard } from '@/components/upcoming-meet-card';
-import { PreparationTimeline } from '@/components/preparation-timeline';
-import { PerformanceChart } from '@/components/performance-chart';
-import { RecentResults } from '@/components/recent-results';
-import { MotivationalQuote } from '@/components/motivational-quote';
-import { PremiumPromotion } from '@/components/premium-promotion';
-import { CreateMeetModal } from '@/components/create-meet-modal';
-import { useAuth } from '@/hooks/use-auth';
+import { HamburgerMenu } from '@/components/layout/hamburger-menu';
 import { Meet, Result } from '@shared/schema';
 import { Link } from 'wouter';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { 
+  Dumbbell, 
+  Trophy, 
+  Users, 
+  Clock, 
+  Clipboard, 
+  ArrowRight,
+  Calendar,
+  Coins
+} from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
+import { MotivationalQuote } from '@/components/motivational-quote';
+import { CreateMeetModal } from '@/components/create-meet-modal';
+import { cn } from '@/lib/utils';
 
 export default function HomePage() {
   const { user } = useAuth();
   const [isCreateMeetOpen, setIsCreateMeetOpen] = useState(false);
   
-  // Fetch upcoming meets
-  const { data: meets, isLoading: isLoadingMeets } = useQuery<Meet[]>({
+  // Fetch data for stats (simplified for now)
+  const { data: meets } = useQuery<Meet[]>({
     queryKey: ['/api/meets'],
   });
   
-  // Fetch results for analytics
-  const { data: results, isLoading: isLoadingResults } = useQuery<Result[]>({
+  const { data: results } = useQuery<Result[]>({
     queryKey: ['/api/results'],
   });
-  
-  // Find the next upcoming meet
-  const upcomingMeet = meets?.find(meet => 
-    new Date(meet.date) > new Date() && meet.status === 'upcoming'
-  );
-  
-  // Group results by meet for the recent results section
-  const recentResultsByMeet = results?.reduce((acc, result) => {
-    const meetId = result.meetId;
-    const meet = meets?.find(m => m.id === meetId);
-    
-    if (meet) {
-      const existingGroup = acc.find(group => group.meet.id === meetId);
-      
-      if (existingGroup) {
-        existingGroup.results.push(result);
-      } else {
-        acc.push({ meet, results: [result] });
-      }
+
+  // Category cards for main navigation
+  const categoryCards = [
+    {
+      title: "Practice",
+      description: "Training sessions and programs",
+      icon: <Dumbbell className="h-8 w-8 text-primary" />,
+      href: "/practice",
+      color: "from-primary/20 to-primary/10"
+    },
+    {
+      title: "Programs",
+      description: "Training plans and schedules",
+      icon: <Clipboard className="h-8 w-8 text-primary" />,
+      href: "/practice",
+      color: "from-secondary/20 to-secondary/10"
+    },
+    {
+      title: "Competitions",
+      description: "Meets, results and analytics",
+      icon: <Trophy className="h-8 w-8 text-primary" />,
+      href: "/meets",
+      color: "from-primary/20 to-primary/10"
+    },
+    {
+      title: "Clubs & Groups",
+      description: "Connect with other athletes",
+      icon: <Users className="h-8 w-8 text-primary" />,
+      href: "/clubs",
+      color: "from-secondary/20 to-secondary/10"
+    },
+    {
+      title: "Tools",
+      description: "Stopwatch, start gun, and more",
+      icon: <Clock className="h-8 w-8 text-primary" />,
+      href: "/training-tools",
+      color: "from-primary/20 to-primary/10"
+    },
+    {
+      title: "Calendar",
+      description: "Schedule and upcoming events",
+      icon: <Calendar className="h-8 w-8 text-primary" />,
+      href: "/calendar",
+      color: "from-secondary/20 to-secondary/10"
     }
-    
-    return acc;
-  }, [] as { meet: Meet; results: Result[] }[]) || [];
-  
-  // Sort by most recent
-  recentResultsByMeet.sort((a, b) => 
-    new Date(b.meet.date).getTime() - new Date(a.meet.date).getTime()
-  );
-  
-  // Filter sprint results for analytics
-  const sprintResults = results?.filter(r => r.event.includes('100m Sprint')) || [];
-  
-  // Filter long jump results for analytics
-  const jumpResults = results?.filter(r => r.event.includes('Long Jump')) || [];
-  
-  // Motivational quote (would normally come from a database or API)
+  ];
+
+  // Define motivational quote
   const quote = {
     text: "The difference between the impossible and the possible lies in a person's determination.",
     author: "Tommy Lasorda"
   };
 
   return (
-    <div className="flex flex-col h-screen">
-      <Header />
+    <div className="min-h-screen bg-background text-foreground pb-16">
+      <HamburgerMenu />
       
-      <main className="flex-1 overflow-auto pt-16 pb-16 md:pb-0 md:pt-16 md:pl-64">
-        <div className="container mx-auto px-4 py-6">
-          {/* Greeting Section */}
-          <section className="mb-8">
-            <h2 className="text-2xl font-bold mb-1">Hello, {user?.name?.split(' ')[0]}</h2>
-            <p className="text-darkGray">Ready for your upcoming meets?</p>
-          </section>
-          
-          {/* Upcoming Meet */}
-          <section className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Upcoming Meet</h3>
-              <Link href="/meets" className="text-secondary text-sm font-medium">View All</Link>
-            </div>
+      <main className="pt-20 px-4 container mx-auto max-w-7xl">
+        {/* Greeting Section */}
+        <section className="mb-8 mt-4">
+          <h1 className="text-3xl font-bold mb-2">
+            Hello, {user?.name?.split(' ')[0] || user?.username}
+          </h1>
+          <p className="text-muted-foreground">
+            Welcome to Track Elite - your complete training platform
+          </p>
+        </section>
+        
+        {/* Main Category Cards */}
+        <section className="mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {categoryCards.map((card, index) => (
+              <Link href={card.href} key={index}>
+                <Card className="h-full cursor-pointer hover:shadow-lg transition-all duration-300 overflow-hidden border-2 border-muted hover:border-primary">
+                  <div className={cn("absolute inset-0 bg-gradient-to-br opacity-20", card.color)} />
+                  <CardContent className="p-6 relative">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h2 className="text-xl font-bold mb-2">{card.title}</h2>
+                        <p className="text-muted-foreground text-sm mb-4">{card.description}</p>
+                      </div>
+                      <div className="p-2 rounded-full bg-card border-2 border-muted">
+                        {card.icon}
+                      </div>
+                    </div>
+                    <Button variant="ghost" className="pl-0 mt-4 group">
+                      <span>Explore</span>
+                      <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </section>
+        
+        {/* Quick Stats */}
+        <section className="mb-12">
+          <h2 className="text-2xl font-bold mb-4">Quick Stats</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="bg-muted/50">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Upcoming Meets</p>
+                    <h3 className="text-3xl font-bold">2</h3>
+                  </div>
+                  <Trophy className="h-8 w-8 text-primary" />
+                </div>
+              </CardContent>
+            </Card>
             
-            {isLoadingMeets ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : upcomingMeet ? (
-              <UpcomingMeetCard 
-                meet={upcomingMeet} 
-                onViewPreparation={() => {
-                  // Scroll to preparation section
-                  document.getElementById('preparation-section')?.scrollIntoView({ 
-                    behavior: 'smooth' 
-                  });
-                }}
-              />
-            ) : (
-              <div className="bg-white rounded-xl shadow-sm p-8 text-center">
-                <p className="text-darkGray mb-4">No upcoming meets found</p>
-                <Button 
-                  onClick={() => setIsCreateMeetOpen(true)}
-                  className="bg-primary text-white"
-                >
-                  Create Your First Meet
-                </Button>
-              </div>
-            )}
-          </section>
-          
-          {/* Meet Preparation */}
-          {upcomingMeet && (
-            <section className="mb-8" id="preparation-section">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Meet Preparation</h3>
-              </div>
-              
-              <PreparationTimeline 
-                meet={upcomingMeet} 
-                onCustomize={() => {
-                  // This would open a customization modal in a real app
-                }}
-              />
-            </section>
-          )}
-          
-          {/* Performance Analytics */}
-          <section className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Performance Analytics</h3>
-              <Link href="/results" className="text-secondary text-sm font-medium">View Details</Link>
-            </div>
+            <Card className="bg-muted/50">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Practice Sessions</p>
+                    <h3 className="text-3xl font-bold">5</h3>
+                  </div>
+                  <Dumbbell className="h-8 w-8 text-primary" />
+                </div>
+              </CardContent>
+            </Card>
             
-            {isLoadingResults ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : sprintResults.length > 0 || jumpResults.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {sprintResults.length > 0 && (
-                  <PerformanceChart
-                    title="100m Sprint"
-                    event="100m Sprint"
-                    results={sprintResults}
-                    improving={true}
-                  />
-                )}
-                
-                {jumpResults.length > 0 && (
-                  <PerformanceChart
-                    title="Long Jump"
-                    event="Long Jump"
-                    results={jumpResults}
-                    stable={true}
-                  />
-                )}
-              </div>
-            ) : (
-              <div className="bg-white rounded-xl shadow-sm p-8 text-center">
-                <p className="text-darkGray mb-4">No performance data yet</p>
-                <p className="text-sm text-darkGray">
-                  Complete a meet and log your results to see analytics
-                </p>
-              </div>
-            )}
-          </section>
-          
-          {/* Recent Results */}
-          <section className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Recent Results</h3>
-              <Link href="/results" className="text-secondary text-sm font-medium">View All</Link>
-            </div>
+            <Card className="bg-muted/50">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Clubs Joined</p>
+                    <h3 className="text-3xl font-bold">1</h3>
+                  </div>
+                  <Users className="h-8 w-8 text-primary" />
+                </div>
+              </CardContent>
+            </Card>
             
-            <RecentResults results={recentResultsByMeet.slice(0, 3)} />
-          </section>
-          
-          {/* Motivational Quote */}
-          <section className="mb-8">
-            <MotivationalQuote quote={quote.text} author={quote.author} />
-          </section>
-          
-          {/* Premium Feature Promotion */}
-          {!user?.isPremium && (
-            <section className="mb-8">
-              <PremiumPromotion 
-                onUpgrade={() => {
-                  // Premium upgrade logic would go here
-                }}
-              />
-            </section>
-          )}
-        </div>
+            <Card className="bg-muted/50">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Spikes Balance</p>
+                    <h3 className="text-3xl font-bold">{user?.spikes || 0}</h3>
+                  </div>
+                  <Coins className="h-8 w-8 text-primary" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+        
+        {/* Motivational Quote */}
+        <section className="mb-12">
+          <Card className="border-primary/20 bg-gradient-to-r from-muted to-background">
+            <CardContent className="p-8">
+              <MotivationalQuote quote={quote.text} author={quote.author} />
+            </CardContent>
+          </Card>
+        </section>
       </main>
-      
-      <SidebarNavigation />
-      <BottomNavigation />
       
       {/* Create Meet Modal */}
       <CreateMeetModal
