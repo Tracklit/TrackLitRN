@@ -83,7 +83,7 @@ export default function HomePage() {
             Hello, {user?.name?.split(' ')[0] || user?.username}
           </h1>
           <p className="text-muted-foreground">
-            Welcome to Track Elite - Your Track and Field Companion
+            Welcome to Track Pro - Your Track and Field Companion
           </p>
         </section>
         

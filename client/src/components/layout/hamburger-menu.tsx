@@ -219,7 +219,7 @@ export function HamburgerMenu() {
               </div>
             </SheetContent>
           </Sheet>
-          <span className="text-xl font-bold text-foreground">Track Elite</span>
+          <span className="text-xl font-bold text-foreground">Track Pro</span>
         </div>
 
         <div className="flex items-center">

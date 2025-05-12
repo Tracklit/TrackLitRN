@@ -20,7 +20,7 @@ export default function ClubsPage() {
       <PageHeader
         title="Clubs & Groups"
         description="Join clubs and chat with fellow athletes"
-        action={
+        actions={
           <Dialog open={isCreateClubOpen} onOpenChange={setIsCreateClubOpen}>
             <DialogTrigger asChild>
               <Button>
