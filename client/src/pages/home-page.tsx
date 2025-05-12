@@ -110,17 +110,17 @@ export default function HomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {categoryCards.map((card, index) => (
               <Link href={card.href} key={index}>
-                <Card className="h-full cursor-pointer hover:shadow-md transition-all duration-300 border border-muted hover:border-primary">
-                  <CardContent className="p-5 relative">
-                    <div className="flex items-start gap-4">
-                      <div className="p-3 rounded-full bg-primary/10 border border-primary/20 shrink-0 mt-1">
+                <Card className="cursor-pointer hover:shadow-md transition-all duration-300 border border-muted hover:border-primary h-[140px]">
+                  <CardContent className="p-5 relative h-full flex items-center">
+                    <div className="flex items-center gap-5 w-full">
+                      <div className="p-3 rounded-full bg-primary/15 border border-primary/20 shrink-0">
                         {card.icon}
                       </div>
                       <div className="flex-1">
-                        <h2 className="text-xl font-bold mb-1">{card.title}</h2>
+                        <h2 className="text-xl font-bold mb-2">{card.title}</h2>
                         <p className="text-muted-foreground text-sm">{card.description}</p>
                       </div>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground self-center" />
+                      <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
                     </div>
                   </CardContent>
                 </Card>

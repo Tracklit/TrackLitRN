@@ -67,7 +67,7 @@ export function HamburgerMenu() {
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50">
-      <div style={{ backgroundColor: 'hsl(220 30% 12%)' }} className="flex items-center justify-between p-3 shadow-md">
+      <div style={{ backgroundColor: 'hsl(220 40% 15%)' }} className="flex items-center justify-between p-3 shadow-md">
         <div className="flex items-center">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
@@ -75,7 +75,7 @@ export function HamburgerMenu() {
                 <Menu className="h-6 w-6" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" style={{ backgroundColor: 'hsl(220 30% 12%)' }} className="border-sidebar-border w-72 p-0">
+            <SheetContent side="left" style={{ backgroundColor: 'hsl(220 40% 15%)' }} className="border-sidebar-border w-72 p-0">
               <div className="flex flex-col h-full">
                 <div className="p-4 border-b border-sidebar-border">
                   <div className="flex items-center space-x-3">
