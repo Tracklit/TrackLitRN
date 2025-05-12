@@ -78,7 +78,7 @@ export default function HomePage() {
       
       <main className="pt-20 px-4 container mx-auto max-w-7xl">
         {/* Greeting Section */}
-        <section className="mb-8 mt-4">
+        <section className="mb-8 mt-4 mx-auto" style={{ maxWidth: "540px" }}>
           <h1 className="text-3xl font-bold mb-2">
             Hello, {user?.name?.split(' ')[0] || user?.username}
           </h1>
@@ -114,7 +114,7 @@ export default function HomePage() {
         </section>
         
         {/* Today's Session Preview */}
-        <section className="mb-12">
+        <section className="mb-12 mx-auto" style={{ maxWidth: "540px" }}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold">Today's Session</h2>
             <Link href="/practice">
@@ -125,7 +125,7 @@ export default function HomePage() {
             </Link>
           </div>
           
-          <Card className="border-primary/20">
+          <Card className="border-primary/20 w-full">
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start">
                 <div>
@@ -200,8 +200,8 @@ export default function HomePage() {
         </section>
         
         {/* Motivational Quote */}
-        <section className="mb-12">
-          <Card className="border-primary/20 bg-primary/5">
+        <section className="mb-12 mx-auto" style={{ maxWidth: "540px" }}>
+          <Card className="border-primary/20 bg-primary/5 w-full">
             <CardContent className="p-6">
               <p className="italic text-lg mb-2">&ldquo;{quote.text}&rdquo;</p>
               <p className="text-right text-muted-foreground">— {quote.author}</p>
