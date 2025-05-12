@@ -326,25 +326,25 @@ export class DatabaseStorage implements IStorage {
 
   // Group Member operations
   async getGroupMember(id: number): Promise<GroupMember | undefined> {
-    const [member] = await db.select().from(groupMembers).where(eq(groupMembers.id, id));
+    const [member] = await db.select().from(athleteGroupMembers).where(eq(athleteGroupMembers.id, id));
     return member;
   }
 
   async getGroupMembersByGroupId(groupId: number): Promise<GroupMember[]> {
-    return db.select().from(groupMembers).where(eq(groupMembers.groupId, groupId));
+    return db.select().from(athleteGroupMembers).where(eq(athleteGroupMembers.groupId, groupId));
   }
 
   async getGroupMembersByAthleteId(athleteId: number): Promise<GroupMember[]> {
-    return db.select().from(groupMembers).where(eq(groupMembers.athleteId, athleteId));
+    return db.select().from(athleteGroupMembers).where(eq(athleteGroupMembers.athleteId, athleteId));
   }
 
   async createGroupMember(insertMember: InsertGroupMember): Promise<GroupMember> {
-    const [member] = await db.insert(groupMembers).values(insertMember).returning();
+    const [member] = await db.insert(athleteGroupMembers).values(insertMember).returning();
     return member;
   }
 
   async deleteGroupMember(id: number): Promise<boolean> {
-    const result = await db.delete(groupMembers).where(eq(groupMembers.id, id));
+    const result = await db.delete(athleteGroupMembers).where(eq(athleteGroupMembers.id, id));
     return !!result;
   }
 
