@@ -2,7 +2,20 @@ import { useAuth } from "@/hooks/use-auth";
 import { getInitials } from "@/lib/utils";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { Home, Calendar, Trophy, LineChart, Users, Settings, Crown, Award } from "lucide-react";
+import { 
+  Home, 
+  Calendar, 
+  Trophy, 
+  LineChart, 
+  Users, 
+  Settings, 
+  Crown, 
+  Award, 
+  Clock,
+  Dumbbell, 
+  MessagesSquare, 
+  Coins
+} from "lucide-react";
 
 interface NavItemProps {
   href: string;
@@ -59,6 +72,30 @@ export function SidebarNavigation() {
           >
             Dashboard
           </NavItem>
+          
+          {/* Training Section */}
+          <div className="pt-4 pb-2">
+            <p className="text-xs text-darkGray px-3 font-medium">TRAINING</p>
+          </div>
+          <NavItem 
+            href="/practice" 
+            icon={<Dumbbell className="h-5 w-5" />} 
+            isActive={location.startsWith('/practice')}
+          >
+            Practice
+          </NavItem>
+          <NavItem 
+            href="/training-tools" 
+            icon={<Clock className="h-5 w-5" />} 
+            isActive={location === '/training-tools'}
+          >
+            Training Tools
+          </NavItem>
+          
+          {/* Competition Section */}
+          <div className="pt-4 pb-2">
+            <p className="text-xs text-darkGray px-3 font-medium">COMPETITION</p>
+          </div>
           <NavItem 
             href="/calendar" 
             icon={<Calendar className="h-5 w-5" />} 
@@ -80,12 +117,43 @@ export function SidebarNavigation() {
           >
             Results
           </NavItem>
+          
+          {/* Social Section */}
+          <div className="pt-4 pb-2">
+            <p className="text-xs text-darkGray px-3 font-medium">SOCIAL</p>
+          </div>
+          <NavItem 
+            href="/clubs" 
+            icon={<Users className="h-5 w-5" />} 
+            isActive={location.startsWith('/clubs')}
+          >
+            Clubs & Groups
+          </NavItem>
+          <NavItem 
+            href="/messages" 
+            icon={<MessagesSquare className="h-5 w-5" />} 
+            isActive={location === '/messages'}
+          >
+            Messages
+          </NavItem>
           <NavItem 
             href="/coaches" 
             icon={<Award className="h-5 w-5" />} 
             isActive={location === '/coaches'}
           >
             Coaches
+          </NavItem>
+          
+          {/* Account Section */}
+          <div className="pt-4 pb-2">
+            <p className="text-xs text-darkGray px-3 font-medium">ACCOUNT</p>
+          </div>
+          <NavItem 
+            href="/spikes" 
+            icon={<Coins className="h-5 w-5" />} 
+            isActive={location === '/spikes'}
+          >
+            Spikes
           </NavItem>
           <NavItem 
             href="/profile" 

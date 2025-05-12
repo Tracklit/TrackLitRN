@@ -1,5 +1,15 @@
 import { Link, useLocation } from "wouter";
-import { Home, Calendar, LineChart, User, Plus, Award } from "lucide-react";
+import { 
+  Home, 
+  Calendar, 
+  LineChart, 
+  User, 
+  Plus, 
+  Award, 
+  Dumbbell, 
+  Users,
+  Trophy
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { CreateMeetModal } from "@/components/create-meet-modal";
@@ -40,11 +50,11 @@ export function BottomNavigation() {
             Home
           </NavItem>
           <NavItem 
-            href="/calendar" 
-            icon={<Calendar className="h-5 w-5" />} 
-            isActive={location === '/calendar'}
+            href="/practice" 
+            icon={<Dumbbell className="h-5 w-5" />} 
+            isActive={location.startsWith('/practice')}
           >
-            Calendar
+            Practice
           </NavItem>
           <div className="flex items-center justify-center">
             <button 
@@ -56,25 +66,18 @@ export function BottomNavigation() {
             </button>
           </div>
           <NavItem 
-            href="/results" 
-            icon={<LineChart className="h-5 w-5" />} 
-            isActive={location === '/results'}
+            href="/meets" 
+            icon={<Trophy className="h-5 w-5" />} 
+            isActive={location === '/meets'}
           >
-            Results
+            Meets
           </NavItem>
           <NavItem 
-            href="/coaches" 
-            icon={<Award className="h-5 w-5" />} 
-            isActive={location === '/coaches'}
+            href="/clubs" 
+            icon={<Users className="h-5 w-5" />} 
+            isActive={location.startsWith('/clubs')}
           >
-            Coaches
-          </NavItem>
-          <NavItem 
-            href="/profile" 
-            icon={<User className="h-5 w-5" />} 
-            isActive={location === '/profile'}
-          >
-            Profile
+            Clubs
           </NavItem>
         </div>
       </nav>
