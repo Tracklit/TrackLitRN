@@ -92,8 +92,8 @@ export default function HomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mx-auto" style={{ maxWidth: "540px", margin: "0 auto 20px" }}>
             {categoryCards.map((card, index) => (
               <Link href={card.href} key={index}>
-                <Card className="cursor-pointer hover:shadow-md transition-all duration-300 border border-muted hover:border-primary h-[250px] w-[250px] mx-auto mb-5 overflow-hidden group">
-                  <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <Card className="cursor-pointer hover:shadow-md transition-all duration-300 border border-muted hover:border-primary h-[250px] w-[250px] mx-auto mb-5 overflow-hidden group relative">
+                  <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                   <CardContent className="p-6 relative h-full flex flex-col justify-center">
                     <div className="flex flex-col items-center text-center gap-7">
                       <div className="p-4 rounded-full bg-primary/15 border border-primary/20 group-hover:bg-primary/25 transition-colors duration-300">
@@ -103,7 +103,7 @@ export default function HomePage() {
                       </div>
                       <div>
                         <h2 className="text-2xl font-bold mb-3">{card.title}</h2>
-                        <p className="text-muted-foreground text-sm px-2">{card.description}</p>
+                        <p className="text-muted-foreground text-sm px-2 line-clamp-3 overflow-hidden">{card.description}</p>
                       </div>
                     </div>
                   </CardContent>
