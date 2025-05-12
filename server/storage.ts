@@ -11,6 +11,7 @@ import {
   InsertCoach,
   AthleteGroup,
   InsertAthleteGroup,
+  AthleteGroupMember,
   GroupMember,
   InsertGroupMember,
   CoachNote,
@@ -21,7 +22,7 @@ import {
   reminders,
   coaches,
   athleteGroups,
-  groupMembers,
+  athleteGroupMembers,
   coachNotes,
 } from "@shared/schema";
 import { db, pool } from "./db";
