@@ -139,7 +139,7 @@ export default function PracticePage() {
           <Card className="mb-6">
             <CardContent className="p-0">
               {/* Workout details as bullet points */}
-              <div className="p-6 pt-6 border-b relative">
+              <div className="p-6 pt-6 relative">
                 <div className="absolute right-6 top-6">
                   <Avatar className="h-12 w-12 border-2 border-primary/20">
                     <AvatarFallback>{user?.name?.split(' ').map(n => n[0]).join('') || user?.username?.[0]}</AvatarFallback>
@@ -155,12 +155,11 @@ export default function PracticePage() {
                 </ul>
               </div>
               
-              {/* Divider with title */}
-              <div className="px-6 pt-6 pb-2">
-                <div className="flex items-center">
-                  <Separator className="flex-grow mr-4" />
-                  <h3 className="text-sm font-medium text-muted-foreground">Performance Calculators</h3>
-                  <Separator className="flex-grow ml-4" />
+              {/* Simple divider */}
+              <div className="px-6 pt-4">
+                <Separator className="bg-primary/10 h-[2px]" />
+                <div className="text-center mt-4 mb-2">
+                  <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Performance Calculator</h3>
                 </div>
               </div>
               
