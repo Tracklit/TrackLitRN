@@ -43,38 +43,26 @@ export default function HomePage() {
     {
       title: "Practice",
       description: "Training sessions and programs",
-      icon: <Dumbbell className="h-12 w-12 text-primary" />,
+      icon: <Dumbbell className="h-6 w-6 text-primary" />,
       href: "/practice",
     },
     {
       title: "Programs",
       description: "Training plans and schedules",
-      icon: <Clipboard className="h-12 w-12 text-primary" />,
+      icon: <Clipboard className="h-6 w-6 text-primary" />,
       href: "/practice",
     },
     {
       title: "Competitions",
       description: "Meets, results and analytics",
-      icon: <Trophy className="h-12 w-12 text-primary" />,
+      icon: <Trophy className="h-6 w-6 text-primary" />,
       href: "/meets",
     },
     {
       title: "Clubs & Groups",
       description: "Find a new home",
-      icon: <Users className="h-12 w-12 text-primary" />,
+      icon: <Users className="h-6 w-6 text-primary" />,
       href: "/clubs",
-    },
-    {
-      title: "Tools",
-      description: "Stopwatch, start gun, and more",
-      icon: <Clock className="h-12 w-12 text-primary" />,
-      href: "/training-tools",
-    },
-    {
-      title: "Calendar",
-      description: "Schedule and upcoming events",
-      icon: <Calendar className="h-12 w-12 text-primary" />,
-      href: "/calendar",
     }
   ];
 
@@ -101,15 +89,15 @@ export default function HomePage() {
         
         {/* Main Category Cards - 2 column layout with fixed size */}
         <section className="mb-16">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-10 mx-auto" style={{ maxWidth: "640px", margin: "0 auto" }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mx-auto" style={{ maxWidth: "540px", margin: "0 auto 20px" }}>
             {categoryCards.map((card, index) => (
               <Link href={card.href} key={index}>
-                <Card className="cursor-pointer hover:shadow-md transition-all duration-300 border border-muted hover:border-primary h-[280px] w-[280px] mx-auto mt-5 mb-10 overflow-hidden group">
+                <Card className="cursor-pointer hover:shadow-md transition-all duration-300 border border-muted hover:border-primary h-[250px] w-[250px] mx-auto mb-5 overflow-hidden group">
                   <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   <CardContent className="p-6 relative h-full flex flex-col justify-center">
                     <div className="flex flex-col items-center text-center gap-7">
-                      <div className="p-5 rounded-full bg-primary/15 border border-primary/20 group-hover:bg-primary/25 transition-colors duration-300">
-                        <div className="h-12 w-12 flex items-center justify-center text-primary">
+                      <div className="p-4 rounded-full bg-primary/15 border border-primary/20 group-hover:bg-primary/25 transition-colors duration-300">
+                        <div className="h-8 w-8 flex items-center justify-center text-primary">
                           {card.icon}
                         </div>
                       </div>
