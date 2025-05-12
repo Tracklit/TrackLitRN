@@ -60,7 +60,7 @@ const getCategoryIcon = (category?: string) => {
 };
 
 // Get reminder status based on dates
-const getReminderStatus = (reminderDate: Date, isCompleted: boolean) => {
+const getReminderStatus = (reminderDate: Date, isCompleted: boolean): 'completed' | 'current' | 'upcoming' => {
   const now = new Date();
   
   if (isCompleted) {
