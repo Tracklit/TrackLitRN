@@ -2,7 +2,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { getInitials } from "@/lib/utils";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { Home, Calendar, Trophy, LineChart, Users, Settings, Crown } from "lucide-react";
+import { Home, Calendar, Trophy, LineChart, Users, Settings, Crown, Award } from "lucide-react";
 
 interface NavItemProps {
   href: string;
@@ -82,7 +82,7 @@ export function SidebarNavigation() {
           </NavItem>
           <NavItem 
             href="/coaches" 
-            icon={<Users className="h-5 w-5" />} 
+            icon={<Award className="h-5 w-5" />} 
             isActive={location === '/coaches'}
           >
             Coaches

@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Calendar, LineChart, User, Plus } from "lucide-react";
+import { Home, Calendar, LineChart, User, Plus, Award } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { CreateMeetModal } from "@/components/create-meet-modal";
@@ -61,6 +61,13 @@ export function BottomNavigation() {
             isActive={location === '/results'}
           >
             Results
+          </NavItem>
+          <NavItem 
+            href="/coaches" 
+            icon={<Award className="h-5 w-5" />} 
+            isActive={location === '/coaches'}
+          >
+            Coaches
           </NavItem>
           <NavItem 
             href="/profile" 
