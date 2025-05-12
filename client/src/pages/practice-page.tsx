@@ -132,15 +132,16 @@ export default function PracticePage() {
   };
   
   return (
-    <div className="container max-w-screen-xl mx-auto p-4 pt-20 md:pt-24 md:pl-72 pb-20">
+    <div className="container max-w-3xl mx-auto p-4 pt-20 md:pt-24 pb-20">
       <PageHeader
         title={currentDay === "today" ? "Today's Practice" : currentDay === "yesterday" ? "Yesterday's Practice" : "Tomorrow's Practice"}
         description="Track your training sessions and progress"
+        className="text-center"
       />
       
       <div className="mt-6 relative">
         {/* Day navigation */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-6 max-w-xs mx-auto">
           <Button 
             variant="ghost" 
             onClick={goToPreviousDay} 
@@ -176,179 +177,170 @@ export default function PracticePage() {
           </Button>
         </div>
         
-        {/* Main session content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Session details - takes up 2/3 of the space */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <Badge className="mb-2 bg-primary/20 text-primary hover:bg-primary/30">Track Session</Badge>
-                    <CardTitle className="text-xl font-semibold">Speed Workout</CardTitle>
-                  </div>
-                  <div className="text-4xl font-bold font-mono">{formatTime(duration)}</div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-medium mb-2">Current Exercise: 5 x 100m Sprints</h3>
-                    <Progress value={60} className="h-2 mb-2" />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>3/5 completed</span>
-                      <span>2 remaining</span>
-                    </div>
-                  </div>
-                  
-                  {/* Timer controls */}
-                  <div className="flex justify-center gap-4">
-                    <Button 
-                      onClick={toggleTimer}
-                      variant={isTimerRunning ? "outline" : "default"}
-                      size="lg"
-                      className="h-14 w-14 rounded-full p-0 flex items-center justify-center"
-                    >
-                      {isTimerRunning ? <PauseCircle className="h-6 w-6" /> : <Timer className="h-6 w-6" />}
-                    </Button>
-                    
-                    <Button 
-                      onClick={resetTimer}
-                      variant="outline"
-                      size="lg"
-                      className="h-14 w-14 rounded-full p-0 flex items-center justify-center"
-                    >
-                      <Activity className="h-6 w-6" />
-                    </Button>
-                  </div>
-                  
-                  {/* Percentage and distance sliders */}
-                  <div className="space-y-6 mt-6 border-t pt-6">
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <label className="text-sm font-medium flex items-center">
-                          <Percent className="h-4 w-4 mr-1" />
-                          Intensity
-                        </label>
-                        <div className="flex items-center">
-                          <span className="text-sm font-medium">{percentage}%</span>
-                        </div>
-                      </div>
-                      <Slider
-                        value={percentage}
-                        min={70}
-                        max={100}
-                        step={5}
-                        onValueChange={setPercentage}
-                      />
-                      <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>Recovery (70%)</span>
-                        <span>Maximum (100%)</span>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <label className="text-sm font-medium flex items-center">
-                          <TrendingUp className="h-4 w-4 mr-1" />
-                          Distance
-                        </label>
-                        <div className="flex items-center">
-                          <span className="text-sm font-medium">{distance[0]}m</span>
-                        </div>
-                      </div>
-                      <Slider
-                        value={distance}
-                        min={50}
-                        max={600}
-                        step={10}
-                        onValueChange={setDistance}
-                      />
-                      <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>50m</span>
-                        <span>600m</span>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-primary/10 p-4 rounded-lg">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium">Goal Time ({percentage}% of Best)</span>
-                        <span className="text-xl font-bold">{calculatedTime.toFixed(2)}s</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Based on your best time of {bestTimes["100"]}s for 100m
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          
-          {/* Feedback section - takes up 1/3 of the space */}
-          <div>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Session Feedback</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-3">
+        {/* Main session content - single column layout */}
+        <div>
+          <Card className="mb-6">
+            <CardHeader className="pb-3 border-b">
+              <div className="text-center">
+                <Badge className="mb-2 bg-primary/20 text-primary hover:bg-primary/30">Track Session</Badge>
+                <CardTitle className="text-2xl font-semibold">Speed Workout</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              {/* Workout details as bullet points */}
+              <div className="p-6 border-b">
+                <h3 className="text-lg font-medium mb-3 text-center">Workout Plan</h3>
+                <ul className="space-y-3 list-disc pl-8 pr-4">
+                  <li>Warm-up: 10 min dynamic stretching</li>
+                  <li>Main set: 5 x 100m sprints at 95% intensity</li>
+                  <li>Recovery: 3 min between sets</li>
+                  <li>Cool down: 5 min easy jog + stretching</li>
+                  <li>Total distance: ~1.5km</li>
+                </ul>
+              </div>
+              
+              {/* Percentage and distance sliders */}
+              <div className="p-6 border-b">
+                <div className="space-y-4">
                   <div className="flex justify-between">
-                    <label className="text-sm font-medium">Intensity</label>
-                    <span className="text-sm text-muted-foreground">{intensity}%</span>
+                    <label className="text-base font-medium flex items-center">
+                      <Percent className="h-5 w-5 mr-2" />
+                      Intensity
+                    </label>
+                    <div className="flex items-center">
+                      <span className="text-3xl font-bold text-primary">{percentage}%</span>
+                    </div>
                   </div>
+                  <div className="mx-auto" style={{ maxWidth: "275px" }}>
+                    <Slider
+                      value={percentage}
+                      min={70}
+                      max={100}
+                      step={5}
+                      onValueChange={setPercentage}
+                      className="py-4"
+                    />
+                  </div>
+                  <div className="flex justify-between text-xs text-muted-foreground" style={{ maxWidth: "275px", margin: "0 auto" }}>
+                    <span>Recovery (70%)</span>
+                    <span>Maximum (100%)</span>
+                  </div>
+                </div>
+                
+                <div className="mt-8 space-y-4">
+                  <div className="flex justify-between">
+                    <label className="text-base font-medium flex items-center">
+                      <TrendingUp className="h-5 w-5 mr-2" />
+                      Distance
+                    </label>
+                    <div className="flex items-center">
+                      <span className="text-3xl font-bold text-primary">{distance[0]}m</span>
+                    </div>
+                  </div>
+                  <div className="mx-auto" style={{ maxWidth: "275px" }}>
+                    <Slider
+                      value={distance}
+                      min={50}
+                      max={600}
+                      step={10}
+                      onValueChange={setDistance}
+                      className="py-4"
+                    />
+                  </div>
+                  <div className="flex justify-between text-xs text-muted-foreground" style={{ maxWidth: "275px", margin: "0 auto" }}>
+                    <span>50m</span>
+                    <span>600m</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Goal time calculation */}
+              <div className="p-6 bg-primary/5">
+                <div className="bg-primary/10 p-6 rounded-lg text-center max-w-sm mx-auto">
+                  <div className="mb-2">
+                    <span className="text-base font-medium">Goal Time ({percentage}% of Best)</span>
+                  </div>
+                  <div className="text-5xl font-bold text-primary mb-2">
+                    {calculatedTime.toFixed(2)}s
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Based on your best time of {bestTimes["100"]}s for 100m
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Feedback section */}
+          <Card>
+            <CardHeader className="border-b">
+              <CardTitle className="text-xl text-center">Session Feedback</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-8">
+              <div className="space-y-4">
+                <div className="flex justify-between">
+                  <label className="text-base font-medium">Intensity</label>
+                  <span className="text-3xl font-bold text-primary">{intensity}%</span>
+                </div>
+                <div className="mx-auto" style={{ maxWidth: "200px" }}>
                   <Slider
                     value={intensity}
                     min={0}
                     max={100}
                     step={5}
                     onValueChange={setIntensity}
-                    className="pt-1"
+                    className="py-4"
                   />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Low</span>
-                    <span>High</span>
-                  </div>
                 </div>
-                
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <label className="text-sm font-medium">Effort Level</label>
-                    <span className="text-sm text-muted-foreground">{effort}%</span>
-                  </div>
+                <div className="flex justify-between text-xs text-muted-foreground" style={{ maxWidth: "200px", margin: "0 auto" }}>
+                  <span>Low</span>
+                  <span>High</span>
+                </div>
+              </div>
+              
+              <div className="pt-4 border-t space-y-4">
+                <div className="flex justify-between">
+                  <label className="text-base font-medium">Effort Level</label>
+                  <span className="text-3xl font-bold text-primary">{effort}%</span>
+                </div>
+                <div className="mx-auto" style={{ maxWidth: "200px" }}>
                   <Slider
                     value={effort}
                     min={0}
                     max={100}
                     step={5}
                     onValueChange={setEffort}
-                    className="pt-1"
+                    className="py-4"
                   />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Easy</span>
-                    <span>Maximum</span>
-                  </div>
                 </div>
-                
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <label className="text-sm font-medium">Enjoyment</label>
-                    <span className="text-sm text-muted-foreground">{enjoyment}%</span>
-                  </div>
+                <div className="flex justify-between text-xs text-muted-foreground" style={{ maxWidth: "200px", margin: "0 auto" }}>
+                  <span>Easy</span>
+                  <span>Maximum</span>
+                </div>
+              </div>
+              
+              <div className="pt-4 border-t space-y-4">
+                <div className="flex justify-between">
+                  <label className="text-base font-medium">Enjoyment</label>
+                  <span className="text-3xl font-bold text-primary">{enjoyment}%</span>
+                </div>
+                <div className="mx-auto" style={{ maxWidth: "200px" }}>
                   <Slider
                     value={enjoyment}
                     min={0}
                     max={100}
                     step={5}
                     onValueChange={setEnjoyment}
-                    className="pt-1"
+                    className="py-4"
                   />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Bad</span>
-                    <span>Great</span>
-                  </div>
                 </div>
-                
+                <div className="flex justify-between text-xs text-muted-foreground" style={{ maxWidth: "200px", margin: "0 auto" }}>
+                  <span>Bad</span>
+                  <span>Great</span>
+                </div>
+              </div>
+              
+              <div className="pt-6 border-t flex flex-col gap-3">
                 <Button className="w-full">
                   <Upload className="h-4 w-4 mr-2" />
                   <span>Save Feedback</span>
@@ -358,9 +350,9 @@ export default function PracticePage() {
                   <Camera className="h-4 w-4 mr-2" />
                   <span>Add Media</span>
                 </Button>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
