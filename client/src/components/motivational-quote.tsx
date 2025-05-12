@@ -7,10 +7,12 @@ interface MotivationalQuoteProps {
 
 export function MotivationalQuote({ quote, author }: MotivationalQuoteProps) {
   return (
-    <div className="bg-gradient-to-r from-secondary to-primary rounded-xl shadow-sm p-6 text-white">
-      <Quote className="h-6 w-6 opacity-50 mb-2" />
-      <p className="text-lg font-medium">"{quote}"</p>
-      <p className="text-sm mt-2 opacity-80">- {author}</p>
+    <div className="relative">
+      <Quote className="h-12 w-12 text-primary opacity-20 absolute top-0 left-0" />
+      <div className="pl-4">
+        <p className="text-xl font-medium text-foreground">"{quote}"</p>
+        <p className="text-sm mt-3 text-primary">- {author}</p>
+      </div>
     </div>
   );
 }
