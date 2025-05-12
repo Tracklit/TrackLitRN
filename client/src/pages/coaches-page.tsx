@@ -39,7 +39,8 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, CheckCircle, XCircle, Clock, UserPlus, Users, Award, MoreHorizontal, Trash, Check, X } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, Clock, UserPlus, Users, Award, MoreHorizontal, Trash, Check, X, UsersRound } from 'lucide-react';
+import { AthleteGroupManagement } from '@/components/athlete-group-management';
 
 export default function CoachesPage() {
   const { user } = useAuth();
@@ -295,7 +296,7 @@ export default function CoachesPage() {
             onValueChange={setActiveTab} 
             className="w-full"
           >
-            <TabsList className="grid w-full md:w-[400px] grid-cols-2 mb-6">
+            <TabsList className="grid w-full md:w-[600px] grid-cols-3 mb-6">
               <TabsTrigger value="myCoaches" className="flex items-center gap-2">
                 <Award className="h-4 w-4" />
                 My Coaches
@@ -303,6 +304,10 @@ export default function CoachesPage() {
               <TabsTrigger value="myAthletes" className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
                 My Athletes
+              </TabsTrigger>
+              <TabsTrigger value="groups" className="flex items-center gap-2">
+                <UsersRound className="h-4 w-4" />
+                Groups
               </TabsTrigger>
             </TabsList>
             
@@ -504,6 +509,20 @@ export default function CoachesPage() {
                       Add Athlete
                     </Button>
                   )}
+                </div>
+              )}
+            </TabsContent>
+            
+            {/* Groups Tab */}
+            <TabsContent value="groups">
+              {user?.role === 'coach' || user?.role === 'both' ? (
+                <AthleteGroupManagement coachId={user.id} />
+              ) : (
+                <div className="bg-muted/50 rounded-lg p-8 text-center">
+                  <h3 className="font-medium text-xl mb-2">Coach Access Only</h3>
+                  <p className="text-darkGray mb-6">
+                    Only coaches can create and manage athlete groups.
+                  </p>
                 </div>
               )}
             </TabsContent>
