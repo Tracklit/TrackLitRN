@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   Upload, 
@@ -152,6 +153,15 @@ export default function PracticePage() {
                   <li>Cool down: 5 min easy jog + stretching</li>
                   <li>Total distance: ~1.5km</li>
                 </ul>
+              </div>
+              
+              {/* Divider with title */}
+              <div className="px-6 pt-6 pb-2">
+                <div className="flex items-center">
+                  <Separator className="flex-grow mr-4" />
+                  <h3 className="text-sm font-medium text-muted-foreground">Performance Calculators</h3>
+                  <Separator className="flex-grow ml-4" />
+                </div>
               </div>
               
               {/* Percentage and distance sliders */}
