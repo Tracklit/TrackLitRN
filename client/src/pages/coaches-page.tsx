@@ -176,6 +176,16 @@ export default function CoachesPage() {
     }
   };
 
+  // Format date safely
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return 'Unknown';
+    try {
+      return new Date(dateString).toLocaleDateString();
+    } catch (error) {
+      return 'Invalid date';
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen">
       <Header title="Coaches" />
@@ -320,7 +330,7 @@ export default function CoachesPage() {
                           </Avatar>
                           <div>
                             <p className="font-medium">Coach Name</p>
-                            <p className="text-xs text-darkGray">Added on {new Date(coach.createdAt).toLocaleDateString()}</p>
+                            <p className="text-xs text-darkGray">Added on {formatDate(coach.createdAt)}</p>
                           </div>
                         </div>
                         
@@ -427,7 +437,7 @@ export default function CoachesPage() {
                           </Avatar>
                           <div>
                             <p className="font-medium">Athlete Name</p>
-                            <p className="text-xs text-darkGray">Added on {new Date(coach.createdAt).toLocaleDateString()}</p>
+                            <p className="text-xs text-darkGray">Added on {formatDate(coach.createdAt)}</p>
                           </div>
                         </div>
                         
