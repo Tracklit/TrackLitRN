@@ -192,49 +192,53 @@ export default function PracticePage() {
                   <CollapsibleContent className="overflow-hidden data-[state=open]:animate-expand data-[state=closed]:animate-collapse">
                     {/* Percentage and distance sliders */}
                     <div className="p-6 border-b">
-                      <div className="mb-8">
-                        <div className="text-center mb-3">
-                          <span className="text-3xl font-bold text-primary">{percentage}%</span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        {/* Intensity slider */}
+                        <div>
+                          <div className="text-center mb-3">
+                            <span className="text-3xl font-bold text-primary">{percentage}%</span>
+                          </div>
+                          <div className="flex items-center gap-2" style={{ maxWidth: "200px", margin: "0 auto" }}>
+                            <label className="text-sm font-medium whitespace-nowrap">
+                              <Percent className="h-4 w-4 mr-1 inline-block" />
+                              Intensity:
+                            </label>
+                            <Slider
+                              value={percentage}
+                              min={0}
+                              max={100}
+                              step={1}
+                              onValueChange={setPercentage}
+                              className="py-2 flex-1"
+                            />
+                          </div>
+                          <div className="text-center text-xs text-muted-foreground mt-1">
+                            <span>Recovery — Maximum</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-3" style={{ maxWidth: "275px", margin: "0 auto" }}>
-                          <label className="text-sm font-medium whitespace-nowrap">
-                            <Percent className="h-4 w-4 mr-1 inline-block" />
-                            Intensity:
-                          </label>
-                          <Slider
-                            value={percentage}
-                            min={0}
-                            max={100}
-                            step={1}
-                            onValueChange={setPercentage}
-                            className="py-2 flex-1"
-                          />
-                        </div>
-                        <div className="text-center text-xs text-muted-foreground mt-1">
-                          <span>Recovery (0%) — Maximum (100%)</span>
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <div className="text-center mb-3">
-                          <span className="text-3xl font-bold text-primary">{distance[0]}m</span>
-                        </div>
-                        <div className="flex items-center gap-3" style={{ maxWidth: "275px", margin: "0 auto" }}>
-                          <label className="text-sm font-medium whitespace-nowrap">
-                            <TrendingUp className="h-4 w-4 mr-1 inline-block" />
-                            Distance:
-                          </label>
-                          <Slider
-                            value={distance}
-                            min={50}
-                            max={600}
-                            step={1}
-                            onValueChange={setDistance}
-                            className="py-2 flex-1"
-                          />
-                        </div>
-                        <div className="text-center text-xs text-muted-foreground mt-1">
-                          <span>50m — 600m</span>
+                        
+                        {/* Distance slider */}
+                        <div>
+                          <div className="text-center mb-3">
+                            <span className="text-3xl font-bold text-primary">{distance[0]}m</span>
+                          </div>
+                          <div className="flex items-center gap-2" style={{ maxWidth: "200px", margin: "0 auto" }}>
+                            <label className="text-sm font-medium whitespace-nowrap">
+                              <TrendingUp className="h-4 w-4 mr-1 inline-block" />
+                              Distance:
+                            </label>
+                            <Slider
+                              value={distance}
+                              min={50}
+                              max={600}
+                              step={10}
+                              onValueChange={setDistance}
+                              className="py-2 flex-1"
+                            />
+                          </div>
+                          <div className="text-center text-xs text-muted-foreground mt-1">
+                            <span>50m — 600m</span>
+                          </div>
                         </div>
                       </div>
                     </div>
