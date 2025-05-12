@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   Dumbbell, 
   Calendar, 
@@ -20,9 +21,11 @@ import {
   ChevronRight,
   Timer,
   TrendingUp,
-  Percent
+  Percent,
+  Home
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Link } from "wouter";
 import { useState, useEffect } from "react";
 
 export default function PracticePage() {
@@ -133,15 +136,22 @@ export default function PracticePage() {
   
   return (
     <div className="container max-w-3xl mx-auto p-4 pt-20 md:pt-24 pb-20">
-      <PageHeader
-        title={currentDay === "today" ? "Today's Practice" : currentDay === "yesterday" ? "Yesterday's Practice" : "Tomorrow's Practice"}
-        description="Track your training sessions and progress"
-        className="text-center"
-      />
+      <div className="text-center">
+        <Link href="/" className="inline-flex items-center text-muted-foreground mb-4 hover:text-primary transition-colors">
+          <Home className="h-4 w-4 mr-1" />
+          <span>Back to Dashboard</span>
+        </Link>
+        
+        <PageHeader
+          title={currentDay === "today" ? "Today's Practice" : currentDay === "yesterday" ? "Yesterday's Practice" : "Tomorrow's Practice"}
+          description="Track your training sessions and progress"
+          className="text-center"
+        />
+      </div>
       
       <div className="mt-6 relative">
         {/* Day navigation */}
-        <div className="flex items-center justify-between mb-6 max-w-xs mx-auto">
+        <div className="flex items-center justify-between mb-6 max-w-xs mx-auto text-center">
           <Button 
             variant="ghost" 
             onClick={goToPreviousDay} 
@@ -181,7 +191,16 @@ export default function PracticePage() {
         <div>
           <Card className="mb-6">
             <CardHeader className="pb-3 border-b">
-              <div className="text-center">
+              <div className="flex flex-col items-center">
+                <div className="flex items-center gap-4 mb-4">
+                  <Avatar className="h-14 w-14 border-2 border-primary/20">
+                    <AvatarFallback>{user?.name?.split(' ').map(n => n[0]).join('') || user?.username?.[0]}</AvatarFallback>
+                  </Avatar>
+                  <div className="text-center">
+                    <div className="text-lg font-medium">{user?.name || user?.username}</div>
+                    <Badge className="bg-primary/20 text-primary hover:bg-primary/30">Track Athlete</Badge>
+                  </div>
+                </div>
                 <Badge className="mb-2 bg-primary/20 text-primary hover:bg-primary/30">Track Session</Badge>
                 <CardTitle className="text-2xl font-semibold">Speed Workout</CardTitle>
               </div>
@@ -201,55 +220,49 @@ export default function PracticePage() {
               
               {/* Percentage and distance sliders */}
               <div className="p-6 border-b">
-                <div className="space-y-4">
-                  <div className="flex justify-between">
-                    <label className="text-base font-medium flex items-center">
-                      <Percent className="h-5 w-5 mr-2" />
-                      Intensity
-                    </label>
-                    <div className="flex items-center">
-                      <span className="text-3xl font-bold text-primary">{percentage}%</span>
-                    </div>
+                <div className="mb-8">
+                  <div className="text-center mb-3">
+                    <span className="text-3xl font-bold text-primary">{percentage}%</span>
                   </div>
-                  <div className="mx-auto" style={{ maxWidth: "275px" }}>
+                  <div className="flex items-center gap-3" style={{ maxWidth: "275px", margin: "0 auto" }}>
+                    <label className="text-sm font-medium whitespace-nowrap">
+                      <Percent className="h-4 w-4 mr-1 inline-block" />
+                      Intensity:
+                    </label>
                     <Slider
                       value={percentage}
-                      min={70}
+                      min={0}
                       max={100}
-                      step={5}
+                      step={1}
                       onValueChange={setPercentage}
-                      className="py-4"
+                      className="py-2 flex-1"
                     />
                   </div>
-                  <div className="flex justify-between text-xs text-muted-foreground" style={{ maxWidth: "275px", margin: "0 auto" }}>
-                    <span>Recovery (70%)</span>
-                    <span>Maximum (100%)</span>
+                  <div className="text-center text-xs text-muted-foreground mt-1">
+                    <span>Recovery (0%) — Maximum (100%)</span>
                   </div>
                 </div>
                 
-                <div className="mt-8 space-y-4">
-                  <div className="flex justify-between">
-                    <label className="text-base font-medium flex items-center">
-                      <TrendingUp className="h-5 w-5 mr-2" />
-                      Distance
-                    </label>
-                    <div className="flex items-center">
-                      <span className="text-3xl font-bold text-primary">{distance[0]}m</span>
-                    </div>
+                <div>
+                  <div className="text-center mb-3">
+                    <span className="text-3xl font-bold text-primary">{distance[0]}m</span>
                   </div>
-                  <div className="mx-auto" style={{ maxWidth: "275px" }}>
+                  <div className="flex items-center gap-3" style={{ maxWidth: "275px", margin: "0 auto" }}>
+                    <label className="text-sm font-medium whitespace-nowrap">
+                      <TrendingUp className="h-4 w-4 mr-1 inline-block" />
+                      Distance:
+                    </label>
                     <Slider
                       value={distance}
                       min={50}
                       max={600}
-                      step={10}
+                      step={1}
                       onValueChange={setDistance}
-                      className="py-4"
+                      className="py-2 flex-1"
                     />
                   </div>
-                  <div className="flex justify-between text-xs text-muted-foreground" style={{ maxWidth: "275px", margin: "0 auto" }}>
-                    <span>50m</span>
-                    <span>600m</span>
+                  <div className="text-center text-xs text-muted-foreground mt-1">
+                    <span>50m — 600m</span>
                   </div>
                 </div>
               </div>
@@ -277,66 +290,63 @@ export default function PracticePage() {
               <CardTitle className="text-xl text-center">Session Feedback</CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-8">
-              <div className="space-y-4">
-                <div className="flex justify-between">
-                  <label className="text-base font-medium">Intensity</label>
+              <div className="mb-8">
+                <div className="text-center mb-3">
                   <span className="text-3xl font-bold text-primary">{intensity}%</span>
                 </div>
-                <div className="mx-auto" style={{ maxWidth: "200px" }}>
+                <div className="flex items-center gap-3" style={{ maxWidth: "200px", margin: "0 auto" }}>
+                  <label className="text-sm font-medium whitespace-nowrap">Intensity:</label>
                   <Slider
                     value={intensity}
                     min={0}
                     max={100}
-                    step={5}
+                    step={1}
                     onValueChange={setIntensity}
-                    className="py-4"
+                    className="py-2 flex-1"
                   />
                 </div>
-                <div className="flex justify-between text-xs text-muted-foreground" style={{ maxWidth: "200px", margin: "0 auto" }}>
-                  <span>Low</span>
-                  <span>High</span>
+                <div className="text-center text-xs text-muted-foreground mt-1">
+                  <span>Low — High</span>
                 </div>
               </div>
               
-              <div className="pt-4 border-t space-y-4">
-                <div className="flex justify-between">
-                  <label className="text-base font-medium">Effort Level</label>
+              <div className="pt-4 border-t mb-8">
+                <div className="text-center mb-3">
                   <span className="text-3xl font-bold text-primary">{effort}%</span>
                 </div>
-                <div className="mx-auto" style={{ maxWidth: "200px" }}>
+                <div className="flex items-center gap-3" style={{ maxWidth: "200px", margin: "0 auto" }}>
+                  <label className="text-sm font-medium whitespace-nowrap">Effort:</label>
                   <Slider
                     value={effort}
                     min={0}
                     max={100}
-                    step={5}
+                    step={1}
                     onValueChange={setEffort}
-                    className="py-4"
+                    className="py-2 flex-1"
                   />
                 </div>
-                <div className="flex justify-between text-xs text-muted-foreground" style={{ maxWidth: "200px", margin: "0 auto" }}>
-                  <span>Easy</span>
-                  <span>Maximum</span>
+                <div className="text-center text-xs text-muted-foreground mt-1">
+                  <span>Easy — Maximum</span>
                 </div>
               </div>
               
-              <div className="pt-4 border-t space-y-4">
-                <div className="flex justify-between">
-                  <label className="text-base font-medium">Enjoyment</label>
+              <div className="pt-4 border-t">
+                <div className="text-center mb-3">
                   <span className="text-3xl font-bold text-primary">{enjoyment}%</span>
                 </div>
-                <div className="mx-auto" style={{ maxWidth: "200px" }}>
+                <div className="flex items-center gap-3" style={{ maxWidth: "200px", margin: "0 auto" }}>
+                  <label className="text-sm font-medium whitespace-nowrap">Enjoyment:</label>
                   <Slider
                     value={enjoyment}
                     min={0}
                     max={100}
-                    step={5}
+                    step={1}
                     onValueChange={setEnjoyment}
-                    className="py-4"
+                    className="py-2 flex-1"
                   />
                 </div>
-                <div className="flex justify-between text-xs text-muted-foreground" style={{ maxWidth: "200px", margin: "0 auto" }}>
-                  <span>Bad</span>
-                  <span>Great</span>
+                <div className="text-center text-xs text-muted-foreground mt-1">
+                  <span>Bad — Great</span>
                 </div>
               </div>
               
