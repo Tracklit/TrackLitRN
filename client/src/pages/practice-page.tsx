@@ -1,6 +1,6 @@
 import { ProtectedRoute } from "@/lib/protected-route";
 import { useAuth } from "@/hooks/use-auth";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
@@ -136,23 +136,15 @@ export default function PracticePage() {
         {/* Main session content - single column layout */}
         <div>
           <Card className="mb-6">
-            <CardHeader className="pb-3 border-b">
-              <div className="flex justify-end items-center">
-                <div className="flex items-center gap-3">
-                  <div className="text-right">
-                    <div className="text-lg font-medium">{user?.name || user?.username}</div>
-                    <Badge className="bg-primary/20 text-primary hover:bg-primary/30">Track Athlete</Badge>
-                  </div>
-                  <Avatar className="h-14 w-14 border-2 border-primary/20">
+            <CardContent className="p-0">
+              {/* Workout details as bullet points */}
+              <div className="p-6 pt-6 border-b relative">
+                <div className="absolute right-6 top-6">
+                  <Avatar className="h-12 w-12 border-2 border-primary/20">
                     <AvatarFallback>{user?.name?.split(' ').map(n => n[0]).join('') || user?.username?.[0]}</AvatarFallback>
                   </Avatar>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              {/* Workout details as bullet points */}
-              <div className="p-6 border-b">
-                <h3 className="text-lg font-medium mb-3 text-center">Workout Plan</h3>
+                <h3 className="text-lg font-medium mb-3">Workout Plan</h3>
                 <ul className="space-y-3 list-disc pl-8 pr-4">
                   <li>Warm-up: 10 min dynamic stretching</li>
                   <li>Main set: 5 x 100m sprints at 95% intensity</li>
