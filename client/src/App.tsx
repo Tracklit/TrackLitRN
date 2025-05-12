@@ -10,6 +10,7 @@ import MeetsPage from "@/pages/meets-page";
 import ResultsPage from "@/pages/results-page";
 import CalendarPage from "@/pages/calendar-page";
 import ProfilePage from "@/pages/profile-page";
+import CoachesPage from "@/pages/coaches-page";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { AuthProvider } from "@/hooks/use-auth";
 
@@ -20,6 +21,7 @@ function Router() {
       <ProtectedRoute path="/meets" component={MeetsPage} />
       <ProtectedRoute path="/results" component={ResultsPage} />
       <ProtectedRoute path="/calendar" component={CalendarPage} />
+      <ProtectedRoute path="/coaches" component={CoachesPage} />
       <ProtectedRoute path="/profile" component={ProfilePage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
