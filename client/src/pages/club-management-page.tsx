@@ -31,6 +31,7 @@ export default function ClubManagementPage() {
   const [clubName, setClubName] = useState("");
   const [clubDescription, setClubDescription] = useState("");
   const [clubPrivacy, setClubPrivacy] = useState<boolean>(false);
+  const [clubIsPremium, setClubIsPremium] = useState<boolean>(false);
   const [clubLogoUrl, setClubLogoUrl] = useState<string>("");
   const [clubBannerUrl, setClubBannerUrl] = useState<string>("");
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -92,6 +93,7 @@ export default function ClubManagementPage() {
         setClubName(clubData.name);
         setClubDescription(clubData.description || "");
         setClubPrivacy(clubData.isPrivate);
+        setClubIsPremium(clubData.isPremium || false);
         setClubLogoUrl(clubData.logoUrl || "");
         setClubBannerUrl(clubData.bannerUrl || "");
       } catch (err: any) {
@@ -239,6 +241,7 @@ export default function ClubManagementPage() {
           name: clubName,
           description: clubDescription,
           isPrivate: clubPrivacy,
+          isPremium: clubIsPremium,
           logoUrl,
           bannerUrl
         }),
@@ -832,6 +835,25 @@ export default function ClubManagementPage() {
                       <option value="public">Public - Anyone can join</option>
                       <option value="private">Private - Approval required</option>
                     </select>
+                  </div>
+                  
+                  <div className="grid gap-2">
+                    <Label htmlFor="club-premium">Premium Features</Label>
+                    <select
+                      id="club-premium"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      value={clubIsPremium ? "premium" : "standard"}
+                      onChange={(e) => setClubIsPremium(e.target.value === "premium")}
+                      disabled={!isEditing}
+                    >
+                      <option value="standard">Standard - Basic features only</option>
+                      <option value="premium">Premium - Includes chat and advanced features</option>
+                    </select>
+                    {!isEditing && !clubIsPremium && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Upgrade to premium to enable chat and other advanced features
+                      </p>
+                    )}
                   </div>
 
                   <div className="grid gap-6 pt-4 border-t">

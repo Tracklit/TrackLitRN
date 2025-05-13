@@ -482,16 +482,25 @@ export function Component() {
                     )}
                   </div>
                   
+                  {!club.isPremium && membership?.role !== 'admin' ? (
+                    <div className="mb-4 p-3 bg-yellow-100 text-yellow-800 rounded-md flex items-center gap-2">
+                      <MessageSquare className="h-5 w-5 flex-shrink-0" />
+                      <div className="text-sm">
+                        <p className="font-semibold">Premium Feature</p>
+                        <p>Chat is available to club owners and members of premium clubs.</p>
+                      </div>
+                    </div>
+                  ) : null}
                   <form onSubmit={handleSendMessage} className="flex gap-2">
                     <Input
                       placeholder="Type a message..."
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
-                      disabled={isSendingMessage}
+                      disabled={isSendingMessage || (!club.isPremium && membership?.role !== 'admin')}
                     />
                     <Button 
                       type="submit" 
-                      disabled={isSendingMessage || !newMessage.trim()}
+                      disabled={isSendingMessage || !newMessage.trim() || (!club.isPremium && membership?.role !== 'admin')}
                     >
                       {isSendingMessage ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
