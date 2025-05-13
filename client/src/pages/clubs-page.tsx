@@ -17,7 +17,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
-// No need for context as we'll use window.location.reload() to refresh the groups
+// No need for context as we'll use window.location.reload() to refresh the clubs
 
 export default function ClubsPage() {
   const { user } = useAuth();
@@ -537,12 +537,12 @@ function CreateClubDialog() {
                   <FormLabel>Description (Optional)</FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="Describe what this group is about" 
+                      placeholder="Describe what this club is about" 
                       {...field} 
                     />
                   </FormControl>
                   <FormDescription>
-                    Briefly explain the purpose of this group
+                    Briefly explain the purpose of this club
                   </FormDescription>
                 </FormItem>
               )}
@@ -560,9 +560,9 @@ function CreateClubDialog() {
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
-                    <FormLabel>Make this group private</FormLabel>
+                    <FormLabel>Make this club private</FormLabel>
                     <FormDescription>
-                      Private groups are only visible to members
+                      Private clubs are only visible to members
                     </FormDescription>
                   </div>
                 </FormItem>
