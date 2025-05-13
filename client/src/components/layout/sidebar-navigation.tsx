@@ -43,14 +43,17 @@ function NavItem({ href, icon, children, isActive }: NavItemProps) {
   );
 }
 
-export function SidebarNavigation() {
+export function SidebarNavigation({ isMobile = false }: { isMobile?: boolean }) {
   const { user } = useAuth();
   const [location] = useLocation();
 
   if (!user) return null;
   
   return (
-    <aside className="md:flex flex-col bg-white dark:bg-background border-r border-lightGray dark:border-zinc-800 w-64 h-screen fixed top-0 left-0 z-20 pt-8 md:pt-16">
+    <aside className={cn(
+      "flex flex-col bg-white dark:bg-background border-r border-lightGray dark:border-zinc-800 w-64 h-screen fixed top-0 left-0 z-20 pt-8 md:pt-16",
+      isMobile ? "block md:hidden" : "hidden md:flex"
+    )}>
       <div className="p-4">
         <div className="bg-primary/5 rounded-lg p-3 mb-6">
           <div className="flex items-center space-x-3">

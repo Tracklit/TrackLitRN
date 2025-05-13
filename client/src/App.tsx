@@ -97,9 +97,7 @@ function App() {
         <TooltipProvider>
           <div className="min-h-screen bg-background text-foreground">
             {/* Desktop Sidebar */}
-            <div className="hidden md:block">
-              <SidebarNavigation />
-            </div>
+            <SidebarNavigation isMobile={false} />
             
             {/* Hamburger Menu Button - Positioned at top left */}
             <div className="fixed top-3 left-3 z-50 md:hidden">
@@ -129,9 +127,7 @@ function App() {
             
             {/* Mobile Menu Sidebar - Only render when needed */}
             {isMenuOpen && (
-              <div className="fixed top-0 left-0 bottom-0 z-40 w-3/4 max-w-xs bg-background shadow-xl md:hidden">
-                <SidebarNavigation />
-              </div>
+              <SidebarNavigation isMobile={true} />
             )}
             
             {/* Main Content - Will slide when menu is open */}
