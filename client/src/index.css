@@ -2,15 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Slide effect for main content */
+/* Slide effect for main content and body */
 @layer components {
+  body {
+    overflow-x: hidden; /* Prevent horizontal scrollbar during animations */
+  }
+  
+  /* Main content slide effect */
   main {
+    position: relative;
     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     will-change: transform;
+    width: 100%;
   }
   
   main.menu-open {
-    transform: translateX(280px);
+    transform: translateX(256px); /* Match sidebar width */
   }
   
   /* Only apply slide effect on mobile */

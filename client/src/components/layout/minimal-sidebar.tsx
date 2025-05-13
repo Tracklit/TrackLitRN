@@ -84,7 +84,7 @@ export function MobileSidebarButton({ onClick }: { onClick: () => void }) {
   return (
     <button 
       onClick={onClick} 
-      className="md:hidden fixed top-4 left-4 z-50 rounded-md p-2 bg-white shadow-md text-gray-700"
+      className="rounded-md p-2 bg-white shadow-md text-gray-700"
     >
       <span className="sr-only">Open menu</span>
       <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -107,11 +107,13 @@ export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
         onClick={onClose}
       />
       
-      {/* Sidebar with slide-in/out */}
+      {/* Sidebar - Always rendered but positioned off-screen when closed */}
       <div 
-        className={`md:hidden fixed top-0 left-0 h-full w-64 bg-white z-50 shadow-lg transition-transform duration-300 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className="md:hidden fixed top-0 left-0 h-full w-64 bg-white z-50 shadow-lg"
+        style={{
+          transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
+          transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+        }}
       >
         <div className="flex justify-between items-center p-4 border-b border-gray-200">
           <h2 className="text-lg font-bold">Track Pro</h2>

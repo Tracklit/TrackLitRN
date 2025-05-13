@@ -72,21 +72,21 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
-          <div className="min-h-screen bg-background text-foreground">
-            {/* TEMPORARILY DISABLED
-            Desktop Sidebar 
+          <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
+            {/* Desktop Sidebar - Only visible on larger screens */}
             <DesktopSidebar />
-            */}
             
-            {/* Mobile Menu Button */}
-            <MobileSidebarButton onClick={toggleMenu} />
-            
-            {/* Mobile Sidebar - Only rendered when open */}
+            {/* Mobile Sidebar - Always rendered but positioned off-screen when closed */}
             <MobileSidebar isOpen={isMenuOpen} onClose={closeMenu} />
             
             {/* Main Content - Will slide when menu is open */}
-            <main className={`pt-4 ${isMenuOpen ? 'menu-open' : ''}`}>
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <main className={`${isMenuOpen ? 'menu-open' : ''}`}>
+              {/* Mobile Menu Button - Fixed to the content that slides */}
+              <div className="md:hidden absolute top-4 left-4 z-50">
+                <MobileSidebarButton onClick={toggleMenu} />
+              </div>
+              
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 md:pt-4 md:pl-64">
                 <Router />
               </div>
             </main>
