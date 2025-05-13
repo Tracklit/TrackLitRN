@@ -4,10 +4,11 @@ import { Header } from '@/components/layout/header';
 import { SidebarNavigation } from '@/components/layout/sidebar-navigation';
 import { BottomNavigation } from '@/components/layout/bottom-navigation';
 import { CreateMeetModal } from '@/components/create-meet-modal';
+import { CalendarMeetShareModal } from '@/components/calendar-meet-share-modal';
 import { Button } from '@/components/ui/button';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Meet } from '@shared/schema';
-import { Calendar as CalendarIcon, Trophy, Clock, MapPin, Loader2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Trophy, Clock, MapPin, Loader2, Share2 } from 'lucide-react';
 import { formatTime } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/use-auth';
@@ -16,6 +17,8 @@ export default function CalendarPage() {
   const { user } = useAuth();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [isCreateMeetOpen, setIsCreateMeetOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [selectedShareMeet, setSelectedShareMeet] = useState<Meet | null>(null);
   
   // Fetch meets
   const { data: meets, isLoading } = useQuery<Meet[]>({
@@ -33,6 +36,12 @@ export default function CalendarPage() {
   
   // Get dates with meets for highlighting in calendar
   const datesWithMeets = meets?.map(meet => new Date(meet.date)) || [];
+  
+  // Handle opening share modal
+  const handleShareMeet = (meet: Meet) => {
+    setSelectedShareMeet(meet);
+    setIsShareModalOpen(true);
+  };
 
   return (
     <div className="flex flex-col h-screen">
