@@ -23,14 +23,33 @@ export default function ClubsPage() {
   
   // Fetch user's groups
   useEffect(() => {
+    // Only fetch groups if user is authenticated
+    if (!user) {
+      return;
+    }
+    
     const fetchGroups = async () => {
       try {
         setIsLoadingGroups(true);
-        const response = await fetch('/api/groups');
+        const response = await fetch('/api/groups', {
+          credentials: 'include', // Important for sending cookies with the request
+        });
+        
         if (!response.ok) {
+          if (response.status === 401) {
+            // Handle unauthorized - should redirect to login
+            toast({
+              title: "Authentication required",
+              description: "Please login to view your groups",
+              variant: "destructive"
+            });
+            return;
+          }
+          
           const errorText = await response.text();
           throw new Error(errorText || 'Failed to fetch groups');
         }
+        
         const data = await response.json();
         setGroups(data);
       } catch (err: any) {
@@ -48,7 +67,7 @@ export default function ClubsPage() {
     };
     
     fetchGroups();
-  }, [toast]);
+  }, [toast, user]);
 
   return (
     <div className="container max-w-screen-xl mx-auto p-4 pt-20 md:pt-24 md:pl-72 pb-20">
@@ -336,6 +355,7 @@ function CreateGroupDialog() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: 'include', // Important for authentication
         body: JSON.stringify({
           name,
           description,
@@ -344,6 +364,15 @@ function CreateGroupDialog() {
       });
       
       if (!response.ok) {
+        if (response.status === 401) {
+          toast({
+            title: "Authentication required",
+            description: "Please login to create a group",
+            variant: "destructive"
+          });
+          return;
+        }
+        
         const errorText = await response.text();
         throw new Error(errorText || "Failed to create group");
       }
@@ -359,8 +388,18 @@ function CreateGroupDialog() {
       setDescription("");
       setIsPrivate(false);
       
-      // To refresh the groups list
-      window.location.reload();
+      // Refresh the groups list without reloading the page
+      const groupsResponse = await fetch('/api/groups', {
+        credentials: 'include',
+      });
+      
+      if (groupsResponse.ok) {
+        const newGroups = await groupsResponse.json();
+        setGroups(newGroups);
+      } else {
+        // Fallback to reload if refresh fails
+        window.location.reload();
+      }
     } catch (err: any) {
       setError(err?.message || "An error occurred");
       toast({
