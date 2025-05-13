@@ -1,8 +1,22 @@
 import { useState, useEffect } from "react";
-import { Menu, X } from "lucide-react";
+import { 
+  Menu, 
+  X, 
+  Home, 
+  Calendar, 
+  Trophy, 
+  LineChart, 
+  Users, 
+  Settings, 
+  Award, 
+  Clock,
+  Dumbbell, 
+  MessagesSquare, 
+  Coins 
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 
 interface HamburgerMenuProps {
   className?: string;
@@ -84,61 +98,149 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
             </Button>
           </div>
           
-          <nav className="space-y-4 mt-6">
-            <a
+          <nav className="space-y-1 mt-6">
+            {/* Dashboard */}
+            <Link
               href="/"
-              className="block py-2 px-4 rounded-md hover:bg-muted transition-colors"
+              className={cn(
+                "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
+                location === "/" ? "bg-primary/10 text-primary" : "text-foreground"
+              )}
+              onClick={() => setIsOpen(false)}
             >
-              Home
-            </a>
-            <a
-              href="/clubs"
-              className="block py-2 px-4 rounded-md hover:bg-muted transition-colors"
-            >
-              Clubs
-            </a>
-            <a
+              <Home className="h-5 w-5 mr-3" />
+              Dashboard
+            </Link>
+            
+            {/* Training Section */}
+            <div className="pt-4 pb-2">
+              <p className="text-xs text-muted-foreground px-4 font-medium">TRAINING</p>
+            </div>
+            <Link
               href="/practice"
-              className="block py-2 px-4 rounded-md hover:bg-muted transition-colors"
+              className={cn(
+                "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
+                location.startsWith("/practice") ? "bg-primary/10 text-primary" : "text-foreground"
+              )}
+              onClick={() => setIsOpen(false)}
             >
+              <Dumbbell className="h-5 w-5 mr-3" />
               Practice
-            </a>
-            <a
-              href="/meets"
-              className="block py-2 px-4 rounded-md hover:bg-muted transition-colors"
-            >
-              Meets
-            </a>
-            <a
-              href="/results"
-              className="block py-2 px-4 rounded-md hover:bg-muted transition-colors"
-            >
-              Results
-            </a>
-            <a
-              href="/coaches"
-              className="block py-2 px-4 rounded-md hover:bg-muted transition-colors"
-            >
-              Coaches
-            </a>
-            <a
+            </Link>
+            <Link
               href="/training-tools"
-              className="block py-2 px-4 rounded-md hover:bg-muted transition-colors"
+              className={cn(
+                "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
+                location === "/training-tools" ? "bg-primary/10 text-primary" : "text-foreground"
+              )}
+              onClick={() => setIsOpen(false)}
             >
+              <Clock className="h-5 w-5 mr-3" />
               Training Tools
-            </a>
-            <a
+            </Link>
+            
+            {/* Competition Section */}
+            <div className="pt-4 pb-2">
+              <p className="text-xs text-muted-foreground px-4 font-medium">COMPETITION</p>
+            </div>
+            <Link
+              href="/calendar"
+              className={cn(
+                "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
+                location === "/calendar" ? "bg-primary/10 text-primary" : "text-foreground"
+              )}
+              onClick={() => setIsOpen(false)}
+            >
+              <Calendar className="h-5 w-5 mr-3" />
+              Calendar
+            </Link>
+            <Link
+              href="/meets"
+              className={cn(
+                "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
+                location === "/meets" ? "bg-primary/10 text-primary" : "text-foreground"
+              )}
+              onClick={() => setIsOpen(false)}
+            >
+              <Trophy className="h-5 w-5 mr-3" />
+              Meets
+            </Link>
+            <Link
+              href="/results"
+              className={cn(
+                "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
+                location === "/results" ? "bg-primary/10 text-primary" : "text-foreground"
+              )}
+              onClick={() => setIsOpen(false)}
+            >
+              <LineChart className="h-5 w-5 mr-3" />
+              Results
+            </Link>
+            
+            {/* Social Section */}
+            <div className="pt-4 pb-2">
+              <p className="text-xs text-muted-foreground px-4 font-medium">SOCIAL</p>
+            </div>
+            <Link
+              href="/clubs"
+              className={cn(
+                "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
+                location.startsWith("/clubs") || location.startsWith("/club") ? "bg-primary/10 text-primary" : "text-foreground"
+              )}
+              onClick={() => setIsOpen(false)}
+            >
+              <Users className="h-5 w-5 mr-3" />
+              Clubs
+            </Link>
+            <Link
+              href="/messages"
+              className={cn(
+                "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
+                location === "/messages" ? "bg-primary/10 text-primary" : "text-foreground"
+              )}
+              onClick={() => setIsOpen(false)}
+            >
+              <MessagesSquare className="h-5 w-5 mr-3" />
+              Messages
+            </Link>
+            <Link
+              href="/coaches"
+              className={cn(
+                "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
+                location === "/coaches" ? "bg-primary/10 text-primary" : "text-foreground"
+              )}
+              onClick={() => setIsOpen(false)}
+            >
+              <Award className="h-5 w-5 mr-3" />
+              Coaches
+            </Link>
+            
+            {/* Account Section */}
+            <div className="pt-4 pb-2">
+              <p className="text-xs text-muted-foreground px-4 font-medium">ACCOUNT</p>
+            </div>
+            <Link
               href="/spikes"
-              className="block py-2 px-4 rounded-md hover:bg-muted transition-colors"
+              className={cn(
+                "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
+                location === "/spikes" ? "bg-primary/10 text-primary" : "text-foreground"
+              )}
+              onClick={() => setIsOpen(false)}
             >
+              <Coins className="h-5 w-5 mr-3" />
               Spikes
-            </a>
-            <a
+            </Link>
+            <Link
               href="/profile"
-              className="block py-2 px-4 rounded-md hover:bg-muted transition-colors"
+              className={cn(
+                "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
+                location === "/profile" ? "bg-primary/10 text-primary" : "text-foreground"
+              )}
+              onClick={() => setIsOpen(false)}
             >
-              Profile
-            </a>
+              <Settings className="h-5 w-5 mr-3" />
+              Settings
+            </Link>
           </nav>
         </div>
       </div>
