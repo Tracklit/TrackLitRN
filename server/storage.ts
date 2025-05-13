@@ -631,15 +631,15 @@ export class DatabaseStorage implements IStorage {
   
   async createGroup(group: InsertGroup): Promise<Group> {
     try {
-      // Make sure we have a join code
-      const valueToInsert = {
-        ...group,
-        joinCode: group.joinCode || Math.random().toString(36).substring(2, 8).toUpperCase()
-      };
+      // Generate a random join code for the group
+      const joinCode = Math.random().toString(36).substring(2, 8).toUpperCase();
       
       const [newGroup] = await db
         .insert(groups)
-        .values(valueToInsert)
+        .values({
+          ...group,
+          joinCode
+        })
         .returning();
         
       // Automatically add the creator as a member with admin role

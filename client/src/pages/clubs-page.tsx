@@ -12,6 +12,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
 // No need for context as we'll use window.location.reload() to refresh the groups
 
@@ -337,74 +341,62 @@ function CreateGroupDialog() {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [isPrivate, setIsPrivate] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   
-  const handleCreateGroup = async () => {
-    if (!name) {
-      setError("Group name is required");
-      return;
-    }
-    
-    setIsLoading(true);
-    setError(null);
-    
+  // Create form with default values
+  const form = useForm({
+    defaultValues: {
+      name: "",
+      description: "",
+      isPrivate: false
+    },
+    resolver: zodResolver(z.object({
+      name: z.string().min(1, "Group name is required"),
+      description: z.string().optional(),
+      isPrivate: z.boolean().default(false)
+    }))
+  });
+  
+  const handleCreateGroup = async (values: any) => {
     try {
+      setIsLoading(true);
+      
       const response = await fetch("/api/groups", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: 'include', // Important for authentication
-        body: JSON.stringify({
-          name,
-          description,
-          isPrivate
-        }),
+        credentials: 'include',
+        body: JSON.stringify(values),
       });
       
       if (!response.ok) {
         if (response.status === 401) {
-          toast({
-            title: "Authentication required",
-            description: "Please login to create a group",
-            variant: "destructive"
-          });
-          return;
+          throw new Error("Please login to create a group");
         }
         
-        const errorText = await response.text();
-        throw new Error(errorText || "Failed to create group");
+        const errorData = await response.json().catch(() => null);
+        if (errorData?.error) {
+          throw new Error(errorData.error);
+        }
+        
+        throw new Error("Failed to create group");
       }
+      
+      const group = await response.json();
       
       // Group created successfully
       toast({
         title: "Group created",
-        description: `${name} group was created successfully`,
+        description: `${values.name} group was created successfully`,
       });
       
+      // Close dialog and reset form
       setIsOpen(false);
-      setName("");
-      setDescription("");
-      setIsPrivate(false);
+      form.reset();
       
-      // Refresh the groups list without reloading the page
-      const groupsResponse = await fetch('/api/groups', {
-        credentials: 'include',
-      });
-      
-      if (groupsResponse.ok) {
-        const newGroups = await groupsResponse.json();
-        // Refresh the page to show updated groups
-        window.location.reload();
-      } else {
-        // Fallback to reload if refresh fails
-        window.location.reload();
-      }
+      // Refresh the page to show updated groups
+      window.location.reload();
     } catch (err: any) {
-      setError(err?.message || "An error occurred");
       toast({
         title: "Error creating group",
         description: err?.message || "An error occurred",
