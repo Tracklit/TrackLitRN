@@ -27,11 +27,8 @@ export default function ClubsPage() {
   const [clubDescription, setClubDescription] = useState("");
   const [clubPrivacy, setClubPrivacy] = useState("public");
   const [isCreatingClub, setIsCreatingClub] = useState(false);
-  const [groups, setGroups] = useState<any[]>([]);
-  const [isLoadingGroups, setIsLoadingGroups] = useState(true);
-  const [groupLoadError, setGroupLoadError] = useState<string | null>(null);
   
-  // Add state for clubs
+  // State for clubs
   const [clubs, setClubs] = useState<any[]>([]);
   const [isLoadingClubs, setIsLoadingClubs] = useState(true);
   const [clubLoadError, setClubLoadError] = useState<string | null>(null);
