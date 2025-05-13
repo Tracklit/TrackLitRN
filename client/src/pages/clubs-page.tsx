@@ -23,9 +23,78 @@ export default function ClubsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isCreateClubOpen, setIsCreateClubOpen] = useState(false);
+  const [clubName, setClubName] = useState("");
+  const [clubDescription, setClubDescription] = useState("");
+  const [clubPrivacy, setClubPrivacy] = useState("public");
+  const [isCreatingClub, setIsCreatingClub] = useState(false);
   const [groups, setGroups] = useState<any[]>([]);
   const [isLoadingGroups, setIsLoadingGroups] = useState(true);
   const [groupLoadError, setGroupLoadError] = useState<string | null>(null);
+  
+  // Handle club creation
+  const handleCreateClub = async () => {
+    if (!clubName.trim()) {
+      toast({
+        title: "Error",
+        description: "Club name is required",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsCreatingClub(true);
+    
+    try {
+      const response = await fetch("/api/clubs", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          name: clubName,
+          description: clubDescription,
+          isPrivate: clubPrivacy === "private"
+        }),
+      });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          toast({
+            title: "Authentication required",
+            description: "Please login to create a club",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to create club");
+      }
+      
+      // Club created successfully
+      toast({
+        title: "Club created",
+        description: `${clubName} club was created successfully`,
+      });
+      
+      setIsCreateClubOpen(false);
+      setClubName("");
+      setClubDescription("");
+      setClubPrivacy("public");
+      
+      // Refresh the page to show updated clubs
+      window.location.reload();
+    } catch (err: any) {
+      toast({
+        title: "Error creating club",
+        description: err?.message || "An error occurred",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCreatingClub(false);
+    }
+  };
   
   // Fetch user's groups
   useEffect(() => {
@@ -98,15 +167,30 @@ export default function ClubsPage() {
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
                   <Label htmlFor="name">Club Name</Label>
-                  <Input id="name" placeholder="Enter club name" />
+                  <Input 
+                    id="name" 
+                    placeholder="Enter club name" 
+                    value={clubName}
+                    onChange={(e) => setClubName(e.target.value)}
+                  />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="description">Description</Label>
-                  <Textarea id="description" placeholder="Describe your club" />
+                  <Textarea 
+                    id="description" 
+                    placeholder="Describe your club" 
+                    value={clubDescription}
+                    onChange={(e) => setClubDescription(e.target.value)}
+                  />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="privacy">Privacy</Label>
-                  <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                  <select 
+                    id="privacy"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    value={clubPrivacy}
+                    onChange={(e) => setClubPrivacy(e.target.value)}
+                  >
                     <option value="public">Public - Anyone can join</option>
                     <option value="private">Private - Approval required</option>
                   </select>
@@ -114,7 +198,19 @@ export default function ClubsPage() {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsCreateClubOpen(false)}>Cancel</Button>
-                <Button type="submit">Create Club</Button>
+                <Button 
+                  onClick={handleCreateClub} 
+                  disabled={isCreatingClub}
+                >
+                  {isCreatingClub ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    "Create Club"
+                  )}
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>

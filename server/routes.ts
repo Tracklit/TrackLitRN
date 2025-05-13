@@ -1144,10 +1144,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).send("Already a member of this club");
       }
       
-      // Join code verification for private clubs
-      if (club.isPrivate && req.body.joinCode !== club.joinCode) {
-        return res.status(403).send("Invalid join code");
-      }
+      // For private clubs, we'll set status to 'pending' for admin approval
+      // Join codes are not implemented in this version
       
       const memberData = {
         clubId,
