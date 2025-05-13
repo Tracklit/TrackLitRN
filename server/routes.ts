@@ -1103,8 +1103,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Parse and validate the club data
       const clubData = {
         ...req.body,
-        ownerId: req.user!.id,
-        joinCode: Math.random().toString(36).substring(2, 8).toUpperCase() // Generate random join code
+        ownerId: req.user!.id
+        // joinCode removed as it doesn't exist in the DB
       };
       const newClub = await dbStorage.createClub(clubData);
       res.status(201).json(newClub);

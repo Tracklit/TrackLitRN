@@ -339,9 +339,8 @@ export const clubs = pgTable("clubs", {
   description: text("description"),
   ownerId: integer("owner_id").notNull().references(() => users.id),
   isPrivate: boolean("is_private").default(false),
-  isPaid: boolean("is_paid").default(false),
-  price: integer("price"), // in currency or spikes
-  joinCode: text("join_code").notNull().unique(),
+  // isPaid and price removed as they don't exist in the actual DB
+  // joinCode removed as it doesn't exist in the actual DB
   logoUrl: text("logo_url"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -549,7 +548,6 @@ export type Weather = {
 export const insertClubSchema = createInsertSchema(clubs).omit({
   id: true,
   createdAt: true,
-  joinCode: true, // Server generates this
 });
 
 export type InsertClub = z.infer<typeof insertClubSchema>;
