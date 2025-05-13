@@ -876,7 +876,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).send("Athlete is already in this group");
       }
       
-      const member = await dbStorage.createGroupMember(memberData);
+      const member = await dbStorage.createAthleteGroupMember(memberData);
       
       // Return the created member with athlete details
       const result = {
@@ -1276,7 +1276,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "accepted" as const // Directly accepted when added by admin/owner
       };
       
-      const newMember = await dbStorage.createGroupMember(memberData);
+      const newMember = await dbStorage.createChatGroupMember(memberData);
       res.status(201).json(newMember);
     } catch (error) {
       res.status(500).send("Error adding group member");

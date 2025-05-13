@@ -76,7 +76,7 @@ export interface IStorage {
   deleteGroup(id: number): Promise<boolean>;
   getGroupMembers(groupId: number): Promise<ChatGroupMember[]>;
   getGroupMemberByUserAndGroup(userId: number, groupId: number): Promise<ChatGroupMember | undefined>;
-  createGroupMember(member: InsertChatGroupMember): Promise<ChatGroupMember>;
+  createChatGroupMember(member: InsertChatGroupMember): Promise<ChatGroupMember>;
   deleteGroupMember(id: number): Promise<boolean>;
   getGroupMessages(groupId: number): Promise<GroupMessage[]>;
   createGroupMessage(message: InsertGroupMessage): Promise<GroupMessage>;
@@ -695,7 +695,7 @@ export class DatabaseStorage implements IStorage {
     return member;
   }
   
-  async createGroupMember(member: InsertChatGroupMember): Promise<ChatGroupMember> {
+  async createChatGroupMember(member: InsertChatGroupMember): Promise<ChatGroupMember> {
     const [newMember] = await db
       .insert(chatGroupMembers)
       .values(member)
