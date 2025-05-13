@@ -31,6 +31,11 @@ export default function ClubManagementPage() {
   const [clubName, setClubName] = useState("");
   const [clubDescription, setClubDescription] = useState("");
   const [clubPrivacy, setClubPrivacy] = useState<boolean>(false);
+  const [clubLogoUrl, setClubLogoUrl] = useState<string>("");
+  const [clubBannerUrl, setClubBannerUrl] = useState<string>("");
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState<{logo: boolean, banner: boolean}>({ logo: false, banner: false });
   const [isSaving, setIsSaving] = useState(false);
   
   // Members state
@@ -87,6 +92,8 @@ export default function ClubManagementPage() {
         setClubName(clubData.name);
         setClubDescription(clubData.description || "");
         setClubPrivacy(clubData.isPrivate);
+        setClubLogoUrl(clubData.logoUrl || "");
+        setClubBannerUrl(clubData.bannerUrl || "");
       } catch (err: any) {
         console.error('Error fetching club details:', err);
         setError(err?.message || 'An error occurred while fetching club details');
@@ -130,6 +137,66 @@ export default function ClubManagementPage() {
     fetchClubMembers();
   }, [clubId, user, toast]);
   
+  // Handle file uploads
+  const handleFileUpload = async (fileType: 'logo' | 'banner', file: File): Promise<string | null> => {
+    if (!file) return null;
+    
+    // Update loading state for the specific upload type
+    setIsUploading(prev => ({ ...prev, [fileType]: true }));
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('fileType', fileType);
+      
+      const response = await fetch(`/api/clubs/${clubId}/upload`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          toast({
+            title: "Authentication required",
+            description: "Please login to upload images",
+            variant: "destructive"
+          });
+          return null;
+        }
+        
+        const errorText = await response.text();
+        throw new Error(errorText || `Failed to upload ${fileType}`);
+      }
+      
+      const data = await response.json();
+      return data.fileUrl;
+    } catch (err: any) {
+      toast({
+        title: `Error uploading ${fileType}`,
+        description: err?.message || "An error occurred",
+        variant: "destructive"
+      });
+      return null;
+    } finally {
+      setIsUploading(prev => ({ ...prev, [fileType]: false }));
+    }
+  };
+  
+  // Handle logo change
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setLogoFile(e.target.files[0]);
+    }
+  };
+  
+  // Handle banner change
+  const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setBannerFile(e.target.files[0]);
+    }
+  };
+
   // Handle club update
   const handleSaveClub = async () => {
     if (!clubName.trim()) {
@@ -143,6 +210,24 @@ export default function ClubManagementPage() {
     
     setIsSaving(true);
     
+    // Upload files if selected
+    let logoUrl = clubLogoUrl;
+    let bannerUrl = clubBannerUrl;
+    
+    if (logoFile) {
+      const uploadedLogoUrl = await handleFileUpload('logo', logoFile);
+      if (uploadedLogoUrl) {
+        logoUrl = uploadedLogoUrl;
+      }
+    }
+    
+    if (bannerFile) {
+      const uploadedBannerUrl = await handleFileUpload('banner', bannerFile);
+      if (uploadedBannerUrl) {
+        bannerUrl = uploadedBannerUrl;
+      }
+    }
+    
     try {
       const response = await fetch(`/api/clubs/${clubId}`, {
         method: "PATCH",
@@ -153,7 +238,9 @@ export default function ClubManagementPage() {
         body: JSON.stringify({
           name: clubName,
           description: clubDescription,
-          isPrivate: clubPrivacy
+          isPrivate: clubPrivacy,
+          logoUrl,
+          bannerUrl
         }),
       });
       
@@ -173,6 +260,14 @@ export default function ClubManagementPage() {
       
       const updatedClub = await response.json();
       setClub(updatedClub);
+      
+      // Update local state with new URLs
+      setClubLogoUrl(updatedClub.logoUrl || "");
+      setClubBannerUrl(updatedClub.bannerUrl || "");
+      
+      // Reset file inputs
+      setLogoFile(null);
+      setBannerFile(null);
       
       toast({
         title: "Club updated",
@@ -702,7 +797,7 @@ export default function ClubManagementPage() {
                 <CardDescription>Update your club information</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div className="grid gap-2">
                     <Label htmlFor="club-name">Club Name</Label>
                     <Input
@@ -737,6 +832,64 @@ export default function ClubManagementPage() {
                       <option value="public">Public - Anyone can join</option>
                       <option value="private">Private - Approval required</option>
                     </select>
+                  </div>
+
+                  <div className="grid gap-6 pt-4 border-t">
+                    <h3 className="text-lg font-medium">Club Images</h3>
+                    
+                    <div className="grid gap-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="club-logo">Club Logo</Label>
+                        {clubLogoUrl && (
+                          <div className="mb-2">
+                            <div className="w-20 h-20 rounded-full overflow-hidden border">
+                              <img 
+                                src={clubLogoUrl} 
+                                alt="Club logo" 
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          </div>
+                        )}
+                        <Input
+                          id="club-logo"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleLogoChange}
+                          disabled={!isEditing || isUploading.logo}
+                          className="cursor-pointer"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Upload a square image for best results (max 2MB)
+                        </p>
+                      </div>
+                      
+                      <div className="grid gap-2">
+                        <Label htmlFor="club-banner">Club Banner</Label>
+                        {clubBannerUrl && (
+                          <div className="mb-2">
+                            <div className="h-32 rounded-md overflow-hidden border">
+                              <img 
+                                src={clubBannerUrl} 
+                                alt="Club banner" 
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          </div>
+                        )}
+                        <Input
+                          id="club-banner"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleBannerChange}
+                          disabled={!isEditing || isUploading.banner}
+                          className="cursor-pointer"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Recommended size: 1200x300px (max 2MB)
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </CardContent>

@@ -1357,6 +1357,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Upload club images (logo or banner)
+  app.post("/api/clubs/:id/upload", upload.single('file'), async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const clubId = parseInt(req.params.id);
+      const fileType = req.body.fileType as 'logo' | 'banner';
+      
+      // Check if club exists
+      const club = await dbStorage.getClub(clubId);
+      if (!club) {
+        return res.status(404).send("Club not found");
+      }
+      
+      // Check if user is the owner
+      if (club.ownerId !== req.user!.id) {
+        return res.status(403).send("Only the club owner can update club images");
+      }
+      
+      // Ensure file was uploaded
+      if (!req.file) {
+        return res.status(400).send("No file uploaded");
+      }
+      
+      // Generate file path
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      const ext = path.extname(req.file.originalname);
+      const filename = `club-${fileType}-${clubId}-${uniqueSuffix}${ext}`;
+      
+      // Move file to a permanent location (it's already saved by multer)
+      const oldPath = req.file.path;
+      const newPath = path.join(uploadsDir, filename);
+      
+      fs.renameSync(oldPath, newPath);
+      
+      // Update relative path for the database
+      const fileUrl = `/uploads/${filename}`;
+      
+      // Return the file URL
+      res.json({ fileUrl });
+    } catch (error: any) {
+      console.error(`Error uploading club ${req.body.fileType}:`, error);
+      res.status(500).send(`Error uploading image: ${error.message || error}`);
+    }
+  });
+
   // Update club
   app.patch("/api/clubs/:id", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
