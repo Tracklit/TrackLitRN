@@ -1,5 +1,7 @@
+import { useState, useEffect } from "react";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { useAuth } from "@/hooks/use-auth";
+import { PageContainer } from "@/components/page-container";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -18,7 +20,6 @@ import {
   ChevronRight,
   TrendingUp,
   Percent,
-  Home,
   Calculator,
   ChevronDown,
   ChevronUp,
@@ -26,26 +27,31 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "wouter";
-import { useState, useEffect } from "react";
-import { PageContainer } from "@/components/page-container";
 
 export default function PracticePage() {
   const { user } = useAuth();
   
-  // Swipe navigation
-  const [currentDay, setCurrentDay] = useState<string>("today");
+  // State for current day navigation
+  const [currentDay, setCurrentDay] = useState<"yesterday" | "today" | "tomorrow">("today");
   
-  // UI state
-  const [showCalculator, setShowCalculator] = useState<boolean>(false);
+  // State for Training Performance inputs
+  const [percentage, setPercentage] = useState<number[]>([85]);
+  const [distance, setDistance] = useState<number[]>([150]);
+  const [calculatedTime, setCalculatedTime] = useState<number>(18.3);
+  const [calculatorOpen, setCalculatorOpen] = useState<boolean>(false);
   
-  // Percentage and distance calculation
-  const [percentage, setPercentage] = useState<number[]>([95]);
-  const [distance, setDistance] = useState<number[]>([100]);
-  const [calculatedTime, setCalculatedTime] = useState<number>(0);
+  // Navigation functions
+  const goToPreviousDay = () => {
+    setCurrentDay("yesterday");
+  };
   
-  // Dummy best times data (will be fetched from API in future)
+  const goToNextDay = () => {
+    setCurrentDay("tomorrow");
+  };
+  
+  // Best times for common distances (in seconds)
   const bestTimes: Record<string, number> = {
-    "50": 6.2,
+    "50": 6.1,
     "60": 7.3,
     "80": 9.6,
     "90": 10.8,
@@ -68,18 +74,9 @@ export default function PracticePage() {
   // Calculate distance marks at specific points
   const distanceMarks = [50, 60, 80, 90, 100, 110, 120, 150, 180, 200, 220, 250, 280, 300, 350, 400, 500, 600];
   
-  // Navigation functions
-  const goToPreviousDay = () => {
-    setCurrentDay("yesterday");
-  };
-  
-  const goToNextDay = () => {
-    setCurrentDay("tomorrow");
-  };
-  
   // Calculate goal time based on percentage and distance
   useEffect(() => {
-    // Find the closest distance mark
+    // Find closest standard distance
     const closestDistance = distanceMarks.reduce((prev, curr) => {
       return (Math.abs(curr - distance[0]) < Math.abs(prev - distance[0])) ? curr : prev;
     });
@@ -94,17 +91,18 @@ export default function PracticePage() {
   }, [percentage, distance]);
   
   return (
-    <div className="container max-w-3xl mx-auto p-4 pt-20 md:pt-24 pb-20">
-      <div className="text-center mx-auto max-w-md">
-        <Link href="/" className="inline-flex items-center text-muted-foreground mb-4 hover:text-primary transition-colors">
-          <Home className="h-4 w-4 mr-1" />
-          <span>Back to Dashboard</span>
-        </Link>
-        
-        <h1 className="text-3xl font-bold tracking-tight">
-          {currentDay === "today" ? "Today's Practice" : currentDay === "yesterday" ? "Yesterday's Practice" : "Tomorrow's Practice"}
-        </h1>
-        <p className="text-muted-foreground mt-2 mb-6">
+    <PageContainer
+      breadcrumbs={[
+        { name: "Practice", href: "/practice" }
+      ]}
+      title={currentDay === "today" ? 
+             "Today's Practice" : 
+             currentDay === "yesterday" ? 
+             "Yesterday's Practice" : 
+             "Tomorrow's Practice"}
+    >
+      <div className="text-center mx-auto max-w-md mb-6">
+        <p className="text-muted-foreground">
           Track your training sessions and progress
         </p>
       </div>
@@ -112,179 +110,210 @@ export default function PracticePage() {
       <div className="mt-6 relative">
         {/* Day navigation */}
         <div className="flex items-center justify-between mb-6 max-w-xs mx-auto text-center">
-          <Button 
-            variant="ghost" 
-            onClick={goToPreviousDay} 
-            disabled={currentDay === "yesterday"}
-            className={cn(
-              "flex items-center gap-1 text-sm",
-              currentDay === "yesterday" ? "opacity-30 cursor-not-allowed" : ""
-            )}
+          <Button
+            variant="outline"
+            onClick={goToPreviousDay}
+            className="flex items-center gap-1"
           >
             <ChevronLeft className="h-4 w-4" />
-            <span>Yesterday</span>
+            Yesterday
           </Button>
           
-          <span className="text-sm font-semibold">
-            {currentDay === "today" 
-              ? "May 12, 2025" 
-              : currentDay === "yesterday" 
-              ? "May 11, 2025" 
-              : "May 13, 2025"}
-          </span>
+          <Badge variant="outline" className="px-3 py-1 text-sm">
+            {currentDay === "yesterday" ? "May 6" : 
+             currentDay === "today" ? "May 7" : "May 8"}
+          </Badge>
           
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="outline"
             onClick={goToNextDay}
-            disabled={currentDay === "tomorrow"}
-            className={cn(
-              "flex items-center gap-1 text-sm",
-              currentDay === "tomorrow" ? "opacity-30 cursor-not-allowed" : ""
-            )}
+            className="flex items-center gap-1"
           >
-            <span>Tomorrow</span>
+            Tomorrow
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-        
-        {/* Main session content - single column layout */}
-        <div>
-          <Card className="mb-6">
-            <CardContent className="p-0">
-              {/* Workout details as bullet points */}
-              <div className="p-6 pt-6 relative">
-                <div className="absolute right-6 top-6">
-                  <Avatar className="h-12 w-12 border-2 border-primary/20">
-                    <AvatarFallback>{user?.name?.split(' ').map(n => n[0]).join('') || user?.username?.[0]}</AvatarFallback>
-                  </Avatar>
+
+        {/* Session Details */}
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-10 w-10 border border-primary/20">
+                  <AvatarFallback className="bg-primary/10 text-primary">
+                    {user?.username?.[0]?.toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h3 className="font-semibold">Speed Endurance</h3>
+                  <p className="text-sm text-muted-foreground">Coach Williams</p>
                 </div>
-                <h3 className="text-lg font-medium mb-3">Workout Plan</h3>
-                <ul className="space-y-3 list-disc pl-8 pr-4">
-                  <li>Warm-up: 10 min dynamic stretching</li>
-                  <li>Main set: 5 x 100m sprints at 95% intensity</li>
-                  <li>Recovery: 3 min between sets</li>
-                  <li>Cool down: 5 min easy jog + stretching</li>
-                  <li>Total distance: ~1.5km</li>
-                </ul>
+              </div>
+              <Badge>High Intensity</Badge>
+            </div>
+            
+            <div className="space-y-4 mt-6">
+              <div className="bg-muted/40 p-3 rounded-md">
+                <div className="flex items-center gap-2 text-sm font-medium mb-2">
+                  <TrendingUp className="h-4 w-4 text-primary" />
+                  <span>Feeling</span>
+                </div>
+                <Slider
+                  value={[7]}
+                  max={10}
+                  step={1}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                  <span>Poor</span>
+                  <span>Excellent</span>
+                </div>
               </div>
               
-              {/* Calculator toggle with animation */}
-              <div className="px-6 pt-4">
-                <Separator className="bg-primary/10 h-[2px]" />
-                <Collapsible
-                  open={showCalculator}
-                  onOpenChange={setShowCalculator}
+              <div className="bg-muted/40 p-3 rounded-md">
+                <div className="flex items-center gap-2 text-sm font-medium mb-2">
+                  <TrendingUp className="h-4 w-4 text-primary" />
+                  <span>Satisfaction</span>
+                </div>
+                <Slider
+                  value={[8]}
+                  max={10}
+                  step={1}
                   className="w-full"
-                >
-                  <CollapsibleTrigger asChild>
-                    <button 
-                      className="flex items-center justify-center gap-2 w-full mt-4 mb-2 p-2 hover:bg-muted rounded-md transition-colors"
-                    >
-                      <Calculator className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                        Performance Calculator
-                      </span>
-                      {showCalculator ? 
-                        <ChevronUp className="h-4 w-4 text-muted-foreground transition-transform duration-200" /> : 
-                        <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" />
-                      }
-                    </button>
-                  </CollapsibleTrigger>
-                  
-                  <CollapsibleContent className="overflow-hidden data-[state=open]:animate-expand data-[state=closed]:animate-collapse">
-                    {/* Percentage and distance sliders */}
-                    <div className="p-6 border-b">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        {/* Intensity slider */}
-                        <div>
-                          <div className="text-center mb-3">
-                            <span className="text-3xl font-bold text-primary">{percentage}%</span>
-                          </div>
-                          <div className="flex items-center gap-2" style={{ maxWidth: "200px", margin: "0 auto" }}>
-                            <label className="text-sm font-medium whitespace-nowrap">
-                              <Percent className="h-4 w-4 mr-1 inline-block" />
-                              Intensity:
-                            </label>
-                            <Slider
-                              value={percentage}
-                              min={0}
-                              max={100}
-                              step={1}
-                              onValueChange={setPercentage}
-                              className="py-2 flex-1"
-                            />
-                          </div>
-                          <div className="text-center text-xs text-muted-foreground mt-1">
-                            <span>Recovery — Maximum</span>
-                          </div>
-                        </div>
-                        
-                        {/* Distance slider */}
-                        <div>
-                          <div className="text-center mb-3">
-                            <span className="text-3xl font-bold text-primary">{distance[0]}m</span>
-                          </div>
-                          <div className="flex items-center gap-2" style={{ maxWidth: "200px", margin: "0 auto" }}>
-                            <label className="text-sm font-medium whitespace-nowrap">
-                              <TrendingUp className="h-4 w-4 mr-1 inline-block" />
-                              Distance:
-                            </label>
-                            <Slider
-                              value={distance}
-                              min={50}
-                              max={600}
-                              step={10}
-                              onValueChange={setDistance}
-                              className="py-2 flex-1"
-                            />
-                          </div>
-                          <div className="text-center text-xs text-muted-foreground mt-1">
-                            <span>50m — 600m</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Goal time calculation */}
-                    <div className="p-6 bg-primary/5">
-                      <div className="bg-primary/10 p-6 rounded-lg text-center max-w-sm mx-auto">
-                        <div className="mb-2">
-                          <span className="text-base font-medium">Goal Time ({percentage}% of Best)</span>
-                        </div>
-                        <div className="text-5xl font-bold text-primary mb-2">
-                          {calculatedTime.toFixed(2)}s
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          Based on your best time of {bestTimes["100"]}s for 100m
-                        </p>
-                      </div>
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
+                />
+                <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                  <span>Poor</span>
+                  <span>Excellent</span>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-          
-          {/* Media Upload Section */}
-          <div className="flex justify-center mt-8">
-            <Button size="lg" className="mr-4 py-6 px-8">
-              <Upload className="h-5 w-5 mr-3" />
-              <span className="text-base">Upload Results</span>
-            </Button>
+              
+              {/* Training Performance Calculator */}
+              <Collapsible 
+                open={calculatorOpen}
+                onOpenChange={setCalculatorOpen}
+                className="bg-muted/40 p-3 rounded-md"
+              >
+                <CollapsibleTrigger asChild>
+                  <div className="flex items-center justify-between cursor-pointer">
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <Calculator className="h-4 w-4 text-primary" />
+                      <span>Performance Calculator</span>
+                    </div>
+                    {calculatorOpen ? (
+                      <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </div>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-3 space-y-4 animate-in fade-in-0 slide-in-from-top-5">
+                  <div>
+                    <div className="flex items-center justify-between text-sm mb-2">
+                      <div className="flex items-center gap-1">
+                        <Percent className="h-3.5 w-3.5 text-primary" />
+                        <span>Effort Level</span>
+                      </div>
+                      <span className="font-semibold">{percentage[0]}%</span>
+                    </div>
+                    <Slider
+                      value={percentage}
+                      onValueChange={setPercentage}
+                      min={50}
+                      max={100}
+                      step={5}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                      <span>50%</span>
+                      <span>100%</span>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div className="flex items-center justify-between text-sm mb-2">
+                      <div className="flex items-center gap-1">
+                        <TrendingUp className="h-3.5 w-3.5 text-primary" />
+                        <span>Distance</span>
+                      </div>
+                      <span className="font-semibold">{distance[0]}m</span>
+                    </div>
+                    <Slider
+                      value={distance}
+                      onValueChange={setDistance}
+                      min={50}
+                      max={600}
+                      step={10}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                      <span>50m</span>
+                      <span>600m</span>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-primary/10 p-2 rounded text-center">
+                    <p className="text-sm font-medium">Target Time:</p>
+                    <p className="text-2xl font-bold text-primary">{calculatedTime}s</p>
+                    <p className="text-xs text-muted-foreground">
+                      at {percentage[0]}% effort for {distance[0]}m
+                    </p>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+              
+              {/* Practice Notes & Diary */}
+              <div className="bg-muted/40 p-3 rounded-md">
+                <h4 className="text-sm font-medium mb-2">Diary Notes</h4>
+                <textarea 
+                  className="w-full h-24 p-2 rounded border border-border bg-background text-sm" 
+                  placeholder="Add your training notes here..."
+                ></textarea>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* Media Upload Section */}
+        <div className="mb-6">
+          <h3 className="font-medium text-lg mb-3">Media</h3>
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            <div className="aspect-square bg-muted/40 rounded-md flex items-center justify-center border border-dashed border-border">
+              <div className="text-center p-4">
+                <div className="bg-primary/10 h-10 w-10 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <Upload className="h-5 w-5 text-primary" />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Upload photo/video
+                </p>
+              </div>
+            </div>
             
-            <Button variant="outline" size="lg" className="py-6 px-8">
+            <div className="aspect-square bg-muted/40 rounded-md border border-dashed border-border flex items-center justify-center">
+              <div className="text-center p-4">
+                <div className="bg-primary/10 h-10 w-10 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <Camera className="h-5 w-5 text-primary" />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Capture photo
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex justify-center">
+            <Button variant="outline" className="w-full">
               <Camera className="h-5 w-5 mr-3" />
               <span className="text-base">Add Media</span>
             </Button>
           </div>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }
 
 // Protected route wrapper
-export function Component() {
+export function PracticePageWrapper() {
   return (
     <ProtectedRoute path="/practice" component={PracticePage} />
   );
