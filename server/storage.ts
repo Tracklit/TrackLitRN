@@ -121,11 +121,11 @@ export interface IStorage {
   updateAthleteGroup(id: number, groupData: Partial<AthleteGroup>): Promise<AthleteGroup | undefined>;
   deleteAthleteGroup(id: number): Promise<boolean>;
   
-  // Group Member operations
+  // Group Member operations (Athlete Group Members)
   getGroupMember(id: number): Promise<GroupMember | undefined>;
   getGroupMembersByGroupId(groupId: number): Promise<GroupMember[]>;
   getGroupMembersByAthleteId(athleteId: number): Promise<GroupMember[]>;
-  createGroupMember(member: InsertGroupMember): Promise<GroupMember>;
+  createAthleteGroupMember(member: InsertGroupMember): Promise<GroupMember>;
   deleteGroupMember(id: number): Promise<boolean>;
   
   // Coach Note operations
@@ -386,7 +386,8 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(athleteGroupMembers).where(eq(athleteGroupMembers.athleteId, athleteId));
   }
 
-  async createGroupMember(insertMember: InsertGroupMember): Promise<GroupMember> {
+  // This method is used for athlete group members (coach-focused functionality)
+  async createAthleteGroupMember(insertMember: InsertGroupMember): Promise<GroupMember> {
     const [member] = await db.insert(athleteGroupMembers).values(insertMember).returning();
     return member;
   }

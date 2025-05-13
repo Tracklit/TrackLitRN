@@ -1272,8 +1272,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const memberData = {
         groupId,
         userId,
-        role,
-        status: 'accepted' // Directly accepted when added by admin/owner
+        role: role as "member" | "admin",
+        status: "accepted" as const // Directly accepted when added by admin/owner
       };
       
       const newMember = await dbStorage.createGroupMember(memberData);
