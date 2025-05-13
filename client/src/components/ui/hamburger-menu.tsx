@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useLocation, Link } from "wouter";
+import { useLocation } from "wouter";
 
 interface HamburgerMenuProps {
   className?: string;
@@ -57,7 +57,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
   }, [isOpen]);
 
   return (
-    <div className={cn("block lg:hidden", className)}>
+    <div className={cn("block md:hidden", className)}>
       <Button 
         variant="ghost" 
         size="icon" 
@@ -85,6 +85,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
           "fixed top-0 left-0 bottom-0 z-40 w-3/4 max-w-xs bg-background shadow-xl transition-transform duration-300 ease-in-out",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
+        style={{ visibility: isOpen ? 'visible' : 'hidden' }}
       >
         <div className="p-6 space-y-4">
           <div className="flex items-center justify-between">
@@ -100,7 +101,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
           
           <nav className="space-y-1 mt-6">
             {/* Dashboard */}
-            <Link
+            <a
               href="/"
               className={cn(
                 "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
@@ -110,13 +111,13 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
             >
               <Home className="h-5 w-5 mr-3" />
               Dashboard
-            </Link>
+            </a>
             
             {/* Training Section */}
             <div className="pt-4 pb-2">
               <p className="text-xs text-muted-foreground px-4 font-medium">TRAINING</p>
             </div>
-            <Link
+            <a
               href="/practice"
               className={cn(
                 "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
@@ -126,8 +127,8 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
             >
               <Dumbbell className="h-5 w-5 mr-3" />
               Practice
-            </Link>
-            <Link
+            </a>
+            <a
               href="/training-tools"
               className={cn(
                 "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
@@ -137,13 +138,13 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
             >
               <Clock className="h-5 w-5 mr-3" />
               Training Tools
-            </Link>
+            </a>
             
             {/* Competition Section */}
             <div className="pt-4 pb-2">
               <p className="text-xs text-muted-foreground px-4 font-medium">COMPETITION</p>
             </div>
-            <Link
+            <a
               href="/calendar"
               className={cn(
                 "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
@@ -153,8 +154,8 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
             >
               <Calendar className="h-5 w-5 mr-3" />
               Calendar
-            </Link>
-            <Link
+            </a>
+            <a
               href="/meets"
               className={cn(
                 "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
@@ -164,8 +165,8 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
             >
               <Trophy className="h-5 w-5 mr-3" />
               Meets
-            </Link>
-            <Link
+            </a>
+            <a
               href="/results"
               className={cn(
                 "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
@@ -175,13 +176,13 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
             >
               <LineChart className="h-5 w-5 mr-3" />
               Results
-            </Link>
+            </a>
             
             {/* Social Section */}
             <div className="pt-4 pb-2">
               <p className="text-xs text-muted-foreground px-4 font-medium">SOCIAL</p>
             </div>
-            <Link
+            <a
               href="/clubs"
               className={cn(
                 "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
@@ -191,8 +192,8 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
             >
               <Users className="h-5 w-5 mr-3" />
               Clubs
-            </Link>
-            <Link
+            </a>
+            <a
               href="/messages"
               className={cn(
                 "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
@@ -202,8 +203,8 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
             >
               <MessagesSquare className="h-5 w-5 mr-3" />
               Messages
-            </Link>
-            <Link
+            </a>
+            <a
               href="/coaches"
               className={cn(
                 "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
@@ -213,13 +214,13 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
             >
               <Award className="h-5 w-5 mr-3" />
               Coaches
-            </Link>
+            </a>
             
             {/* Account Section */}
             <div className="pt-4 pb-2">
               <p className="text-xs text-muted-foreground px-4 font-medium">ACCOUNT</p>
             </div>
-            <Link
+            <a
               href="/spikes"
               className={cn(
                 "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
@@ -229,8 +230,8 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
             >
               <Coins className="h-5 w-5 mr-3" />
               Spikes
-            </Link>
-            <Link
+            </a>
+            <a
               href="/profile"
               className={cn(
                 "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
@@ -240,7 +241,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
             >
               <Settings className="h-5 w-5 mr-3" />
               Settings
-            </Link>
+            </a>
           </nav>
         </div>
       </div>

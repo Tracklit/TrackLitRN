@@ -5,18 +5,22 @@
 @layer components {
   /* Sidebar animation */
   #main-content {
-    transition: padding-left 0.3s ease-in-out, width 0.3s ease-in-out;
+    position: relative;
+    transition: transform 0.3s ease-in-out, width 0.3s ease-in-out;
+    will-change: transform;
+    transform: translateX(0);
+    width: 100%;
   }
   
   #main-content.menu-open {
-    padding-left: 75vw;
-    max-width: 75vw;
+    transform: translateX(75vw);
+    width: 100vw;
   }
   
   @media (min-width: 768px) {
     #main-content.menu-open {
-      padding-left: 320px;
-      max-width: calc(100% - 320px);
+      transform: translateX(320px);
+      width: 100vw;
     }
   }
 }

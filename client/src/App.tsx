@@ -67,7 +67,7 @@ function App() {
             <SidebarNavigation />
             
             {/* Hamburger Menu Button - Positioned at top left */}
-            <div className="fixed top-4 left-4 z-50 block md:hidden">
+            <div className="fixed top-3 left-3 z-50">
               <HamburgerMenu />
             </div>
             
