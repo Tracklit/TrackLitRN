@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation, useRoute, Link } from "wouter";
+import { useLocation, useRoute, Link as WouterLink } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/page-header";
 import { ProtectedRoute } from "@/lib/protected-route";
-import { Loader2, Save, Users, UserPlus, Settings, ArrowLeft, Trash, Shield, Globe } from "lucide-react";
+import { Loader2, Save, Users, UserPlus, Settings, ArrowLeft, Trash, Shield, Globe, LinkIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
@@ -521,49 +521,68 @@ export default function ClubManagementPage() {
                     <CardTitle>Club Members</CardTitle>
                     <CardDescription>Manage members of your club</CardDescription>
                   </div>
-                  <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button>
-                        <UserPlus className="h-4 w-4 mr-2" />
-                        Invite Member
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Invite a New Member</DialogTitle>
-                        <DialogDescription>
-                          Enter the username of the person you want to invite to your club.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                          <Label htmlFor="username">Username</Label>
-                          <Input
-                            id="username"
-                            placeholder="Enter username"
-                            value={inviteUsername}
-                            onChange={(e) => setInviteUsername(e.target.value)}
-                          />
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsInviteDialogOpen(false)}>Cancel</Button>
-                        <Button 
-                          onClick={handleInviteMember}
-                          disabled={isInviting}
-                        >
-                          {isInviting ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Inviting...
-                            </>
-                          ) : (
-                            "Invite Member"
-                          )}
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={generateInviteLink}
+                      disabled={isGeneratingLink}
+                    >
+                      {isGeneratingLink ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <LinkIcon className="h-4 w-4 mr-2" />
+                          Generate Link
+                        </>
+                      )}
+                    </Button>
+                    <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button>
+                          <UserPlus className="h-4 w-4 mr-2" />
+                          Invite Member
                         </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Invite a New Member</DialogTitle>
+                          <DialogDescription>
+                            Enter the username of the person you want to invite to your club.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                          <div className="grid gap-2">
+                            <Label htmlFor="username">Username</Label>
+                            <Input
+                              id="username"
+                              placeholder="Enter username"
+                              value={inviteUsername}
+                              onChange={(e) => setInviteUsername(e.target.value)}
+                            />
+                          </div>
+                        </div>
+                        <DialogFooter>
+                          <Button variant="outline" onClick={() => setIsInviteDialogOpen(false)}>Cancel</Button>
+                          <Button 
+                            onClick={handleInviteMember}
+                            disabled={isInviting}
+                          >
+                            {isInviting ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Inviting...
+                              </>
+                            ) : (
+                              "Invite Member"
+                            )}
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
