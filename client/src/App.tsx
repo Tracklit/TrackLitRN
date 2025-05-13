@@ -5,6 +5,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { DesktopSidebar, MobileSidebar, MobileSidebarButton } from "@/components/layout/minimal-sidebar";
+import { DebugHelper } from "@/components/debug-helper";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
@@ -72,8 +73,10 @@ function App() {
       <AuthProvider>
         <TooltipProvider>
           <div className="min-h-screen bg-background text-foreground">
-            {/* Desktop Sidebar */}
+            {/* TEMPORARILY DISABLED
+            Desktop Sidebar 
             <DesktopSidebar />
+            */}
             
             {/* Mobile Menu Button */}
             <MobileSidebarButton onClick={toggleMenu} />
@@ -82,13 +85,16 @@ function App() {
             <MobileSidebar isOpen={isMenuOpen} onClose={closeMenu} />
             
             {/* Main Content */}
-            <main className="pt-4 md:pl-64">
+            <main className="pt-4">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <Router />
               </div>
             </main>
             
             <Toaster />
+            
+            {/* Debug Helper - Only in development */}
+            {process.env.NODE_ENV !== 'production' && <DebugHelper />}
           </div>
         </TooltipProvider>
       </AuthProvider>
