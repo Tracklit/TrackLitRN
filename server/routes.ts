@@ -1047,13 +1047,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user!.id;
       
       // Only allow specific fields to be updated
-      const allowedUpdates = ["name", "email", "events"];
+      const allowedUpdates = ["name", "email", "defaultClubId"];
       
       const updates: Record<string, any> = {};
       
       for (const field of allowedUpdates) {
         if (req.body[field] !== undefined) {
           updates[field] = req.body[field];
+        }
+      }
+      
+      // If a default club ID is provided, verify the user is a member of that club
+      if (updates.defaultClubId !== undefined) {
+        const clubMember = await dbStorage.getClubMemberByUserAndClub(userId, updates.defaultClubId);
+        if (!clubMember && updates.defaultClubId !== null) {
+          return res.status(400).send("User is not a member of the specified club");
         }
       }
       

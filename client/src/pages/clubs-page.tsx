@@ -32,8 +32,12 @@ export default function ClubsPage() {
   
   // State for clubs
   const [clubs, setClubs] = useState<any[]>([]);
+  const [allClubs, setAllClubs] = useState<any[]>([]);
   const [isLoadingClubs, setIsLoadingClubs] = useState(true);
+  const [isLoadingAllClubs, setIsLoadingAllClubs] = useState(true);
   const [clubLoadError, setClubLoadError] = useState<string | null>(null);
+  const [allClubsLoadError, setAllClubsLoadError] = useState<string | null>(null);
+  const [clubAdmins, setClubAdmins] = useState<Record<number, string>>({});
   
   // Handle club creation
   const handleCreateClub = async () => {
@@ -173,6 +177,75 @@ export default function ClubsPage() {
     
     fetchClubs();
   }, [toast, user, setLocation]);
+  
+  // Fetch all clubs for the discover tab
+  useEffect(() => {
+    // Only fetch data if user is authenticated
+    if (!user) {
+      return;
+    }
+    
+    // Function to fetch all clubs
+    const fetchAllClubs = async () => {
+      try {
+        setIsLoadingAllClubs(true);
+        const response = await fetch('/api/clubs', {
+          credentials: 'include',
+        });
+        
+        if (!response.ok) {
+          if (response.status === 401) {
+            toast({
+              title: "Authentication required",
+              description: "Please login to view clubs",
+              variant: "destructive"
+            });
+            return;
+          }
+          
+          throw new Error(`Failed to fetch clubs: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Fetched all clubs:', data);
+        setAllClubs(data);
+        
+        // Fetch admin usernames for each club
+        const adminDetails: Record<number, string> = {};
+        const adminPromises = data.map(async (club: any) => {
+          try {
+            const adminResponse = await fetch(`/api/users/${club.ownerId}`, {
+              credentials: 'include',
+            });
+            
+            if (adminResponse.ok) {
+              const adminData = await adminResponse.json();
+              adminDetails[club.id] = adminData.username;
+            }
+          } catch (err) {
+            console.error(`Error fetching admin for club ${club.id}:`, err);
+          }
+        });
+        
+        // Wait for all admin username fetches to complete
+        await Promise.all(adminPromises);
+        setClubAdmins(adminDetails);
+      } catch (err: any) {
+        console.error('Error fetching all clubs:', err);
+        setAllClubsLoadError(err?.message || 'An error occurred while fetching clubs');
+        
+        toast({
+          title: "Error loading clubs",
+          description: err?.message || 'An error occurred while fetching clubs',
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoadingAllClubs(false);
+      }
+    };
+    
+    fetchAllClubs();
+  }, [toast, user]);
 
   return (
     <div className="container max-w-screen-xl mx-auto p-4 pt-20 md:pt-24 md:pl-72 pb-20">
