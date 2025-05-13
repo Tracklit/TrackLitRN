@@ -28,6 +28,8 @@ import {
   InsertChatGroupMember,
   GroupMessage,
   InsertGroupMessage,
+  ClubMessage,
+  InsertClubMessage,
   users,
   meets,
   results,
@@ -42,7 +44,8 @@ import {
   clubMembers,
   groups,
   chatGroupMembers,
-  groupMessages
+  groupMessages,
+  clubMessages
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, lt, gte, desc, asc, inArray, or, isNotNull, isNull } from "drizzle-orm";
@@ -804,6 +807,45 @@ export class DatabaseStorage implements IStorage {
       .values(message)
       .returning();
     return newMessage;
+  }
+
+  // Club Messages operations
+  async getClubMessages(clubId: number): Promise<(ClubMessage & { username: string })[]> {
+    const messages = await db
+      .select({
+        id: clubMessages.id,
+        clubId: clubMessages.clubId,
+        userId: clubMessages.userId,
+        content: clubMessages.content,
+        createdAt: clubMessages.createdAt,
+        username: users.username
+      })
+      .from(clubMessages)
+      .innerJoin(users, eq(clubMessages.userId, users.id))
+      .where(eq(clubMessages.clubId, clubId))
+      .orderBy(asc(clubMessages.createdAt));
+    
+    return messages;
+  }
+  
+  async createClubMessage(message: InsertClubMessage): Promise<ClubMessage & { username: string }> {
+    try {
+      const [newMessage] = await db
+        .insert(clubMessages)
+        .values(message)
+        .returning();
+      
+      // Get the username for the created message
+      const [user] = await db
+        .select({ username: users.username })
+        .from(users)
+        .where(eq(users.id, message.userId));
+      
+      return { ...newMessage, username: user.username };
+    } catch (error) {
+      console.error("Error creating club message:", error);
+      throw error;
+    }
   }
 }
 
