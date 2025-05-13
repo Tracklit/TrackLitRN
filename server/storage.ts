@@ -523,8 +523,8 @@ export class DatabaseStorage implements IStorage {
       .values({
         clubId: club.id,
         userId: club.ownerId,
-        role: 'admin',
-        status: 'accepted'
+        role: 'admin' as const,
+        status: 'accepted' as const
       });
     
     return club;

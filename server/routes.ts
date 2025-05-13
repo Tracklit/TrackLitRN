@@ -1104,12 +1104,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const clubData = {
         ...req.body,
         ownerId: req.user!.id,
-        // No join code in the schema
+        joinCode: Math.random().toString(36).substring(2, 8).toUpperCase() // Generate random join code
       };
       const newClub = await dbStorage.createClub(clubData);
       res.status(201).json(newClub);
-    } catch (error) {
-      res.status(500).send("Error creating club");
+    } catch (error: any) {
+      console.error("Error creating club:", error);
+      res.status(500).send(`Error creating club: ${error.message || error}`);
     }
   });
 
