@@ -37,7 +37,7 @@ function Router() {
       
       {/* Social */}
       <ProtectedRoute path="/clubs" component={ClubsPage} />
-      <Route path="/club-management/:id" component={ClubManagementPage} />
+      <ProtectedRoute path="/club-management/:id" component={ClubManagementPage} />
       <ProtectedRoute path="/messages" component={MessagesPage} />
       <ProtectedRoute path="/coaches" component={CoachesPage} />
       

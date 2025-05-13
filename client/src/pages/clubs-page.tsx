@@ -341,7 +341,12 @@ export default function ClubsPage() {
                       </p>
                     </CardContent>
                     <CardFooter>
-                      <Button className="w-full">Manage Club</Button>
+                      <Button 
+                        className="w-full"
+                        onClick={() => window.location.href = `/club-management/${club.id}`}
+                      >
+                        Manage Club
+                      </Button>
                     </CardFooter>
                   </Card>
                 ))}
