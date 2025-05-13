@@ -6,8 +6,8 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
 import { SidebarNavigation } from "@/components/layout/sidebar-navigation";
+import { MobileMenu } from "@/components/layout/mobile-menu";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
@@ -63,31 +63,25 @@ function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   // Handle menu toggle
-  const handleMenuToggle = (isOpen: boolean) => {
-    setIsMenuOpen(isOpen);
-    
-    // Apply class to body when menu is open to prevent scrolling
-    if (isOpen) {
-      document.body.classList.add("overflow-hidden");
-    } else {
-      document.body.classList.remove("overflow-hidden");
-    }
-    
-    // Apply class to main content for slide effect
-    const mainContent = document.getElementById("main-content");
-    if (mainContent) {
-      if (isOpen) {
-        mainContent.classList.add("menu-open");
-      } else {
-        mainContent.classList.remove("menu-open");
-      }
-    }
+  const handleMenuToggle = () => {
+    setIsMenuOpen(prev => !prev);
   };
   
-  // Clean up on unmount
+  const closeMenu = () => {
+    setIsMenuOpen(false);
+  };
+  
+  // Close menu on resize to desktop
   useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setIsMenuOpen(false);
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
     return () => {
-      document.body.classList.remove("overflow-hidden");
+      window.removeEventListener('resize', handleResize);
     };
   }, []);
   
@@ -96,44 +90,35 @@ function App() {
       <AuthProvider>
         <TooltipProvider>
           <div className="min-h-screen bg-background text-foreground">
-            {/* Desktop Sidebar */}
-            <SidebarNavigation isMobile={false} />
+            {/* Desktop Sidebar - Only visible on MD screens and up */}
+            <div className="hidden md:block">
+              <SidebarNavigation />
+            </div>
             
-            {/* Hamburger Menu Button - Positioned at top left */}
+            {/* Mobile Menu Button */}
             <div className="fixed top-3 left-3 z-50 md:hidden">
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="relative"
-                onClick={() => handleMenuToggle(!isMenuOpen)}
+                className="text-foreground hover:bg-accent/10 hover:text-accent"
+                onClick={handleMenuToggle}
               >
                 {isMenuOpen ? (
-                  <X className="h-6 w-6 text-foreground" />
+                  <X className="h-6 w-6" />
                 ) : (
-                  <Menu className="h-6 w-6 text-foreground" />
+                  <Menu className="h-6 w-6" />
                 )}
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </div>
             
-            {/* Mobile Menu Overlay */}
-            <div
-              className={cn(
-                "fixed inset-0 z-40 bg-background/80 backdrop-blur-sm transition-opacity duration-300 md:hidden",
-                isMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-              )}
-              onClick={() => handleMenuToggle(false)}
-            />
+            {/* Mobile Menu - Using the new component */}
+            <MobileMenu isOpen={isMenuOpen} onClose={closeMenu} />
             
-            {/* Mobile Menu Sidebar - Only render when needed */}
-            {isMenuOpen && (
-              <SidebarNavigation isMobile={true} />
-            )}
-            
-            {/* Main Content - Will slide when menu is open */}
-            <div id="main-content" className="relative transition-all">
+            {/* Main Content with padding to account for sidebar */}
+            <main className="md:pl-64 transition-all duration-300 min-h-screen">
               <Router />
-            </div>
+            </main>
             
             <Toaster />
           </div>
