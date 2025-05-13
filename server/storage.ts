@@ -66,7 +66,10 @@ export interface IStorage {
   updateClub(id: number, clubData: Partial<Club>): Promise<Club | undefined>;
   deleteClub(id: number): Promise<boolean>;
   getClubMemberByUserAndClub(userId: number, clubId: number): Promise<ClubMember | undefined>;
+  getClubMember(id: number): Promise<ClubMember | undefined>;
+  getClubMembersByClubId(clubId: number): Promise<ClubMember[]>;
   createClubMember(member: InsertClubMember): Promise<ClubMember>;
+  deleteClubMember(id: number): Promise<boolean>;
   
   // Group operations
   getGroup(id: number): Promise<Group | undefined>;

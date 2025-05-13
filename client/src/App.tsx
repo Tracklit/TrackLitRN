@@ -14,6 +14,7 @@ import CoachesPage from "@/pages/coaches-page";
 import PracticePage from "@/pages/practice-page";
 import TrainingToolsPage from "@/pages/training-tools-page";
 import ClubsPage from "@/pages/clubs-page";
+import { Component as ClubManagementPage } from "@/pages/club-management-page";
 import MessagesPage from "@/pages/messages-page";
 import SpikesPage from "@/pages/spikes-page";
 import { ProtectedRoute } from "@/lib/protected-route";
@@ -36,6 +37,7 @@ function Router() {
       
       {/* Social */}
       <ProtectedRoute path="/clubs" component={ClubsPage} />
+      <Route path="/club-management/:id" component={ClubManagementPage} />
       <ProtectedRoute path="/messages" component={MessagesPage} />
       <ProtectedRoute path="/coaches" component={CoachesPage} />
       

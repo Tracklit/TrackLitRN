@@ -1124,8 +1124,208 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).send("Club not found");
       }
       res.json(club);
-    } catch (error) {
-      res.status(500).send("Error fetching club");
+    } catch (error: any) {
+      console.error("Error fetching club:", error);
+      res.status(500).send(`Error fetching club: ${error.message || error}`);
+    }
+  });
+  
+  // Get club members
+  app.get("/api/clubs/:id/members", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const clubId = parseInt(req.params.id);
+      const club = await dbStorage.getClub(clubId);
+      
+      if (!club) {
+        return res.status(404).send("Club not found");
+      }
+      
+      // Check if user is a member of the club
+      const userMembership = await dbStorage.getClubMemberByUserAndClub(req.user!.id, clubId);
+      if (!userMembership) {
+        return res.status(403).send("You are not a member of this club");
+      }
+      
+      // Get all members
+      const members = await dbStorage.getClubMembersByClubId(clubId);
+      res.json(members);
+    } catch (error: any) {
+      console.error("Error fetching club members:", error);
+      res.status(500).send(`Error fetching club members: ${error.message || error}`);
+    }
+  });
+  
+  // Invite new member to club
+  app.post("/api/clubs/:id/members", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const clubId = parseInt(req.params.id);
+      const { username } = req.body;
+      
+      if (!username) {
+        return res.status(400).send("Username is required");
+      }
+      
+      // Check if club exists
+      const club = await dbStorage.getClub(clubId);
+      if (!club) {
+        return res.status(404).send("Club not found");
+      }
+      
+      // Check if user has admin permission
+      const userMembership = await dbStorage.getClubMemberByUserAndClub(req.user!.id, clubId);
+      if (!userMembership || userMembership.role !== 'admin') {
+        return res.status(403).send("You don't have permission to invite members");
+      }
+      
+      // Find the user by username
+      const userToInvite = await dbStorage.getUserByUsername(username);
+      if (!userToInvite) {
+        return res.status(404).send("User not found");
+      }
+      
+      // Check if user is already a member
+      const existingMembership = await dbStorage.getClubMemberByUserAndClub(userToInvite.id, clubId);
+      if (existingMembership) {
+        return res.status(400).send("User is already a member of this club");
+      }
+      
+      // Create the membership
+      const newMember = await dbStorage.createClubMember({
+        clubId,
+        userId: userToInvite.id,
+        role: 'member' as const
+      });
+      
+      const memberWithDetails = {
+        ...newMember,
+        username: userToInvite.username
+      };
+      
+      res.status(201).json(memberWithDetails);
+    } catch (error: any) {
+      console.error("Error inviting member:", error);
+      res.status(500).send(`Error inviting member: ${error.message || error}`);
+    }
+  });
+  
+  // Remove member from club
+  app.delete("/api/clubs/:clubId/members/:memberId", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const clubId = parseInt(req.params.clubId);
+      const memberId = parseInt(req.params.memberId);
+      
+      // Check if club exists
+      const club = await dbStorage.getClub(clubId);
+      if (!club) {
+        return res.status(404).send("Club not found");
+      }
+      
+      // Check if user has admin permission
+      const userMembership = await dbStorage.getClubMemberByUserAndClub(req.user!.id, clubId);
+      if (!userMembership || userMembership.role !== 'admin') {
+        return res.status(403).send("You don't have permission to remove members");
+      }
+      
+      // Get the member details
+      const memberToRemove = await dbStorage.getClubMember(memberId);
+      if (!memberToRemove || memberToRemove.clubId !== clubId) {
+        return res.status(404).send("Member not found in this club");
+      }
+      
+      // Don't allow removing the owner
+      if (memberToRemove.userId === club.ownerId) {
+        return res.status(403).send("Cannot remove the club owner");
+      }
+      
+      // Remove the member
+      const success = await dbStorage.deleteClubMember(memberId);
+      if (!success) {
+        return res.status(500).send("Failed to remove member");
+      }
+      
+      res.status(200).send("Member removed successfully");
+    } catch (error: any) {
+      console.error("Error removing member:", error);
+      res.status(500).send(`Error removing member: ${error.message || error}`);
+    }
+  });
+  
+  // Update club
+  app.patch("/api/clubs/:id", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const clubId = parseInt(req.params.id);
+      const { name, description, isPrivate } = req.body;
+      
+      // Validation
+      if (name !== undefined && !name.trim()) {
+        return res.status(400).send("Club name cannot be empty");
+      }
+      
+      // Check if club exists
+      const club = await dbStorage.getClub(clubId);
+      if (!club) {
+        return res.status(404).send("Club not found");
+      }
+      
+      // Check if user is the owner
+      if (club.ownerId !== req.user!.id) {
+        return res.status(403).send("Only the club owner can update club details");
+      }
+      
+      // Update the club
+      const updatedClub = await dbStorage.updateClub(clubId, {
+        name: name !== undefined ? name : undefined,
+        description: description !== undefined ? description : undefined,
+        isPrivate: isPrivate !== undefined ? isPrivate : undefined
+      });
+      
+      if (!updatedClub) {
+        return res.status(500).send("Failed to update club");
+      }
+      
+      res.json(updatedClub);
+    } catch (error: any) {
+      console.error("Error updating club:", error);
+      res.status(500).send(`Error updating club: ${error.message || error}`);
+    }
+  });
+  
+  // Delete club
+  app.delete("/api/clubs/:id", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const clubId = parseInt(req.params.id);
+      
+      // Check if club exists
+      const club = await dbStorage.getClub(clubId);
+      if (!club) {
+        return res.status(404).send("Club not found");
+      }
+      
+      // Check if user is the owner
+      if (club.ownerId !== req.user!.id) {
+        return res.status(403).send("Only the club owner can delete the club");
+      }
+      
+      // Delete the club
+      const success = await dbStorage.deleteClub(clubId);
+      if (!success) {
+        return res.status(500).send("Failed to delete club");
+      }
+      
+      res.status(200).send("Club deleted successfully");
+    } catch (error: any) {
+      console.error("Error deleting club:", error);
+      res.status(500).send(`Error deleting club: ${error.message || error}`);
     }
   });
 
