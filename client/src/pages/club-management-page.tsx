@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/page-header";
 import { ProtectedRoute } from "@/lib/protected-route";
-import { Loader2, Save, Users, UserPlus, Settings, ArrowLeft, Trash, Shield, Globe, LinkIcon } from "lucide-react";
+import { Loader2, Save, Users, UserPlus, Settings, ArrowLeft, Trash, Shield, Globe, LinkIcon, SquarePen, Upload, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
@@ -146,7 +146,34 @@ export default function ClubManagementPage() {
     // Update loading state for the specific upload type
     setIsUploading(prev => ({ ...prev, [fileType]: true }));
     
+    // Validate file size again (max 2MB) as a safety measure
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: `File too large`,
+        description: `${fileType === 'logo' ? 'Logo' : 'Banner'} image must be less than 2MB`,
+        variant: "destructive"
+      });
+      setIsUploading(prev => ({ ...prev, [fileType]: false }));
+      return null;
+    }
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload an image file",
+        variant: "destructive"
+      });
+      setIsUploading(prev => ({ ...prev, [fileType]: false }));
+      return null;
+    }
+    
     try {
+      toast({
+        title: `Uploading ${fileType}`,
+        description: "Please wait while we process your image...",
+      });
+      
       const formData = new FormData();
       formData.append('file', file);
       formData.append('fileType', fileType);
@@ -167,13 +194,29 @@ export default function ClubManagementPage() {
           return null;
         }
         
+        if (response.status === 403) {
+          toast({
+            title: "Permission denied",
+            description: "Only club administrators can change club images",
+            variant: "destructive"
+          });
+          return null;
+        }
+        
         const errorText = await response.text();
         throw new Error(errorText || `Failed to upload ${fileType}`);
       }
       
       const data = await response.json();
+      
+      toast({
+        title: `${fileType === 'logo' ? 'Logo' : 'Banner'} uploaded`,
+        description: "Your image has been uploaded successfully. Save changes to apply.",
+      });
+      
       return data.fileUrl;
     } catch (err: any) {
+      console.error(`Error uploading ${fileType}:`, err);
       toast({
         title: `Error uploading ${fileType}`,
         description: err?.message || "An error occurred",
@@ -188,14 +231,54 @@ export default function ClubManagementPage() {
   // Handle logo change
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setLogoFile(e.target.files[0]);
+      const file = e.target.files[0];
+      
+      // Validate file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Logo image must be less than 2MB",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Preview image
+      const reader = new FileReader();
+      reader.onload = () => {
+        // This is just to trigger a UI update, the actual file is used for upload
+        setClubLogoUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+      
+      setLogoFile(file);
     }
   };
   
   // Handle banner change
   const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setBannerFile(e.target.files[0]);
+      const file = e.target.files[0];
+      
+      // Validate file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Banner image must be less than 2MB",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Preview image
+      const reader = new FileReader();
+      reader.onload = () => {
+        // This is just to trigger a UI update, the actual file is used for upload
+        setClubBannerUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+      
+      setBannerFile(file);
     }
   };
 
@@ -862,25 +945,68 @@ export default function ClubManagementPage() {
                     <div className="grid gap-4">
                       <div className="grid gap-2">
                         <Label htmlFor="club-logo">Club Logo</Label>
-                        {clubLogoUrl && (
-                          <div className="mb-2">
-                            <div className="w-20 h-20 rounded-full overflow-hidden border">
+                        <div className="mb-2">
+                          {clubLogoUrl ? (
+                            <div className="relative group w-20 h-20 rounded-full overflow-hidden border">
                               <img 
                                 src={clubLogoUrl} 
                                 alt="Club logo" 
                                 className="w-full h-full object-cover"
                               />
+                              {isEditing && (
+                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <label htmlFor="club-logo" className="cursor-pointer p-2 bg-background rounded-full">
+                                    <SquarePen className="h-5 w-5 text-primary" />
+                                  </label>
+                                </div>
+                              )}
                             </div>
-                          </div>
+                          ) : (
+                            <div className="relative group w-20 h-20 rounded-full overflow-hidden border bg-muted flex items-center justify-center">
+                              <span className="text-2xl font-bold text-muted-foreground">{clubName?.charAt(0) || '?'}</span>
+                              {isEditing && (
+                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <label htmlFor="club-logo" className="cursor-pointer p-2 bg-background rounded-full">
+                                    <SquarePen className="h-5 w-5 text-primary" />
+                                  </label>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          {logoFile && (
+                            <div className="mt-2 text-sm flex items-center">
+                              <Check className="h-4 w-4 text-green-500 mr-1" />
+                              <span>New logo selected</span>
+                            </div>
+                          )}
+                          {isUploading.logo && (
+                            <div className="mt-2 text-sm flex items-center">
+                              <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                              <span>Uploading...</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="hidden">
+                          <Input
+                            id="club-logo"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleLogoChange}
+                            disabled={!isEditing || isUploading.logo}
+                          />
+                        </div>
+                        {isEditing && (
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            size="sm" 
+                            disabled={isUploading.logo}
+                            onClick={() => document.getElementById('club-logo')?.click()}
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            {clubLogoUrl ? 'Change Logo' : 'Upload Logo'}
+                          </Button>
                         )}
-                        <Input
-                          id="club-logo"
-                          type="file"
-                          accept="image/*"
-                          onChange={handleLogoChange}
-                          disabled={!isEditing || isUploading.logo}
-                          className="cursor-pointer"
-                        />
                         <p className="text-xs text-muted-foreground">
                           Upload a square image for best results (max 2MB)
                         </p>
@@ -888,25 +1014,68 @@ export default function ClubManagementPage() {
                       
                       <div className="grid gap-2">
                         <Label htmlFor="club-banner">Club Banner</Label>
-                        {clubBannerUrl && (
-                          <div className="mb-2">
-                            <div className="h-32 rounded-md overflow-hidden border">
+                        <div className="mb-2">
+                          {clubBannerUrl ? (
+                            <div className="relative group h-32 rounded-md overflow-hidden border">
                               <img 
                                 src={clubBannerUrl} 
                                 alt="Club banner" 
                                 className="w-full h-full object-cover"
                               />
+                              {isEditing && (
+                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <label htmlFor="club-banner" className="cursor-pointer p-2 bg-background rounded-full">
+                                    <SquarePen className="h-5 w-5 text-primary" />
+                                  </label>
+                                </div>
+                              )}
                             </div>
-                          </div>
+                          ) : (
+                            <div className="relative group h-32 rounded-md overflow-hidden border bg-gradient-to-br from-primary/10 to-primary/30 flex items-center justify-center">
+                              <span className="text-xl font-bold text-primary/50">{clubName || 'Club Banner'}</span>
+                              {isEditing && (
+                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <label htmlFor="club-banner" className="cursor-pointer p-2 bg-background rounded-full">
+                                    <SquarePen className="h-5 w-5 text-primary" />
+                                  </label>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          {bannerFile && (
+                            <div className="mt-2 text-sm flex items-center">
+                              <Check className="h-4 w-4 text-green-500 mr-1" />
+                              <span>New banner selected</span>
+                            </div>
+                          )}
+                          {isUploading.banner && (
+                            <div className="mt-2 text-sm flex items-center">
+                              <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                              <span>Uploading...</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="hidden">
+                          <Input
+                            id="club-banner"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleBannerChange}
+                            disabled={!isEditing || isUploading.banner}
+                          />
+                        </div>
+                        {isEditing && (
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            size="sm"
+                            disabled={isUploading.banner}
+                            onClick={() => document.getElementById('club-banner')?.click()}
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            {clubBannerUrl ? 'Change Banner' : 'Upload Banner'}
+                          </Button>
                         )}
-                        <Input
-                          id="club-banner"
-                          type="file"
-                          accept="image/*"
-                          onChange={handleBannerChange}
-                          disabled={!isEditing || isUploading.banner}
-                          className="cursor-pointer"
-                        />
                         <p className="text-xs text-muted-foreground">
                           Recommended size: 1200x300px (max 2MB)
                         </p>
