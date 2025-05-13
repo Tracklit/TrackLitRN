@@ -555,8 +555,7 @@ export type InsertClub = z.infer<typeof insertClubSchema>;
 
 export const insertGroupSchema = createInsertSchema(groups).omit({
   id: true,
-  createdAt: true,
-  joinCode: true, // Generated on the server
+  createdAt: true
 });
 
 export type InsertGroup = z.infer<typeof insertGroupSchema>;

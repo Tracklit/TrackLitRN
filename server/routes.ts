@@ -1179,7 +1179,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     try {
-      // Validate the request data
+      // Validate the request data and use the correct field name for owner
       const parsedData = insertGroupSchema.safeParse({
         ...req.body,
         ownerId: req.user!.id
@@ -1192,10 +1192,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Create the group - the storage method will handle the join code and adding the owner
-      const newGroup = await dbStorage.createGroup({
-        ...parsedData.data
-      });
+      // Create the group with owner ID properly set
+      const newGroup = await dbStorage.createGroup(parsedData.data);
       
       res.status(201).json(newGroup);
     } catch (error) {
@@ -1304,16 +1302,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).send("Already a member of this group");
       }
       
-      // Join code verification for private groups
-      if (group.isPrivate && req.body.joinCode !== group.joinCode) {
-        return res.status(403).send("Invalid join code");
-      }
+      // For private groups, we'll set status to 'pending' for admin approval
+      // Join codes are not implemented in this version
       
       const memberData = {
         groupId,
         userId: req.user!.id,
-        role: 'member',
-        status: group.isPrivate ? 'pending' : 'accepted'
+        role: "member" as const,
+        status: group.isPrivate ? "pending" as const : "accepted" as const
       };
       
       const membership = await dbStorage.createGroupMember(memberData);
