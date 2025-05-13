@@ -549,6 +549,7 @@ export type Weather = {
 export const insertClubSchema = createInsertSchema(clubs).omit({
   id: true,
   createdAt: true,
+  joinCode: true, // Server generates this
 });
 
 export type InsertClub = z.infer<typeof insertClubSchema>;
