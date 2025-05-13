@@ -9,15 +9,15 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   name: text("name").notNull(),
   email: text("email").notNull(),
-  events: text("events").array(),
   isPremium: boolean("is_premium").default(false),
   role: text("role").default("athlete"), // athlete, coach, or both
   bio: text("bio"),
   spikes: integer("spikes").default(0), // In-app currency/tokens
+  defaultClubId: integer("default_club_id"), // Will be connected through relations
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ many, one }) => ({
   meetsAsAthlete: many(meets),
   meetsAsCoach: many(meets, { relationName: "coach_meets" }),
   athleteGroups: many(athleteGroups),
@@ -27,6 +27,11 @@ export const usersRelations = relations(users, ({ many }) => ({
   athleteRelations: many(coaches, { relationName: "athlete_side" }),
   coachNotesAuthored: many(coachNotes, { relationName: "notes_authored" }),
   coachNotesReceived: many(coachNotes, { relationName: "notes_received" }),
+  defaultClub: one(clubs, { 
+    fields: [users.defaultClubId],
+    references: [clubs.id],
+    relationName: "user_default_club"
+  }),
 }));
 
 export const meets = pgTable("meets", {
