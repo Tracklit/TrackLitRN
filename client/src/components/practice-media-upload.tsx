@@ -33,20 +33,35 @@ export function PracticeMediaUpload({
   // Upload mutation
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      const response = await apiRequest(
-        'POST',
-        '/api/practice/media',
-        formData,
-        {
-          isFormData: true,
-          onUploadProgress: (progressEvent) => {
-            if (progressEvent.total) {
-              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-              setUploadProgress(percentCompleted);
-            }
-          }
+      // Create XMLHttpRequest to track upload progress
+      const xhr = new XMLHttpRequest();
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable) {
+          const percentCompleted = Math.round((event.loaded * 100) / event.total);
+          setUploadProgress(percentCompleted);
         }
-      );
+      });
+      
+      // Create a promise wrapper around XMLHttpRequest
+      const response = await new Promise<Response>((resolve, reject) => {
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(new Response(xhr.response, {
+              status: xhr.status,
+              statusText: xhr.statusText,
+              headers: new Headers({
+                'Content-Type': 'application/json'
+              })
+            }));
+          } else {
+            reject(new Error('Upload failed'));
+          }
+        };
+        xhr.onerror = () => reject(new Error('Network error during upload'));
+        xhr.open('POST', '/api/practice/media');
+        xhr.responseType = 'json';
+        xhr.send(formData);
+      });
       return await response.json();
     },
     onSuccess: (data) => {

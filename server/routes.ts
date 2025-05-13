@@ -1,6 +1,6 @@
 import express, { type Express, type Request, type Response } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { storage as dbStorage } from "./storage";
 import { setupAuth } from "./auth";
 import { z } from "zod";
 import multer from "multer";
@@ -48,7 +48,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   const upload = multer({ 
-    storage,
+    storage: uploadStorage,
     limits: {
       fileSize: 10 * 1024 * 1024, // 10MB limit
     },
@@ -102,7 +102,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     const userId = req.user!.id;
-    const meets = await storage.getMeetsByUserId(userId);
+    const meets = await dbStorage.getMeetsByUserId(userId);
     res.json(meets);
   });
 
@@ -110,7 +110,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     const userId = req.user!.id;
-    const meets = await storage.getUpcomingMeetsByUserId(userId);
+    const meets = await dbStorage.getUpcomingMeetsByUserId(userId);
     res.json(meets);
   });
 
@@ -118,7 +118,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     const userId = req.user!.id;
-    const meets = await storage.getPastMeetsByUserId(userId);
+    const meets = await dbStorage.getPastMeetsByUserId(userId);
     res.json(meets);
   });
 
@@ -128,7 +128,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const meetId = parseInt(req.params.id);
     if (isNaN(meetId)) return res.status(400).send("Invalid meet ID");
     
-    const meet = await storage.getMeet(meetId);
+    const meet = await dbStorage.getMeet(meetId);
     if (!meet) return res.status(404).send("Meet not found");
     
     // Check if user owns the meet
@@ -171,7 +171,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       meetData.userId = req.user!.id;
       
       // Create the meet
-      const meet = await storage.createMeet(meetData);
+      const meet = await dbStorage.createMeet(meetData);
       
       // Create automatic reminders
       try {
@@ -180,7 +180,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // 5 days before reminder
         const fiveDaysBefore = new Date(meetDate);
         fiveDaysBefore.setDate(fiveDaysBefore.getDate() - 5);
-        await storage.createReminder({
+        await dbStorage.createReminder({
           meetId: meet.id,
           userId: req.user!.id,
           title: "Prepare your equipment",
@@ -192,7 +192,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // 3 days before reminder
         const threeDaysBefore = new Date(meetDate);
         threeDaysBefore.setDate(threeDaysBefore.getDate() - 3);
-        await storage.createReminder({
+        await dbStorage.createReminder({
           meetId: meet.id,
           userId: req.user!.id,
           title: "Pre-meet nutrition plan",
@@ -204,7 +204,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // 1 day before reminder
         const dayBefore = new Date(meetDate);
         dayBefore.setDate(dayBefore.getDate() - 1);
-        await storage.createReminder({
+        await dbStorage.createReminder({
           meetId: meet.id,
           userId: req.user!.id,
           title: "Sleep preparation",
@@ -216,7 +216,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Warmup reminder on meet day
         const warmupTime = new Date(meetDate);
         warmupTime.setMinutes(warmupTime.getMinutes() - (meet.warmupTime || 60));
-        await storage.createReminder({
+        await dbStorage.createReminder({
           meetId: meet.id,
           userId: req.user!.id,
           title: "Warmup time",
@@ -249,7 +249,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const meetId = parseInt(req.params.id);
     if (isNaN(meetId)) return res.status(400).send("Invalid meet ID");
     
-    const meet = await storage.getMeet(meetId);
+    const meet = await dbStorage.getMeet(meetId);
     if (!meet) return res.status(404).send("Meet not found");
     
     // Check if user owns the meet
@@ -270,7 +270,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      const updatedMeet = await storage.updateMeet(meetId, updates);
+      const updatedMeet = await dbStorage.updateMeet(meetId, updates);
       res.json(updatedMeet);
     } catch (error) {
       res.status(500).send("Error updating meet");
@@ -283,13 +283,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const meetId = parseInt(req.params.id);
     if (isNaN(meetId)) return res.status(400).send("Invalid meet ID");
     
-    const meet = await storage.getMeet(meetId);
+    const meet = await dbStorage.getMeet(meetId);
     if (!meet) return res.status(404).send("Meet not found");
     
     // Check if user owns the meet
     if (meet.userId !== req.user!.id) return res.sendStatus(403);
     
-    await storage.deleteMeet(meetId);
+    await dbStorage.deleteMeet(meetId);
     res.sendStatus(204);
   });
 
@@ -298,7 +298,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     const userId = req.user!.id;
-    const results = await storage.getResultsByUserId(userId);
+    const results = await dbStorage.getResultsByUserId(userId);
     res.json(results);
   });
 
@@ -308,13 +308,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const meetId = parseInt(req.params.meetId);
     if (isNaN(meetId)) return res.status(400).send("Invalid meet ID");
     
-    const meet = await storage.getMeet(meetId);
+    const meet = await dbStorage.getMeet(meetId);
     if (!meet) return res.status(404).send("Meet not found");
     
     // Check if user owns the meet
     if (meet.userId !== req.user!.id) return res.sendStatus(403);
     
-    const results = await storage.getResultsByMeetId(meetId);
+    const results = await dbStorage.getResultsByMeetId(meetId);
     res.json(results);
   });
 
@@ -328,16 +328,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       resultData.userId = req.user!.id;
       
       // Verify meet exists and user owns it
-      const meet = await storage.getMeet(resultData.meetId);
+      const meet = await dbStorage.getMeet(resultData.meetId);
       if (!meet) return res.status(404).send("Meet not found");
       if (meet.userId !== req.user!.id) return res.sendStatus(403);
       
       // Create the result
-      const result = await storage.createResult(resultData);
+      const result = await dbStorage.createResult(resultData);
       
       // Update meet status to completed if not already
       if (meet.status === 'upcoming') {
-        await storage.updateMeet(meet.id, { status: 'completed' });
+        await dbStorage.updateMeet(meet.id, { status: 'completed' });
       }
       
       res.status(201).json(result);
@@ -355,7 +355,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const resultId = parseInt(req.params.id);
     if (isNaN(resultId)) return res.status(400).send("Invalid result ID");
     
-    const result = await storage.getResult(resultId);
+    const result = await dbStorage.getResult(resultId);
     if (!result) return res.status(404).send("Result not found");
     
     // Check if user owns the result
@@ -373,7 +373,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      const updatedResult = await storage.updateResult(resultId, updates);
+      const updatedResult = await dbStorage.updateResult(resultId, updates);
       res.json(updatedResult);
     } catch (error) {
       res.status(500).send("Error updating result");
@@ -386,13 +386,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const resultId = parseInt(req.params.id);
     if (isNaN(resultId)) return res.status(400).send("Invalid result ID");
     
-    const result = await storage.getResult(resultId);
+    const result = await dbStorage.getResult(resultId);
     if (!result) return res.status(404).send("Result not found");
     
     // Check if user owns the result
     if (result.userId !== req.user!.id) return res.sendStatus(403);
     
-    await storage.deleteResult(resultId);
+    await dbStorage.deleteResult(resultId);
     res.sendStatus(204);
   });
 
@@ -401,7 +401,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     const userId = req.user!.id;
-    const reminders = await storage.getRemindersByUserId(userId);
+    const reminders = await dbStorage.getRemindersByUserId(userId);
     res.json(reminders);
   });
 
@@ -411,13 +411,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const meetId = parseInt(req.params.meetId);
     if (isNaN(meetId)) return res.status(400).send("Invalid meet ID");
     
-    const meet = await storage.getMeet(meetId);
+    const meet = await dbStorage.getMeet(meetId);
     if (!meet) return res.status(404).send("Meet not found");
     
     // Check if user owns the meet
     if (meet.userId !== req.user!.id) return res.sendStatus(403);
     
-    const reminders = await storage.getRemindersByMeetId(meetId);
+    const reminders = await dbStorage.getRemindersByMeetId(meetId);
     res.json(reminders);
   });
 
@@ -434,11 +434,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       // Verify meet exists and user owns it
-      const meet = await storage.getMeet(reminderData.meetId);
+      const meet = await dbStorage.getMeet(reminderData.meetId);
       if (!meet) return res.status(404).send("Meet not found");
       if (meet.userId !== req.user!.id) return res.sendStatus(403);
       
-      const reminder = await storage.createReminder(reminderData);
+      const reminder = await dbStorage.createReminder(reminderData);
       res.status(201).json(reminder);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -454,7 +454,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const reminderId = parseInt(req.params.id);
     if (isNaN(reminderId)) return res.status(400).send("Invalid reminder ID");
     
-    const reminder = await storage.getReminder(reminderId);
+    const reminder = await dbStorage.getReminder(reminderId);
     if (!reminder) return res.status(404).send("Reminder not found");
     
     // Check if user owns the reminder
@@ -472,7 +472,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      const updatedReminder = await storage.updateReminder(reminderId, updates);
+      const updatedReminder = await dbStorage.updateReminder(reminderId, updates);
       res.json(updatedReminder);
     } catch (error) {
       res.status(500).send("Error updating reminder");
@@ -485,13 +485,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const reminderId = parseInt(req.params.id);
     if (isNaN(reminderId)) return res.status(400).send("Invalid reminder ID");
     
-    const reminder = await storage.getReminder(reminderId);
+    const reminder = await dbStorage.getReminder(reminderId);
     if (!reminder) return res.status(404).send("Reminder not found");
     
     // Check if user owns the reminder
     if (reminder.userId !== req.user!.id) return res.sendStatus(403);
     
-    await storage.deleteReminder(reminderId);
+    await dbStorage.deleteReminder(reminderId);
     res.sendStatus(204);
   });
 
@@ -500,7 +500,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     const userId = req.user!.id;
-    const coaches = await storage.getCoachesByUserId(userId);
+    const coaches = await dbStorage.getCoachesByUserId(userId);
     res.json(coaches);
   });
 
@@ -508,7 +508,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     const coachId = req.user!.id;
-    const athletes = await storage.getAthletesByCoachId(coachId);
+    const athletes = await dbStorage.getAthletesByCoachId(coachId);
     res.json(athletes);
   });
 
@@ -519,11 +519,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const coachData = insertCoachSchema.parse(req.body);
       
       // Verify athlete exists
-      const athlete = await storage.getUser(coachData.athleteId);
+      const athlete = await dbStorage.getUser(coachData.athleteId);
       if (!athlete) return res.status(404).send("Athlete not found");
       
       // Create the coach relationship (pending by default)
-      const coach = await storage.createCoach(coachData);
+      const coach = await dbStorage.createCoach(coachData);
       res.status(201).json(coach);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -539,7 +539,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const coachId = parseInt(req.params.id);
     if (isNaN(coachId)) return res.status(400).send("Invalid coach ID");
     
-    const coach = await storage.getCoach(coachId);
+    const coach = await dbStorage.getCoach(coachId);
     if (!coach) return res.status(404).send("Coach relationship not found");
     
     // Check if user is the athlete in the relationship (for accepting/rejecting)
@@ -559,7 +559,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).send("Invalid status value");
       }
       
-      const updatedCoach = await storage.updateCoach(coachId, { status: req.body.status });
+      const updatedCoach = await dbStorage.updateCoach(coachId, { status: req.body.status });
       res.json(updatedCoach);
     } catch (error) {
       res.status(500).send("Error updating coach relationship");
@@ -572,7 +572,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const coachId = parseInt(req.params.id);
     if (isNaN(coachId)) return res.status(400).send("Invalid coach ID");
     
-    const coach = await storage.getCoach(coachId);
+    const coach = await dbStorage.getCoach(coachId);
     if (!coach) return res.status(404).send("Coach relationship not found");
     
     // Check if user is either the athlete or the coach
@@ -580,7 +580,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.sendStatus(403);
     }
     
-    await storage.deleteCoach(coachId);
+    await dbStorage.deleteCoach(coachId);
     res.sendStatus(204);
   });
   
@@ -589,7 +589,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     const coachId = req.user!.id;
-    const groups = await storage.getAthleteGroupsByCoachId(coachId);
+    const groups = await dbStorage.getAthleteGroupsByCoachId(coachId);
     res.json(groups);
   });
 
@@ -604,7 +604,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).send("Coach ID must match the current user");
       }
       
-      const group = await storage.createAthleteGroup(groupData);
+      const group = await dbStorage.createAthleteGroup(groupData);
       res.status(201).json(group);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -620,18 +620,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const groupId = parseInt(req.params.id);
     if (isNaN(groupId)) return res.status(400).send("Invalid group ID");
     
-    const group = await storage.getAthleteGroup(groupId);
+    const group = await dbStorage.getAthleteGroup(groupId);
     if (!group) return res.status(404).send("Athlete group not found");
     
     // Check if user owns the group
     if (group.coachId !== req.user!.id) return res.sendStatus(403);
     
     // Get the members of the group
-    const members = await storage.getGroupMembersByGroupId(groupId);
+    const members = await dbStorage.getGroupMembersByGroupId(groupId);
     
     // Get details of each athlete
     const athletePromises = members.map(async (member) => {
-      return await storage.getUser(member.athleteId);
+      return await dbStorage.getUser(member.athleteId);
     });
     
     const athletes = await Promise.all(athletePromises);
@@ -649,7 +649,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const groupId = parseInt(req.params.id);
     if (isNaN(groupId)) return res.status(400).send("Invalid group ID");
     
-    const group = await storage.getAthleteGroup(groupId);
+    const group = await dbStorage.getAthleteGroup(groupId);
     if (!group) return res.status(404).send("Athlete group not found");
     
     // Check if user owns the group
@@ -670,7 +670,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).send("No valid updates provided");
       }
       
-      const updatedGroup = await storage.updateAthleteGroup(groupId, updates);
+      const updatedGroup = await dbStorage.updateAthleteGroup(groupId, updates);
       res.json(updatedGroup);
     } catch (error) {
       res.status(500).send("Error updating athlete group");
@@ -683,13 +683,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const groupId = parseInt(req.params.id);
     if (isNaN(groupId)) return res.status(400).send("Invalid group ID");
     
-    const group = await storage.getAthleteGroup(groupId);
+    const group = await dbStorage.getAthleteGroup(groupId);
     if (!group) return res.status(404).send("Athlete group not found");
     
     // Check if user owns the group
     if (group.coachId !== req.user!.id) return res.sendStatus(403);
     
-    await storage.deleteAthleteGroup(groupId);
+    await dbStorage.deleteAthleteGroup(groupId);
     res.sendStatus(204);
   });
 
@@ -700,17 +700,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const groupId = parseInt(req.params.groupId);
     if (isNaN(groupId)) return res.status(400).send("Invalid group ID");
     
-    const group = await storage.getAthleteGroup(groupId);
+    const group = await dbStorage.getAthleteGroup(groupId);
     if (!group) return res.status(404).send("Athlete group not found");
     
     // Check if user owns the group
     if (group.coachId !== req.user!.id) return res.sendStatus(403);
     
-    const members = await storage.getGroupMembersByGroupId(groupId);
+    const members = await dbStorage.getGroupMembersByGroupId(groupId);
     
     // Get details of each athlete
     const athletePromises = members.map(async (member) => {
-      const athlete = await storage.getUser(member.athleteId);
+      const athlete = await dbStorage.getUser(member.athleteId);
       if (athlete) {
         return {
           memberId: member.id,
@@ -732,7 +732,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const groupId = parseInt(req.params.groupId);
     if (isNaN(groupId)) return res.status(400).send("Invalid group ID");
     
-    const group = await storage.getAthleteGroup(groupId);
+    const group = await dbStorage.getAthleteGroup(groupId);
     if (!group) return res.status(404).send("Athlete group not found");
     
     // Check if user owns the group
@@ -745,11 +745,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // Verify athlete exists
-      const athlete = await storage.getUser(memberData.athleteId);
+      const athlete = await dbStorage.getUser(memberData.athleteId);
       if (!athlete) return res.status(404).send("Athlete not found");
       
       // Verify the coach-athlete relationship exists and is accepted
-      const coachRelation = await storage.getCoachesByUserId(req.user!.id)
+      const coachRelation = await dbStorage.getCoachesByUserId(req.user!.id)
         .then(coaches => coaches.find(coach => 
           coach.athleteId === memberData.athleteId && coach.status === 'accepted'
         ));
@@ -759,14 +759,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check if athlete is already in the group
-      const existingMember = await storage.getGroupMembersByGroupId(groupId)
+      const existingMember = await dbStorage.getGroupMembersByGroupId(groupId)
         .then(members => members.find(member => member.athleteId === memberData.athleteId));
       
       if (existingMember) {
         return res.status(400).send("Athlete is already in this group");
       }
       
-      const member = await storage.createGroupMember(memberData);
+      const member = await dbStorage.createGroupMember(memberData);
       
       // Return the created member with athlete details
       const result = {
@@ -789,17 +789,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const memberId = parseInt(req.params.id);
     if (isNaN(memberId)) return res.status(400).send("Invalid member ID");
     
-    const member = await storage.getGroupMember(memberId);
+    const member = await dbStorage.getGroupMember(memberId);
     if (!member) return res.status(404).send("Group member not found");
     
     // Get the group to check ownership
-    const group = await storage.getAthleteGroup(member.groupId);
+    const group = await dbStorage.getAthleteGroup(member.groupId);
     if (!group) return res.status(404).send("Athlete group not found");
     
     // Check if user owns the group
     if (group.coachId !== req.user!.id) return res.sendStatus(403);
     
-    await storage.deleteGroupMember(memberId);
+    await dbStorage.deleteGroupMember(memberId);
     res.sendStatus(204);
   });
 
@@ -813,13 +813,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const userId = req.user!.id;
     
     // If the user is the coach, include private notes
-    const isCoach = await storage.getCoachesByUserId(userId)
+    const isCoach = await dbStorage.getCoachesByUserId(userId)
       .then(coaches => coaches.some(coach => 
         coach.athleteId === athleteId && coach.status === 'accepted'
       ));
     
     const includePrivate = isCoach;
-    const notes = await storage.getCoachNotesByAthleteId(athleteId, includePrivate);
+    const notes = await dbStorage.getCoachNotesByAthleteId(athleteId, includePrivate);
     
     // If the user is the athlete, filter out private notes and only show notes where they are the athlete
     if (!isCoach) {
@@ -844,11 +844,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Verify athlete exists
-      const athlete = await storage.getUser(noteData.athleteId);
+      const athlete = await dbStorage.getUser(noteData.athleteId);
       if (!athlete) return res.status(404).send("Athlete not found");
       
       // Verify the coach-athlete relationship exists and is accepted
-      const coachRelation = await storage.getCoachesByUserId(req.user!.id)
+      const coachRelation = await dbStorage.getCoachesByUserId(req.user!.id)
         .then(coaches => coaches.find(coach => 
           coach.athleteId === noteData.athleteId && coach.status === 'accepted'
         ));
@@ -859,17 +859,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Optional: Verify meet exists if meetId is provided
       if (noteData.meetId) {
-        const meet = await storage.getMeet(noteData.meetId);
+        const meet = await dbStorage.getMeet(noteData.meetId);
         if (!meet) return res.status(404).send("Meet not found");
       }
       
       // Optional: Verify result exists if resultId is provided
       if (noteData.resultId) {
-        const result = await storage.getResult(noteData.resultId);
+        const result = await dbStorage.getResult(noteData.resultId);
         if (!result) return res.status(404).send("Result not found");
       }
       
-      const note = await storage.createCoachNote(noteData);
+      const note = await dbStorage.createCoachNote(noteData);
       res.status(201).json(note);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -885,7 +885,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const noteId = parseInt(req.params.id);
     if (isNaN(noteId)) return res.status(400).send("Invalid note ID");
     
-    const note = await storage.getCoachNote(noteId);
+    const note = await dbStorage.getCoachNote(noteId);
     if (!note) return res.status(404).send("Coach note not found");
     
     // Check if user is the coach who created the note
@@ -906,7 +906,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).send("No valid updates provided");
       }
       
-      const updatedNote = await storage.updateCoachNote(noteId, updates);
+      const updatedNote = await dbStorage.updateCoachNote(noteId, updates);
       res.json(updatedNote);
     } catch (error) {
       res.status(500).send("Error updating coach note");
@@ -919,13 +919,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const noteId = parseInt(req.params.id);
     if (isNaN(noteId)) return res.status(400).send("Invalid note ID");
     
-    const note = await storage.getCoachNote(noteId);
+    const note = await dbStorage.getCoachNote(noteId);
     if (!note) return res.status(404).send("Coach note not found");
     
     // Check if user is the coach who created the note
     if (note.coachId !== req.user!.id) return res.sendStatus(403);
     
-    await storage.deleteCoachNote(noteId);
+    await dbStorage.deleteCoachNote(noteId);
     res.sendStatus(204);
   });
 
@@ -947,7 +947,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      const updatedUser = await storage.updateUser(userId, updates);
+      const updatedUser = await dbStorage.updateUser(userId, updates);
       
       // Update the session user object
       if (updatedUser) {
@@ -969,7 +969,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       const userId = req.user!.id;
-      const updatedUser = await storage.updateUser(userId, { isPremium: true });
+      const updatedUser = await dbStorage.updateUser(userId, { isPremium: true });
       
       if (updatedUser) {
         // Update the session user object
