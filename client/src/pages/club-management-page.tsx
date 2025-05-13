@@ -43,6 +43,11 @@ export default function ClubManagementPage() {
   const [inviteUsername, setInviteUsername] = useState("");
   const [isInviting, setIsInviting] = useState(false);
 
+  // Invite link state
+  const [inviteLink, setInviteLink] = useState<string | null>(null);
+  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+  const [showInviteLink, setShowInviteLink] = useState(false);
+  
   // Delete club state
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -226,6 +231,54 @@ export default function ClubManagementPage() {
     } finally {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);
+    }
+  };
+
+  // Generate shareable invite link
+  const generateInviteLink = async () => {
+    if (!clubId) return;
+    
+    setIsGeneratingLink(true);
+    
+    try {
+      const response = await fetch(`/api/clubs/${clubId}/generateInviteLink`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          toast({
+            title: "Authentication required",
+            description: "Please login to generate an invite link",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to generate invite link");
+      }
+      
+      const data = await response.json();
+      setInviteLink(data.inviteLink);
+      setShowInviteLink(true);
+      
+      toast({
+        title: "Invite link generated",
+        description: "Share this link to invite members to your club",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Error generating invite link",
+        description: err?.message || "An error occurred",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingLink(false);
     }
   };
   
