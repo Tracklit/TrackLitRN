@@ -1433,6 +1433,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update relative path for the database
       const fileUrl = `/uploads/${filename}`;
       
+      // Update the club in the database
+      if (fileType === 'logo') {
+        await dbStorage.updateClub(clubId, { logoUrl: fileUrl });
+      } else if (fileType === 'banner') {
+        await dbStorage.updateClub(clubId, { bannerUrl: fileUrl });
+      }
+      
       // Return the file URL
       res.json({ fileUrl });
     } catch (error: any) {
