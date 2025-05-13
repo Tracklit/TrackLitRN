@@ -6,21 +6,18 @@
   /* Sidebar animation */
   #main-content {
     position: relative;
-    transition: transform 0.3s ease-in-out, width 0.3s ease-in-out;
-    will-change: transform;
+    transition: transform 0.3s ease-in-out;
     transform: translateX(0);
     width: 100%;
   }
   
   #main-content.menu-open {
     transform: translateX(75vw);
-    width: 100vw;
   }
   
   @media (min-width: 768px) {
     #main-content.menu-open {
-      transform: translateX(320px);
-      width: 100vw;
+      transform: translateX(0);
     }
   }
 }
