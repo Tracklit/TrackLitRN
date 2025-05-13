@@ -1409,7 +1409,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       const clubId = parseInt(req.params.id);
-      const { name, description, isPrivate, logoUrl, bannerUrl } = req.body;
+      const { name, description, isPrivate, isPremium, logoUrl, bannerUrl } = req.body;
       
       // Validation
       if (name !== undefined && !name.trim()) {
@@ -1432,6 +1432,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         name: name !== undefined ? name : undefined,
         description: description !== undefined ? description : undefined,
         isPrivate: isPrivate !== undefined ? isPrivate : undefined,
+        isPremium: isPremium !== undefined ? isPremium : undefined,
         logoUrl: logoUrl !== undefined ? logoUrl : undefined,
         bannerUrl: bannerUrl !== undefined ? bannerUrl : undefined
       });
