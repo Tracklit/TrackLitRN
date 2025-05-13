@@ -1512,6 +1512,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Club messages endpoints
+  app.get("/api/clubs/:id/messages", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const clubId = parseInt(req.params.id);
+      
+      // Check if user is a member of the club
+      const membership = await dbStorage.getClubMemberByUserAndClub(req.user!.id, clubId);
+      
+      if (!membership) {
+        return res.status(403).send("Not authorized to view messages in this club");
+      }
+      
+      const messages = await dbStorage.getClubMessages(clubId);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching club messages:", error);
+      res.status(500).send("Error fetching messages");
+    }
+  });
+  
+  app.post("/api/clubs/:id/messages", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const clubId = parseInt(req.params.id);
+      const userId = req.user!.id;
+      
+      // Check if user is a member of the club
+      const membership = await dbStorage.getClubMemberByUserAndClub(userId, clubId);
+      
+      if (!membership) {
+        return res.status(403).send("Not authorized to post messages in this club");
+      }
+      
+      // Get the club to check if it's premium
+      const club = await dbStorage.getClub(clubId);
+      
+      if (!club) {
+        return res.status(404).send("Club not found");
+      }
+      
+      // Check if the club is premium or if the club owner is sending the message
+      if (!club.isPremium && club.ownerId !== userId) {
+        return res.status(403).send("Chat is a premium feature. Please upgrade to send messages.");
+      }
+      
+      const message = await dbStorage.createClubMessage({
+        clubId,
+        userId,
+        content: req.body.content
+      });
+      
+      res.json(message);
+    } catch (error) {
+      console.error("Error posting club message:", error);
+      res.status(500).send("Error posting message");
+    }
+  });
+
   // Group endpoints
   app.get("/api/groups", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
