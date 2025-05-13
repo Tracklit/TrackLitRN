@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Globe, Shield, Plus, MessagesSquare, UserCircle } from "lucide-react";
+import { Users, Globe, Shield, Plus, MessagesSquare, UserCircle, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -336,7 +336,7 @@ export default function ClubsPage() {
   );
 }
 
-// CreateGroupDialog component
+// CreateGroupDialog component 
 function CreateGroupDialog() {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
@@ -422,53 +422,80 @@ function CreateGroupDialog() {
             Create a group to chat with specific athletes and coaches.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="name">Group Name</Label>
-            <Input 
-              id="name" 
-              placeholder="Enter group name" 
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+        
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleCreateGroup)} className="space-y-4 py-2">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Group Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter group name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea 
-              id="description" 
-              placeholder="Describe your group" 
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+            
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description (Optional)</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="Describe what this group is about" 
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Briefly explain the purpose of this group
+                  </FormDescription>
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="privacy" 
-              checked={isPrivate}
-              onCheckedChange={(checked) => setIsPrivate(!!checked)}
+            
+            <FormField
+              control={form.control}
+              name="isPrivate"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>Make this group private</FormLabel>
+                    <FormDescription>
+                      Private groups are only visible to members
+                    </FormDescription>
+                  </div>
+                </FormItem>
+              )}
             />
-            <Label htmlFor="privacy" className="cursor-pointer">
-              Private Group (invite only)
-            </Label>
-          </div>
-          {error && (
-            <div className="text-destructive text-sm">{error}</div>
-          )}
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
-          <Button 
-            onClick={handleCreateGroup} 
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <span className="mr-2">Creating...</span>
-                <span className="animate-spin">⏳</span>
-              </>
-            ) : "Create Group"}
-          </Button>
-        </DialogFooter>
+            
+            <DialogFooter>
+              <Button variant="outline" type="button" onClick={() => setIsOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  "Create Group"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
