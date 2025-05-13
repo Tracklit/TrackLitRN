@@ -80,7 +80,7 @@ export default function AuthPage() {
         <div className="mx-auto w-full max-w-md">
           <div className="flex items-center mb-8">
             <Terminal className="h-8 w-8 text-primary mr-2" />
-            <h1 className="text-3xl font-bold">Track Meet</h1>
+            <h1 className="text-3xl font-bold">Track Pro</h1>
           </div>
           
           <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'login' | 'register')}>
