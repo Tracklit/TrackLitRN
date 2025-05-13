@@ -26,6 +26,25 @@ export function PracticeMediaGallery({
 }: PracticeMediaGalleryProps) {
   const { user } = useAuth();
   const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
+  
+  // Show a more helpful message if no completionId is provided
+  if (!completionId) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center">
+            <Image className="w-5 h-5 mr-2" />
+            Session Media
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-muted-foreground">
+            <p>Media gallery requires a practice completion ID</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   // Query to fetch media for this completion
   const { data: mediaItems = [], isLoading } = useQuery<Media[]>({

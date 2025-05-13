@@ -29,6 +29,19 @@ export function PracticeMediaUpload({
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  
+  // Show a more helpful message if no completionId is provided
+  if (!completionId) {
+    return (
+      <Card className="mt-6">
+        <CardContent className="pt-6">
+          <div className="text-center py-8 text-muted-foreground">
+            <p>Media upload requires a practice completion ID</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   // Upload mutation
   const uploadMutation = useMutation({
@@ -70,8 +83,9 @@ export function PracticeMediaUpload({
         description: 'Your media has been uploaded successfully.'
       });
       
+      // Invalidate the media queries to refresh the gallery
       queryClient.invalidateQueries({
-        queryKey: ['/api/practice/completions', completionId],
+        queryKey: ['/api/practice/media', completionId],
       });
       
       // Reset form
@@ -127,9 +141,8 @@ export function PracticeMediaUpload({
     const formData = new FormData();
     formData.append('file', selectedFile);
     formData.append('completionId', completionId.toString());
-    formData.append('sessionId', sessionId.toString());
-    formData.append('type', selectedFile.type.startsWith('video/') ? 'video' : 'image');
     
+    // The server determines the media type from the file automatically
     uploadMutation.mutate(formData);
   };
 
