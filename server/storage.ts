@@ -586,24 +586,43 @@ export class DatabaseStorage implements IStorage {
   
   async getUserGroups(userId: number): Promise<Group[]> {
     try {
-      // Get groups where user is a member
-      const memberships = await db
-        .select()
-        .from(chatGroupMembers)
-        .where(and(
-          eq(chatGroupMembers.userId, userId),
-          eq(chatGroupMembers.status, 'accepted')
-        ));
+      // First get groups where user is an accepted member
+      let memberGroups: Group[] = [];
       
-      if (memberships.length === 0) {
-        // Also get groups owned by the user
-        const ownedGroups = await db
-          .select()
-          .from(groups)
-          .where(eq(groups.ownerId, userId));
-          
-        return ownedGroups;
+      try {
+        const memberships = await db
+          .select({
+            groupId: chatGroupMembers.groupId,
+          })
+          .from(chatGroupMembers)
+          .where(eq(chatGroupMembers.userId, userId));
+            
+        if (memberships.length > 0) {
+          const groupIds = memberships.map(m => m.groupId);
+          memberGroups = await db
+            .select()
+            .from(groups)
+            .where(inArray(groups.id, groupIds));
+        }
+      } catch (error) {
+        console.error("Error fetching group memberships:", error);
       }
+      
+      // Also get groups owned by the user
+      const ownedGroups = await db
+        .select()
+        .from(groups)
+        .where(eq(groups.ownerId, userId));
+      
+      // Combine both lists without duplicates
+      const allGroups = [...memberGroups];
+      ownedGroups.forEach(owned => {
+        if (!allGroups.some(g => g.id === owned.id)) {
+          allGroups.push(owned);
+        }
+      });
+      
+      return allGroups;
       
       // Include both member groups and owned groups
       const memberGroupIds = memberships.map((m: any) => m.groupId);

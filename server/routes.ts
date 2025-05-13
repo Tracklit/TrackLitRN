@@ -15,6 +15,7 @@ import {
   insertGroupMemberSchema,
   insertCoachNoteSchema,
   insertPracticeMediaSchema,
+  insertGroupSchema,
   InsertMeet,
   InsertResult,
   InsertReminder,

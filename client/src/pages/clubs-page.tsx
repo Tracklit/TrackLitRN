@@ -13,6 +13,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 
+// No need for context as we'll use window.location.reload() to refresh the groups
+
 export default function ClubsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -395,7 +397,8 @@ function CreateGroupDialog() {
       
       if (groupsResponse.ok) {
         const newGroups = await groupsResponse.json();
-        setGroups(newGroups);
+        // Refresh the page to show updated groups
+        window.location.reload();
       } else {
         // Fallback to reload if refresh fails
         window.location.reload();
