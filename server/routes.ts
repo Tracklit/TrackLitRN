@@ -1100,10 +1100,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     try {
+      // Parse and validate the club data
       const clubData = {
         ...req.body,
         ownerId: req.user!.id,
-        joinCode: Math.random().toString(36).substring(2, 8).toUpperCase(), // Generate random join code
+        // No join code in the schema
       };
       const newClub = await dbStorage.createClub(clubData);
       res.status(201).json(newClub);
