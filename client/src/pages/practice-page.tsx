@@ -153,37 +153,48 @@ export default function PracticePage() {
             </div>
             
             <div className="space-y-4 mt-6">
+              {/* Dummy content for today's session */}
               <div className="bg-muted/40 p-3 rounded-md">
-                <div className="flex items-center gap-2 text-sm font-medium mb-2">
-                  <TrendingUp className="h-4 w-4 text-primary" />
-                  <span>Feeling</span>
-                </div>
-                <Slider
-                  value={[7]}
-                  max={10}
-                  step={1}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>Poor</span>
-                  <span>Excellent</span>
-                </div>
-              </div>
-              
-              <div className="bg-muted/40 p-3 rounded-md">
-                <div className="flex items-center gap-2 text-sm font-medium mb-2">
-                  <TrendingUp className="h-4 w-4 text-primary" />
-                  <span>Satisfaction</span>
-                </div>
-                <Slider
-                  value={[8]}
-                  max={10}
-                  step={1}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>Poor</span>
-                  <span>Excellent</span>
+                <h4 className="text-sm font-medium mb-2">Today's Workout</h4>
+                <div className="space-y-2">
+                  <div className="p-2 bg-background/50 rounded border border-border/50">
+                    <div className="flex items-center">
+                      <div className="bg-primary/10 p-1.5 rounded-full mr-3">
+                        <Dumbbell className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">3 x 200m</p>
+                        <p className="text-xs text-muted-foreground">@ 28s, 2min rest</p>
+                      </div>
+                      <Badge className="ml-auto" variant="outline">Completed</Badge>
+                    </div>
+                  </div>
+                  
+                  <div className="p-2 bg-background/50 rounded border border-border/50">
+                    <div className="flex items-center">
+                      <div className="bg-primary/10 p-1.5 rounded-full mr-3">
+                        <Dumbbell className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">2 x 250m</p>
+                        <p className="text-xs text-muted-foreground">@ 36s, 3min rest</p>
+                      </div>
+                      <Badge className="ml-auto" variant="outline">Completed</Badge>
+                    </div>
+                  </div>
+                  
+                  <div className="p-2 bg-background/50 rounded border border-border/50">
+                    <div className="flex items-center">
+                      <div className="bg-primary/10 p-1.5 rounded-full mr-3">
+                        <Dumbbell className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">1 x 300m</p>
+                        <p className="text-xs text-muted-foreground">@ 45s, all out</p>
+                      </div>
+                      <Badge className="ml-auto" variant="secondary">Next up</Badge>
+                    </div>
+                  </div>
                 </div>
               </div>
               

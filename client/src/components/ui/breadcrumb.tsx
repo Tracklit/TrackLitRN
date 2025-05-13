@@ -35,9 +35,9 @@ export function Breadcrumb({
             <span className="sr-only">Home</span>
           </Link>
         </li>
-        {segments.map((segment, index) => (
-          <React.Fragment key={segment.href}>
-            <li className="flex items-center space-x-2">
+        {segments.map((segment, index) => {
+          return (
+            <li key={segment.href} className="flex items-center space-x-2">
               <span className="mx-1 text-muted-foreground/50">{separator}</span>
               {index === segments.length - 1 ? (
                 <span className="font-medium text-foreground" aria-current="page">
@@ -52,8 +52,8 @@ export function Breadcrumb({
                 </Link>
               )}
             </li>
-          </React.Fragment>
-        ))}
+          );
+        })}
       </ol>
     </nav>
   )
