@@ -45,7 +45,7 @@ import {
   groupMessages
 } from "@shared/schema";
 import { db, pool } from "./db";
-import { eq, and, lt, gte, desc, asc, inArray } from "drizzle-orm";
+import { eq, and, lt, gte, desc, asc, inArray, or } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 
@@ -585,30 +585,72 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getUserGroups(userId: number): Promise<Group[]> {
-    // Get groups where user is a member
-    const memberships = await db
-      .select()
-      .from(chatGroupMembers)
-      .where(eq(chatGroupMembers.userId, userId))
-      .where(eq(chatGroupMembers.status, 'accepted'));
-    
-    if (memberships.length === 0) {
+    try {
+      // Get groups where user is a member
+      const memberships = await db
+        .select()
+        .from(chatGroupMembers)
+        .where(and(
+          eq(chatGroupMembers.userId, userId),
+          eq(chatGroupMembers.status, 'accepted')
+        ));
+      
+      if (memberships.length === 0) {
+        // Also get groups owned by the user
+        const ownedGroups = await db
+          .select()
+          .from(groups)
+          .where(eq(groups.ownerId, userId));
+          
+        return ownedGroups;
+      }
+      
+      // Include both member groups and owned groups
+      const memberGroupIds = memberships.map((m: any) => m.groupId);
+      
+      const result = await db
+        .select()
+        .from(groups)
+        .where(
+          or(
+            inArray(groups.id, memberGroupIds),
+            eq(groups.ownerId, userId)
+          )
+        );
+        
+      return result;
+    } catch (error) {
+      console.error("Error in getUserGroups:", error);
       return [];
     }
-    
-    const groupIds = memberships.map(m => m.groupId);
-    return db
-      .select()
-      .from(groups)
-      .where(inArray(groups.id, groupIds));
   }
   
   async createGroup(group: InsertGroup): Promise<Group> {
-    const [newGroup] = await db
-      .insert(groups)
-      .values(group)
-      .returning();
-    return newGroup;
+    try {
+      // Make sure we have a join code
+      const valueToInsert = {
+        ...group,
+        joinCode: group.joinCode || Math.random().toString(36).substring(2, 8).toUpperCase()
+      };
+      
+      const [newGroup] = await db
+        .insert(groups)
+        .values(valueToInsert)
+        .returning();
+        
+      // Automatically add the creator as a member with admin role
+      await this.createGroupMember({
+        groupId: newGroup.id,
+        userId: newGroup.ownerId,
+        role: 'admin',
+        status: 'accepted'
+      });
+        
+      return newGroup;
+    } catch (error) {
+      console.error("Error in createGroup:", error);
+      throw error;
+    }
   }
   
   async updateGroup(id: number, groupData: Partial<Group>): Promise<Group | undefined> {

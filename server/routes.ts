@@ -1178,25 +1178,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     try {
-      const groupData = {
+      // Validate the request data
+      const parsedData = insertGroupSchema.safeParse({
         ...req.body,
-        ownerId: req.user!.id,
-        joinCode: Math.random().toString(36).substring(2, 8).toUpperCase(), // Generate random join code
-      };
-      const newGroup = await dbStorage.createGroup(groupData);
+        ownerId: req.user!.id
+      });
       
-      // Auto-add the creator as admin
-      const memberData = {
-        groupId: newGroup.id,
-        userId: req.user!.id,
-        role: 'admin',
-        status: 'accepted'
-      };
-      await dbStorage.createGroupMember(memberData);
+      if (!parsedData.success) {
+        return res.status(400).json({ 
+          error: "Invalid data", 
+          details: parsedData.error.format() 
+        });
+      }
+      
+      // Generate random join code
+      const joinCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      
+      // Create the group - the storage method will also add the owner as a member
+      const newGroup = await dbStorage.createGroup({
+        ...parsedData.data,
+        joinCode
+      });
       
       res.status(201).json(newGroup);
     } catch (error) {
-      res.status(500).send("Error creating group");
+      console.error("Error creating group:", error);
+      res.status(500).send("An error occurred while creating the group");
     }
   });
 
