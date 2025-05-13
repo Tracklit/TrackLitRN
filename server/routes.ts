@@ -1150,8 +1150,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const memberData = {
         clubId,
         userId: req.user!.id,
-        role: 'member',
-        status: club.isPrivate ? 'pending' : 'accepted'
+        role: "member" as const,
+        status: club.isPrivate ? "pending" as const : "accepted" as const
       };
       
       const membership = await dbStorage.createClubMember(memberData);
