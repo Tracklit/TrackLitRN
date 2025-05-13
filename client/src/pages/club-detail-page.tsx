@@ -14,8 +14,12 @@ import {
   Settings,
   MessageSquare,
   CalendarDays,
-  Users
+  Users,
+  ImageIcon,
+  SquarePen,
+  Check
 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
@@ -42,6 +46,13 @@ export function Component() {
   const [isLoadingMessages, setIsLoadingMessages] = useState(true);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [membership, setMembership] = useState<any>(null);
+  
+  // Image edit states
+  const [isEditingLogo, setIsEditingLogo] = useState(false);
+  const [isEditingBanner, setIsEditingBanner] = useState(false);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState<{logo: boolean, banner: boolean}>({ logo: false, banner: false });
   
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -199,6 +210,137 @@ export function Component() {
     }
   };
   
+  // Handle file uploads
+  const handleFileUpload = async (fileType: 'logo' | 'banner', file: File): Promise<string | null> => {
+    if (!file) return null;
+    
+    // Update loading state for the specific upload type
+    setIsUploading(prev => ({ ...prev, [fileType]: true }));
+    
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: `File too large`,
+        description: `${fileType === 'logo' ? 'Logo' : 'Banner'} image must be less than 2MB`,
+        variant: "destructive"
+      });
+      setIsUploading(prev => ({ ...prev, [fileType]: false }));
+      return null;
+    }
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload an image file",
+        variant: "destructive"
+      });
+      setIsUploading(prev => ({ ...prev, [fileType]: false }));
+      return null;
+    }
+    
+    try {
+      toast({
+        title: `Uploading ${fileType}`,
+        description: "Please wait while we process your image...",
+      });
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('fileType', fileType);
+      
+      const response = await fetch(`/api/clubs/${clubId}/upload`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          toast({
+            title: "Authentication required",
+            description: "Please login to upload images",
+            variant: "destructive"
+          });
+          return null;
+        }
+        
+        if (response.status === 403) {
+          toast({
+            title: "Permission denied",
+            description: "Only club administrators can change club images",
+            variant: "destructive"
+          });
+          return null;
+        }
+        
+        const errorText = await response.text();
+        throw new Error(errorText || `Failed to upload ${fileType}`);
+      }
+      
+      const data = await response.json();
+      
+      toast({
+        title: `${fileType === 'logo' ? 'Logo' : 'Banner'} uploaded`,
+        description: "Your image has been uploaded successfully",
+      });
+      
+      return data.fileUrl;
+    } catch (err: any) {
+      console.error(`Error uploading ${fileType}:`, err);
+      toast({
+        title: `Error uploading ${fileType}`,
+        description: err?.message || "An error occurred",
+        variant: "destructive"
+      });
+      return null;
+    } finally {
+      setIsUploading(prev => ({ ...prev, [fileType]: false }));
+    }
+  };
+  
+  // Handle logo change
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setLogoFile(file);
+      
+      // Upload immediately
+      const uploadedUrl = await handleFileUpload('logo', file);
+      if (uploadedUrl) {
+        // Update club in state
+        setClub({
+          ...club,
+          logoUrl: uploadedUrl
+        });
+        
+        // Close dialog
+        setIsEditingLogo(false);
+      }
+    }
+  };
+  
+  // Handle banner change
+  const handleBannerChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setBannerFile(file);
+      
+      // Upload immediately
+      const uploadedUrl = await handleFileUpload('banner', file);
+      if (uploadedUrl) {
+        // Update club in state
+        setClub({
+          ...club,
+          bannerUrl: uploadedUrl
+        });
+        
+        // Close dialog
+        setIsEditingBanner(false);
+      }
+    }
+  };
+
   // Handle join club
   const handleJoinClub = async () => {
     try {
@@ -321,7 +463,7 @@ export function Component() {
       
       {/* Club Banner */}
       <div className="relative mb-8">
-        <div className="h-48 md:h-64 rounded-lg overflow-hidden bg-muted">
+        <div className="relative group h-48 md:h-64 rounded-lg overflow-hidden bg-muted">
           {club.bannerUrl ? (
             <img 
               src={club.bannerUrl} 
@@ -333,10 +475,22 @@ export function Component() {
               <span className="text-2xl font-bold text-primary/50">{club.name}</span>
             </div>
           )}
+          
+          {/* Edit Banner Button - only for admins */}
+          {membership?.role === 'admin' && (
+            <Button
+              size="sm"
+              className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 hover:bg-background"
+              onClick={() => setIsEditingBanner(true)}
+            >
+              <SquarePen className="h-4 w-4 mr-2" />
+              Edit Banner
+            </Button>
+          )}
         </div>
         
         <div className="absolute -bottom-6 left-8 flex items-end">
-          <div className="w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-background overflow-hidden bg-muted">
+          <div className="relative group w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-background overflow-hidden bg-muted">
             {club.logoUrl ? (
               <img 
                 src={club.logoUrl} 
@@ -347,6 +501,18 @@ export function Component() {
               <div className="w-full h-full flex items-center justify-center bg-primary/20">
                 <span className="text-xl font-bold text-primary">{club.name.charAt(0)}</span>
               </div>
+            )}
+            
+            {/* Edit Logo Button - only for admins */}
+            {membership?.role === 'admin' && (
+              <Button
+                size="sm"
+                variant="secondary"
+                className="absolute inset-0 opacity-0 group-hover:opacity-80 transition-opacity flex items-center justify-center"
+                onClick={() => setIsEditingLogo(true)}
+              >
+                <SquarePen className="h-4 w-4" />
+              </Button>
             )}
           </div>
         </div>
@@ -629,6 +795,122 @@ export function Component() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Logo Edit Dialog */}
+      <Dialog open={isEditingLogo} onOpenChange={setIsEditingLogo}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Club Logo</DialogTitle>
+            <DialogDescription>
+              Upload a new logo for your club. Square images work best.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {club.logoUrl && (
+              <div className="flex justify-center mb-4">
+                <div className="w-32 h-32 rounded-full overflow-hidden border">
+                  <img 
+                    src={club.logoUrl} 
+                    alt={`${club.name} current logo`} 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+            )}
+            
+            <div className="grid gap-2">
+              <label htmlFor="logo-upload" className="text-sm font-medium">
+                Select a new logo
+              </label>
+              <Input
+                id="logo-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleLogoChange}
+                disabled={isUploading.logo}
+              />
+              <p className="text-xs text-muted-foreground">
+                Recommended square image up to 2MB
+              </p>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsEditingLogo(false)}
+              disabled={isUploading.logo}
+            >
+              Cancel
+            </Button>
+            {isUploading.logo && (
+              <Button disabled>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Uploading...
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Banner Edit Dialog */}
+      <Dialog open={isEditingBanner} onOpenChange={setIsEditingBanner}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Edit Club Banner</DialogTitle>
+            <DialogDescription>
+              Upload a new banner for your club. Wide images work best.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {club.bannerUrl && (
+              <div className="flex justify-center mb-4">
+                <div className="w-full h-40 rounded-md overflow-hidden border">
+                  <img 
+                    src={club.bannerUrl} 
+                    alt={`${club.name} current banner`} 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+            )}
+            
+            <div className="grid gap-2">
+              <label htmlFor="banner-upload" className="text-sm font-medium">
+                Select a new banner
+              </label>
+              <Input
+                id="banner-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleBannerChange}
+                disabled={isUploading.banner}
+              />
+              <p className="text-xs text-muted-foreground">
+                Recommended size: 1200x300px (max 2MB)
+              </p>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsEditingBanner(false)}
+              disabled={isUploading.banner}
+            >
+              Cancel
+            </Button>
+            {isUploading.banner && (
+              <Button disabled>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Uploading...
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
