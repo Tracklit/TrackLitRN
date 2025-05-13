@@ -496,6 +496,11 @@ export const insertCoachNoteSchema = createInsertSchema(coachNotes).omit({
   createdAt: true,
 });
 
+export const insertPracticeMediaSchema = createInsertSchema(practiceMedia).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertMeet = z.infer<typeof insertMeetSchema>;
@@ -505,6 +510,7 @@ export type InsertCoach = z.infer<typeof insertCoachSchema>;
 export type InsertAthleteGroup = z.infer<typeof insertAthleteGroupSchema>;
 export type InsertGroupMember = z.infer<typeof insertGroupMemberSchema>;
 export type InsertCoachNote = z.infer<typeof insertCoachNoteSchema>;
+export type InsertPracticeMedia = z.infer<typeof insertPracticeMediaSchema>;
 
 export type User = typeof users.$inferSelect;
 export type Meet = typeof meets.$inferSelect;
@@ -516,6 +522,7 @@ export type AthleteGroupMember = typeof athleteGroupMembers.$inferSelect;
 // Alias for backward compatibility
 export type GroupMember = AthleteGroupMember;
 export type CoachNote = typeof coachNotes.$inferSelect;
+export type PracticeMedia = typeof practiceMedia.$inferSelect;
 
 // Login schema
 export const loginSchema = z.object({

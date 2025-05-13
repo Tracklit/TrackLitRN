@@ -14,13 +14,16 @@ import {
   insertAthleteGroupSchema,
   insertGroupMemberSchema,
   insertCoachNoteSchema,
+  insertPracticeMediaSchema,
   InsertMeet,
   InsertResult,
   InsertReminder,
   InsertCoach,
   InsertAthleteGroup,
   InsertGroupMember,
-  InsertCoachNote
+  InsertCoachNote,
+  InsertPracticeMedia,
+  PracticeMedia
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {

@@ -95,6 +95,12 @@ export interface IStorage {
   createCoachNote(note: InsertCoachNote): Promise<CoachNote>;
   updateCoachNote(id: number, noteData: Partial<CoachNote>): Promise<CoachNote | undefined>;
   deleteCoachNote(id: number): Promise<boolean>;
+  
+  // Practice Media operations
+  getPracticeMedia(id: number): Promise<PracticeMedia | undefined>;
+  getPracticeMediaByCompletionId(completionId: number): Promise<PracticeMedia[]>;
+  createPracticeMedia(media: InsertPracticeMedia): Promise<PracticeMedia>;
+  deletePracticeMedia(id: number): Promise<boolean>;
 
   // Session store
   sessionStore: session.Store;
