@@ -54,14 +54,29 @@ function Router() {
   );
 }
 
+// Import Sidebar Navigation and Hamburger Menu
+import { SidebarNavigation } from "@/components/layout/sidebar-navigation";
+import { HamburgerMenu } from "@/components/ui/hamburger-menu";
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
           <div className="min-h-screen bg-background text-foreground">
+            <SidebarNavigation />
+            
+            {/* Hamburger Menu Button - Positioned at top left */}
+            <div className="fixed top-4 left-4 z-50 block md:hidden">
+              <HamburgerMenu />
+            </div>
+            
+            {/* Main Content - This will slide when menu opens */}
+            <div id="main-content" className="relative transition-all">
+              <Router />
+            </div>
+            
             <Toaster />
-            <Router />
           </div>
         </TooltipProvider>
       </AuthProvider>

@@ -2,6 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  /* Sidebar animation */
+  #main-content {
+    transition: padding-left 0.3s ease-in-out, width 0.3s ease-in-out;
+  }
+  
+  #main-content.menu-open {
+    padding-left: 75vw;
+    max-width: 75vw;
+  }
+  
+  @media (min-width: 768px) {
+    #main-content.menu-open {
+      padding-left: 320px;
+      max-width: calc(100% - 320px);
+    }
+  }
+}
+
 :root {
   /* Single color dark blue background with golden yellow accent as requested */
   --background: 220 40% 12%;

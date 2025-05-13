@@ -735,7 +735,7 @@ export default function ClubManagementPage() {
   }
   
   return (
-    <div className="container max-w-screen-xl mx-auto p-4 pt-20 md:pt-24 md:pl-72 pb-20">
+    <div className="container max-w-screen-xl mx-auto p-4 pt-8 md:pt-8 md:pl-72 pb-20">
       <div className="mb-6">
         <Button variant="ghost" onClick={() => setLocation("/clubs")}>
           <ArrowLeft className="h-4 w-4 mr-2" />
