@@ -233,6 +233,9 @@ export default function ClubManagementPage() {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       
+      // Store the current URL in case we need to revert
+      const currentLogoUrl = clubLogoUrl;
+      
       // Validate file size (max 2MB)
       if (file.size > 2 * 1024 * 1024) {
         toast({
@@ -246,12 +249,40 @@ export default function ClubManagementPage() {
       // Preview image
       const reader = new FileReader();
       reader.onload = () => {
-        // This is just to trigger a UI update, the actual file is used for upload
-        setClubLogoUrl(reader.result as string);
+        if (reader.result) {
+          // Create temporary preview URL
+          const previewUrl = reader.result as string;
+          console.log("Generated logo preview URL:", previewUrl.substring(0, 50) + "...");
+          setClubLogoUrl(previewUrl);
+        } else {
+          console.error("Failed to generate logo preview");
+          // Keep the existing URL if reading fails
+          setClubLogoUrl(currentLogoUrl);
+        }
       };
-      reader.readAsDataURL(file);
       
-      setLogoFile(file);
+      reader.onerror = () => {
+        console.error("Error reading logo file:", reader.error);
+        // Keep the existing URL if reading fails
+        setClubLogoUrl(currentLogoUrl);
+        toast({
+          title: "Preview Error",
+          description: "Failed to preview image, but you can still upload it",
+          variant: "destructive"
+        });
+      };
+      
+      try {
+        reader.readAsDataURL(file);
+        setLogoFile(file);
+      } catch (error) {
+        console.error("Exception reading logo file:", error);
+        toast({
+          title: "File Error",
+          description: "Failed to read the selected file",
+          variant: "destructive"
+        });
+      }
     }
   };
   
@@ -259,6 +290,9 @@ export default function ClubManagementPage() {
   const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      
+      // Store the current URL in case we need to revert
+      const currentBannerUrl = clubBannerUrl;
       
       // Validate file size (max 2MB)
       if (file.size > 2 * 1024 * 1024) {
@@ -273,12 +307,40 @@ export default function ClubManagementPage() {
       // Preview image
       const reader = new FileReader();
       reader.onload = () => {
-        // This is just to trigger a UI update, the actual file is used for upload
-        setClubBannerUrl(reader.result as string);
+        if (reader.result) {
+          // Create temporary preview URL
+          const previewUrl = reader.result as string;
+          console.log("Generated banner preview URL:", previewUrl.substring(0, 50) + "...");
+          setClubBannerUrl(previewUrl);
+        } else {
+          console.error("Failed to generate banner preview");
+          // Keep the existing URL if reading fails
+          setClubBannerUrl(currentBannerUrl);
+        }
       };
-      reader.readAsDataURL(file);
       
-      setBannerFile(file);
+      reader.onerror = () => {
+        console.error("Error reading banner file:", reader.error);
+        // Keep the existing URL if reading fails
+        setClubBannerUrl(currentBannerUrl);
+        toast({
+          title: "Preview Error",
+          description: "Failed to preview image, but you can still upload it",
+          variant: "destructive"
+        });
+      };
+      
+      try {
+        reader.readAsDataURL(file);
+        setBannerFile(file);
+      } catch (error) {
+        console.error("Exception reading banner file:", error);
+        toast({
+          title: "File Error",
+          description: "Failed to read the selected file",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -295,25 +357,45 @@ export default function ClubManagementPage() {
     
     setIsSaving(true);
     
+    // Save the current URLs in case we need to revert
+    const originalLogoUrl = club?.logoUrl || "";
+    const originalBannerUrl = club?.bannerUrl || "";
+    
     // Upload files if selected
-    let logoUrl = clubLogoUrl;
-    let bannerUrl = clubBannerUrl;
-    
-    if (logoFile) {
-      const uploadedLogoUrl = await handleFileUpload('logo', logoFile);
-      if (uploadedLogoUrl) {
-        logoUrl = uploadedLogoUrl;
-      }
-    }
-    
-    if (bannerFile) {
-      const uploadedBannerUrl = await handleFileUpload('banner', bannerFile);
-      if (uploadedBannerUrl) {
-        bannerUrl = uploadedBannerUrl;
-      }
-    }
+    let logoUrl = logoFile ? clubLogoUrl : (club?.logoUrl || "");
+    let bannerUrl = bannerFile ? clubBannerUrl : (club?.bannerUrl || "");
     
     try {
+      // First handle file uploads if present
+      if (logoFile) {
+        console.log("Uploading logo file...");
+        const uploadedLogoUrl = await handleFileUpload('logo', logoFile);
+        if (uploadedLogoUrl) {
+          logoUrl = uploadedLogoUrl;
+          console.log("Logo uploaded successfully:", uploadedLogoUrl.substring(0, 50) + "...");
+        } else {
+          console.error("Logo upload failed, reverting to original");
+          // If upload fails, revert to original
+          logoUrl = originalLogoUrl;
+        }
+      }
+      
+      if (bannerFile) {
+        console.log("Uploading banner file...");
+        const uploadedBannerUrl = await handleFileUpload('banner', bannerFile);
+        if (uploadedBannerUrl) {
+          bannerUrl = uploadedBannerUrl;
+          console.log("Banner uploaded successfully:", uploadedBannerUrl.substring(0, 50) + "...");
+        } else {
+          console.error("Banner upload failed, reverting to original");
+          // If upload fails, revert to original
+          bannerUrl = originalBannerUrl;
+        }
+      }
+      
+      console.log("Updating club with logoUrl:", logoUrl ? "present" : "empty", "bannerUrl:", bannerUrl ? "present" : "empty");
+      
+      // Now update the club details
       const response = await fetch(`/api/clubs/${clubId}`, {
         method: "PATCH",
         headers: {
@@ -345,9 +427,14 @@ export default function ClubManagementPage() {
       }
       
       const updatedClub = await response.json();
-      setClub(updatedClub);
+      console.log("Club updated successfully:", updatedClub);
       
-      // Update local state with new URLs
+      // Update all state with the latest data from server
+      setClub(updatedClub);
+      setClubName(updatedClub.name);
+      setClubDescription(updatedClub.description || "");
+      setClubPrivacy(updatedClub.isPrivate);
+      setClubIsPremium(updatedClub.isPremium || false);
       setClubLogoUrl(updatedClub.logoUrl || "");
       setClubBannerUrl(updatedClub.bannerUrl || "");
       
@@ -362,6 +449,12 @@ export default function ClubManagementPage() {
       
       setIsEditing(false);
     } catch (err: any) {
+      console.error("Error updating club:", err);
+      
+      // Revert to original state on error
+      setClubLogoUrl(originalLogoUrl);
+      setClubBannerUrl(originalBannerUrl);
+      
       toast({
         title: "Error updating club",
         description: err?.message || "An error occurred",
@@ -657,7 +750,22 @@ export default function ClubManagementPage() {
           <div className="flex items-center gap-2">
             {isEditing ? (
               <>
-                <Button variant="outline" onClick={() => setIsEditing(false)}>
+                <Button variant="outline" onClick={() => {
+                  // Restore original values from the club object
+                  setClubName(club?.name || "");
+                  setClubDescription(club?.description || "");
+                  setClubPrivacy(club?.isPrivate || false);
+                  setClubIsPremium(club?.isPremium || false);
+                  setClubLogoUrl(club?.logoUrl || "");
+                  setClubBannerUrl(club?.bannerUrl || "");
+                  
+                  // Reset file inputs
+                  setLogoFile(null);
+                  setBannerFile(null);
+                  
+                  // Exit edit mode
+                  setIsEditing(false);
+                }}>
                   Cancel
                 </Button>
                 <Button 
@@ -1087,7 +1195,22 @@ export default function ClubManagementPage() {
               <CardFooter className="justify-between">
                 {isEditing ? (
                   <>
-                    <Button variant="outline" onClick={() => setIsEditing(false)}>
+                    <Button variant="outline" onClick={() => {
+                      // Restore original values from the club object
+                      setClubName(club?.name || "");
+                      setClubDescription(club?.description || "");
+                      setClubPrivacy(club?.isPrivate || false);
+                      setClubIsPremium(club?.isPremium || false);
+                      setClubLogoUrl(club?.logoUrl || "");
+                      setClubBannerUrl(club?.bannerUrl || "");
+                      
+                      // Reset file inputs
+                      setLogoFile(null);
+                      setBannerFile(null);
+                      
+                      // Exit edit mode
+                      setIsEditing(false);
+                    }}>
                       Cancel
                     </Button>
                     <Button
