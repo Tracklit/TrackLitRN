@@ -186,7 +186,7 @@ export default function ClubsPage() {
   return (
     <div className="container max-w-screen-xl mx-auto p-4 pt-20 md:pt-24 md:pl-72 pb-20">
       <PageHeader
-        title="Clubs & Groups"
+        title="Clubs"
         description="Join clubs and chat with fellow athletes"
         actions={
           <Dialog open={isCreateClubOpen} onOpenChange={setIsCreateClubOpen}>
@@ -259,7 +259,6 @@ export default function ClubsPage() {
       <Tabs defaultValue="my-clubs" className="mt-6">
         <TabsList className="mb-4">
           <TabsTrigger value="my-clubs">My Clubs</TabsTrigger>
-          <TabsTrigger value="groups">My Groups</TabsTrigger>
           <TabsTrigger value="discover">Discover</TabsTrigger>
         </TabsList>
 

@@ -45,7 +45,7 @@ import {
   groupMessages
 } from "@shared/schema";
 import { db, pool } from "./db";
-import { eq, and, lt, gte, desc, asc, inArray, or, isNotNull } from "drizzle-orm";
+import { eq, and, lt, gte, desc, asc, inArray, or, isNotNull, isNull } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 
@@ -633,7 +633,7 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(users, eq(clubMembers.userId, users.id))
       .where(and(
         eq(clubMembers.clubId, clubId),
-        eq(clubMembers.joinedAt, null)  // Pending members have null joinedAt
+        isNull(clubMembers.joinedAt)  // Pending members have null joinedAt
       ));
   }
   
