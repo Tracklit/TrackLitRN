@@ -163,7 +163,7 @@ export function HamburgerMenu() {
                       isActive={location.startsWith("/clubs")}
                       onClick={closeMenu}
                     >
-                      Clubs & Groups
+                      Clubs
                     </NavItem>
                     <NavItem
                       href="/messages"

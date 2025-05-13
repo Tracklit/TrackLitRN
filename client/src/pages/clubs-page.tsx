@@ -411,7 +411,7 @@ export default function ClubsPage() {
                   <span className="text-sm text-muted-foreground">67 members</span>
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Exclusive group for serious field event athletes. 
+                  Exclusive club for serious field event athletes. 
                   Technical coaching, video analysis, and competition preparation.
                 </p>
               </CardContent>

@@ -127,7 +127,7 @@ export function SidebarNavigation() {
             icon={<Users className="h-5 w-5" />} 
             isActive={location.startsWith('/clubs')}
           >
-            Clubs & Groups
+            Clubs
           </NavItem>
           <NavItem 
             href="/messages" 
