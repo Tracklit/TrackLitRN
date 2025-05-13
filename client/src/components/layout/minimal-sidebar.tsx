@@ -7,16 +7,18 @@ import {
   LineChart
 } from "lucide-react";
 
-function NavItem({ href, icon, children, isActive }: { 
+function NavItem({ href, icon, children, isActive, onClick }: { 
   href: string; 
   icon: React.ReactNode; 
   children: React.ReactNode; 
   isActive: boolean;
+  onClick?: () => void;
 }) {
   return (
     <li>
       <Link 
         href={href} 
+        onClick={onClick}
         className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg ${
           isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100"
         }`}
@@ -95,18 +97,22 @@ export function MobileSidebarButton({ onClick }: { onClick: () => void }) {
 export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [location] = useLocation();
   
-  if (!isOpen) return null;
-  
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop with fade-in/out */}
       <div 
-        className="md:hidden fixed inset-0 bg-black/20 z-40"
+        className={`md:hidden fixed inset-0 bg-black/20 z-40 transition-opacity duration-300 ${
+          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
         onClick={onClose}
       />
       
-      {/* Sidebar */}
-      <div className="md:hidden fixed top-0 left-0 h-full w-64 bg-white z-50 shadow-lg">
+      {/* Sidebar with slide-in/out */}
+      <div 
+        className={`md:hidden fixed top-0 left-0 h-full w-64 bg-white z-50 shadow-lg transition-transform duration-300 ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
         <div className="flex justify-between items-center p-4 border-b border-gray-200">
           <h2 className="text-lg font-bold">Track Pro</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
@@ -123,6 +129,7 @@ export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
               href="/" 
               icon={<Home className="h-5 w-5" />} 
               isActive={location === '/'}
+              onClick={onClose}
             >
               Dashboard
             </NavItem>
@@ -130,6 +137,7 @@ export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
               href="/clubs" 
               icon={<Users className="h-5 w-5" />} 
               isActive={location.includes('/club')}
+              onClick={onClose}
             >
               Clubs
             </NavItem>
@@ -137,6 +145,7 @@ export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
               href="/calendar" 
               icon={<Calendar className="h-5 w-5" />} 
               isActive={location === '/calendar'}
+              onClick={onClose}
             >
               Calendar
             </NavItem>
@@ -144,6 +153,7 @@ export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
               href="/results" 
               icon={<LineChart className="h-5 w-5" />} 
               isActive={location === '/results'}
+              onClick={onClose}
             >
               Results
             </NavItem>
@@ -151,6 +161,7 @@ export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
               href="/profile" 
               icon={<Settings className="h-5 w-5" />} 
               isActive={location === '/profile'}
+              onClick={onClose}
             >
               Settings
             </NavItem>

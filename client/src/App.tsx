@@ -84,8 +84,8 @@ function App() {
             {/* Mobile Sidebar - Only rendered when open */}
             <MobileSidebar isOpen={isMenuOpen} onClose={closeMenu} />
             
-            {/* Main Content */}
-            <main className="pt-4">
+            {/* Main Content - Will slide when menu is open */}
+            <main className={`pt-4 ${isMenuOpen ? 'menu-open' : ''}`}>
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <Router />
               </div>
