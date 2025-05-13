@@ -574,10 +574,6 @@ export function Component() {
               <Users className="h-4 w-4 mr-2" />
               Members
             </TabsTrigger>
-            <TabsTrigger value="calendar">
-              <CalendarDays className="h-4 w-4 mr-2" />
-              Events
-            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="chat" className="p-0">
