@@ -98,7 +98,7 @@ export default function ClubsPage() {
     }
   };
   
-  // Fetch user's groups and clubs
+  // Fetch user's clubs
   useEffect(() => {
     // Only fetch data if user is authenticated
     if (!user) {
@@ -132,52 +132,18 @@ export default function ClubsPage() {
       } catch (err: any) {
         console.error('Error fetching clubs:', err);
         setClubLoadError(err?.message || 'An error occurred while fetching clubs');
+        
+        toast({
+          title: "Error loading clubs",
+          description: err?.message || 'An error occurred while fetching clubs',
+          variant: "destructive"
+        });
       } finally {
         setIsLoadingClubs(false);
       }
     };
     
-    // Function to fetch groups
-    const fetchGroups = async () => {
-      try {
-        setIsLoadingGroups(true);
-        const response = await fetch('/api/groups', {
-          credentials: 'include', // Important for sending cookies with the request
-        });
-        
-        if (!response.ok) {
-          if (response.status === 401) {
-            // Handle unauthorized - should redirect to login
-            toast({
-              title: "Authentication required",
-              description: "Please login to view your groups",
-              variant: "destructive"
-            });
-            return;
-          }
-          
-          const errorText = await response.text();
-          throw new Error(errorText || 'Failed to fetch groups');
-        }
-        
-        const data = await response.json();
-        setGroups(data);
-      } catch (err: any) {
-        console.error('Error fetching groups:', err);
-        setGroupLoadError(err?.message || 'An error occurred while fetching groups');
-        
-        toast({
-          title: "Error loading groups",
-          description: err?.message || 'An error occurred while fetching groups',
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoadingGroups(false);
-      }
-    };
-    
-    fetchGroups();
-    fetchClubs(); // Call the fetch clubs function
+    fetchClubs();
   }, [toast, user]);
 
   return (
@@ -460,8 +426,8 @@ export default function ClubsPage() {
   );
 }
 
-// CreateGroupDialog component 
-function CreateGroupDialog() {
+// CreateClubDialog component 
+function CreateClubDialog() {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -474,17 +440,17 @@ function CreateGroupDialog() {
       isPrivate: false
     },
     resolver: zodResolver(z.object({
-      name: z.string().min(1, "Group name is required"),
+      name: z.string().min(1, "Club name is required"),
       description: z.string().optional(),
       isPrivate: z.boolean().default(false)
     }))
   });
   
-  const handleCreateGroup = async (values: any) => {
+  const handleCreateClub = async (values: any) => {
     try {
       setIsLoading(true);
       
-      const response = await fetch("/api/groups", {
+      const response = await fetch("/api/clubs", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -495,7 +461,7 @@ function CreateGroupDialog() {
       
       if (!response.ok) {
         if (response.status === 401) {
-          throw new Error("Please login to create a group");
+          throw new Error("Please login to create a club");
         }
         
         const errorData = await response.json().catch(() => null);
@@ -503,26 +469,26 @@ function CreateGroupDialog() {
           throw new Error(errorData.error);
         }
         
-        throw new Error("Failed to create group");
+        throw new Error("Failed to create club");
       }
       
-      const group = await response.json();
+      const club = await response.json();
       
-      // Group created successfully
+      // Club created successfully
       toast({
-        title: "Group created",
-        description: `${values.name} group was created successfully`,
+        title: "Club created",
+        description: `${values.name} club was created successfully`,
       });
       
       // Close dialog and reset form
       setIsOpen(false);
       form.reset();
       
-      // Refresh the page to show updated groups
+      // Refresh the page to show updated clubs
       window.location.reload();
     } catch (err: any) {
       toast({
-        title: "Error creating group",
+        title: "Error creating club",
         description: err?.message || "An error occurred",
         variant: "destructive"
       });
@@ -536,27 +502,27 @@ function CreateGroupDialog() {
       <DialogTrigger asChild>
         <Button className="mt-4">
           <Plus className="h-4 w-4 mr-2" />
-          Create a Group
+          Create a Club
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create a New Group</DialogTitle>
+          <DialogTitle>Create a New Club</DialogTitle>
           <DialogDescription>
-            Create a group to chat with specific athletes and coaches.
+            Create a club to collaborate with athletes and coaches.
           </DialogDescription>
         </DialogHeader>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleCreateGroup)} className="space-y-4 py-2">
+          <form onSubmit={form.handleSubmit(handleCreateClub)} className="space-y-4 py-2">
             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Group Name</FormLabel>
+                  <FormLabel>Club Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter group name" {...field} />
+                    <Input placeholder="Enter club name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
