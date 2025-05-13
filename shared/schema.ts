@@ -586,6 +586,35 @@ export type InsertGroupMessage = z.infer<typeof insertGroupMessageSchema>;
 // Select types
 export type Club = typeof clubs.$inferSelect;
 export type Group = typeof groups.$inferSelect;
+// Club Messages
+export const clubMessages = pgTable("club_messages", {
+  id: serial("id").primaryKey(),
+  clubId: integer("club_id").notNull().references(() => clubs.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const clubMessagesRelations = relations(clubMessages, ({ one }) => ({
+  club: one(clubs, {
+    fields: [clubMessages.clubId],
+    references: [clubs.id],
+  }),
+  user: one(users, {
+    fields: [clubMessages.userId],
+    references: [users.id],
+  }),
+}));
+
+export const insertClubMessageSchema = createInsertSchema(clubMessages).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertClubMessage = z.infer<typeof insertClubMessageSchema>;
+
+// Select types
 export type ClubMember = typeof clubMembers.$inferSelect;
 export type ChatGroupMember = typeof chatGroupMembers.$inferSelect;
 export type GroupMessage = typeof groupMessages.$inferSelect;
+export type ClubMessage = typeof clubMessages.$inferSelect;

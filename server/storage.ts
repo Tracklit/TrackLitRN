@@ -86,6 +86,10 @@ export interface IStorage {
   deleteChatGroupMember(id: number): Promise<boolean>;
   getGroupMessages(groupId: number): Promise<GroupMessage[]>;
   createGroupMessage(message: InsertGroupMessage): Promise<GroupMessage>;
+  
+  // Club Message operations
+  getClubMessages(clubId: number): Promise<(ClubMessage & { username: string })[]>;
+  createClubMessage(message: InsertClubMessage): Promise<ClubMessage & { username: string }>;
 
   // Meet operations
   getMeet(id: number): Promise<Meet | undefined>;
