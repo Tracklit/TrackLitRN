@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,6 +23,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 export default function ClubsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [isCreateClubOpen, setIsCreateClubOpen] = useState(false);
   const [clubName, setClubName] = useState("");
   const [clubDescription, setClubDescription] = useState("");
@@ -271,7 +273,11 @@ export default function ClubsPage() {
             ) : (
               <>
                 {clubs.map((club) => (
-                  <Card key={club.id}>
+                  <Card 
+                    key={club.id} 
+                    className="cursor-pointer transition-all hover:shadow-md"
+                    onClick={() => setLocation(`/club/${club.id}`)}
+                  >
                     <CardHeader>
                       <div className="flex justify-between items-start">
                         <div>
@@ -303,12 +309,22 @@ export default function ClubsPage() {
                       </p>
                     </CardContent>
                     <CardFooter>
-                      <Button 
-                        className="w-full"
-                        onClick={() => window.location.href = `/club-management/${club.id}`}
-                      >
-                        Manage Club
-                      </Button>
+                      <div className="flex gap-2 w-full">
+                        <Button
+                          variant="default"
+                          className="flex-1"
+                          onClick={() => setLocation(`/club/${club.id}`)}
+                        >
+                          View Club
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => setLocation(`/club-management/${club.id}`)}
+                        >
+                          Manage
+                        </Button>
+                      </div>
                     </CardFooter>
                   </Card>
                 ))}
