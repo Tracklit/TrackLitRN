@@ -126,7 +126,7 @@ export interface IStorage {
   getGroupMembersByGroupId(groupId: number): Promise<GroupMember[]>;
   getGroupMembersByAthleteId(athleteId: number): Promise<GroupMember[]>;
   createAthleteGroupMember(member: InsertGroupMember): Promise<GroupMember>;
-  deleteGroupMember(id: number): Promise<boolean>;
+  deleteAthleteGroupMember(id: number): Promise<boolean>;
   
   // Coach Note operations
   getCoachNote(id: number): Promise<CoachNote | undefined>;
@@ -392,7 +392,7 @@ export class DatabaseStorage implements IStorage {
     return member;
   }
 
-  async deleteGroupMember(id: number): Promise<boolean> {
+  async deleteAthleteGroupMember(id: number): Promise<boolean> {
     const result = await db.delete(athleteGroupMembers).where(eq(athleteGroupMembers.id, id));
     return !!result;
   }

@@ -909,7 +909,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Check if user owns the group
     if (group.coachId !== req.user!.id) return res.sendStatus(403);
     
-    await dbStorage.deleteGroupMember(memberId);
+    await dbStorage.deleteAthleteGroupMember(memberId);
     res.sendStatus(204);
   });
 
