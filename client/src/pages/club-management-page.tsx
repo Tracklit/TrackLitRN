@@ -586,6 +586,36 @@ export default function ClubManagementPage() {
                 </div>
               </CardHeader>
               <CardContent>
+                {showInviteLink && inviteLink && (
+                  <div className="mb-6 p-4 border rounded-lg bg-muted">
+                    <div className="flex flex-col space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="font-medium">Invite Link</Label>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => {
+                            navigator.clipboard.writeText(inviteLink);
+                            toast({
+                              title: "Copied to clipboard",
+                              description: "The invite link has been copied to your clipboard"
+                            });
+                          }}
+                        >
+                          Copy
+                        </Button>
+                      </div>
+                      <div className="flex items-center gap-2 p-2 bg-background rounded border overflow-hidden">
+                        <p className="text-sm truncate flex-1">{inviteLink}</p>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        This link can be used by anyone to join your club without approval. 
+                        Generate a new link to revoke the old one.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
                 {isLoadingMembers ? (
                   <div className="text-center py-8">
                     <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
