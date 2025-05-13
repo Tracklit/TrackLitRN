@@ -42,6 +42,29 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, userData: Partial<User>): Promise<User | undefined>;
+  
+  // Club operations
+  getClub(id: number): Promise<Club | undefined>;
+  getClubs(): Promise<Club[]>;
+  getUserClubs(userId: number): Promise<Club[]>;
+  createClub(club: InsertClub): Promise<Club>;
+  updateClub(id: number, clubData: Partial<Club>): Promise<Club | undefined>;
+  deleteClub(id: number): Promise<boolean>;
+  getClubMemberByUserAndClub(userId: number, clubId: number): Promise<ClubMember | undefined>;
+  createClubMember(member: InsertClubMember): Promise<ClubMember>;
+  
+  // Group operations
+  getGroup(id: number): Promise<Group | undefined>;
+  getUserGroups(userId: number): Promise<Group[]>;
+  createGroup(group: InsertGroup): Promise<Group>;
+  updateGroup(id: number, groupData: Partial<Group>): Promise<Group | undefined>;
+  deleteGroup(id: number): Promise<boolean>;
+  getGroupMembers(groupId: number): Promise<ChatGroupMember[]>;
+  getGroupMemberByUserAndGroup(userId: number, groupId: number): Promise<ChatGroupMember | undefined>;
+  createGroupMember(member: InsertChatGroupMember): Promise<ChatGroupMember>;
+  deleteGroupMember(id: number): Promise<boolean>;
+  getGroupMessages(groupId: number): Promise<GroupMessage[]>;
+  createGroupMessage(message: InsertGroupMessage): Promise<GroupMessage>;
 
   // Meet operations
   getMeet(id: number): Promise<Meet | undefined>;
@@ -441,6 +464,210 @@ export class DatabaseStorage implements IStorage {
   async deletePracticeMedia(id: number): Promise<boolean> {
     const result = await db.delete(practiceMedia).where(eq(practiceMedia.id, id));
     return !!result;
+  }
+
+  // Club operations
+  async getClub(id: number): Promise<Club | undefined> {
+    const [club] = await db.select().from(clubs).where(eq(clubs.id, id));
+    return club;
+  }
+  
+  async getClubs(): Promise<Club[]> {
+    return db.select().from(clubs);
+  }
+  
+  async getUserClubs(userId: number): Promise<Club[]> {
+    // Get clubs where user is a member
+    const memberships = await db
+      .select()
+      .from(clubMembers)
+      .where(eq(clubMembers.userId, userId))
+      .where(eq(clubMembers.status, 'accepted'));
+    
+    if (memberships.length === 0) {
+      return [];
+    }
+    
+    const clubIds = memberships.map(m => m.clubId);
+    return db
+      .select()
+      .from(clubs)
+      .where(inArray(clubs.id, clubIds));
+  }
+  
+  async createClub(clubData: InsertClub): Promise<Club> {
+    const [club] = await db
+      .insert(clubs)
+      .values(clubData)
+      .returning();
+    
+    // Auto-add creator as admin member
+    await db
+      .insert(clubMembers)
+      .values({
+        clubId: club.id,
+        userId: club.ownerId,
+        role: 'admin',
+        status: 'accepted'
+      });
+    
+    return club;
+  }
+  
+  async updateClub(id: number, clubData: Partial<Club>): Promise<Club | undefined> {
+    const [club] = await db
+      .update(clubs)
+      .set(clubData)
+      .where(eq(clubs.id, id))
+      .returning();
+    return club;
+  }
+  
+  async deleteClub(id: number): Promise<boolean> {
+    // Delete all members first
+    await db
+      .delete(clubMembers)
+      .where(eq(clubMembers.clubId, id));
+    
+    // Delete all groups in this club
+    const clubGroups = await db
+      .select()
+      .from(groups)
+      .where(eq(groups.clubId, id));
+    
+    for (const group of clubGroups) {
+      await this.deleteGroup(group.id);
+    }
+    
+    // Delete the club
+    const result = await db
+      .delete(clubs)
+      .where(eq(clubs.id, id));
+    return !!result;
+  }
+  
+  async getClubMemberByUserAndClub(userId: number, clubId: number): Promise<ClubMember | undefined> {
+    const [member] = await db
+      .select()
+      .from(clubMembers)
+      .where(eq(clubMembers.userId, userId))
+      .where(eq(clubMembers.clubId, clubId));
+    return member;
+  }
+  
+  async createClubMember(member: InsertClubMember): Promise<ClubMember> {
+    const [newMember] = await db
+      .insert(clubMembers)
+      .values(member)
+      .returning();
+    return newMember;
+  }
+  
+  // Group operations
+  async getGroup(id: number): Promise<Group | undefined> {
+    const [group] = await db.select().from(groups).where(eq(groups.id, id));
+    return group;
+  }
+  
+  async getUserGroups(userId: number): Promise<Group[]> {
+    // Get groups where user is a member
+    const memberships = await db
+      .select()
+      .from(chatGroupMembers)
+      .where(eq(chatGroupMembers.userId, userId))
+      .where(eq(chatGroupMembers.status, 'accepted'));
+    
+    if (memberships.length === 0) {
+      return [];
+    }
+    
+    const groupIds = memberships.map(m => m.groupId);
+    return db
+      .select()
+      .from(groups)
+      .where(inArray(groups.id, groupIds));
+  }
+  
+  async createGroup(group: InsertGroup): Promise<Group> {
+    const [newGroup] = await db
+      .insert(groups)
+      .values(group)
+      .returning();
+    return newGroup;
+  }
+  
+  async updateGroup(id: number, groupData: Partial<Group>): Promise<Group | undefined> {
+    const [group] = await db
+      .update(groups)
+      .set(groupData)
+      .where(eq(groups.id, id))
+      .returning();
+    return group;
+  }
+  
+  async deleteGroup(id: number): Promise<boolean> {
+    // Delete all members first
+    await db
+      .delete(chatGroupMembers)
+      .where(eq(chatGroupMembers.groupId, id));
+    
+    // Delete all messages 
+    await db
+      .delete(groupMessages)
+      .where(eq(groupMessages.groupId, id));
+    
+    // Delete the group
+    const result = await db
+      .delete(groups)
+      .where(eq(groups.id, id));
+    return !!result;
+  }
+  
+  async getGroupMembers(groupId: number): Promise<ChatGroupMember[]> {
+    return db
+      .select()
+      .from(chatGroupMembers)
+      .where(eq(chatGroupMembers.groupId, groupId));
+  }
+  
+  async getGroupMemberByUserAndGroup(userId: number, groupId: number): Promise<ChatGroupMember | undefined> {
+    const [member] = await db
+      .select()
+      .from(chatGroupMembers)
+      .where(eq(chatGroupMembers.userId, userId))
+      .where(eq(chatGroupMembers.groupId, groupId));
+    return member;
+  }
+  
+  async createGroupMember(member: InsertChatGroupMember): Promise<ChatGroupMember> {
+    const [newMember] = await db
+      .insert(chatGroupMembers)
+      .values(member)
+      .returning();
+    return newMember;
+  }
+  
+  async deleteGroupMember(id: number): Promise<boolean> {
+    const result = await db
+      .delete(chatGroupMembers)
+      .where(eq(chatGroupMembers.id, id));
+    return !!result;
+  }
+  
+  async getGroupMessages(groupId: number): Promise<GroupMessage[]> {
+    return db
+      .select()
+      .from(groupMessages)
+      .where(eq(groupMessages.groupId, groupId))
+      .orderBy(asc(groupMessages.createdAt));
+  }
+  
+  async createGroupMessage(message: InsertGroupMessage): Promise<GroupMessage> {
+    const [newMessage] = await db
+      .insert(groupMessages)
+      .values(message)
+      .returning();
+    return newMessage;
   }
 }
 

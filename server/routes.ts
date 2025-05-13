@@ -1072,6 +1072,308 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Club endpoints
+  app.get("/api/clubs", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const clubs = await dbStorage.getClubs();
+      res.json(clubs);
+    } catch (error) {
+      res.status(500).send("Error fetching clubs");
+    }
+  });
+
+  app.get("/api/clubs/my", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const clubs = await dbStorage.getUserClubs(req.user!.id);
+      res.json(clubs);
+    } catch (error) {
+      res.status(500).send("Error fetching user clubs");
+    }
+  });
+
+  app.post("/api/clubs", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const clubData = {
+        ...req.body,
+        ownerId: req.user!.id,
+        joinCode: Math.random().toString(36).substring(2, 8).toUpperCase(), // Generate random join code
+      };
+      const newClub = await dbStorage.createClub(clubData);
+      res.status(201).json(newClub);
+    } catch (error) {
+      res.status(500).send("Error creating club");
+    }
+  });
+
+  app.get("/api/clubs/:id", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const clubId = parseInt(req.params.id);
+      const club = await dbStorage.getClub(clubId);
+      if (!club) {
+        return res.status(404).send("Club not found");
+      }
+      res.json(club);
+    } catch (error) {
+      res.status(500).send("Error fetching club");
+    }
+  });
+
+  app.post("/api/clubs/:id/join", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const clubId = parseInt(req.params.id);
+      const club = await dbStorage.getClub(clubId);
+      
+      if (!club) {
+        return res.status(404).send("Club not found");
+      }
+      
+      // Check if user is already a member
+      const existingMembership = await dbStorage.getClubMemberByUserAndClub(req.user!.id, clubId);
+      if (existingMembership) {
+        return res.status(400).send("Already a member of this club");
+      }
+      
+      // Join code verification for private clubs
+      if (club.isPrivate && req.body.joinCode !== club.joinCode) {
+        return res.status(403).send("Invalid join code");
+      }
+      
+      const memberData = {
+        clubId,
+        userId: req.user!.id,
+        role: 'member',
+        status: club.isPrivate ? 'pending' : 'accepted'
+      };
+      
+      const membership = await dbStorage.createClubMember(memberData);
+      res.status(201).json(membership);
+    } catch (error) {
+      res.status(500).send("Error joining club");
+    }
+  });
+
+  // Group endpoints
+  app.get("/api/groups", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const groups = await dbStorage.getUserGroups(req.user!.id);
+      res.json(groups);
+    } catch (error) {
+      res.status(500).send("Error fetching user groups");
+    }
+  });
+
+  app.post("/api/groups", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const groupData = {
+        ...req.body,
+        ownerId: req.user!.id,
+        joinCode: Math.random().toString(36).substring(2, 8).toUpperCase(), // Generate random join code
+      };
+      const newGroup = await dbStorage.createGroup(groupData);
+      
+      // Auto-add the creator as admin
+      const memberData = {
+        groupId: newGroup.id,
+        userId: req.user!.id,
+        role: 'admin',
+        status: 'accepted'
+      };
+      await dbStorage.createGroupMember(memberData);
+      
+      res.status(201).json(newGroup);
+    } catch (error) {
+      res.status(500).send("Error creating group");
+    }
+  });
+
+  app.get("/api/groups/:id", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const groupId = parseInt(req.params.id);
+      const group = await dbStorage.getGroup(groupId);
+      
+      if (!group) {
+        return res.status(404).send("Group not found");
+      }
+      
+      // Check if user is a member
+      const membership = await dbStorage.getGroupMemberByUserAndGroup(req.user!.id, groupId);
+      if (!membership && group.ownerId !== req.user!.id && group.isPrivate) {
+        return res.status(403).send("Not authorized to view this group");
+      }
+      
+      res.json(group);
+    } catch (error) {
+      res.status(500).send("Error fetching group");
+    }
+  });
+
+  app.get("/api/groups/:id/members", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const groupId = parseInt(req.params.id);
+      const group = await dbStorage.getGroup(groupId);
+      
+      if (!group) {
+        return res.status(404).send("Group not found");
+      }
+      
+      // Check if user is a member or owner
+      const membership = await dbStorage.getGroupMemberByUserAndGroup(req.user!.id, groupId);
+      if (!membership && group.ownerId !== req.user!.id && group.isPrivate) {
+        return res.status(403).send("Not authorized to view group members");
+      }
+      
+      const members = await dbStorage.getGroupMembers(groupId);
+      res.json(members);
+    } catch (error) {
+      res.status(500).send("Error fetching group members");
+    }
+  });
+
+  app.post("/api/groups/:id/members", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const groupId = parseInt(req.params.id);
+      const group = await dbStorage.getGroup(groupId);
+      
+      if (!group) {
+        return res.status(404).send("Group not found");
+      }
+      
+      // Only owner or admin can add members
+      const membership = await dbStorage.getGroupMemberByUserAndGroup(req.user!.id, groupId);
+      if (group.ownerId !== req.user!.id && (!membership || membership.role !== 'admin')) {
+        return res.status(403).send("Not authorized to add members to this group");
+      }
+      
+      const { userId, role = 'member' } = req.body;
+      if (!userId) {
+        return res.status(400).send("User ID is required");
+      }
+      
+      const memberData = {
+        groupId,
+        userId,
+        role,
+        status: 'accepted' // Directly accepted when added by admin/owner
+      };
+      
+      const newMember = await dbStorage.createGroupMember(memberData);
+      res.status(201).json(newMember);
+    } catch (error) {
+      res.status(500).send("Error adding group member");
+    }
+  });
+
+  app.post("/api/groups/:id/join", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const groupId = parseInt(req.params.id);
+      const group = await dbStorage.getGroup(groupId);
+      
+      if (!group) {
+        return res.status(404).send("Group not found");
+      }
+      
+      // Check if user is already a member
+      const existingMembership = await dbStorage.getGroupMemberByUserAndGroup(req.user!.id, groupId);
+      if (existingMembership) {
+        return res.status(400).send("Already a member of this group");
+      }
+      
+      // Join code verification for private groups
+      if (group.isPrivate && req.body.joinCode !== group.joinCode) {
+        return res.status(403).send("Invalid join code");
+      }
+      
+      const memberData = {
+        groupId,
+        userId: req.user!.id,
+        role: 'member',
+        status: group.isPrivate ? 'pending' : 'accepted'
+      };
+      
+      const membership = await dbStorage.createGroupMember(memberData);
+      res.status(201).json(membership);
+    } catch (error) {
+      res.status(500).send("Error joining group");
+    }
+  });
+
+  app.post("/api/groups/:id/messages", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const groupId = parseInt(req.params.id);
+      const group = await dbStorage.getGroup(groupId);
+      
+      if (!group) {
+        return res.status(404).send("Group not found");
+      }
+      
+      // Check if user is a member
+      const membership = await dbStorage.getGroupMemberByUserAndGroup(req.user!.id, groupId);
+      if (!membership && group.ownerId !== req.user!.id) {
+        return res.status(403).send("Not authorized to post messages in this group");
+      }
+      
+      const messageData = {
+        groupId,
+        senderId: req.user!.id,
+        message: req.body.message,
+        mediaUrl: req.body.mediaUrl
+      };
+      
+      const newMessage = await dbStorage.createGroupMessage(messageData);
+      res.status(201).json(newMessage);
+    } catch (error) {
+      res.status(500).send("Error sending message");
+    }
+  });
+
+  app.get("/api/groups/:id/messages", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const groupId = parseInt(req.params.id);
+      const group = await dbStorage.getGroup(groupId);
+      
+      if (!group) {
+        return res.status(404).send("Group not found");
+      }
+      
+      // Check if user is a member
+      const membership = await dbStorage.getGroupMemberByUserAndGroup(req.user!.id, groupId);
+      if (!membership && group.ownerId !== req.user!.id) {
+        return res.status(403).send("Not authorized to view messages in this group");
+      }
+      
+      const messages = await dbStorage.getGroupMessages(groupId);
+      res.json(messages);
+    } catch (error) {
+      res.status(500).send("Error fetching messages");
+    }
+  });
+
   // Premium features - just mock endpoints for now
   app.post("/api/premium/upgrade", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
