@@ -1080,6 +1080,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).send("Error updating user");
     }
   });
+  
+  // Get user by ID - for getting admin usernames for clubs
+  app.get("/api/users/:id", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).send("Invalid user ID");
+      }
+      
+      const user = await dbStorage.getUser(userId);
+      if (!user) {
+        return res.status(404).send("User not found");
+      }
+      
+      // Only return public user info
+      const publicUserInfo = {
+        id: user.id,
+        username: user.username,
+        name: user.name,
+        role: user.role,
+      };
+      
+      res.json(publicUserInfo);
+    } catch (error: any) {
+      console.error("Error fetching user:", error);
+      res.status(500).send(`Error fetching user: ${error.message || error}`);
+    }
+  });
 
   // Club endpoints
   app.get("/api/clubs", async (req: Request, res: Response) => {

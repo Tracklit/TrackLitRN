@@ -446,269 +446,139 @@ export default function ClubsPage() {
           </div>
         </TabsContent>
 
-
-
         <TabsContent value="discover" id="discover-tab">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Example club cards */}
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle>Track Stars Academy</CardTitle>
-                    <CardDescription>Elite training for sprinters and jumpers</CardDescription>
+            {isLoadingAllClubs ? (
+              <Card className="col-span-full text-center py-8">
+                <CardContent>
+                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-muted animate-pulse">
+                    <Users className="h-10 w-10 text-muted-foreground" />
                   </div>
-                  <div className="flex items-center space-x-1 text-muted-foreground text-sm">
-                    <Globe className="h-4 w-4" />
-                    <span>Public</span>
+                  <h3 className="mt-6 text-xl font-medium">Loading clubs...</h3>
+                </CardContent>
+              </Card>
+            ) : allClubsLoadError ? (
+              <Card className="col-span-full text-center py-8 border-destructive">
+                <CardContent>
+                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10">
+                    <Shield className="h-10 w-10 text-destructive" />
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-2 mb-4">
-                  <UserCircle className="h-5 w-5 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">142 members</span>
-                </div>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Join our community of dedicated athletes focused on sprint events and jumps. 
-                  Weekly training plans and expert coaching available.
-                </p>
-              </CardContent>
-              <CardFooter>
-                <Button className="w-full">Join Club</Button>
-              </CardFooter>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle>Distance Runners Guild</CardTitle>
-                    <CardDescription>For cross country and distance events</CardDescription>
+                  <h3 className="mt-6 text-xl font-medium">Error loading clubs</h3>
+                  <p className="mt-2 text-muted-foreground">{allClubsLoadError}</p>
+                  <Button 
+                    className="mt-4"
+                    onClick={() => window.location.reload()}
+                    variant="outline"
+                  >
+                    Retry
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : allClubs.length === 0 ? (
+              <Card className="col-span-full text-center py-8">
+                <CardContent>
+                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-muted">
+                    <Globe className="h-10 w-10 text-muted-foreground" />
                   </div>
-                  <div className="flex items-center space-x-1 text-muted-foreground text-sm">
-                    <Globe className="h-4 w-4" />
-                    <span>Public</span>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-2 mb-4">
-                  <UserCircle className="h-5 w-5 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">98 members</span>
-                </div>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Community for endurance athletes specializing in 800m and up.
-                  Share training routes, compare race strategies, and support each other.
-                </p>
-              </CardContent>
-              <CardFooter>
-                <Button className="w-full">Join Club</Button>
-              </CardFooter>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle>Field Event Specialists</CardTitle>
-                    <CardDescription>Throws, jumps, and combined events</CardDescription>
-                  </div>
-                  <div className="flex items-center space-x-1 text-muted-foreground text-sm">
-                    <Shield className="h-4 w-4" />
-                    <span>Private</span>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-2 mb-4">
-                  <UserCircle className="h-5 w-5 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">67 members</span>
-                </div>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Exclusive club for serious field event athletes. 
-                  Technical coaching, video analysis, and competition preparation.
-                </p>
-              </CardContent>
-              <CardFooter>
-                <Button className="w-full">Request to Join</Button>
-              </CardFooter>
-            </Card>
+                  <h3 className="mt-6 text-xl font-medium">No clubs available</h3>
+                  <p className="mt-2 text-muted-foreground">
+                    Be the first to create a club and invite others to join.
+                  </p>
+                  <Button 
+                    className="mt-4"
+                    onClick={() => setIsCreateClubOpen(true)}
+                  >
+                    Create a Club
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                {allClubs.map((club: any) => (
+                  <Card key={club.id}>
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle>{club.name}</CardTitle>
+                          <CardDescription>{club.description || "No description"}</CardDescription>
+                        </div>
+                        <div className="flex items-center space-x-1 text-muted-foreground text-sm">
+                          {club.isPrivate ? (
+                            <>
+                              <Shield className="h-4 w-4" />
+                              <span>Private</span>
+                            </>
+                          ) : (
+                            <>
+                              <Globe className="h-4 w-4" />
+                              <span>Public</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center gap-2 mb-4">
+                        <UserCircle className="h-5 w-5 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">
+                          Admin: {clubAdmins[club.id] || "Unknown"}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Created {new Date(club.createdAt).toLocaleDateString()}
+                        {club.isPremium && (
+                          <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                            Premium
+                          </span>
+                        )}
+                      </p>
+                    </CardContent>
+                    <CardFooter>
+                      <Button 
+                        className="w-full"
+                        onClick={async () => {
+                          try {
+                            const response = await fetch(`/api/clubs/${club.id}/join`, {
+                              method: 'POST',
+                              credentials: 'include',
+                              headers: {
+                                'Content-Type': 'application/json'
+                              }
+                            });
+                            
+                            if (!response.ok) {
+                              const errorText = await response.text();
+                              throw new Error(errorText || 'Failed to join club');
+                            }
+                            
+                            toast({
+                              title: club.isPrivate ? "Request Sent" : "Joined Successfully",
+                              description: club.isPrivate 
+                                ? "Your request to join has been sent to the club admin" 
+                                : `You have joined ${club.name}`,
+                            });
+                            
+                            // Refresh the page after joining
+                            window.location.reload();
+                          } catch (err: any) {
+                            toast({
+                              title: "Error",
+                              description: err?.message || "Failed to join club",
+                              variant: "destructive"
+                            });
+                          }
+                        }}
+                      >
+                        {club.isPrivate ? "Request to Join" : "Join Club"}
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </>
+            )}
           </div>
         </TabsContent>
       </Tabs>
     </div>
-  );
-}
-
-// CreateClubDialog component 
-function CreateClubDialog() {
-  const { toast } = useToast();
-  const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  
-  // Create form with default values
-  const form = useForm({
-    defaultValues: {
-      name: "",
-      description: "",
-      isPrivate: false
-    },
-    resolver: zodResolver(z.object({
-      name: z.string().min(1, "Club name is required"),
-      description: z.string().optional(),
-      isPrivate: z.boolean().default(false)
-    }))
-  });
-  
-  const handleCreateClub = async (values: any) => {
-    try {
-      setIsLoading(true);
-      
-      const response = await fetch("/api/clubs", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: 'include',
-        body: JSON.stringify(values),
-      });
-      
-      if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error("Please login to create a club");
-        }
-        
-        const errorData = await response.json().catch(() => null);
-        if (errorData?.error) {
-          throw new Error(errorData.error);
-        }
-        
-        throw new Error("Failed to create club");
-      }
-      
-      const club = await response.json();
-      
-      // Club created successfully
-      toast({
-        title: "Club created",
-        description: `${values.name} club was created successfully`,
-      });
-      
-      // Close dialog and reset form
-      setIsOpen(false);
-      form.reset();
-      
-      // Refresh the page to show updated clubs
-      window.location.reload();
-    } catch (err: any) {
-      toast({
-        title: "Error creating club",
-        description: err?.message || "An error occurred",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button className="mt-4">
-          <Plus className="h-4 w-4 mr-2" />
-          Create a Club
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Create a New Club</DialogTitle>
-          <DialogDescription>
-            Create a club to collaborate with athletes and coaches.
-          </DialogDescription>
-        </DialogHeader>
-        
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleCreateClub)} className="space-y-4 py-2">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Club Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter club name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description (Optional)</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Describe what this club is about" 
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Briefly explain the purpose of this club
-                  </FormDescription>
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="isPrivate"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>Make this club private</FormLabel>
-                    <FormDescription>
-                      Private clubs are only visible to members
-                    </FormDescription>
-                  </div>
-                </FormItem>
-              )}
-            />
-            
-            <DialogFooter>
-              <Button variant="outline" type="button" onClick={() => setIsOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  "Create Group"
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// Protected route wrapper
-export function Component() {
-  return (
-    <ProtectedRoute path="/clubs" component={ClubsPage} />
   );
 }

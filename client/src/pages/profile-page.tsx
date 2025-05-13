@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -23,45 +23,96 @@ import { Crown, Plus, X } from 'lucide-react';
 import { PremiumPromotion } from '@/components/premium-promotion';
 import { Separator } from '@/components/ui/separator';
 import { insertUserSchema } from '@shared/schema';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup, SelectLabel } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
 
 // Profile form schema (for updating user info)
 const profileFormSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
   email: z.string().email({ message: "Invalid email address" }),
-  newEvent: z.string().optional(),
+  defaultClubId: z.number().nullable().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export default function ProfilePage() {
   const { user } = useAuth();
-  const [events, setEvents] = useState<string[]>(user?.events || []);
-  const [newEvent, setNewEvent] = useState('');
+  const { toast } = useToast();
+  const [clubs, setClubs] = useState<any[]>([]);
+  const [isLoadingClubs, setIsLoadingClubs] = useState(false);
   
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
       name: user?.name || '',
       email: user?.email || '',
-      newEvent: '',
+      defaultClubId: user?.defaultClubId || null,
     },
   });
 
-  function onSubmit(data: ProfileFormValues) {
-    // In a real app, this would update the user profile
-    console.log(data);
-  }
-  
-  const addEvent = () => {
-    if (newEvent.trim() && !events.includes(newEvent.trim())) {
-      setEvents([...events, newEvent.trim()]);
-      setNewEvent('');
+  // Fetch user's clubs
+  useEffect(() => {
+    if (!user) return;
+    
+    const fetchClubs = async () => {
+      try {
+        setIsLoadingClubs(true);
+        const response = await fetch('/api/clubs/my', {
+          credentials: 'include',
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch clubs: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setClubs(data);
+      } catch (err: any) {
+        console.error('Error fetching clubs:', err);
+        toast({
+          title: "Error loading clubs",
+          description: err?.message || 'An error occurred while fetching clubs',
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoadingClubs(false);
+      }
+    };
+    
+    fetchClubs();
+  }, [user, toast]);
+
+  async function onSubmit(data: ProfileFormValues) {
+    try {
+      const response = await fetch('/api/user', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update profile');
+      }
+      
+      toast({
+        title: "Profile updated",
+        description: "Your changes have been saved",
+      });
+      
+      // Reload the page to reflect the changes
+      window.location.reload();
+    } catch (err: any) {
+      console.error('Error updating profile:', err);
+      toast({
+        title: "Error updating profile",
+        description: err?.message || 'An error occurred',
+        variant: "destructive"
+      });
     }
-  };
-  
-  const removeEvent = (eventToRemove: string) => {
-    setEvents(events.filter(event => event !== eventToRemove));
-  };
+  }
 
   return (
     <div className="flex flex-col h-screen">
@@ -125,48 +176,45 @@ export default function ProfilePage() {
                       )}
                     />
                     
-                    <div>
-                      <FormLabel htmlFor="events">Your Events</FormLabel>
-                      <FormDescription>
-                        Add the track and field events you compete in
-                      </FormDescription>
-                      
-                      <div className="flex flex-wrap gap-2 mt-3 mb-3">
-                        {events.map((event) => (
-                          <Badge 
-                            key={event} 
-                            variant="event"
-                            className="flex items-center gap-1"
+                    <FormField
+                      control={form.control}
+                      name="defaultClubId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Default Club</FormLabel>
+                          <FormDescription>
+                            Set your default club to automatically open it when visiting the clubs page
+                          </FormDescription>
+                          <Select 
+                            value={field.value?.toString() || ""}
+                            onValueChange={(value) => {
+                              field.onChange(value ? parseInt(value) : null);
+                            }}
                           >
-                            {event}
-                            <button 
-                              type="button" 
-                              onClick={() => removeEvent(event)}
-                              className="ml-1 focus:outline-none"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </Badge>
-                        ))}
-                      </div>
-                      
-                      <div className="flex">
-                        <Input 
-                          placeholder="Add event (e.g. 100m Sprint)"
-                          value={newEvent}
-                          onChange={(e) => setNewEvent(e.target.value)}
-                          className="rounded-r-none border-r-0"
-                        />
-                        <Button 
-                          type="button" 
-                          variant="secondary"
-                          onClick={addEvent}
-                          className="rounded-l-none"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a default club" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="">No default club</SelectItem>
+                              {isLoadingClubs ? (
+                                <SelectItem value="" disabled>Loading clubs...</SelectItem>
+                              ) : clubs.length === 0 ? (
+                                <SelectItem value="" disabled>You haven't joined any clubs yet</SelectItem>
+                              ) : (
+                                clubs.map((club) => (
+                                  <SelectItem key={club.id} value={club.id.toString()}>
+                                    {club.name}
+                                  </SelectItem>
+                                ))
+                              )}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     
                     <Button type="submit" className="bg-primary text-white">
                       Save Changes
