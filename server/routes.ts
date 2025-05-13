@@ -1409,7 +1409,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       const clubId = parseInt(req.params.id);
-      const { name, description, isPrivate } = req.body;
+      const { name, description, isPrivate, logoUrl, bannerUrl } = req.body;
       
       // Validation
       if (name !== undefined && !name.trim()) {
@@ -1431,7 +1431,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedClub = await dbStorage.updateClub(clubId, {
         name: name !== undefined ? name : undefined,
         description: description !== undefined ? description : undefined,
-        isPrivate: isPrivate !== undefined ? isPrivate : undefined
+        isPrivate: isPrivate !== undefined ? isPrivate : undefined,
+        logoUrl: logoUrl !== undefined ? logoUrl : undefined,
+        bannerUrl: bannerUrl !== undefined ? bannerUrl : undefined
       });
       
       if (!updatedClub) {
