@@ -500,14 +500,16 @@ export class DatabaseStorage implements IStorage {
     const memberships = await db
       .select()
       .from(clubMembers)
-      .where(eq(clubMembers.userId, userId))
-      .where(isNotNull(clubMembers.joinedAt)); // Use joinedAt instead of status
+      .where(and(
+        eq(clubMembers.userId, userId),
+        isNotNull(clubMembers.joinedAt)
+      )); // Use joinedAt instead of status
     
     if (memberships.length === 0) {
       return [];
     }
     
-    const clubIds = memberships.map(m => m.clubId);
+    const clubIds = memberships.map((m: { clubId: number }) => m.clubId);
     return db
       .select()
       .from(clubs)
