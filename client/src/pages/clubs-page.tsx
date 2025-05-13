@@ -100,7 +100,7 @@ export default function ClubsPage() {
     }
   };
   
-  // Fetch user's clubs
+  // Fetch user's clubs and redirect to default club if it exists
   useEffect(() => {
     // Only fetch data if user is authenticated
     if (!user) {
@@ -131,6 +131,32 @@ export default function ClubsPage() {
         const data = await response.json();
         console.log('Fetched clubs:', data);
         setClubs(data);
+        
+        // Check if user has at least one club
+        if (data.length > 0) {
+          // If the user has only one club, go to that club
+          if (data.length === 1) {
+            setLocation(`/club/${data[0].id}`);
+            return;
+          }
+          
+          // Check if user has a default club set
+          const userResponse = await fetch('/api/user', {
+            credentials: 'include',
+          });
+          
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            if (userData.defaultClubId) {
+              // Check if defaultClubId matches one of the user's clubs
+              const defaultClub = data.find((club: any) => club.id === userData.defaultClubId);
+              if (defaultClub) {
+                setLocation(`/club/${defaultClub.id}`);
+                return;
+              }
+            }
+          }
+        }
       } catch (err: any) {
         console.error('Error fetching clubs:', err);
         setClubLoadError(err?.message || 'An error occurred while fetching clubs');
@@ -146,7 +172,7 @@ export default function ClubsPage() {
     };
     
     fetchClubs();
-  }, [toast, user]);
+  }, [toast, user, setLocation]);
 
   return (
     <div className="container max-w-screen-xl mx-auto p-4 pt-20 md:pt-24 md:pl-72 pb-20">

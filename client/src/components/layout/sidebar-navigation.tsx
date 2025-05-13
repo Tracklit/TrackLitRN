@@ -59,7 +59,7 @@ export function SidebarNavigation() {
             </div>
             <div>
               <p className="font-medium text-sm">{user.name}</p>
-              <p className="text-xs text-darkGray">{user.events?.join(', ') || 'No events yet'}</p>
+              <p className="text-xs text-darkGray">{user.role || 'Athlete'}</p>
             </div>
           </div>
         </div>
