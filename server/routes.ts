@@ -1192,13 +1192,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Generate random join code
-      const joinCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-      
-      // Create the group - the storage method will also add the owner as a member
+      // Create the group - the storage method will handle the join code and adding the owner
       const newGroup = await dbStorage.createGroup({
-        ...parsedData.data,
-        joinCode
+        ...parsedData.data
       });
       
       res.status(201).json(newGroup);

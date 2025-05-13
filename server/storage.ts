@@ -623,21 +623,6 @@ export class DatabaseStorage implements IStorage {
       });
       
       return allGroups;
-      
-      // Include both member groups and owned groups
-      const memberGroupIds = memberships.map((m: any) => m.groupId);
-      
-      const result = await db
-        .select()
-        .from(groups)
-        .where(
-          or(
-            inArray(groups.id, memberGroupIds),
-            eq(groups.ownerId, userId)
-          )
-        );
-        
-      return result;
     } catch (error) {
       console.error("Error in getUserGroups:", error);
       return [];
