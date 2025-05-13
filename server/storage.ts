@@ -45,7 +45,7 @@ import {
   groupMessages
 } from "@shared/schema";
 import { db, pool } from "./db";
-import { eq, and, lt, gte, desc, asc, inArray, or } from "drizzle-orm";
+import { eq, and, lt, gte, desc, asc, inArray, or, isNotNull } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 
@@ -498,7 +498,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(clubMembers)
       .where(eq(clubMembers.userId, userId))
-      .where(eq(clubMembers.status, 'accepted'));
+      .where(isNotNull(clubMembers.joinedAt)); // Use joinedAt instead of status
     
     if (memberships.length === 0) {
       return [];
@@ -524,7 +524,7 @@ export class DatabaseStorage implements IStorage {
         clubId: club.id,
         userId: club.ownerId,
         role: 'admin' as const,
-        status: 'accepted' as const
+        joinedAt: new Date() // Use joined_at instead of status
       });
     
     return club;

@@ -359,7 +359,8 @@ export const clubMembers = pgTable("club_members", {
   clubId: integer("club_id").notNull().references(() => clubs.id),
   userId: integer("user_id").notNull().references(() => users.id),
   role: text("role", { enum: ['member', 'admin'] }).default('member'),
-  status: text("status", { enum: ['pending', 'accepted', 'rejected'] }).default('pending'),
+  // status field doesn't exist in the actual database
+  joinedAt: timestamp("joined_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
