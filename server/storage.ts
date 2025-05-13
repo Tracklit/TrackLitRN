@@ -18,6 +18,16 @@ import {
   InsertCoachNote,
   PracticeMedia,
   InsertPracticeMedia,
+  Club,
+  InsertClub,
+  ClubMember,
+  InsertClubMember,
+  Group,
+  InsertGroup,
+  ChatGroupMember,
+  InsertChatGroupMember,
+  GroupMessage,
+  InsertGroupMessage,
   users,
   meets,
   results,
@@ -27,10 +37,15 @@ import {
   athleteGroupMembers,
   coachNotes,
   practiceMedia,
-  practiceCompletions
+  practiceCompletions,
+  clubs,
+  clubMembers,
+  groups,
+  chatGroupMembers,
+  groupMessages
 } from "@shared/schema";
 import { db, pool } from "./db";
-import { eq, and, lt, gte, desc } from "drizzle-orm";
+import { eq, and, lt, gte, desc, asc, inArray } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 

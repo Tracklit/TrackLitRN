@@ -9,11 +9,46 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ClubsPage() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [isCreateClubOpen, setIsCreateClubOpen] = useState(false);
+  const [groups, setGroups] = useState<any[]>([]);
+  const [isLoadingGroups, setIsLoadingGroups] = useState(true);
+  const [groupLoadError, setGroupLoadError] = useState<string | null>(null);
+  
+  // Fetch user's groups
+  useEffect(() => {
+    const fetchGroups = async () => {
+      try {
+        setIsLoadingGroups(true);
+        const response = await fetch('/api/groups');
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || 'Failed to fetch groups');
+        }
+        const data = await response.json();
+        setGroups(data);
+      } catch (err: any) {
+        console.error('Error fetching groups:', err);
+        setGroupLoadError(err?.message || 'An error occurred while fetching groups');
+        
+        toast({
+          title: "Error loading groups",
+          description: err?.message || 'An error occurred while fetching groups',
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoadingGroups(false);
+      }
+    };
+    
+    fetchGroups();
+  }, [toast]);
 
   return (
     <div className="container max-w-screen-xl mx-auto p-4 pt-20 md:pt-24 md:pl-72 pb-20">
@@ -90,22 +125,96 @@ export default function ClubsPage() {
 
         <TabsContent value="groups">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Empty state */}
-            <Card className="col-span-full text-center py-8">
-              <CardContent>
-                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-muted">
-                  <MessagesSquare className="h-10 w-10 text-muted-foreground" />
-                </div>
-                <h3 className="mt-6 text-xl font-medium">No group chats yet</h3>
-                <p className="mt-2 text-muted-foreground">
-                  Groups let you chat with specific sets of athletes and coaches.
-                </p>
-                <Button className="mt-4">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create a Group
-                </Button>
-              </CardContent>
-            </Card>
+            {isLoadingGroups ? (
+              <Card className="col-span-full text-center py-8">
+                <CardContent>
+                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-muted animate-pulse">
+                    <MessagesSquare className="h-10 w-10 text-muted-foreground" />
+                  </div>
+                  <h3 className="mt-6 text-xl font-medium">Loading groups...</h3>
+                </CardContent>
+              </Card>
+            ) : groupLoadError ? (
+              <Card className="col-span-full text-center py-8 border-destructive">
+                <CardContent>
+                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10">
+                    <Shield className="h-10 w-10 text-destructive" />
+                  </div>
+                  <h3 className="mt-6 text-xl font-medium">Error loading groups</h3>
+                  <p className="mt-2 text-muted-foreground">{groupLoadError}</p>
+                  <Button 
+                    className="mt-4"
+                    onClick={() => window.location.reload()}
+                    variant="outline"
+                  >
+                    Retry
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : groups.length === 0 ? (
+              <Card className="col-span-full text-center py-8">
+                <CardContent>
+                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-muted">
+                    <MessagesSquare className="h-10 w-10 text-muted-foreground" />
+                  </div>
+                  <h3 className="mt-6 text-xl font-medium">No group chats yet</h3>
+                  <p className="mt-2 text-muted-foreground">
+                    Groups let you chat with specific sets of athletes and coaches.
+                  </p>
+                  <CreateGroupDialog />
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                {groups.map((group) => (
+                  <Card key={group.id}>
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle>{group.name}</CardTitle>
+                          <CardDescription>{group.description || "No description"}</CardDescription>
+                        </div>
+                        <div className="flex items-center space-x-1 text-muted-foreground text-sm">
+                          {group.isPrivate ? (
+                            <>
+                              <Shield className="h-4 w-4" />
+                              <span>Private</span>
+                            </>
+                          ) : (
+                            <>
+                              <Globe className="h-4 w-4" />
+                              <span>Public</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Created {new Date(group.createdAt).toLocaleDateString()}
+                      </p>
+                    </CardContent>
+                    <CardFooter>
+                      <Button className="w-full">
+                        <MessagesSquare className="h-4 w-4 mr-2" />
+                        Open Chat
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ))}
+                
+                <Card className="border-dashed border-2 flex flex-col items-center justify-center p-6">
+                  <div className="text-center">
+                    <Plus className="h-8 w-8 mx-auto mb-2 text-primary/60" />
+                    <h3 className="font-medium mb-1">Create New Group</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Add a new chat group for your team
+                    </p>
+                    <CreateGroupDialog />
+                  </div>
+                </Card>
+              </>
+            )}
           </div>
         </TabsContent>
 
@@ -199,6 +308,135 @@ export default function ClubsPage() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+// CreateGroupDialog component
+function CreateGroupDialog() {
+  const { toast } = useToast();
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  const handleCreateGroup = async () => {
+    if (!name) {
+      setError("Group name is required");
+      return;
+    }
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch("/api/groups", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          description,
+          isPrivate
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to create group");
+      }
+      
+      // Group created successfully
+      toast({
+        title: "Group created",
+        description: `${name} group was created successfully`,
+      });
+      
+      setIsOpen(false);
+      setName("");
+      setDescription("");
+      setIsPrivate(false);
+      
+      // To refresh the groups list
+      window.location.reload();
+    } catch (err: any) {
+      setError(err?.message || "An error occurred");
+      toast({
+        title: "Error creating group",
+        description: err?.message || "An error occurred",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button className="mt-4">
+          <Plus className="h-4 w-4 mr-2" />
+          Create a Group
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create a New Group</DialogTitle>
+          <DialogDescription>
+            Create a group to chat with specific athletes and coaches.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="name">Group Name</Label>
+            <Input 
+              id="name" 
+              placeholder="Enter group name" 
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea 
+              id="description" 
+              placeholder="Describe your group" 
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="privacy" 
+              checked={isPrivate}
+              onCheckedChange={(checked) => setIsPrivate(!!checked)}
+            />
+            <Label htmlFor="privacy" className="cursor-pointer">
+              Private Group (invite only)
+            </Label>
+          </div>
+          {error && (
+            <div className="text-destructive text-sm">{error}</div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
+          <Button 
+            onClick={handleCreateGroup} 
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <span className="mr-2">Creating...</span>
+                <span className="animate-spin">⏳</span>
+              </>
+            ) : "Create Group"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
