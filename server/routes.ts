@@ -1310,7 +1310,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: group.isPrivate ? "pending" as const : "accepted" as const
       };
       
-      const membership = await dbStorage.createGroupMember(memberData);
+      const membership = await dbStorage.createChatGroupMember(memberData);
       res.status(201).json(membership);
     } catch (error) {
       res.status(500).send("Error joining group");

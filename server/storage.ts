@@ -77,7 +77,7 @@ export interface IStorage {
   getGroupMembers(groupId: number): Promise<ChatGroupMember[]>;
   getGroupMemberByUserAndGroup(userId: number, groupId: number): Promise<ChatGroupMember | undefined>;
   createChatGroupMember(member: InsertChatGroupMember): Promise<ChatGroupMember>;
-  deleteGroupMember(id: number): Promise<boolean>;
+  deleteChatGroupMember(id: number): Promise<boolean>;
   getGroupMessages(groupId: number): Promise<GroupMessage[]>;
   createGroupMessage(message: InsertGroupMessage): Promise<GroupMessage>;
 
@@ -638,11 +638,11 @@ export class DatabaseStorage implements IStorage {
         .returning();
         
       // Automatically add the creator as a member with admin role
-      await this.createGroupMember({
+      await this.createChatGroupMember({
         groupId: newGroup.id,
         userId: newGroup.ownerId,
-        role: 'admin',
-        status: 'accepted'
+        role: 'admin' as const,
+        status: 'accepted' as const
       });
         
       return newGroup;
@@ -703,7 +703,7 @@ export class DatabaseStorage implements IStorage {
     return newMember;
   }
   
-  async deleteGroupMember(id: number): Promise<boolean> {
+  async deleteChatGroupMember(id: number): Promise<boolean> {
     const result = await db
       .delete(chatGroupMembers)
       .where(eq(chatGroupMembers.id, id));
