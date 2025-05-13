@@ -480,7 +480,7 @@ export function Component() {
           {membership?.role === 'admin' && (
             <Button
               size="sm"
-              className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 hover:bg-background"
+              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 hover:bg-background"
               onClick={() => setIsEditingBanner(true)}
             >
               <SquarePen className="h-4 w-4 mr-2" />
@@ -505,19 +505,25 @@ export function Component() {
             
             {/* Edit Logo Button - only for admins */}
             {membership?.role === 'admin' && (
-              <Button
-                size="sm"
-                variant="secondary"
-                className="absolute inset-0 opacity-0 group-hover:opacity-80 transition-opacity flex items-center justify-center"
-                onClick={() => setIsEditingLogo(true)}
-              >
-                <SquarePen className="h-4 w-4" />
-              </Button>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="opacity-0 group-hover:opacity-90 transition-opacity flex items-center justify-center z-10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsEditingLogo(true);
+                  }}
+                >
+                  <SquarePen className="h-4 w-4 mr-1" />
+                  Edit
+                </Button>
+              </div>
             )}
           </div>
         </div>
         
-        <div className="absolute bottom-4 right-4 flex gap-2">
+        <div className="absolute bottom-4 right-4 flex gap-2" style={{ zIndex: 20 }}>
           {membership ? (
             <Button 
               variant="secondary"
