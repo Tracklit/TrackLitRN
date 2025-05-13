@@ -31,6 +31,11 @@ export default function ClubsPage() {
   const [isLoadingGroups, setIsLoadingGroups] = useState(true);
   const [groupLoadError, setGroupLoadError] = useState<string | null>(null);
   
+  // Add state for clubs
+  const [clubs, setClubs] = useState<any[]>([]);
+  const [isLoadingClubs, setIsLoadingClubs] = useState(true);
+  const [clubLoadError, setClubLoadError] = useState<string | null>(null);
+  
   // Handle club creation
   const handleCreateClub = async () => {
     if (!clubName.trim()) {
@@ -96,13 +101,46 @@ export default function ClubsPage() {
     }
   };
   
-  // Fetch user's groups
+  // Fetch user's groups and clubs
   useEffect(() => {
-    // Only fetch groups if user is authenticated
+    // Only fetch data if user is authenticated
     if (!user) {
       return;
     }
     
+    // Function to fetch clubs
+    const fetchClubs = async () => {
+      try {
+        setIsLoadingClubs(true);
+        const response = await fetch('/api/clubs/my', {
+          credentials: 'include',
+        });
+        
+        if (!response.ok) {
+          if (response.status === 401) {
+            toast({
+              title: "Authentication required",
+              description: "Please login to view your clubs",
+              variant: "destructive"
+            });
+            return;
+          }
+          
+          throw new Error(`Failed to fetch clubs: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Fetched clubs:', data);
+        setClubs(data);
+      } catch (err: any) {
+        console.error('Error fetching clubs:', err);
+        setClubLoadError(err?.message || 'An error occurred while fetching clubs');
+      } finally {
+        setIsLoadingClubs(false);
+      }
+    };
+    
+    // Function to fetch groups
     const fetchGroups = async () => {
       try {
         setIsLoadingGroups(true);
@@ -142,6 +180,7 @@ export default function ClubsPage() {
     };
     
     fetchGroups();
+    fetchClubs(); // Call the fetch clubs function
   }, [toast, user]);
 
   return (
@@ -226,21 +265,102 @@ export default function ClubsPage() {
 
         <TabsContent value="my-clubs">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Empty state */}
-            <Card className="col-span-full text-center py-8">
-              <CardContent>
-                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-muted">
-                  <Users className="h-10 w-10 text-muted-foreground" />
-                </div>
-                <h3 className="mt-6 text-xl font-medium">You haven't joined any clubs yet</h3>
-                <p className="mt-2 text-muted-foreground">
-                  Clubs connect you with other athletes and coaches for training and competitions.
-                </p>
-                <Button className="mt-4" onClick={() => document.getElementById('discover-tab')?.click()}>
-                  Discover Clubs
-                </Button>
-              </CardContent>
-            </Card>
+            {isLoadingClubs ? (
+              <Card className="col-span-full text-center py-8">
+                <CardContent>
+                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-muted animate-pulse">
+                    <Users className="h-10 w-10 text-muted-foreground" />
+                  </div>
+                  <h3 className="mt-6 text-xl font-medium">Loading clubs...</h3>
+                </CardContent>
+              </Card>
+            ) : clubLoadError ? (
+              <Card className="col-span-full text-center py-8 border-destructive">
+                <CardContent>
+                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10">
+                    <Shield className="h-10 w-10 text-destructive" />
+                  </div>
+                  <h3 className="mt-6 text-xl font-medium">Error loading clubs</h3>
+                  <p className="mt-2 text-muted-foreground">{clubLoadError}</p>
+                  <Button 
+                    className="mt-4"
+                    onClick={() => window.location.reload()}
+                    variant="outline"
+                  >
+                    Retry
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : clubs.length === 0 ? (
+              <Card className="col-span-full text-center py-8">
+                <CardContent>
+                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-muted">
+                    <Users className="h-10 w-10 text-muted-foreground" />
+                  </div>
+                  <h3 className="mt-6 text-xl font-medium">You haven't joined any clubs yet</h3>
+                  <p className="mt-2 text-muted-foreground">
+                    Clubs connect you with other athletes and coaches for training and competitions.
+                  </p>
+                  <Button className="mt-4" onClick={() => document.getElementById('discover-tab')?.click()}>
+                    Discover Clubs
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                {clubs.map((club) => (
+                  <Card key={club.id}>
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle>{club.name}</CardTitle>
+                          <CardDescription>{club.description || "No description"}</CardDescription>
+                        </div>
+                        <div className="flex items-center space-x-1 text-muted-foreground text-sm">
+                          {club.isPrivate ? (
+                            <>
+                              <Shield className="h-4 w-4" />
+                              <span>Private</span>
+                            </>
+                          ) : (
+                            <>
+                              <Globe className="h-4 w-4" />
+                              <span>Public</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center gap-2 mb-4">
+                        <UserCircle className="h-5 w-5 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">You are an admin</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Created {new Date(club.createdAt).toLocaleDateString()}
+                      </p>
+                    </CardContent>
+                    <CardFooter>
+                      <Button className="w-full">Manage Club</Button>
+                    </CardFooter>
+                  </Card>
+                ))}
+                
+                <Card className="border-dashed border-2 flex flex-col items-center justify-center p-6">
+                  <div className="text-center">
+                    <Plus className="h-8 w-8 mx-auto mb-2 text-primary/60" />
+                    <h3 className="font-medium mb-1">Create New Club</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Start a new club for your team or community
+                    </p>
+                    <Button onClick={() => setIsCreateClubOpen(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Club
+                    </Button>
+                  </div>
+                </Card>
+              </>
+            )}
           </div>
         </TabsContent>
 
