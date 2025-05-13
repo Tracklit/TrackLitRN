@@ -67,7 +67,7 @@ export interface IStorage {
   deleteClub(id: number): Promise<boolean>;
   getClubMemberByUserAndClub(userId: number, clubId: number): Promise<ClubMember | undefined>;
   getClubMember(id: number): Promise<ClubMember | undefined>;
-  getClubMembersByClubId(clubId: number): Promise<ClubMember[]>;
+  getClubMembersByClubId(clubId: number): Promise<(ClubMember & { username: string })[]>;
   createClubMember(member: InsertClubMember): Promise<ClubMember>;
   deleteClubMember(id: number): Promise<boolean>;
   
@@ -569,8 +569,10 @@ export class DatabaseStorage implements IStorage {
     const [member] = await db
       .select()
       .from(clubMembers)
-      .where(eq(clubMembers.userId, userId))
-      .where(eq(clubMembers.clubId, clubId));
+      .where(and(
+        eq(clubMembers.userId, userId),
+        eq(clubMembers.clubId, clubId)
+      ));
     return member;
   }
   
@@ -580,6 +582,37 @@ export class DatabaseStorage implements IStorage {
       .values(member)
       .returning();
     return newMember;
+  }
+  
+  async getClubMember(id: number): Promise<ClubMember | undefined> {
+    const [member] = await db
+      .select()
+      .from(clubMembers)
+      .where(eq(clubMembers.id, id));
+    return member;
+  }
+  
+  async getClubMembersByClubId(clubId: number): Promise<(ClubMember & { username: string })[]> {
+    return db
+      .select({
+        id: clubMembers.id,
+        userId: clubMembers.userId,
+        clubId: clubMembers.clubId,
+        role: clubMembers.role,
+        joinedAt: clubMembers.joinedAt,
+        createdAt: clubMembers.createdAt,
+        username: users.username,
+      })
+      .from(clubMembers)
+      .innerJoin(users, eq(clubMembers.userId, users.id))
+      .where(eq(clubMembers.clubId, clubId));
+  }
+  
+  async deleteClubMember(id: number): Promise<boolean> {
+    const result = await db
+      .delete(clubMembers)
+      .where(eq(clubMembers.id, id));
+    return !!result;
   }
   
   // Group operations
@@ -693,8 +726,10 @@ export class DatabaseStorage implements IStorage {
     const [member] = await db
       .select()
       .from(chatGroupMembers)
-      .where(eq(chatGroupMembers.userId, userId))
-      .where(eq(chatGroupMembers.groupId, groupId));
+      .where(and(
+        eq(chatGroupMembers.userId, userId),
+        eq(chatGroupMembers.groupId, groupId)
+      ));
     return member;
   }
   
