@@ -21,11 +21,13 @@ import {
   Home,
   Calculator,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Dumbbell
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "wouter";
 import { useState, useEffect } from "react";
+import { PageContainer } from "@/components/page-container";
 
 export default function PracticePage() {
   const { user } = useAuth();
