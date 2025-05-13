@@ -547,3 +547,47 @@ export type Weather = {
   // Timestamp for target forecast time
   targetTime?: number;
 };
+
+// Club and Group schemas
+export const insertClubSchema = createInsertSchema(clubs).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertClub = z.infer<typeof insertClubSchema>;
+
+export const insertGroupSchema = createInsertSchema(groups).omit({
+  id: true,
+  createdAt: true,
+  joinCode: true, // Generated on the server
+});
+
+export type InsertGroup = z.infer<typeof insertGroupSchema>;
+
+export const insertClubMemberSchema = createInsertSchema(clubMembers).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertClubMember = z.infer<typeof insertClubMemberSchema>;
+
+export const insertChatGroupMemberSchema = createInsertSchema(chatGroupMembers).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertChatGroupMember = z.infer<typeof insertChatGroupMemberSchema>;
+
+export const insertGroupMessageSchema = createInsertSchema(groupMessages).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertGroupMessage = z.infer<typeof insertGroupMessageSchema>;
+
+// Select types
+export type Club = typeof clubs.$inferSelect;
+export type Group = typeof groups.$inferSelect;
+export type ClubMember = typeof clubMembers.$inferSelect;
+export type ChatGroupMember = typeof chatGroupMembers.$inferSelect;
+export type GroupMessage = typeof groupMessages.$inferSelect;
