@@ -50,7 +50,7 @@ export function SidebarNavigation() {
   if (!user) return null;
   
   return (
-    <aside className="hidden md:flex flex-col bg-white border-r border-lightGray w-64 h-screen fixed top-0 left-0 z-20 pt-16">
+    <aside className="md:flex flex-col bg-white dark:bg-background border-r border-lightGray dark:border-zinc-800 w-64 h-screen fixed top-0 left-0 z-20 pt-8 md:pt-16">
       <div className="p-4">
         <div className="bg-primary/5 rounded-lg p-3 mb-6">
           <div className="flex items-center space-x-3">
@@ -59,7 +59,7 @@ export function SidebarNavigation() {
             </div>
             <div>
               <p className="font-medium text-sm">{user.name}</p>
-              <p className="text-xs text-darkGray">{user.role || 'Athlete'}</p>
+              <p className="text-xs text-muted-foreground">{user.role || 'Athlete'}</p>
             </div>
           </div>
         </div>

@@ -127,15 +127,12 @@ function App() {
               onClick={() => handleMenuToggle(false)}
             />
             
-            {/* Mobile Menu Sidebar */}
-            <div
-              className={cn(
-                "fixed top-0 left-0 bottom-0 z-40 w-3/4 max-w-xs bg-background shadow-xl transition-transform duration-300 ease-in-out md:hidden",
-                isMenuOpen ? "translate-x-0" : "-translate-x-full"
-              )}
-            >
-              <SidebarNavigation />
-            </div>
+            {/* Mobile Menu Sidebar - Only render when needed */}
+            {isMenuOpen && (
+              <div className="fixed top-0 left-0 bottom-0 z-40 w-3/4 max-w-xs bg-background shadow-xl md:hidden">
+                <SidebarNavigation />
+              </div>
+            )}
             
             {/* Main Content - Will slide when menu is open */}
             <div id="main-content" className="relative transition-all">

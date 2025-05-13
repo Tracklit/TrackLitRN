@@ -6,9 +6,10 @@
   /* Sidebar animation */
   #main-content {
     position: relative;
-    transition: transform 0.3s ease-in-out;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     transform: translateX(0);
     width: 100%;
+    will-change: transform;
   }
   
   #main-content.menu-open {
