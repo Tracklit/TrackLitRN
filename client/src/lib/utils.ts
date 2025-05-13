@@ -221,17 +221,34 @@ export function getInitials(name: string): string {
 }
 
 /**
- * Format a time value (hours or minutes)
- * @param hours Hours or minutes to format
- * @returns Formatted time string (HH:MM or MM:SS)
+ * Format a time value (hours or minutes) or Date object to display time
+ * @param time Hours, minutes, or Date object to format
+ * @returns Formatted time string (HH:MM AM/PM or HH:MM)
  */
-export function formatTime(time: number | string | undefined | null): string {
+export function formatTime(time: number | string | Date | undefined | null): string {
   if (time === undefined || time === null) return '';
   
+  // If it's a Date object, format it to display just the time
+  if (time instanceof Date) {
+    return format(time, 'h:mm a');
+  }
+  
+  // If it's a string that might be a date
+  if (typeof time === 'string' && time.includes('-')) {
+    try {
+      const date = new Date(time);
+      if (!isNaN(date.getTime())) {
+        return format(date, 'h:mm a');
+      }
+    } catch (e) {
+      // Ignore parsing errors and proceed with numeric parsing
+    }
+  }
+  
+  // For numeric values (e.g., warmup time, arrival time in minutes)
   const timeNum = typeof time === 'string' ? parseInt(time, 10) : time;
   if (isNaN(timeNum)) return '';
   
-  // For formatting hours (e.g., warmup time, arrival time)
   const hours = Math.floor(timeNum / 60);
   const minutes = timeNum % 60;
   

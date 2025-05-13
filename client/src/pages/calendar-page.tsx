@@ -131,14 +131,27 @@ export default function CalendarPage() {
                         key={meet.id} 
                         className="border-l-4 border-primary p-3 rounded-r-lg bg-primary/5"
                       >
-                        <h4 className="font-medium flex items-center">
-                          <Trophy className="h-4 w-4 text-primary mr-2" />
-                          {meet.name}
-                        </h4>
+                        <div className="flex justify-between">
+                          <h4 className="font-medium flex items-center">
+                            <Trophy className="h-4 w-4 text-primary mr-2" />
+                            {meet.name}
+                          </h4>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleShareMeet(meet);
+                            }}
+                          >
+                            <Share2 className="h-4 w-4 text-darkGray" />
+                          </Button>
+                        </div>
                         <div className="mt-2 space-y-1.5 text-sm">
                           <div className="flex items-center text-darkGray">
                             <Clock className="h-4 w-4 mr-2" />
-                            {formatTime(meet.date)}
+                            {formatTime(new Date(meet.date))}
                           </div>
                           <div className="flex items-center text-darkGray">
                             <MapPin className="h-4 w-4 mr-2" />
@@ -179,6 +192,12 @@ export default function CalendarPage() {
       <CreateMeetModal
         isOpen={isCreateMeetOpen}
         onClose={() => setIsCreateMeetOpen(false)}
+      />
+      
+      <CalendarMeetShareModal
+        meet={selectedShareMeet}
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
       />
     </div>
   );
