@@ -380,11 +380,8 @@ export const groups = pgTable("groups", {
   clubId: integer("club_id").references(() => clubs.id),
   name: text("name").notNull(),
   description: text("description"),
-  ownerId: integer("owner_id").notNull().references(() => users.id),
+  ownerId: integer("created_by").notNull().references(() => users.id),
   isPrivate: boolean("is_private").default(false),
-  isPaid: boolean("is_paid").default(false),
-  price: integer("price"), // in currency or spikes
-  joinCode: text("join_code").notNull().unique(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
