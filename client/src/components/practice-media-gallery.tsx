@@ -1,11 +1,23 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Image, FileVideo, Loader2, Play, X, Calendar } from 'lucide-react';
+import { Image, FileVideo, Loader2, Play, X, Calendar, Trash2 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from '@/hooks/use-toast';
+import { queryClient } from '@/lib/queryClient';
 
 interface Media {
   id: number;
@@ -25,7 +37,10 @@ export function PracticeMediaGallery({
   completionId 
 }: PracticeMediaGalleryProps) {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
+  const [mediaToDelete, setMediaToDelete] = useState<Media | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   
   // Show a more helpful message if no completionId is provided
   if (!completionId) {
@@ -66,6 +81,60 @@ export function PracticeMediaGallery({
     },
     enabled: !!completionId && !!user,
   });
+  
+  // Mutation to delete media
+  const deleteMutation = useMutation({
+    mutationFn: async (mediaId: number) => {
+      const response = await fetch(`/api/practice/media/${mediaId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to delete media');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Media deleted',
+        description: 'The media item has been deleted successfully',
+      });
+      
+      // Close dialogs
+      setDeleteDialogOpen(false);
+      setMediaToDelete(null);
+      
+      // Refresh media list
+      queryClient.invalidateQueries({
+        queryKey: ['/api/practice/media', completionId],
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Failed to delete media',
+        description: error.message,
+        variant: 'destructive',
+      });
+      
+      setDeleteDialogOpen(false);
+    },
+  });
+  
+  // Handle delete confirmation
+  const handleDeleteConfirm = (media: Media) => {
+    setMediaToDelete(media);
+    setDeleteDialogOpen(true);
+  };
+  
+  // Handle actual deletion
+  const handleDelete = () => {
+    if (mediaToDelete) {
+      deleteMutation.mutate(mediaToDelete.id);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -123,9 +192,29 @@ export function PracticeMediaGallery({
             {mediaItems.map((media) => (
               <div 
                 key={media.id} 
-                className="relative rounded-md overflow-hidden aspect-square cursor-pointer hover:opacity-90 transition-opacity border border-border"
-                onClick={() => setSelectedMedia(media)}
+                className="relative rounded-md overflow-hidden aspect-square cursor-pointer hover:opacity-90 transition-opacity border border-border group"
               >
+                {/* Clickable overlay for preview */}
+                <div 
+                  className="absolute inset-0 z-10"
+                  onClick={() => setSelectedMedia(media)}
+                />
+                
+                {/* Delete button */}
+                <div className="absolute top-2 right-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button 
+                    variant="destructive" 
+                    size="icon" 
+                    className="h-7 w-7"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteConfirm(media);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                
                 {media.type === 'image' ? (
                   <img 
                     src={media.url} 
@@ -190,6 +279,32 @@ export function PracticeMediaGallery({
           </DialogTitle>
         </DialogContent>
       </Dialog>
+      
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action will permanently delete this media file and cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteMutation.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4 mr-2" />
+              )}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
