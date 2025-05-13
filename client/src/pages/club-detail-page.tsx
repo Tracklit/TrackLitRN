@@ -13,7 +13,6 @@ import {
   UserPlus,
   Settings,
   MessageSquare,
-  CalendarDays,
   Users,
   ImageIcon,
   SquarePen,
@@ -770,29 +769,6 @@ export function Component() {
                   </div>
                 )}
               </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="calendar">
-            <Card>
-              <CardHeader>
-                <CardTitle>Club Events</CardTitle>
-                <CardDescription>Upcoming events and schedule</CardDescription>
-              </CardHeader>
-              <CardContent className="text-center py-12">
-                <CalendarDays className="h-16 w-16 mx-auto text-muted-foreground opacity-20" />
-                <p className="mt-4">No upcoming events</p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Club events and training schedules will appear here
-                </p>
-              </CardContent>
-              {membership?.role === 'admin' && (
-                <CardFooter>
-                  <Button className="w-full" variant="outline">
-                    Create Event
-                  </Button>
-                </CardFooter>
-              )}
             </Card>
           </TabsContent>
         </Tabs>
