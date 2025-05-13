@@ -60,6 +60,7 @@ export interface IStorage {
   
   // Club operations
   getClub(id: number): Promise<Club | undefined>;
+  getClubByInviteCode(inviteCode: string): Promise<Club | undefined>;
   getClubs(): Promise<Club[]>;
   getUserClubs(userId: number): Promise<Club[]>;
   createClub(club: InsertClub): Promise<Club>;
@@ -68,7 +69,9 @@ export interface IStorage {
   getClubMemberByUserAndClub(userId: number, clubId: number): Promise<ClubMember | undefined>;
   getClubMember(id: number): Promise<ClubMember | undefined>;
   getClubMembersByClubId(clubId: number): Promise<(ClubMember & { username: string })[]>;
+  getPendingClubMembers(clubId: number): Promise<(ClubMember & { username: string })[]>;
   createClubMember(member: InsertClubMember): Promise<ClubMember>;
+  updateClubMember(id: number, memberData: Partial<ClubMember>): Promise<ClubMember | undefined>;
   deleteClubMember(id: number): Promise<boolean>;
   
   // Group operations
@@ -491,6 +494,11 @@ export class DatabaseStorage implements IStorage {
     return club;
   }
   
+  async getClubByInviteCode(inviteCode: string): Promise<Club | undefined> {
+    const [club] = await db.select().from(clubs).where(eq(clubs.inviteCode, inviteCode));
+    return club;
+  }
+  
   async getClubs(): Promise<Club[]> {
     return db.select().from(clubs);
   }
@@ -608,6 +616,34 @@ export class DatabaseStorage implements IStorage {
       .from(clubMembers)
       .innerJoin(users, eq(clubMembers.userId, users.id))
       .where(eq(clubMembers.clubId, clubId));
+  }
+  
+  async getPendingClubMembers(clubId: number): Promise<(ClubMember & { username: string })[]> {
+    return db
+      .select({
+        id: clubMembers.id,
+        userId: clubMembers.userId,
+        clubId: clubMembers.clubId,
+        role: clubMembers.role,
+        joinedAt: clubMembers.joinedAt,
+        createdAt: clubMembers.createdAt,
+        username: users.username,
+      })
+      .from(clubMembers)
+      .innerJoin(users, eq(clubMembers.userId, users.id))
+      .where(and(
+        eq(clubMembers.clubId, clubId),
+        eq(clubMembers.joinedAt, null)  // Pending members have null joinedAt
+      ));
+  }
+  
+  async updateClubMember(id: number, memberData: Partial<ClubMember>): Promise<ClubMember | undefined> {
+    const [updatedMember] = await db
+      .update(clubMembers)
+      .set(memberData)
+      .where(eq(clubMembers.id, id))
+      .returning();
+    return updatedMember;
   }
   
   async deleteClubMember(id: number): Promise<boolean> {

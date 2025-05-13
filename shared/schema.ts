@@ -340,9 +340,11 @@ export const clubs = pgTable("clubs", {
   ownerId: integer("owner_id").notNull().references(() => users.id),
   isPrivate: boolean("is_private").default(false),
   // isPaid and price removed as they don't exist in the actual DB
-  // joinCode removed as it doesn't exist in the actual DB
+  inviteCode: text("invite_code"), // Unique invite code for the club
   logoUrl: text("logo_url"),
+  bannerUrl: text("banner_url"), // New field for club banner image
   createdAt: timestamp("created_at").defaultNow(),
+  isPremium: boolean("is_premium").default(false), // Whether the club has premium features
 });
 
 export const clubsRelations = relations(clubs, ({ one, many }) => ({

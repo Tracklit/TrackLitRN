@@ -1157,17 +1157,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Invite new member to club
-  app.post("/api/clubs/:id/members", async (req: Request, res: Response) => {
+  // Generate club invite link
+  app.post("/api/clubs/:id/generateInviteLink", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     try {
       const clubId = parseInt(req.params.id);
-      const { username } = req.body;
-      
-      if (!username) {
-        return res.status(400).send("Username is required");
-      }
       
       // Check if club exists
       const club = await dbStorage.getClub(clubId);
@@ -1178,37 +1173,143 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if user has admin permission
       const userMembership = await dbStorage.getClubMemberByUserAndClub(req.user!.id, clubId);
       if (!userMembership || userMembership.role !== 'admin') {
-        return res.status(403).send("You don't have permission to invite members");
+        return res.status(403).send("You don't have permission to generate invite links");
       }
       
-      // Find the user by username
-      const userToInvite = await dbStorage.getUserByUsername(username);
-      if (!userToInvite) {
-        return res.status(404).send("User not found");
+      // Generate a unique invite code
+      const inviteCode = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      
+      // Store the invite code for the club
+      const updatedClub = await dbStorage.updateClub(clubId, {
+        inviteCode
+      });
+      
+      if (!updatedClub) {
+        return res.status(500).send("Failed to generate invite link");
+      }
+      
+      // Return the full invite link
+      const inviteLink = `${process.env.BASE_URL || 'http://localhost:5000'}/clubs/join/${inviteCode}`;
+      res.json({ inviteLink, inviteCode });
+    } catch (error: any) {
+      console.error("Error generating invite link:", error);
+      res.status(500).send(`Error generating invite link: ${error.message || error}`);
+    }
+  });
+  
+  // Request to join club
+  app.post("/api/clubs/:id/request", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const clubId = parseInt(req.params.id);
+      const userId = req.user!.id;
+      
+      // Check if club exists
+      const club = await dbStorage.getClub(clubId);
+      if (!club) {
+        return res.status(404).send("Club not found");
       }
       
       // Check if user is already a member
-      const existingMembership = await dbStorage.getClubMemberByUserAndClub(userToInvite.id, clubId);
+      const existingMembership = await dbStorage.getClubMemberByUserAndClub(userId, clubId);
       if (existingMembership) {
+        return res.status(400).send("You are already a member of this club");
+      }
+      
+      // Create a membership request (joinedAt is NULL until approved)
+      const memberRequest = await dbStorage.createClubMember({
+        clubId,
+        userId,
+        role: 'member' as const,
+        joinedAt: null // Pending approval
+      });
+      
+      res.status(201).json({ message: "Join request sent successfully" });
+    } catch (error: any) {
+      console.error("Error requesting to join club:", error);
+      res.status(500).send(`Error requesting to join club: ${error.message || error}`);
+    }
+  });
+  
+  // Approve member join request
+  app.post("/api/clubs/:id/approve/:userId", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const clubId = parseInt(req.params.id);
+      const userIdToApprove = parseInt(req.params.userId);
+      
+      // Check if club exists
+      const club = await dbStorage.getClub(clubId);
+      if (!club) {
+        return res.status(404).send("Club not found");
+      }
+      
+      // Check if requester has admin permission
+      const userMembership = await dbStorage.getClubMemberByUserAndClub(req.user!.id, clubId);
+      if (!userMembership || userMembership.role !== 'admin') {
+        return res.status(403).send("You don't have permission to approve members");
+      }
+      
+      // Get the pending membership
+      const membershipRequest = await dbStorage.getClubMemberByUserAndClub(userIdToApprove, clubId);
+      if (!membershipRequest) {
+        return res.status(404).send("Membership request not found");
+      }
+      
+      if (membershipRequest.joinedAt !== null) {
         return res.status(400).send("User is already a member of this club");
       }
       
-      // Create the membership
-      const newMember = await dbStorage.createClubMember({
-        clubId,
-        userId: userToInvite.id,
-        role: 'member' as const
+      // Approve the request by setting joinedAt
+      const updatedMembership = await dbStorage.updateClubMember(membershipRequest.id, {
+        joinedAt: new Date()
       });
       
-      const memberWithDetails = {
-        ...newMember,
-        username: userToInvite.username
-      };
+      if (!updatedMembership) {
+        return res.status(500).send("Failed to approve member");
+      }
       
-      res.status(201).json(memberWithDetails);
+      res.json({ message: "Member approved successfully" });
     } catch (error: any) {
-      console.error("Error inviting member:", error);
-      res.status(500).send(`Error inviting member: ${error.message || error}`);
+      console.error("Error approving club member:", error);
+      res.status(500).send(`Error approving club member: ${error.message || error}`);
+    }
+  });
+  
+  // Join with invite code
+  app.post("/api/clubs/join-with-code/:inviteCode", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const { inviteCode } = req.params;
+      const userId = req.user!.id;
+      
+      // Find club by invite code
+      const club = await dbStorage.getClubByInviteCode(inviteCode);
+      if (!club) {
+        return res.status(404).send("Invalid or expired invite code");
+      }
+      
+      // Check if user is already a member
+      const existingMembership = await dbStorage.getClubMemberByUserAndClub(userId, club.id);
+      if (existingMembership) {
+        return res.status(400).send("You are already a member of this club");
+      }
+      
+      // Create the membership (automatically approved via invite link)
+      const newMember = await dbStorage.createClubMember({
+        clubId: club.id,
+        userId,
+        role: 'member' as const,
+        joinedAt: new Date() // Automatically approved via invite
+      });
+      
+      res.status(201).json({ message: "Successfully joined the club" });
+    } catch (error: any) {
+      console.error("Error joining club with invite code:", error);
+      res.status(500).send(`Error joining club: ${error.message || error}`);
     }
   });
   
