@@ -2,42 +2,88 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Simple slide animation for mobile */
-body {
-  overflow-x: hidden; /* Prevent horizontal scrollbar during animations */
+/* Mobile menu animations */
+.mobile-menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 280px;
+  height: 100%;
+  background-color: white;
+  border-right: 1px solid #e5e7eb;
+  z-index: 50;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
 }
 
-/* Mobile menu animation */
-@keyframes slideIn {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(0); }
+.mobile-menu.open {
+  transform: translateX(0);
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+.mobile-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 40;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
 }
 
-.slide-animation {
-  animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+.mobile-menu-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
 }
 
-.fade-animation {
-  animation: fadeIn 0.3s ease forwards;
+/* Push animation */
+.push-content {
+  position: relative;
+  min-height: 100vh;
+  transition: transform 0.3s ease;
 }
 
-/* Slide effect for main content on mobile */
-.content-slide {
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+.push-content.open {
+  transform: translateX(280px);
 }
 
-.content-slide.open {
-  transform: translateX(16rem); /* 256px */
+/* Hide menu button when menu is open */
+.menu-button {
+  transition: opacity 0.3s ease;
+}
+
+.menu-button.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Main content */
+.main-content {
+  padding: 16px;
 }
 
 @media (min-width: 768px) {
-  .content-slide.open {
-    transform: translateX(0);
+  .main-content {
+    margin-left: 280px;
+    padding: 24px;
+  }
+  
+  .push-content.open {
+    transform: none;
+  }
+  
+  .mobile-menu {
+    display: none;
+  }
+  
+  .mobile-menu-overlay {
+    display: none;
+  }
+  
+  .menu-button {
+    display: none;
   }
 }
 
@@ -45,100 +91,28 @@ body {
   /* Single color dark blue background with golden yellow accent as requested */
   --background: 220 40% 12%;
   --foreground: 0 0% 95%;
-  --muted: 220 35% 18%;
-  --muted-foreground: 220 5% 65%;
+  --card: 220 45% 11%;
+  --card-foreground: 0 0% 95%;
   --popover: 220 40% 12%;
   --popover-foreground: 0 0% 95%;
-  --card: 220 35% 15%;
-  --card-foreground: 0 0% 95%;
-  --border: 220 20% 15%;
-  --input: 220 20% 15%;
-  --primary: 40 100% 55%; /* More vibrant golden yellow */
-  --primary-foreground: 220 30% 8%;
-  --secondary: 220 70% 40%; /* Blue */
+  --primary: 45 100% 50%;
+  --primary-foreground: 220 40% 12%;
+  --secondary: 220 40% 16%;
   --secondary-foreground: 0 0% 95%;
-  --accent: 40 100% 55%; /* More vibrant golden yellow */
-  --accent-foreground: 220 30% 8%;
-  --destructive: 0 70% 50%;
+  --muted: 220 40% 16%;
+  --muted-foreground: 220 10% 70%;
+  --accent: 45 100% 50%;
+  --accent-foreground: 220 40% 12%;
+  --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 95%;
+  --border: 220 40% 17%;
+  --input: 220 40% 16%;
   --ring: 45 100% 50%;
+  
   --radius: 0.5rem;
-  --chart-1: 45 100% 50%;
-  --chart-2: 220 70% 40%;
-  --chart-3: 160 70% 40%;
-  --chart-4: 260 70% 40%;
-  --chart-5: 300 70% 50%;
-  --sidebar-background: 220 30% 12%; /* Lighter blue for the menu */
-  --sidebar-foreground: 0 0% 95%;
-  --sidebar-primary: 45 100% 50%;
-  --sidebar-primary-foreground: 220 30% 8%;
-  --sidebar-accent: 45 100% 50%;
-  --sidebar-accent-foreground: 220 30% 8%;
-  --sidebar-border: 220 20% 18%;
-  --sidebar-ring: 45 100% 50%;
-  --success: 142 71% 45%;
-  --warning: 36 93% 54%;
-  --darkNavy: 220 30% 6%;
-  --darkGray: 220 20% 15%;
-  --lightGray: 220 15% 20%;
-}
-
-/* Light mode variant is now the same as dark mode for consistency */
-.dark {
-  --background: 220 30% 10%;
-  --foreground: 0 0% 95%;
-  --muted: 220 25% 15%;
-  --muted-foreground: 220 5% 65%;
-  --popover: 220 30% 10%;
-  --popover-foreground: 0 0% 95%;
-  --card: 220 25% 15%;
-  --card-foreground: 0 0% 95%;
-  --border: 220 20% 20%;
-  --input: 220 20% 20%;
-  --primary: 36 100% 50%; /* Yellow/Orange */
-  --primary-foreground: 220 30% 10%;
-  --secondary: 220 70% 40%; /* Blue */
-  --secondary-foreground: 0 0% 95%;
-  --accent: 36 100% 50%; /* Yellow/Orange */
-  --accent-foreground: 220 30% 10%;
-  --destructive: 0 70% 50%;
-  --destructive-foreground: 0 0% 95%;
-  --ring: 36 100% 50%;
-  --radius: 0.5rem;
-  --chart-1: 36 100% 50%;
-  --chart-2: 220 70% 40%;
-  --chart-3: 160 70% 40%;
-  --chart-4: 260 70% 40%;
-  --chart-5: 300 70% 50%;
-  --sidebar-background: 220 30% 8%;
-  --sidebar-foreground: 0 0% 95%;
-  --sidebar-primary: 36 100% 50%;
-  --sidebar-primary-foreground: 220 30% 10%;
-  --sidebar-accent: 36 100% 50%;
-  --sidebar-accent-foreground: 220 30% 10%;
-  --sidebar-border: 220 20% 20%;
-  --sidebar-ring: 36 100% 50%;
-  --success: 142 71% 45%;
-  --warning: 36 93% 54%;
-  --darkNavy: 220 30% 8%;
-  --darkGray: 220 20% 20%;
-  --lightGray: 220 15% 30%;
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-
-  body {
-    @apply font-sans antialiased bg-background text-foreground;
-  }
-}
-
-.weather-icon {
-  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.1));
-}
-
-.wind-arrow {
-  transition: transform 0.3s ease;
+  
+  --darkNavy: #1a202c;
+  --accent: gold;
+  --lightGray: #e5e7eb;
+  --darkGray: #6b7280;
 }
