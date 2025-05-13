@@ -27,22 +27,25 @@ export function PracticeMediaGallery({
   const { user } = useAuth();
   const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
 
-  // Query to fetch media for this session/completion
+  // Query to fetch media for this completion
   const { data: mediaItems = [], isLoading } = useQuery<Media[]>({
-    queryKey: ['/api/practice/media', completionId || sessionId],
+    queryKey: ['/api/practice/media', completionId],
     queryFn: async () => {
-      // If we have a completionId, fetch media for that specific completion
-      // Otherwise, fetch all media for the session
-      const endpoint = completionId 
-        ? `/api/practice/completions/${completionId}/media`
-        : `/api/practice/sessions/${sessionId}/media`;
+      if (!completionId) {
+        return [];
+      }
+      
+      const endpoint = `/api/practice/media?completionId=${completionId}`;
         
       // Use the fetch API with credentials to include cookies
-      const response = await fetch(endpoint);
+      const response = await fetch(endpoint, {
+        credentials: 'include'
+      });
+      
       if (!response.ok) throw new Error('Failed to fetch media');
       return response.json();
     },
-    enabled: !!sessionId && !!user,
+    enabled: !!completionId && !!user,
   });
 
   if (isLoading) {

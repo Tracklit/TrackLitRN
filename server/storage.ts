@@ -16,6 +16,8 @@ import {
   InsertGroupMember,
   CoachNote,
   InsertCoachNote,
+  PracticeMedia,
+  InsertPracticeMedia,
   users,
   meets,
   results,
@@ -24,6 +26,8 @@ import {
   athleteGroups,
   athleteGroupMembers,
   coachNotes,
+  practiceMedia,
+  practiceCompletions
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, lt, gte, desc } from "drizzle-orm";
@@ -413,6 +417,29 @@ export class DatabaseStorage implements IStorage {
 
   async deleteCoachNote(id: number): Promise<boolean> {
     const result = await db.delete(coachNotes).where(eq(coachNotes.id, id));
+    return !!result;
+  }
+
+  // Practice Media operations
+  async getPracticeMedia(id: number): Promise<PracticeMedia | undefined> {
+    const [media] = await db.select().from(practiceMedia).where(eq(practiceMedia.id, id));
+    return media;
+  }
+
+  async getPracticeMediaByCompletionId(completionId: number): Promise<PracticeMedia[]> {
+    return await db.select()
+      .from(practiceMedia)
+      .where(eq(practiceMedia.completionId, completionId))
+      .orderBy(desc(practiceMedia.createdAt));
+  }
+
+  async createPracticeMedia(media: InsertPracticeMedia): Promise<PracticeMedia> {
+    const [result] = await db.insert(practiceMedia).values(media).returning();
+    return result;
+  }
+
+  async deletePracticeMedia(id: number): Promise<boolean> {
+    const result = await db.delete(practiceMedia).where(eq(practiceMedia.id, id));
     return !!result;
   }
 }

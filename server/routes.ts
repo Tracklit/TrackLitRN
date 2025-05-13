@@ -67,6 +67,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Serve static files from the uploads directory
   app.use('/uploads', express.static(uploadsDir));
+  
+  // Practice media routes
+  // Get media for a completion
+  app.get('/api/practice/media', async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: 'You must be logged in' });
+      }
+      
+      const { completionId } = req.query;
+      
+      if (!completionId) {
+        return res.status(400).json({ message: 'Completion ID is required' });
+      }
+      
+      const media = await dbStorage.getPracticeMediaByCompletionId(parseInt(completionId as string));
+      
+      res.status(200).json(media);
+    } catch (error: any) {
+      console.error('Error fetching media:', error);
+      res.status(500).json({ message: error.message || 'Failed to fetch media' });
+    }
+  });
+  
+  // Delete media
+  app.delete('/api/practice/media/:id', async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: 'You must be logged in' });
+      }
+      
+      const { id } = req.params;
+      
+      if (!id) {
+        return res.status(400).json({ message: 'Media ID is required' });
+      }
+      
+      // Get the media first to find the file path
+      const media = await dbStorage.getPracticeMedia(parseInt(id));
+      
+      if (!media) {
+        return res.status(404).json({ message: 'Media not found' });
+      }
+      
+      // Delete the file from filesystem
+      const filePath = path.join(process.cwd(), media.url);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+      
+      // Delete the media record from database
+      const deleted = await dbStorage.deletePracticeMedia(parseInt(id));
+      
+      if (!deleted) {
+        return res.status(404).json({ message: 'Media not found or already deleted' });
+      }
+      
+      res.status(200).json({ message: 'Media deleted successfully' });
+    } catch (error: any) {
+      console.error('Error deleting media:', error);
+      res.status(500).json({ message: error.message || 'Failed to delete media' });
+    }
+  });
+  
+  // Upload media
+  app.post('/api/practice/media', upload.single('file'), async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: 'You must be logged in' });
+      }
+      
+      if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+      }
+      
+      const { completionId } = req.body;
+      
+      if (!completionId) {
+        return res.status(400).json({ message: 'Completion ID is required' });
+      }
+      
+      // Determine file type
+      const fileType = req.file.mimetype.startsWith('image/') ? 'image' : 'video';
+      
+      // Create file path URL
+      const fileUrl = `/uploads/${req.file.filename}`;
+      
+      // Create thumbnail if it's a video (for now we'll just use the same URL)
+      const thumbnail = fileType === 'video' ? fileUrl : undefined;
+      
+      // Create media record in database
+      const mediaData: InsertPracticeMedia = {
+        completionId: parseInt(completionId as string),
+        type: fileType,
+        url: fileUrl,
+        thumbnail,
+      };
+      
+      const media = await dbStorage.createPracticeMedia(mediaData);
+      
+      res.status(201).json(media);
+    } catch (error: any) {
+      console.error('Error uploading media:', error);
+      res.status(500).json({ message: error.message || 'Failed to upload media' });
+    }
+  });
 
   // API Routes - prefix all routes with /api
   
