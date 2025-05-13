@@ -164,9 +164,8 @@ export default function PracticePage() {
                       </div>
                       <div>
                         <p className="font-medium text-sm">3 x 200m</p>
-                        <p className="text-xs text-muted-foreground">@ 28s, 2min rest</p>
+                        <p className="text-xs text-muted-foreground">85% effort, 2min rest</p>
                       </div>
-                      <Badge className="ml-auto" variant="outline">Completed</Badge>
                     </div>
                   </div>
                   
@@ -177,9 +176,8 @@ export default function PracticePage() {
                       </div>
                       <div>
                         <p className="font-medium text-sm">2 x 250m</p>
-                        <p className="text-xs text-muted-foreground">@ 36s, 3min rest</p>
+                        <p className="text-xs text-muted-foreground">90% effort, 3min rest</p>
                       </div>
-                      <Badge className="ml-auto" variant="outline">Completed</Badge>
                     </div>
                   </div>
                   
@@ -190,15 +188,14 @@ export default function PracticePage() {
                       </div>
                       <div>
                         <p className="font-medium text-sm">1 x 300m</p>
-                        <p className="text-xs text-muted-foreground">@ 45s, all out</p>
+                        <p className="text-xs text-muted-foreground">100% effort, all out</p>
                       </div>
-                      <Badge className="ml-auto" variant="secondary">Next up</Badge>
                     </div>
                   </div>
                 </div>
               </div>
               
-              {/* Training Performance Calculator */}
+              {/* Distance & % Calculator */}
               <Collapsible 
                 open={calculatorOpen}
                 onOpenChange={setCalculatorOpen}
@@ -208,7 +205,7 @@ export default function PracticePage() {
                   <div className="flex items-center justify-between cursor-pointer">
                     <div className="flex items-center gap-2 text-sm font-medium">
                       <Calculator className="h-4 w-4 text-primary" />
-                      <span>Performance Calculator</span>
+                      <span>Distance & %</span>
                     </div>
                     {calculatorOpen ? (
                       <ChevronUp className="h-4 w-4 text-muted-foreground" />
