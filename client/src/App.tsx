@@ -1,13 +1,10 @@
 import { Switch, Route } from "wouter";
-import { useState, useEffect } from "react";
-import { Menu, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { SidebarNavigation } from "@/components/layout/sidebar-navigation";
-import { MobileMenu } from "@/components/layout/mobile-menu";
+import { DesktopSidebar, MobileSidebar, MobileSidebarButton } from "@/components/layout/minimal-sidebar";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
@@ -62,62 +59,33 @@ function Router() {
 function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
-  // Handle menu toggle
-  const handleMenuToggle = () => {
-    setIsMenuOpen(prev => !prev);
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
   };
   
   const closeMenu = () => {
     setIsMenuOpen(false);
   };
   
-  // Close menu on resize to desktop
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 768) {
-        setIsMenuOpen(false);
-      }
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
-  
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
           <div className="min-h-screen bg-background text-foreground">
-            {/* Desktop Sidebar - Only visible on MD screens and up */}
-            <div className="hidden md:block">
-              <SidebarNavigation />
-            </div>
+            {/* Desktop Sidebar */}
+            <DesktopSidebar />
             
             {/* Mobile Menu Button */}
-            <div className="fixed top-3 left-3 z-50 md:hidden">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="text-foreground hover:bg-accent/10 hover:text-accent"
-                onClick={handleMenuToggle}
-              >
-                {isMenuOpen ? (
-                  <X className="h-6 w-6" />
-                ) : (
-                  <Menu className="h-6 w-6" />
-                )}
-                <span className="sr-only">Toggle menu</span>
-              </Button>
-            </div>
+            <MobileSidebarButton onClick={toggleMenu} />
             
-            {/* Mobile Menu - Using the new component */}
-            <MobileMenu isOpen={isMenuOpen} onClose={closeMenu} />
+            {/* Mobile Sidebar - Only rendered when open */}
+            <MobileSidebar isOpen={isMenuOpen} onClose={closeMenu} />
             
-            {/* Main Content with padding to account for sidebar */}
-            <main className="md:pl-64 transition-all duration-300 min-h-screen">
-              <Router />
+            {/* Main Content */}
+            <main className="pt-4 md:pl-64">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <Router />
+              </div>
             </main>
             
             <Toaster />
