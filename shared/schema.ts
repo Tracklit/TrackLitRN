@@ -853,9 +853,13 @@ export const trainingPrograms = pgTable("training_programs", {
   category: text("category").notNull(), // sprint, distance, jumps, throws, etc.
   level: text("level"), // beginner, intermediate, advanced
   duration: integer("duration").notNull(), // In days
+  totalSessions: integer("total_sessions").default(0),
   isUploadedProgram: boolean("is_uploaded_program").default(false),
   programFileUrl: text("program_file_url"), // URL to uploaded document
   programFileType: text("program_file_type"), // pdf, excel, doc, etc.
+  importedFromSheet: boolean("imported_from_sheet").default(false),
+  googleSheetUrl: text("google_sheet_url"), // URL to the Google Sheet
+  googleSheetId: text("google_sheet_id"), // Google Sheet ID
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -900,10 +904,24 @@ export const programSessions = pgTable("program_sessions", {
   id: serial("id").primaryKey(),
   programId: integer("program_id").notNull().references(() => trainingPrograms.id),
   workoutId: integer("workout_id").references(() => workoutLibrary.id),
-  title: text("title").notNull(),
+  title: text("title"),
   description: text("description"),
-  dayNumber: integer("day_number").notNull(), // Day in the program (1, 2, 3...)
+  dayNumber: integer("day_number"), // Day in the program (1, 2, 3...)
   orderInDay: integer("order_in_day").default(1), // Order if multiple sessions in a day
+  
+  // Google Sheet import specific fields
+  date: text("date"), // ISO Date string for sheet imports
+  shortDistanceWorkout: text("short_distance_workout"), // 60/100m focused sessions
+  mediumDistanceWorkout: text("medium_distance_workout"), // 200m focused sessions 
+  longDistanceWorkout: text("long_distance_workout"), // 400m focused sessions
+  preActivation1: text("pre_activation_1"), // Pre-Activation 1
+  preActivation2: text("pre_activation_2"), // Pre-Activation 2
+  extraSession: text("extra_session"), // Extra afternoon sessions
+  isRestDay: boolean("is_rest_day").default(false),
+  
+  isCompleted: boolean("is_completed").default(false),
+  completedAt: timestamp("completed_at"),
+  notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
