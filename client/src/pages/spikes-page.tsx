@@ -1,11 +1,19 @@
 import { ProtectedRoute } from "@/lib/protected-route";
 import { useAuth } from "@/hooks/use-auth";
+import { 
+  useAchievements, 
+  useLoginStreak, 
+  useSpikeTransactions, 
+  useCheckDailyLogin,
+  useClaimAchievement 
+} from "@/hooks/use-spikes";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Coins, Trophy, CalendarCheck, MessageSquare, Medal, Gift, Crown, Award, Clock, RefreshCw } from "lucide-react";
+import { Coins, Trophy, CalendarCheck, MessageSquare, Medal, Gift, Crown, Award, Clock, RefreshCw, Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { formatDistanceToNow } from 'date-fns';
 
 export default function SpikesPage() {
   const { user } = useAuth();

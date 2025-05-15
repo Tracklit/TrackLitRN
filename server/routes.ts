@@ -354,14 +354,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Not authenticated" });
       }
       
-      const achievements = await storage.getAchievements();
+      const achievements = await dbStorage.getAchievements();
       
       // Get user achievements to determine completion status
-      const userAchievements = await storage.getUserAchievementsByUserId(req.user!.id);
+      const userAchievements = await dbStorage.getUserAchievementsByUserId(req.user!.id);
       
       // Map user achievements to their respective achievement details
-      const achievementsWithStatus = achievements.map(achievement => {
-        const userAchievement = userAchievements.find(ua => ua.achievementId === achievement.id);
+      const achievementsWithStatus = achievements.map((achievement) => {
+        const userAchievement = userAchievements.find((ua) => ua.achievementId === achievement.id);
         return {
           ...achievement,
           progress: userAchievement?.progress || 0,
@@ -385,7 +385,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Not authenticated" });
       }
       
-      const streak = await storage.getLoginStreakByUserId(req.user!.id);
+      const streak = await dbStorage.getLoginStreakByUserId(req.user!.id);
       if (!streak) {
         // Create a new login streak record if it doesn't exist
         return res.json({ currentStreak: 0, longestStreak: 0 });
@@ -404,7 +404,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Not authenticated" });
       }
       
-      const transactions = await storage.getSpikeTransactions(req.user!.id);
+      const transactions = await dbStorage.getSpikeTransactions(req.user!.id);
       res.json(transactions);
     } catch (error) {
       console.error("Error fetching spike transactions:", error);
@@ -420,7 +420,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // For this initial version, we'll just return the current login streak
       // We'll implement proper daily login tracking in a future update
-      const streak = await storage.getLoginStreakByUserId(req.user!.id);
+      const streak = await dbStorage.getLoginStreakByUserId(req.user!.id);
       res.json(streak || { currentStreak: 0, longestStreak: 0 });
     } catch (error) {
       console.error("Error checking daily login:", error);
@@ -441,8 +441,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // For this initial version, we'll just fetch the achievement
       // We'll implement proper achievement claiming in a future update
-      const achievements = await storage.getAchievements();
-      const achievement = achievements.find(a => a.id === achievementId);
+      const achievements = await dbStorage.getAchievements();
+      const achievement = achievements.find((a) => a.id === achievementId);
       
       if (!achievement) {
         return res.status(404).json({ error: "Achievement not found" });
