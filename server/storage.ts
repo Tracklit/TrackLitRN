@@ -1712,9 +1712,14 @@ export class DatabaseStorage implements IStorage {
         id: users.id,
         username: users.username,
         email: users.email,
-        firstName: users.firstName,
-        lastName: users.lastName,
-        profileImageUrl: users.profileImageUrl
+        name: users.name,
+        isPremium: users.isPremium,
+        role: users.role,
+        bio: users.bio,
+        spikes: users.spikes,
+        defaultClubId: users.defaultClubId,
+        createdAt: users.createdAt,
+        password: users.password
       })
       .from(clubMembers)
       .innerJoin(users, eq(clubMembers.userId, users.id))
