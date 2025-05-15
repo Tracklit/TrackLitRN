@@ -2610,13 +2610,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const programData = {
         userId: req.user!.id,
         title: req.body.title,
-        description: req.body.description,
+        description: req.body.description || '',
         category: req.body.category,
         level: req.body.level,
         duration: parseInt(req.body.duration),
         visibility: req.body.visibility,
         price: req.body.price ? parseFloat(req.body.price) : 0,
-        isUploadedProgram: true,
+        isUploadedProgram: req.body.isUploadedProgram === 'true',
         programFileUrl: fileUrl,
         programFileType: fileType
       };

@@ -19,6 +19,7 @@ import {
   CalendarDays,
   Clock,
   Crown,
+  FileText,
   Filter,
   Info,
   LayersIcon,
@@ -263,6 +264,16 @@ function ProgramCard({ program, type, creator, viewMode }: {
   return (
     <Card className="overflow-hidden transition-all hover:shadow-md">
       <div className="h-32 bg-gradient-to-r from-primary/20 to-primary/40 relative">
+        {/* File icon for uploaded documents */}
+        {program.isUploadedProgram && (
+          <div className="absolute top-2 left-2">
+            <Badge variant="outline" className="flex items-center gap-1 bg-background/80">
+              <FileText className="h-3 w-3" />
+              <span>Document</span>
+            </Badge>
+          </div>
+        )}
+        
         {program.visibility === 'premium' && (
           <div className="absolute top-2 right-2">
             <Badge variant="secondary" className="flex items-center gap-1">

@@ -65,13 +65,13 @@ export default function ProgramCreatePage() {
         
         // Add program metadata
         formData.append('title', data.title);
-        formData.append('description', data.description);
+        formData.append('description', data.description || '');
         formData.append('category', data.category);
         formData.append('level', data.level);
         formData.append('duration', data.duration.toString());
         formData.append('visibility', data.visibility);
         formData.append('price', data.price?.toString() || '0');
-        formData.append('useFileUpload', 'true');
+        formData.append('isUploadedProgram', 'true');
         
         // Add the program file
         formData.append('programFile', data.programFile);
