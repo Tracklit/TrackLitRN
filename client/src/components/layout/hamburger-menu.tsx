@@ -67,7 +67,7 @@ export function HamburgerMenu() {
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50">
-      <div style={{ backgroundColor: 'hsl(220 40% 15%)' }} className="flex items-center justify-between p-2 shadow-md">
+      <div style={{ backgroundColor: 'hsl(220 40% 15%)' }} className="flex items-center justify-between p-1 shadow-md">
         <div className="flex items-center">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>

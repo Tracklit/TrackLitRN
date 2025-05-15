@@ -76,21 +76,21 @@ export default function HomePage() {
     <div className="min-h-screen bg-background text-foreground pb-16">
       <HamburgerMenu />
       
-      <main className="pt-6 px-4 container mx-auto max-w-7xl">
+      <main className="pt-3 px-4 container mx-auto max-w-7xl">
         {/* Logo will be placed here in the future */}
-        <div className="h-6 mb-2 mx-auto" style={{ maxWidth: "540px" }}>
+        <div className="h-3 mb-1 mx-auto" style={{ maxWidth: "540px" }}>
           {/* Reserved space for logo */}
         </div>
 
         {/* Motivational Quote - Smaller and without card */}
-        <section className="mb-4 mx-auto text-center" style={{ maxWidth: "270px" }}>
-          <p className="italic text-sm mb-1 text-muted-foreground">&ldquo;{quote.text}&rdquo;</p>
+        <section className="mb-2 mx-auto text-center" style={{ maxWidth: "270px" }}>
+          <p className="italic text-sm mb-0.5 text-muted-foreground">&ldquo;{quote.text}&rdquo;</p>
           <p className="text-right text-xs text-muted-foreground">— {quote.author}</p>
         </section>
         
         {/* Main Category Cards - 2 column layout with smaller sizes for mobile */}
-        <section className="mb-8">
-          <div className="grid grid-cols-2 gap-2 mx-auto" style={{ maxWidth: "540px", margin: "0 auto 16px" }}>
+        <section className="mb-4">
+          <div className="grid grid-cols-2 gap-2 mx-auto" style={{ maxWidth: "540px", margin: "0 auto 8px" }}>
             {categoryCards.map((card, index) => (
               <Link href={card.href} key={index}>
                 <Card className="cursor-pointer hover:shadow-md transition-all duration-300 border border-muted hover:border-primary h-[140px] mx-auto mb-2 overflow-hidden group relative">
@@ -115,8 +115,8 @@ export default function HomePage() {
         </section>
         
         {/* Today's Session Preview */}
-        <section className="mb-8 mx-auto" style={{ maxWidth: "540px" }}>
-          <div className="flex items-center justify-between mb-3">
+        <section className="mb-4 mx-auto" style={{ maxWidth: "540px" }}>
+          <div className="flex items-center justify-between mb-2">
             <h2 className="text-xl font-bold">Today's Session</h2>
             <Link href="/practice">
               <Button variant="link" className="text-primary p-0 h-auto text-sm">
