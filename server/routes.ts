@@ -29,9 +29,177 @@ import {
   PracticeMedia
 } from "@shared/schema";
 
+// Initialize default achievements
+async function initializeDefaultAchievements() {
+  try {
+    // Check if we already have achievements
+    const existingAchievements = await dbStorage.getAchievements();
+    if (existingAchievements.length > 0) {
+      return; // Already initialized
+    }
+
+    // Define our default achievements
+    const defaultAchievements = [
+      // Login achievements
+      {
+        name: "First Login",
+        description: "Log in to the app for the first time",
+        category: "login",
+        iconUrl: "/icons/achievements/first-login.svg",
+        spikeReward: 5,
+        isOneTime: true,
+        requirementValue: 1,
+        requirementType: "count",
+        isHidden: false
+      },
+      {
+        name: "Week Streak",
+        description: "Maintain a 7-day login streak",
+        category: "login",
+        iconUrl: "/icons/achievements/week-streak.svg",
+        spikeReward: 25,
+        isOneTime: false,
+        requirementValue: 7,
+        requirementType: "streak",
+        isHidden: false
+      },
+      {
+        name: "Month Streak",
+        description: "Maintain a 30-day login streak",
+        category: "login",
+        iconUrl: "/icons/achievements/month-streak.svg",
+        spikeReward: 100,
+        isOneTime: false,
+        requirementValue: 30,
+        requirementType: "streak",
+        isHidden: false
+      },
+      
+      // Workout achievements
+      {
+        name: "First Workout",
+        description: "Complete your first workout",
+        category: "workout",
+        iconUrl: "/icons/achievements/first-workout.svg",
+        spikeReward: 20,
+        isOneTime: true,
+        requirementValue: 1,
+        requirementType: "count",
+        isHidden: false
+      },
+      {
+        name: "Workout Warrior",
+        description: "Complete 10 workouts",
+        category: "workout",
+        iconUrl: "/icons/achievements/workout-warrior.svg",
+        spikeReward: 50,
+        isOneTime: true,
+        requirementValue: 10,
+        requirementType: "count",
+        isHidden: false
+      },
+      {
+        name: "Training Master",
+        description: "Complete 100 workouts",
+        category: "workout",
+        iconUrl: "/icons/achievements/training-master.svg",
+        spikeReward: 500,
+        isOneTime: true,
+        requirementValue: 100,
+        requirementType: "count",
+        isHidden: false
+      },
+      
+      // Meet achievements
+      {
+        name: "Competition Planner",
+        description: "Create your first competition",
+        category: "meet",
+        iconUrl: "/icons/achievements/competition-planner.svg",
+        spikeReward: 30,
+        isOneTime: true,
+        requirementValue: 1,
+        requirementType: "count",
+        isHidden: false
+      },
+      {
+        name: "Meet Manager",
+        description: "Create 5 competitions",
+        category: "meet",
+        iconUrl: "/icons/achievements/meet-manager.svg",
+        spikeReward: 100,
+        isOneTime: true,
+        requirementValue: 5,
+        requirementType: "count",
+        isHidden: false
+      },
+      
+      // Group achievements
+      {
+        name: "Team Builder",
+        description: "Create your first group",
+        category: "group",
+        iconUrl: "/icons/achievements/team-builder.svg",
+        spikeReward: 25,
+        isOneTime: true,
+        requirementValue: 1,
+        requirementType: "count",
+        isHidden: false
+      },
+      {
+        name: "Club Leader",
+        description: "Create a club",
+        category: "club",
+        iconUrl: "/icons/achievements/club-leader.svg",
+        spikeReward: 50,
+        isOneTime: true,
+        requirementValue: 1,
+        requirementType: "count",
+        isHidden: false
+      },
+      
+      // Social achievements
+      {
+        name: "Social Butterfly",
+        description: "Send 10 messages in groups",
+        category: "social",
+        iconUrl: "/icons/achievements/social-butterfly.svg",
+        spikeReward: 20,
+        isOneTime: true,
+        requirementValue: 10,
+        requirementType: "count",
+        isHidden: false
+      },
+      {
+        name: "Recruiter",
+        description: "Successfully refer a friend to join the app",
+        category: "social",
+        iconUrl: "/icons/achievements/recruiter.svg",
+        spikeReward: 100,
+        isOneTime: false,
+        requirementValue: 1,
+        requirementType: "count",
+        isHidden: false
+      }
+    ];
+    
+    // Insert each achievement
+    for (const achievement of defaultAchievements) {
+      await dbStorage.createAchievement(achievement);
+    }
+    
+    console.log(`Initialized ${defaultAchievements.length} default achievements`);
+  } catch (error) {
+    console.error("Error initializing default achievements:", error);
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
   setupAuth(app);
+  
+  // Initialize default achievements
+  await initializeDefaultAchievements();
 
   // Configure multer for file uploads
   const uploadsDir = path.join(process.cwd(), 'uploads');
@@ -1851,6 +2019,312 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (error) {
       res.status(500).send("Error upgrading to premium");
+    }
+  });
+
+  // ============================================================
+  // Spikes Reward System Routes
+  // ============================================================
+
+  // Update login streak when user logs in
+  app.post("/api/login-streak", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const userId = req.user!.id;
+      const streak = await dbStorage.createOrUpdateLoginStreak(userId);
+      res.json(streak);
+    } catch (error) {
+      console.error("Error updating login streak:", error);
+      res.status(500).send("Error updating login streak");
+    }
+  });
+
+  // Get user's achievement progress
+  app.get("/api/achievements", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const achievements = await dbStorage.getAchievements();
+      res.json(achievements);
+    } catch (error) {
+      console.error("Error fetching achievements:", error);
+      res.status(500).send("Error fetching achievements");
+    }
+  });
+
+  // Get user's achievements
+  app.get("/api/user/achievements", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const userId = req.user!.id;
+      const userAchievements = await dbStorage.getUserAchievementsByUserId(userId);
+      res.json(userAchievements);
+    } catch (error) {
+      console.error("Error fetching user achievements:", error);
+      res.status(500).send("Error fetching user achievements");
+    }
+  });
+
+  // Award achievement to user
+  app.post("/api/user/achievements/:achievementId", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const userId = req.user!.id;
+      const achievementId = parseInt(req.params.achievementId);
+      
+      if (isNaN(achievementId)) {
+        return res.status(400).send("Invalid achievement ID");
+      }
+      
+      const userAchievement = await dbStorage.completeUserAchievement(userId, achievementId);
+      res.json(userAchievement);
+    } catch (error) {
+      console.error("Error awarding achievement:", error);
+      res.status(500).send("Error awarding achievement");
+    }
+  });
+
+  // Get user's login streak
+  app.get("/api/user/streak", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const userId = req.user!.id;
+      const streak = await dbStorage.getLoginStreakByUserId(userId);
+      res.json(streak || { currentStreak: 0, longestStreak: 0 });
+    } catch (error) {
+      console.error("Error fetching login streak:", error);
+      res.status(500).send("Error fetching login streak");
+    }
+  });
+
+  // Get user's spike transaction history
+  app.get("/api/user/spikes/transactions", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const userId = req.user!.id;
+      const transactions = await dbStorage.getSpikeTransactions(userId);
+      res.json(transactions);
+    } catch (error) {
+      console.error("Error fetching spike transactions:", error);
+      res.status(500).send("Error fetching spike transactions");
+    }
+  });
+
+  // Add spikes to user (for testing or admin purposes)
+  app.post("/api/user/spikes/add", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const userId = req.user!.id;
+      const { amount, reason } = req.body;
+      
+      if (!amount || isNaN(amount) || amount <= 0) {
+        return res.status(400).send("Invalid amount");
+      }
+      
+      const result = await dbStorage.addSpikesToUser(
+        userId, 
+        amount, 
+        'manual', 
+        undefined, 
+        reason || `Manual addition of ${amount} spikes`
+      );
+      
+      // Update the session user object
+      req.login(result.user, (err) => {
+        if (err) return res.status(500).send("Error updating session");
+        res.json(result);
+      });
+    } catch (error) {
+      console.error("Error adding spikes:", error);
+      res.status(500).send("Error adding spikes");
+    }
+  });
+
+  // Spend spikes (for purchasing items, etc.)
+  app.post("/api/user/spikes/spend", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const userId = req.user!.id;
+      const { amount, source, description } = req.body;
+      
+      if (!amount || isNaN(amount) || amount <= 0) {
+        return res.status(400).send("Invalid amount");
+      }
+      
+      if (!source) {
+        return res.status(400).send("Source is required");
+      }
+      
+      const result = await dbStorage.deductSpikesFromUser(
+        userId, 
+        amount, 
+        source, 
+        undefined, 
+        description
+      );
+      
+      if (!result) {
+        return res.status(400).send("Not enough spikes");
+      }
+      
+      // Update the session user object
+      req.login(result.user, (err) => {
+        if (err) return res.status(500).send("Error updating session");
+        res.json(result);
+      });
+    } catch (error) {
+      console.error("Error spending spikes:", error);
+      res.status(500).send("Error spending spikes");
+    }
+  });
+
+  // Generate referral code
+  app.post("/api/user/referral", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const userId = req.user!.id;
+      
+      // Generate a unique referral code
+      const referralCode = `${req.user!.username.substring(0, 4)}${Date.now().toString(36).substring(4)}`;
+      
+      const newReferral = await dbStorage.createReferral({
+        referrerId: userId,
+        referredId: 0, // We'll update this when someone uses the code
+        referralCode,
+        status: 'pending'
+      });
+      
+      res.json(newReferral);
+    } catch (error) {
+      console.error("Error generating referral code:", error);
+      res.status(500).send("Error generating referral code");
+    }
+  });
+
+  // Get user's referrals
+  app.get("/api/user/referrals", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const userId = req.user!.id;
+      const referrals = await dbStorage.getUserReferrals(userId);
+      res.json(referrals);
+    } catch (error) {
+      console.error("Error fetching referrals:", error);
+      res.status(500).send("Error fetching referrals");
+    }
+  });
+
+  // Use referral code (for new user registration)
+  app.post("/api/referral/:code", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const userId = req.user!.id;
+      const referralCode = req.params.code;
+      
+      const referral = await dbStorage.getReferralByCode(referralCode);
+      
+      if (!referral) {
+        return res.status(404).send("Invalid referral code");
+      }
+      
+      if (referral.referrerId === userId) {
+        return res.status(400).send("You cannot use your own referral code");
+      }
+      
+      // Update referral with the new user's ID
+      const updatedReferral = await dbStorage.completeReferral(referral.id);
+      
+      // Also award some spikes to the new user who was referred
+      const newUserBonus = await dbStorage.addSpikesToUser(
+        userId,
+        50,
+        'referral_bonus',
+        referral.id,
+        `Welcome bonus for using a referral code: 50 spikes`
+      );
+      
+      // Update the session user object
+      req.login(newUserBonus.user, (err) => {
+        if (err) return res.status(500).send("Error updating session");
+        res.json({ referral: updatedReferral, bonus: newUserBonus });
+      });
+    } catch (error) {
+      console.error("Error using referral code:", error);
+      res.status(500).send("Error using referral code");
+    }
+  });
+
+  // Award spikes for workout completion
+  app.post("/api/practice/completion/:completionId/reward", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const userId = req.user!.id;
+      const completionId = parseInt(req.params.completionId);
+      
+      if (isNaN(completionId)) {
+        return res.status(400).send("Invalid completion ID");
+      }
+      
+      // Award spikes for workout completion (50 spikes)
+      const result = await dbStorage.addSpikesToUser(
+        userId,
+        50,
+        'workout_completion',
+        completionId,
+        `Completed workout: 50 spikes`
+      );
+      
+      // Update the session user object
+      req.login(result.user, (err) => {
+        if (err) return res.status(500).send("Error updating session");
+        res.json(result);
+      });
+    } catch (error) {
+      console.error("Error awarding workout completion spikes:", error);
+      res.status(500).send("Error awarding workout completion spikes");
+    }
+  });
+
+  // Award spikes for creating a meet
+  app.post("/api/meets/:meetId/reward", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const userId = req.user!.id;
+      const meetId = parseInt(req.params.meetId);
+      
+      if (isNaN(meetId)) {
+        return res.status(400).send("Invalid meet ID");
+      }
+      
+      // Award spikes for creating a meet (30 spikes)
+      const result = await dbStorage.addSpikesToUser(
+        userId,
+        30,
+        'meet_creation',
+        meetId,
+        `Created a competition: 30 spikes`
+      );
+      
+      // Update the session user object
+      req.login(result.user, (err) => {
+        if (err) return res.status(500).send("Error updating session");
+        res.json(result);
+      });
+    } catch (error) {
+      console.error("Error awarding meet creation spikes:", error);
+      res.status(500).send("Error awarding meet creation spikes");
     }
   });
 
