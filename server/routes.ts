@@ -2892,6 +2892,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // 7.3 Get programs assigned to the current user
+  app.get("/api/assigned-programs", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const assignedPrograms = await dbStorage.getAssignedPrograms(req.user!.id);
+      
+      // For each assigned program, fetch the full program details and assigner info
+      const enrichedAssignments = await Promise.all(
+        assignedPrograms.map(async (assignment) => {
+          const program = await dbStorage.getProgram(assignment.programId);
+          const assigner = await dbStorage.getUser(assignment.assignerId);
+          
+          return {
+            ...assignment,
+            program,
+            assigner: assigner ? {
+              id: assigner.id,
+              username: assigner.username,
+              name: assigner.name
+            } : null
+          };
+        })
+      );
+      
+      res.json(enrichedAssignments);
+    } catch (error) {
+      console.error("Error fetching assigned programs:", error);
+      res.status(500).json({ error: "Failed to fetch assigned programs" });
+    }
+  });
+  
+  // 7.4 Update the status of an assigned program
+  app.patch("/api/program-assignments/:id", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const assignmentId = parseInt(req.params.id);
+      const { status, notes } = req.body;
+      
+      // Fetch the assignment to check permissions
+      const assignments = await dbStorage.getAssignedPrograms(req.user!.id);
+      const assignment = assignments.find(a => a.id === assignmentId);
+      
+      if (!assignment) {
+        return res.status(404).json({ error: "Assignment not found or you don't have access to it" });
+      }
+      
+      // Update the assignment
+      const updates: Partial<ProgramAssignment> = {};
+      if (status) updates.status = status;
+      if (notes !== undefined) updates.notes = notes;
+      
+      // If marking as completed, set completedAt
+      if (status === 'completed') {
+        updates.completedAt = new Date();
+      }
+      
+      const updatedAssignment = await dbStorage.updateProgramAssignment(assignmentId, updates);
+      
+      res.json(updatedAssignment);
+    } catch (error) {
+      console.error("Error updating program assignment:", error);
+      res.status(500).json({ error: "Failed to update program assignment" });
+    }
+  });
+  
   // 8. Record program session progress
   app.post("/api/program-sessions/:id/complete", async (req: Request, res: Response) => {
     try {

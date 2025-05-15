@@ -6,11 +6,42 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, useParams } from "wouter";
-import { ArrowLeft, Calendar, Clock, FileText, Crown, LockIcon, Tag, TrendingUp, Dumbbell } from "lucide-react";
+import { 
+  ArrowLeft, 
+  Calendar, 
+  Clock, 
+  FileText, 
+  Crown, 
+  LockIcon, 
+  Tag, 
+  TrendingUp, 
+  Dumbbell, 
+  Users, 
+  CheckCircle2,
+  PlusCircle
+} from "lucide-react";
 import { Loader2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { queryClient } from "@/lib/queryClient";
 
 function ProgramDetailContent({ program }: { program: any }) {
   // For uploaded program documents
