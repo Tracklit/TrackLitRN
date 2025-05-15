@@ -214,12 +214,213 @@ export default function SpikesPage() {
         </Card>
       </div>
 
-      <Tabs defaultValue="rewards" className="mt-8">
+      <Tabs defaultValue="achievements" className="mt-8">
         <TabsList className="mb-4">
+          <TabsTrigger value="achievements" id="achievements-tab">Achievements</TabsTrigger>
           <TabsTrigger value="rewards">Rewards</TabsTrigger>
           <TabsTrigger value="premium">Premium Features</TabsTrigger>
           <TabsTrigger value="history">Transaction History</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="achievements">
+          {isLoadingAchievements ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
+            </div>
+          ) : achievements && achievements.length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Login Achievements</CardTitle>
+                    <CardDescription>Earn Spikes by logging in consistently</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {loginAchievements.map((achievement) => (
+                      <div key={achievement.id} className="flex items-start">
+                        <div className={`p-2 rounded-md mr-3 ${achievement.isCompleted ? 'bg-amber-100' : 'bg-muted'}`}>
+                          <Trophy className={`h-5 w-5 ${achievement.isCompleted ? 'text-amber-500' : 'text-muted-foreground'}`} />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-medium">{achievement.name}</h3>
+                            <span className="text-sm font-medium text-amber-500">+{achievement.spikeReward} Spikes</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">{achievement.description}</p>
+                          {achievement.isCompleted ? (
+                            <span className="text-xs text-green-600">Completed</span>
+                          ) : (
+                            <div className="mt-1">
+                              <Progress value={(achievement.progress / achievement.requirementValue) * 100} className="h-1" />
+                              <div className="flex justify-between mt-1">
+                                <span className="text-xs text-muted-foreground">
+                                  Progress: {achievement.progress}/{achievement.requirementValue}
+                                </span>
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost" 
+                                  className="text-xs h-5 px-2"
+                                  disabled={achievement.progress < achievement.requirementValue || isClaimingAchievement}
+                                  onClick={() => claimAchievement(achievement.id)}
+                                >
+                                  {isClaimingAchievement ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Claim'}
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Workout Achievements</CardTitle>
+                    <CardDescription>Earn Spikes through training</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {workoutAchievements.map((achievement) => (
+                      <div key={achievement.id} className="flex items-start">
+                        <div className={`p-2 rounded-md mr-3 ${achievement.isCompleted ? 'bg-amber-100' : 'bg-muted'}`}>
+                          <Clock className={`h-5 w-5 ${achievement.isCompleted ? 'text-amber-500' : 'text-muted-foreground'}`} />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-medium">{achievement.name}</h3>
+                            <span className="text-sm font-medium text-amber-500">+{achievement.spikeReward} Spikes</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">{achievement.description}</p>
+                          {achievement.isCompleted ? (
+                            <span className="text-xs text-green-600">Completed</span>
+                          ) : (
+                            <div className="mt-1">
+                              <Progress value={(achievement.progress / achievement.requirementValue) * 100} className="h-1" />
+                              <div className="flex justify-between mt-1">
+                                <span className="text-xs text-muted-foreground">
+                                  Progress: {achievement.progress}/{achievement.requirementValue}
+                                </span>
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost" 
+                                  className="text-xs h-5 px-2"
+                                  disabled={achievement.progress < achievement.requirementValue || isClaimingAchievement}
+                                  onClick={() => claimAchievement(achievement.id)}
+                                >
+                                  {isClaimingAchievement ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Claim'}
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Meet & Competition Achievements</CardTitle>
+                    <CardDescription>Earn Spikes by creating competitions</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {meetAchievements.map((achievement) => (
+                      <div key={achievement.id} className="flex items-start">
+                        <div className={`p-2 rounded-md mr-3 ${achievement.isCompleted ? 'bg-amber-100' : 'bg-muted'}`}>
+                          <Medal className={`h-5 w-5 ${achievement.isCompleted ? 'text-amber-500' : 'text-muted-foreground'}`} />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-medium">{achievement.name}</h3>
+                            <span className="text-sm font-medium text-amber-500">+{achievement.spikeReward} Spikes</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">{achievement.description}</p>
+                          {achievement.isCompleted ? (
+                            <span className="text-xs text-green-600">Completed</span>
+                          ) : (
+                            <div className="mt-1">
+                              <Progress value={(achievement.progress / achievement.requirementValue) * 100} className="h-1" />
+                              <div className="flex justify-between mt-1">
+                                <span className="text-xs text-muted-foreground">
+                                  Progress: {achievement.progress}/{achievement.requirementValue}
+                                </span>
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost" 
+                                  className="text-xs h-5 px-2"
+                                  disabled={achievement.progress < achievement.requirementValue || isClaimingAchievement}
+                                  onClick={() => claimAchievement(achievement.id)}
+                                >
+                                  {isClaimingAchievement ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Claim'}
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Group & Club Achievements</CardTitle>
+                    <CardDescription>Earn Spikes through social activities</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {groupAchievements.map((achievement) => (
+                      <div key={achievement.id} className="flex items-start">
+                        <div className={`p-2 rounded-md mr-3 ${achievement.isCompleted ? 'bg-amber-100' : 'bg-muted'}`}>
+                          <MessageSquare className={`h-5 w-5 ${achievement.isCompleted ? 'text-amber-500' : 'text-muted-foreground'}`} />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-medium">{achievement.name}</h3>
+                            <span className="text-sm font-medium text-amber-500">+{achievement.spikeReward} Spikes</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">{achievement.description}</p>
+                          {achievement.isCompleted ? (
+                            <span className="text-xs text-green-600">Completed</span>
+                          ) : (
+                            <div className="mt-1">
+                              <Progress value={(achievement.progress / achievement.requirementValue) * 100} className="h-1" />
+                              <div className="flex justify-between mt-1">
+                                <span className="text-xs text-muted-foreground">
+                                  Progress: {achievement.progress}/{achievement.requirementValue}
+                                </span>
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost" 
+                                  className="text-xs h-5 px-2"
+                                  disabled={achievement.progress < achievement.requirementValue || isClaimingAchievement}
+                                  onClick={() => claimAchievement(achievement.id)}
+                                >
+                                  {isClaimingAchievement ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Claim'}
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-12">
+              <div className="flex justify-center mb-4">
+                <Trophy className="w-16 h-16 text-muted-foreground" />
+              </div>
+              <h3 className="text-xl font-medium mb-2">No Achievements Found</h3>
+              <p className="text-muted-foreground max-w-md mx-auto">
+                There seems to be an issue loading your achievements. Please try refreshing the page.
+              </p>
+            </div>
+          )}
+        </TabsContent>
 
         <TabsContent value="rewards">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
