@@ -379,6 +379,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Endpoint for workout session previews
+  app.get("/api/workout-previews", (_req: Request, res: Response) => {
+    // Mock data for workout previews demo
+    const workoutPreviews = [
+      {
+        id: 1,
+        workoutId: 1,
+        userId: 2,
+        title: "Speed Intervals",
+        previewText: "Completed a great sprint session with 6x200m at 30s each!",
+        createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+        user: { username: "sarah_runner", name: "Sarah T." }
+      },
+      {
+        id: 2,
+        workoutId: 2,
+        userId: 3,
+        title: "Long Run Day",
+        previewText: "10km easy run completed in 45mins. Feeling great!",
+        createdAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
+        user: { username: "track_star", name: "Michael J." }
+      },
+      {
+        id: 3,
+        workoutId: 3,
+        userId: 4,
+        title: "Tempo Run",
+        previewText: "5x400m ladder workout complete. New personal best!",
+        createdAt: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
+        user: { username: "coach_k", name: "Coach Kevin" }
+      },
+      {
+        id: 4,
+        workoutId: 4,
+        userId: 5,
+        title: "Hill Sprints",
+        previewText: "Just finished 10x hill sprints. My legs are on fire but worth it!",
+        createdAt: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
+        user: { username: "sprint_queen", name: "Lisa M." }
+      },
+      {
+        id: 5,
+        workoutId: 5,
+        userId: 6,
+        title: "Morning Endurance",
+        previewText: "Early morning 800m repeats - 6 sets at 2:15 pace. New week, new goals!",
+        createdAt: new Date(Date.now() - 1000 * 60 * 150).toISOString(),
+        user: { username: "distance_king", name: "Alex P." }
+      },
+      {
+        id: 6,
+        workoutId: 6,
+        userId: 7,
+        title: "Track Workout",
+        previewText: "400m, 300m, 200m, 100m ladder with full recovery. Felt strong today!",
+        createdAt: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
+        user: { username: "track_coach", name: "Coach Smith" }
+      },
+      {
+        id: 7,
+        workoutId: 7,
+        userId: 8,
+        title: "Race Prep",
+        previewText: "Final tuneup before Saturday's meet - 4x150m at race pace with 3min rest",
+        createdAt: new Date(Date.now() - 1000 * 60 * 210).toISOString(),
+        user: { username: "medal_hunter", name: "James W." }
+      }
+    ];
+    
+    res.json(workoutPreviews);
+  });
+  
   app.get("/api/login-streak", async (req: Request, res: Response) => {
     try {
       if (!req.isAuthenticated()) {

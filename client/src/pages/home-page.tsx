@@ -219,7 +219,7 @@ export default function HomePage() {
       
       {/* Session Preview Ticker */}
       {isTickerVisible && (
-        <div className="sticky top-0 left-0 right-0 z-10 bg-background/80 backdrop-blur-sm py-2 border-b border-border/20">
+        <div className="sticky top-0 left-0 right-0 z-10 bg-background/80 backdrop-blur-sm pt-4 pb-1 border-b border-border/20">
           <div className="flex items-center justify-between px-4 mb-2">
             <div className="flex items-center">
               <Clock className="h-4 w-4 text-primary mr-2" />
@@ -235,7 +235,7 @@ export default function HomePage() {
             </Button>
           </div>
           
-          <div className="px-4 pb-1">
+          <div className="px-4 pb-0">
             {sessionPreviews && (
               <div 
                 className="cursor-pointer"
