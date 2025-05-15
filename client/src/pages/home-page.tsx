@@ -73,6 +73,72 @@ export default function HomePage() {
   // Fetch workout session previews
   const { data: sessionPreviews, isLoading: isLoadingPreviews } = useQuery<SessionPreviewWithUser[]>({
     queryKey: ['/api/workout-previews'],
+    // Use fallback data for demo until API is implemented
+    placeholderData: [
+      {
+        id: 1,
+        workoutId: 1,
+        userId: 2,
+        title: "Speed Intervals",
+        previewText: "Completed a great sprint session with 6x200m at 30s each!",
+        createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+        user: { username: "sarah_runner", name: "Sarah T." }
+      },
+      {
+        id: 2,
+        workoutId: 2,
+        userId: 3,
+        title: "Long Run Day",
+        previewText: "10km easy run completed in 45mins. Feeling great!",
+        createdAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
+        user: { username: "track_star", name: "Michael J." }
+      },
+      {
+        id: 3,
+        workoutId: 3,
+        userId: 4,
+        title: "Tempo Run",
+        previewText: "5x400m ladder workout complete. New personal best!",
+        createdAt: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
+        user: { username: "coach_k", name: "Coach Kevin" }
+      },
+      {
+        id: 4,
+        workoutId: 4,
+        userId: 5,
+        title: "Hill Sprints",
+        previewText: "Just finished 10x hill sprints. My legs are on fire but worth it!",
+        createdAt: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
+        user: { username: "sprint_queen", name: "Lisa M." }
+      },
+      {
+        id: 5,
+        workoutId: 5,
+        userId: 6,
+        title: "Morning Endurance",
+        previewText: "Early morning 800m repeats - 6 sets at 2:15 pace. New week, new goals!",
+        createdAt: new Date(Date.now() - 1000 * 60 * 150).toISOString(),
+        user: { username: "distance_king", name: "Alex P." }
+      },
+      {
+        id: 6,
+        workoutId: 6,
+        userId: 7,
+        title: "Track Workout",
+        previewText: "400m, 300m, 200m, 100m ladder with full recovery. Felt strong today!",
+        createdAt: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
+        user: { username: "track_coach", name: "Coach Smith" }
+      },
+      {
+        id: 7,
+        workoutId: 7,
+        userId: 8,
+        title: "Race Prep",
+        previewText: "Final tuneup before Saturday's meet - 4x150m at race pace with 3min rest",
+        createdAt: new Date(Date.now() - 1000 * 60 * 210).toISOString(),
+        user: { username: "medal_hunter", name: "James W." }
+      }
+    ]
   });
   
   // Interval for rotating through sessions
@@ -94,45 +160,69 @@ export default function HomePage() {
     setIsSessionModalOpen(true);
   };
   
-  // Function to save a session to the workout library
+  // Function to save session to user's workout library
   const saveSessionToLibrary = async () => {
-    if (!currentSession) return;
+    if (!currentSession || !user) return;
     
     setIsSavingSession(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Success notification would go here
-    
-    setIsSessionModalOpen(false);
-    setIsSavingSession(false);
+    try {
+      // This would be the actual API call when implemented
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      
+      console.log("Session saved to library:", currentSession.title);
+      setIsSavingSession(false);
+      setIsSessionModalOpen(false);
+      
+      // Show success message or toast here
+    } catch (error) {
+      console.error("Error saving session:", error);
+      setIsSavingSession(false);
+    }
   };
+  
+  // Interval for rotating through sessions
+  useEffect(() => {
+    if (!sessionPreviews?.length) return;
+    
+    const interval = setInterval(() => {
+      setActiveSessionIndex(prev => 
+        prev >= (sessionPreviews.length - 1) ? 0 : prev + 1
+      );
+    }, 5000); // 5 second interval
+    
+    return () => clearInterval(interval);
+  }, [sessionPreviews]);
 
   // Category cards for main navigation
   const categoryCards = [
     {
       title: "Practice",
-      description: "Manage daily workouts and track progress",
-      icon: <Dumbbell className="h-5 w-5" />,
+      description: "Training sessions and programs",
+      icon: <Dumbbell className="h-6 w-6 text-primary" />,
       href: "/practice",
-      color: "from-violet-500 to-indigo-600"
+    },
+    {
+      title: "Programs",
+      description: "Training plans and schedules",
+      icon: <Clipboard className="h-6 w-6 text-primary" />,
+      href: "/practice",
     },
     {
       title: "Competitions",
-      description: "Plan and analyze meets and events",
-      icon: <Trophy className="h-5 w-5" />,
+      description: "Meets, results and analytics",
+      icon: <Trophy className="h-6 w-6 text-primary" />,
       href: "/meets",
-      color: "from-amber-500 to-orange-600" 
     },
     {
-      title: "Clubs & Teams",
-      description: "Connect with your training groups",
-      icon: <Users className="h-5 w-5" />,
+      title: "Clubs & Groups",
+      description: "Find a new home",
+      icon: <Users className="h-6 w-6 text-primary" />,
       href: "/clubs",
-      color: "from-emerald-500 to-teal-600"
     }
   ];
+
+  // Quote removed as requested
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-16">
@@ -141,16 +231,18 @@ export default function HomePage() {
       {/* Session Preview Ticker */}
       {isTickerVisible && (
         <div className="relative left-0 right-0 z-10 bg-background/80 backdrop-blur-sm pt-8 pb-1 border-b border-border/20">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="absolute left-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
-            onClick={() => setIsTickerVisible(false)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center px-4 mb-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 mr-3"
+              onClick={() => setIsTickerVisible(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
           
-          <div className="px-4 pb-0 ml-6">
+          <div className="px-4 pb-0">
             {sessionPreviews && (
               <div 
                 className="cursor-pointer animate-fadeIn"
@@ -211,42 +303,49 @@ export default function HomePage() {
         <div className="h-3 mb-4 mx-auto" style={{ maxWidth: "540px" }}>
           {/* Reserved space for logo */}
         </div>
+
+        {/* Quote removed as requested */}
         
-        {/* Main Navigation Categories */}
-        <section className="mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {/* Main Category Cards - 2 column layout with smaller sizes for mobile */}
+        <section className="mb-4">
+          <div className="grid grid-cols-2 gap-2 mx-auto" style={{ maxWidth: "540px", margin: "0 auto 8px" }}>
             {categoryCards.map((card, index) => (
               <Link href={card.href} key={index}>
-                <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
-                  <CardHeader className="pb-2 pt-6">
-                    <div className="flex justify-between items-start">
-                      <div className={`h-10 w-10 rounded-lg flex items-center justify-center bg-gradient-to-r ${card.color} text-white`}>
-                        {card.icon}
+                <Card className="cursor-pointer hover:shadow-md transition-all duration-300 border border-muted hover:border-primary h-[140px] mx-auto mb-2 overflow-hidden group relative">
+                  <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                  <CardContent className="p-2.5 relative h-full flex flex-col justify-center">
+                    <div className="flex flex-col items-center text-center gap-2">
+                      <div className="p-1.5 rounded-full bg-primary/15 border border-primary/20 group-hover:bg-primary/25 transition-colors duration-300">
+                        <div className="h-4 w-4 flex items-center justify-center text-primary">
+                          {card.icon}
+                        </div>
                       </div>
-                      <ArrowRight className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <h2 className="text-base font-bold mb-0.5">{card.title}</h2>
+                        <p className="text-muted-foreground text-xs px-1 line-clamp-2 overflow-hidden">{card.description}</p>
+                      </div>
                     </div>
-                    <CardTitle className="text-lg mt-4">{card.title}</CardTitle>
-                    <CardDescription className="text-muted-foreground text-sm">
-                      {card.description}
-                    </CardDescription>
-                  </CardHeader>
+                  </CardContent>
                 </Card>
               </Link>
             ))}
           </div>
         </section>
         
-        {/* Today's Sessions */}
-        <section className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold">Today's Sessions</h2>
-            <Button variant="ghost" size="sm" className="text-primary">
-              View All <ChevronRight className="ml-1 h-4 w-4" />
-            </Button>
+        {/* Today's Session Preview */}
+        <section className="mb-4 mx-auto" style={{ maxWidth: "540px" }}>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-xl font-bold">Today's Session</h2>
+            <Link href="/practice">
+              <Button variant="link" className="text-primary p-0 h-auto text-sm">
+                <span>View All</span>
+                <ArrowRight className="ml-1 h-3 w-3" />
+              </Button>
+            </Link>
           </div>
           
-          <Card className="mb-4">
-            <CardHeader className="pb-2">
+          <Card className="border-primary/20 w-full">
+            <CardHeader className="pb-2 pt-3 px-3">
               <div className="flex justify-between items-start">
                 <div>
                   <Badge className="mb-1 bg-primary/20 text-primary hover:bg-primary/30 text-xs px-2 py-0.5">Track Session</Badge>
@@ -329,11 +428,11 @@ export default function HomePage() {
           
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <div className="h-10 w-10 rounded-full bg-primary/15 flex items-center justify-center">
-                <UserCircle className="h-5 w-5 text-primary" />
+              <div className="rounded-full bg-primary/10 h-8 w-8 flex items-center justify-center flex-shrink-0">
+                <UserCircle className="h-4 w-4 text-primary" />
               </div>
               <div>
-                <p className="font-semibold text-sm">{currentSession?.user?.name}</p>
+                <p className="text-sm font-medium">{currentSession?.user?.name}</p>
                 <p className="text-xs text-muted-foreground">@{currentSession?.user?.username}</p>
               </div>
             </div>
@@ -341,18 +440,16 @@ export default function HomePage() {
             <Separator />
             
             <div>
-              <h4 className="text-sm font-semibold mb-2">Workout Summary</h4>
-              <p className="text-sm text-muted-foreground mb-4">{currentSession?.previewText}</p>
-              
-              <h4 className="text-sm font-semibold mb-2">Session Details</h4>
+              <h3 className="text-sm font-medium mb-2">Workout Details</h3>
+              <p className="text-sm">{currentSession?.previewText}</p>
+            </div>
+            
+            <div className="bg-muted p-3 rounded-md">
+              <h4 className="text-xs font-medium mb-2">Exercise Breakdown</h4>
               <ul className="space-y-2 text-sm">
                 <li className="flex items-center gap-2">
                   <Dumbbell className="h-3 w-3 text-primary" />
-                  <span>15 minute warmup</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Dumbbell className="h-3 w-3 text-primary" />
-                  <span>6x200m at 32 seconds per rep</span>
+                  <span>6 x 200m at 30s each</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Dumbbell className="h-3 w-3 text-primary" />
