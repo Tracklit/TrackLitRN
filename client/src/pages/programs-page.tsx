@@ -272,6 +272,15 @@ function ProgramCard({ program, type, creator, viewMode }: {
             <FileText className="h-10 w-10 text-slate-400" />
             <span className="text-xs text-slate-500 mt-1">Program Document</span>
           </div>
+        ) : program.importedFromSheet ? (
+          <div className="absolute inset-0 flex items-center justify-center flex-col">
+            <div className="grid grid-cols-3 gap-1 h-16 w-40">
+              {Array.from({ length: 9 }).map((_, i) => (
+                <div key={i} className={i % 2 === 0 ? "bg-slate-200 rounded h-4" : "bg-slate-300 rounded h-4"}></div>
+              ))}
+            </div>
+            <span className="text-xs text-slate-500 mt-1">Google Sheet Import</span>
+          </div>
         ) : (
           <div className="absolute inset-0">
             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/30"></div>
@@ -291,6 +300,16 @@ function ProgramCard({ program, type, creator, viewMode }: {
             <Badge variant="outline" className="flex items-center gap-1 bg-background/80">
               <FileText className="h-3 w-3" />
               <span>Document</span>
+            </Badge>
+          </div>
+        )}
+        
+        {/* Google Sheet badge */}
+        {program.importedFromSheet && (
+          <div className="absolute top-2 left-2">
+            <Badge variant="outline" className="flex items-center gap-1 bg-background/80">
+              <FileText className="h-3 w-3 text-green-600" />
+              <span>Google Sheet</span>
             </Badge>
           </div>
         )}
@@ -369,6 +388,27 @@ function ProgramCard({ program, type, creator, viewMode }: {
                 buttonText="Assign" 
               />
             </div>
+          ) : program.importedFromSheet ? (
+            <div className="flex w-full gap-2">
+              <Button variant="outline" size="sm" asChild className="flex-1">
+                <Link href={`/programs/${program.id}`}>
+                  <FileText className="h-3.5 w-3.5 mr-1.5" />
+                  View
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild className="flex-1">
+                <a href={program.googleSheetUrl} target="_blank" rel="noopener noreferrer">
+                  <FileText className="h-3.5 w-3.5 mr-1.5" />
+                  Sheet
+                </a>
+              </Button>
+              <AssignProgramDialog 
+                program={program}
+                size="sm"
+                className="flex-1"
+                buttonText="Assign"
+              />
+            </div>
           ) : (
             <div className="flex w-full gap-2">
               <Button variant="outline" size="sm" asChild className="flex-1">
@@ -427,9 +467,23 @@ function CreateProgramCard() {
         <CardDescription className="mb-6">
           Design your own training program to follow or share with others
         </CardDescription>
-        <Button asChild>
-          <Link href="/programs/create">Create Program</Link>
-        </Button>
+        
+        <div className="flex flex-col gap-3 w-full">
+          <Button asChild>
+            <Link href="/programs/create">Create Program</Link>
+          </Button>
+          
+          <div className="flex items-center gap-2 my-1">
+            <div className="h-px bg-border flex-1" />
+            <span className="text-xs text-muted-foreground">OR</span>
+            <div className="h-px bg-border flex-1" />
+          </div>
+          
+          <GoogleSheetImportDialog 
+            variant="outline"
+            buttonText="Import from Google Sheet"
+          />
+        </div>
       </CardContent>
     </Card>
   );
