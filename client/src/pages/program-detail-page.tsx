@@ -262,7 +262,7 @@ function AssignProgramDialog({ program }: { program: any }) {
               <div className="flex items-center justify-center h-10">
                 <Loader2 className="h-4 w-4 animate-spin text-primary" />
               </div>
-            ) : potentialAssignees?.length === 0 ? (
+            ) : !potentialAssignees || potentialAssignees.length === 0 ? (
               <div className="text-sm text-muted-foreground">
                 No eligible athletes found. Invite athletes to your club to assign programs to them.
               </div>
@@ -272,7 +272,7 @@ function AssignProgramDialog({ program }: { program: any }) {
                   <SelectValue placeholder="Select an athlete" />
                 </SelectTrigger>
                 <SelectContent>
-                  {potentialAssignees?.map((user: any) => (
+                  {Array.isArray(potentialAssignees) && potentialAssignees.map((user: any) => (
                     <SelectItem key={user.id} value={user.id.toString()}>
                       {user.name || user.username}
                     </SelectItem>
@@ -452,7 +452,19 @@ function ProgramDetail() {
             <CardFooter>
               {/* If user is the program creator, show assign program button */}
               {program.userId === user?.id ? (
-                <AssignProgramDialog program={program} />
+                program.isUploadedProgram ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button variant="outline" asChild className="w-full">
+                      <a href={program.programFileUrl} download>
+                        <FileText className="h-3.5 w-3.5 mr-1.5" />
+                        Download
+                      </a>
+                    </Button>
+                    <AssignProgramDialog program={program} />
+                  </div>
+                ) : (
+                  <AssignProgramDialog program={program} />
+                )
               ) : program.visibility === 'premium' ? (
                 <Button className="w-full">
                   <Crown className="h-3.5 w-3.5 mr-1.5 text-yellow-500" />

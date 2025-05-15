@@ -247,7 +247,7 @@ export function Component() {
       <PageHeader
         title="Assigned Programs"
         description="View and manage programs assigned to you by coaches"
-        icon={<Users className="h-6 w-6" />}
+        actions={<Users className="h-6 w-6 text-muted-foreground" />}
       />
       <Separator className="my-6" />
       <AssignedProgramsContent />
