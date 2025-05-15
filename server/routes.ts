@@ -2590,6 +2590,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // 3.1 Create a new program with file upload
+  app.post("/api/programs/upload", upload.single('programFile'), async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+      
+      // Get file info
+      const file = req.file;
+      const fileUrl = `/uploads/${file.filename}`;
+      const fileType = file.mimetype;
+      
+      // Create program record with file information
+      const programData = {
+        userId: req.user!.id,
+        title: req.body.title,
+        description: req.body.description,
+        category: req.body.category,
+        level: req.body.level,
+        duration: parseInt(req.body.duration),
+        visibility: req.body.visibility,
+        price: req.body.price ? parseFloat(req.body.price) : 0,
+        isUploadedProgram: true,
+        programFileUrl: fileUrl,
+        programFileType: fileType
+      };
+      
+      const program = await dbStorage.createProgram(programData);
+      res.status(201).json(program);
+    } catch (error) {
+      console.error("Error creating program with file upload:", error);
+      res.status(500).json({ error: "Failed to create program with file upload" });
+    }
+  });
+  
   // 4. Update a program
   app.put("/api/programs/:id", async (req: Request, res: Response) => {
     try {

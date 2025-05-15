@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { FileUpload, Upload } from "lucide-react";
+import { FileUp, Upload } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
@@ -146,6 +146,56 @@ export default function ProgramCreatePage() {
             <CardContent>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  {/* File Upload Toggle Switch */}
+                  <FormField
+                    control={form.control}
+                    name="useFileUpload"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+                        <div className="space-y-0.5">
+                          <FormLabel>Upload Program File</FormLabel>
+                          <FormDescription>
+                            Upload an Excel, PDF, or Word document instead of creating a program manually
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* File Upload Input (shown when toggle is on) */}
+                  {form.watch("useFileUpload") && (
+                    <div className="space-y-2">
+                      <Label htmlFor="programFile" className="text-sm font-medium">
+                        Program Document
+                      </Label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          id="programFile"
+                          type="file"
+                          className="flex-1"
+                          accept=".pdf,.doc,.docx,.xls,.xlsx"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              form.setValue("programFile", e.target.files[0]);
+                            }
+                          }}
+                        />
+                        <div className="bg-primary/10 rounded-full p-2">
+                          <FileUp className="h-4 w-4 text-primary" />
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Accepted formats: PDF, Word documents, Excel spreadsheets
+                      </p>
+                    </div>
+                  )}
+
                   <FormField
                     control={form.control}
                     name="title"
