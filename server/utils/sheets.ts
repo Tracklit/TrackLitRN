@@ -1,146 +1,200 @@
-import { GoogleSpreadsheet, GoogleSpreadsheetRow } from 'google-spreadsheet';
-
-// For newer versions of google-spreadsheet package that have changed APIs
-interface SpreadsheetRow {
-  get: (columnName: string) => string | undefined;
-  [key: string]: any;
+// Simple wrapper to directly fetch a public Google Sheet
+async function fetchPublicSheet(sheetId: string) {
+  const response = await fetch(`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch sheet data: ${response.statusText}`);
+  }
+  
+  const text = await response.text();
+  const rows = text.split('\n').map(row => row.split(',').map(cell => {
+    // Remove quotes if they exist and unescape any double quotes
+    if (cell.startsWith('"') && cell.endsWith('"')) {
+      return cell.substring(1, cell.length - 1).replace(/""/g, '"');
+    }
+    return cell;
+  }));
+  
+  if (rows.length === 0) {
+    throw new Error('Empty spreadsheet');
+  }
+  
+  return rows;
 }
 
 export async function fetchSpreadsheetData(sheetId: string) {
   try {
-    // Use JavaScript dynamic import to load google-spreadsheet because
-    // the package has major version differences that affect the API
-    const GoogleSheetPkg = await import('google-spreadsheet');
-    const { GoogleSpreadsheet } = GoogleSheetPkg;
+    console.log(`Attempting to fetch Google Sheet: ${sheetId}`);
     
-    const doc = new GoogleSpreadsheet(sheetId);
-    
-    // Authenticate based on available credentials
-    if (process.env.GOOGLE_API_KEY) {
-      try {
-        // For v3+ of the package
-        await doc.useApiKey(process.env.GOOGLE_API_KEY);
-      } catch (e) {
-        // For v4+ of the package
-        // @ts-ignore - we're accounting for API differences
-        doc.apiKey = process.env.GOOGLE_API_KEY;
-      }
-    } else if (process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) {
-      try {
-        // For v3+ of the package
-        await doc.useServiceAccountAuth({
-          client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-          private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-        });
-      } catch (e) {
-        // For v4+ of the package
-        // @ts-ignore - we're accounting for API differences
-        await doc.authenticate({
-          client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-          private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-        });
-      }
-    } else {
-      console.warn("No Google Sheets authentication method found. This may only work with public sheets.");
-    }
-    
-    // Load document properties and sheets
-    await doc.loadInfo();
-    
-    // Get the first sheet (most training programs will use the first sheet)
-    const sheet = doc.sheetsByIndex[0];
-    
-    // Different sheet methods based on package version
-    let rows: SpreadsheetRow[] = [];
+    // Try to fetch via the public API first (works for public sheets)
     try {
-      await sheet.loadCells();
-      rows = await sheet.getRows();
-    } catch (e) {
-      // For newer versions
-      try {
-        await sheet.loadHeaderRow();
-        rows = await sheet.getRows();
-      } catch (e2) {
-        console.error("Error loading sheet data:", e2);
-        throw new Error("Failed to load sheet data");
-      }
-    }
-    
-    // Map spreadsheet data to our program session format
-    const sessions = rows.map((row: any, index: number) => {
-      let dateValue = '';
-      let preActivation1 = '';
-      let preActivation2 = '';
-      let shortDistanceWorkout = '';
-      let mediumDistanceWorkout = '';
-      let longDistanceWorkout = '';
-      let extraSession = '';
+      console.log("Trying to fetch as public sheet...");
+      const rows = await fetchPublicSheet(sheetId);
+      console.log(`Successfully fetched public sheet with ${rows.length} rows`);
       
-      // Try different methods to access row data based on package version
-      try {
-        // For older versions accessing _rawData
-        if (row._rawData) {
-          dateValue = row._rawData[0] || '';
-          preActivation1 = row._rawData[1] || '';
-          preActivation2 = row._rawData[2] || '';
-          shortDistanceWorkout = row._rawData[3] || '';
-          mediumDistanceWorkout = row._rawData[4] || '';
-          longDistanceWorkout = row._rawData[5] || '';
-          extraSession = row._rawData.length > 6 ? row._rawData[6] || '' : '';
-        } else if (typeof row.get === 'function') {
-          // For newer versions using get() method
-          dateValue = row.get('A') || row.get('Date') || '';
-          preActivation1 = row.get('B') || row.get('Pre-Activation 1') || '';
-          preActivation2 = row.get('C') || row.get('Pre-Activation 2') || '';
-          shortDistanceWorkout = row.get('D') || row.get('60/100m') || '';
-          mediumDistanceWorkout = row.get('E') || row.get('200m') || '';
-          longDistanceWorkout = row.get('F') || row.get('400m') || '';
-          extraSession = row.get('G') || row.get('Extra Session') || '';
-        } else {
-          // Direct property access as fallback
-          dateValue = row['A'] || row['Date'] || '';
-          preActivation1 = row['B'] || row['Pre-Activation 1'] || '';
-          preActivation2 = row['C'] || row['Pre-Activation 2'] || '';
-          shortDistanceWorkout = row['D'] || row['60/100m'] || '';
-          mediumDistanceWorkout = row['E'] || row['200m'] || '';
-          longDistanceWorkout = row['F'] || row['400m'] || '';
-          extraSession = row['G'] || row['Extra Session'] || '';
-        }
-      } catch (e) {
-        console.warn("Error accessing row data:", e);
-        // Continue with empty values
-      }
+      // Skip header row if present
+      const dataRows = rows.length > 1 ? rows.slice(1) : rows;
       
-      // Determine if it's a rest day (all workout cells empty)
-      const isRestDay = !shortDistanceWorkout && !mediumDistanceWorkout && !longDistanceWorkout;
+      // Map spreadsheet data to our program session format
+      const sessions = dataRows.map((row, index) => {
+        const dateValue = row[0] || '';
+        const preActivation1 = row[1] || '';
+        const preActivation2 = row[2] || '';
+        const shortDistanceWorkout = row[3] || '';
+        const mediumDistanceWorkout = row[4] || '';
+        const longDistanceWorkout = row[5] || '';
+        const extraSession = row.length > 6 ? row[6] || '' : '';
+        
+        // Determine if it's a rest day (all workout cells empty)
+        const isRestDay = !shortDistanceWorkout && !mediumDistanceWorkout && !longDistanceWorkout;
+        
+        return {
+          dayNumber: index + 1,
+          date: dateValue,
+          columnA: dateValue,
+          columnB: preActivation1,
+          columnC: preActivation2,
+          columnD: shortDistanceWorkout,
+          columnE: mediumDistanceWorkout,
+          columnF: longDistanceWorkout,
+          columnG: extraSession,
+          preActivation1,
+          preActivation2,
+          shortDistanceWorkout,
+          mediumDistanceWorkout,
+          longDistanceWorkout,
+          extraSession,
+          isRestDay,
+          title: `Day ${index + 1} Training`,
+          description: isRestDay ? 'Rest and Recovery' : 'Training Session',
+        };
+      });
       
       return {
-        dayNumber: index + 1,
-        date: dateValue,
-        columnA: dateValue,
-        columnB: preActivation1,
-        columnC: preActivation2,
-        columnD: shortDistanceWorkout,
-        columnE: mediumDistanceWorkout,
-        columnF: longDistanceWorkout,
-        columnG: extraSession,
-        preActivation1,
-        preActivation2,
-        shortDistanceWorkout,
-        mediumDistanceWorkout,
-        longDistanceWorkout,
-        extraSession,
-        isRestDay,
-        title: `Day ${index + 1} Training`,
-        description: isRestDay ? 'Rest and Recovery' : 'Training Session',
+        title: `Training Program (Sheet ID: ${sheetId})`,
+        totalSessions: sessions.length,
+        sessions,
       };
-    });
-    
-    return {
-      title: doc.title,
-      totalSessions: sessions.length,
-      sessions,
-    };
+      
+    } catch (publicError) {
+      console.error("Error fetching as public sheet:", publicError);
+      
+      // Fall back to trying the API key
+      if (!process.env.GOOGLE_API_KEY) {
+        console.error("No Google API key provided for non-public sheet access");
+        throw publicError;
+      }
+      
+      try {
+        // For private sheets, try using the API key method
+        const GoogleSheetModule = await import('google-spreadsheet');
+        const apiKeyOptions = { apiKey: process.env.GOOGLE_API_KEY };
+        const doc = new GoogleSheetModule.GoogleSpreadsheet(sheetId, apiKeyOptions);
+        
+        // Load document properties and sheets
+        await doc.loadInfo();
+        const title = doc.title;
+        
+        // Get the first sheet
+        const sheet = doc.sheetsByIndex[0];
+        if (!sheet) {
+          throw new Error("No sheet found in the spreadsheet");
+        }
+        
+        // Load rows from the sheet
+        const rows = await sheet.getRows();
+        
+        const sessions = rows.map((row: any, index: number) => {
+          // Try to access row data in different ways
+          let getDateValue = '';
+          let getPreActivation1 = '';
+          let getPreActivation2 = '';
+          let getShortDistanceWorkout = '';
+          let getMediumDistanceWorkout = '';
+          let getLongDistanceWorkout = '';
+          let getExtraSession = '';
+          
+          try {
+            // Try accessing properties directly
+            if (row._rawData && Array.isArray(row._rawData)) {
+              getDateValue = row._rawData[0] || '';
+              getPreActivation1 = row._rawData[1] || '';
+              getPreActivation2 = row._rawData[2] || '';
+              getShortDistanceWorkout = row._rawData[3] || '';
+              getMediumDistanceWorkout = row._rawData[4] || '';
+              getLongDistanceWorkout = row._rawData[5] || '';
+              getExtraSession = row._rawData.length > 6 ? row._rawData[6] || '' : '';
+            } else {
+              // Alternative approach for newer API versions
+              const rowData: any = {};
+              
+              // Get the header row (if available)
+              const headerValues = sheet.headerValues || [];
+              
+              // Try to map row properties based on header values
+              if (headerValues.length > 0) {
+                headerValues.forEach((header, idx) => {
+                  if (header && row[header]) {
+                    rowData[header] = row[header];
+                  }
+                });
+                
+                getDateValue = rowData['Date'] || '';
+                getPreActivation1 = rowData['Pre-Activation 1'] || '';
+                getPreActivation2 = rowData['Pre-Activation 2'] || '';
+                getShortDistanceWorkout = rowData['60/100m'] || '';
+                getMediumDistanceWorkout = rowData['200m'] || '';
+                getLongDistanceWorkout = rowData['400m'] || '';
+                getExtraSession = rowData['Extra Session'] || '';
+              } else {
+                // If no headers, try indexed access
+                Object.keys(row).forEach(key => {
+                  if (row[key] && !key.startsWith('_')) {
+                    rowData[key] = row[key];
+                  }
+                });
+                
+                const values = Object.values(rowData);
+                getDateValue = values[0] || '';
+                getPreActivation1 = values[1] || '';
+                getPreActivation2 = values[2] || '';
+                getShortDistanceWorkout = values[3] || '';
+                getMediumDistanceWorkout = values[4] || '';
+                getLongDistanceWorkout = values[5] || '';
+                getExtraSession = values.length > 6 ? values[6] || '' : '';
+              }
+            }
+          } catch (e) {
+            console.warn("Error accessing row data:", e);
+          }
+          
+          // Determine if it's a rest day
+          const isRestDay = !getShortDistanceWorkout && !getMediumDistanceWorkout && !getLongDistanceWorkout;
+          
+          return {
+            dayNumber: index + 1,
+            date: getDateValue,
+            preActivation1: getPreActivation1,
+            preActivation2: getPreActivation2,
+            shortDistanceWorkout: getShortDistanceWorkout,
+            mediumDistanceWorkout: getMediumDistanceWorkout,
+            longDistanceWorkout: getLongDistanceWorkout,
+            extraSession: getExtraSession,
+            title: `Day ${index + 1} Training`,
+            description: isRestDay ? 'Rest and Recovery' : 'Training Session',
+            isRestDay,
+          };
+        });
+        
+        return {
+          title: title || `Training Program (Sheet ID: ${sheetId})`,
+          totalSessions: sessions.length,
+          sessions,
+        };
+      } catch (apiError) {
+        console.error("Error using Google Sheets API:", apiError);
+        throw apiError;
+      }
+    }
   } catch (error) {
     console.error('Error fetching Google Sheet data:', error);
     throw new Error('Failed to fetch data from Google Sheet');
