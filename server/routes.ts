@@ -2750,10 +2750,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const sheetId = match[1];
       
+      // Check if we have Google Sheets API credentials
+      const hasCredentials = !!(process.env.GOOGLE_API_KEY || 
+        (process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_PRIVATE_KEY));
+      
+      // If we have credentials, try to fetch the actual sheet data
+      let sheetData: any = null;
+      if (hasCredentials) {
+        try {
+          // Import the sheets utility
+          const { fetchSpreadsheetData } = await import('./utils/sheets');
+          sheetData = await fetchSpreadsheetData(sheetId);
+          console.log("Successfully fetched sheet data:", sheetData.title);
+        } catch (err) {
+          console.error("Failed to fetch Google Sheet data:", err);
+          // Continue with demo data if we couldn't fetch the sheet
+        }
+      }
+      
       // Create program with sheet info
       const programData = {
         userId: req.user!.id,
-        title,
+        title: sheetData?.title || title,
         description: description || '',
         category,
         level,
@@ -2762,41 +2780,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
         importedFromSheet: true,
         googleSheetUrl,
         googleSheetId: sheetId,
-        totalSessions: 10, // Default temporary value for demo
+        totalSessions: sheetData?.totalSessions || 10, // Use actual session count if available
       };
       
       // Create the program
       const createdProgram = await dbStorage.createProgram(programData);
       
-      // Create mock sessions to demonstrate the spreadsheet column structure
-      // Following the specified Google Sheet structure:
-      // Column A: date, B: pre-activation 1, C: pre-activation 2
-      // D: 60/100m, E: 200m, F: 400m, G: extra session
-      for (let i = 1; i <= 10; i++) {
-        const isRestDay = i % 3 === 0; // Every third day is a rest day
+      // If we have actual sheet data, use it to create sessions
+      if (sheetData && sheetData.sessions && sheetData.sessions.length > 0) {
+        // Create sessions from the actual sheet data
+        for (const session of sheetData.sessions) {
+          await dbStorage.createProgramSession({
+            ...session,
+            programId: createdProgram.id
+          });
+        }
         
-        // Map data to match how the frontend expects it
-        const sessionData = {
-          programId: createdProgram.id,
-          // Map to spreadsheet columns
-          columnA: `2025-05-${i < 10 ? '0' + i : i}`, // Date in column A
-          columnB: 'Warm up 10 min',                  // Pre-Activation 1 in column B
-          columnC: 'Dynamic stretching',              // Pre-Activation 2 in column C
-          columnD: isRestDay ? '' : 'Sprint intervals 5x100m',  // 60/100m sessions in column D
-          columnE: isRestDay ? '' : '3x400m at race pace',      // 200m sessions in column E
-          columnF: isRestDay ? '' : '1x800m tempo run',         // 400m sessions in column F
-          columnG: i % 4 === 0 ? 'Evening recovery session' : '', // Extra sessions in column G
-          dayNumber: i,
-        };
+        res.status(201).json({
+          program: createdProgram,
+          importedSessions: sheetData.sessions.length,
+          message: "Program created successfully with data from Google Sheet."
+        });
+      } else {
+        // Fallback to demo data if no sheet data could be fetched
+        console.log("No sheet data available, using demo data");
         
-        await dbStorage.createProgramSession(sessionData);
+        // Create mock sessions to demonstrate the spreadsheet column structure
+        // Following the specified Google Sheet structure:
+        // Column A: date, B: pre-activation 1, C: pre-activation 2
+        // D: 60/100m, E: 200m, F: 400m, G: extra session
+        for (let i = 1; i <= 10; i++) {
+          const isRestDay = i % 3 === 0; // Every third day is a rest day
+          
+          // Map data to match how the frontend expects it
+          const sessionData = {
+            programId: createdProgram.id,
+            // Map to spreadsheet columns
+            date: `2025-05-${i < 10 ? '0' + i : i}`,
+            columnA: `2025-05-${i < 10 ? '0' + i : i}`, // Date in column A
+            columnB: 'Warm up 10 min',                  // Pre-Activation 1 in column B
+            columnC: 'Dynamic stretching',              // Pre-Activation 2 in column C
+            columnD: isRestDay ? '' : 'Sprint intervals 5x100m',  // 60/100m sessions in column D
+            columnE: isRestDay ? '' : '3x400m at race pace',      // 200m sessions in column E
+            columnF: isRestDay ? '' : '1x800m tempo run',         // 400m sessions in column F
+            columnG: i % 4 === 0 ? 'Evening recovery session' : '', // Extra sessions in column G
+            preActivation1: 'Warm up 10 min',
+            preActivation2: 'Dynamic stretching',
+            shortDistanceWorkout: isRestDay ? '' : 'Sprint intervals 5x100m',
+            mediumDistanceWorkout: isRestDay ? '' : '3x400m at race pace',
+            longDistanceWorkout: isRestDay ? '' : '1x800m tempo run',
+            extraSession: i % 4 === 0 ? 'Evening recovery session' : '',
+            dayNumber: i,
+            isRestDay,
+            title: `Day ${i} Training`,
+            description: isRestDay ? 'Rest and Recovery' : 'Training Session',
+          };
+          
+          await dbStorage.createProgramSession(sessionData);
+        }
+        
+        res.status(201).json({
+          program: createdProgram,
+          importedSessions: 10,
+          message: "Program created successfully with example data. Connect your Google Sheet API key for actual data import."
+        });
       }
-      
-      res.status(201).json({
-        program: createdProgram,
-        importedSessions: 10,
-        message: "Program created successfully with example data. The full Google Sheets integration will be implemented soon."
-      });
     } catch (error: any) {
       console.error("Error importing program:", error);
       res.status(500).json({ error: error.message || "Failed to import program" });
