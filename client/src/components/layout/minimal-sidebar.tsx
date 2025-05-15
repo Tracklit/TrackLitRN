@@ -79,6 +79,13 @@ export function DesktopSidebar() {
             Results
           </NavItem>
           <NavItem 
+            href="/programs" 
+            icon={<BookOpen className="h-5 w-5" />} 
+            isActive={location.startsWith('/programs')}
+          >
+            Programs
+          </NavItem>
+          <NavItem 
             href="/profile" 
             icon={<Settings className="h-5 w-5" />} 
             isActive={location === '/profile'}
