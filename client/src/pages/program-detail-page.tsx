@@ -19,10 +19,9 @@ import {
   Tag, 
   TrendingUp, 
   Dumbbell, 
-  Users, 
-  CheckCircle2,
-  PlusCircle
+  CheckCircle2
 } from "lucide-react";
+import { AssignProgramDialog } from "@/components/assign-program-dialog";
 import { Loader2 } from "lucide-react";
 import {
   Dialog,
@@ -169,154 +168,7 @@ function ProgramDetailContent({ program }: { program: any }) {
 }
 
 // Component to allow program creators to assign programs to athletes
-function AssignProgramDialog({ program }: { program: any }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<string>("");
-  const [notes, setNotes] = useState<string>("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
-  
-  // Fetch potential assignees (athletes in coach's clubs)
-  const { data: potentialAssignees, isLoading } = useQuery({
-    queryKey: [`/api/programs/${program.id}/potential-assignees`],
-    enabled: isOpen,
-  });
-  
-  // Mutation to assign program
-  const assignMutation = useMutation({
-    mutationFn: async (data: { assigneeId: number, notes: string }) => {
-      const res = await fetch(`/api/programs/${program.id}/assign`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-      
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Failed to assign program');
-      }
-      
-      return res.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Program assigned",
-        description: "The athlete will be notified about this assignment",
-      });
-      setIsOpen(false);
-      setSelectedUser("");
-      setNotes("");
-      setIsSubmitting(false);
-    },
-    onError: (error) => {
-      toast({
-        title: "Failed to assign program",
-        description: error.message,
-        variant: "destructive",
-      });
-      setIsSubmitting(false);
-    },
-  });
-  
-  const handleAssign = () => {
-    if (!selectedUser) {
-      toast({
-        title: "Error",
-        description: "Please select an athlete to assign this program to",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setIsSubmitting(true);
-    assignMutation.mutate({
-      assigneeId: parseInt(selectedUser),
-      notes,
-    });
-  };
-  
-  return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button className="w-full">
-          <Users className="h-3.5 w-3.5 mr-1.5" />
-          Assign Program
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Assign Program to Athlete</DialogTitle>
-          <DialogDescription>
-            Assign "{program.title}" to athletes in your club or group.
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <label htmlFor="assignee" className="text-sm font-medium">
-              Select Athlete
-            </label>
-            {isLoading ? (
-              <div className="flex items-center justify-center h-10">
-                <Loader2 className="h-4 w-4 animate-spin text-primary" />
-              </div>
-            ) : !potentialAssignees || potentialAssignees.length === 0 ? (
-              <div className="text-sm text-muted-foreground">
-                No eligible athletes found. Invite athletes to your club to assign programs to them.
-              </div>
-            ) : (
-              <Select value={selectedUser} onValueChange={setSelectedUser}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select an athlete" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.isArray(potentialAssignees) && potentialAssignees.map((user: any) => (
-                    <SelectItem key={user.id} value={user.id.toString()}>
-                      {user.name || user.username}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-          
-          <div className="grid gap-2">
-            <label htmlFor="notes" className="text-sm font-medium">
-              Notes (optional)
-            </label>
-            <Textarea
-              id="notes"
-              placeholder="Add any specific instructions or notes for the athlete"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-            />
-          </div>
-        </div>
-        
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setIsOpen(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleAssign} disabled={isSubmitting || !selectedUser}>
-            {isSubmitting ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Assigning...
-              </>
-            ) : (
-              <>
-                <PlusCircle className="h-4 w-4 mr-2" />
-                Assign Program
-              </>
-            )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
+
 
 function ProgramDetail() {
   const { id } = useParams();

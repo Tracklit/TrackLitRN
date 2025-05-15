@@ -29,6 +29,7 @@ import {
   Search,
   Tag,
   TrendingUp,
+  Users,
   Dumbbell
 } from "lucide-react";
 
@@ -348,12 +349,39 @@ function ProgramCard({ program, type, creator, viewMode }: {
       
       <CardFooter className="flex justify-between pt-2">
         {viewMode === "creator" ? (
-          <>
-            <Button variant="ghost" size="sm">Edit</Button>
-            <Button variant="default" size="sm" asChild>
-              <Link href={`/programs/${program.id}`}>View Program</Link>
-            </Button>
-          </>
+          program.isUploadedProgram ? (
+            <div className="flex w-full gap-2">
+              <Button variant="outline" size="sm" asChild className="flex-1">
+                <Link href={program.programFileUrl}>
+                  <FileText className="h-3.5 w-3.5 mr-1.5" />
+                  View
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild className="flex-1">
+                <Link href={`/programs/${program.id}`}>Edit</Link>
+              </Button>
+              <Button variant="default" size="sm" className="flex-1">
+                <Users className="h-3.5 w-3.5 mr-1.5" />
+                Assign
+              </Button>
+            </div>
+          ) : (
+            <div className="flex w-full gap-2">
+              <Button variant="outline" size="sm" asChild className="flex-1">
+                <Link href={`/programs/${program.id}`}>
+                  <FileText className="h-3.5 w-3.5 mr-1.5" />
+                  View
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" className="flex-1">
+                Edit
+              </Button>
+              <Button variant="default" size="sm" className="flex-1">
+                <Users className="h-3.5 w-3.5 mr-1.5" />
+                Assign
+              </Button>
+            </div>
+          )
         ) : viewMode === "purchased" ? (
           <>
             <Button variant="ghost" size="sm">Details</Button>
