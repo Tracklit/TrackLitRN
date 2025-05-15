@@ -347,6 +347,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // API Routes - prefix all routes with /api
   
+  // Spikes and achievements endpoints
+  app.get("/api/achievements", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const achievements = await storage.getAchievements();
+      
+      // Get user achievements to determine completion status
+      const userAchievements = await storage.getUserAchievementsByUserId(req.user!.id);
+      
+      // Map user achievements to their respective achievement details
+      const achievementsWithStatus = achievements.map(achievement => {
+        const userAchievement = userAchievements.find(ua => ua.achievementId === achievement.id);
+        return {
+          ...achievement,
+          progress: userAchievement?.progress || 0,
+          isCompleted: userAchievement?.isCompleted || false,
+          timesEarned: userAchievement?.timesEarned || 0,
+          completionDate: userAchievement?.completionDate || null,
+          lastEarnedAt: userAchievement?.lastEarnedAt || null
+        };
+      });
+      
+      res.json(achievementsWithStatus);
+    } catch (error) {
+      console.error("Error fetching achievements:", error);
+      res.status(500).json({ error: "Failed to fetch achievements" });
+    }
+  });
+  
+  app.get("/api/login-streak", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const streak = await storage.getLoginStreakByUserId(req.user!.id);
+      if (!streak) {
+        // Create a new login streak record if it doesn't exist
+        return res.json({ currentStreak: 0, longestStreak: 0 });
+      }
+      
+      res.json(streak);
+    } catch (error) {
+      console.error("Error fetching login streak:", error);
+      res.status(500).json({ error: "Failed to fetch login streak" });
+    }
+  });
+  
+  app.get("/api/spike-transactions", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const transactions = await storage.getSpikeTransactions(req.user!.id);
+      res.json(transactions);
+    } catch (error) {
+      console.error("Error fetching spike transactions:", error);
+      res.status(500).json({ error: "Failed to fetch spike transactions" });
+    }
+  });
+  
+  app.post("/api/check-daily-login", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      // For this initial version, we'll just return the current login streak
+      // We'll implement proper daily login tracking in a future update
+      const streak = await storage.getLoginStreakByUserId(req.user!.id);
+      res.json(streak || { currentStreak: 0, longestStreak: 0 });
+    } catch (error) {
+      console.error("Error checking daily login:", error);
+      res.status(500).json({ error: "Failed to check daily login" });
+    }
+  });
+  
+  app.post("/api/claim-achievement/:id", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const achievementId = parseInt(req.params.id);
+      if (isNaN(achievementId)) {
+        return res.status(400).json({ error: "Invalid achievement ID" });
+      }
+      
+      // For this initial version, we'll just fetch the achievement
+      // We'll implement proper achievement claiming in a future update
+      const achievements = await storage.getAchievements();
+      const achievement = achievements.find(a => a.id === achievementId);
+      
+      if (!achievement) {
+        return res.status(404).json({ error: "Achievement not found" });
+      }
+      
+      res.json(achievement);
+    } catch (error) {
+      console.error("Error claiming achievement:", error);
+      res.status(500).json({ error: "Failed to claim achievement" });
+    }
+  });
+  
   // Proxy route for external API calls - no auth required
   app.get("/api/proxy", async (req: Request, res: Response) => {
     try {
