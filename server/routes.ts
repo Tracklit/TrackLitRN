@@ -18,6 +18,11 @@ import {
   insertGroupSchema,
   insertUserAchievementSchema,
   insertReferralSchema,
+  insertTrainingProgramSchema,
+  insertProgramSessionSchema,
+  insertProgramPurchaseSchema,
+  insertProgramProgressSchema,
+  insertWorkoutLibrarySchema,
   InsertMeet,
   InsertResult,
   InsertReminder,
@@ -26,7 +31,12 @@ import {
   InsertGroupMember,
   InsertCoachNote,
   InsertPracticeMedia,
-  PracticeMedia
+  PracticeMedia,
+  InsertTrainingProgram,
+  InsertProgramSession,
+  InsertProgramPurchase,
+  InsertProgramProgress,
+  InsertWorkoutLibrary
 } from "@shared/schema";
 
 // Initialize default achievements
@@ -2505,6 +2515,282 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error awarding meet creation spikes:", error);
       res.status(500).send("Error awarding meet creation spikes");
+    }
+  });
+
+  // Programs endpoints
+  // 1. Get user's own programs
+  app.get("/api/programs", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const programs = await dbStorage.getUserPrograms(req.user!.id);
+      res.json(programs);
+    } catch (error) {
+      console.error("Error fetching programs:", error);
+      res.status(500).json({ error: "Failed to fetch programs" });
+    }
+  });
+  
+  // 2. Get program by id
+  app.get("/api/programs/:id", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const programId = parseInt(req.params.id);
+      const program = await dbStorage.getProgram(programId);
+      
+      if (!program) {
+        return res.status(404).json({ error: "Program not found" });
+      }
+      
+      // Check if user has access to this program
+      if (program.userId !== req.user!.id && !program.isPublic) {
+        // Check if user has purchased this program
+        const purchase = await dbStorage.getPurchasedProgram(req.user!.id, programId);
+        if (!purchase) {
+          return res.status(403).json({ error: "You don't have access to this program" });
+        }
+      }
+      
+      // Get program sessions
+      const sessions = await dbStorage.getProgramSessions(programId);
+      
+      res.json({
+        ...program,
+        sessions
+      });
+    } catch (error) {
+      console.error("Error fetching program:", error);
+      res.status(500).json({ error: "Failed to fetch program" });
+    }
+  });
+  
+  // 3. Create a new program
+  app.post("/api/programs", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const programData = {
+        ...req.body,
+        userId: req.user!.id
+      };
+      
+      const program = await dbStorage.createProgram(programData);
+      res.status(201).json(program);
+    } catch (error) {
+      console.error("Error creating program:", error);
+      res.status(500).json({ error: "Failed to create program" });
+    }
+  });
+  
+  // 4. Update a program
+  app.put("/api/programs/:id", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const programId = parseInt(req.params.id);
+      const program = await dbStorage.getProgram(programId);
+      
+      if (!program) {
+        return res.status(404).json({ error: "Program not found" });
+      }
+      
+      // Check if user is the owner of this program
+      if (program.userId !== req.user!.id) {
+        return res.status(403).json({ error: "You don't have permission to update this program" });
+      }
+      
+      const updatedProgram = await dbStorage.updateProgram(programId, req.body);
+      res.json(updatedProgram);
+    } catch (error) {
+      console.error("Error updating program:", error);
+      res.status(500).json({ error: "Failed to update program" });
+    }
+  });
+  
+  // 5. Delete a program
+  app.delete("/api/programs/:id", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const programId = parseInt(req.params.id);
+      const program = await dbStorage.getProgram(programId);
+      
+      if (!program) {
+        return res.status(404).json({ error: "Program not found" });
+      }
+      
+      // Check if user is the owner of this program
+      if (program.userId !== req.user!.id) {
+        return res.status(403).json({ error: "You don't have permission to delete this program" });
+      }
+      
+      await dbStorage.deleteProgram(programId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting program:", error);
+      res.status(500).json({ error: "Failed to delete program" });
+    }
+  });
+  
+  // 6. Get user's purchased programs
+  app.get("/api/purchased-programs", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const purchases = await dbStorage.getUserPurchasedPrograms(req.user!.id);
+      res.json(purchases);
+    } catch (error) {
+      console.error("Error fetching purchased programs:", error);
+      res.status(500).json({ error: "Failed to fetch purchased programs" });
+    }
+  });
+  
+  // 7. Purchase a program
+  app.post("/api/programs/:id/purchase", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const programId = parseInt(req.params.id);
+      const program = await dbStorage.getProgram(programId);
+      
+      if (!program) {
+        return res.status(404).json({ error: "Program not found" });
+      }
+      
+      // Check if the user already purchased this program
+      const existingPurchase = await dbStorage.getPurchasedProgram(req.user!.id, programId);
+      if (existingPurchase) {
+        return res.status(400).json({ error: "You already own this program" });
+      }
+      
+      // Check if the program is free or the user has enough spikes
+      const isFree = !program.price || program.price <= 0;
+      
+      if (!isFree) {
+        const programPrice = program.price || 0;
+        
+        // Check if user has enough spikes
+        if ((req.user!.spikes || 0) < programPrice) {
+          return res.status(400).json({ error: "You don't have enough spikes to purchase this program" });
+        }
+        
+        // Deduct spikes from user
+        await dbStorage.deductSpikesFromUser(
+          req.user!.id, 
+          programPrice, 
+          'program_purchase', 
+          programId, 
+          `Purchased program: ${program.title}`
+        );
+        
+        // Add spikes to program creator
+        await dbStorage.addSpikesToUser(
+          program.userId, 
+          programPrice, 
+          'program_sale', 
+          programId, 
+          `Program purchased: ${program.title}`
+        );
+      }
+      
+      // Record the purchase
+      const purchase = await dbStorage.purchaseProgram({
+        programId,
+        userId: req.user!.id,
+        price: program.price || 0,
+        isFree
+      });
+      
+      res.status(201).json(purchase);
+    } catch (error) {
+      console.error("Error purchasing program:", error);
+      res.status(500).json({ error: "Failed to purchase program" });
+    }
+  });
+  
+  // 8. Record program session progress
+  app.post("/api/program-sessions/:id/complete", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const sessionId = parseInt(req.params.id);
+      const { programId, rating, notes } = req.body;
+      
+      if (!programId) {
+        return res.status(400).json({ error: "Program ID is required" });
+      }
+      
+      // Check if user has access to this program
+      const program = await dbStorage.getProgram(programId);
+      
+      if (!program) {
+        return res.status(404).json({ error: "Program not found" });
+      }
+      
+      // Check if user owns this program or has purchased it
+      const hasAccess = program.userId === req.user!.id || 
+                         !!(await dbStorage.getPurchasedProgram(req.user!.id, programId));
+      
+      if (!hasAccess) {
+        return res.status(403).json({ error: "You don't have access to this program" });
+      }
+      
+      // Record the progress
+      const progress = await dbStorage.recordProgramProgress({
+        userId: req.user!.id,
+        programId,
+        sessionId,
+        completedAt: new Date(),
+        rating,
+        notes
+      });
+      
+      res.status(201).json(progress);
+    } catch (error) {
+      console.error("Error completing program session:", error);
+      res.status(500).json({ error: "Failed to complete program session" });
+    }
+  });
+  
+  // 9. Get saved workouts (library)
+  app.get("/api/workout-library", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const savedWorkouts = await dbStorage.getSavedWorkouts(req.user!.id);
+      
+      // Check if user has reached free limit (10 saved workouts) and is not premium
+      const isLimited = !req.user!.isPremium && savedWorkouts.length >= 10;
+      
+      res.json({
+        workouts: savedWorkouts,
+        isLimited,
+        totalSaved: savedWorkouts.length,
+        maxFreeAllowed: 10
+      });
+    } catch (error) {
+      console.error("Error fetching workout library:", error);
+      res.status(500).json({ error: "Failed to fetch workout library" });
     }
   });
 

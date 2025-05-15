@@ -21,6 +21,8 @@ import { Component as ClubDetailPage } from "@/pages/club-detail-page";
 import { Component as ClubManagementPage } from "@/pages/club-management-page";
 import MessagesPage from "@/pages/messages-page";
 import SpikesPage from "@/pages/spikes-page";
+import { Component as ProgramsPage } from "@/pages/programs-page";
+import { Component as ProgramCreatePage } from "@/pages/program-create-page";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { AuthProvider } from "@/hooks/use-auth";
 
