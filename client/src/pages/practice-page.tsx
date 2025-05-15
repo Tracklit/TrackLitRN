@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { useAuth } from "@/hooks/use-auth";
+import { useAssignedPrograms } from "@/hooks/use-assigned-programs";
 import { PageContainer } from "@/components/page-container";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,13 +34,20 @@ import {
   ChevronUp,
   Dumbbell,
   CheckCircle,
-  Save
+  Save,
+  ClipboardList,
+  Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "wouter";
 
 export default function PracticePage() {
   const { user } = useAuth();
+  const { assignedPrograms, isLoading: isLoadingPrograms } = useAssignedPrograms();
+  
+  // State for selected program
+  const [selectedProgram, setSelectedProgram] = useState<any>(null);
+  const [showAssignedPrograms, setShowAssignedPrograms] = useState<boolean>(true);
   
   // State for current day navigation
   const [currentDay, setCurrentDay] = useState<"yesterday" | "today" | "tomorrow">("today");
@@ -49,6 +57,13 @@ export default function PracticePage() {
   const [distance, setDistance] = useState<number[]>([150]);
   const [calculatedTime, setCalculatedTime] = useState<number>(18.3);
   const [calculatorOpen, setCalculatorOpen] = useState<boolean>(false);
+  
+  // Set the selected program when assigned programs load
+  useEffect(() => {
+    if (assignedPrograms && assignedPrograms.length > 0 && !selectedProgram) {
+      setSelectedProgram(assignedPrograms[0]);
+    }
+  }, [assignedPrograms, selectedProgram]);
   
   // State for session completion
   const [sessionCompleteOpen, setSessionCompleteOpen] = useState<boolean>(false);
@@ -122,6 +137,62 @@ export default function PracticePage() {
         </p>
       </div>
       
+      {/* Assigned Programs Section */}
+      {(assignedPrograms && assignedPrograms.length > 0) && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold flex items-center">
+              <ClipboardList className="mr-2 h-5 w-5 text-primary" />
+              My Assigned Programs
+            </h2>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowAssignedPrograms(!showAssignedPrograms)}
+            >
+              {showAssignedPrograms ? "Hide" : "Show"}
+            </Button>
+          </div>
+          
+          {showAssignedPrograms && (
+            <div className="space-y-3">
+              {isLoadingPrograms ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : (
+                <div className="grid gap-3 md:grid-cols-2">
+                  {assignedPrograms.map((program: any) => (
+                    <Card 
+                      key={program.id} 
+                      className={cn(
+                        "cursor-pointer hover:border-primary/50 transition-all",
+                        selectedProgram?.id === program.id ? "border-primary" : ""
+                      )}
+                      onClick={() => setSelectedProgram(program)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="bg-primary/10 p-2 rounded-full">
+                            <ClipboardList className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <h3 className="font-medium">{program.program?.title || "Program"}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {program.status === 'accepted' ? 'In Progress' : program.status}
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+      
       <div className="mt-6 relative">
         {/* Day navigation */}
         <div className="flex items-center justify-between mb-6 max-w-xs mx-auto text-center">
@@ -160,54 +231,96 @@ export default function PracticePage() {
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h3 className="font-semibold">Speed Endurance</h3>
-                  <p className="text-sm text-muted-foreground">Coach Williams</p>
+                  <h3 className="font-semibold">
+                    {selectedProgram ? selectedProgram.program?.title : "Speed Endurance"}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedProgram ? 
+                     `Assigned on ${new Date(selectedProgram.createdAt).toLocaleDateString()}` : 
+                     "Coach Williams"}
+                  </p>
                 </div>
               </div>
-              <Badge>High Intensity</Badge>
+              <Badge>
+                {selectedProgram ? selectedProgram.status : "High Intensity"}
+              </Badge>
             </div>
             
             <div className="space-y-4 mt-6">
-              {/* Dummy content for today's session */}
+              {/* Program content or default content */}
               <div className="bg-muted/40 p-3 rounded-md">
-                <h4 className="text-sm font-medium mb-2">Today's Workout</h4>
-                <div className="space-y-2">
-                  <div className="p-2 bg-background/50 rounded border border-border/50">
-                    <div className="flex items-center">
-                      <div className="bg-primary/10 p-1.5 rounded-full mr-3">
-                        <Dumbbell className="h-4 w-4 text-primary" />
+                <h4 className="text-sm font-medium mb-2">
+                  {selectedProgram ? "Program Content" : "Today's Workout"}
+                </h4>
+                
+                {selectedProgram ? (
+                  <div className="space-y-2">
+                    {/* Display program details */}
+                    <div className="p-4 bg-background/80 rounded border border-border/50">
+                      <p className="mb-2 font-medium">{selectedProgram.program?.title}</p>
+                      <p className="text-sm text-muted-foreground mb-3">{selectedProgram.program?.description}</p>
+                      
+                      {selectedProgram.notes && (
+                        <div className="p-3 bg-muted/30 rounded-md mb-3">
+                          <h5 className="text-xs font-medium mb-1">Assignment Notes:</h5>
+                          <p className="text-sm">{selectedProgram.notes}</p>
+                        </div>
+                      )}
+                      
+                      <div className="flex justify-between items-center">
+                        <Badge variant="outline">
+                          {selectedProgram.program?.level || "Beginner"}
+                        </Badge>
+                        <Badge variant="outline">
+                          {selectedProgram.program?.category || "General"}
+                        </Badge>
                       </div>
-                      <div>
-                        <p className="font-medium text-sm">3 x 200m</p>
-                        <p className="text-xs text-muted-foreground">85% effort, 2min rest</p>
+                    </div>
+                    
+                    <Link href={`/programs/${selectedProgram.programId}`} className="text-sm text-primary hover:underline mt-2 inline-block">
+                      View Full Program Details
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {/* Default content */}
+                    <div className="p-2 bg-background/50 rounded border border-border/50">
+                      <div className="flex items-center">
+                        <div className="bg-primary/10 p-1.5 rounded-full mr-3">
+                          <Dumbbell className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">3 x 200m</p>
+                          <p className="text-xs text-muted-foreground">85% effort, 2min rest</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="p-2 bg-background/50 rounded border border-border/50">
+                      <div className="flex items-center">
+                        <div className="bg-primary/10 p-1.5 rounded-full mr-3">
+                          <Dumbbell className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">2 x 250m</p>
+                          <p className="text-xs text-muted-foreground">90% effort, 3min rest</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="p-2 bg-background/50 rounded border border-border/50">
+                      <div className="flex items-center">
+                        <div className="bg-primary/10 p-1.5 rounded-full mr-3">
+                          <Dumbbell className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">1 x 300m</p>
+                          <p className="text-xs text-muted-foreground">100% effort, all out</p>
+                        </div>
                       </div>
                     </div>
                   </div>
-                  
-                  <div className="p-2 bg-background/50 rounded border border-border/50">
-                    <div className="flex items-center">
-                      <div className="bg-primary/10 p-1.5 rounded-full mr-3">
-                        <Dumbbell className="h-4 w-4 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">2 x 250m</p>
-                        <p className="text-xs text-muted-foreground">90% effort, 3min rest</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="p-2 bg-background/50 rounded border border-border/50">
-                    <div className="flex items-center">
-                      <div className="bg-primary/10 p-1.5 rounded-full mr-3">
-                        <Dumbbell className="h-4 w-4 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">1 x 300m</p>
-                        <p className="text-xs text-muted-foreground">100% effort, all out</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
               
               {/* Distance & % Calculator */}
