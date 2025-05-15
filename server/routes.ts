@@ -221,27 +221,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Storage configuration for multer
   const uploadStorage = multer.diskStorage({
-    destination: (_req, _file, cb) => {
-      cb(null, uploadsDir);
+    destination: (req, _file, cb) => {
+      // Use different subdirectories for program files and practice media
+      if (req.path === '/api/programs/upload') {
+        const programsUploadsDir = path.join(uploadsDir, 'programs');
+        if (!fs.existsSync(programsUploadsDir)) {
+          fs.mkdirSync(programsUploadsDir, { recursive: true });
+        }
+        cb(null, programsUploadsDir);
+      } else {
+        const practiceUploadsDir = path.join(uploadsDir, 'practice');
+        if (!fs.existsSync(practiceUploadsDir)) {
+          fs.mkdirSync(practiceUploadsDir, { recursive: true });
+        }
+        cb(null, practiceUploadsDir);
+      }
     },
-    filename: (_req, file, cb) => {
+    filename: (req, file, cb) => {
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
       const ext = path.extname(file.originalname);
-      cb(null, 'practice-' + uniqueSuffix + ext);
+      
+      if (req.path === '/api/programs/upload') {
+        cb(null, 'program-' + uniqueSuffix + ext);
+      } else {
+        cb(null, 'practice-' + uniqueSuffix + ext);
+      }
     },
   });
   
   const upload = multer({ 
     storage: uploadStorage,
     limits: {
-      fileSize: 10 * 1024 * 1024, // 10MB limit
+      fileSize: 15 * 1024 * 1024, // 15MB limit
     },
-    fileFilter: (_req, file, cb) => {
-      // Accept only images and videos
-      if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/')) {
-        cb(null, true);
-      } else {
-        cb(new Error('Only images and videos are allowed'));
+    fileFilter: (req, file, cb) => {
+      // For program files, accept PDF, Word, and Excel documents
+      if (req.path === '/api/programs/upload') {
+        const allowedMimeTypes = [
+          'application/pdf',
+          'application/msword',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'application/vnd.ms-excel',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        ];
+        
+        if (allowedMimeTypes.includes(file.mimetype)) {
+          cb(null, true);
+        } else {
+          cb(new Error('Only PDF, Word, and Excel documents are allowed for programs'));
+        }
+      } 
+      // For practice media, accept only images and videos
+      else {
+        if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/')) {
+          cb(null, true);
+        } else {
+          cb(new Error('Only images and videos are allowed for practice media'));
+        }
       }
     }
   });
@@ -2603,7 +2639,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get file info
       const file = req.file;
-      const fileUrl = `/uploads/${file.filename}`;
+      const fileUrl = `/uploads/programs/${file.filename}`;
       const fileType = file.mimetype;
       
       // Create program record with file information

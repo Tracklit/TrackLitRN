@@ -15,28 +15,85 @@ import { Loader2 } from "lucide-react";
 function ProgramDetailContent({ program }: { program: any }) {
   // For uploaded program documents
   if (program.isUploadedProgram && program.programFileUrl) {
+    const fileType = program.programFileType || '';
+    const fileExtension = fileType.split('/')[1]?.toUpperCase() || 'Document';
+    
+    // Determine which icon to use based on file type
+    let FileIcon = FileText;
+    let fileTypeDisplay = 'Document';
+    let fileTypeColor = 'text-blue-500';
+    
+    if (fileType.includes('pdf')) {
+      fileTypeDisplay = 'PDF';
+      fileTypeColor = 'text-red-500';
+    } else if (fileType.includes('word') || fileType.includes('document')) {
+      fileTypeDisplay = 'Word Document';
+      fileTypeColor = 'text-blue-600';
+    } else if (fileType.includes('excel') || fileType.includes('sheet')) {
+      fileTypeDisplay = 'Excel Spreadsheet';
+      fileTypeColor = 'text-green-600';
+    }
+    
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <FileText className="h-5 w-5 mr-2 text-primary" />
-            <span className="text-lg font-medium">Uploaded Program Document</span>
+            <FileText className={`h-5 w-5 mr-2 ${fileTypeColor}`} />
+            <span className="text-lg font-medium">Uploaded Training Program</span>
           </div>
-          <Button asChild>
-            <a href={program.programFileUrl} target="_blank" rel="noopener noreferrer">
-              View Document
-            </a>
-          </Button>
+          <div className="flex space-x-2">
+            <Button variant="outline" asChild>
+              <a href={program.programFileUrl} download>
+                Download
+              </a>
+            </Button>
+            <Button asChild>
+              <a href={program.programFileUrl} target="_blank" rel="noopener noreferrer">
+                View Document
+              </a>
+            </Button>
+          </div>
         </div>
         
-        <div className="p-8 rounded-lg border-2 border-dashed border-muted flex flex-col items-center justify-center">
-          <FileText className="h-16 w-16 text-muted mb-4" />
-          <p className="text-muted-foreground mb-2">
-            This program is available as a downloadable document
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Format: {program.programFileType?.split('/')[1]?.toUpperCase() || 'Document'}
-          </p>
+        {/* File preview card */}
+        <div className="rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden">
+          <div className="bg-muted p-6 flex flex-col items-center justify-center">
+            <div className={`w-20 h-20 rounded-lg ${fileTypeColor} bg-opacity-10 flex items-center justify-center mb-4`}>
+              <FileText className={`h-10 w-10 ${fileTypeColor}`} />
+            </div>
+            <p className="text-xl font-semibold mb-1">{fileTypeDisplay}</p>
+            <p className="text-muted-foreground">
+              Click the "View Document" button to open the program
+            </p>
+          </div>
+          
+          <div className="p-6 bg-white">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold">Program Details</h4>
+                <p className="text-sm">{program.description}</p>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-xs font-semibold uppercase text-muted-foreground">Category</h4>
+                  <p className="text-sm capitalize">{program.category || "General"}</p>
+                </div>
+                <div>
+                  <h4 className="text-xs font-semibold uppercase text-muted-foreground">Level</h4>
+                  <p className="text-sm capitalize">{program.level || "Beginner"}</p>
+                </div>
+                <div>
+                  <h4 className="text-xs font-semibold uppercase text-muted-foreground">Duration</h4>
+                  <p className="text-sm">{program.duration || 7} days</p>
+                </div>
+                <div>
+                  <h4 className="text-xs font-semibold uppercase text-muted-foreground">File Type</h4>
+                  <p className="text-sm">{fileExtension}</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
