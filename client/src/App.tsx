@@ -80,7 +80,7 @@ function App() {
             {isMenuOpen && <MobileSidebar isOpen={isMenuOpen} onClose={closeMenu} />}
             
             {/* Main Content */}
-            <main className="pt-4">
+            <main className="pt-12">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <Router />
               </div>

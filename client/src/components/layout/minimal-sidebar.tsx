@@ -4,22 +4,36 @@ import {
   Users, 
   Calendar, 
   Settings, 
-  LineChart
+  LineChart,
+  Dumbbell,
+  Clock,
+  Trophy,
+  MessagesSquare,
+  Award,
+  Coins,
+  LogOut
 } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { cn } from "@/lib/utils";
 
-function NavItem({ href, icon, children, isActive }: { 
+function NavItem({ href, icon, children, isActive, onClick }: { 
   href: string; 
   icon: React.ReactNode; 
   children: React.ReactNode; 
   isActive: boolean;
+  onClick?: () => void;
 }) {
   return (
     <li>
       <Link 
-        href={href} 
-        className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg ${
-          isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100"
-        }`}
+        href={href}
+        onClick={onClick}
+        className={cn(
+          "flex items-center space-x-3 px-3 py-2.5 rounded-lg font-medium transition-all",
+          isActive 
+            ? "bg-primary/20 text-primary" 
+            : "text-foreground hover:bg-muted"
+        )}
       >
         {icon}
         <span>{children}</span>
@@ -79,21 +93,45 @@ export function DesktopSidebar() {
 }
 
 export function MobileSidebarButton({ onClick }: { onClick: () => void }) {
+  const { user } = useAuth();
+  
+  if (!user) return null;
+  
   return (
-    <button 
-      onClick={onClick} 
-      className="md:hidden fixed top-4 left-4 z-50 rounded-md p-2 bg-white shadow-md text-gray-700"
-    >
-      <span className="sr-only">Open menu</span>
-      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-      </svg>
-    </button>
+    <div className="fixed top-0 left-0 right-0 z-50">
+      <div style={{ backgroundColor: 'hsl(220 40% 15%)' }} className="flex items-center justify-between p-1 shadow-md">
+        <div className="flex items-center">
+          <button 
+            onClick={onClick} 
+            className="text-foreground p-2"
+          >
+            <span className="sr-only">Open menu</span>
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        </div>
+        
+        <div className="flex items-center">
+          <div className="h-6 w-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-medium">
+            {user.name ? user.name.charAt(0).toUpperCase() : user.username.charAt(0).toUpperCase()}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
 export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [location] = useLocation();
+  const { user, logoutMutation } = useAuth();
+  
+  if (!user) return null;
+
+  const handleLogout = () => {
+    logoutMutation.mutate();
+    onClose();
+  };
   
   return (
     <>
@@ -104,10 +142,10 @@ export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
       />
       
       {/* Sidebar */}
-      <div className="md:hidden fixed top-0 left-0 h-full w-64 bg-white z-50 shadow-lg">
-        <div className="flex justify-between items-center p-4 border-b border-gray-200">
-          <h2 className="text-lg font-bold">Track Pro</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+      <div className="md:hidden fixed top-0 left-0 h-full w-64 z-50 shadow-lg" style={{ backgroundColor: 'hsl(220 40% 15%)' }}>
+        <div className="flex justify-between items-center p-4 border-b border-sidebar-border">
+          <h2 className="text-lg font-bold text-foreground">Track Pro</h2>
+          <button onClick={onClose} className="text-foreground hover:text-muted-foreground">
             <span className="sr-only">Close menu</span>
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -115,26 +153,57 @@ export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
           </button>
         </div>
         
-        <div className="p-4">
-          <ul className="space-y-1">
+        <div className="flex-1 px-2 py-4 overflow-auto">
+          <div className="space-y-1">
             <NavItem 
               href="/" 
               icon={<Home className="h-5 w-5" />} 
               isActive={location === '/'}
+              onClick={onClose}
             >
               Dashboard
             </NavItem>
+          </div>
+
+          <div className="pt-4 pb-2">
+            <p className="text-xs text-muted-foreground px-3 font-medium uppercase">Training</p>
+          </div>
+          <div className="space-y-1">
             <NavItem 
-              href="/clubs" 
-              icon={<Users className="h-5 w-5" />} 
-              isActive={location.includes('/club')}
+              href="/practice" 
+              icon={<Dumbbell className="h-5 w-5" />} 
+              isActive={location.startsWith('/practice')}
+              onClick={onClose}
             >
-              Clubs
+              Practice
+            </NavItem>
+            <NavItem 
+              href="/training-tools" 
+              icon={<Clock className="h-5 w-5" />} 
+              isActive={location === '/training-tools'}
+              onClick={onClose}
+            >
+              Training Tools
+            </NavItem>
+          </div>
+
+          <div className="pt-4 pb-2">
+            <p className="text-xs text-muted-foreground px-3 font-medium uppercase">Competition</p>
+          </div>
+          <div className="space-y-1">
+            <NavItem 
+              href="/meets" 
+              icon={<Trophy className="h-5 w-5" />} 
+              isActive={location === '/meets'}
+              onClick={onClose}
+            >
+              Meets
             </NavItem>
             <NavItem 
               href="/calendar" 
               icon={<Calendar className="h-5 w-5" />} 
               isActive={location === '/calendar'}
+              onClick={onClose}
             >
               Calendar
             </NavItem>
@@ -142,17 +211,73 @@ export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
               href="/results" 
               icon={<LineChart className="h-5 w-5" />} 
               isActive={location === '/results'}
+              onClick={onClose}
             >
               Results
+            </NavItem>
+          </div>
+
+          <div className="pt-4 pb-2">
+            <p className="text-xs text-muted-foreground px-3 font-medium uppercase">Social</p>
+          </div>
+          <div className="space-y-1">
+            <NavItem 
+              href="/clubs" 
+              icon={<Users className="h-5 w-5" />} 
+              isActive={location.startsWith('/club')}
+              onClick={onClose}
+            >
+              Clubs
+            </NavItem>
+            <NavItem 
+              href="/messages" 
+              icon={<MessagesSquare className="h-5 w-5" />} 
+              isActive={location === '/messages'}
+              onClick={onClose}
+            >
+              Messages
+            </NavItem>
+            <NavItem 
+              href="/coaches" 
+              icon={<Award className="h-5 w-5" />} 
+              isActive={location === '/coaches'}
+              onClick={onClose}
+            >
+              Coaches
+            </NavItem>
+          </div>
+
+          <div className="pt-4 pb-2">
+            <p className="text-xs text-muted-foreground px-3 font-medium uppercase">Account</p>
+          </div>
+          <div className="space-y-1">
+            <NavItem 
+              href="/spikes" 
+              icon={<Coins className="h-5 w-5" />} 
+              isActive={location === '/spikes'}
+              onClick={onClose}
+            >
+              Spikes
             </NavItem>
             <NavItem 
               href="/profile" 
               icon={<Settings className="h-5 w-5" />} 
               isActive={location === '/profile'}
+              onClick={onClose}
             >
               Settings
             </NavItem>
-          </ul>
+          </div>
+        </div>
+        
+        <div className="p-4 border-t border-sidebar-border">
+          <button 
+            onClick={handleLogout}
+            className="flex items-center w-full space-x-2 px-3 py-2.5 rounded-lg font-medium text-destructive hover:bg-muted transition-all"
+          >
+            <LogOut className="h-5 w-5" />
+            <span>Logout</span>
+          </button>
         </div>
       </div>
     </>
