@@ -76,8 +76,8 @@ function App() {
             {/* Mobile Menu Button */}
             <MobileSidebarButton onClick={toggleMenu} />
             
-            {/* Mobile Sidebar - Only rendered when open */}
-            {isMenuOpen && <MobileSidebar isOpen={isMenuOpen} onClose={closeMenu} />}
+            {/* Mobile Sidebar - Always rendered but with slide animation */}
+            <MobileSidebar isOpen={isMenuOpen} onClose={closeMenu} />
             
             {/* Main Content */}
             <main className="pt-12">

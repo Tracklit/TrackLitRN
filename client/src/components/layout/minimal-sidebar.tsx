@@ -24,21 +24,19 @@ function NavItem({ href, icon, children, isActive, onClick }: {
   onClick?: () => void;
 }) {
   return (
-    <li>
-      <Link 
-        href={href}
-        onClick={onClick}
-        className={cn(
-          "flex items-center space-x-3 px-3 py-2.5 rounded-lg font-medium transition-all",
-          isActive 
-            ? "bg-primary/20 text-primary" 
-            : "text-foreground hover:bg-muted"
-        )}
-      >
-        {icon}
-        <span>{children}</span>
-      </Link>
-    </li>
+    <Link 
+      href={href}
+      onClick={onClick}
+      className={cn(
+        "flex items-center space-x-3 px-3 py-2.5 rounded-lg font-medium transition-all",
+        isActive 
+          ? "bg-primary/20 text-primary" 
+          : "text-foreground hover:bg-muted"
+      )}
+    >
+      {icon}
+      <span>{children}</span>
+    </Link>
   );
 }
 
@@ -137,18 +135,28 @@ export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
     <>
       {/* Backdrop */}
       <div 
-        className="md:hidden fixed inset-0 bg-black/20 z-40"
+        className="md:hidden fixed inset-0 bg-black/20 z-40 transition-opacity duration-300"
         onClick={onClose}
+        style={{ 
+          opacity: isOpen ? 1 : 0,
+          pointerEvents: isOpen ? 'auto' : 'none'
+        }}
       />
       
       {/* Sidebar */}
-      <div className="md:hidden fixed top-0 left-0 h-full w-64 z-50 shadow-lg" style={{ backgroundColor: 'hsl(220 40% 15%)' }}>
+      <div 
+        className="md:hidden fixed top-0 left-0 h-full w-64 z-50 shadow-lg transform transition-transform duration-300 ease-in-out" 
+        style={{ 
+          backgroundColor: 'hsl(220 40% 15%)',
+          transform: isOpen ? 'translateX(0)' : 'translateX(-100%)'
+        }}
+      >
         <div className="flex justify-between items-center p-4 border-b border-sidebar-border">
           <h2 className="text-lg font-bold text-foreground">Track Pro</h2>
           <button onClick={onClose} className="text-foreground hover:text-muted-foreground">
             <span className="sr-only">Close menu</span>
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
         </div>
