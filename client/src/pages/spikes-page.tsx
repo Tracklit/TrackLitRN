@@ -17,9 +17,21 @@ import { formatDistanceToNow } from 'date-fns';
 
 export default function SpikesPage() {
   const { user } = useAuth();
+  const { data: achievements, isLoading: isLoadingAchievements } = useAchievements();
+  const { data: loginStreak, isLoading: isLoadingStreak } = useLoginStreak();
+  const { data: transactions, isLoading: isLoadingTransactions } = useSpikeTransactions();
+  const { mutate: checkDailyLogin, isPending: isCheckingLogin } = useCheckDailyLogin();
+  const { mutate: claimAchievement, isPending: isClaimingAchievement } = useClaimAchievement();
   
-  // Placeholder data
   const spikeBalance = user?.spikes || 0;
+  const currentStreak = loginStreak?.currentStreak || 0;
+  const longestStreak = loginStreak?.longestStreak || 0;
+  
+  // Get categories of achievements
+  const loginAchievements = achievements?.filter(a => a.category === 'login') || [];
+  const workoutAchievements = achievements?.filter(a => a.category === 'workout') || [];
+  const meetAchievements = achievements?.filter(a => a.category === 'meet') || [];
+  const groupAchievements = achievements?.filter(a => a.category === 'group') || [];
   
   return (
     <div className="container max-w-screen-xl mx-auto p-4 pt-20 md:pt-24 md:pl-72 pb-20">
@@ -52,52 +64,93 @@ export default function SpikesPage() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-md">Weekly Challenge</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <Award className="h-5 w-5 mr-2 text-amber-500" />
-                        <div>
-                          <p className="text-sm font-medium">Complete 3 training sessions</p>
-                          <p className="text-xs text-muted-foreground">1/3 completed</p>
+                {isLoadingAchievements ? (
+                  <Card className="min-h-[150px] flex items-center justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  </Card>
+                ) : (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-md">Achievement Progress</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <Award className="h-5 w-5 mr-2 text-amber-500" />
+                          <div>
+                            <p className="text-sm font-medium">
+                              {achievements?.filter(a => a.isCompleted).length || 0} / {achievements?.length || 0} Achievements
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Complete achievements to earn Spikes
+                            </p>
+                          </div>
                         </div>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => document.getElementById('achievements-tab')?.click()}
+                        >
+                          View All
+                        </Button>
                       </div>
-                      <div className="text-sm font-medium">+50 Spikes</div>
-                    </div>
-                    <Progress value={33.3} className="h-1.5 mt-2" />
-                  </CardContent>
-                </Card>
+                      <Progress 
+                        value={achievements?.length ? 
+                          (achievements.filter(a => a.isCompleted).length / achievements.length) * 100 : 0
+                        } 
+                        className="h-1.5 mt-2" 
+                      />
+                    </CardContent>
+                  </Card>
+                )}
 
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-md">Daily Login</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <CalendarCheck className="h-5 w-5 mr-2 text-amber-500" />
-                        <div>
-                          <p className="text-sm font-medium">3-day streak</p>
-                          <p className="text-xs text-muted-foreground">Come back tomorrow for more Spikes</p>
+                {isLoadingStreak ? (
+                  <Card className="min-h-[150px] flex items-center justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  </Card>
+                ) : (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-md">Login Streak</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <CalendarCheck className="h-5 w-5 mr-2 text-amber-500" />
+                          <div>
+                            <p className="text-sm font-medium">{currentStreak}-day streak</p>
+                            <p className="text-xs text-muted-foreground">
+                              {currentStreak >= 7 ? 'Awesome commitment!' : 'Come back daily for more Spikes'}
+                              {longestStreak > currentStreak && ` (Best: ${longestStreak} days)`}
+                            </p>
+                          </div>
                         </div>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => checkDailyLogin()}
+                          disabled={isCheckingLogin}
+                        >
+                          {isCheckingLogin ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            'Check In'
+                          )}
+                        </Button>
                       </div>
-                      <div className="text-sm font-medium">+5 Spikes</div>
-                    </div>
-                    <div className="flex justify-between mt-2">
-                      {[1, 2, 3, 4, 5, 6, 7].map((day) => (
-                        <div
-                          key={day}
-                          className={`h-2 w-2 rounded-full ${
-                            day <= 3 ? "bg-amber-500" : "bg-muted"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                      <div className="flex justify-between mt-2">
+                        {[1, 2, 3, 4, 5, 6, 7].map((day) => (
+                          <div
+                            key={day}
+                            className={`h-2 w-2 rounded-full ${
+                              day <= Math.min(currentStreak, 7) ? "bg-amber-500" : "bg-muted"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             </div>
           </CardContent>
@@ -351,35 +404,40 @@ export default function SpikesPage() {
               <CardDescription>Your Spikes earning and spending history</CardDescription>
             </CardHeader>
             <CardContent>
-              {spikeBalance > 0 ? (
+              {isLoadingTransactions ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : transactions && transactions.length > 0 ? (
                 <div className="space-y-4">
-                  {/* Example transactions */}
-                  <div className="flex items-center justify-between py-2 border-b">
-                    <div>
-                      <p className="font-medium">Completed Practice Session</p>
-                      <p className="text-xs text-muted-foreground">May 10, 2025</p>
+                  {transactions.map((transaction) => (
+                    <div key={transaction.id} className="flex items-center justify-between py-2 border-b">
+                      <div>
+                        <p className="font-medium">{transaction.description}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {transaction.createdAt ? 
+                            new Date(transaction.createdAt).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
+                            }) : 'Date unknown'}
+                        </p>
+                      </div>
+                      <div className={transaction.amount > 0 ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
+                        {transaction.amount > 0 ? '+' : ''}{transaction.amount} Spikes
+                      </div>
                     </div>
-                    <div className="text-green-600 font-medium">+20 Spikes</div>
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-b">
-                    <div>
-                      <p className="font-medium">Daily Login Streak (3 days)</p>
-                      <p className="text-xs text-muted-foreground">May 9, 2025</p>
-                    </div>
-                    <div className="text-green-600 font-medium">+5 Spikes</div>
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-b">
-                    <div>
-                      <p className="font-medium">Completed Weekly Challenge</p>
-                      <p className="text-xs text-muted-foreground">May 8, 2025</p>
-                    </div>
-                    <div className="text-green-600 font-medium">+50 Spikes</div>
-                  </div>
+                  ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">No transaction history yet</p>
-                  <p className="text-sm text-muted-foreground mt-2">Start earning Spikes by completing activities</p>
+                <div className="text-center py-6">
+                  <div className="flex justify-center mb-4">
+                    <Coins className="w-12 h-12 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-medium mb-2">No Transactions Yet</h3>
+                  <p className="text-muted-foreground">
+                    Start earning Spikes through daily logins, completing workouts, and achievements!
+                  </p>
                 </div>
               )}
             </CardContent>
