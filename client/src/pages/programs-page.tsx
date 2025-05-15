@@ -263,7 +263,25 @@ function ProgramCard({ program, type, creator, viewMode }: {
   
   return (
     <Card className="overflow-hidden transition-all hover:shadow-md">
-      <div className="h-32 bg-gradient-to-r from-primary/20 to-primary/40 relative">
+      <div className="h-32 relative bg-slate-100 border-b overflow-hidden">
+        {program.isUploadedProgram ? (
+          <div className="absolute inset-0 flex items-center justify-center flex-col">
+            <FileText className="h-10 w-10 text-slate-400" />
+            <span className="text-xs text-slate-500 mt-1">Program Document</span>
+          </div>
+        ) : (
+          <div className="absolute inset-0">
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/30"></div>
+            <div className="absolute bottom-2 left-2 right-2 text-xs text-white font-medium px-2 py-1 bg-black/30 rounded backdrop-blur-sm">
+              Preview content and exercises
+            </div>
+            <div className="grid grid-cols-3 gap-1 h-full p-2">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="bg-white/10 rounded h-10"></div>
+              ))}
+            </div>
+          </div>
+        )}
         {/* File icon for uploaded documents */}
         {program.isUploadedProgram && (
           <div className="absolute top-2 left-2">
