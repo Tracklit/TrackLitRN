@@ -6,6 +6,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
@@ -24,9 +25,10 @@ const programFormSchema = z.object({
   category: z.string().min(1, { message: "Please select a category" }),
   level: z.string().min(1, { message: "Please select a level" }),
   duration: z.coerce.number().min(1, { message: "Duration must be at least 1 day" }),
-  isPremium: z.boolean().default(false),
+  visibility: z.enum(["private", "public", "premium"], {
+    required_error: "Please select a visibility option",
+  }),
   price: z.coerce.number().min(0, { message: "Price cannot be negative" }).optional(),
-  isPublic: z.boolean().default(false),
 });
 
 export default function ProgramCreatePage() {
@@ -43,9 +45,8 @@ export default function ProgramCreatePage() {
       category: "",
       level: "beginner",
       duration: 7,
-      isPremium: false,
+      visibility: "private",
       price: 0,
-      isPublic: false,
     },
   });
   
@@ -225,59 +226,65 @@ export default function ProgramCreatePage() {
                     )}
                   />
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="isPublic"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                          <div className="space-y-0.5">
-                            <FormLabel>Make Public</FormLabel>
-                            <FormDescription>
-                              Allow others to discover and purchase this program
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="isPremium"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                          <div className="space-y-0.5">
-                            <FormLabel className="flex items-center">
-                              <Crown className="h-4 w-4 mr-1 text-yellow-500" />
-                              Premium Program
-                            </FormLabel>
-                            <FormDescription>
-                              Charge spikes for users to access this program
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={(checked) => {
-                                field.onChange(checked);
-                                if (!checked) {
-                                  form.setValue("price", 0);
-                                }
-                              }}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="visibility"
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel>Program Visibility</FormLabel>
+                        <FormControl>
+                          <RadioGroup 
+                            onValueChange={field.onChange} 
+                            defaultValue={field.value}
+                            className="grid grid-cols-1 md:grid-cols-3 gap-2"
+                          >
+                            <FormItem className="flex flex-col items-center space-y-2 rounded-lg border p-3 cursor-pointer hover:bg-muted/30 transition-colors [&:has([data-state=checked])]:border-primary [&:has([data-state=checked])]:bg-primary/5">
+                              <FormControl>
+                                <RadioGroupItem value="private" />
+                              </FormControl>
+                              <div className="space-y-1 text-center">
+                                <p className="font-medium">Private</p>
+                                <p className="text-xs text-muted-foreground">
+                                  Only visible to assigned athletes or clubs
+                                </p>
+                              </div>
+                            </FormItem>
+                            <FormItem className="flex flex-col items-center space-y-2 rounded-lg border p-3 cursor-pointer hover:bg-muted/30 transition-colors [&:has([data-state=checked])]:border-primary [&:has([data-state=checked])]:bg-primary/5">
+                              <FormControl>
+                                <RadioGroupItem value="public" />
+                              </FormControl>
+                              <div className="space-y-1 text-center">
+                                <p className="font-medium">Public</p>
+                                <p className="text-xs text-muted-foreground">
+                                  Anyone can view and use the program
+                                </p>
+                              </div>
+                            </FormItem>
+                            <FormItem className="flex flex-col items-center space-y-2 rounded-lg border p-3 cursor-pointer hover:bg-muted/30 transition-colors [&:has([data-state=checked])]:border-primary [&:has([data-state=checked])]:bg-primary/5">
+                              <FormControl>
+                                <RadioGroupItem value="premium" />
+                              </FormControl>
+                              <div className="space-y-1 text-center flex flex-col items-center">
+                                <p className="font-medium flex items-center">
+                                  <Crown className="h-4 w-4 mr-1 text-yellow-500" />
+                                  Premium
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  Users pay Spikes to access
+                                </p>
+                              </div>
+                            </FormItem>
+                          </RadioGroup>
+                        </FormControl>
+                        <FormDescription>
+                          Choose how your program is shared with others
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   
-                  {form.watch("isPremium") && (
+                  {form.watch("visibility") === "premium" && (
                     <FormField
                       control={form.control}
                       name="price"
@@ -354,8 +361,15 @@ export default function ProgramCreatePage() {
               )}
             </CardContent>
             <CardFooter className="flex justify-between border-t p-4">
-              <div className="text-sm text-muted-foreground">
-                {form.watch("isPublic") ? "Public program" : "Private program"}
+              <div className="text-sm text-muted-foreground flex items-center">
+                {form.watch("visibility") === "public" && "Public program"}
+                {form.watch("visibility") === "private" && "Private program"}
+                {form.watch("visibility") === "premium" && (
+                  <span className="flex items-center">
+                    <Crown className="h-3.5 w-3.5 mr-1 text-yellow-500" />
+                    Premium program
+                  </span>
+                )}
               </div>
               {form.watch("category") && (
                 <div className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
