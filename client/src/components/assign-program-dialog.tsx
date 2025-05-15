@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,7 +16,9 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -40,6 +43,7 @@ export function AssignProgramDialog({
   buttonText = "Assign"
 }: AssignProgramDialogProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState("");
@@ -60,7 +64,43 @@ export function AssignProgramDialog({
     enabled: isOpen, // Only fetch when dialog is open
   });
   
-  // Mutation to assign program to user
+  // Self-assign mutation
+  const selfAssignMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest(
+        "POST", 
+        `/api/programs/${program.id}/self-assign`, 
+        { notes }
+      );
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to self-assign program");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Program assigned to yourself successfully",
+      });
+      setIsOpen(false);
+      setSelectedUser("");
+      setNotes("");
+      queryClient.invalidateQueries({ queryKey: ['/api/assigned-programs'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+    onSettled: () => {
+      setIsSubmitting(false);
+    }
+  });
+  
+  // Assign to other user mutation
   const assignMutation = useMutation({
     mutationFn: async (data: { assigneeId: number; notes: string }) => {
       const response = await apiRequest(
@@ -107,10 +147,17 @@ export function AssignProgramDialog({
     }
     
     setIsSubmitting(true);
-    assignMutation.mutate({
-      assigneeId: parseInt(selectedUser),
-      notes,
-    });
+    
+    // Self-assign if "myself" is selected
+    if (selectedUser === "myself") {
+      selfAssignMutation.mutate();
+    } else {
+      // Otherwise assign to the selected user
+      assignMutation.mutate({
+        assigneeId: parseInt(selectedUser),
+        notes,
+      });
+    }
   };
   
   return (
@@ -142,7 +189,7 @@ export function AssignProgramDialog({
               <div className="flex items-center justify-center h-10">
                 <Loader2 className="h-4 w-4 animate-spin text-primary" />
               </div>
-            ) : !potentialAssignees || potentialAssignees.length === 0 ? (
+            ) : (!potentialAssignees || (potentialAssignees.length === 0 && !user)) ? (
               <div className="text-sm text-muted-foreground">
                 No eligible athletes found. Invite athletes to your club to assign programs to them.
               </div>
@@ -152,11 +199,21 @@ export function AssignProgramDialog({
                   <SelectValue placeholder="Select an athlete" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Array.isArray(potentialAssignees) && potentialAssignees.map((user: any) => (
-                    <SelectItem key={user.id} value={user.id.toString()}>
-                      {user.name || user.username}
-                    </SelectItem>
-                  ))}
+                  <SelectGroup>
+                    <SelectLabel>Myself</SelectLabel>
+                    <SelectItem value="myself">Assign to myself</SelectItem>
+                  </SelectGroup>
+                  
+                  {Array.isArray(potentialAssignees) && potentialAssignees.length > 0 && (
+                    <SelectGroup>
+                      <SelectLabel>Other Athletes</SelectLabel>
+                      {potentialAssignees.map((user: any) => (
+                        <SelectItem key={user.id} value={user.id.toString()}>
+                          {user.name || user.username}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  )}
                 </SelectContent>
               </Select>
             )}

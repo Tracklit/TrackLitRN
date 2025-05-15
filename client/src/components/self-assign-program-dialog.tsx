@@ -6,7 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Program } from "@shared/schema";
+// Using any type since we don't have a direct TrainingProgram export
+interface Program {
+  id: number;
+  title: string;
+  [key: string]: any;
+}
 
 interface SelfAssignProgramDialogProps {
   program: Program;
