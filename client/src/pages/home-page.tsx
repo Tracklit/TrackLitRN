@@ -1,11 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { HamburgerMenu } from '@/components/layout/hamburger-menu';
-import { Meet, Result } from '@shared/schema';
+import { Meet, Result, WorkoutSessionPreview } from '@shared/schema';
 import { Link } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from "@/components/ui/separator";
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { 
   Dumbbell, 
   Trophy, 
@@ -18,7 +27,11 @@ import {
   ChevronRight,
   Timer,
   LineChart,
-  ArrowUpRight
+  ArrowUpRight,
+  Eye,
+  BookmarkPlus,
+  MoreHorizontal,
+  UserCircle
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { CreateMeetModal } from '@/components/create-meet-modal';
@@ -27,6 +40,10 @@ import { cn } from '@/lib/utils';
 export default function HomePage() {
   const { user } = useAuth();
   const [isCreateMeetOpen, setIsCreateMeetOpen] = useState(false);
+  const sessionTickerRef = useRef<HTMLDivElement>(null);
+  const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
+  const [currentSession, setCurrentSession] = useState<any>(null);
+  const [isSavingSession, setIsSavingSession] = useState(false);
   
   // Fetch data for stats (simplified for now)
   const { data: meets } = useQuery<Meet[]>({
@@ -36,6 +53,106 @@ export default function HomePage() {
   const { data: results } = useQuery<Result[]>({
     queryKey: ['/api/results'],
   });
+  
+  // Temporary type for session previews with user data
+  type SessionPreviewWithUser = {
+    id: number;
+    workoutId: number;
+    userId: number;
+    title: string;
+    previewText: string;
+    createdAt: string;
+    user?: {
+      username: string;
+      name: string;
+    };
+  };
+  
+  // Fetch workout session previews
+  const { data: sessionPreviews, isLoading: isLoadingPreviews } = useQuery<SessionPreviewWithUser[]>({
+    queryKey: ['/api/workout-previews'],
+    // Use fallback data for demo until API is implemented
+    placeholderData: [
+      {
+        id: 1,
+        workoutId: 1,
+        userId: 2,
+        title: "Speed Intervals",
+        previewText: "Completed a great sprint session with 6x200m at 30s each!",
+        createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+        user: { username: "sarah_runner", name: "Sarah T." }
+      },
+      {
+        id: 2,
+        workoutId: 2,
+        userId: 3,
+        title: "Long Run Day",
+        previewText: "10km easy run completed in 45mins. Feeling great!",
+        createdAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
+        user: { username: "track_star", name: "Michael J." }
+      },
+      {
+        id: 3,
+        workoutId: 3,
+        userId: 4,
+        title: "Tempo Run",
+        previewText: "5x400m ladder workout complete. New personal best!",
+        createdAt: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
+        user: { username: "coach_k", name: "Coach Kevin" }
+      }
+    ]
+  });
+  
+  // Function to open session details modal
+  const openSessionDetails = (session: SessionPreviewWithUser) => {
+    setCurrentSession(session);
+    setIsSessionModalOpen(true);
+  };
+  
+  // Function to save session to user's workout library
+  const saveSessionToLibrary = async () => {
+    if (!currentSession || !user) return;
+    
+    setIsSavingSession(true);
+    
+    try {
+      // This would be the actual API call when implemented
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      
+      console.log("Session saved to library:", currentSession.title);
+      setIsSavingSession(false);
+      setIsSessionModalOpen(false);
+      
+      // Show success message or toast here
+    } catch (error) {
+      console.error("Error saving session:", error);
+      setIsSavingSession(false);
+    }
+  };
+  
+  // Ticker animation effect
+  useEffect(() => {
+    if (!sessionTickerRef.current || !sessionPreviews?.length) return;
+    
+    const ticker = sessionTickerRef.current;
+    let animationId: number;
+    let position = ticker.scrollWidth;
+    
+    const animate = () => {
+      position -= 1;
+      if (position <= -ticker.scrollWidth / 2) {
+        position = ticker.scrollWidth;
+      }
+      ticker.style.transform = `translateX(${position}px)`;
+      animationId = requestAnimationFrame(animate);
+    };
+    
+    animate();
+    
+    return () => {
+      cancelAnimationFrame(animationId);
+    };
+  }, [sessionPreviews]);
 
   // Category cards for main navigation
   const categoryCards = [
@@ -193,6 +310,140 @@ export default function HomePage() {
       </main>
       
       {/* Create Meet Modal */}
+      {/* Session Preview Ticker */}
+      <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border py-3 z-10">
+        <div className="flex items-center mb-2 px-4">
+          <Clock className="h-4 w-4 text-primary mr-2" />
+          <h3 className="text-sm font-semibold">Recent Public Workouts</h3>
+        </div>
+        
+        <div className="relative overflow-hidden whitespace-nowrap">
+          <div 
+            ref={sessionTickerRef} 
+            className="inline-flex gap-4 px-4"
+            style={{ willChange: 'transform' }}
+          >
+            {sessionPreviews?.map((session, index) => (
+              <div 
+                key={`${session.id}-${index}`} 
+                className="cursor-pointer inline-block"
+                onClick={() => openSessionDetails(session)}
+              >
+                <div className="flex items-center gap-2 bg-muted px-3 py-2 rounded-md">
+                  <div className="rounded-full bg-primary/10 h-8 w-8 flex items-center justify-center flex-shrink-0">
+                    <UserCircle className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="min-w-[200px]">
+                    <div className="flex items-center gap-1 mb-0.5">
+                      <span className="text-xs font-medium">{session.title}</span>
+                      <span className="text-xs text-muted-foreground">· {session.user?.username}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground line-clamp-1">{session.previewText}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            {/* Duplicate items for seamless looping */}
+            {sessionPreviews?.map((session, index) => (
+              <div 
+                key={`${session.id}-duplicate-${index}`} 
+                className="cursor-pointer inline-block"
+                onClick={() => openSessionDetails(session)}
+              >
+                <div className="flex items-center gap-2 bg-muted px-3 py-2 rounded-md">
+                  <div className="rounded-full bg-primary/10 h-8 w-8 flex items-center justify-center flex-shrink-0">
+                    <UserCircle className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="min-w-[200px]">
+                    <div className="flex items-center gap-1 mb-0.5">
+                      <span className="text-xs font-medium">{session.title}</span>
+                      <span className="text-xs text-muted-foreground">· {session.user?.username}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground line-clamp-1">{session.previewText}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      
+      {/* Session Detail Modal */}
+      <Dialog open={isSessionModalOpen} onOpenChange={setIsSessionModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{currentSession?.title}</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="rounded-full bg-primary/10 h-8 w-8 flex items-center justify-center flex-shrink-0">
+                <UserCircle className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">{currentSession?.user?.name}</p>
+                <p className="text-xs text-muted-foreground">@{currentSession?.user?.username}</p>
+              </div>
+            </div>
+            
+            <Separator />
+            
+            <div>
+              <h3 className="text-sm font-medium mb-2">Workout Details</h3>
+              <p className="text-sm">{currentSession?.previewText}</p>
+            </div>
+            
+            <div className="bg-muted p-3 rounded-md">
+              <h4 className="text-xs font-medium mb-2">Exercise Breakdown</h4>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-center gap-2">
+                  <Dumbbell className="h-3 w-3 text-primary" />
+                  <span>6 x 200m at 30s each</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Dumbbell className="h-3 w-3 text-primary" />
+                  <span>90 second recovery between sets</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Dumbbell className="h-3 w-3 text-primary" />
+                  <span>10 minute cool down</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+          
+          <DialogFooter className="flex sm:justify-between">
+            <DialogClose asChild>
+              <Button
+                type="button"
+                variant="outline"
+              >
+                Close
+              </Button>
+            </DialogClose>
+            <Button 
+              type="button"
+              onClick={saveSessionToLibrary}
+              disabled={isSavingSession}
+              className="bg-primary text-white"
+            >
+              {isSavingSession ? (
+                <>
+                  <BookmarkPlus className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <BookmarkPlus className="mr-2 h-4 w-4" />
+                  Save to Library
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
       <CreateMeetModal
         isOpen={isCreateMeetOpen}
         onClose={() => setIsCreateMeetOpen(false)}

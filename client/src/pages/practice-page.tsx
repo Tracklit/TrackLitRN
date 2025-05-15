@@ -13,6 +13,14 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { 
   Upload, 
   Camera, 
@@ -23,7 +31,9 @@ import {
   Calculator,
   ChevronDown,
   ChevronUp,
-  Dumbbell
+  Dumbbell,
+  CheckCircle,
+  Save
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "wouter";
@@ -39,6 +49,11 @@ export default function PracticePage() {
   const [distance, setDistance] = useState<number[]>([150]);
   const [calculatedTime, setCalculatedTime] = useState<number>(18.3);
   const [calculatorOpen, setCalculatorOpen] = useState<boolean>(false);
+  
+  // State for session completion
+  const [sessionCompleteOpen, setSessionCompleteOpen] = useState<boolean>(false);
+  const [diaryNotes, setDiaryNotes] = useState<string>("");
+  const [isSaving, setIsSaving] = useState<boolean>(false);
   
   // Navigation functions
   const goToPreviousDay = () => {
@@ -275,7 +290,17 @@ export default function PracticePage() {
                 <textarea 
                   className="w-full h-24 p-2 rounded border border-border bg-background text-sm" 
                   placeholder="Add your training notes here..."
+                  value={diaryNotes}
+                  onChange={(e) => setDiaryNotes(e.target.value)}
                 ></textarea>
+                <div className="flex justify-end mt-3">
+                  <Button 
+                    className="bg-primary hover:bg-primary/90 text-white"
+                    onClick={() => setSessionCompleteOpen(true)}
+                  >
+                    Complete Session
+                  </Button>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -316,8 +341,113 @@ export default function PracticePage() {
           </div>
         </div>
       </div>
+
+      {/* Session Complete Modal */}
+      <Dialog open={sessionCompleteOpen} onOpenChange={setSessionCompleteOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle className="text-green-500 h-5 w-5" />
+              Session Saved
+            </DialogTitle>
+            <DialogDescription>
+              Your training session has been completed and saved to your workout library.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="bg-muted/30 p-4 rounded-md mb-4">
+            <h3 className="font-medium mb-2">Speed Endurance Session</h3>
+            <p className="text-sm text-muted-foreground">
+              {diaryNotes || "No notes added for this session."}
+            </p>
+          </div>
+          
+          <DialogFooter className="flex sm:justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setSessionCompleteOpen(false)}
+            >
+              Close
+            </Button>
+            <Button 
+              type="button"
+              className="bg-primary text-white"
+              onClick={() => saveWorkout(true)}
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <>
+                  <Save className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Go to Workout Library
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageContainer>
   );
+  
+  // Function to save the workout
+  async function saveWorkout(navigateToLibrary: boolean = false) {
+    if (!user) return;
+    
+    setIsSaving(true);
+    
+    try {
+      // Content would contain structured data about the workout
+      const workoutContent = {
+        exercises: [
+          { name: "3 x 200m", effort: "85% effort", rest: "2min rest" },
+          { name: "2 x 250m", effort: "90% effort", rest: "3min rest" },
+          { name: "1 x 300m", effort: "100% effort", rest: "all out" }
+        ],
+        performance: {
+          percentage: percentage[0],
+          distance: distance[0],
+          calculatedTime: calculatedTime
+        }
+      };
+      
+      // Save to the workout library
+      const response = await fetch('/api/workout-library', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          title: "Speed Endurance",
+          description: diaryNotes,
+          category: "completed",
+          content: workoutContent,
+          isPublic: true,
+          completedAt: new Date().toISOString()
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save workout');
+      }
+      
+      // Handle successful save
+      setIsSaving(false);
+      
+      // Optionally navigate to workout library
+      if (navigateToLibrary) {
+        // This would be implemented when we create the workout library page
+        console.log("Navigate to workout library");
+      }
+    } catch (error) {
+      console.error('Error saving workout:', error);
+      setIsSaving(false);
+    }
+  }
 }
 
 // Protected route wrapper
