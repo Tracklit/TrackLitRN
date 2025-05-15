@@ -231,15 +231,11 @@ export default function HomePage() {
       {/* Session Preview Ticker */}
       {isTickerVisible && (
         <div className="relative left-0 right-0 z-10 bg-background/80 backdrop-blur-sm pt-8 pb-1 border-b border-border/20">
-          <div className="flex items-center justify-between px-4 mb-2">
-            <div className="flex items-center">
-              <Clock className="h-4 w-4 text-primary mr-2" />
-              <h3 className="text-sm font-semibold">Recent Public Workouts</h3>
-            </div>
+          <div className="flex items-center px-4 mb-2">
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 w-6 p-0"
+              className="h-6 w-6 p-0 mr-3"
               onClick={() => setIsTickerVisible(false)}
             >
               <X className="h-4 w-4" />
