@@ -263,11 +263,19 @@ function ProgramCard({ program, type, creator, viewMode }: {
   return (
     <Card className="overflow-hidden transition-all hover:shadow-md">
       <div className="h-32 bg-gradient-to-r from-primary/20 to-primary/40 relative">
-        {program.isPremium && (
+        {program.visibility === 'premium' && (
           <div className="absolute top-2 right-2">
             <Badge variant="secondary" className="flex items-center gap-1">
               <Crown className="h-3 w-3 text-yellow-500" />
               <span>{program.price || 0} Spikes</span>
+            </Badge>
+          </div>
+        )}
+        {program.visibility === 'private' && (
+          <div className="absolute top-2 right-2">
+            <Badge variant="outline" className="flex items-center gap-1 bg-background/80">
+              <LockIcon className="h-3 w-3" />
+              <span>Private</span>
             </Badge>
           </div>
         )}
@@ -325,10 +333,15 @@ function ProgramCard({ program, type, creator, viewMode }: {
         ) : (
           <>
             <Button variant="ghost" size="sm">Preview</Button>
-            {program.isPremium ? (
+            {program.visibility === 'premium' ? (
               <Button variant="default" size="sm">
                 <Crown className="h-3.5 w-3.5 mr-1.5 text-yellow-500" />
                 Purchase
+              </Button>
+            ) : program.visibility === 'private' ? (
+              <Button variant="default" size="sm" disabled>
+                <LockIcon className="h-3.5 w-3.5 mr-1.5" />
+                Private
               </Button>
             ) : (
               <Button variant="default" size="sm">Start Free</Button>
