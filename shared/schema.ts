@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json, real } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, real, date } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -623,3 +623,157 @@ export type ClubMember = typeof clubMembers.$inferSelect;
 export type ChatGroupMember = typeof chatGroupMembers.$inferSelect;
 export type GroupMessage = typeof groupMessages.$inferSelect;
 export type ClubMessage = typeof clubMessages.$inferSelect;
+
+// Spikes Reward System
+
+// Achievement definition table
+export const achievements = pgTable("achievements", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  category: text("category").notNull(), // login, workout, journal, meet, group, social, etc.
+  iconUrl: text("icon_url"),
+  spikeReward: integer("spike_reward").notNull().default(10),
+  isOneTime: boolean("is_one_time").notNull().default(true), // Can it be earned multiple times
+  requirementValue: integer("requirement_value").notNull().default(1), // e.g. 3 for a 3-day streak
+  requirementType: text("requirement_type").notNull(), // streak, count, etc.
+  isHidden: boolean("is_hidden").default(false), // Hide until earned
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// User achievements - records which achievements a user has earned
+export const userAchievements = pgTable("user_achievements", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  achievementId: integer("achievement_id").notNull().references(() => achievements.id),
+  progress: integer("progress").notNull().default(0), // Current progress toward achievement
+  isCompleted: boolean("is_completed").default(false),
+  completionDate: timestamp("completion_date"),
+  timesEarned: integer("times_earned").default(0), // For repeatable achievements
+  lastEarnedAt: timestamp("last_earned_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Record of login streaks for users
+export const loginStreaks = pgTable("login_streaks", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id).unique(),
+  currentStreak: integer("current_streak").default(0),
+  longestStreak: integer("longest_streak").default(0),
+  lastLoginDate: date("last_login_date"),
+  streakUpdatedAt: timestamp("streak_updated_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Spikes transactions - history of spikes earned or spent
+export const spikeTransactions = pgTable("spike_transactions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  amount: integer("amount").notNull(), // Positive for earned, negative for spent
+  balance: integer("balance").notNull(), // Running balance after transaction
+  source: text("source").notNull(), // achievement, streak, referral, purchase, etc.
+  sourceId: integer("source_id"), // ID of the related entity (if applicable)
+  description: text("description").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Referral system
+export const referrals = pgTable("referrals", {
+  id: serial("id").primaryKey(),
+  referrerId: integer("referrer_id").notNull().references(() => users.id), // User who referred
+  referredId: integer("referred_id").notNull().references(() => users.id), // User who was referred
+  referralCode: text("referral_code").notNull(),
+  status: text("status", { enum: ['pending', 'completed'] }).default('pending'),
+  spikesAwarded: boolean("spikes_awarded").default(false),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Relations
+export const achievementsRelations = relations(achievements, ({ many }) => ({
+  userAchievements: many(userAchievements),
+}));
+
+export const userAchievementsRelations = relations(userAchievements, ({ one }) => ({
+  user: one(users, {
+    fields: [userAchievements.userId],
+    references: [users.id],
+  }),
+  achievement: one(achievements, {
+    fields: [userAchievements.achievementId],
+    references: [achievements.id],
+  }),
+}));
+
+export const loginStreaksRelations = relations(loginStreaks, ({ one }) => ({
+  user: one(users, {
+    fields: [loginStreaks.userId],
+    references: [users.id],
+  }),
+}));
+
+export const spikeTransactionsRelations = relations(spikeTransactions, ({ one }) => ({
+  user: one(users, {
+    fields: [spikeTransactions.userId],
+    references: [users.id],
+  }),
+}));
+
+export const referralsRelations = relations(referrals, ({ one }) => ({
+  referrer: one(users, {
+    fields: [referrals.referrerId],
+    references: [users.id],
+    relationName: "referrer",
+  }),
+  referred: one(users, {
+    fields: [referrals.referredId],
+    references: [users.id],
+  }),
+}));
+
+// Schemas for Spikes System
+export const insertAchievementSchema = createInsertSchema(achievements, {
+  spikeReward: z.number().int().min(1),
+  requirementValue: z.number().int().min(1),
+});
+
+export const insertUserAchievementSchema = createInsertSchema(userAchievements, {
+  progress: z.number().int().min(0),
+  timesEarned: z.number().int().min(0),
+});
+
+export const insertLoginStreakSchema = createInsertSchema(loginStreaks, {
+  currentStreak: z.number().int().min(0),
+  longestStreak: z.number().int().min(0),
+});
+
+export const insertSpikeTransactionSchema = createInsertSchema(spikeTransactions, {
+  amount: z.number().int(),
+  balance: z.number().int().min(0),
+  description: z.string().min(1),
+});
+
+export const insertReferralSchema = createInsertSchema(referrals, {
+  referralCode: z.string().min(6),
+});
+
+// Types
+export type Achievement = typeof achievements.$inferSelect;
+export type UserAchievement = typeof userAchievements.$inferSelect;
+export type LoginStreak = typeof loginStreaks.$inferSelect;
+export type SpikeTransaction = typeof spikeTransactions.$inferSelect;
+export type Referral = typeof referrals.$inferSelect;
+
+export type InsertAchievement = z.infer<typeof insertAchievementSchema>;
+export type InsertUserAchievement = z.infer<typeof insertUserAchievementSchema>;
+export type InsertLoginStreak = z.infer<typeof insertLoginStreakSchema>;
+export type InsertSpikeTransaction = z.infer<typeof insertSpikeTransactionSchema>;
+export type InsertReferral = z.infer<typeof insertReferralSchema>;
+
+// Additional relations for users with spikes system
+export const usersSpikesRelations = relations(users, ({ many, one }) => ({
+  userAchievements: many(userAchievements),
+  loginStreaks: one(loginStreaks),
+  spikeTransactions: many(spikeTransactions),
+  referrals: many(referrals, { relationName: "referrer" }),
+}));
