@@ -154,13 +154,13 @@ export async function fetchSpreadsheetData(sheetId: string) {
                 });
                 
                 const values = Object.values(rowData);
-                getDateValue = values[0] || '';
-                getPreActivation1 = values[1] || '';
-                getPreActivation2 = values[2] || '';
-                getShortDistanceWorkout = values[3] || '';
-                getMediumDistanceWorkout = values[4] || '';
-                getLongDistanceWorkout = values[5] || '';
-                getExtraSession = values.length > 6 ? values[6] || '' : '';
+                getDateValue = String(values[0] || '');
+                getPreActivation1 = String(values[1] || '');
+                getPreActivation2 = String(values[2] || '');
+                getShortDistanceWorkout = String(values[3] || '');
+                getMediumDistanceWorkout = String(values[4] || '');
+                getLongDistanceWorkout = String(values[5] || '');
+                getExtraSession = values.length > 6 ? String(values[6] || '') : '';
               }
             }
           } catch (e) {
