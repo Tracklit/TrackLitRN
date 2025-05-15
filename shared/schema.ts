@@ -847,13 +847,12 @@ export const trainingPrograms = pgTable("training_programs", {
   userId: integer("user_id").notNull().references(() => users.id), // Creator
   title: text("title").notNull(),
   description: text("description"),
-  isPremium: boolean("is_premium").default(false),
-  price: integer("price"), // In spikes currency
+  visibility: text("visibility", { enum: ['private', 'public', 'premium'] }).default('private'),
+  price: integer("price").default(0), // In spikes currency (for premium programs)
   coverImageUrl: text("cover_image_url"),
   category: text("category").notNull(), // sprint, distance, jumps, throws, etc.
   level: text("level"), // beginner, intermediate, advanced
   duration: integer("duration").notNull(), // In days
-  isPublic: boolean("is_public").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

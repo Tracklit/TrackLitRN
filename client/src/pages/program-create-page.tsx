@@ -351,7 +351,7 @@ export default function ProgramCreatePage() {
                 </span>
               </div>
               
-              {form.watch("isPremium") && (
+              {form.watch("visibility") === "premium" && (
                 <div className="mt-4 p-2 bg-yellow-100 dark:bg-yellow-900/40 rounded-md flex items-center">
                   <Crown className="h-4 w-4 text-yellow-600 dark:text-yellow-400 mr-2" />
                   <span className="text-sm text-yellow-700 dark:text-yellow-300">
