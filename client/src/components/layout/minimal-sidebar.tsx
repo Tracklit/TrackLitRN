@@ -136,7 +136,11 @@ export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
       {/* Backdrop */}
       <div 
         className="md:hidden fixed inset-0 bg-black/20 z-40 transition-opacity duration-300"
-        onClick={onClose}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onClose();
+        }}
         style={{ 
           opacity: isOpen ? 1 : 0,
           pointerEvents: isOpen ? 'auto' : 'none'
@@ -148,14 +152,25 @@ export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
         className="md:hidden fixed top-0 left-0 h-full w-64 z-50 shadow-lg transform transition-transform duration-300 ease-in-out" 
         style={{ 
           backgroundColor: 'hsl(220 40% 15%)',
-          transform: isOpen ? 'translateX(0)' : 'translateX(-100%)'
+          transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
+          overscrollBehavior: 'contain'
         }}
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-center items-center p-4 border-b border-sidebar-border">
           <h2 className="text-lg font-bold text-foreground">Track Pro</h2>
         </div>
         
-        <div className="flex-1 px-2 py-4 overflow-auto">
+        <div 
+          className="flex-1 px-2 py-4 overflow-y-auto h-[calc(100vh-140px)]" 
+          style={{ 
+            WebkitOverflowScrolling: 'touch',
+            scrollbarWidth: 'thin',
+            msOverflowStyle: 'none'
+          }}
+          onTouchStart={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
+        >
           <div className="space-y-1">
             <NavItem 
               href="/" 
