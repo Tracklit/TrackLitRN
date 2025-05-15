@@ -431,12 +431,18 @@ function ProgramCard({ program, type, creator, viewMode }: {
           )
         ) : viewMode === "purchased" ? (
           <>
-            <Button variant="ghost" size="sm">Details</Button>
-            <Button variant="default" size="sm">Continue</Button>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href={`/programs/${program.id}`}>Details</Link>
+            </Button>
+            <Button variant="default" size="sm" asChild>
+              <Link href={`/programs/${program.id}`}>Continue</Link>
+            </Button>
           </>
         ) : (
           <>
-            <Button variant="ghost" size="sm">Preview</Button>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href={`/programs/${program.id}`}>Preview</Link>
+            </Button>
             {program.visibility === 'premium' ? (
               <Button variant="default" size="sm">
                 <Crown className="h-3.5 w-3.5 mr-1.5 text-yellow-500" />
@@ -448,7 +454,12 @@ function ProgramCard({ program, type, creator, viewMode }: {
                 Private
               </Button>
             ) : (
-              <Button variant="default" size="sm">Start Free</Button>
+              <SelfAssignProgramDialog 
+                program={program}
+                size="sm"
+                variant="default"
+                buttonText="Start Free"
+              />
             )}
           </>
         )}
