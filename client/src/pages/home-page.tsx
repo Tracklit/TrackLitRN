@@ -311,8 +311,8 @@ export default function HomePage() {
       
       {/* Create Meet Modal */}
       {/* Session Preview Ticker */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border py-3 z-10">
-        <div className="flex items-center mb-2 px-4">
+      <div className="fixed bottom-0 left-0 right-0 z-10">
+        <div className="flex items-center mb-1.5 px-4">
           <Clock className="h-4 w-4 text-primary mr-2" />
           <h3 className="text-sm font-semibold">Recent Public Workouts</h3>
         </div>
@@ -329,8 +329,8 @@ export default function HomePage() {
                 className="cursor-pointer inline-block"
                 onClick={() => openSessionDetails(session)}
               >
-                <div className="flex items-center gap-2 bg-muted px-3 py-2 rounded-md">
-                  <div className="rounded-full bg-primary/10 h-8 w-8 flex items-center justify-center flex-shrink-0">
+                <div className="flex items-center gap-2 bg-primary/5 border border-primary/10 px-3 py-2 rounded-md hover:bg-primary/10 transition-colors">
+                  <div className="rounded-full bg-primary/15 h-8 w-8 flex items-center justify-center flex-shrink-0">
                     <UserCircle className="h-4 w-4 text-primary" />
                   </div>
                   <div className="min-w-[200px]">
@@ -351,8 +351,8 @@ export default function HomePage() {
                 className="cursor-pointer inline-block"
                 onClick={() => openSessionDetails(session)}
               >
-                <div className="flex items-center gap-2 bg-muted px-3 py-2 rounded-md">
-                  <div className="rounded-full bg-primary/10 h-8 w-8 flex items-center justify-center flex-shrink-0">
+                <div className="flex items-center gap-2 bg-primary/5 border border-primary/10 px-3 py-2 rounded-md hover:bg-primary/10 transition-colors">
+                  <div className="rounded-full bg-primary/15 h-8 w-8 flex items-center justify-center flex-shrink-0">
                     <UserCircle className="h-4 w-4 text-primary" />
                   </div>
                   <div className="min-w-[200px]">
