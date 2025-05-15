@@ -64,20 +64,16 @@ function App() {
     setIsMenuOpen(!isMenuOpen);
   };
   
-  const closeMenu = () => {
-    setIsMenuOpen(false);
-  };
-  
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
           <div className="min-h-screen bg-background text-foreground">
             {/* Mobile Menu Button */}
-            <MobileSidebarButton onClick={toggleMenu} />
+            <MobileSidebarButton onClick={toggleMenu} isOpen={isMenuOpen} />
             
             {/* Mobile Sidebar - Always rendered but with slide animation */}
-            <MobileSidebar isOpen={isMenuOpen} onClose={closeMenu} />
+            <MobileSidebar isOpen={isMenuOpen} onClose={toggleMenu} />
             
             {/* Main Content */}
             <main className="pt-12">

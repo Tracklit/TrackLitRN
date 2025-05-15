@@ -90,20 +90,20 @@ export function DesktopSidebar() {
   );
 }
 
-export function MobileSidebarButton({ onClick }: { onClick: () => void }) {
+export function MobileSidebarButton({ onClick, isOpen }: { onClick: () => void, isOpen?: boolean }) {
   const { user } = useAuth();
   
   if (!user) return null;
   
   return (
-    <div className="fixed top-0 left-0 right-0 z-50">
+    <div className="fixed top-0 left-0 right-0 z-[60]">
       <div style={{ backgroundColor: 'hsl(220 40% 15%)' }} className="flex items-center justify-between p-1 shadow-md">
         <div className="flex items-center">
           <button 
             onClick={onClick} 
             className="text-foreground p-2"
           >
-            <span className="sr-only">Open menu</span>
+            <span className="sr-only">{isOpen ? 'Close' : 'Open'} menu</span>
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
@@ -151,14 +151,8 @@ export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
           transform: isOpen ? 'translateX(0)' : 'translateX(-100%)'
         }}
       >
-        <div className="flex justify-between items-center p-4 border-b border-sidebar-border">
+        <div className="flex justify-center items-center p-4 border-b border-sidebar-border">
           <h2 className="text-lg font-bold text-foreground">Track Pro</h2>
-          <button onClick={onClose} className="text-foreground hover:text-muted-foreground">
-            <span className="sr-only">Close menu</span>
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
         </div>
         
         <div className="flex-1 px-2 py-4 overflow-auto">
