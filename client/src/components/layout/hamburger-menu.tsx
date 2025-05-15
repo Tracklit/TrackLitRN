@@ -67,12 +67,12 @@ export function HamburgerMenu() {
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50">
-      <div style={{ backgroundColor: 'hsl(220 40% 15%)' }} className="flex items-center justify-between p-3 shadow-md">
+      <div style={{ backgroundColor: 'hsl(220 40% 15%)' }} className="flex items-center justify-between p-2 shadow-md">
         <div className="flex items-center">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-foreground mr-2">
-                <Menu className="h-6 w-6" />
+              <Button variant="ghost" size="icon" className="text-foreground">
+                <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
             <SheetContent side="left" style={{ backgroundColor: 'hsl(220 40% 15%)' }} className="border-sidebar-border w-72 p-0">
@@ -219,11 +219,11 @@ export function HamburgerMenu() {
               </div>
             </SheetContent>
           </Sheet>
-          <span className="text-xl font-bold text-foreground">Track Pro</span>
+          {/* Removed Track Pro text */}
         </div>
 
         <div className="flex items-center">
-          <Avatar className="h-8 w-8 bg-primary text-primary-foreground">
+          <Avatar className="h-6 w-6 bg-primary text-primary-foreground">
             <AvatarFallback>{getInitials(user.name || user.username)}</AvatarFallback>
           </Avatar>
         </div>

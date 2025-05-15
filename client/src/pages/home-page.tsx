@@ -76,9 +76,9 @@ export default function HomePage() {
     <div className="min-h-screen bg-background text-foreground pb-16">
       <HamburgerMenu />
       
-      <main className="pt-16 px-4 container mx-auto max-w-7xl">
+      <main className="pt-6 px-4 container mx-auto max-w-7xl">
         {/* Logo will be placed here in the future */}
-        <div className="h-8 mb-4 mt-2 mx-auto" style={{ maxWidth: "540px" }}>
+        <div className="h-6 mb-2 mx-auto" style={{ maxWidth: "540px" }}>
           {/* Reserved space for logo */}
         </div>
 
