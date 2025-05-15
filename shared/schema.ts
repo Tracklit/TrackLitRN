@@ -770,10 +770,78 @@ export type InsertLoginStreak = z.infer<typeof insertLoginStreakSchema>;
 export type InsertSpikeTransaction = z.infer<typeof insertSpikeTransactionSchema>;
 export type InsertReferral = z.infer<typeof insertReferralSchema>;
 
+// Workout Library System
+export const workoutLibrary = pgTable("workout_library", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  category: text("category", { enum: ['coming', 'completed', 'saved'] }).notNull(),
+  content: json("content").notNull(), // Structured workout content
+  isPublic: boolean("is_public").default(false),
+  originalUserId: integer("original_user_id").references(() => users.id), // For saved workouts, null if created by user
+  completedAt: timestamp("completed_at"), // When the workout was completed (if applicable)
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const workoutLibraryRelations = relations(workoutLibrary, ({ one }) => ({
+  user: one(users, {
+    fields: [workoutLibrary.userId],
+    references: [users.id],
+  }),
+  originalUser: one(users, {
+    fields: [workoutLibrary.originalUserId],
+    references: [users.id],
+    relationName: "original_creator",
+  }),
+}));
+
+export const workoutSessionPreview = pgTable("workout_session_preview", {
+  id: serial("id").primaryKey(),
+  workoutId: integer("workout_id").notNull().references(() => workoutLibrary.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  title: text("title").notNull(),
+  previewText: text("preview_text").notNull(),
+  imageUrl: text("image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const workoutSessionPreviewRelations = relations(workoutSessionPreview, ({ one }) => ({
+  workout: one(workoutLibrary, {
+    fields: [workoutSessionPreview.workoutId],
+    references: [workoutLibrary.id],
+  }),
+  user: one(users, {
+    fields: [workoutSessionPreview.userId],
+    references: [users.id],
+  }),
+}));
+
+// Create Insert Schemas for the new tables
+export const insertWorkoutLibrarySchema = createInsertSchema(workoutLibrary, {
+  content: z.record(z.string(), z.any()),
+}).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertWorkoutSessionPreviewSchema = createInsertSchema(workoutSessionPreview).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Create Type Definitions
+export type WorkoutLibrary = typeof workoutLibrary.$inferSelect;
+export type InsertWorkoutLibrary = z.infer<typeof insertWorkoutLibrarySchema>;
+export type WorkoutSessionPreview = typeof workoutSessionPreview.$inferSelect;
+export type InsertWorkoutSessionPreview = z.infer<typeof insertWorkoutSessionPreviewSchema>;
+
 // Additional relations for users with spikes system
 export const usersSpikesRelations = relations(users, ({ many, one }) => ({
   userAchievements: many(userAchievements),
   loginStreaks: one(loginStreaks),
   spikeTransactions: many(spikeTransactions),
   referrals: many(referrals, { relationName: "referrer" }),
+  workouts: many(workoutLibrary),
+  workoutPreviews: many(workoutSessionPreview),
 }));
