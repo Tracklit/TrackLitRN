@@ -28,6 +28,8 @@ import {
   InsertChatGroupMember,
   GroupMessage,
   InsertGroupMessage,
+  ProgramAssignment,
+  InsertProgramAssignment,
   ClubMessage,
   InsertClubMessage,
   Achievement,
@@ -78,7 +80,8 @@ import {
   trainingPrograms,
   programSessions,
   programPurchases,
-  programProgress
+  programProgress,
+  programAssignments
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, lt, gte, desc, asc, inArray, or, isNotNull, isNull } from "drizzle-orm";
@@ -212,6 +215,14 @@ export interface IStorage {
   getUserPurchasedPrograms(userId: number): Promise<(ProgramPurchase & { program: TrainingProgram, creator: { username: string } })[]>;
   getPurchasedProgram(userId: number, programId: number): Promise<ProgramPurchase | undefined>;
   purchaseProgram(purchase: InsertProgramPurchase): Promise<ProgramPurchase>;
+  
+  // Program Assignments
+  createProgramAssignment(assignment: InsertProgramAssignment): Promise<ProgramAssignment>;
+  getProgramAssignment(programId: number, assigneeId: number): Promise<ProgramAssignment | undefined>;
+  getProgramAssignees(programId: number): Promise<ProgramAssignment[]>;
+  getAssignedPrograms(userId: number): Promise<ProgramAssignment[]>;
+  updateProgramAssignment(id: number, updates: Partial<ProgramAssignment>): Promise<ProgramAssignment>;
+  getCoachableUsers(coachId: number): Promise<User[]>;
   
   // Program Progress
   getProgramProgress(userId: number, programId: number): Promise<ProgramProgress[]>;
@@ -1625,6 +1636,94 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return newProgress;
+  }
+  
+  // Program Assignments methods
+  async createProgramAssignment(assignment: InsertProgramAssignment): Promise<ProgramAssignment> {
+    const [newAssignment] = await db
+      .insert(programAssignments)
+      .values(assignment)
+      .returning();
+    
+    return newAssignment;
+  }
+  
+  async getProgramAssignment(programId: number, assigneeId: number): Promise<ProgramAssignment | undefined> {
+    const [assignment] = await db
+      .select()
+      .from(programAssignments)
+      .where(and(
+        eq(programAssignments.programId, programId),
+        eq(programAssignments.assigneeId, assigneeId)
+      ));
+    
+    return assignment;
+  }
+  
+  async getProgramAssignees(programId: number): Promise<ProgramAssignment[]> {
+    const assignments = await db
+      .select()
+      .from(programAssignments)
+      .where(eq(programAssignments.programId, programId));
+    
+    return assignments;
+  }
+  
+  async getAssignedPrograms(userId: number): Promise<ProgramAssignment[]> {
+    const assignments = await db
+      .select()
+      .from(programAssignments)
+      .where(eq(programAssignments.assigneeId, userId));
+    
+    return assignments;
+  }
+  
+  async updateProgramAssignment(id: number, updates: Partial<ProgramAssignment>): Promise<ProgramAssignment> {
+    const [updated] = await db
+      .update(programAssignments)
+      .set(updates)
+      .where(eq(programAssignments.id, id))
+      .returning();
+    
+    return updated;
+  }
+  
+  // Get users who can be assigned programs (club members, coached athletes)
+  async getCoachableUsers(coachId: number): Promise<User[]> {
+    // First get all clubs where the user is an admin/coach
+    const clubIds = await db
+      .select({ clubId: clubMembers.clubId })
+      .from(clubMembers)
+      .where(and(
+        eq(clubMembers.userId, coachId),
+        or(
+          eq(clubMembers.role, 'admin'),
+          eq(clubMembers.role, 'coach')
+        )
+      ));
+    
+    if (clubIds.length === 0) {
+      return [];
+    }
+    
+    // Then get all members of those clubs
+    const clubMemberUsers = await db
+      .select({
+        id: users.id,
+        username: users.username,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        profileImageUrl: users.profileImageUrl
+      })
+      .from(clubMembers)
+      .innerJoin(users, eq(clubMembers.userId, users.id))
+      .where(inArray(
+        clubMembers.clubId,
+        clubIds.map(c => c.clubId)
+      ));
+    
+    return clubMemberUsers;
   }
 }
 
