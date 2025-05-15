@@ -210,6 +210,7 @@ export interface IStorage {
   createProgramSession(session: InsertProgramSession): Promise<ProgramSession>;
   updateProgramSession(id: number, data: Partial<ProgramSession>): Promise<ProgramSession | undefined>;
   deleteProgramSession(id: number): Promise<boolean>;
+  createProgramSessionBatch(sessions: InsertProgramSession[]): Promise<ProgramSession[]>;
   
   // Purchased Programs
   getUserPurchasedPrograms(userId: number): Promise<(ProgramPurchase & { program: TrainingProgram, creator: { username: string } })[]>;
@@ -1541,6 +1542,20 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return newSession;
+  }
+  
+  async createProgramSessionBatch(sessions: InsertProgramSession[]): Promise<ProgramSession[]> {
+    if (sessions.length === 0) {
+      return [];
+    }
+    
+    // Insert all sessions at once
+    const newSessions = await db
+      .insert(programSessions)
+      .values(sessions)
+      .returning();
+    
+    return newSessions;
   }
   
   async updateProgramSession(id: number, data: Partial<ProgramSession>): Promise<ProgramSession | undefined> {

@@ -2666,6 +2666,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // 3.2 Import program from Google Sheet
+  app.post("/api/programs/import-sheet", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const { GoogleSpreadsheet } = require('google-spreadsheet');
+      
+      const { 
+        title, 
+        description, 
+        googleSheetUrl, 
+        category, 
+        level, 
+        visibility, 
+        duration 
+      } = req.body;
+      
+      // Extract sheet ID from the URL
+      const urlPattern = /\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/;
+      const match = googleSheetUrl.match(urlPattern);
+      
+      if (!match || !match[1]) {
+        return res.status(400).json({ error: "Invalid Google Sheet URL" });
+      }
+      
+      const sheetId = match[1];
+      
+      // Create program with sheet info
+      const programData = {
+        userId: req.user!.id,
+        title,
+        description: description || '',
+        category,
+        level,
+        visibility,
+        duration: parseInt(duration),
+        importedFromSheet: true,
+        googleSheetUrl,
+        googleSheetId: sheetId,
+        totalSessions: 0,
+      };
+      
+      // Create the program first
+      const createdProgram = await dbStorage.createProgram(programData);
+      
+      // Now fetch and parse the Google Sheet
+      const doc = new GoogleSpreadsheet(sheetId);
+      
+      // Auth is not required for public sheets
+      await doc.loadInfo();
+      
+      // Get the first sheet
+      const sheet = doc.sheetsByIndex[0];
+      await sheet.loadCells();
+      
+      // Parse the rows into sessions
+      const rows = await sheet.getRows();
+      const sessions = [];
+      
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        
+        // Skip rows without dates or empty rows
+        if (!row || !row._rawData || !row._rawData[0]) {
+          continue;
+        }
+        
+        // Get date from column A
+        const date = row._rawData[0];
+        
+        // Check if the cell is empty
+        const isRestDay = !row._rawData[3] && !row._rawData[4] && !row._rawData[5];
+        
+        // Create session for this date
+        const sessionData = {
+          programId: createdProgram.id,
+          date,
+          preActivation1: row._rawData[1] || '',
+          preActivation2: row._rawData[2] || '',
+          shortDistanceWorkout: row._rawData[3] || '',
+          mediumDistanceWorkout: row._rawData[4] || '',
+          longDistanceWorkout: row._rawData[5] || '',
+          extraSession: row._rawData[6] || '',
+          isRestDay,
+          dayNumber: i + 1,
+          title: `Day ${i + 1}: ${isRestDay ? 'Rest Day' : 'Training Day'}`,
+        };
+        
+        const createdSession = await dbStorage.createProgramSession(sessionData);
+        sessions.push(createdSession);
+      }
+      
+      // Update the program with the total sessions count
+      await dbStorage.updateProgram(createdProgram.id, {
+        totalSessions: sessions.length
+      });
+      
+      res.status(201).json({
+        program: createdProgram,
+        importedSessions: sessions.length
+      });
+    } catch (error: any) {
+      console.error("Error importing Google Sheet:", error);
+      res.status(500).json({ error: error.message || "Failed to import Google Sheet" });
+    }
+  });
+  
   // 4. Update a program
   app.put("/api/programs/:id", async (req: Request, res: Response) => {
     try {
