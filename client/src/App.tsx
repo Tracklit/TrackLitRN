@@ -73,16 +73,11 @@ function App() {
       <AuthProvider>
         <TooltipProvider>
           <div className="min-h-screen bg-background text-foreground">
-            {/* TEMPORARILY DISABLED
-            Desktop Sidebar 
-            <DesktopSidebar />
-            */}
-            
             {/* Mobile Menu Button */}
             <MobileSidebarButton onClick={toggleMenu} />
             
             {/* Mobile Sidebar - Only rendered when open */}
-            <MobileSidebar isOpen={isMenuOpen} onClose={closeMenu} />
+            {isMenuOpen && <MobileSidebar isOpen={isMenuOpen} onClose={closeMenu} />}
             
             {/* Main Content */}
             <main className="pt-4">

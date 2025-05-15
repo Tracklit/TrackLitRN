@@ -95,8 +95,6 @@ export function MobileSidebarButton({ onClick }: { onClick: () => void }) {
 export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [location] = useLocation();
   
-  if (!isOpen) return null;
-  
   return (
     <>
       {/* Backdrop */}
