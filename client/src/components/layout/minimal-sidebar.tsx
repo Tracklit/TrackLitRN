@@ -12,7 +12,8 @@ import {
   Award,
   Coins,
   LogOut,
-  BookOpen
+  BookOpen,
+  Clipboard
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -81,9 +82,16 @@ export function DesktopSidebar() {
           <NavItem 
             href="/programs" 
             icon={<BookOpen className="h-5 w-5" />} 
-            isActive={location.startsWith('/programs')}
+            isActive={location.startsWith('/programs') && !location.includes('assigned')}
           >
             Programs
+          </NavItem>
+          <NavItem 
+            href="/assigned-programs" 
+            icon={<Clipboard className="h-5 w-5" />} 
+            isActive={location.includes('assigned-programs')}
+          >
+            Assigned Programs
           </NavItem>
           <NavItem 
             href="/profile" 
