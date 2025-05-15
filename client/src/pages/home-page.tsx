@@ -31,7 +31,8 @@ import {
   Eye,
   BookmarkPlus,
   MoreHorizontal,
-  UserCircle
+  UserCircle,
+  X
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { CreateMeetModal } from '@/components/create-meet-modal';
@@ -40,10 +41,11 @@ import { cn } from '@/lib/utils';
 export default function HomePage() {
   const { user } = useAuth();
   const [isCreateMeetOpen, setIsCreateMeetOpen] = useState(false);
-  const sessionTickerRef = useRef<HTMLDivElement>(null);
   const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
   const [currentSession, setCurrentSession] = useState<any>(null);
   const [isSavingSession, setIsSavingSession] = useState(false);
+  const [isTickerVisible, setIsTickerVisible] = useState(true);
+  const [activeSessionIndex, setActiveSessionIndex] = useState(0);
   
   // Fetch data for stats (simplified for now)
   const { data: meets } = useQuery<Meet[]>({
@@ -99,9 +101,58 @@ export default function HomePage() {
         previewText: "5x400m ladder workout complete. New personal best!",
         createdAt: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
         user: { username: "coach_k", name: "Coach Kevin" }
+      },
+      {
+        id: 4,
+        workoutId: 4,
+        userId: 5,
+        title: "Hill Sprints",
+        previewText: "Just finished 10x hill sprints. My legs are on fire but worth it!",
+        createdAt: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
+        user: { username: "sprint_queen", name: "Lisa M." }
+      },
+      {
+        id: 5,
+        workoutId: 5,
+        userId: 6,
+        title: "Morning Endurance",
+        previewText: "Early morning 800m repeats - 6 sets at 2:15 pace. New week, new goals!",
+        createdAt: new Date(Date.now() - 1000 * 60 * 150).toISOString(),
+        user: { username: "distance_king", name: "Alex P." }
+      },
+      {
+        id: 6,
+        workoutId: 6,
+        userId: 7,
+        title: "Track Workout",
+        previewText: "400m, 300m, 200m, 100m ladder with full recovery. Felt strong today!",
+        createdAt: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
+        user: { username: "track_coach", name: "Coach Smith" }
+      },
+      {
+        id: 7,
+        workoutId: 7,
+        userId: 8,
+        title: "Race Prep",
+        previewText: "Final tuneup before Saturday's meet - 4x150m at race pace with 3min rest",
+        createdAt: new Date(Date.now() - 1000 * 60 * 210).toISOString(),
+        user: { username: "medal_hunter", name: "James W." }
       }
     ]
   });
+  
+  // Interval for rotating through sessions
+  useEffect(() => {
+    if (!sessionPreviews?.length) return;
+    
+    const interval = setInterval(() => {
+      setActiveSessionIndex(prev => 
+        prev >= (sessionPreviews.length - 1) ? 0 : prev + 1
+      );
+    }, 5000); // 5 second interval
+    
+    return () => clearInterval(interval);
+  }, [sessionPreviews]);
   
   // Function to open session details modal
   const openSessionDetails = (session: SessionPreviewWithUser) => {
@@ -130,29 +181,7 @@ export default function HomePage() {
     }
   };
   
-  // Ticker animation effect
-  useEffect(() => {
-    if (!sessionTickerRef.current || !sessionPreviews?.length) return;
-    
-    const ticker = sessionTickerRef.current;
-    let animationId: number;
-    let position = ticker.scrollWidth;
-    
-    const animate = () => {
-      position -= 1;
-      if (position <= -ticker.scrollWidth / 2) {
-        position = ticker.scrollWidth;
-      }
-      ticker.style.transform = `translateX(${position}px)`;
-      animationId = requestAnimationFrame(animate);
-    };
-    
-    animate();
-    
-    return () => {
-      cancelAnimationFrame(animationId);
-    };
-  }, [sessionPreviews]);
+  // We removed the scrolling ticker animation in favor of the fade transition
 
   // Category cards for main navigation
   const categoryCards = [
@@ -188,7 +217,22 @@ export default function HomePage() {
     <div className="min-h-screen bg-background text-foreground pb-16">
       <HamburgerMenu />
       
-      <main className="pt-12 px-4 container mx-auto max-w-7xl">
+      {/* Show ticker button */}
+      {!isTickerVisible && (
+        <div className="sticky top-0 z-10 py-2 px-4 flex justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs"
+            onClick={() => setIsTickerVisible(true)}
+          >
+            <Clock className="h-3.5 w-3.5 mr-1" />
+            Show Recent Workouts
+          </Button>
+        </div>
+      )}
+      
+      <main className="pt-4 px-4 container mx-auto max-w-7xl">
         {/* Logo will be placed here in the future */}
         <div className="h-3 mb-4 mx-auto" style={{ maxWidth: "540px" }}>
           {/* Reserved space for logo */}
@@ -311,63 +355,70 @@ export default function HomePage() {
       
       {/* Create Meet Modal */}
       {/* Session Preview Ticker */}
-      <div className="fixed bottom-0 left-0 right-0 z-10">
-        <div className="flex items-center mb-1.5 px-4">
-          <Clock className="h-4 w-4 text-primary mr-2" />
-          <h3 className="text-sm font-semibold">Recent Public Workouts</h3>
-        </div>
-        
-        <div className="relative overflow-hidden whitespace-nowrap">
-          <div 
-            ref={sessionTickerRef} 
-            className="inline-flex gap-4 px-4"
-            style={{ willChange: 'transform' }}
-          >
-            {sessionPreviews?.map((session, index) => (
+      {isTickerVisible && (
+        <div className="sticky top-0 left-0 right-0 z-10 bg-background/80 backdrop-blur-sm py-2 border-b border-border/20">
+          <div className="flex items-center justify-between px-4 mb-2">
+            <div className="flex items-center">
+              <Clock className="h-4 w-4 text-primary mr-2" />
+              <h3 className="text-sm font-semibold">Recent Public Workouts</h3>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+              onClick={() => setIsTickerVisible(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          <div className="px-4 pb-1">
+            {sessionPreviews && (
               <div 
-                key={`${session.id}-${index}`} 
-                className="cursor-pointer inline-block"
-                onClick={() => openSessionDetails(session)}
+                className="cursor-pointer"
+                onClick={() => openSessionDetails(sessionPreviews[activeSessionIndex])}
               >
-                <div className="flex items-center gap-2 bg-primary/5 border border-primary/10 px-3 py-2 rounded-md hover:bg-primary/10 transition-colors">
+                <div 
+                  className="flex items-center gap-2 bg-primary/5 border border-primary/10 px-3 py-2 rounded-md hover:bg-primary/10 transition-all duration-300"
+                >
                   <div className="rounded-full bg-primary/15 h-8 w-8 flex items-center justify-center flex-shrink-0">
                     <UserCircle className="h-4 w-4 text-primary" />
                   </div>
-                  <div className="min-w-[200px]">
+                  <div className="flex-1 overflow-hidden">
                     <div className="flex items-center gap-1 mb-0.5">
-                      <span className="text-xs font-medium">{session.title}</span>
-                      <span className="text-xs text-muted-foreground">· {session.user?.username}</span>
+                      <span className="text-xs font-medium">{sessionPreviews[activeSessionIndex].title}</span>
+                      <span className="text-xs text-muted-foreground">· {sessionPreviews[activeSessionIndex].user?.username}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground line-clamp-1">{session.previewText}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-1">{sessionPreviews[activeSessionIndex].previewText}</p>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 px-2 text-xs"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openSessionDetails(sessionPreviews[activeSessionIndex]);
+                      }}
+                    >
+                      <Eye className="h-3 w-3 mr-1" />
+                      View
+                    </Button>
                   </div>
                 </div>
-              </div>
-            ))}
-            
-            {/* Duplicate items for seamless looping */}
-            {sessionPreviews?.map((session, index) => (
-              <div 
-                key={`${session.id}-duplicate-${index}`} 
-                className="cursor-pointer inline-block"
-                onClick={() => openSessionDetails(session)}
-              >
-                <div className="flex items-center gap-2 bg-primary/5 border border-primary/10 px-3 py-2 rounded-md hover:bg-primary/10 transition-colors">
-                  <div className="rounded-full bg-primary/15 h-8 w-8 flex items-center justify-center flex-shrink-0">
-                    <UserCircle className="h-4 w-4 text-primary" />
-                  </div>
-                  <div className="min-w-[200px]">
-                    <div className="flex items-center gap-1 mb-0.5">
-                      <span className="text-xs font-medium">{session.title}</span>
-                      <span className="text-xs text-muted-foreground">· {session.user?.username}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground line-clamp-1">{session.previewText}</p>
-                  </div>
+                <div className="h-1 bg-muted mt-1 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-primary/50 rounded-full transition-all duration-300"
+                    style={{ 
+                      width: `${((activeSessionIndex + 1) / sessionPreviews.length) * 100}%` 
+                    }}
+                  />
                 </div>
               </div>
-            ))}
+            )}
           </div>
         </div>
-      </div>
+      )}
       
       {/* Session Detail Modal */}
       <Dialog open={isSessionModalOpen} onOpenChange={setIsSessionModalOpen}>
