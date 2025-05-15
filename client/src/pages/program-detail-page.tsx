@@ -58,12 +58,25 @@ function ProgramDetailContent({ program }: { program: any }) {
         {/* File preview card */}
         <div className="rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden">
           <div className="bg-muted p-6 flex flex-col items-center justify-center">
-            <div className={`w-20 h-20 rounded-lg ${fileTypeColor} bg-opacity-10 flex items-center justify-center mb-4`}>
-              <FileText className={`h-10 w-10 ${fileTypeColor}`} />
-            </div>
+            {/* PDF preview */}
+            {fileType.includes('pdf') ? (
+              <div className="w-full max-h-[400px] overflow-hidden mb-4 border rounded-lg shadow-sm">
+                <iframe 
+                  src={`${program.programFileUrl}#toolbar=0&view=FitH`} 
+                  className="w-full h-[400px]"
+                  title="PDF Preview"
+                />
+              </div>
+            ) : (
+              <div className={`w-20 h-20 rounded-lg ${fileTypeColor} bg-opacity-10 flex items-center justify-center mb-4`}>
+                <FileText className={`h-10 w-10 ${fileTypeColor}`} />
+              </div>
+            )}
             <p className="text-xl font-semibold mb-1">{fileTypeDisplay}</p>
             <p className="text-muted-foreground">
-              Click the "View Document" button to open the program
+              {fileType.includes('pdf') 
+                ? "PDF preview is shown above. Use the buttons to download or view the full document." 
+                : "Click the \"View Document\" button to open the program"}
             </p>
           </div>
           

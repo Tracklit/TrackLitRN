@@ -859,6 +859,33 @@ export const trainingPrograms = pgTable("training_programs", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Program assignments (for coach to athlete)
+export const programAssignments = pgTable("program_assignments", {
+  id: serial("id").primaryKey(),
+  programId: integer("program_id").notNull().references(() => trainingPrograms.id),
+  assignerId: integer("assigner_id").notNull().references(() => users.id), // Coach who assigns
+  assigneeId: integer("assignee_id").notNull().references(() => users.id), // Athlete who receives
+  status: text("status", { enum: ['pending', 'accepted', 'completed', 'rejected'] }).default('pending'),
+  assignedAt: timestamp("assigned_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+  notes: text("notes"),
+});
+
+export const programAssignmentsRelations = relations(programAssignments, ({ one }) => ({
+  program: one(trainingPrograms, {
+    fields: [programAssignments.programId],
+    references: [trainingPrograms.id],
+  }),
+  assigner: one(users, {
+    fields: [programAssignments.assignerId],
+    references: [users.id],
+  }),
+  assignee: one(users, {
+    fields: [programAssignments.assigneeId],
+    references: [users.id],
+  }),
+}));
+
 export const trainingProgramsRelations = relations(trainingPrograms, ({ one, many }) => ({
   creator: one(users, {
     fields: [trainingPrograms.userId],
@@ -866,6 +893,7 @@ export const trainingProgramsRelations = relations(trainingPrograms, ({ one, man
   }),
   sessions: many(programSessions),
   purchases: many(programPurchases),
+  assignments: many(programAssignments),
 }));
 
 export const programSessions = pgTable("program_sessions", {
@@ -942,6 +970,12 @@ export const insertTrainingProgramSchema = createInsertSchema(trainingPrograms).
   createdAt: true,
 });
 
+export const insertProgramAssignmentSchema = createInsertSchema(programAssignments).omit({
+  id: true,
+  assignedAt: true,
+  completedAt: true,
+});
+
 export const insertProgramSessionSchema = createInsertSchema(programSessions).omit({
   id: true,
   createdAt: true,
@@ -960,6 +994,9 @@ export const insertProgramProgressSchema = createInsertSchema(programProgress).o
 // Create Type Definitions
 export type TrainingProgram = typeof trainingPrograms.$inferSelect;
 export type InsertTrainingProgram = z.infer<typeof insertTrainingProgramSchema>;
+
+export type ProgramAssignment = typeof programAssignments.$inferSelect;
+export type InsertProgramAssignment = z.infer<typeof insertProgramAssignmentSchema>;
 
 export type ProgramSession = typeof programSessions.$inferSelect;
 export type InsertProgramSession = z.infer<typeof insertProgramSessionSchema>;
