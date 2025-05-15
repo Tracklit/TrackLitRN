@@ -181,7 +181,18 @@ export default function HomePage() {
     }
   };
   
-  // We removed the scrolling ticker animation in favor of the fade transition
+  // Interval for rotating through sessions
+  useEffect(() => {
+    if (!sessionPreviews?.length) return;
+    
+    const interval = setInterval(() => {
+      setActiveSessionIndex(prev => 
+        prev >= (sessionPreviews.length - 1) ? 0 : prev + 1
+      );
+    }, 5000); // 5 second interval
+    
+    return () => clearInterval(interval);
+  }, [sessionPreviews]);
 
   // Category cards for main navigation
   const categoryCards = [
