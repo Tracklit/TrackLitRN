@@ -86,6 +86,16 @@ export default function HomePage() {
             Welcome to Track Pro - Your Track and Field Companion
           </p>
         </section>
+
+        {/* Motivational Quote - Moved to top */}
+        <section className="mb-8 mx-auto" style={{ maxWidth: "540px" }}>
+          <Card className="border-primary/20 bg-primary/5 w-full">
+            <CardContent className="p-6">
+              <p className="italic text-lg mb-2">&ldquo;{quote.text}&rdquo;</p>
+              <p className="text-right text-muted-foreground">— {quote.author}</p>
+            </CardContent>
+          </Card>
+        </section>
         
         {/* Main Category Cards - 2 column layout with fixed size */}
         <section className="mb-16">
@@ -196,16 +206,6 @@ export default function HomePage() {
                 <ArrowUpRight className="ml-1 h-3 w-3 text-primary" />
               </div>
             </CardFooter>
-          </Card>
-        </section>
-        
-        {/* Motivational Quote */}
-        <section className="mb-12 mx-auto" style={{ maxWidth: "540px" }}>
-          <Card className="border-primary/20 bg-primary/5 w-full">
-            <CardContent className="p-6">
-              <p className="italic text-lg mb-2">&ldquo;{quote.text}&rdquo;</p>
-              <p className="text-right text-muted-foreground">— {quote.author}</p>
-            </CardContent>
           </Card>
         </section>
       </main>
