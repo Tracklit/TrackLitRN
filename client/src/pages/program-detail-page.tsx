@@ -312,10 +312,10 @@ function ProgramDetail() {
                         Download
                       </a>
                     </Button>
-                    <AssignProgramDialog program={program} />
+                    <AssignProgramDialog program={program} fullWidth={true} />
                   </div>
                 ) : (
-                  <AssignProgramDialog program={program} />
+                  <AssignProgramDialog program={program} fullWidth={true} buttonText="Assign Program" />
                 )
               ) : program.visibility === 'premium' ? (
                 <Button className="w-full">

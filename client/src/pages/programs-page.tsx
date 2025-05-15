@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AssignProgramDialog } from "@/components/assign-program-dialog";
 
 import {
   BookOpen,
@@ -352,18 +353,20 @@ function ProgramCard({ program, type, creator, viewMode }: {
           program.isUploadedProgram ? (
             <div className="flex w-full gap-2">
               <Button variant="outline" size="sm" asChild className="flex-1">
-                <Link href={program.programFileUrl}>
+                <a href={program.programFileUrl} target="_blank" rel="noopener noreferrer">
                   <FileText className="h-3.5 w-3.5 mr-1.5" />
                   View
-                </Link>
+                </a>
               </Button>
               <Button variant="outline" size="sm" asChild className="flex-1">
                 <Link href={`/programs/${program.id}`}>Edit</Link>
               </Button>
-              <Button variant="default" size="sm" className="flex-1">
-                <Users className="h-3.5 w-3.5 mr-1.5" />
-                Assign
-              </Button>
+              <AssignProgramDialog 
+                program={program} 
+                size="sm" 
+                className="flex-1" 
+                buttonText="Assign" 
+              />
             </div>
           ) : (
             <div className="flex w-full gap-2">
@@ -373,13 +376,15 @@ function ProgramCard({ program, type, creator, viewMode }: {
                   View
                 </Link>
               </Button>
-              <Button variant="outline" size="sm" className="flex-1">
-                Edit
+              <Button variant="outline" size="sm" asChild className="flex-1">
+                <Link href={`/programs/${program.id}`}>Edit</Link>
               </Button>
-              <Button variant="default" size="sm" className="flex-1">
-                <Users className="h-3.5 w-3.5 mr-1.5" />
-                Assign
-              </Button>
+              <AssignProgramDialog 
+                program={program}
+                size="sm"
+                className="flex-1"
+                buttonText="Assign"
+              />
             </div>
           )
         ) : viewMode === "purchased" ? (
