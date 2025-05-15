@@ -217,6 +217,72 @@ export default function HomePage() {
     <div className="min-h-screen bg-background text-foreground pb-16">
       <HamburgerMenu />
       
+      {/* Session Preview Ticker */}
+      {isTickerVisible && (
+        <div className="sticky top-0 left-0 right-0 z-10 bg-background/80 backdrop-blur-sm py-2 border-b border-border/20">
+          <div className="flex items-center justify-between px-4 mb-2">
+            <div className="flex items-center">
+              <Clock className="h-4 w-4 text-primary mr-2" />
+              <h3 className="text-sm font-semibold">Recent Public Workouts</h3>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+              onClick={() => setIsTickerVisible(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          <div className="px-4 pb-1">
+            {sessionPreviews && (
+              <div 
+                className="cursor-pointer"
+                onClick={() => openSessionDetails(sessionPreviews[activeSessionIndex])}
+              >
+                <div 
+                  className="flex items-center gap-2 bg-primary/5 border border-primary/10 px-3 py-2 rounded-md hover:bg-primary/10 transition-all duration-300"
+                >
+                  <div className="rounded-full bg-primary/15 h-8 w-8 flex items-center justify-center flex-shrink-0">
+                    <UserCircle className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1 overflow-hidden">
+                    <div className="flex items-center gap-1 mb-0.5">
+                      <span className="text-xs font-medium">{sessionPreviews[activeSessionIndex].title}</span>
+                      <span className="text-xs text-muted-foreground">· {sessionPreviews[activeSessionIndex].user?.username}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground line-clamp-1">{sessionPreviews[activeSessionIndex].previewText}</p>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 px-2 text-xs"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openSessionDetails(sessionPreviews[activeSessionIndex]);
+                      }}
+                    >
+                      <Eye className="h-3 w-3 mr-1" />
+                      View
+                    </Button>
+                  </div>
+                </div>
+                <div className="h-1 bg-muted mt-1 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-primary/50 rounded-full transition-all duration-300"
+                    style={{ 
+                      width: `${((activeSessionIndex + 1) / sessionPreviews.length) * 100}%` 
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      
       {/* Show ticker button */}
       {!isTickerVisible && (
         <div className="sticky top-0 z-10 py-2 px-4 flex justify-end">
@@ -352,73 +418,6 @@ export default function HomePage() {
           </Card>
         </section>
       </main>
-      
-      {/* Create Meet Modal */}
-      {/* Session Preview Ticker */}
-      {isTickerVisible && (
-        <div className="sticky top-0 left-0 right-0 z-10 bg-background/80 backdrop-blur-sm py-2 border-b border-border/20">
-          <div className="flex items-center justify-between px-4 mb-2">
-            <div className="flex items-center">
-              <Clock className="h-4 w-4 text-primary mr-2" />
-              <h3 className="text-sm font-semibold">Recent Public Workouts</h3>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 w-6 p-0"
-              onClick={() => setIsTickerVisible(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          
-          <div className="px-4 pb-1">
-            {sessionPreviews && (
-              <div 
-                className="cursor-pointer"
-                onClick={() => openSessionDetails(sessionPreviews[activeSessionIndex])}
-              >
-                <div 
-                  className="flex items-center gap-2 bg-primary/5 border border-primary/10 px-3 py-2 rounded-md hover:bg-primary/10 transition-all duration-300"
-                >
-                  <div className="rounded-full bg-primary/15 h-8 w-8 flex items-center justify-center flex-shrink-0">
-                    <UserCircle className="h-4 w-4 text-primary" />
-                  </div>
-                  <div className="flex-1 overflow-hidden">
-                    <div className="flex items-center gap-1 mb-0.5">
-                      <span className="text-xs font-medium">{sessionPreviews[activeSessionIndex].title}</span>
-                      <span className="text-xs text-muted-foreground">· {sessionPreviews[activeSessionIndex].user?.username}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground line-clamp-1">{sessionPreviews[activeSessionIndex].previewText}</p>
-                  </div>
-                  <div className="flex-shrink-0">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-6 px-2 text-xs"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openSessionDetails(sessionPreviews[activeSessionIndex]);
-                      }}
-                    >
-                      <Eye className="h-3 w-3 mr-1" />
-                      View
-                    </Button>
-                  </div>
-                </div>
-                <div className="h-1 bg-muted mt-1 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-primary/50 rounded-full transition-all duration-300"
-                    style={{ 
-                      width: `${((activeSessionIndex + 1) / sessionPreviews.length) * 100}%` 
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
       
       {/* Session Detail Modal */}
       <Dialog open={isSessionModalOpen} onOpenChange={setIsSessionModalOpen}>
