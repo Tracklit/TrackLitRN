@@ -102,7 +102,7 @@ export default function ProgramsPage() {
     : [];
   
   return (
-    <div className="container max-w-screen-xl mx-auto p-4 pt-20 md:pt-24 md:pl-72 pb-20">
+    <div className="container max-w-screen-xl mx-auto p-4 pt-20 md:pt-24 md:pl-72 pb-20 h-screen overflow-y-auto">
       <PageHeader
         title="Training Programs"
         description="Create, discover, and follow training programs"

@@ -6,6 +6,7 @@ import { z } from "zod";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { GoogleSpreadsheet } from "google-spreadsheet";
 import { 
   insertMeetSchema, 
   insertResultSchema, 
@@ -2673,7 +2674,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Not authenticated" });
       }
       
-      const { GoogleSpreadsheet } = require('google-spreadsheet');
+      // Use the Google Spreadsheet module we imported at the top
       
       const { 
         title, 
@@ -2730,27 +2731,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
         
+        // Access the raw data safely, using reflection if needed
+        const rowData = row.toObject ? row.toObject() : 
+                        (row._rawData ? row._rawData : 
+                        Object.values(row).filter(val => typeof val !== 'function'));
+        
         // Skip rows without dates or empty rows
-        if (!row || !row._rawData || !row._rawData[0]) {
+        if (!rowData || !rowData[0]) {
           continue;
         }
         
         // Get date from column A
-        const date = row._rawData[0];
+        const date = rowData[0];
         
         // Check if the cell is empty
-        const isRestDay = !row._rawData[3] && !row._rawData[4] && !row._rawData[5];
+        const isRestDay = !rowData[3] && !rowData[4] && !rowData[5];
         
         // Create session for this date
         const sessionData = {
           programId: createdProgram.id,
           date,
-          preActivation1: row._rawData[1] || '',
-          preActivation2: row._rawData[2] || '',
-          shortDistanceWorkout: row._rawData[3] || '',
-          mediumDistanceWorkout: row._rawData[4] || '',
-          longDistanceWorkout: row._rawData[5] || '',
-          extraSession: row._rawData[6] || '',
+          preActivation1: rowData[1] || '',
+          preActivation2: rowData[2] || '',
+          shortDistanceWorkout: rowData[3] || '',
+          mediumDistanceWorkout: rowData[4] || '',
+          longDistanceWorkout: rowData[5] || '',
+          extraSession: rowData[6] || '',
           isRestDay,
           dayNumber: i + 1,
           title: `Day ${i + 1}: ${isRestDay ? 'Rest Day' : 'Training Day'}`,
