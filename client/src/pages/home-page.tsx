@@ -76,9 +76,9 @@ export default function HomePage() {
     <div className="min-h-screen bg-background text-foreground pb-16">
       <HamburgerMenu />
       
-      <main className="pt-20 px-4 container mx-auto max-w-7xl">
+      <main className="pt-16 px-4 container mx-auto max-w-7xl">
         {/* Greeting Section */}
-        <section className="mb-8 mt-4 mx-auto" style={{ maxWidth: "540px" }}>
+        <section className="mb-4 mt-2 mx-auto" style={{ maxWidth: "540px" }}>
           <h1 className="text-3xl font-bold mb-2">
             Hello, {user?.name?.split(' ')[0] || user?.username}
           </h1>
@@ -87,32 +87,28 @@ export default function HomePage() {
           </p>
         </section>
 
-        {/* Motivational Quote - Moved to top */}
-        <section className="mb-8 mx-auto" style={{ maxWidth: "540px" }}>
-          <Card className="border-primary/20 bg-primary/5 w-full">
-            <CardContent className="p-6">
-              <p className="italic text-lg mb-2">&ldquo;{quote.text}&rdquo;</p>
-              <p className="text-right text-muted-foreground">— {quote.author}</p>
-            </CardContent>
-          </Card>
+        {/* Motivational Quote - Smaller and without card */}
+        <section className="mb-4 mx-auto text-center" style={{ maxWidth: "270px" }}>
+          <p className="italic text-sm mb-1 text-muted-foreground">&ldquo;{quote.text}&rdquo;</p>
+          <p className="text-right text-xs text-muted-foreground">— {quote.author}</p>
         </section>
         
         {/* Main Category Cards - 2 column layout with smaller sizes for mobile */}
-        <section className="mb-16">
-          <div className="grid grid-cols-2 gap-3 mx-auto" style={{ maxWidth: "540px", margin: "0 auto 20px" }}>
+        <section className="mb-8">
+          <div className="grid grid-cols-2 gap-2 mx-auto" style={{ maxWidth: "540px", margin: "0 auto 16px" }}>
             {categoryCards.map((card, index) => (
               <Link href={card.href} key={index}>
-                <Card className="cursor-pointer hover:shadow-md transition-all duration-300 border border-muted hover:border-primary h-[160px] mx-auto mb-2 overflow-hidden group relative">
+                <Card className="cursor-pointer hover:shadow-md transition-all duration-300 border border-muted hover:border-primary h-[140px] mx-auto mb-2 overflow-hidden group relative">
                   <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-                  <CardContent className="p-3 relative h-full flex flex-col justify-center">
-                    <div className="flex flex-col items-center text-center gap-3">
-                      <div className="p-2 rounded-full bg-primary/15 border border-primary/20 group-hover:bg-primary/25 transition-colors duration-300">
-                        <div className="h-5 w-5 flex items-center justify-center text-primary">
+                  <CardContent className="p-2.5 relative h-full flex flex-col justify-center">
+                    <div className="flex flex-col items-center text-center gap-2">
+                      <div className="p-1.5 rounded-full bg-primary/15 border border-primary/20 group-hover:bg-primary/25 transition-colors duration-300">
+                        <div className="h-4 w-4 flex items-center justify-center text-primary">
                           {card.icon}
                         </div>
                       </div>
                       <div>
-                        <h2 className="text-lg font-bold mb-1">{card.title}</h2>
+                        <h2 className="text-base font-bold mb-0.5">{card.title}</h2>
                         <p className="text-muted-foreground text-xs px-1 line-clamp-2 overflow-hidden">{card.description}</p>
                       </div>
                     </div>
