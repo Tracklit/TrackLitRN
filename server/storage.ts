@@ -40,6 +40,18 @@ import {
   InsertSpikeTransaction,
   Referral,
   InsertReferral,
+  TrainingProgram,
+  InsertTrainingProgram,
+  ProgramSession,
+  InsertProgramSession,
+  ProgramPurchase,
+  InsertProgramPurchase,
+  ProgramProgress,
+  InsertProgramProgress,
+  WorkoutLibrary,
+  InsertWorkoutLibrary,
+  WorkoutSessionPreview,
+  InsertWorkoutSessionPreview,
   users,
   meets,
   results,
@@ -60,7 +72,13 @@ import {
   userAchievements,
   loginStreaks,
   spikeTransactions,
-  referrals
+  referrals,
+  workoutLibrary,
+  workoutSessionPreview,
+  trainingPrograms,
+  programSessions,
+  programPurchases,
+  programProgress
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, lt, gte, desc, asc, inArray, or, isNotNull, isNull } from "drizzle-orm";
@@ -171,7 +189,35 @@ export interface IStorage {
   getPracticeMediaByCompletionId(completionId: number): Promise<PracticeMedia[]>;
   createPracticeMedia(media: InsertPracticeMedia): Promise<PracticeMedia>;
   deletePracticeMedia(id: number): Promise<boolean>;
-
+  
+  // Workout Library
+  getWorkoutPreviews(userId: number): Promise<any[]>;
+  getSavedWorkouts(userId: number): Promise<any[]>;
+  
+  // Programs
+  // Training Programs - User's own programs
+  getUserPrograms(userId: number): Promise<TrainingProgram[]>;
+  getProgram(id: number): Promise<TrainingProgram | undefined>;
+  createProgram(program: InsertTrainingProgram): Promise<TrainingProgram>;
+  updateProgram(id: number, data: Partial<TrainingProgram>): Promise<TrainingProgram | undefined>;
+  deleteProgram(id: number): Promise<boolean>;
+  
+  // Program sessions
+  getProgramSessions(programId: number): Promise<ProgramSession[]>;
+  createProgramSession(session: InsertProgramSession): Promise<ProgramSession>;
+  updateProgramSession(id: number, data: Partial<ProgramSession>): Promise<ProgramSession | undefined>;
+  deleteProgramSession(id: number): Promise<boolean>;
+  
+  // Purchased Programs
+  getUserPurchasedPrograms(userId: number): Promise<(ProgramPurchase & { program: TrainingProgram, creator: { username: string } })[]>;
+  getPurchasedProgram(userId: number, programId: number): Promise<ProgramPurchase | undefined>;
+  purchaseProgram(purchase: InsertProgramPurchase): Promise<ProgramPurchase>;
+  
+  // Program Progress
+  getProgramProgress(userId: number, programId: number): Promise<ProgramProgress[]>;
+  getSessionProgress(userId: number, sessionId: number): Promise<ProgramProgress | undefined>;
+  recordProgramProgress(progress: InsertProgramProgress): Promise<ProgramProgress>;
+  
   // Session store
   sessionStore: session.Store;
 
@@ -1396,6 +1442,189 @@ export class DatabaseStorage implements IStorage {
       console.error("Error completing referral:", error);
       throw error;
     }
+  }
+
+  // Workout Library Methods
+  async getWorkoutPreviews(userId: number): Promise<any[]> {
+    const previews = await db
+      .select()
+      .from(workoutSessionPreview)
+      .where(eq(workoutSessionPreview.userId, userId))
+      .orderBy(desc(workoutSessionPreview.createdAt));
+    
+    return previews;
+  }
+  
+  async getSavedWorkouts(userId: number): Promise<any[]> {
+    const savedWorkouts = await db
+      .select()
+      .from(workoutLibrary)
+      .where(and(
+        eq(workoutLibrary.userId, userId),
+        eq(workoutLibrary.category, 'saved')
+      ))
+      .orderBy(desc(workoutLibrary.createdAt));
+    
+    return savedWorkouts;
+  }
+  
+  // Programs Methods
+  async getUserPrograms(userId: number): Promise<TrainingProgram[]> {
+    const programs = await db
+      .select()
+      .from(trainingPrograms)
+      .where(eq(trainingPrograms.userId, userId))
+      .orderBy(desc(trainingPrograms.createdAt));
+    
+    return programs;
+  }
+  
+  async getProgram(id: number): Promise<TrainingProgram | undefined> {
+    const [program] = await db
+      .select()
+      .from(trainingPrograms)
+      .where(eq(trainingPrograms.id, id));
+    
+    return program;
+  }
+  
+  async createProgram(program: InsertTrainingProgram): Promise<TrainingProgram> {
+    const [newProgram] = await db
+      .insert(trainingPrograms)
+      .values(program)
+      .returning();
+    
+    return newProgram;
+  }
+  
+  async updateProgram(id: number, data: Partial<TrainingProgram>): Promise<TrainingProgram | undefined> {
+    const [updatedProgram] = await db
+      .update(trainingPrograms)
+      .set(data)
+      .where(eq(trainingPrograms.id, id))
+      .returning();
+    
+    return updatedProgram;
+  }
+  
+  async deleteProgram(id: number): Promise<boolean> {
+    await db.delete(trainingPrograms).where(eq(trainingPrograms.id, id));
+    return true;
+  }
+  
+  // Program Sessions Methods
+  async getProgramSessions(programId: number): Promise<ProgramSession[]> {
+    const sessions = await db
+      .select()
+      .from(programSessions)
+      .where(eq(programSessions.programId, programId))
+      .orderBy(asc(programSessions.dayNumber), asc(programSessions.orderInDay));
+    
+    return sessions;
+  }
+  
+  async createProgramSession(session: InsertProgramSession): Promise<ProgramSession> {
+    const [newSession] = await db
+      .insert(programSessions)
+      .values(session)
+      .returning();
+    
+    return newSession;
+  }
+  
+  async updateProgramSession(id: number, data: Partial<ProgramSession>): Promise<ProgramSession | undefined> {
+    const [updatedSession] = await db
+      .update(programSessions)
+      .set(data)
+      .where(eq(programSessions.id, id))
+      .returning();
+    
+    return updatedSession;
+  }
+  
+  async deleteProgramSession(id: number): Promise<boolean> {
+    await db.delete(programSessions).where(eq(programSessions.id, id));
+    return true;
+  }
+  
+  // Purchased Programs Methods
+  async getUserPurchasedPrograms(userId: number): Promise<(ProgramPurchase & { program: TrainingProgram, creator: { username: string } })[]> {
+    const purchases = await db
+      .select({
+        id: programPurchases.id,
+        programId: programPurchases.programId,
+        userId: programPurchases.userId,
+        price: programPurchases.price,
+        isFree: programPurchases.isFree,
+        purchasedAt: programPurchases.purchasedAt,
+        program: trainingPrograms,
+        creator: {
+          username: users.username
+        }
+      })
+      .from(programPurchases)
+      .innerJoin(trainingPrograms, eq(programPurchases.programId, trainingPrograms.id))
+      .innerJoin(users, eq(trainingPrograms.userId, users.id))
+      .where(eq(programPurchases.userId, userId))
+      .orderBy(desc(programPurchases.purchasedAt));
+    
+    return purchases;
+  }
+  
+  async getPurchasedProgram(userId: number, programId: number): Promise<ProgramPurchase | undefined> {
+    const [purchase] = await db
+      .select()
+      .from(programPurchases)
+      .where(and(
+        eq(programPurchases.userId, userId),
+        eq(programPurchases.programId, programId)
+      ));
+    
+    return purchase;
+  }
+  
+  async purchaseProgram(purchase: InsertProgramPurchase): Promise<ProgramPurchase> {
+    const [newPurchase] = await db
+      .insert(programPurchases)
+      .values(purchase)
+      .returning();
+    
+    return newPurchase;
+  }
+  
+  // Program Progress Methods
+  async getProgramProgress(userId: number, programId: number): Promise<ProgramProgress[]> {
+    const progress = await db
+      .select()
+      .from(programProgress)
+      .where(and(
+        eq(programProgress.userId, userId),
+        eq(programProgress.programId, programId)
+      ))
+      .orderBy(desc(programProgress.completedAt));
+    
+    return progress;
+  }
+  
+  async getSessionProgress(userId: number, sessionId: number): Promise<ProgramProgress | undefined> {
+    const [progress] = await db
+      .select()
+      .from(programProgress)
+      .where(and(
+        eq(programProgress.userId, userId),
+        eq(programProgress.sessionId, sessionId)
+      ));
+    
+    return progress;
+  }
+  
+  async recordProgramProgress(progress: InsertProgramProgress): Promise<ProgramProgress> {
+    const [newProgress] = await db
+      .insert(programProgress)
+      .values(progress)
+      .returning();
+    
+    return newProgress;
   }
 }
 
