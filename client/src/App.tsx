@@ -24,6 +24,7 @@ import SpikesPage from "@/pages/spikes-page";
 import { Component as ProgramsPage } from "@/pages/programs-page";
 import { Component as ProgramCreatePage } from "@/pages/program-create-page";
 import { Component as ProgramDetailPage } from "@/pages/program-detail-page";
+import { Component as AssignedProgramsPage } from "@/pages/assigned-programs-page";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { AuthProvider } from "@/hooks/use-auth";
 
@@ -39,6 +40,7 @@ function Router() {
       <ProtectedRoute path="/programs" component={ProgramsPage} />
       <ProtectedRoute path="/programs/create" component={ProgramCreatePage} />
       <ProtectedRoute path="/programs/:id" component={ProgramDetailPage} />
+      <ProtectedRoute path="/assigned-programs" component={AssignedProgramsPage} />
       
       {/* Competition */}
       <ProtectedRoute path="/meets" component={MeetsPage} />

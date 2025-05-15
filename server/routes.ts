@@ -18,6 +18,7 @@ import {
   insertGroupSchema,
   insertUserAchievementSchema,
   insertReferralSchema,
+  ProgramAssignment,
   insertTrainingProgramSchema,
   insertProgramSessionSchema,
   insertProgramPurchaseSchema,
