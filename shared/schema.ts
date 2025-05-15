@@ -853,6 +853,9 @@ export const trainingPrograms = pgTable("training_programs", {
   category: text("category").notNull(), // sprint, distance, jumps, throws, etc.
   level: text("level"), // beginner, intermediate, advanced
   duration: integer("duration").notNull(), // In days
+  isUploadedProgram: boolean("is_uploaded_program").default(false),
+  programFileUrl: text("program_file_url"), // URL to uploaded document
+  programFileType: text("program_file_type"), // pdf, excel, doc, etc.
   createdAt: timestamp("created_at").defaultNow(),
 });
 

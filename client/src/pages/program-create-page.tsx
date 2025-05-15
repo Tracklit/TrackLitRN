@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { FileUpload, Upload } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
@@ -29,6 +31,9 @@ const programFormSchema = z.object({
     required_error: "Please select a visibility option",
   }),
   price: z.coerce.number().min(0, { message: "Price cannot be negative" }).optional(),
+  // File upload related fields
+  useFileUpload: z.boolean().default(false),
+  programFile: z.instanceof(File).optional(),
 });
 
 export default function ProgramCreatePage() {
@@ -47,18 +52,52 @@ export default function ProgramCreatePage() {
       duration: 7,
       visibility: "private",
       price: 0,
+      useFileUpload: false,
     },
   });
   
   // Create program mutation
   const createProgramMutation = useMutation({
     mutationFn: async (data: z.infer<typeof programFormSchema>) => {
-      const res = await apiRequest("POST", "/api/programs", data);
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to create program");
+      // Handle file upload if useFileUpload is true and there's a programFile
+      if (data.useFileUpload && data.programFile) {
+        const formData = new FormData();
+        
+        // Add program metadata
+        formData.append('title', data.title);
+        formData.append('description', data.description);
+        formData.append('category', data.category);
+        formData.append('level', data.level);
+        formData.append('duration', data.duration.toString());
+        formData.append('visibility', data.visibility);
+        formData.append('price', data.price?.toString() || '0');
+        formData.append('useFileUpload', 'true');
+        
+        // Add the program file
+        formData.append('programFile', data.programFile);
+        
+        const res = await fetch('/api/programs/upload', {
+          method: 'POST',
+          body: formData,
+          // Don't set Content-Type header, browser will set it with boundary for FormData
+          credentials: 'include',
+        });
+        
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || "Failed to upload program");
+        }
+        
+        return res.json();
+      } else {
+        // Regular program creation without file
+        const res = await apiRequest("POST", "/api/programs", data);
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || "Failed to create program");
+        }
+        return res.json();
       }
-      return res.json();
     },
     onSuccess: () => {
       toast({
