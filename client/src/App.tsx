@@ -23,6 +23,7 @@ import MessagesPage from "@/pages/messages-page";
 import SpikesPage from "@/pages/spikes-page";
 import { Component as ProgramsPage } from "@/pages/programs-page";
 import { Component as ProgramCreatePage } from "@/pages/program-create-page";
+import { Component as ProgramDetailPage } from "@/pages/program-detail-page";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { AuthProvider } from "@/hooks/use-auth";
 
@@ -37,6 +38,7 @@ function Router() {
       <ProtectedRoute path="/training-tools" component={TrainingToolsPage} />
       <ProtectedRoute path="/programs" component={ProgramsPage} />
       <ProtectedRoute path="/programs/create" component={ProgramCreatePage} />
+      <ProtectedRoute path="/programs/:id" component={ProgramDetailPage} />
       
       {/* Competition */}
       <ProtectedRoute path="/meets" component={MeetsPage} />
