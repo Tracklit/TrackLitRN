@@ -230,7 +230,7 @@ export default function HomePage() {
       
       {/* Session Preview Ticker */}
       {isTickerVisible && (
-        <div className="sticky top-0 left-0 right-0 z-10 bg-background/80 backdrop-blur-sm pt-4 pb-1 border-b border-border/20">
+        <div className="relative left-0 right-0 z-10 bg-background/80 backdrop-blur-sm pt-8 pb-1 border-b border-border/20">
           <div className="flex items-center justify-between px-4 mb-2">
             <div className="flex items-center">
               <Clock className="h-4 w-4 text-primary mr-2" />
@@ -296,7 +296,7 @@ export default function HomePage() {
       
       {/* Show ticker button */}
       {!isTickerVisible && (
-        <div className="sticky top-0 z-10 py-2 px-4 flex justify-end">
+        <div className="relative z-10 py-4 px-4 flex justify-end">
           <Button
             variant="outline"
             size="sm"
