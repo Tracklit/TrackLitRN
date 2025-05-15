@@ -32,6 +32,11 @@ export const usersRelations = relations(users, ({ many, one }) => ({
     references: [clubs.id],
     relationName: "user_default_club"
   }),
+  workouts: many(workoutLibrary),
+  workoutPreviews: many(workoutSessionPreview),
+  createdPrograms: many(trainingPrograms, { relationName: "program_creator" }),
+  purchasedPrograms: many(programPurchases, { relationName: "program_purchaser" }),
+  programProgress: many(programProgress, { relationName: "program_progress" }),
 }));
 
 export const meets = pgTable("meets", {
@@ -835,6 +840,133 @@ export type WorkoutLibrary = typeof workoutLibrary.$inferSelect;
 export type InsertWorkoutLibrary = z.infer<typeof insertWorkoutLibrarySchema>;
 export type WorkoutSessionPreview = typeof workoutSessionPreview.$inferSelect;
 export type InsertWorkoutSessionPreview = z.infer<typeof insertWorkoutSessionPreviewSchema>;
+
+// Training Programs
+export const trainingPrograms = pgTable("training_programs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id), // Creator
+  title: text("title").notNull(),
+  description: text("description"),
+  isPremium: boolean("is_premium").default(false),
+  price: integer("price"), // In spikes currency
+  coverImageUrl: text("cover_image_url"),
+  category: text("category").notNull(), // sprint, distance, jumps, throws, etc.
+  level: text("level"), // beginner, intermediate, advanced
+  duration: integer("duration").notNull(), // In days
+  isPublic: boolean("is_public").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const trainingProgramsRelations = relations(trainingPrograms, ({ one, many }) => ({
+  creator: one(users, {
+    fields: [trainingPrograms.userId],
+    references: [users.id],
+  }),
+  sessions: many(programSessions),
+  purchases: many(programPurchases),
+}));
+
+export const programSessions = pgTable("program_sessions", {
+  id: serial("id").primaryKey(),
+  programId: integer("program_id").notNull().references(() => trainingPrograms.id),
+  workoutId: integer("workout_id").references(() => workoutLibrary.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  dayNumber: integer("day_number").notNull(), // Day in the program (1, 2, 3...)
+  orderInDay: integer("order_in_day").default(1), // Order if multiple sessions in a day
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const programSessionsRelations = relations(programSessions, ({ one }) => ({
+  program: one(trainingPrograms, {
+    fields: [programSessions.programId],
+    references: [trainingPrograms.id],
+  }),
+  workout: one(workoutLibrary, {
+    fields: [programSessions.workoutId],
+    references: [workoutLibrary.id],
+  }),
+}));
+
+export const programPurchases = pgTable("program_purchases", {
+  id: serial("id").primaryKey(),
+  programId: integer("program_id").notNull().references(() => trainingPrograms.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  price: integer("price").notNull(), // How many spikes were paid
+  isFree: boolean("is_free").default(false), // If it was given for free
+  purchasedAt: timestamp("purchased_at").defaultNow(),
+});
+
+export const programPurchasesRelations = relations(programPurchases, ({ one }) => ({
+  program: one(trainingPrograms, {
+    fields: [programPurchases.programId],
+    references: [trainingPrograms.id],
+  }),
+  user: one(users, {
+    fields: [programPurchases.userId],
+    references: [users.id],
+  }),
+}));
+
+export const programProgress = pgTable("program_progress", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  programId: integer("program_id").notNull().references(() => trainingPrograms.id),
+  sessionId: integer("session_id").notNull().references(() => programSessions.id),
+  completedAt: timestamp("completed_at").notNull(),
+  rating: integer("rating"), // User rating for the session (1-5)
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const programProgressRelations = relations(programProgress, ({ one }) => ({
+  user: one(users, {
+    fields: [programProgress.userId],
+    references: [users.id],
+  }),
+  program: one(trainingPrograms, {
+    fields: [programProgress.programId],
+    references: [trainingPrograms.id],
+  }),
+  session: one(programSessions, {
+    fields: [programProgress.sessionId],
+    references: [programSessions.id],
+  }),
+}));
+
+// Create Insert Schemas for programs
+export const insertTrainingProgramSchema = createInsertSchema(trainingPrograms).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertProgramSessionSchema = createInsertSchema(programSessions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertProgramPurchaseSchema = createInsertSchema(programPurchases).omit({
+  id: true,
+  purchasedAt: true,
+});
+
+export const insertProgramProgressSchema = createInsertSchema(programProgress).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Create Type Definitions
+export type TrainingProgram = typeof trainingPrograms.$inferSelect;
+export type InsertTrainingProgram = z.infer<typeof insertTrainingProgramSchema>;
+
+export type ProgramSession = typeof programSessions.$inferSelect;
+export type InsertProgramSession = z.infer<typeof insertProgramSessionSchema>;
+
+export type ProgramPurchase = typeof programPurchases.$inferSelect;
+export type InsertProgramPurchase = z.infer<typeof insertProgramPurchaseSchema>;
+
+export type ProgramProgress = typeof programProgress.$inferSelect;
+export type InsertProgramProgress = z.infer<typeof insertProgramProgressSchema>;
 
 // Additional relations for users with spikes system
 export const usersSpikesRelations = relations(users, ({ many, one }) => ({
