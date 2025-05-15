@@ -32,7 +32,8 @@ import {
   BookmarkPlus,
   MoreHorizontal,
   UserCircle,
-  X
+  X,
+  BookOpen
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { CreateMeetModal } from '@/components/create-meet-modal';
@@ -205,8 +206,8 @@ export default function HomePage() {
     {
       title: "Programs",
       description: "Training plans and schedules",
-      icon: <Clipboard className="h-6 w-6 text-primary" />,
-      href: "/practice",
+      icon: <BookOpen className="h-6 w-6 text-primary" />,
+      href: "/programs",
     },
     {
       title: "Competitions",
