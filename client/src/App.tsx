@@ -35,6 +35,8 @@ function Router() {
       {/* Training */}
       <ProtectedRoute path="/practice" component={PracticePage} />
       <ProtectedRoute path="/training-tools" component={TrainingToolsPage} />
+      <ProtectedRoute path="/programs" component={ProgramsPage} />
+      <ProtectedRoute path="/programs/create" component={ProgramCreatePage} />
       
       {/* Competition */}
       <ProtectedRoute path="/meets" component={MeetsPage} />

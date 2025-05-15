@@ -11,7 +11,8 @@ import {
   MessagesSquare,
   Award,
   Coins,
-  LogOut
+  LogOut,
+  BookOpen
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -201,6 +202,14 @@ export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
               onClick={onClose}
             >
               Training Tools
+            </NavItem>
+            <NavItem 
+              href="/programs" 
+              icon={<BookOpen className="h-5 w-5" />} 
+              isActive={location.startsWith('/programs')}
+              onClick={onClose}
+            >
+              Programs
             </NavItem>
           </div>
 
