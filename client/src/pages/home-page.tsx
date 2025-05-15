@@ -77,15 +77,10 @@ export default function HomePage() {
       <HamburgerMenu />
       
       <main className="pt-16 px-4 container mx-auto max-w-7xl">
-        {/* Greeting Section */}
-        <section className="mb-4 mt-2 mx-auto" style={{ maxWidth: "540px" }}>
-          <h1 className="text-3xl font-bold mb-2">
-            Hello, {user?.name?.split(' ')[0] || user?.username}
-          </h1>
-          <p className="text-muted-foreground">
-            Welcome to Track Pro - Your Track and Field Companion
-          </p>
-        </section>
+        {/* Logo will be placed here in the future */}
+        <div className="h-8 mb-4 mt-2 mx-auto" style={{ maxWidth: "540px" }}>
+          {/* Reserved space for logo */}
+        </div>
 
         {/* Motivational Quote - Smaller and without card */}
         <section className="mb-4 mx-auto text-center" style={{ maxWidth: "270px" }}>
