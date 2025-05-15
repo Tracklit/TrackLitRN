@@ -21,7 +21,6 @@ import {
   ArrowUpRight
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
-import { MotivationalQuote } from '@/components/motivational-quote';
 import { CreateMeetModal } from '@/components/create-meet-modal';
 import { cn } from '@/lib/utils';
 
@@ -66,11 +65,7 @@ export default function HomePage() {
     }
   ];
 
-  // Define motivational quote
-  const quote = {
-    text: "The difference between the impossible and the possible lies in a person's determination.",
-    author: "Tommy Lasorda"
-  };
+  // Quote removed as requested
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-16">
@@ -82,11 +77,7 @@ export default function HomePage() {
           {/* Reserved space for logo */}
         </div>
 
-        {/* Motivational Quote - Smaller and without card */}
-        <section className="mb-2 mx-auto text-center" style={{ maxWidth: "270px" }}>
-          <p className="italic text-sm mb-0.5 text-muted-foreground">&ldquo;{quote.text}&rdquo;</p>
-          <p className="text-right text-xs text-muted-foreground">— {quote.author}</p>
-        </section>
+        {/* Quote removed as requested */}
         
         {/* Main Category Cards - 2 column layout with smaller sizes for mobile */}
         <section className="mb-4">
