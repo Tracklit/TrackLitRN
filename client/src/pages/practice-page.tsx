@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { useAuth } from "@/hooks/use-auth";
 import { useAssignedPrograms } from "@/hooks/use-assigned-programs";
+import { useProgramSessions } from "@/hooks/use-program-sessions";
 import { PageContainer } from "@/components/page-container";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -51,6 +52,16 @@ export default function PracticePage() {
   
   // State for current day navigation
   const [currentDay, setCurrentDay] = useState<"yesterday" | "today" | "tomorrow">("today");
+  const [currentDayOffset, setCurrentDayOffset] = useState<number>(0); // 0 = today, -1 = yesterday, 1 = tomorrow
+  
+  // State for session data
+  const [activeSessionData, setActiveSessionData] = useState<any>(null);
+  
+  // Fetch program sessions if we have a selected program
+  const { 
+    programSessions, 
+    isLoading: isLoadingProgramSessions 
+  } = useProgramSessions(selectedProgram?.programId || null);
   
   // State for Training Performance inputs
   const [percentage, setPercentage] = useState<number[]>([85]);
@@ -65,6 +76,30 @@ export default function PracticePage() {
     }
   }, [assignedPrograms, selectedProgram]);
   
+  // Get the session for the current day when program sessions load
+  useEffect(() => {
+    if (programSessions && programSessions.length > 0) {
+      // Find session for current day (relative to offset)
+      const todayDate = new Date();
+      todayDate.setDate(todayDate.getDate() + currentDayOffset);
+      const todayStr = todayDate.toISOString().split('T')[0]; // format as YYYY-MM-DD
+      
+      // First try to find a session with matching date
+      let matchingSession = programSessions.find(session => session.date === todayStr);
+      
+      // If no matching date, use day_number
+      if (!matchingSession) {
+        // Current day from program start (assuming program starts today - currentDayOffset)
+        const dayNumber = currentDayOffset + 1; // day_number starts at 1
+        matchingSession = programSessions.find(session => session.dayNumber === dayNumber);
+      }
+      
+      if (matchingSession) {
+        setActiveSessionData(matchingSession);
+      }
+    }
+  }, [programSessions, currentDayOffset]);
+  
   // State for session completion
   const [sessionCompleteOpen, setSessionCompleteOpen] = useState<boolean>(false);
   const [diaryNotes, setDiaryNotes] = useState<string>("");
@@ -72,11 +107,23 @@ export default function PracticePage() {
   
   // Navigation functions
   const goToPreviousDay = () => {
-    setCurrentDay("yesterday");
+    if (currentDay === "today") {
+      setCurrentDay("yesterday");
+      setCurrentDayOffset(-1);
+    } else if (currentDay === "tomorrow") {
+      setCurrentDay("today");
+      setCurrentDayOffset(0);
+    }
   };
   
   const goToNextDay = () => {
-    setCurrentDay("tomorrow");
+    if (currentDay === "yesterday") {
+      setCurrentDay("today");
+      setCurrentDayOffset(0);
+    } else if (currentDay === "today") {
+      setCurrentDay("tomorrow");
+      setCurrentDayOffset(1);
+    }
   };
   
   // Best times for common distances (in seconds)
@@ -254,28 +301,146 @@ export default function PracticePage() {
                 </h4>
                 
                 {selectedProgram ? (
-                  <div className="space-y-2">
-                    {/* Display program details */}
-                    <div className="p-4 bg-background/80 rounded border border-border/50">
-                      <p className="mb-2 font-medium">{selectedProgram.program?.title}</p>
-                      <p className="text-sm text-muted-foreground mb-3">{selectedProgram.program?.description}</p>
-                      
-                      {selectedProgram.notes && (
-                        <div className="p-3 bg-muted/30 rounded-md mb-3">
-                          <h5 className="text-xs font-medium mb-1">Assignment Notes:</h5>
-                          <p className="text-sm">{selectedProgram.notes}</p>
+                  <div className="space-y-4">
+                    {/* Show active session if available */}
+                    {activeSessionData ? (
+                      <div className="space-y-3">
+                        <div className="p-3 bg-background/80 rounded-md border border-border/50">
+                          <h3 className="font-medium mb-2">
+                            {activeSessionData.title || `Day ${activeSessionData.dayNumber} Training`}
+                          </h3>
+                          {activeSessionData.description && (
+                            <p className="text-sm text-muted-foreground mb-3">{activeSessionData.description}</p>
+                          )}
+                          
+                          {/* Display spreadsheet data for the appropriate distance based on the athlete's needs */}
+                          <div className="space-y-3">
+                            {activeSessionData.isRestDay ? (
+                              <div className="p-3 bg-muted/30 rounded-md">
+                                <p className="text-center font-medium">Rest Day</p>
+                                <p className="text-sm text-center text-muted-foreground">
+                                  Take time to recover and prepare for your next training session.
+                                </p>
+                              </div>
+                            ) : (
+                              <>
+                                {/* Show imported workout information with proper hierarchy */}
+                                {activeSessionData.shortDistanceWorkout && (
+                                  <div className="p-2 bg-background/50 rounded border border-border/50">
+                                    <div className="flex items-start">
+                                      <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
+                                        <Dumbbell className="h-4 w-4 text-primary" />
+                                      </div>
+                                      <div>
+                                        <p className="font-medium text-sm">Short Distance (60-100m)</p>
+                                        <div className="whitespace-pre-line text-sm mt-1">
+                                          {activeSessionData.shortDistanceWorkout}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                                
+                                {activeSessionData.mediumDistanceWorkout && (
+                                  <div className="p-2 bg-background/50 rounded border border-border/50">
+                                    <div className="flex items-start">
+                                      <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
+                                        <Dumbbell className="h-4 w-4 text-primary" />
+                                      </div>
+                                      <div>
+                                        <p className="font-medium text-sm">Medium Distance (200m)</p>
+                                        <div className="whitespace-pre-line text-sm mt-1">
+                                          {activeSessionData.mediumDistanceWorkout}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                                
+                                {activeSessionData.longDistanceWorkout && (
+                                  <div className="p-2 bg-background/50 rounded border border-border/50">
+                                    <div className="flex items-start">
+                                      <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
+                                        <Dumbbell className="h-4 w-4 text-primary" />
+                                      </div>
+                                      <div>
+                                        <p className="font-medium text-sm">Long Distance (400m+)</p>
+                                        <div className="whitespace-pre-line text-sm mt-1">
+                                          {activeSessionData.longDistanceWorkout}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                                
+                                {/* Pre-activation exercises */}
+                                {(activeSessionData.preActivation1 || activeSessionData.preActivation2) && (
+                                  <div className="p-2 bg-background/50 rounded border border-border/50">
+                                    <p className="font-medium text-sm mb-2">Pre-Activation</p>
+                                    {activeSessionData.preActivation1 && (
+                                      <div className="whitespace-pre-line text-sm mt-1 pl-2 border-l-2 border-primary/30">
+                                        {activeSessionData.preActivation1}
+                                      </div>
+                                    )}
+                                    {activeSessionData.preActivation2 && (
+                                      <div className="whitespace-pre-line text-sm mt-2 pl-2 border-l-2 border-primary/30">
+                                        {activeSessionData.preActivation2}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                                
+                                {/* Extra session */}
+                                {activeSessionData.extraSession && (
+                                  <div className="p-2 bg-background/50 rounded border border-border/50">
+                                    <p className="font-medium text-sm mb-1">Extra Session</p>
+                                    <div className="whitespace-pre-line text-sm">
+                                      {activeSessionData.extraSession}
+                                    </div>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                          </div>
                         </div>
-                      )}
-                      
-                      <div className="flex justify-between items-center">
-                        <Badge variant="outline">
-                          {selectedProgram.program?.level || "Beginner"}
-                        </Badge>
-                        <Badge variant="outline">
-                          {selectedProgram.program?.category || "General"}
-                        </Badge>
+                        
+                        {/* Show day number and date information */}
+                        <div className="flex justify-between text-xs text-muted-foreground px-1">
+                          <span>Day {activeSessionData.dayNumber}</span>
+                          {activeSessionData.date && (
+                            <span>Date: {activeSessionData.date}</span>
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    ) : isLoadingProgramSessions ? (
+                      <div className="flex justify-center py-6">
+                        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {/* Program info but no sessions */}
+                        <div className="p-4 bg-background/80 rounded border border-border/50">
+                          <p className="mb-2 font-medium">{selectedProgram.program?.title}</p>
+                          <p className="text-sm text-muted-foreground mb-3">{selectedProgram.program?.description}</p>
+                          
+                          {selectedProgram.notes && (
+                            <div className="p-3 bg-muted/30 rounded-md mb-3">
+                              <h5 className="text-xs font-medium mb-1">Assignment Notes:</h5>
+                              <p className="text-sm">{selectedProgram.notes}</p>
+                            </div>
+                          )}
+                          
+                          <div className="flex justify-between items-center">
+                            <Badge variant="outline">
+                              {selectedProgram.program?.level || "Beginner"}
+                            </Badge>
+                            <Badge variant="outline">
+                              {selectedProgram.program?.category || "General"}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     
                     <Link href={`/programs/${selectedProgram.programId}`} className="text-sm text-primary hover:underline mt-2 inline-block">
                       View Full Program Details
