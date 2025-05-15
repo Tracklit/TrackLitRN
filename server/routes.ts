@@ -2972,6 +2972,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // 7.2.1 Self-assign a program (assign to yourself)
+  app.post("/api/programs/:id/self-assign", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const programId = parseInt(req.params.id);
+      const { notes } = req.body;
+      const userId = req.user!.id;
+      
+      const program = await dbStorage.getProgram(programId);
+      
+      if (!program) {
+        return res.status(404).json({ error: "Program not found" });
+      }
+      
+      // Check if already assigned
+      const existingAssignment = await dbStorage.getProgramAssignment(programId, userId);
+      if (existingAssignment) {
+        return res.status(400).json({ error: "You've already started this program" });
+      }
+      
+      // Create assignment (self-assigned)
+      const assignment = await dbStorage.createProgramAssignment({
+        programId,
+        assigneeId: userId,
+        assignerId: userId, // Self-assigned
+        notes: notes || 'Self-assigned program',
+        status: "active"  // Auto-activate for self-assignments
+      });
+      
+      res.status(201).json(assignment);
+    } catch (error) {
+      console.error("Error self-assigning program:", error);
+      res.status(500).json({ error: "Failed to start program" });
+    }
+  });
+  
   // 7.3 Get programs assigned to the current user
   app.get("/api/assigned-programs", async (req: Request, res: Response) => {
     try {
