@@ -30,6 +30,16 @@ import {
   InsertGroupMessage,
   ClubMessage,
   InsertClubMessage,
+  Achievement,
+  InsertAchievement,
+  UserAchievement,
+  InsertUserAchievement,
+  LoginStreak,
+  InsertLoginStreak,
+  SpikeTransaction,
+  InsertSpikeTransaction,
+  Referral,
+  InsertReferral,
   users,
   meets,
   results,
@@ -45,7 +55,12 @@ import {
   groups,
   chatGroupMembers,
   groupMessages,
-  clubMessages
+  clubMessages,
+  achievements,
+  userAchievements,
+  loginStreaks,
+  spikeTransactions,
+  referrals
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, lt, gte, desc, asc, inArray, or, isNotNull, isNull } from "drizzle-orm";
@@ -159,6 +174,39 @@ export interface IStorage {
 
   // Session store
   sessionStore: session.Store;
+
+  // Achievement operations
+  getAchievement(id: number): Promise<Achievement | undefined>;
+  getAchievements(): Promise<Achievement[]>;
+  getAchievementsByCategory(category: string): Promise<Achievement[]>;
+  createAchievement(achievement: InsertAchievement): Promise<Achievement>;
+  updateAchievement(id: number, achievementData: Partial<Achievement>): Promise<Achievement | undefined>;
+  deleteAchievement(id: number): Promise<boolean>;
+
+  // User Achievement operations
+  getUserAchievement(id: number): Promise<UserAchievement | undefined>;
+  getUserAchievementsByUserId(userId: number): Promise<(UserAchievement & { achievement: Achievement })[]>;
+  getUserAchievementByUserAndAchievement(userId: number, achievementId: number): Promise<UserAchievement | undefined>;
+  createUserAchievement(userAchievement: InsertUserAchievement): Promise<UserAchievement>;
+  updateUserAchievement(id: number, userAchievementData: Partial<UserAchievement>): Promise<UserAchievement | undefined>;
+  completeUserAchievement(userId: number, achievementId: number): Promise<UserAchievement | undefined>;
+  
+  // Login Streak operations
+  getLoginStreakByUserId(userId: number): Promise<LoginStreak | undefined>;
+  createOrUpdateLoginStreak(userId: number): Promise<LoginStreak>;
+  
+  // Spike Transaction operations
+  getSpikeTransactions(userId: number): Promise<SpikeTransaction[]>;
+  createSpikeTransaction(transaction: InsertSpikeTransaction): Promise<SpikeTransaction>;
+  addSpikesToUser(userId: number, amount: number, source: string, sourceId?: number, description?: string): Promise<{ transaction: SpikeTransaction, user: User }>;
+  deductSpikesFromUser(userId: number, amount: number, source: string, sourceId?: number, description?: string): Promise<{ transaction: SpikeTransaction, user: User } | undefined>;
+  
+  // Referral operations
+  getReferral(id: number): Promise<Referral | undefined>;
+  getReferralByCode(referralCode: string): Promise<Referral | undefined>;
+  getUserReferrals(userId: number): Promise<Referral[]>;
+  createReferral(referral: InsertReferral): Promise<Referral>;
+  completeReferral(id: number): Promise<Referral | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -844,6 +892,508 @@ export class DatabaseStorage implements IStorage {
       return { ...newMessage, username: user.username };
     } catch (error) {
       console.error("Error creating club message:", error);
+      throw error;
+    }
+  }
+
+  // Achievement operations
+  async getAchievement(id: number): Promise<Achievement | undefined> {
+    const [achievement] = await db.select().from(achievements).where(eq(achievements.id, id));
+    return achievement;
+  }
+
+  async getAchievements(): Promise<Achievement[]> {
+    return db.select().from(achievements).orderBy(achievements.category, achievements.name);
+  }
+
+  async getAchievementsByCategory(category: string): Promise<Achievement[]> {
+    return db.select().from(achievements).where(eq(achievements.category, category)).orderBy(achievements.name);
+  }
+
+  async createAchievement(insertAchievement: InsertAchievement): Promise<Achievement> {
+    const [achievement] = await db.insert(achievements).values(insertAchievement).returning();
+    return achievement;
+  }
+
+  async updateAchievement(id: number, achievementData: Partial<Achievement>): Promise<Achievement | undefined> {
+    const [achievement] = await db
+      .update(achievements)
+      .set(achievementData)
+      .where(eq(achievements.id, id))
+      .returning();
+    return achievement;
+  }
+
+  async deleteAchievement(id: number): Promise<boolean> {
+    const result = await db.delete(achievements).where(eq(achievements.id, id));
+    return !!result;
+  }
+
+  // User Achievement operations
+  async getUserAchievement(id: number): Promise<UserAchievement | undefined> {
+    const [userAchievement] = await db.select().from(userAchievements).where(eq(userAchievements.id, id));
+    return userAchievement;
+  }
+
+  async getUserAchievementsByUserId(userId: number): Promise<(UserAchievement & { achievement: Achievement })[]> {
+    // Join with achievements to get details
+    const result = await db
+      .select({
+        ua: userAchievements,
+        achievement: achievements
+      })
+      .from(userAchievements)
+      .innerJoin(achievements, eq(userAchievements.achievementId, achievements.id))
+      .where(eq(userAchievements.userId, userId));
+    
+    return result.map(item => ({
+      ...item.ua,
+      achievement: item.achievement
+    }));
+  }
+
+  async getUserAchievementByUserAndAchievement(userId: number, achievementId: number): Promise<UserAchievement | undefined> {
+    const [userAchievement] = await db
+      .select()
+      .from(userAchievements)
+      .where(
+        and(
+          eq(userAchievements.userId, userId),
+          eq(userAchievements.achievementId, achievementId)
+        )
+      );
+    return userAchievement;
+  }
+
+  async createUserAchievement(insertUserAchievement: InsertUserAchievement): Promise<UserAchievement> {
+    const [userAchievement] = await db.insert(userAchievements).values(insertUserAchievement).returning();
+    return userAchievement;
+  }
+
+  async updateUserAchievement(id: number, userAchievementData: Partial<UserAchievement>): Promise<UserAchievement | undefined> {
+    const [userAchievement] = await db
+      .update(userAchievements)
+      .set(userAchievementData)
+      .where(eq(userAchievements.id, id))
+      .returning();
+    return userAchievement;
+  }
+
+  async completeUserAchievement(userId: number, achievementId: number): Promise<UserAchievement | undefined> {
+    try {
+      // Start a transaction
+      return await db.transaction(async (tx) => {
+        // Get the achievement
+        const [achievement] = await tx
+          .select()
+          .from(achievements)
+          .where(eq(achievements.id, achievementId));
+        
+        if (!achievement) {
+          throw new Error(`Achievement with ID ${achievementId} not found`);
+        }
+
+        // Get or create user achievement
+        let userAchievement: UserAchievement | undefined;
+        const [existingUserAchievement] = await tx
+          .select()
+          .from(userAchievements)
+          .where(
+            and(
+              eq(userAchievements.userId, userId),
+              eq(userAchievements.achievementId, achievementId)
+            )
+          );
+        
+        if (existingUserAchievement) {
+          // If one-time achievement and already completed, return existing
+          if (achievement.isOneTime && existingUserAchievement.isCompleted) {
+            return existingUserAchievement;
+          }
+
+          // Update existing achievement
+          const timesEarned = existingUserAchievement.timesEarned + 1;
+          const now = new Date();
+          
+          [userAchievement] = await tx
+            .update(userAchievements)
+            .set({
+              isCompleted: true,
+              completionDate: now,
+              timesEarned,
+              lastEarnedAt: now
+            })
+            .where(eq(userAchievements.id, existingUserAchievement.id))
+            .returning();
+        } else {
+          // Create new user achievement
+          const now = new Date();
+          [userAchievement] = await tx
+            .insert(userAchievements)
+            .values({
+              userId,
+              achievementId,
+              isCompleted: true,
+              progress: achievement.requirementValue,
+              completionDate: now,
+              timesEarned: 1,
+              lastEarnedAt: now
+            })
+            .returning();
+        }
+
+        // Award spikes to the user
+        await this._awardSpikesForAchievement(tx, userId, achievement);
+
+        return userAchievement;
+      });
+    } catch (error) {
+      console.error("Error completing user achievement:", error);
+      throw error;
+    }
+  }
+
+  // Helper function to award spikes for achievement
+  private async _awardSpikesForAchievement(tx: any, userId: number, achievement: Achievement) {
+    const [user] = await tx.select().from(users).where(eq(users.id, userId));
+    if (!user) throw new Error(`User with ID ${userId} not found`);
+
+    const newBalance = user.spikes + achievement.spikeReward;
+    
+    // Update user spikes
+    await tx
+      .update(users)
+      .set({ spikes: newBalance })
+      .where(eq(users.id, userId));
+
+    // Record transaction
+    await tx
+      .insert(spikeTransactions)
+      .values({
+        userId,
+        amount: achievement.spikeReward,
+        balance: newBalance,
+        source: 'achievement',
+        sourceId: achievement.id,
+        description: `Earned ${achievement.spikeReward} spikes for achievement: ${achievement.name}`
+      });
+  }
+
+  // Login Streak operations
+  async getLoginStreakByUserId(userId: number): Promise<LoginStreak | undefined> {
+    const [streak] = await db.select().from(loginStreaks).where(eq(loginStreaks.userId, userId));
+    return streak;
+  }
+
+  async createOrUpdateLoginStreak(userId: number): Promise<LoginStreak> {
+    try {
+      return await db.transaction(async (tx) => {
+        // Get user
+        const [user] = await tx.select().from(users).where(eq(users.id, userId));
+        if (!user) throw new Error(`User with ID ${userId} not found`);
+
+        // Get existing streak
+        const [existingStreak] = await tx
+          .select()
+          .from(loginStreaks)
+          .where(eq(loginStreaks.userId, userId));
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        let streakData: Partial<LoginStreak>;
+        let spikesToAward = 0;
+        let description = '';
+
+        if (!existingStreak) {
+          // Create new streak
+          streakData = {
+            userId,
+            currentStreak: 1,
+            longestStreak: 1,
+            lastLoginDate: today,
+            streakUpdatedAt: new Date()
+          };
+          spikesToAward = 5; // First login
+          description = 'First login bonus: 5 spikes';
+        } else {
+          const lastLogin = existingStreak.lastLoginDate;
+          
+          if (!lastLogin) {
+            // First time tracking
+            streakData = {
+              currentStreak: 1,
+              longestStreak: Math.max(existingStreak.longestStreak, 1),
+              lastLoginDate: today,
+              streakUpdatedAt: new Date()
+            };
+            spikesToAward = 5;
+            description = 'Login bonus: 5 spikes';
+          } else {
+            // Already logged in today
+            if (lastLogin.toDateString() === today.toDateString()) {
+              return existingStreak;
+            }
+
+            // Check if yesterday
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            
+            if (lastLogin.toDateString() === yesterday.toDateString()) {
+              // Continuing streak
+              const newStreak = existingStreak.currentStreak + 1;
+              const newLongestStreak = Math.max(existingStreak.longestStreak, newStreak);
+              
+              streakData = {
+                currentStreak: newStreak,
+                longestStreak: newLongestStreak,
+                lastLoginDate: today,
+                streakUpdatedAt: new Date()
+              };
+
+              // Award spikes based on streak milestones
+              if (newStreak % 7 === 0) {
+                // Weekly milestone (7, 14, 21, etc.)
+                spikesToAward = 25;
+                description = `${newStreak}-day login streak bonus: 25 spikes`;
+              } else if (newStreak % 30 === 0) {
+                // Monthly milestone (30, 60, 90, etc.)
+                spikesToAward = 100;
+                description = `${newStreak}-day login streak milestone: 100 spikes`;
+              } else {
+                // Regular day
+                spikesToAward = 5;
+                description = `Day ${newStreak} login streak: 5 spikes`;
+              }
+            } else {
+              // Streak broken
+              streakData = {
+                currentStreak: 1,
+                lastLoginDate: today,
+                streakUpdatedAt: new Date()
+              };
+              spikesToAward = 5;
+              description = 'Login bonus: 5 spikes';
+            }
+          }
+        }
+
+        // Update or insert streak
+        let streak: LoginStreak;
+        if (existingStreak) {
+          [streak] = await tx
+            .update(loginStreaks)
+            .set(streakData)
+            .where(eq(loginStreaks.userId, userId))
+            .returning();
+        } else {
+          [streak] = await tx
+            .insert(loginStreaks)
+            .values(streakData as InsertLoginStreak)
+            .returning();
+        }
+
+        // Award spikes
+        if (spikesToAward > 0) {
+          const newBalance = user.spikes + spikesToAward;
+          
+          // Update user spikes
+          await tx
+            .update(users)
+            .set({ spikes: newBalance })
+            .where(eq(users.id, userId));
+
+          // Record transaction
+          await tx
+            .insert(spikeTransactions)
+            .values({
+              userId,
+              amount: spikesToAward,
+              balance: newBalance,
+              source: 'login_streak',
+              sourceId: streak.id,
+              description
+            });
+        }
+
+        return streak;
+      });
+    } catch (error) {
+      console.error("Error updating login streak:", error);
+      throw error;
+    }
+  }
+
+  // Spike Transaction operations
+  async getSpikeTransactions(userId: number): Promise<SpikeTransaction[]> {
+    return db
+      .select()
+      .from(spikeTransactions)
+      .where(eq(spikeTransactions.userId, userId))
+      .orderBy(desc(spikeTransactions.createdAt));
+  }
+
+  async createSpikeTransaction(insertTransaction: InsertSpikeTransaction): Promise<SpikeTransaction> {
+    const [transaction] = await db.insert(spikeTransactions).values(insertTransaction).returning();
+    return transaction;
+  }
+
+  async addSpikesToUser(userId: number, amount: number, source: string, sourceId?: number, description?: string): Promise<{ transaction: SpikeTransaction, user: User }> {
+    try {
+      return await db.transaction(async (tx) => {
+        // Get user
+        const [user] = await tx.select().from(users).where(eq(users.id, userId));
+        if (!user) throw new Error(`User with ID ${userId} not found`);
+
+        const newBalance = user.spikes + amount;
+        
+        // Update user spikes
+        const [updatedUser] = await tx
+          .update(users)
+          .set({ spikes: newBalance })
+          .where(eq(users.id, userId))
+          .returning();
+
+        // Record transaction
+        const [transaction] = await tx
+          .insert(spikeTransactions)
+          .values({
+            userId,
+            amount,
+            balance: newBalance,
+            source,
+            sourceId,
+            description: description || `Earned ${amount} spikes from ${source}`
+          })
+          .returning();
+
+        return { transaction, user: updatedUser };
+      });
+    } catch (error) {
+      console.error("Error adding spikes to user:", error);
+      throw error;
+    }
+  }
+
+  async deductSpikesFromUser(userId: number, amount: number, source: string, sourceId?: number, description?: string): Promise<{ transaction: SpikeTransaction, user: User } | undefined> {
+    try {
+      return await db.transaction(async (tx) => {
+        // Get user
+        const [user] = await tx.select().from(users).where(eq(users.id, userId));
+        if (!user) throw new Error(`User with ID ${userId} not found`);
+
+        // Check if user has enough spikes
+        if (user.spikes < amount) {
+          return undefined;
+        }
+
+        const newBalance = user.spikes - amount;
+        
+        // Update user spikes
+        const [updatedUser] = await tx
+          .update(users)
+          .set({ spikes: newBalance })
+          .where(eq(users.id, userId))
+          .returning();
+
+        // Record transaction
+        const [transaction] = await tx
+          .insert(spikeTransactions)
+          .values({
+            userId,
+            amount: -amount,
+            balance: newBalance,
+            source,
+            sourceId,
+            description: description || `Spent ${amount} spikes on ${source}`
+          })
+          .returning();
+
+        return { transaction, user: updatedUser };
+      });
+    } catch (error) {
+      console.error("Error deducting spikes from user:", error);
+      throw error;
+    }
+  }
+
+  // Referral operations
+  async getReferral(id: number): Promise<Referral | undefined> {
+    const [referral] = await db.select().from(referrals).where(eq(referrals.id, id));
+    return referral;
+  }
+
+  async getReferralByCode(referralCode: string): Promise<Referral | undefined> {
+    const [referral] = await db.select().from(referrals).where(eq(referrals.referralCode, referralCode));
+    return referral;
+  }
+
+  async getUserReferrals(userId: number): Promise<Referral[]> {
+    return db
+      .select()
+      .from(referrals)
+      .where(eq(referrals.referrerId, userId))
+      .orderBy(desc(referrals.createdAt));
+  }
+
+  async createReferral(insertReferral: InsertReferral): Promise<Referral> {
+    const [referral] = await db.insert(referrals).values(insertReferral).returning();
+    return referral;
+  }
+
+  async completeReferral(id: number): Promise<Referral | undefined> {
+    try {
+      return await db.transaction(async (tx) => {
+        // Get referral
+        const [referral] = await tx.select().from(referrals).where(eq(referrals.id, id));
+        if (!referral) throw new Error(`Referral with ID ${id} not found`);
+
+        // If already completed, just return
+        if (referral.status === 'completed' && referral.spikesAwarded) {
+          return referral;
+        }
+
+        // Get referrer
+        const [referrer] = await tx.select().from(users).where(eq(users.id, referral.referrerId));
+        if (!referrer) throw new Error(`Referrer with ID ${referral.referrerId} not found`);
+
+        // Award spikes to referrer (100 spikes for successful referral)
+        const amount = 100;
+        const newBalance = referrer.spikes + amount;
+        
+        // Update referrer spikes
+        await tx
+          .update(users)
+          .set({ spikes: newBalance })
+          .where(eq(users.id, referrer.id));
+
+        // Record transaction
+        await tx
+          .insert(spikeTransactions)
+          .values({
+            userId: referrer.id,
+            amount,
+            balance: newBalance,
+            source: 'referral',
+            sourceId: referral.id,
+            description: `Earned ${amount} spikes for referring a new user!`
+          });
+
+        // Update referral status
+        const [updatedReferral] = await tx
+          .update(referrals)
+          .set({
+            status: 'completed',
+            spikesAwarded: true,
+            completedAt: new Date()
+          })
+          .where(eq(referrals.id, id))
+          .returning();
+
+        return updatedReferral;
+      });
+    } catch (error) {
+      console.error("Error completing referral:", error);
       throw error;
     }
   }
