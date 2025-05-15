@@ -2799,6 +2799,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // 7.1 Get potential assignees for a program (club members, athletes, etc.)
+  app.get("/api/programs/:id/potential-assignees", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const programId = parseInt(req.params.id);
+      const program = await dbStorage.getProgram(programId);
+      
+      if (!program) {
+        return res.status(404).json({ error: "Program not found" });
+      }
+      
+      // Only the creator can assign programs
+      if (program.userId !== req.user!.id) {
+        return res.status(403).json({ error: "Only the creator can assign this program" });
+      }
+      
+      // Get users from clubs where this user is an admin/coach
+      const clubMembers = await dbStorage.getCoachableUsers(req.user!.id);
+      
+      // Filter out users who already have this program assigned
+      const existingAssignees = await dbStorage.getProgramAssignees(programId);
+      const existingAssigneeIds = existingAssignees.map(a => a.assigneeId);
+      
+      const eligibleAssignees = clubMembers.filter(member => 
+        !existingAssigneeIds.includes(member.id) && 
+        member.id !== req.user!.id
+      );
+      
+      res.json(eligibleAssignees);
+    } catch (error) {
+      console.error("Error fetching potential assignees:", error);
+      res.status(500).json({ error: "Failed to fetch potential assignees" });
+    }
+  });
+  
+  // 7.2 Assign a program to a user
+  app.post("/api/programs/:id/assign", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const programId = parseInt(req.params.id);
+      const { assigneeId, notes } = req.body;
+      
+      if (!assigneeId) {
+        return res.status(400).json({ error: "Assignee ID is required" });
+      }
+      
+      const program = await dbStorage.getProgram(programId);
+      
+      if (!program) {
+        return res.status(404).json({ error: "Program not found" });
+      }
+      
+      // Only the creator can assign programs
+      if (program.userId !== req.user!.id) {
+        return res.status(403).json({ error: "Only the creator can assign this program" });
+      }
+      
+      // Check if the assignee is eligible (in same club/group or a coached athlete)
+      const clubMembers = await dbStorage.getCoachableUsers(req.user!.id);
+      const isEligible = clubMembers.some(member => member.id === assigneeId);
+      
+      if (!isEligible) {
+        return res.status(403).json({ error: "You can only assign programs to your club members or athletes" });
+      }
+      
+      // Check if already assigned
+      const existingAssignment = await dbStorage.getProgramAssignment(programId, assigneeId);
+      if (existingAssignment) {
+        return res.status(400).json({ error: "Program is already assigned to this user" });
+      }
+      
+      // Create assignment
+      const assignment = await dbStorage.createProgramAssignment({
+        programId,
+        assignerId: req.user!.id,
+        assigneeId,
+        notes: notes || "",
+        status: "pending"
+      });
+      
+      res.status(201).json(assignment);
+    } catch (error) {
+      console.error("Error assigning program:", error);
+      res.status(500).json({ error: "Failed to assign program" });
+    }
+  });
+  
   // 8. Record program session progress
   app.post("/api/program-sessions/:id/complete", async (req: Request, res: Response) => {
     try {
