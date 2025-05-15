@@ -3001,7 +3001,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         assigneeId: userId,
         assignerId: userId, // Self-assigned
         notes: notes || 'Self-assigned program',
-        status: "active"  // Auto-activate for self-assignments
+        status: "accepted"  // Auto-activate for self-assignments
       });
       
       res.status(201).json(assignment);
