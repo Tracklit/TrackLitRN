@@ -260,20 +260,7 @@ export default function HomePage() {
                     </div>
                     <p className="text-xs text-muted-foreground line-clamp-1">{sessionPreviews[activeSessionIndex].previewText}</p>
                   </div>
-                  <div className="flex-shrink-0">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-6 px-2 text-xs"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openSessionDetails(sessionPreviews[activeSessionIndex]);
-                      }}
-                    >
-                      <Eye className="h-3 w-3 mr-1" />
-                      View
-                    </Button>
-                  </div>
+
                 </div>
               </div>
             )}
