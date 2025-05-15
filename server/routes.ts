@@ -2712,23 +2712,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create the program
       const createdProgram = await dbStorage.createProgram(programData);
       
-      // Create a few mock sessions to demonstrate the structure
-      // These would normally come from parsing the Google Sheet
+      // Create mock sessions to demonstrate the spreadsheet column structure
+      // Following the specified Google Sheet structure:
+      // Column A: date, B: pre-activation 1, C: pre-activation 2
+      // D: 60/100m, E: 200m, F: 400m, G: extra session
       for (let i = 1; i <= 10; i++) {
         const isRestDay = i % 3 === 0; // Every third day is a rest day
         
+        // Map data to match how the frontend expects it
         const sessionData = {
           programId: createdProgram.id,
-          date: `2025-05-${i < 10 ? '0' + i : i}`,
-          preActivation1: 'Warm up 10 min',
-          preActivation2: 'Dynamic stretching',
-          shortDistanceWorkout: isRestDay ? '' : 'Sprint intervals 5x100m',
-          mediumDistanceWorkout: isRestDay ? '' : '3x400m at race pace',
-          longDistanceWorkout: isRestDay ? '' : '1x800m tempo run',
-          extraSession: '',
-          isRestDay,
+          // Map to spreadsheet columns
+          columnA: `2025-05-${i < 10 ? '0' + i : i}`, // Date in column A
+          columnB: 'Warm up 10 min',                  // Pre-Activation 1 in column B
+          columnC: 'Dynamic stretching',              // Pre-Activation 2 in column C
+          columnD: isRestDay ? '' : 'Sprint intervals 5x100m',  // 60/100m sessions in column D
+          columnE: isRestDay ? '' : '3x400m at race pace',      // 200m sessions in column E
+          columnF: isRestDay ? '' : '1x800m tempo run',         // 400m sessions in column F
+          columnG: i % 4 === 0 ? 'Evening recovery session' : '', // Extra sessions in column G
           dayNumber: i,
-          title: `Day ${i}: ${isRestDay ? 'Rest Day' : 'Training Day'}`,
         };
         
         await dbStorage.createProgramSession(sessionData);

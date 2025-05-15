@@ -79,23 +79,67 @@ export default function PracticePage() {
   // Get the session for the current day when program sessions load
   useEffect(() => {
     if (programSessions && programSessions.length > 0) {
-      // Find session for current day (relative to offset)
-      const todayDate = new Date();
-      todayDate.setDate(todayDate.getDate() + currentDayOffset);
-      const todayStr = todayDate.toISOString().split('T')[0]; // format as YYYY-MM-DD
+      // Find session for current day 
+      // For testing, just use relative day number since we don't have real dates in our test data
+      const dayNumber = Math.abs(currentDayOffset) + 1; // day_number starts at 1
       
-      // First try to find a session with matching date
-      let matchingSession = programSessions.find(session => session.date === todayStr);
+      // Try to find the session for the current day
+      let matchingSession = programSessions.find((session: any) => {
+        // First check exact date match if available
+        if (session.date) {
+          try {
+            // Try to parse the date (could be ISO format or other format from sheet)
+            const sessionDate = new Date(session.date);
+            if (!isNaN(sessionDate.getTime())) {
+              const today = new Date();
+              today.setDate(today.getDate() + currentDayOffset);
+              // Compare dates (ignore time)
+              return sessionDate.toISOString().split('T')[0] === today.toISOString().split('T')[0];
+            }
+          } catch (e) {
+            // If date parsing fails, fall back to day number
+          }
+        }
+        
+        // Fall back to day number if no date match
+        return session.dayNumber === dayNumber;
+      });
       
-      // If no matching date, use day_number
-      if (!matchingSession) {
-        // Current day from program start (assuming program starts today - currentDayOffset)
-        const dayNumber = currentDayOffset + 1; // day_number starts at 1
-        matchingSession = programSessions.find(session => session.dayNumber === dayNumber);
+      // If no match but we have sessions, use the first one or the closest one
+      if (!matchingSession && programSessions.length > 0) {
+        // Get the closest day number if available
+        const sessionsWithDayNumbers = programSessions.filter((s: any) => typeof s.dayNumber === 'number');
+        if (sessionsWithDayNumbers.length > 0) {
+          // Sort sessions by day number and find closest
+          sessionsWithDayNumbers.sort((a: any, b: any) => {
+            const distA = Math.abs(a.dayNumber - dayNumber);
+            const distB = Math.abs(b.dayNumber - dayNumber);
+            return distA - distB;
+          });
+          matchingSession = sessionsWithDayNumbers[0];
+        } else {
+          // Just use the first session
+          matchingSession = programSessions[0];
+        }
       }
       
       if (matchingSession) {
-        setActiveSessionData(matchingSession);
+        // Make sure the session reflects the day we're showing
+        const sessionData = {
+          ...matchingSession,
+          // If we don't have a day number, use the calculated one
+          dayNumber: matchingSession.dayNumber || dayNumber
+        };
+        
+        // Determine if it's a rest day (all workout cells empty)
+        const isRestDay = !sessionData.shortDistanceWorkout && 
+                          !sessionData.mediumDistanceWorkout && 
+                          !sessionData.longDistanceWorkout;
+        
+        setActiveSessionData({
+          ...sessionData,
+          isRestDay
+        });
       }
     }
   }, [programSessions, currentDayOffset]);
@@ -107,24 +151,29 @@ export default function PracticePage() {
   
   // Navigation functions
   const goToPreviousDay = () => {
+    setCurrentDayOffset(currentDayOffset - 1);
+    
     if (currentDay === "today") {
       setCurrentDay("yesterday");
-      setCurrentDayOffset(-1);
     } else if (currentDay === "tomorrow") {
       setCurrentDay("today");
-      setCurrentDayOffset(0);
     }
   };
   
   const goToNextDay = () => {
+    setCurrentDayOffset(currentDayOffset + 1);
+    
     if (currentDay === "yesterday") {
       setCurrentDay("today");
-      setCurrentDayOffset(0);
     } else if (currentDay === "today") {
       setCurrentDay("tomorrow");
-      setCurrentDayOffset(1);
     }
   };
+  
+  // For debugging only - logs the structure of active session data
+  useEffect(() => {
+    console.log("Active session data:", activeSessionData);
+  }, [activeSessionData]);
   
   // Best times for common distances (in seconds)
   const bestTimes: Record<string, number> = {
