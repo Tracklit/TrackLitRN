@@ -86,6 +86,10 @@ export default {
         "collapse": {
           from: { height: "var(--radix-collapsible-content-height)", opacity: "1" },
           to: { height: "0", opacity: "0" }
+        },
+        "fadeIn": {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" }
         }
       },
       animation: {
@@ -93,6 +97,7 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         "expand": "expand 0.3s ease-out",
         "collapse": "collapse 0.3s ease-out",
+        "fadeIn": "fadeIn 0.5s ease-in-out",
       },
     },
   },

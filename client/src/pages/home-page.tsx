@@ -249,8 +249,9 @@ export default function HomePage() {
           <div className="px-4 pb-0">
             {sessionPreviews && (
               <div 
-                className="cursor-pointer"
+                className="cursor-pointer animate-fadeIn"
                 onClick={() => openSessionDetails(sessionPreviews[activeSessionIndex])}
+                key={activeSessionIndex} // Key helps with animation
               >
                 <div 
                   className="flex items-center gap-2 bg-primary/5 border border-primary/10 px-3 py-2 rounded-md hover:bg-primary/10 transition-all duration-300"
@@ -279,14 +280,6 @@ export default function HomePage() {
                       View
                     </Button>
                   </div>
-                </div>
-                <div className="h-1 bg-muted mt-1 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-primary/50 rounded-full transition-all duration-300"
-                    style={{ 
-                      width: `${((activeSessionIndex + 1) / sessionPreviews.length) * 100}%` 
-                    }}
-                  />
                 </div>
               </div>
             )}
