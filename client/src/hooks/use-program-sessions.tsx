@@ -43,11 +43,17 @@ export function useProgramSessions(programId: number | null) {
       }
       const data = await response.json();
       
+      // Debug: Log what we're getting from the server
+      console.log("Raw program data:", data);
+      
       // If we have sessions, parse them according to spreadsheet structure
       if (data.sessions && Array.isArray(data.sessions)) {
-        return parseSpreadsheetData(data.sessions);
+        const parsedSessions = parseSpreadsheetData(data.sessions);
+        console.log("Parsed sessions:", parsedSessions);
+        return parsedSessions;
       }
       
+      console.log("No sessions found in data");
       return [];
     },
     enabled: !!programId, // Only fetch when we have a programId
