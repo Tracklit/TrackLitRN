@@ -1,140 +1,92 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2, User } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { Program } from "@shared/schema";
 
 interface SelfAssignProgramDialogProps {
-  program: any;
-  className?: string;
-  variant?: "default" | "outline" | "ghost";
-  size?: "default" | "sm" | "lg" | "icon";
-  fullWidth?: boolean;
+  program: Program;
   buttonText?: string;
+  size?: "default" | "sm" | "lg" | "icon";
+  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
 }
 
 export function SelfAssignProgramDialog({ 
   program, 
-  className = "", 
-  variant = "default",
-  size = "sm",
-  fullWidth = false,
-  buttonText = "Start Program"
+  buttonText = "Start Free", 
+  size = "default", 
+  variant = "default" 
 }: SelfAssignProgramDialogProps) {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [notes, setNotes] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Mutation to assign program to yourself
-  const assignMutation = useMutation({
-    mutationFn: async (data: { notes: string }) => {
-      const response = await apiRequest(
-        "POST", 
-        `/api/programs/${program.id}/self-assign`, 
-        data
-      );
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to assign program");
-      }
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const selfAssignMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", `/api/programs/${program.id}/self-assign`, { notes });
       return response.json();
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/assigned-programs"] });
       toast({
-        title: "Success",
-        description: "Program assigned to yourself successfully",
+        title: "Program Assigned",
+        description: "You have successfully assigned the program to yourself. You can view it in your assigned programs.",
       });
       setIsOpen(false);
-      setNotes("");
-      queryClient.invalidateQueries({ queryKey: ['/api/assigned-programs'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/purchased-programs'] });
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
+        title: "Failed to assign program",
         description: error.message,
         variant: "destructive",
       });
     },
-    onSettled: () => {
-      setIsSubmitting(false);
-    }
   });
-  
-  const handleSubmit = () => {
-    setIsSubmitting(true);
-    assignMutation.mutate({
-      notes,
-    });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    selfAssignMutation.mutate();
   };
-  
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button 
-          variant={variant} 
-          size={size} 
-          className={`${fullWidth ? "w-full" : ""} ${className}`}
-        >
-          <User className="h-3.5 w-3.5 mr-1.5" />
-          {buttonText}
-        </Button>
+        <Button size={size} variant={variant}>{buttonText}</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Start This Program</DialogTitle>
+          <DialogTitle>Start Training Program</DialogTitle>
           <DialogDescription>
-            You're about to start "{program.title}". You can track your progress and mark sessions as completed.
+            You're about to start "{program.title}". Add any notes about your goals for this program.
           </DialogDescription>
         </DialogHeader>
-        
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <label htmlFor="notes" className="text-sm font-medium">
-              Personal Notes (Optional)
-            </label>
-            <Textarea
-              id="notes"
-              placeholder="Add any personal goals or notes for this program..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="min-h-[100px]"
-            />
+        <form onSubmit={handleSubmit}>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="notes">Notes (optional)</Label>
+              <Textarea
+                id="notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Add any notes or goals for this program..."
+                className="resize-none"
+              />
+            </div>
           </div>
-        </div>
-        
-        <DialogFooter>
-          <Button 
-            variant="outline" 
-            onClick={() => setIsOpen(false)}
-          >
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleSubmit} 
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Starting...
-              </>
-            ) : "Start Program"}
-          </Button>
-        </DialogFooter>
+          <DialogFooter>
+            <Button 
+              type="submit" 
+              disabled={selfAssignMutation.isPending}
+            >
+              {selfAssignMutation.isPending ? "Starting..." : "Start Program"}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
