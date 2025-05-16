@@ -1520,15 +1520,59 @@ export class DatabaseStorage implements IStorage {
   }
   
   async deleteProgram(id: number): Promise<boolean> {
-    // First delete all program sessions associated with this program
-    await db.delete(programSessions).where(eq(programSessions.programId, id));
+    // Double-check if program exists
+    const program = await db.select().from(trainingPrograms).where(eq(trainingPrograms.id, id));
+    if (!program || program.length === 0) {
+      console.log(`Program with ID ${id} not found`);
+      return false;
+    }
     
-    // Delete all program assignments associated with this program
-    await db.delete(programAssignments).where(eq(programAssignments.programId, id));
-    
-    // Then delete the program itself
-    await db.delete(trainingPrograms).where(eq(trainingPrograms.id, id));
-    return true;
+    try {
+      // Using direct SQL to handle deletions in proper order to avoid constraint violations
+      
+      // First delete any practice completions tied to program sessions
+      await pool.query(
+        `DELETE FROM practice_completions WHERE session_id IN (
+          SELECT id FROM program_sessions WHERE program_id = $1
+        )`,
+        [id]
+      );
+      
+      // Delete program sessions
+      await pool.query(
+        `DELETE FROM program_sessions WHERE program_id = $1`,
+        [id]
+      );
+      
+      // Delete program purchases
+      await pool.query(
+        `DELETE FROM program_purchases WHERE program_id = $1`,
+        [id]
+      );
+      
+      // Delete program progress
+      await pool.query(
+        `DELETE FROM program_progress WHERE program_id = $1`,
+        [id]
+      );
+      
+      // Delete program assignments
+      await pool.query(
+        `DELETE FROM program_assignments WHERE program_id = $1`,
+        [id]
+      );
+      
+      // Finally delete the program itself
+      await pool.query(
+        `DELETE FROM training_programs WHERE id = $1`,
+        [id]
+      );
+      
+      return true;
+    } catch (error) {
+      console.error(`Error in deleteProgram:`, error);
+      throw error;
+    }
   }
   
   // Program Sessions Methods
