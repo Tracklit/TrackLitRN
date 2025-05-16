@@ -60,6 +60,7 @@ export default function PracticePage() {
   // State for current day navigation
   const [currentDay, setCurrentDay] = useState<"yesterday" | "today" | "tomorrow">("today");
   const [currentDayOffset, setCurrentDayOffset] = useState<number>(0); // 0 = today, -1 = yesterday, 1 = tomorrow
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   
   // State for session data
   const [activeSessionData, setActiveSessionData] = useState<any>(null);
@@ -247,15 +248,37 @@ export default function PracticePage() {
   const goToPreviousDay = () => {
     setCurrentDayOffset(prev => prev - 1);
     
-    // We no longer need to update currentDay as we're using continuous offset navigation
-    // instead of just yesterday/today/tomorrow
+    // Update the selected date as well
+    const newDate = new Date(); 
+    newDate.setDate(newDate.getDate() + (currentDayOffset - 1));
+    setSelectedDate(newDate);
   };
   
   const goToNextDay = () => {
     setCurrentDayOffset(prev => prev + 1);
     
-    // We no longer need to update currentDay as we're using continuous offset navigation
-    // instead of just yesterday/today/tomorrow
+    // Update the selected date as well
+    const newDate = new Date();
+    newDate.setDate(newDate.getDate() + (currentDayOffset + 1));
+    setSelectedDate(newDate);
+  };
+  
+  // Handle date picker selection
+  const handleDateSelect = (date: Date | undefined) => {
+    if (!date) return;
+    
+    // Calculate the day offset from today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selectedDay = new Date(date);
+    selectedDay.setHours(0, 0, 0, 0);
+    
+    const diffTime = selectedDay.getTime() - today.getTime();
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+    
+    // Update states
+    setCurrentDayOffset(diffDays);
+    setSelectedDate(date);
   };
   
   // For debugging only - logs the structure of active session data
@@ -387,12 +410,24 @@ export default function PracticePage() {
             Go Back
           </Button>
           
-          <Badge variant="outline" className="px-3 py-1 text-sm">
-            {activeSessionData ? 
-              (activeSessionData.columnA || activeSessionData.date) : 
-              formatMonthDay(new Date(new Date().setDate(new Date().getDate() + currentDayOffset)))
-            }
-          </Badge>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Badge variant="outline" className="px-3 py-1 text-sm cursor-pointer hover:bg-muted/60 transition-colors">
+                {activeSessionData ? 
+                  (activeSessionData.columnA || activeSessionData.date) : 
+                  formatMonthDay(new Date(new Date().setDate(new Date().getDate() + currentDayOffset)))
+                }
+              </Badge>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="center">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={handleDateSelect}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
           
           <Button
             variant="outline"
