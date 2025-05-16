@@ -310,7 +310,7 @@ export default function PracticePage() {
             className="flex items-center gap-1"
           >
             <ChevronLeft className="h-4 w-4" />
-            Yesterday
+            Go Back
           </Button>
           
           <Badge variant="outline" className="px-3 py-1 text-sm">
@@ -329,7 +329,7 @@ export default function PracticePage() {
             onClick={goToNextDay}
             className="flex items-center gap-1"
           >
-            Tomorrow
+            Next Day
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
