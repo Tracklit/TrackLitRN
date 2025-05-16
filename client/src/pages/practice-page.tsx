@@ -412,12 +412,12 @@ export default function PracticePage() {
           
           <Popover>
             <PopoverTrigger asChild>
-              <Badge variant="outline" className="px-3 py-1 text-sm cursor-pointer hover:bg-muted/60 transition-colors">
+              <Button variant="outline" className="px-3 py-1 h-auto text-sm min-w-[100px]">
                 {activeSessionData ? 
                   (activeSessionData.columnA || activeSessionData.date) : 
                   formatMonthDay(new Date(new Date().setDate(new Date().getDate() + currentDayOffset)))
                 }
-              </Badge>
+              </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="center">
               <Calendar
