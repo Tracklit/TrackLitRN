@@ -462,7 +462,7 @@ export default function PracticePage() {
                                         <Dumbbell className="h-4 w-4 text-primary" />
                                       </div>
                                       <div>
-                                        <p className="font-medium text-sm">Short Distance (60-100m)</p>
+                                        <p className="font-medium text-sm">60m/100m</p>
                                         <div className="whitespace-pre-line text-sm mt-1">
                                           {activeSessionData.shortDistanceWorkout.replace(/^"|"$/g, '')}
                                         </div>
@@ -478,7 +478,7 @@ export default function PracticePage() {
                                         <Dumbbell className="h-4 w-4 text-primary" />
                                       </div>
                                       <div>
-                                        <p className="font-medium text-sm">Medium Distance (200m)</p>
+                                        <p className="font-medium text-sm">200m</p>
                                         <div className="whitespace-pre-line text-sm mt-1">
                                           {activeSessionData.mediumDistanceWorkout.replace(/^"|"$/g, '')}
                                         </div>
@@ -494,7 +494,7 @@ export default function PracticePage() {
                                         <Dumbbell className="h-4 w-4 text-primary" />
                                       </div>
                                       <div>
-                                        <p className="font-medium text-sm">Long Distance (400m+)</p>
+                                        <p className="font-medium text-sm">400m</p>
                                         <div className="whitespace-pre-line text-sm mt-1">
                                           {activeSessionData.longDistanceWorkout.replace(/^"|"$/g, '')}
                                         </div>
