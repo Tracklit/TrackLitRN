@@ -1520,6 +1520,13 @@ export class DatabaseStorage implements IStorage {
   }
   
   async deleteProgram(id: number): Promise<boolean> {
+    // First delete all program sessions associated with this program
+    await db.delete(programSessions).where(eq(programSessions.programId, id));
+    
+    // Delete all program assignments associated with this program
+    await db.delete(programAssignments).where(eq(programAssignments.programId, id));
+    
+    // Then delete the program itself
     await db.delete(trainingPrograms).where(eq(trainingPrograms.id, id));
     return true;
   }
