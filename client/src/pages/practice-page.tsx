@@ -102,14 +102,34 @@ export default function PracticePage() {
                                      currentDay === "yesterday" ? yesterdayFormatted : 
                                      tomorrowFormatted);
       
-      // First try to find a session with a matching date
+      // Debug all session dates
+      console.log("Parsed sessions:", programSessions);
+      
+      // Get today's date components for matching Month-Day format
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const todayMonth = months[today.getMonth()];
+      const todayDay = today.getDate();
+      const yesterdayMonth = months[yesterday.getMonth()];
+      const yesterdayDay = yesterday.getDate();
+      const tomorrowMonth = months[tomorrow.getMonth()];
+      const tomorrowDay = tomorrow.getDate();
+      
+      // Target date in Month-Day format (e.g., "May-16")
+      const targetMonthDay = currentDay === "today" 
+        ? `${todayMonth}-${todayDay}` 
+        : currentDay === "yesterday" 
+          ? `${yesterdayMonth}-${yesterdayDay}` 
+          : `${tomorrowMonth}-${tomorrowDay}`;
+          
+      console.log("Looking for date in Month-Day format:", targetMonthDay);
+      
+      // First try to find a session with matching Month-Day format date (e.g., "May-16")
       let sessionData = programSessions.find((session: any) => {
-        const sessionDate = session.date;
+        const sessionDate = session.date || session.columnA;
         if (!sessionDate) return false;
         
-        return sessionDate === (currentDay === "today" ? todayFormatted : 
-                              currentDay === "yesterday" ? yesterdayFormatted : 
-                              tomorrowFormatted);
+        console.log(`Comparing session date ${sessionDate} with target ${targetMonthDay}`);
+        return sessionDate === targetMonthDay;
       });
       
       // If no match by date, fallback to using the day number
@@ -308,8 +328,13 @@ export default function PracticePage() {
           </Button>
           
           <Badge variant="outline" className="px-3 py-1 text-sm">
-            {currentDay === "yesterday" ? "May 6" : 
-             currentDay === "today" ? "May 7" : "May 8"}
+            {activeSessionData ? 
+              (activeSessionData.columnA || activeSessionData.date) : 
+              (currentDay === "yesterday" ? 
+                `${months[yesterday.getMonth()]}-${yesterdayDay}` : 
+                currentDay === "today" ? 
+                  `${months[today.getMonth()]}-${todayDay}` : 
+                  `${months[tomorrow.getMonth()]}-${tomorrowDay}`)}
           </Badge>
           
           <Button
