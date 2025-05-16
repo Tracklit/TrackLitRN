@@ -416,25 +416,28 @@ export default function PracticePage() {
                                   </div>
                                 )}
                                 
-                                {/* Pre-activation exercises */}
-                                {(activeSessionData.preActivation1 || activeSessionData.preActivation2) && (
+                                {/* Pre-activation exercises - Column B only */}
+                                {activeSessionData.preActivation1 && (
                                   <div className="p-2 bg-background/50 rounded border border-border/50">
                                     <p className="font-medium text-sm mb-2">Pre-Activation</p>
-                                    {activeSessionData.preActivation1 && (
-                                      <div className="whitespace-pre-line text-sm mt-1 pl-2 border-l-2 border-primary/30">
-                                        {activeSessionData.preActivation1}
-                                      </div>
-                                    )}
-                                    {activeSessionData.preActivation2 && (
-                                      <div className="whitespace-pre-line text-sm mt-2 pl-2 border-l-2 border-primary/30">
-                                        {activeSessionData.preActivation2}
-                                      </div>
-                                    )}
+                                    <div className="whitespace-pre-line text-sm mt-1 pl-2 border-l-2 border-primary/30">
+                                      {activeSessionData.preActivation1}
+                                    </div>
                                   </div>
                                 )}
                                 
-                                {/* Extra session */}
-                                {activeSessionData.extraSession && (
+                                {/* Post-Workout data - Column C */}
+                                {activeSessionData.preActivation2 && (
+                                  <div className="p-2 bg-background/50 rounded border border-border/50">
+                                    <p className="font-medium text-sm mb-2">Post-Workout</p>
+                                    <div className="whitespace-pre-line text-sm mt-1 pl-2 border-l-2 border-primary/30">
+                                      {activeSessionData.preActivation2}
+                                    </div>
+                                  </div>
+                                )}
+                                
+                                {/* Extra session - Column G, only if not empty */}
+                                {activeSessionData.extraSession && activeSessionData.extraSession.trim() !== "" && (
                                   <div className="p-2 bg-background/50 rounded border border-border/50">
                                     <p className="font-medium text-sm mb-1">Extra Session</p>
                                     <div className="whitespace-pre-line text-sm">
