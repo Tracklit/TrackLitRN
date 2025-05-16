@@ -337,11 +337,7 @@ export default function PracticePage() {
              "Today's Practice" : 
              `Practice for ${formatMonthDay(new Date(new Date().setDate(new Date().getDate() + currentDayOffset)))}`}
     >
-      <div className="text-center mx-auto max-w-md mb-6">
-        <p className="text-muted-foreground">
-          Track your training sessions and progress
-        </p>
-      </div>
+      {/* Removed tracking sessions text */}
       
       {/* Assigned Programs Section */}
       {(assignedPrograms && assignedPrograms.length > 0) && (
@@ -494,9 +490,7 @@ export default function PracticePage() {
             <div className="space-y-4 mt-6">
               {/* Program content or default content */}
               <div className="bg-muted/40 p-3 rounded-md">
-                <h4 className="text-sm font-medium mb-2">
-                  {selectedProgram ? "Program Content" : "Today's Workout"}
-                </h4>
+                {/* Removed Program Content label */}
                 
                 {selectedProgram ? (
                   <div className="space-y-4">
@@ -505,7 +499,7 @@ export default function PracticePage() {
                       <div className="space-y-3">
                         <div className="p-3 bg-background/80 rounded-md border border-border/50">
                           <h3 className="font-medium mb-2">
-                            {activeSessionData.title || `Day ${activeSessionData.dayNumber} Training`}
+                            {activeSessionData.date}
                           </h3>
                           {activeSessionData.description && (
                             <p className="text-sm text-muted-foreground mb-3">{activeSessionData.description}</p>
@@ -607,13 +601,7 @@ export default function PracticePage() {
                           </div>
                         </div>
                         
-                        {/* Show day number and date information */}
-                        <div className="flex justify-between text-xs text-muted-foreground px-1">
-                          <span>Day {activeSessionData.dayNumber}</span>
-                          {activeSessionData.date && (
-                            <span>Date: {activeSessionData.date}</span>
-                          )}
-                        </div>
+                        {/* Removed day number and date information */}
                       </div>
                     ) : isLoadingProgramSessions ? (
                       <div className="flex justify-center py-6">
