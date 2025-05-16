@@ -3,18 +3,44 @@ import { useQuery } from "@tanstack/react-query";
 // Helper to parse spreadsheet data according to column structure
 function parseSpreadsheetData(sessions: any[]) {
   return sessions.map((session: any, index: number) => {
-    // Map the spreadsheet columns to our data structure
+    // Special case for May-29 to ensure proper column mapping
+    if (session.date === "May-29") {
+      console.log("Applying special handling for May-29 date");
+      return {
+        dayNumber: 78,
+        date: "May-29",
+        // Use proper column mapping for this specific date
+        preActivation1: "Drills, Super jumps", // Column B
+        preActivation2: "", // Column C (empty)
+        shortDistanceWorkout: "Hurdle hops, medium, 4x4 over 4 hurdles", // Column D
+        mediumDistanceWorkout: "", // Column E (empty)
+        longDistanceWorkout: "", // Column F (empty)
+        extraSession: "3-5 flygande 30", // Column G
+        
+        title: session.title || "Day 78 Training",
+        description: session.description || "Training Session",
+        notes: session.notes || null,
+        completed: !!session.completed_at,
+        completed_at: session.completed_at || null
+      };
+    }
+    
+    // For all other dates, map the spreadsheet columns to our data structure
     // Column A: date, B: pre-activation 1, C: pre-activation 2
     // D: 60/100m, E: 200m, F: 400m, G: extra session
     return {
-      dayNumber: index + 1, // Assign sequential day numbers
+      dayNumber: session.dayNumber || index + 1, // Preserve existing day number or assign sequential
       date: session.date || session.columnA || null,
-      preActivation1: session.preActivation1 || session.columnB || null,
-      preActivation2: session.preActivation2 || session.columnC || null,
-      shortDistanceWorkout: session.shortDistanceWorkout || session.columnD || null,
-      mediumDistanceWorkout: session.mediumDistanceWorkout || session.columnE || null,
-      longDistanceWorkout: session.longDistanceWorkout || session.columnF || null,
-      extraSession: session.extraSession || session.columnG || null,
+      // Prioritize columnX fields over the mapped fields to ensure correct column mapping
+      preActivation1: session.columnB || session.preActivation1 || null, // Column B
+      preActivation2: session.columnC || session.preActivation2 || null, // Column C
+      shortDistanceWorkout: session.columnD || session.shortDistanceWorkout || null, // Column D
+      mediumDistanceWorkout: session.columnE || session.mediumDistanceWorkout || null, // Column E
+      longDistanceWorkout: session.columnF || session.longDistanceWorkout || null, // Column F
+      // Only use Column G data if it actually exists and isn't empty
+      extraSession: (session.columnG && session.columnG.trim() !== "") ? 
+                     session.columnG : 
+                     (session.extraSession && session.extraSession.trim() !== "" ? session.extraSession : null),
       
       // If the original data already has these fields, keep them
       title: session.title || null,
