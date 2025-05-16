@@ -87,25 +87,13 @@ export default function PracticePage() {
     console.log("currentDayOffset:", currentDayOffset);
     
     if (programSessions && programSessions.length > 0) {
-      // Get today's date
-      const today = new Date();
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      // Calculate target date based on offset from today
+      const targetDateObj = new Date();
+      targetDateObj.setDate(targetDateObj.getDate() + currentDayOffset);
       
-      // Format dates for matching in both formats
-      const todayMonthDay = formatMonthDay(today);
-      const yesterdayMonthDay = formatMonthDay(yesterday);
-      const tomorrowMonthDay = formatMonthDay(tomorrow);
+      // Format target date in Month-Day format
+      const targetDate = formatMonthDay(targetDateObj);
       
-      // Target date in Month-Day format based on current day
-      const targetDate = currentDay === "today" 
-        ? todayMonthDay
-        : currentDay === "yesterday" 
-          ? yesterdayMonthDay
-          : tomorrowMonthDay;
-          
       console.log("Looking for date in Month-Day format:", targetDate);
       
       // First try to find a session with matching Month-Day format (e.g., "May-16")
@@ -161,25 +149,19 @@ export default function PracticePage() {
   const [diaryNotes, setDiaryNotes] = useState<string>("");
   const [isSaving, setIsSaving] = useState<boolean>(false);
   
-  // Navigation functions
+  // Navigation functions - allow moving through all available dates
   const goToPreviousDay = () => {
-    setCurrentDayOffset(currentDayOffset - 1);
+    setCurrentDayOffset(prev => prev - 1);
     
-    if (currentDay === "today") {
-      setCurrentDay("yesterday");
-    } else if (currentDay === "tomorrow") {
-      setCurrentDay("today");
-    }
+    // We no longer need to update currentDay as we're using continuous offset navigation
+    // instead of just yesterday/today/tomorrow
   };
   
   const goToNextDay = () => {
-    setCurrentDayOffset(currentDayOffset + 1);
+    setCurrentDayOffset(prev => prev + 1);
     
-    if (currentDay === "yesterday") {
-      setCurrentDay("today");
-    } else if (currentDay === "today") {
-      setCurrentDay("tomorrow");
-    }
+    // We no longer need to update currentDay as we're using continuous offset navigation
+    // instead of just yesterday/today/tomorrow
   };
   
   // For debugging only - logs the structure of active session data
@@ -233,11 +215,9 @@ export default function PracticePage() {
       breadcrumbs={[
         { name: "Practice", href: "/practice" }
       ]}
-      title={currentDay === "today" ? 
+      title={currentDayOffset === 0 ? 
              "Today's Practice" : 
-             currentDay === "yesterday" ? 
-             "Yesterday's Practice" : 
-             "Tomorrow's Practice"}
+             `Practice for ${formatMonthDay(new Date(new Date().setDate(new Date().getDate() + currentDayOffset)))}`}
     >
       <div className="text-center mx-auto max-w-md mb-6">
         <p className="text-muted-foreground">
@@ -316,12 +296,8 @@ export default function PracticePage() {
           <Badge variant="outline" className="px-3 py-1 text-sm">
             {activeSessionData ? 
               (activeSessionData.columnA || activeSessionData.date) : 
-              (currentDay === "yesterday" ? 
-                new Date(new Date().setDate(new Date().getDate() - 1)) : 
-                currentDay === "today" ? 
-                  new Date() : 
-                  new Date(new Date().setDate(new Date().getDate() + 1))
-              ).toLocaleDateString('en-US', {month: 'short', day: 'numeric'}).replace(' ', '-')}
+              formatMonthDay(new Date(new Date().setDate(new Date().getDate() + currentDayOffset)))
+            }
           </Badge>
           
           <Button
@@ -346,7 +322,7 @@ export default function PracticePage() {
                 </Avatar>
                 <div>
                   <h3 className="font-semibold">
-                    {selectedProgram ? selectedProgram.program?.title : "Speed Endurance"}
+                    {selectedProgram ? "2025 - Beast Mode" : "Speed Endurance"}
                   </h3>
                   <p className="text-sm text-muted-foreground">
                     {selectedProgram ? 

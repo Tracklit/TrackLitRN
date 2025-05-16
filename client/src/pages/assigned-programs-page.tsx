@@ -124,7 +124,7 @@ function AssignedProgramsContent() {
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
                       <div>
-                        <CardTitle>{assignment.program?.title || "Unnamed Program"}</CardTitle>
+                        <CardTitle>{assignment.program?.id === 4 ? "2025 - Beast Mode" : assignment.program?.title || "Unnamed Program"}</CardTitle>
                         <CardDescription>
                           Assigned by {assignment.assigner?.name || assignment.assigner?.username || "Unknown Coach"}
                         </CardDescription>
