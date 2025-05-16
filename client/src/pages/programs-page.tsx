@@ -15,6 +15,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AssignProgramDialog } from "@/components/assign-program-dialog";
 import { SelfAssignProgramDialog } from "@/components/self-assign-program-dialog";
 import { GoogleSheetImportDialog } from "@/components/google-sheet-import-dialog";
+import { DeleteProgramDialog } from "@/components/delete-program-dialog";
 
 import {
   BookOpen,
@@ -409,6 +410,12 @@ function ProgramCard({ program, type, creator, viewMode }: {
                 className="flex-1"
                 buttonText="Assign"
               />
+              <DeleteProgramDialog
+                programId={program.id}
+                programTitle={program.title}
+                buttonSize="sm"
+                className="flex-1"
+              />
             </div>
           ) : (
             <div className="flex w-full gap-2">
@@ -426,6 +433,12 @@ function ProgramCard({ program, type, creator, viewMode }: {
                 size="sm"
                 className="flex-1"
                 buttonText="Assign"
+              />
+              <DeleteProgramDialog
+                programId={program.id}
+                programTitle={program.title}
+                buttonSize="sm"
+                iconOnly={true}
               />
             </div>
           )
