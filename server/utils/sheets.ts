@@ -34,16 +34,29 @@ export async function fetchSpreadsheetData(sheetId: string) {
       // Skip header row if present
       const dataRows = rows.length > 1 ? rows.slice(1) : rows;
       
-      // Try to extract the sheet title from the request URL
-      const fetchUrl = `https://docs.google.com/spreadsheets/d/${sheetId}`;
-      let sheetTitle = '';
+      // Set a default title that will be used if we can't extract from spreadsheet
+      let sheetTitle = `My Training Program`;
+      
+      // Try to get the title directly from the URL response
       try {
-        const titleResponse = await fetch(fetchUrl);
-        const htmlText = await titleResponse.text();
-        const titleMatch = htmlText.match(/<title>(.*?)<\/title>/i);
-        if (titleMatch && titleMatch[1]) {
-          sheetTitle = titleMatch[1].replace(' - Google Sheets', '').replace(' - Google Drive', '').trim();
-          console.log(`Found sheet title: ${sheetTitle}`);
+        const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}?fields=properties.title&key=${process.env.GOOGLE_API_KEY}`;
+        const titleResponse = await fetch(apiUrl);
+        if (titleResponse.ok) {
+          const data = await titleResponse.json();
+          if (data && data.properties && data.properties.title) {
+            sheetTitle = data.properties.title;
+            console.log(`Successfully fetched sheet title from API: ${sheetTitle}`);
+          }
+        } else {
+          // Fallback: Try to extract from HTML
+          const fetchUrl = `https://docs.google.com/spreadsheets/d/${sheetId}`;
+          const htmlResponse = await fetch(fetchUrl);
+          const htmlText = await htmlResponse.text();
+          const titleMatch = htmlText.match(/<title>(.*?)<\/title>/i);
+          if (titleMatch && titleMatch[1]) {
+            sheetTitle = titleMatch[1].replace(' - Google Sheets', '').replace(' - Google Drive', '').trim();
+            console.log(`Found sheet title from HTML: ${sheetTitle}`);
+          }
         }
       } catch (e) {
         console.warn("Couldn't extract sheet title:", e);

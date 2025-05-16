@@ -82,20 +82,51 @@ export default function PracticePage() {
     console.log("currentDayOffset:", currentDayOffset);
     
     if (programSessions && programSessions.length > 0) {
-      // Find session for current day 
-      // For testing, just use relative day number since we don't have real dates in our test data
-      const dayNumber = Math.abs(currentDayOffset) + 1; // day_number starts at 1
-      console.log("Looking for day number:", dayNumber);
+      // Get today's date
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
       
-      // Log every program session to see what we have
-      programSessions.forEach((session: any, index: number) => {
-        console.log(`Session ${index+1}:`, session);
+      // Format dates to match spreadsheet format (YYYY-MM-DD)
+      const formatDate = (date: Date) => {
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      };
+      
+      const todayFormatted = formatDate(today);
+      const yesterdayFormatted = formatDate(yesterday);
+      const tomorrowFormatted = formatDate(tomorrow);
+      
+      console.log("Looking for date:", currentDay === "today" ? todayFormatted : 
+                                     currentDay === "yesterday" ? yesterdayFormatted : 
+                                     tomorrowFormatted);
+      
+      // First try to find a session with a matching date
+      let sessionData = programSessions.find((session: any) => {
+        const sessionDate = session.date;
+        if (!sessionDate) return false;
+        
+        return sessionDate === (currentDay === "today" ? todayFormatted : 
+                              currentDay === "yesterday" ? yesterdayFormatted : 
+                              tomorrowFormatted);
       });
       
-      // Just use the program session corresponding to the current day offset
-      // For now, we'll simplify and just use the index
-      const dayIndex = Math.min(Math.max(0, dayNumber-1), programSessions.length-1);
-      const sessionData = programSessions[dayIndex];
+      // If no match by date, fallback to using the day number
+      if (!sessionData) {
+        // Find session by day number relative to current offset
+        const dayNumber = Math.abs(currentDayOffset) + 1; // day_number starts at 1
+        console.log("No date match, falling back to day number:", dayNumber);
+        
+        // First try to find a session with the exact day number
+        sessionData = programSessions.find((session: any) => session.dayNumber === dayNumber);
+        
+        // If still no match, just use the corresponding index 
+        if (!sessionData) {
+          const dayIndex = Math.min(Math.max(0, dayNumber-1), programSessions.length-1);
+          sessionData = programSessions[dayIndex];
+        }
+      }
       
       console.log("Selected session:", sessionData);
       
@@ -106,17 +137,16 @@ export default function PracticePage() {
       
       setActiveSessionData({
         ...sessionData,
-        dayNumber: dayNumber,
         isRestDay
       });
       
       console.log("Setting active session data:", {
         ...sessionData,
-        dayNumber: dayNumber,
         isRestDay
       });
     } else {
       console.log("No program sessions available");
+      setActiveSessionData(null);
     }
   }, [programSessions, currentDayOffset]);
   
