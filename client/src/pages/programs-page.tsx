@@ -5,7 +5,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { Link } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,6 +32,7 @@ import {
   Loader2,
   LockIcon,
   Plus,
+  RefreshCw,
   Search,
   Tag,
   TrendingUp,
@@ -265,6 +268,48 @@ function ProgramCard({ program, type, creator, viewMode }: {
   viewMode: "creator" | "public" | "purchased";
 }) {
   const progress = program.progress ? Math.round((program.completedSessions / program.totalSessions) * 100) : 0;
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // Create mutation for refreshing Google Sheet data
+  const refreshSheetMutation = useMutation({
+    mutationFn: async (programId: number) => {
+      if (!program.googleSheetUrl || !program.importedFromSheet) {
+        throw new Error("This program is not linked to a Google Sheet");
+      }
+      
+      const response = await apiRequest("POST", `/api/programs/refresh-sheet/${programId}`, {
+        googleSheetUrl: program.googleSheetUrl
+      });
+      
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error || "Failed to refresh program data");
+      }
+      
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Sheet data refreshed",
+        description: "Your program has been updated with the latest spreadsheet data",
+      });
+      // Refresh the programs list
+      queryClient.invalidateQueries({ queryKey: ['/api/programs'] });
+      // Refresh assigned programs to update sessions
+      queryClient.invalidateQueries({ queryKey: ['/api/assigned-programs'] });
+      setIsRefreshing(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Refresh failed",
+        description: error.message,
+        variant: "destructive",
+      });
+      setIsRefreshing(false);
+    }
+  });
   
   return (
     <Card className="overflow-hidden transition-all hover:shadow-md">
@@ -403,6 +448,23 @@ function ProgramCard({ program, type, creator, viewMode }: {
                   <FileText className="h-3.5 w-3.5 mr-1.5" />
                   Sheet
                 </a>
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex-1"
+                onClick={() => {
+                  setIsRefreshing(true);
+                  refreshSheetMutation.mutate(program.id);
+                }}
+                disabled={isRefreshing}
+              >
+                {isRefreshing ? (
+                  <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                )}
+                Refresh
               </Button>
               <AssignProgramDialog 
                 program={program}
