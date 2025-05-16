@@ -120,12 +120,20 @@ export async function fetchSpreadsheetData(sheetId: string) {
       // Map spreadsheet data to our program session format
       const sessions = dataRows.map((row, index) => {
         const dateValue = row[0] || '';
-        const preActivation1 = row[1] || '';
-        const preActivation2 = row[2] || '';
-        const shortDistanceWorkout = row[3] || '';
-        const mediumDistanceWorkout = row[4] || '';
-        const longDistanceWorkout = row[5] || '';
-        const extraSession = row.length > 6 ? row[6] || '' : '';
+        
+        // Clean the data from quotes and ensure it's properly formatted
+        let preActivation1 = row[1] || '';
+        let preActivation2 = row[2] || '';
+        let shortDistanceWorkout = row[3] || '';
+        let mediumDistanceWorkout = row[4] || '';
+        let longDistanceWorkout = row[5] || '';
+        let extraSession = row.length > 6 ? row[6] || '' : '';
+        
+        // Fix for May-29 and similar dates where quoted content might be incorrectly split
+        // Remove starting/ending quotes if present
+        [preActivation1, preActivation2, shortDistanceWorkout, mediumDistanceWorkout, longDistanceWorkout, extraSession] = 
+          [preActivation1, preActivation2, shortDistanceWorkout, mediumDistanceWorkout, longDistanceWorkout, extraSession]
+          .map(val => val.replace(/^"|"$/g, ''));
         
         // Process the date value if it's in Month-Day format
         let formattedDate = dateValue;
