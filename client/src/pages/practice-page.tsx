@@ -56,7 +56,7 @@ export default function PracticePage() {
   
   // State for selected program
   const [selectedProgram, setSelectedProgram] = useState<any>(null);
-  const [showAssignedPrograms, setShowAssignedPrograms] = useState<boolean>(true);
+  const [showAssignedPrograms, setShowAssignedPrograms] = useState<boolean>(false);
   
   // State for current day navigation
   const [currentDay, setCurrentDay] = useState<"yesterday" | "today" | "tomorrow">("today");
