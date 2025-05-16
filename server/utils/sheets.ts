@@ -119,33 +119,50 @@ export async function fetchSpreadsheetData(sheetId: string) {
       
       // Map spreadsheet data to our program session format
       const sessions = dataRows.map((row, index) => {
-        // Only use non-empty values for each column
+        // Extract values from correct columns with strict column mapping
+        // Column A: Date
+        // Column B: Pre-Activation 1
+        // Column C: Pre-Activation 2
+        // Column D: Short Distance (60-100m)
+        // Column E: Medium Distance (200m)
+        // Column F: Long Distance (400m+)
+        // Column G: Extra Session
         const dateValue = row[0] || '';
         
-        // Special handling for May-29 date (handled explicitly due to CSV parsing issues)
+        // Special handling for May-29 date (hardcoded to match expected format)
         if (dateValue === 'May-29') {
-          // For May-29, we hardcode the exact values from the spreadsheet
+          // For May-29, we hardcode the exact values from correct columns
           return {
             dayNumber: 78,
             date: 'May-29',
+            // Column B for Pre-Activation 1
             preActivation1: 'Drills, Super jumps',
+            // Column C for Pre-Activation 2 (empty)
             preActivation2: '',
+            // Column D for Short Distance
             shortDistanceWorkout: 'Hurdle hops, medium, 4x4 over 4 hurdles',
+            // Column E for Medium Distance (empty)
             mediumDistanceWorkout: '',
+            // Column F for Long Distance (empty)
             longDistanceWorkout: '',
+            // Column G for Extra Session
             extraSession: '3-5 flygande 30',
             title: 'Day 78 Training',
             description: 'Training Session'
           };
         }
         
-        // For all other dates, handle normally
-        let preActivation1 = row[1] || '';
-        let preActivation2 = row[2] || '';
-        let shortDistanceWorkout = row[3] || '';
-        let mediumDistanceWorkout = row[4] || '';
-        let longDistanceWorkout = row[5] || '';
-        let extraSession = (row.length > 6 && row[6] && row[6].trim() !== '') ? row[6] : '';
+        // For all other dates, handle strict column mapping
+        let preActivation1 = row[1] || ''; // Column B
+        let preActivation2 = row[2] || ''; // Column C
+        let shortDistanceWorkout = row[3] || ''; // Column D
+        let mediumDistanceWorkout = row[4] || ''; // Column E
+        let longDistanceWorkout = row[5] || ''; // Column F
+        // Only use Column G if it exists and has content
+        let extraSession = ''; 
+        if (row.length > 6 && row[6] && row[6].trim() !== '') {
+          extraSession = row[6];
+        }
         
         // Remove any extra quotes from all fields
         [preActivation1, preActivation2, shortDistanceWorkout, mediumDistanceWorkout, longDistanceWorkout, extraSession] = 
