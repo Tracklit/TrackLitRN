@@ -76,6 +76,11 @@ export default function PracticePage() {
     }
   }, [assignedPrograms, selectedProgram]);
   
+  // Format Month-Day from Date object
+  const formatMonthDay = (date: Date) => {
+    return date.toLocaleDateString('en-US', {month: 'short', day: 'numeric'}).replace(' ', '-');
+  };
+  
   // Get the session for the current day when program sessions load
   useEffect(() => {
     console.log("programSessions:", programSessions);
@@ -89,47 +94,28 @@ export default function PracticePage() {
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
       
-      // Format dates to match spreadsheet format (YYYY-MM-DD)
-      const formatDate = (date: Date) => {
-        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-      };
+      // Format dates for matching in both formats
+      const todayMonthDay = formatMonthDay(today);
+      const yesterdayMonthDay = formatMonthDay(yesterday);
+      const tomorrowMonthDay = formatMonthDay(tomorrow);
       
-      const todayFormatted = formatDate(today);
-      const yesterdayFormatted = formatDate(yesterday);
-      const tomorrowFormatted = formatDate(tomorrow);
-      
-      console.log("Looking for date:", currentDay === "today" ? todayFormatted : 
-                                     currentDay === "yesterday" ? yesterdayFormatted : 
-                                     tomorrowFormatted);
-      
-      // Debug all session dates
-      console.log("Parsed sessions:", programSessions);
-      
-      // Get today's date components for matching Month-Day format
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      const todayMonth = months[today.getMonth()];
-      const todayDay = today.getDate();
-      const yesterdayMonth = months[yesterday.getMonth()];
-      const yesterdayDay = yesterday.getDate();
-      const tomorrowMonth = months[tomorrow.getMonth()];
-      const tomorrowDay = tomorrow.getDate();
-      
-      // Target date in Month-Day format (e.g., "May-16")
-      const targetMonthDay = currentDay === "today" 
-        ? `${todayMonth}-${todayDay}` 
+      // Target date in Month-Day format based on current day
+      const targetDate = currentDay === "today" 
+        ? todayMonthDay
         : currentDay === "yesterday" 
-          ? `${yesterdayMonth}-${yesterdayDay}` 
-          : `${tomorrowMonth}-${tomorrowDay}`;
+          ? yesterdayMonthDay
+          : tomorrowMonthDay;
           
-      console.log("Looking for date in Month-Day format:", targetMonthDay);
+      console.log("Looking for date in Month-Day format:", targetDate);
       
-      // First try to find a session with matching Month-Day format date (e.g., "May-16")
+      // First try to find a session with matching Month-Day format (e.g., "May-16")
       let sessionData = programSessions.find((session: any) => {
         const sessionDate = session.date || session.columnA;
         if (!sessionDate) return false;
         
-        console.log(`Comparing session date ${sessionDate} with target ${targetMonthDay}`);
-        return sessionDate === targetMonthDay;
+        // Compare the session date with our target date
+        console.log(`Comparing session date ${sessionDate} with target ${targetDate}`);
+        return sessionDate === targetDate;
       });
       
       // If no match by date, fallback to using the day number
@@ -331,10 +317,11 @@ export default function PracticePage() {
             {activeSessionData ? 
               (activeSessionData.columnA || activeSessionData.date) : 
               (currentDay === "yesterday" ? 
-                `${months[yesterday.getMonth()]}-${yesterdayDay}` : 
+                new Date(new Date().setDate(new Date().getDate() - 1)) : 
                 currentDay === "today" ? 
-                  `${months[today.getMonth()]}-${todayDay}` : 
-                  `${months[tomorrow.getMonth()]}-${tomorrowDay}`)}
+                  new Date() : 
+                  new Date(new Date().setDate(new Date().getDate() + 1))
+              ).toLocaleDateString('en-US', {month: 'short', day: 'numeric'}).replace(' ', '-')}
           </Badge>
           
           <Button
