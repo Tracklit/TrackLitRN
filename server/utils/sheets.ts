@@ -34,6 +34,21 @@ export async function fetchSpreadsheetData(sheetId: string) {
       // Skip header row if present
       const dataRows = rows.length > 1 ? rows.slice(1) : rows;
       
+      // Try to extract the sheet title from the request URL
+      const fetchUrl = `https://docs.google.com/spreadsheets/d/${sheetId}`;
+      let sheetTitle = '';
+      try {
+        const titleResponse = await fetch(fetchUrl);
+        const htmlText = await titleResponse.text();
+        const titleMatch = htmlText.match(/<title>(.*?)<\/title>/i);
+        if (titleMatch && titleMatch[1]) {
+          sheetTitle = titleMatch[1].replace(' - Google Sheets', '').replace(' - Google Drive', '').trim();
+          console.log(`Found sheet title: ${sheetTitle}`);
+        }
+      } catch (e) {
+        console.warn("Couldn't extract sheet title:", e);
+      }
+      
       // Map spreadsheet data to our program session format
       const sessions = dataRows.map((row, index) => {
         const dateValue = row[0] || '';
@@ -44,13 +59,30 @@ export async function fetchSpreadsheetData(sheetId: string) {
         const longDistanceWorkout = row[5] || '';
         const extraSession = row.length > 6 ? row[6] || '' : '';
         
+        // Process the date value if it's in Month-Day format
+        let formattedDate = dateValue;
+        if (dateValue && dateValue.includes('-')) {
+          const [month, day] = dateValue.split('-');
+          if (month && day) {
+            // Convert month name to month number
+            const monthMap: {[key: string]: string} = {
+              'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06',
+              'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'
+            };
+            
+            const monthNum = monthMap[month] || month;
+            const currentYear = new Date().getFullYear();
+            formattedDate = `${currentYear}-${monthNum}-${day.padStart(2, '0')}`;
+          }
+        }
+        
         // Determine if it's a rest day (all workout cells empty)
         const isRestDay = !shortDistanceWorkout && !mediumDistanceWorkout && !longDistanceWorkout;
         
         return {
           dayNumber: index + 1,
-          date: dateValue,
-          columnA: dateValue,
+          date: formattedDate,
+          columnA: dateValue, // Keep original date format in columnA
           columnB: preActivation1,
           columnC: preActivation2,
           columnD: shortDistanceWorkout,
@@ -70,7 +102,7 @@ export async function fetchSpreadsheetData(sheetId: string) {
       });
       
       return {
-        title: `Training Program (Sheet ID: ${sheetId})`,
+        title: sheetTitle || `Training Program (Sheet ID: ${sheetId})`,
         totalSessions: sessions.length,
         sessions,
       };
@@ -170,9 +202,27 @@ export async function fetchSpreadsheetData(sheetId: string) {
           // Determine if it's a rest day
           const isRestDay = !getShortDistanceWorkout && !getMediumDistanceWorkout && !getLongDistanceWorkout;
           
+          // Process the date value if it's in Month-Day format
+          let formattedDate = getDateValue;
+          if (getDateValue && getDateValue.includes('-')) {
+            const [month, day] = getDateValue.split('-');
+            if (month && day) {
+              // Convert month name to month number
+              const monthMap: {[key: string]: string} = {
+                'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06',
+                'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'
+              };
+              
+              const monthNum = monthMap[month] || month;
+              const currentYear = new Date().getFullYear();
+              formattedDate = `${currentYear}-${monthNum}-${day.padStart(2, '0')}`;
+            }
+          }
+
           return {
             dayNumber: index + 1,
-            date: getDateValue,
+            date: formattedDate,
+            columnA: getDateValue, // Keep original date format
             preActivation1: getPreActivation1,
             preActivation2: getPreActivation2,
             shortDistanceWorkout: getShortDistanceWorkout,
