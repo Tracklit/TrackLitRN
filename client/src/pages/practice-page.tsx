@@ -410,24 +410,49 @@ export default function PracticePage() {
             Go Back
           </Button>
           
-          <Popover>
-            <PopoverTrigger asChild>
+          <Dialog>
+            <DialogTrigger asChild>
               <Button variant="outline" className="px-3 py-1 h-auto text-sm min-w-[100px]">
                 {activeSessionData ? 
                   (activeSessionData.columnA || activeSessionData.date) : 
                   formatMonthDay(new Date(new Date().setDate(new Date().getDate() + currentDayOffset)))
                 }
               </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="center">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={handleDateSelect}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Select Training Date</DialogTitle>
+              </DialogHeader>
+              <div className="max-h-[300px] overflow-y-auto py-2 px-1">
+                <div className="space-y-2">
+                  {programSessions && programSessions.map((session: any, index: number) => (
+                    <Button 
+                      key={index} 
+                      variant={activeSessionData && session.date === activeSessionData.date ? "default" : "outline"}
+                      className="w-full justify-between"
+                      onClick={() => {
+                        // Set the day offset based on the selected session's date
+                        handleDateSelect(new Date(2025, 
+                          parseInt(session.date?.split('-')[0] === 'May' ? '4' : 
+                                   session.date?.split('-')[0] === 'Apr' ? '3' : 
+                                   session.date?.split('-')[0] === 'Mar' ? '2' : '0'), 
+                          parseInt(session.date?.split('-')[1]) || 1));
+                        
+                        // Close the dialog
+                        const closeEvent = new Event('close');
+                        document.dispatchEvent(closeEvent);
+                      }}
+                    >
+                      <span>{session.date || `Day ${session.dayNumber}`}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {session.title?.replace('Day', 'D') || `Training Day ${session.dayNumber}`}
+                      </span>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
           
           <Button
             variant="outline"
