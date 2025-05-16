@@ -2825,8 +2825,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Verify the program is a Google Sheet import
-      if (!program.importedFromSheet || !program.googleSheetId) {
+      if (!program.importedFromSheet) {
         return res.status(400).json({ error: "This program is not linked to a Google Sheet" });
+      }
+      
+      // Use either the stored Google Sheet ID or extract it from the URL
+      let sheetId = program.googleSheetId;
+      
+      // If we don't have a direct ID, try to extract it from the URL
+      if (!sheetId && program.googleSheetUrl) {
+        // Extract sheet ID from Google Sheets URL
+        // URLs are like: https://docs.google.com/spreadsheets/d/SHEET_ID_HERE/edit#gid=0
+        const urlPattern = /^https:\/\/docs\.google\.com\/spreadsheets\/d\/([a-zA-Z0-9_-]+)(?:\/.*)?$/;
+        const match = program.googleSheetUrl.match(urlPattern);
+        
+        if (!match || !match[1]) {
+          return res.status(400).json({ error: "Invalid Google Sheet URL" });
+        }
+        
+        sheetId = match[1];
+        
+        // Update the program with the extracted ID for future use
+        await dbStorage.updateProgram(programId, { googleSheetId: sheetId });
+      }
+      
+      if (!sheetId) {
+        return res.status(400).json({ error: "Could not determine Google Sheet ID" });
       }
       
       // Try to fetch the updated sheet data
@@ -2834,8 +2858,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         // Import the sheets utility and fetch fresh data
         const { fetchSpreadsheetData } = await import('./utils/sheets');
-        console.log(`Refreshing Google Sheet with ID: ${program.googleSheetId}`);
-        sheetData = await fetchSpreadsheetData(program.googleSheetId);
+        console.log(`Refreshing Google Sheet with ID: ${sheetId}`);
+        sheetData = await fetchSpreadsheetData(sheetId);
         console.log(`Successfully fetched updated sheet data: ${sheetData.title} with ${sheetData.sessions.length} sessions`);
       } catch (err) {
         console.error("Failed to fetch updated Google Sheet data:", err);
@@ -2849,9 +2873,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create new sessions from the updated sheet data
       for (const session of sheetData.sessions) {
+        // Make sure we properly format the session data to match our schema
         await dbStorage.createProgramSession({
-          ...session,
-          programId: programId
+          programId: programId,
+          dayNumber: session.dayNumber || 0,
+          date: session.date || null,
+          title: session.title || "Training Session",
+          description: session.description || "Training Session",
+          isRestDay: !!session.isRestDay,
+          // Map column data to our specific fields
+          columnA: session.columnA || "",
+          columnB: session.columnB || "",
+          columnC: session.columnC || "",
+          columnD: session.columnD || "",
+          columnE: session.columnE || "",
+          columnF: session.columnF || "",
+          columnG: session.columnG || ""
         });
       }
       
