@@ -1,3 +1,63 @@
+// Function to parse CSV properly handling quotes and commas
+function parseCSV(csv: string): string[][] {
+  const rows: string[][] = [];
+  let currentRow: string[] = [];
+  let currentCell = '';
+  let inQuotes = false;
+  
+  // Process each character in the CSV text
+  for (let i = 0; i < csv.length; i++) {
+    const char = csv[i];
+    const nextChar = i < csv.length - 1 ? csv[i + 1] : '';
+    
+    // Handle double quotes (escaped quotes)
+    if (char === '"' && nextChar === '"') {
+      currentCell += '"';
+      i++; // Skip the next quote
+      continue;
+    }
+    
+    // Toggle quote mode when we hit a non-escaped quote
+    if (char === '"') {
+      inQuotes = !inQuotes;
+      continue;
+    }
+    
+    // Handle commas - only treat as delimiter if not in quotes
+    if (char === ',' && !inQuotes) {
+      currentRow.push(currentCell);
+      currentCell = '';
+      continue;
+    }
+    
+    // Handle newlines - only treat as row delimiter if not in quotes
+    if ((char === '\n' || (char === '\r' && nextChar === '\n')) && !inQuotes) {
+      // Skip extra \n in \r\n sequence
+      if (char === '\r') i++;
+      
+      // Add the current cell to the row and the row to our results
+      currentRow.push(currentCell);
+      rows.push(currentRow);
+      
+      // Reset for next row
+      currentRow = [];
+      currentCell = '';
+      continue;
+    }
+    
+    // Add the current character to our cell
+    currentCell += char;
+  }
+  
+  // Add any final cell/row data that might be left
+  if (currentCell.length > 0 || currentRow.length > 0) {
+    currentRow.push(currentCell);
+    rows.push(currentRow);
+  }
+  
+  return rows;
+}
+
 // Simple wrapper to directly fetch a public Google Sheet
 async function fetchPublicSheet(sheetId: string) {
   const response = await fetch(`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`);
@@ -6,13 +66,8 @@ async function fetchPublicSheet(sheetId: string) {
   }
   
   const text = await response.text();
-  const rows = text.split('\n').map(row => row.split(',').map(cell => {
-    // Remove quotes if they exist and unescape any double quotes
-    if (cell.startsWith('"') && cell.endsWith('"')) {
-      return cell.substring(1, cell.length - 1).replace(/""/g, '"');
-    }
-    return cell;
-  }));
+  // More robust CSV parsing that handles commas within quoted cells
+  const rows = parseCSV(text);
   
   if (rows.length === 0) {
     throw new Error('Empty spreadsheet');
