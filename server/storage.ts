@@ -1619,6 +1619,16 @@ export class DatabaseStorage implements IStorage {
     return updatedSession;
   }
   
+  async deleteProgramSessions(programId: number): Promise<boolean> {
+    // Delete all sessions for a specific program
+    await pool.query(
+      `DELETE FROM program_sessions WHERE program_id = $1`,
+      [programId]
+    );
+    
+    return true;
+  }
+  
   async deleteProgramSession(id: number): Promise<boolean> {
     await db.delete(programSessions).where(eq(programSessions.id, id));
     return true;

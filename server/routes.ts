@@ -2805,6 +2805,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // 3.1 Refresh a program's spreadsheet data
+  app.post("/api/programs/refresh-sheet/:id", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const programId = parseInt(req.params.id);
+      const program = await dbStorage.getProgram(programId);
+      
+      if (!program) {
+        return res.status(404).json({ error: "Program not found" });
+      }
+      
+      // Check if user is the owner of this program
+      if (program.userId !== req.user!.id) {
+        return res.status(403).json({ error: "You don't have permission to refresh this program" });
+      }
+      
+      // Verify the program is a Google Sheet import
+      if (!program.importedFromSheet || !program.googleSheetId) {
+        return res.status(400).json({ error: "This program is not linked to a Google Sheet" });
+      }
+      
+      // Try to fetch the updated sheet data
+      let sheetData: any = null;
+      try {
+        // Import the sheets utility and fetch fresh data
+        const { fetchSpreadsheetData } = await import('./utils/sheets');
+        console.log(`Refreshing Google Sheet with ID: ${program.googleSheetId}`);
+        sheetData = await fetchSpreadsheetData(program.googleSheetId);
+        console.log(`Successfully fetched updated sheet data: ${sheetData.title} with ${sheetData.sessions.length} sessions`);
+      } catch (err) {
+        console.error("Failed to fetch updated Google Sheet data:", err);
+        return res.status(400).json({ 
+          error: "Failed to fetch updated Google Sheet data. Make sure your sheet is public or you've added a valid Google API key." 
+        });
+      }
+      
+      // First, delete all existing sessions
+      await dbStorage.deleteProgramSessions(programId);
+      
+      // Create new sessions from the updated sheet data
+      for (const session of sheetData.sessions) {
+        await dbStorage.createProgramSession({
+          ...session,
+          programId: programId
+        });
+      }
+      
+      // Return success response
+      res.status(200).json({
+        program,
+        refreshedSessions: sheetData.sessions.length,
+        message: "Program data refreshed successfully from Google Sheet."
+      });
+    } catch (error: any) {
+      console.error("Error refreshing program data:", error);
+      res.status(500).json({ error: error.message || "Failed to refresh program data" });
+    }
+  });
+  
   // 4. Update a program
   app.put("/api/programs/:id", async (req: Request, res: Response) => {
     try {
