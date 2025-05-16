@@ -86,7 +86,7 @@ export default function PracticePage() {
     if (!session) return session;
     
     // Special direct override for May-29 with hardcoded values
-    if (session && session.date === "May-29") {
+    if (session && (session.date === "May-29" || (typeof session.date === 'string' && session.date.includes("2025-05-29")))) {
       console.log("DIRECTLY overriding May-29 data");
       // Instead of modifying, create a completely new object
       return {
