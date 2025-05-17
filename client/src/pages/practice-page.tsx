@@ -399,12 +399,12 @@ export default function PracticePage() {
         {/* Day navigation */}
         <div className="flex items-center justify-between mb-6 max-w-xs mx-auto text-center">
           <Button
-            variant="outline"
+            variant="ghost"
+            size="icon"
             onClick={goToPreviousDay}
-            className="flex items-center gap-1"
+            className="h-8 w-8"
           >
-            <ChevronLeft className="h-4 w-4" />
-            Go Back
+            <ChevronLeft className="h-5 w-5" />
           </Button>
           
           <Dialog>
@@ -452,12 +452,12 @@ export default function PracticePage() {
           </Dialog>
           
           <Button
-            variant="outline"
+            variant="ghost"
+            size="icon"
             onClick={goToNextDay}
-            className="flex items-center gap-1"
+            className="h-8 w-8"
           >
-            Next Day
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-5 w-5" />
           </Button>
         </div>
 
