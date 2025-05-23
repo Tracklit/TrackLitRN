@@ -424,13 +424,7 @@ export default function PracticePage() {
                     {activeSessionData ? (
                       <div className="space-y-3">
                         <div className="p-3 bg-background/80 rounded-md border border-border/50">
-                          <h3 className="font-medium mb-2">
-                            {activeSessionData.date}
-                          </h3>
-                          {activeSessionData.description && (
-                            <p className="text-sm text-muted-foreground mb-3">{activeSessionData.description}</p>
-                          )}
-                          
+                          {/* Date and description removed */}
                           {/* Display spreadsheet data for the appropriate distance based on the athlete's needs */}
                           <div className="space-y-3">
                             {activeSessionData.isRestDay ? (
