@@ -802,16 +802,16 @@ export default function PracticePage() {
                               if (!time) return null;
                               
                               // Calculate percentages
-                              const percent80 = (time / 0.8).toFixed(1);
-                              const percent90 = (time / 0.9).toFixed(1);
-                              const percent95 = (time / 0.95).toFixed(1);
-                              const percent98 = (time / 0.98).toFixed(1);
+                              const percent80 = (time / 0.8).toFixed(2);
+                              const percent90 = (time / 0.9).toFixed(2);
+                              const percent95 = (time / 0.95).toFixed(2);
+                              const percent98 = (time / 0.98).toFixed(2);
                               
                               // Apply timing adjustments for 100% column
                               let percent100 = time;
                               if (useFirstFootTiming) percent100 -= 0.55;
                               if (useMovementTiming) percent100 -= 0.15;
-                              percent100 = Math.max(percent100, 0).toFixed(1);
+                              percent100 = Math.max(percent100, 0).toFixed(2);
                               
                               // Alternating backgrounds for even/odd rows
                               const isEvenRow = index % 2 === 0;
@@ -829,7 +829,7 @@ export default function PracticePage() {
                                   <td className="px-3 py-2 text-right">{percent95}s</td>
                                   <td className="px-3 py-2 text-right">{percent98}s</td>
                                   <td className="px-3 py-2 text-right">{percent100}s</td>
-                                  <td className="px-3 py-2 text-right font-bold">{time.toFixed(1)}s</td>
+                                  <td className="px-3 py-2 text-right font-bold">{time.toFixed(2)}s</td>
                                 </tr>
                               );
                             });
