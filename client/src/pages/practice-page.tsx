@@ -807,15 +807,8 @@ export default function PracticePage() {
                   <div className="bg-primary/10 p-2 rounded text-center">
                     <p className="text-sm font-medium">Target Time:</p>
                     <p className="text-2xl font-bold text-primary">
-                      {/* Simple calculation if not using goal times */}
-                      {!athleteProfile || (!athleteProfile.sprint60m100mGoal && 
-                                           !athleteProfile.sprint200mGoal && 
-                                           !athleteProfile.sprint400mGoal && 
-                                           !athleteProfile.hurdles100m110mGoal && 
-                                           !athleteProfile.hurdles400mGoal && 
-                                           !athleteProfile.otherEventGoal) 
-                        ? Math.round((distance[0] / (percentage[0] / 100 * 5)) * 10) / 10
-                        : calculatedTime}s
+                      {/* Direct inline calculation that will update immediately */}
+                      {(Math.round((distance[0] / (percentage[0] / 100 * 5)) * 10) / 10).toFixed(1)}s
                     </p>
                     <p className="text-xs text-muted-foreground">
                       at {percentage[0]}% effort for {distance[0]}m
