@@ -178,7 +178,7 @@ export default function HomePage() {
     <div className="min-h-screen text-foreground pb-16">
       {/* Session Preview Ticker */}
       {isTickerVisible && (
-        <div className="relative left-0 right-0 z-10 bg-background/80 backdrop-blur-sm pt-8 pb-3 border-b border-border/20 px-4">
+        <div className="relative left-0 right-0 z-10 pt-8 pb-3 px-4">
           <Button
             variant="ghost"
             size="sm"
@@ -196,7 +196,7 @@ export default function HomePage() {
                 key={activeSessionIndex} // Key helps with animation
               >
                 <div 
-                  className="flex items-center gap-2 bg-primary/5 px-3 py-2 rounded-md hover:bg-primary/10 transition-all duration-300"
+                  className="flex items-center gap-2 px-3 py-2 hover:bg-primary/10 transition-all duration-300"
                 >
                   <div className="rounded-full bg-primary/15 h-8 w-8 flex items-center justify-center flex-shrink-0">
                     <UserCircle className="h-4 w-4 text-primary" />
