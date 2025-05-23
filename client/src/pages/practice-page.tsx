@@ -85,9 +85,7 @@ export default function PracticePage() {
   // State for Training Performance inputs
   const [percentage, setPercentage] = useState<number[]>([85]);
   const [distance, setDistance] = useState<number[]>([150]);
-  const [calculatedTime, setCalculatedTime] = useState<number>(0);
   const [calculatorOpen, setCalculatorOpen] = useState<boolean>(false);
-  const [showGoalPrompt, setShowGoalPrompt] = useState<boolean>(false);
   
   // Set the selected program when assigned programs load
   useEffect(() => {
@@ -807,8 +805,7 @@ export default function PracticePage() {
                   <div className="bg-primary/10 p-2 rounded text-center">
                     <p className="text-sm font-medium">Target Time:</p>
                     <p className="text-2xl font-bold text-primary">
-                      {/* Direct inline calculation that will update immediately */}
-                      {(Math.round((distance[0] / (percentage[0] / 100 * 5)) * 10) / 10).toFixed(1)}s
+                      {((distance[0] / 3) * (100 / percentage[0])).toFixed(1)}s
                     </p>
                     <p className="text-xs text-muted-foreground">
                       at {percentage[0]}% effort for {distance[0]}m
