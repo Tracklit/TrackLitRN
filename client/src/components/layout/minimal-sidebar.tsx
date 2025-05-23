@@ -319,6 +319,16 @@ export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
         </div>
         
         <div className="p-4 border-t border-sidebar-border">
+          <div className="flex justify-between items-center mb-4">
+            <NavItem 
+              href="/assigned-programs" 
+              icon={<Clipboard className="h-5 w-5" />} 
+              isActive={location.includes('assigned-programs')}
+              onClick={onClose}
+            >
+              Assigned Programs
+            </NavItem>
+          </div>
           <button 
             onClick={handleLogout}
             className="flex items-center w-full space-x-2 px-3 py-2.5 rounded-lg font-medium text-destructive hover:bg-muted transition-all"
