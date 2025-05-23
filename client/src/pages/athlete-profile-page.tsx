@@ -546,7 +546,7 @@ export default function AthleteProfilePage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[100px]">Distance</TableHead>
+                <TableHead className="w-[100px] sticky left-0 bg-background shadow-sm z-10">Distance</TableHead>
                 <TableHead>80%</TableHead>
                 <TableHead>90%</TableHead>
                 <TableHead>92%</TableHead>
@@ -651,8 +651,20 @@ export default function AthleteProfilePage() {
                 const percent100 = (scaledGoalTime - 0.55).toFixed(2); // First foot timing
                 
                 return (
-                  <TableRow key={item.distance}>
-                    <TableCell className="font-medium">{item.distance}</TableCell>
+                  <TableRow 
+                    key={item.distance} 
+                    className={
+                      item.distance === "50m" || 
+                      item.distance === "80m" || 
+                      item.distance === "120m" || 
+                      item.distance === "200m" || 
+                      item.distance === "250m" || 
+                      item.distance === "350m" 
+                        ? "bg-blue-50 dark:bg-blue-950/20" 
+                        : ""
+                    }
+                  >
+                    <TableCell className="font-medium sticky left-0 bg-inherit shadow-sm">{item.distance}</TableCell>
                     <TableCell>{percent80}s</TableCell>
                     <TableCell>{percent90}s</TableCell>
                     <TableCell>{percent92}s</TableCell>
