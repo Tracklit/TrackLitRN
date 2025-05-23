@@ -109,7 +109,11 @@ function MainApp() {
   };
   
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen text-foreground" 
+      style={{ 
+        background: "linear-gradient(135deg, hsl(220, 80%, 4%), hsl(215, 70%, 13%))",
+        minHeight: "100vh" 
+      }}>
       {/* Mobile Menu Button */}
       <MobileSidebarButton onClick={toggleMenu} isOpen={isMenuOpen} />
       
