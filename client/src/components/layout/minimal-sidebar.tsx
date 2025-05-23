@@ -87,13 +87,6 @@ export function DesktopSidebar() {
             Programs
           </NavItem>
           <NavItem 
-            href="/assigned-programs" 
-            icon={<Clipboard className="h-5 w-5" />} 
-            isActive={location.includes('assigned-programs')}
-          >
-            Assigned Programs
-          </NavItem>
-          <NavItem 
             href="/profile" 
             icon={<Settings className="h-5 w-5" />} 
             isActive={location === '/profile'}
@@ -101,6 +94,20 @@ export function DesktopSidebar() {
             Settings
           </NavItem>
         </ul>
+        
+        <div className="absolute bottom-4 left-0 right-0 flex justify-center">
+          <button 
+            onClick={() => window.location.href = '/assigned-programs'}
+            className={`w-10 h-10 rounded-full flex items-center justify-center ${
+              location.includes('assigned-programs') 
+                ? 'bg-primary/20 text-primary' 
+                : 'text-foreground hover:bg-muted'
+            }`}
+            title="Assigned Programs"
+          >
+            <Clipboard className="h-5 w-5" />
+          </button>
+        </div>
       </div>
     </aside>
   );
@@ -221,7 +228,7 @@ export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
             <NavItem 
               href="/programs" 
               icon={<BookOpen className="h-5 w-5" />} 
-              isActive={location.startsWith('/programs')}
+              isActive={location.startsWith('/programs') && !location.includes('assigned')}
               onClick={onClose}
             >
               Programs
