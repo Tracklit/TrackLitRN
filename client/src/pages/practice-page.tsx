@@ -245,41 +245,77 @@ export default function PracticePage() {
   const [diaryNotes, setDiaryNotes] = useState<string>("");
   const [isSaving, setIsSaving] = useState<boolean>(false);
   
-  // Navigation functions - allow moving through all available dates
+  // State for fade animation
+  const [fadeTransition, setFadeTransition] = useState<boolean>(true);
+  
+  // Navigation functions - allow moving through all available dates with fade animation
   const goToPreviousDay = () => {
-    setCurrentDayOffset(prev => prev - 1);
+    // Start fade out
+    setFadeTransition(false);
     
-    // Update the selected date as well
-    const newDate = new Date(); 
-    newDate.setDate(newDate.getDate() + (currentDayOffset - 1));
-    setSelectedDate(newDate);
+    // Wait for transition to complete before changing date
+    setTimeout(() => {
+      setCurrentDayOffset(prev => prev - 1);
+      
+      // Update the selected date as well
+      const newDate = new Date(); 
+      newDate.setDate(newDate.getDate() + (currentDayOffset - 1));
+      setSelectedDate(newDate);
+      
+      // Start fade in
+      setTimeout(() => {
+        setFadeTransition(true);
+      }, 50);
+    }, 150);
   };
   
   const goToNextDay = () => {
-    setCurrentDayOffset(prev => prev + 1);
+    // Start fade out
+    setFadeTransition(false);
     
-    // Update the selected date as well
-    const newDate = new Date();
-    newDate.setDate(newDate.getDate() + (currentDayOffset + 1));
-    setSelectedDate(newDate);
+    // Wait for transition to complete before changing date
+    setTimeout(() => {
+      setCurrentDayOffset(prev => prev + 1);
+      
+      // Update the selected date as well
+      const newDate = new Date();
+      newDate.setDate(newDate.getDate() + (currentDayOffset + 1));
+      setSelectedDate(newDate);
+      
+      // Start fade in
+      setTimeout(() => {
+        setFadeTransition(true);
+      }, 50);
+    }, 150);
   };
   
-  // Handle date picker selection
+  // Handle date picker selection with fade animation
   const handleDateSelect = (date: Date | undefined) => {
     if (!date) return;
     
-    // Calculate the day offset from today
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const selectedDay = new Date(date);
-    selectedDay.setHours(0, 0, 0, 0);
+    // Start fade out
+    setFadeTransition(false);
     
-    const diffTime = selectedDay.getTime() - today.getTime();
-    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-    
-    // Update states
-    setCurrentDayOffset(diffDays);
-    setSelectedDate(date);
+    // Wait for transition to complete before changing date
+    setTimeout(() => {
+      // Calculate the day offset from today
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const selectedDay = new Date(date);
+      selectedDay.setHours(0, 0, 0, 0);
+      
+      const diffTime = selectedDay.getTime() - today.getTime();
+      const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+      
+      // Update states
+      setCurrentDayOffset(diffDays);
+      setSelectedDate(date);
+      
+      // Start fade in
+      setTimeout(() => {
+        setFadeTransition(true);
+      }, 50);
+    }, 150);
   };
   
   // For debugging only - logs the structure of active session data
@@ -413,7 +449,7 @@ export default function PracticePage() {
               </h3>
             </div>
             
-            <div className="space-y-4 mt-6">
+            <div className={`space-y-4 mt-6 transition-opacity duration-200 ${fadeTransition ? 'opacity-100' : 'opacity-0'}`}>
               {/* Program content or default content */}
               <div className="bg-muted/40 p-3 rounded-md">
                 {/* Removed Program Content label */}
