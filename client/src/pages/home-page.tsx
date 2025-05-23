@@ -301,16 +301,12 @@ export default function HomePage() {
                 <div className="flex justify-between items-start">
                   <div>
                     <Badge className="mb-1 bg-primary/20 text-primary hover:bg-primary/30 text-xs px-2 py-0.5">
-                      Day {todaySession.dayNumber}
+                      Workout
                     </Badge>
-                    <CardTitle className="text-lg">{todaySession.title || `${todayDate} Workout`}</CardTitle>
+                    <CardTitle className="text-lg">{`${todayDate} Training Session`}</CardTitle>
                     <CardDescription className="flex items-center gap-2 mt-0.5 text-xs">
-                      <span>{todayDate}</span>
                       {todaySession.isRestDay && (
-                        <>
-                          <span>•</span>
-                          <span className="text-amber-600 font-medium">Rest Day</span>
-                        </>
+                        <span className="text-amber-600 font-medium">Rest Day</span>
                       )}
                     </CardDescription>
                   </div>
