@@ -126,9 +126,13 @@ export function InstallAppButton() {
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="sm" className="gap-1 text-green-500">
+            <Button variant="ghost" size="sm" className="gap-2 text-green-500 px-3 min-w-[100px]">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              </span>
               <Check className="h-4 w-4" />
-              <span className="hidden sm:inline-block">Installed</span>
+              <span className="text-xs">Installed</span>
             </Button>
           </TooltipTrigger>
           <TooltipContent>
@@ -146,19 +150,23 @@ export function InstallAppButton() {
           <Button 
             variant="outline" 
             size="sm" 
-            className="gap-1 border-primary text-primary hover:bg-primary/10"
+            className="gap-2 border-primary text-primary hover:bg-primary/10 px-3 min-w-[100px]"
             onClick={handleInstallClick}
             disabled={isInstalling}
           >
             {isInstalling ? (
               <>
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                <span className="hidden sm:inline-block">Installing...</span>
+                <span className="text-xs">Installing...</span>
               </>
             ) : (
               <>
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+                </span>
                 <Download className="h-4 w-4" />
-                <span className="hidden sm:inline-block">Install App</span>
+                <span className="text-xs">Install App</span>
               </>
             )}
           </Button>
