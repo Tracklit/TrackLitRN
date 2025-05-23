@@ -174,16 +174,29 @@ export default function PracticePage() {
         const pacePerMeter = baseEvent.time / baseEvent.distance;
         
         // Calculate target time scaling with distance and adjusting for effort level
-        // The formula adjusts time based on effort level (slower at lower efforts)
-        // We use an exponential function that approximates performance decrease at lower efforts
-        const effortFactor = Math.pow(2 - currentEffort, 1.5);
+        // Effort factor: 100% = 1.0, 90% = ~1.1, 80% = ~1.25, etc.
+        // This makes the target time slower as the effort decreases
+        const effortFactor = 1 / (currentEffort * currentEffort);
         
         // Calculate target time for the current distance at the specified effort level
         const targetTime = pacePerMeter * currentDistance * effortFactor;
         
         // Round to 2 decimal places
         setCalculatedTime(Math.round(targetTime * 100) / 100);
+        
+        // Log for debugging
+        console.log('Calculator data:', {
+          currentDistance,
+          currentEffort,
+          baseEvent,
+          pacePerMeter,
+          effortFactor,
+          targetTime: Math.round(targetTime * 100) / 100
+        });
       }
+    } else {
+      // If no goal times set, use a default calculation
+      setCalculatedTime(Math.round((currentDistance / (currentEffort * 5)) * 10) / 10);
     }
   }, [athleteProfile, distance, percentage]);
   
