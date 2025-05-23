@@ -236,7 +236,7 @@ export default function HomePage() {
       
       <main className="pt-2 px-4 container mx-auto max-w-7xl">
         {/* Logo will be placed here in the future */}
-        <div className="h-3 mb-4 mx-auto" style={{ maxWidth: "540px" }}>
+        <div className="h-1 mb-2 mx-auto" style={{ maxWidth: "540px" }}>
           {/* Reserved space for logo */}
         </div>
 
