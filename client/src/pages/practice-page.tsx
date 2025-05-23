@@ -97,7 +97,8 @@ export default function PracticePage() {
   }, [assignedPrograms, selectedProgram]);
   
   // Calculate target time based on goal times and current settings
-  useEffect(() => {
+  // Calculate target time on component mount and when sliders change
+  const calculateTargetTime = () => {
     if (!athleteProfile) return;
     
     // Find the closest event distance to the selected distance
@@ -182,21 +183,19 @@ export default function PracticePage() {
         const targetTime = pacePerMeter * currentDistance * effortFactor;
         
         // Round to 2 decimal places
-        setCalculatedTime(Math.round(targetTime * 100) / 100);
-        
-        // Log for debugging
-        console.log('Calculator data:', {
-          currentDistance,
-          currentEffort,
-          baseEvent,
-          pacePerMeter,
-          effortFactor,
-          targetTime: Math.round(targetTime * 100) / 100
-        });
+        return Math.round(targetTime * 100) / 100;
       }
-    } else {
-      // If no goal times set, use a default calculation
-      setCalculatedTime(Math.round((currentDistance / (currentEffort * 5)) * 10) / 10);
+    }
+    
+    // If no goal times set, use a default calculation
+    return Math.round((currentDistance / (currentEffort * 5)) * 10) / 10;
+  };
+  
+  // Update calculated time when inputs change
+  useEffect(() => {
+    const newTime = calculateTargetTime();
+    if (newTime) {
+      setCalculatedTime(newTime);
     }
   }, [athleteProfile, distance, percentage]);
   
@@ -782,7 +781,6 @@ export default function PracticePage() {
                           toast({
                             title: "Goal Times Required",
                             description: "Please set your goal times in the Athlete Profile page to use this calculator.",
-                            variant: "warning",
                             action: (
                               <Button 
                                 variant="outline" 
@@ -833,7 +831,6 @@ export default function PracticePage() {
                           toast({
                             title: "Goal Times Required",
                             description: "Please set your goal times in the Athlete Profile page to use this calculator.",
-                            variant: "warning",
                             action: (
                               <Button 
                                 variant="outline" 
