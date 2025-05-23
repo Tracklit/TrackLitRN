@@ -26,7 +26,9 @@ const programFormSchema = z.object({
   description: z.string().min(10, { message: "Description must be at least 10 characters" }),
   category: z.string().min(1, { message: "Please select a category" }),
   level: z.string().min(1, { message: "Please select a level" }),
-  duration: z.coerce.number().min(1, { message: "Duration must be at least 1 day" }),
+  macroBlockSize: z.coerce.number().min(1, { message: "Macro block size must be at least 1 week" }),
+  numberOfMacroBlocks: z.coerce.number().min(1, { message: "Number of macro blocks must be at least 1" }),
+  microBlockSize: z.number().min(1, { message: "Micro block size must be at least 1 day" }).default(7),
   visibility: z.enum(["private", "public", "premium"], {
     required_error: "Please select a visibility option",
   }),
@@ -49,7 +51,9 @@ export default function ProgramCreatePage() {
       description: "",
       category: "",
       level: "beginner",
-      duration: 7,
+      macroBlockSize: 4, // 4 weeks per macro block by default
+      numberOfMacroBlocks: 3, // 3 macro blocks by default
+      microBlockSize: 7, // 7 days per micro block (1 week) by default
       visibility: "private",
       price: 0,
       useFileUpload: false,
@@ -68,7 +72,9 @@ export default function ProgramCreatePage() {
         formData.append('description', data.description || '');
         formData.append('category', data.category);
         formData.append('level', data.level);
-        formData.append('duration', data.duration.toString());
+        // Calculate program duration based on blocks
+        const totalDays = data.macroBlockSize * data.numberOfMacroBlocks * data.microBlockSize;
+        formData.append('duration', totalDays.toString());
         formData.append('visibility', data.visibility);
         formData.append('price', data.price?.toString() || '0');
         formData.append('isUploadedProgram', 'true');
@@ -298,22 +304,61 @@ export default function ProgramCreatePage() {
                     />
                   </div>
                   
-                  <FormField
-                    control={form.control}
-                    name="duration"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Program Duration (Days)</FormLabel>
-                        <FormControl>
-                          <Input type="number" min={1} max={365} {...field} />
-                        </FormControl>
-                        <FormDescription>
-                          How many days will this program last?
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium">Program Structure</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="macroBlockSize"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Macro Block Size (Weeks)</FormLabel>
+                            <FormControl>
+                              <Input type="number" min={1} max={12} {...field} />
+                            </FormControl>
+                            <FormDescription>
+                              How many weeks in each macro block?
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="numberOfMacroBlocks"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Number of Macro Blocks</FormLabel>
+                            <FormControl>
+                              <Input type="number" min={1} max={12} {...field} />
+                            </FormControl>
+                            <FormDescription>
+                              How many macro blocks in this program?
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <FormField
+                      control={form.control}
+                      name="microBlockSize"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Micro Block Size (Days)</FormLabel>
+                          <FormControl>
+                            <Input type="number" min={1} max={14} {...field} />
+                          </FormControl>
+                          <FormDescription>
+                            Days per micro block (typically 7 for a week)
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                   
                   <FormField
                     control={form.control}
@@ -428,7 +473,9 @@ export default function ProgramCreatePage() {
               </p>
               <div className="flex items-center text-sm text-muted-foreground mb-2">
                 <CalendarDays className="h-4 w-4 mr-1" />
-                <span>{form.watch("duration") || 0} days</span>
+                <span>
+                  {form.watch("macroBlockSize") * form.watch("numberOfMacroBlocks") * form.watch("microBlockSize") || 0} days
+                </span>
               </div>
               <div className="flex items-center text-sm text-muted-foreground">
                 <Clock className="h-4 w-4 mr-1" />
