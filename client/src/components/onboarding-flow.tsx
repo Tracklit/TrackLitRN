@@ -222,7 +222,7 @@ export function OnboardingFlow({ onComplete, isFirstTimeUser = true }: Onboardin
             <div className="text-center mb-6">
               <p className="mb-4">Add TrackLit to your home screen for the best experience and earn 15 Spikes!</p>
               
-              <div className="relative inline-block">
+              <div className="inline-block">
                 <Button 
                   size="lg" 
                   className="gap-2"
@@ -230,13 +230,6 @@ export function OnboardingFlow({ onComplete, isFirstTimeUser = true }: Onboardin
                   <Download className="h-5 w-5" />
                   Add to Home Screen
                 </Button>
-                
-                {/* Arrow pointing to button */}
-                <div className="absolute -top-20 right-4 transform rotate-45">
-                  <div className="h-16 w-px bg-primary relative">
-                    <ArrowRight className="h-5 w-5 text-primary absolute -bottom-5 -right-2 transform -rotate-45" />
-                  </div>
-                </div>
               </div>
             </div>
             
