@@ -656,11 +656,10 @@ export default function AthleteProfilePage() {
                     className={
                       item.distance === "50m" || 
                       item.distance === "80m" || 
-                      item.distance === "120m" || 
                       item.distance === "200m" || 
-                      item.distance === "250m" || 
+                      item.distance === "300m" || 
                       item.distance === "350m" 
-                        ? "bg-blue-50/70 dark:bg-blue-800/30" 
+                        ? "bg-gray-200/80 dark:bg-gray-700/30" 
                         : "bg-white dark:bg-slate-900"
                     }
                   >
