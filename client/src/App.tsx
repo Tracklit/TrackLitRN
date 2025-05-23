@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { DesktopSidebar, MobileSidebar, MobileSidebarButton } from "@/components/layout/minimal-sidebar";
 import { DebugHelper } from "@/components/debug-helper";
+import { OnboardingFlow } from "@/components/onboarding-flow";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
@@ -26,7 +27,7 @@ import { Component as ProgramCreatePage } from "@/pages/program-create-page";
 import { Component as ProgramDetailPage } from "@/pages/program-detail-page";
 import { Component as AssignedProgramsPage } from "@/pages/assigned-programs-page";
 import { ProtectedRoute } from "@/lib/protected-route";
-import { AuthProvider } from "@/hooks/use-auth";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
 
 function Router() {
   return (
@@ -65,8 +66,10 @@ function Router() {
   );
 }
 
-function App() {
+function MainApp() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(true);
+  const { user } = useAuth();
   
   const toggleMenu = () => {
     const newMenuState = !isMenuOpen;
@@ -87,29 +90,51 @@ function App() {
     };
   }, []);
   
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
+    
+    // Award spikes to the user for completing onboarding (this could call an API)
+    // Implementation would go here
+    console.log("Onboarding completed!");
+  };
+  
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Mobile Menu Button */}
+      <MobileSidebarButton onClick={toggleMenu} isOpen={isMenuOpen} />
+      
+      {/* Mobile Sidebar - Always rendered but with slide animation */}
+      <MobileSidebar isOpen={isMenuOpen} onClose={toggleMenu} />
+      
+      {/* Main Content */}
+      <main className="pt-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Router />
+        </div>
+      </main>
+      
+      {/* Onboarding flow - Only show for logged in users who haven't seen it */}
+      {user && showOnboarding && (
+        <OnboardingFlow 
+          onComplete={handleOnboardingComplete}
+          isFirstTimeUser={true} // We can check if user has used the app before
+        />
+      )}
+      
+      <Toaster />
+      
+      {/* Debug Helper - Only in development */}
+      {process.env.NODE_ENV !== 'production' && <DebugHelper />}
+    </div>
+  );
+}
+
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
-          <div className="min-h-screen bg-background text-foreground">
-            {/* Mobile Menu Button */}
-            <MobileSidebarButton onClick={toggleMenu} isOpen={isMenuOpen} />
-            
-            {/* Mobile Sidebar - Always rendered but with slide animation */}
-            <MobileSidebar isOpen={isMenuOpen} onClose={toggleMenu} />
-            
-            {/* Main Content */}
-            <main className="pt-12">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <Router />
-              </div>
-            </main>
-            
-            <Toaster />
-            
-            {/* Debug Helper - Only in development */}
-            {process.env.NODE_ENV !== 'production' && <DebugHelper />}
-          </div>
+          <MainApp />
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
