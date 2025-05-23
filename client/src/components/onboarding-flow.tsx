@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Smartphone, ArrowRight, Download, Info, ExternalLink } from "lucide-react";
+import { Sparkles, Smartphone, ArrowRight, Download, Info, ExternalLink, AlertCircle } from "lucide-react";
 
 export type OnboardingStep = {
   title: string;
@@ -48,36 +48,40 @@ export function OnboardingFlow({ onComplete, isFirstTimeUser = true }: Onboardin
       icon: <Sparkles className="h-8 w-8 text-primary" />
     },
     {
-      title: "Spikes: Your Rewards Currency",
+      title: "Alpha Testing Information",
       description: (
         <>
-          Earn Spikes by completing workouts, attending meets, and achieving personal bests.
+          Welcome to the TrackLit alpha test! This app is still in development and not finalized yet.
           
-          <div className="grid grid-cols-2 gap-3 mt-4">
-            <div className="p-3 rounded-md bg-muted/60 text-center">
-              <span className="font-medium block mb-1">+5 Spikes</span>
-              <span className="text-xs text-muted-foreground">Complete a workout</span>
-            </div>
-            <div className="p-3 rounded-md bg-muted/60 text-center">
-              <span className="font-medium block mb-1">+10 Spikes</span>
-              <span className="text-xs text-muted-foreground">Participate in a meet</span>
-            </div>
-            <div className="p-3 rounded-md bg-muted/60 text-center">
-              <span className="font-medium block mb-1">+20 Spikes</span>
-              <span className="text-xs text-muted-foreground">Set a personal record</span>
-            </div>
-            <div className="p-3 rounded-md bg-muted/60 text-center">
-              <span className="font-medium block mb-1">+15 Spikes</span>
-              <span className="text-xs text-muted-foreground">Install the app</span>
-            </div>
+          <div className="p-4 bg-muted/40 rounded-md mt-4 text-sm">
+            <span className="font-medium block mb-2">What to expect during alpha testing:</span>
+            <ul className="space-y-2 list-disc pl-4">
+              <li>Some features may be incomplete or change during development</li>
+              <li>You might encounter occasional bugs or performance issues</li>
+              <li>Your feedback is extremely valuable to us at this stage</li>
+            </ul>
           </div>
           
-          <div className="text-sm text-muted-foreground mt-4">
-            Use Spikes to unlock premium features and training programs.
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 text-sm mt-4">
+            <ExternalLink className="h-5 w-5 text-primary flex-shrink-0" />
+            <div>
+              <span className="font-medium block">Join our Telegram testing group</span>
+              <a 
+                href="https://t.me/+LHVB4IeeSvEwNmNk" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-xs text-primary underline"
+              >
+                https://t.me/+LHVB4IeeSvEwNmNk
+              </a>
+              <span className="text-xs block mt-1">
+                Report bugs and suggest features to help improve TrackLit
+              </span>
+            </div>
           </div>
         </>
       ),
-      icon: <Sparkles className="h-8 w-8 text-primary" />
+      icon: <Info className="h-8 w-8 text-primary" />
     },
     {
       title: "Install TrackLit for Easy Access",
