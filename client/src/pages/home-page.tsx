@@ -178,7 +178,7 @@ export default function HomePage() {
     <div className="min-h-screen text-foreground pb-16">
       {/* Session Preview Ticker */}
       {isTickerVisible && (
-        <div className="relative left-0 right-0 z-10 pt-2 px-4">
+        <div className="relative left-0 right-0 z-10 pt-2 pb-1 px-4">
           <div>
             {sessionPreviews && (
               <div 
@@ -187,7 +187,7 @@ export default function HomePage() {
                 key={activeSessionIndex} // Key helps with animation
               >
                 <div 
-                  className="flex items-center gap-2 px-3 py-2 hover:bg-primary/10 transition-all duration-300 relative"
+                  className="flex items-center gap-2 px-3 py-1 hover:bg-primary/10 transition-all duration-300 relative"
                 >
                   <Button
                     variant="ghost"
@@ -234,7 +234,7 @@ export default function HomePage() {
         </div>
       )}
       
-      <main className="pt-4 px-4 container mx-auto max-w-7xl">
+      <main className="pt-2 px-4 container mx-auto max-w-7xl">
         {/* Logo will be placed here in the future */}
         <div className="h-3 mb-4 mx-auto" style={{ maxWidth: "540px" }}>
           {/* Reserved space for logo */}
