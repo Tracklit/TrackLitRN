@@ -407,27 +407,10 @@ export default function PracticePage() {
         {/* Session Details */}
         <Card className="mb-6">
           <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-10 w-10 border border-primary/20">
-                  <AvatarFallback className="bg-primary/10 text-primary">
-                    {user?.username?.[0]?.toUpperCase() || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h3 className="font-semibold">
-                    {selectedProgram ? "2025 - Beast Mode" : "Speed Endurance"}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedProgram ? 
-                     `Assigned on ${new Date(selectedProgram.createdAt).toLocaleDateString()}` : 
-                     "Coach Williams"}
-                  </p>
-                </div>
-              </div>
-              <Badge>
-                {selectedProgram ? selectedProgram.status : "High Intensity"}
-              </Badge>
+            <div className="mb-4">
+              <h3 className="font-semibold text-center">
+                {selectedProgram ? "2025 - Beast Mode" : "Speed Endurance"}
+              </h3>
             </div>
             
             <div className="space-y-4 mt-6">
