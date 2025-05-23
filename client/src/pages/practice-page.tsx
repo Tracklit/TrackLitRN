@@ -436,6 +436,17 @@ export default function PracticePage() {
                               </div>
                             ) : (
                               <>
+                                {/* Pre-activation exercises - Moved to top of session area */}
+                                {activeSessionData.preActivation1 && activeSessionData.preActivation1.trim() !== "" && (
+                                  <div className="p-2 bg-background/50 rounded border border-border/50">
+                                    <p className="font-medium text-sm mb-2">Pre-Activation</p>
+                                    <div className="whitespace-pre-line text-sm mt-1 pl-2 border-l-2 border-primary/30">
+                                      {/* Remove any starting/ending quotes from the displayed text */}
+                                      {activeSessionData.preActivation1.replace(/^"|"$/g, '')}
+                                    </div>
+                                  </div>
+                                )}
+                              
                                 {/* Show imported workout information with proper hierarchy */}
                                 {activeSessionData.shortDistanceWorkout && activeSessionData.shortDistanceWorkout.trim() !== "" && (
                                   <div className="p-2 bg-background/50 rounded border border-border/50">
@@ -481,17 +492,6 @@ export default function PracticePage() {
                                           {activeSessionData.longDistanceWorkout.replace(/^"|"$/g, '')}
                                         </div>
                                       </div>
-                                    </div>
-                                  </div>
-                                )}
-                                
-                                {/* Pre-activation exercises - Column B only */}
-                                {activeSessionData.preActivation1 && activeSessionData.preActivation1.trim() !== "" && (
-                                  <div className="p-2 bg-background/50 rounded border border-border/50">
-                                    <p className="font-medium text-sm mb-2">Pre-Activation</p>
-                                    <div className="whitespace-pre-line text-sm mt-1 pl-2 border-l-2 border-primary/30">
-                                      {/* Remove any starting/ending quotes from the displayed text */}
-                                      {activeSessionData.preActivation1.replace(/^"|"$/g, '')}
                                     </div>
                                   </div>
                                 )}
