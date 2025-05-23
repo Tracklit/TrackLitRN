@@ -106,6 +106,8 @@ export function DesktopSidebar() {
   );
 }
 
+import { InstallAppButton } from "@/components/install-app-button";
+
 export function MobileSidebarButton({ onClick, isOpen }: { onClick: () => void, isOpen?: boolean }) {
   const { user } = useAuth();
   
@@ -126,7 +128,11 @@ export function MobileSidebarButton({ onClick, isOpen }: { onClick: () => void, 
           </button>
         </div>
         
-        <div className="flex items-center">
+        <div className="flex items-center space-x-2">
+          {/* Install App Button */}
+          <InstallAppButton />
+          
+          {/* User Profile */}
           <div className="h-6 w-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-medium">
             {user.name ? user.name.charAt(0).toUpperCase() : user.username.charAt(0).toUpperCase()}
           </div>
