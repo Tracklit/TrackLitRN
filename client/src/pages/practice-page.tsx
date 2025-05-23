@@ -339,61 +339,7 @@ export default function PracticePage() {
     >
       {/* Removed tracking sessions text */}
       
-      {/* Assigned Programs Section */}
-      {(assignedPrograms && assignedPrograms.length > 0) && (
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold flex items-center">
-              <ClipboardList className="mr-2 h-5 w-5 text-primary" />
-              My Assigned Programs
-            </h2>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setShowAssignedPrograms(!showAssignedPrograms)}
-            >
-              {showAssignedPrograms ? "Hide" : "Show"}
-            </Button>
-          </div>
-          
-          {showAssignedPrograms && (
-            <div className="space-y-3">
-              {isLoadingPrograms ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : (
-                <div className="grid gap-3 md:grid-cols-2">
-                  {assignedPrograms.map((program: any) => (
-                    <Card 
-                      key={program.id} 
-                      className={cn(
-                        "cursor-pointer hover:border-primary/50 transition-all",
-                        selectedProgram?.id === program.id ? "border-primary" : ""
-                      )}
-                      onClick={() => setSelectedProgram(program)}
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="bg-primary/10 p-2 rounded-full">
-                            <ClipboardList className="h-5 w-5 text-primary" />
-                          </div>
-                          <div>
-                            <h3 className="font-medium">{program.program?.title || "Program"}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              {program.status === 'accepted' ? 'In Progress' : program.status}
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+      {/* Removed Assigned Programs Section from here - moved to bottom */}
       
       <div className="mt-6 relative">
         {/* Day navigation */}
@@ -809,6 +755,66 @@ export default function PracticePage() {
             </Button>
           </div>
         </div>
+        
+        {/* Assigned Programs Section - Moved to bottom */}
+        {(assignedPrograms && assignedPrograms.length > 0) && (
+          <div className="mt-6 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="p-0 hover:bg-transparent"
+                onClick={() => setShowAssignedPrograms(!showAssignedPrograms)}
+              >
+                <ClipboardList className="h-6 w-6 text-primary" />
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowAssignedPrograms(!showAssignedPrograms)}
+              >
+                {showAssignedPrograms ? "Hide" : "Show Programs"}
+              </Button>
+            </div>
+            
+            {showAssignedPrograms && (
+              <div className="space-y-3">
+                {isLoadingPrograms ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {assignedPrograms.map((program: any) => (
+                      <Card 
+                        key={program.id} 
+                        className={cn(
+                          "cursor-pointer hover:border-primary/50 transition-all",
+                          selectedProgram?.id === program.id ? "border-primary" : ""
+                        )}
+                        onClick={() => setSelectedProgram(program)}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="bg-primary/10 p-2 rounded-full">
+                              <ClipboardList className="h-5 w-5 text-primary" />
+                            </div>
+                            <div>
+                              <h3 className="font-medium">{program.program?.title || "Program"}</h3>
+                              <p className="text-sm text-muted-foreground">
+                                {program.status === 'accepted' ? 'In Progress' : program.status}
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Session Complete Modal */}
