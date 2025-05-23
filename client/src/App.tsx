@@ -26,6 +26,7 @@ import { Component as ProgramsPage } from "@/pages/programs-page";
 import { Component as ProgramCreatePage } from "@/pages/program-create-page";
 import { Component as ProgramDetailPage } from "@/pages/program-detail-page";
 import { Component as AssignedProgramsPage } from "@/pages/assigned-programs-page";
+import AthleteProfilePage from "@/pages/athlete-profile-page";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 
@@ -58,6 +59,7 @@ function Router() {
       {/* Account */}
       <ProtectedRoute path="/spikes" component={SpikesPage} />
       <ProtectedRoute path="/profile" component={ProfilePage} />
+      <ProtectedRoute path="/athlete-profile" component={AthleteProfilePage} />
       
       {/* Auth */}
       <Route path="/auth" component={AuthPage} />

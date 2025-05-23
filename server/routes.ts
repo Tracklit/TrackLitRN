@@ -1481,6 +1481,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Get user by ID - for getting admin usernames for clubs
+  // Athlete Profile Routes
+  app.get("/api/athlete-profile", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const profile = await dbStorage.getAthleteProfile(userId);
+      return res.json(profile || null);
+    } catch (err) {
+      console.error("Error fetching athlete profile:", err);
+      return res.status(500).json({ error: "Failed to fetch athlete profile" });
+    }
+  });
+
+  app.post("/api/athlete-profile", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const profileData = insertAthleteProfileSchema.parse({
+        ...req.body,
+        userId
+      });
+      
+      // Check if profile already exists
+      const existingProfile = await dbStorage.getAthleteProfile(userId);
+      if (existingProfile) {
+        return res.status(400).json({ error: "Profile already exists, use PATCH to update" });
+      }
+
+      const profile = await dbStorage.createAthleteProfile(profileData);
+      return res.status(201).json(profile);
+    } catch (err) {
+      console.error("Error creating athlete profile:", err);
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ error: err.errors });
+      }
+      return res.status(500).json({ error: "Failed to create athlete profile" });
+    }
+  });
+
+  app.patch("/api/athlete-profile", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const profileData = req.body;
+      const profile = await dbStorage.updateAthleteProfile(userId, profileData);
+
+      if (!profile) {
+        return res.status(404).json({ error: "Profile not found" });
+      }
+
+      return res.json(profile);
+    } catch (err) {
+      console.error("Error updating athlete profile:", err);
+      return res.status(500).json({ error: "Failed to update athlete profile" });
+    }
+  });
+  
   app.get("/api/users/:id", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     

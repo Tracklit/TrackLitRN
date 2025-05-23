@@ -50,7 +50,7 @@ const athleteProfileSchema = z.object({
 type AthleteProfileFormValues = z.infer<typeof athleteProfileSchema>;
 
 export default function AthleteProfilePage() {
-  const { isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 

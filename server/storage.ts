@@ -313,8 +313,8 @@ export class DatabaseStorage implements IStorage {
     } else {
       // Create new profile if one doesn't exist
       return this.createAthleteProfile({
-        userId,
-        ...profileData as InsertAthleteProfile
+        ...profileData,
+        userId
       });
     }
   }

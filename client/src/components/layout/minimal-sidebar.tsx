@@ -13,7 +13,8 @@ import {
   Coins,
   LogOut,
   BookOpen,
-  Clipboard
+  Clipboard,
+  UserCircle
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -92,6 +93,13 @@ export function DesktopSidebar() {
             isActive={location.includes('assigned-programs')}
           >
             Assigned Programs
+          </NavItem>
+          <NavItem 
+            href="/athlete-profile" 
+            icon={<UserCircle className="h-5 w-5" />} 
+            isActive={location === '/athlete-profile'}
+          >
+            Athlete Profile
           </NavItem>
           <NavItem 
             href="/profile" 
@@ -305,6 +313,14 @@ export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
               onClick={onClose}
             >
               Spikes
+            </NavItem>
+            <NavItem 
+              href="/athlete-profile" 
+              icon={<UserCircle className="h-5 w-5" />} 
+              isActive={location === '/athlete-profile'}
+              onClick={onClose}
+            >
+              Athlete Profile
             </NavItem>
             <NavItem 
               href="/profile" 
