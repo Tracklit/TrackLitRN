@@ -424,8 +424,12 @@ export default function PracticePage() {
                     {activeSessionData ? (
                       <div className="space-y-3">
                         <div className="p-3 bg-white rounded-md border border-border/50 shadow-sm">
-                          {/* Date and description removed */}
-                          {/* Display spreadsheet data for the appropriate distance based on the athlete's needs */}
+                          {/* Display the title of the imported sheet */}
+                          {activeSessionData.title && (
+                            <h3 className="text-base font-medium mb-3 text-center border-b pb-2">
+                              {activeSessionData.title}
+                            </h3>
+                          )}
                           <div className="space-y-3">
                             {activeSessionData.isRestDay ? (
                               <div className="p-3 bg-green-50 rounded-md border border-green-100">
@@ -509,9 +513,9 @@ export default function PracticePage() {
                                 
                                 {/* Extra session - Column G, only if not empty */}
                                 {activeSessionData.extraSession && activeSessionData.extraSession.trim() !== "" && (
-                                  <div className="p-2 bg-background/50 rounded border border-border/50">
-                                    <p className="font-medium text-sm mb-1">Extra Session</p>
-                                    <div className="whitespace-pre-line text-sm">
+                                  <div className="p-2 bg-emerald-50 rounded border border-emerald-100">
+                                    <p className="font-medium text-sm mb-1 text-emerald-800">Extra Session</p>
+                                    <div className="whitespace-pre-line text-sm text-emerald-700">
                                       {activeSessionData.extraSession.replace(/^"|"$/g, '')}
                                     </div>
                                   </div>
