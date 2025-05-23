@@ -409,7 +409,7 @@ export default function PracticePage() {
           <CardContent className="pt-6">
             <div className="mb-4">
               <h3 className="font-semibold text-center">
-                {selectedProgram ? "2025 - Beast Mode" : "Speed Endurance"}
+                {selectedProgram?.program?.title || ""}
               </h3>
             </div>
             
@@ -805,7 +805,7 @@ export default function PracticePage() {
           </DialogHeader>
           
           <div className="bg-muted/30 p-4 rounded-md mb-4">
-            <h3 className="font-medium mb-2">Speed Endurance Session</h3>
+            <h3 className="font-medium mb-2">{selectedProgram?.program?.title || "Training Session"}</h3>
             <p className="text-sm text-muted-foreground">
               {diaryNotes || "No notes added for this session."}
             </p>
@@ -871,7 +871,7 @@ export default function PracticePage() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          title: "Speed Endurance",
+          title: selectedProgram?.program?.title || activeSessionData?.title || "Training Session",
           description: diaryNotes,
           category: "completed",
           content: workoutContent,
