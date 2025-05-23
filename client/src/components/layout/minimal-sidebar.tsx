@@ -87,6 +87,13 @@ export function DesktopSidebar() {
             Programs
           </NavItem>
           <NavItem 
+            href="/assigned-programs" 
+            icon={<Clipboard className="h-5 w-5" />} 
+            isActive={location.includes('assigned-programs')}
+          >
+            Assigned Programs
+          </NavItem>
+          <NavItem 
             href="/profile" 
             icon={<Settings className="h-5 w-5" />} 
             isActive={location === '/profile'}
@@ -94,20 +101,6 @@ export function DesktopSidebar() {
             Settings
           </NavItem>
         </ul>
-        
-        <div className="absolute bottom-4 left-0 right-0 flex justify-center">
-          <button 
-            onClick={() => window.location.href = '/assigned-programs'}
-            className={`w-10 h-10 rounded-full flex items-center justify-center ${
-              location.includes('assigned-programs') 
-                ? 'bg-primary/20 text-primary' 
-                : 'text-foreground hover:bg-muted'
-            }`}
-            title="Assigned Programs"
-          >
-            <Clipboard className="h-5 w-5" />
-          </button>
-        </div>
       </div>
     </aside>
   );
@@ -228,7 +221,7 @@ export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
             <NavItem 
               href="/programs" 
               icon={<BookOpen className="h-5 w-5" />} 
-              isActive={location.startsWith('/programs') && !location.includes('assigned')}
+              isActive={location.startsWith('/programs')}
               onClick={onClose}
             >
               Programs
@@ -319,16 +312,6 @@ export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
         </div>
         
         <div className="p-4 border-t border-sidebar-border">
-          <div className="flex justify-between items-center mb-4">
-            <NavItem 
-              href="/assigned-programs" 
-              icon={<Clipboard className="h-5 w-5" />} 
-              isActive={location.includes('assigned-programs')}
-              onClick={onClose}
-            >
-              Assigned Programs
-            </NavItem>
-          </div>
           <button 
             onClick={handleLogout}
             className="flex items-center w-full space-x-2 px-3 py-2.5 rounded-lg font-medium text-destructive hover:bg-muted transition-all"
