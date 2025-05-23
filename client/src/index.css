@@ -95,7 +95,7 @@
 
   body {
     @apply font-sans antialiased text-foreground;
-    background: linear-gradient(to bottom, hsl(220, 40%, 8%), hsl(220, 40%, 14%));
+    background: linear-gradient(135deg, hsl(220, 70%, 4%), hsl(215, 80%, 15%));
     min-height: 100vh;
   }
 }
