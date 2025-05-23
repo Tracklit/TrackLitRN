@@ -545,7 +545,7 @@ export default function AthleteProfilePage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-[#111827] text-white border-b border-amber-500/50">
+              <tr className="bg-[#111827] text-white border-b border-transparent">
                 <th className="sticky left-0 z-10 bg-inherit whitespace-nowrap px-3 py-3 text-left font-bold">
                   Distance
                 </th>
@@ -650,7 +650,7 @@ export default function AthleteProfilePage() {
                     "bg-[#1e293b] text-white";
                   
                   return (
-                    <tr key={distance} className={`${rowBgClass} border-b border-amber-500/50`}>
+                    <tr key={distance} className={`${rowBgClass} border-b border-transparent`}>
                       <td className="sticky left-0 z-10 bg-inherit whitespace-nowrap px-3 py-3 font-bold">
                         {distance}
                       </td>
