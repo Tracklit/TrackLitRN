@@ -179,18 +179,6 @@ export default function HomePage() {
       {/* Session Preview Ticker */}
       {isTickerVisible && (
         <div className="relative left-0 right-0 z-10 pt-4 px-4">
-          <div className="w-full flex items-center mb-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 w-6 p-0 -ml-3 absolute left-0"
-              onClick={() => setIsTickerVisible(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-            <div className="w-full"></div>
-          </div>
-          
           <div>
             {sessionPreviews && (
               <div 
@@ -199,8 +187,20 @@ export default function HomePage() {
                 key={activeSessionIndex} // Key helps with animation
               >
                 <div 
-                  className="flex items-center gap-2 px-3 py-2 hover:bg-primary/10 transition-all duration-300"
+                  className="flex items-center gap-2 px-3 py-2 hover:bg-primary/10 transition-all duration-300 relative"
                 >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 -ml-3 absolute left-0 top-1/2 -translate-y-1/2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsTickerVisible(false);
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                  <div className="w-6"></div> {/* Spacer to offset the X button */}
                   <div className="rounded-full bg-primary/15 h-8 w-8 flex items-center justify-center flex-shrink-0">
                     <UserCircle className="h-4 w-4 text-primary" />
                   </div>
