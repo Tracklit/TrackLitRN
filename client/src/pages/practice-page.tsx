@@ -579,10 +579,10 @@ export default function PracticePage() {
                           
                           <div className="flex justify-between items-center">
                             <Badge variant="outline">
-                              {selectedProgram.program?.level || "Beginner"}
+                              {selectedProgram.program?.level || ""}
                             </Badge>
                             <Badge variant="outline">
-                              {selectedProgram.program?.category || "General"}
+                              {selectedProgram.program?.category || ""}
                             </Badge>
                           </div>
                         </div>
@@ -595,40 +595,12 @@ export default function PracticePage() {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {/* Default content */}
-                    <div className="p-2 bg-background/50 rounded border border-border/50">
-                      <div className="flex items-center">
-                        <div className="bg-primary/10 p-1.5 rounded-full mr-3">
-                          <Dumbbell className="h-4 w-4 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-sm">3 x 200m</p>
-                          <p className="text-xs text-muted-foreground">85% effort, 2min rest</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="p-2 bg-background/50 rounded border border-border/50">
-                      <div className="flex items-center">
-                        <div className="bg-primary/10 p-1.5 rounded-full mr-3">
-                          <Dumbbell className="h-4 w-4 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-sm">2 x 250m</p>
-                          <p className="text-xs text-muted-foreground">90% effort, 3min rest</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="p-2 bg-background/50 rounded border border-border/50">
-                      <div className="flex items-center">
-                        <div className="bg-primary/10 p-1.5 rounded-full mr-3">
-                          <Dumbbell className="h-4 w-4 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-sm">1 x 300m</p>
-                          <p className="text-xs text-muted-foreground">100% effort, all out</p>
-                        </div>
+                    {/* Empty state when no program is selected */}
+                    <div className="p-6 bg-background/50 rounded border border-border/50 text-center">
+                      <div className="flex flex-col items-center gap-3 py-4">
+                        <CalendarRange className="h-10 w-10 text-muted-foreground opacity-70" />
+                        <p className="text-sm text-muted-foreground">No training session selected</p>
+                        <p className="text-xs text-muted-foreground mt-1">Select a program from below to view your workouts</p>
                       </div>
                     </div>
                   </div>
