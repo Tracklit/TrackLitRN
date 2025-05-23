@@ -423,7 +423,7 @@ export default function PracticePage() {
                     {/* Show active session if available */}
                     {activeSessionData ? (
                       <div className="space-y-3">
-                        <div className="p-3 rounded-md border border-border shadow-sm" style={{ backgroundColor: "white" }}>
+                        <div className="p-3 rounded-md border border-border shadow-sm bg-background">
                           {/* Title removed as requested */}
                           <div className="space-y-3">
                             {activeSessionData.isRestDay ? (
