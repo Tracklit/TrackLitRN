@@ -37,6 +37,27 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Import scheduler utilities
+  const { refreshAllGoogleSheetPrograms } = await import('./utils/scheduler');
+  
+  // Set up a daily refresh of Google Sheets data at midnight UTC
+  setInterval(() => {
+    const now = new Date();
+    // Check if it's close to midnight (between 12:00 AM and 12:05 AM)
+    if (now.getUTCHours() === 0 && now.getUTCMinutes() < 5) {
+      console.log('Starting scheduled daily refresh of Google Sheets data...');
+      refreshAllGoogleSheetPrograms()
+        .then(() => console.log('Google Sheets data refresh completed successfully'))
+        .catch(error => console.error('Error refreshing Google Sheets data:', error));
+    }
+  }, 5 * 60 * 1000); // Check every 5 minutes
+
+  // Initial refresh on server start
+  console.log('Running initial Google Sheets data refresh on server start...');
+  refreshAllGoogleSheetPrograms()
+    .then(() => console.log('Initial Google Sheets data refresh completed'))
+    .catch(error => console.error('Error during initial Google Sheets refresh:', error));
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

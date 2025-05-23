@@ -201,6 +201,7 @@ export interface IStorage {
   // Training Programs - User's own programs
   getUserPrograms(userId: number): Promise<TrainingProgram[]>;
   getProgram(id: number): Promise<TrainingProgram | undefined>;
+  getProgramsFromSheets(): Promise<TrainingProgram[]>;
   createProgram(program: InsertTrainingProgram): Promise<TrainingProgram>;
   updateProgram(id: number, data: Partial<TrainingProgram>): Promise<TrainingProgram | undefined>;
   deleteProgram(id: number): Promise<boolean>;
@@ -1498,6 +1499,18 @@ export class DatabaseStorage implements IStorage {
       .where(eq(trainingPrograms.id, id));
     
     return program;
+  }
+  
+  async getProgramsFromSheets(): Promise<TrainingProgram[]> {
+    const sheetPrograms = await db
+      .select()
+      .from(trainingPrograms)
+      .where(and(
+        eq(trainingPrograms.importedFromSheet, true),
+        isNotNull(trainingPrograms.googleSheetId)
+      ));
+    
+    return sheetPrograms;
   }
   
   async createProgram(program: InsertTrainingProgram): Promise<TrainingProgram> {
