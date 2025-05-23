@@ -38,6 +38,8 @@ import {
 import { useAuth } from '@/hooks/use-auth';
 import { CreateMeetModal } from '@/components/create-meet-modal';
 import { cn } from '@/lib/utils';
+import { useAssignedPrograms } from '@/hooks/use-assigned-programs';
+import { useProgramSessions } from '@/hooks/use-program-sessions';
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -48,7 +50,7 @@ export default function HomePage() {
   const [isTickerVisible, setIsTickerVisible] = useState(true);
   const [activeSessionIndex, setActiveSessionIndex] = useState(0);
   
-  // Fetch data for stats (simplified for now)
+  // Fetch data for stats
   const { data: meets } = useQuery<Meet[]>({
     queryKey: ['/api/meets'],
   });
@@ -56,6 +58,19 @@ export default function HomePage() {
   const { data: results } = useQuery<Result[]>({
     queryKey: ['/api/results'],
   });
+  
+  // Fetch assigned programs
+  const { assignedPrograms, isLoading: isLoadingPrograms } = useAssignedPrograms();
+  
+  // Get the first assigned program's ID (Beast Mode program)
+  const primaryProgramId = assignedPrograms?.[0]?.programId || null;
+  
+  // Fetch program sessions for the primary program
+  const { programSessions, isLoading: isLoadingSessions } = useProgramSessions(primaryProgramId);
+  
+  // Find today's workout session (for May 23, 2025 as specified)
+  const todayDate = "May-23";
+  const todaySession = programSessions?.find(session => session.date === todayDate) || null;
   
   // Temporary type for session previews with user data
   type SessionPreviewWithUser = {
@@ -262,78 +277,138 @@ export default function HomePage() {
             </Link>
           </div>
           
-          <Card className="border-primary/20 w-full">
-            <CardHeader className="pb-2 pt-3 px-3">
-              <div className="flex justify-between items-start">
-                <div>
-                  <Badge className="mb-1 bg-primary/20 text-primary hover:bg-primary/30 text-xs px-2 py-0.5">Track Session</Badge>
-                  <CardTitle className="text-lg">Speed Endurance</CardTitle>
-                  <CardDescription className="flex items-center gap-2 mt-0.5 text-xs">
-                    <span>4:00 PM</span>
-                    <span>•</span>
-                    <span>Main Track</span>
-                    <span>•</span>
-                    <span>Intensity: High</span>
-                  </CardDescription>
-                </div>
-                <Button variant="outline" size="sm" className="border-primary/20 text-primary hover:bg-primary/10 text-xs h-7 px-2">
-                  Start Session
-                </Button>
+          {isLoadingSessions ? (
+            <Card className="border-primary/20 w-full p-8 flex justify-center items-center">
+              <div className="text-center text-muted-foreground">
+                <div className="animate-pulse h-5 w-24 bg-muted rounded-md mx-auto mb-4"></div>
+                <p className="text-sm">Loading today's workout...</p>
               </div>
-            </CardHeader>
-            
-            <CardContent className="px-3 py-2">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 p-1 rounded-md hover:bg-muted/30">
-                  <div className="flex-shrink-0 h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center">
-                    <LineChart className="h-2.5 w-2.5 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-xs">Dynamic Warmup</p>
-                    <p className="text-xs text-muted-foreground">Duration: 15 min</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2 p-1 rounded-md hover:bg-muted/30">
-                  <div className="flex-shrink-0 h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Timer className="h-2.5 w-2.5 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-xs">6 × 200m</p>
-                    <p className="text-xs text-muted-foreground">Pace: 32s • Rest: 2 min</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2 p-1 rounded-md hover:bg-muted/30">
-                  <div className="flex-shrink-0 h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Timer className="h-2.5 w-2.5 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-xs">4 × 300m</p>
-                    <p className="text-xs text-muted-foreground">Pace: 48s • Rest: 3 min</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2 p-1 rounded-md hover:bg-muted/30">
-                  <div className="flex-shrink-0 h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center">
-                    <LineChart className="h-2.5 w-2.5 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-xs">Cool Down</p>
-                    <p className="text-xs text-muted-foreground">Duration: 10 min</p>
-                  </div>
-                </div>
+            </Card>
+          ) : !todaySession ? (
+            <Card className="border-primary/20 w-full p-8">
+              <div className="text-center text-muted-foreground">
+                <p className="mb-2">No session scheduled for today</p>
+                <Link href="/practice">
+                  <Button variant="outline" size="sm">
+                    View All Workouts
+                  </Button>
+                </Link>
               </div>
-            </CardContent>
-            
-            <CardFooter className="border-t py-2 px-3 flex justify-between text-xs text-muted-foreground">
-              <div>Coach: Coach Williams</div>
-              <div className="flex items-center">
-                <span className="text-primary font-medium">Details</span>
-                <ArrowUpRight className="ml-1 h-2.5 w-2.5 text-primary" />
-              </div>
-            </CardFooter>
-          </Card>
+            </Card>
+          ) : (
+            <Card className="border-primary/20 w-full">
+              <CardHeader className="pb-2 pt-3 px-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <Badge className="mb-1 bg-primary/20 text-primary hover:bg-primary/30 text-xs px-2 py-0.5">
+                      Day {todaySession.dayNumber}
+                    </Badge>
+                    <CardTitle className="text-lg">{todaySession.title || `${todayDate} Workout`}</CardTitle>
+                    <CardDescription className="flex items-center gap-2 mt-0.5 text-xs">
+                      <span>{todayDate}</span>
+                      {todaySession.isRestDay && (
+                        <>
+                          <span>•</span>
+                          <span className="text-amber-600 font-medium">Rest Day</span>
+                        </>
+                      )}
+                    </CardDescription>
+                  </div>
+                  <Link href="/practice">
+                    <Button variant="outline" size="sm" className="border-primary/20 text-primary hover:bg-primary/10 text-xs h-7 px-2">
+                      Start Session
+                    </Button>
+                  </Link>
+                </div>
+              </CardHeader>
+              
+              <CardContent className="px-3 py-2">
+                <div className="space-y-1">
+                  {todaySession.preActivation1 && (
+                    <div className="flex items-center gap-2 p-1 rounded-md hover:bg-muted/30">
+                      <div className="flex-shrink-0 h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center">
+                        <LineChart className="h-2.5 w-2.5 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-xs">Pre-Activation</p>
+                        <p className="text-xs text-muted-foreground">{todaySession.preActivation1}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {todaySession.shortDistanceWorkout && (
+                    <div className="flex items-center gap-2 p-1 rounded-md hover:bg-muted/30">
+                      <div className="flex-shrink-0 h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Timer className="h-2.5 w-2.5 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-xs">Sprint Workout</p>
+                        <p className="text-xs text-muted-foreground">{todaySession.shortDistanceWorkout}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {todaySession.mediumDistanceWorkout && (
+                    <div className="flex items-center gap-2 p-1 rounded-md hover:bg-muted/30">
+                      <div className="flex-shrink-0 h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Timer className="h-2.5 w-2.5 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-xs">Medium Distance</p>
+                        <p className="text-xs text-muted-foreground">{todaySession.mediumDistanceWorkout}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {todaySession.longDistanceWorkout && (
+                    <div className="flex items-center gap-2 p-1 rounded-md hover:bg-muted/30">
+                      <div className="flex-shrink-0 h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Timer className="h-2.5 w-2.5 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-xs">Long Distance</p>
+                        <p className="text-xs text-muted-foreground">{todaySession.longDistanceWorkout}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {todaySession.extraSession && (
+                    <div className="flex items-center gap-2 p-1 rounded-md hover:bg-muted/30">
+                      <div className="flex-shrink-0 h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Dumbbell className="h-2.5 w-2.5 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-xs">Extra Training</p>
+                        <p className="text-xs text-muted-foreground">{todaySession.extraSession}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* If no workout data is available, show a message */}
+                  {!todaySession.preActivation1 && 
+                   !todaySession.shortDistanceWorkout && 
+                   !todaySession.mediumDistanceWorkout && 
+                   !todaySession.longDistanceWorkout && 
+                   !todaySession.extraSession && (
+                    <div className="py-4 text-center text-muted-foreground text-sm">
+                      <p>Rest day or no specific workout details available.</p>
+                      <p className="text-xs mt-1">Check the full program for more information.</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+              
+              <CardFooter className="border-t py-2 px-3 flex justify-between text-xs text-muted-foreground">
+                <div>Program: {assignedPrograms?.[0]?.title || 'Beast Mode'}</div>
+                <Link href="/practice">
+                  <div className="flex items-center cursor-pointer">
+                    <span className="text-primary font-medium">View Details</span>
+                    <ArrowUpRight className="ml-1 h-2.5 w-2.5 text-primary" />
+                  </div>
+                </Link>
+              </CardFooter>
+            </Card>
+          )}
         </section>
       </main>
       
