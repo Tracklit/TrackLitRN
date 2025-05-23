@@ -55,6 +55,12 @@ export default function PracticePage() {
   const { user } = useAuth();
   const { assignedPrograms, isLoading: isLoadingPrograms } = useAssignedPrograms();
   
+  // Fetch athlete profile for event preferences
+  const { data: athleteProfile, isLoading: isLoadingProfile } = useQuery({
+    queryKey: ["/api/athlete-profile"],
+    enabled: !!user,
+  });
+  
   // State for selected program
   const [selectedProgram, setSelectedProgram] = useState<any>(null);
   const [showAssignedPrograms, setShowAssignedPrograms] = useState<boolean>(false);
@@ -484,8 +490,10 @@ export default function PracticePage() {
                                   </div>
                                 )}
                               
-                                {/* Show imported workout information with proper hierarchy */}
-                                {activeSessionData.shortDistanceWorkout && activeSessionData.shortDistanceWorkout.trim() !== "" && (
+                                {/* Show imported workout information with proper hierarchy, filtered by athlete profile */}
+                                {activeSessionData.shortDistanceWorkout && 
+                                 activeSessionData.shortDistanceWorkout.trim() !== "" && 
+                                 (!athleteProfile || athleteProfile.sprint60m100m) && (
                                   <div className="p-2 bg-background/50 rounded border border-border/50">
                                     <div className="flex items-start">
                                       <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
@@ -501,7 +509,9 @@ export default function PracticePage() {
                                   </div>
                                 )}
                                 
-                                {activeSessionData.mediumDistanceWorkout && activeSessionData.mediumDistanceWorkout.trim() !== "" && (
+                                {activeSessionData.mediumDistanceWorkout && 
+                                 activeSessionData.mediumDistanceWorkout.trim() !== "" && 
+                                 (!athleteProfile || athleteProfile.sprint200m) && (
                                   <div className="p-2 bg-background/50 rounded border border-border/50">
                                     <div className="flex items-start">
                                       <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
@@ -517,7 +527,9 @@ export default function PracticePage() {
                                   </div>
                                 )}
                                 
-                                {activeSessionData.longDistanceWorkout && activeSessionData.longDistanceWorkout.trim() !== "" && (
+                                {activeSessionData.longDistanceWorkout && 
+                                 activeSessionData.longDistanceWorkout.trim() !== "" && 
+                                 (!athleteProfile || athleteProfile.sprint400m) && (
                                   <div className="p-2 bg-background/50 rounded border border-border/50">
                                     <div className="flex items-start">
                                       <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
