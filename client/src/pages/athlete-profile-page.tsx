@@ -660,8 +660,8 @@ export default function AthleteProfilePage() {
                       item.distance === "200m" || 
                       item.distance === "250m" || 
                       item.distance === "350m" 
-                        ? "bg-blue-50 dark:bg-blue-950/20" 
-                        : ""
+                        ? "bg-blue-50/70 dark:bg-blue-800/30" 
+                        : "bg-white dark:bg-slate-900"
                     }
                   >
                     <TableCell className="font-medium sticky left-0 bg-inherit shadow-sm">{item.distance}</TableCell>
