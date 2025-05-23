@@ -690,7 +690,18 @@ export default function PracticePage() {
                   <div className="bg-primary/10 p-2 rounded text-center">
                     <p className="text-sm font-medium">Target Time:</p>
                     <p className="text-2xl font-bold text-primary">
-                      {((distance[0] / 3) * (100 / percentage[0])).toFixed(1)}s
+                      {athleteProfile && ((
+                        // Get the goal time based on the closest event distance
+                        (athleteProfile.sprint60m100mGoal && (distance[0] <= 100)) ? 
+                          (parseFloat(athleteProfile.sprint60m100mGoal) * (distance[0] / (distance[0] <= 70 ? 60 : 100)) * (100 / percentage[0])).toFixed(1) :
+                        (athleteProfile.sprint200mGoal && (distance[0] > 100 && distance[0] <= 200)) ? 
+                          (parseFloat(athleteProfile.sprint200mGoal) * (distance[0] / 200) * (100 / percentage[0])).toFixed(1) :
+                        (athleteProfile.sprint400mGoal && (distance[0] > 200 && distance[0] <= 400)) ? 
+                          (parseFloat(athleteProfile.sprint400mGoal) * (distance[0] / 400) * (100 / percentage[0])).toFixed(1) :
+                        (athleteProfile.otherEventGoal && athleteProfile.otherEventDistance) ? 
+                          (parseFloat(athleteProfile.otherEventGoal) * (distance[0] / parseFloat(athleteProfile.otherEventDistance)) * (100 / percentage[0])).toFixed(1) :
+                        ((distance[0] / 3) * (100 / percentage[0])).toFixed(1) // Fallback if no matching goal time
+                      )) || ((distance[0] / 3) * (100 / percentage[0])).toFixed(1)}s
                     </p>
                     <p className="text-xs text-muted-foreground">
                       at {percentage[0]}% effort for {distance[0]}m
