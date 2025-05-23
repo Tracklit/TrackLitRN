@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useAssignedPrograms } from "@/hooks/use-assigned-programs";
 import { useProgramSessions } from "@/hooks/use-program-sessions";
 import { useQuery } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import { PageContainer } from "@/components/page-container";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,7 @@ import { Link } from "wouter";
 
 export default function PracticePage() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const { assignedPrograms, isLoading: isLoadingPrograms } = useAssignedPrograms();
   
   // Fetch athlete profile for event preferences
@@ -85,6 +87,7 @@ export default function PracticePage() {
   const [distance, setDistance] = useState<number[]>([150]);
   const [calculatedTime, setCalculatedTime] = useState<number>(18.3);
   const [calculatorOpen, setCalculatorOpen] = useState<boolean>(false);
+  const [showGoalPrompt, setShowGoalPrompt] = useState<boolean>(false);
   
   // Set the selected program when assigned programs load
   useEffect(() => {
@@ -494,7 +497,10 @@ export default function PracticePage() {
                                 {/* Show imported workout information with proper hierarchy, filtered by athlete profile */}
                                 {activeSessionData.shortDistanceWorkout && 
                                  activeSessionData.shortDistanceWorkout.trim() !== "" && 
-                                 (!athleteProfile || athleteProfile.sprint60m100m) && (
+                                 (!athleteProfile || !athleteProfile.sprint60m100m === false || 
+                                  (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
+                                   !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
+                                   !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
                                   <div className="p-2 bg-background/50 rounded border border-border/50">
                                     <div className="flex items-start">
                                       <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
@@ -512,7 +518,10 @@ export default function PracticePage() {
                                 
                                 {activeSessionData.mediumDistanceWorkout && 
                                  activeSessionData.mediumDistanceWorkout.trim() !== "" && 
-                                 (!athleteProfile || athleteProfile.sprint200m) && (
+                                 (!athleteProfile || athleteProfile.sprint200m || 
+                                  (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
+                                   !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
+                                   !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
                                   <div className="p-2 bg-background/50 rounded border border-border/50">
                                     <div className="flex items-start">
                                       <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
@@ -530,7 +539,10 @@ export default function PracticePage() {
                                 
                                 {activeSessionData.longDistanceWorkout && 
                                  activeSessionData.longDistanceWorkout.trim() !== "" && 
-                                 (!athleteProfile || athleteProfile.sprint400m) && (
+                                 (!athleteProfile || athleteProfile.sprint400m || 
+                                  (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
+                                   !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
+                                   !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
                                   <div className="p-2 bg-background/50 rounded border border-border/50">
                                     <div className="flex items-start">
                                       <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
@@ -651,7 +663,23 @@ export default function PracticePage() {
                     </div>
                     <Slider
                       value={percentage}
-                      onValueChange={setPercentage}
+                      onValueChange={(value) => {
+                        // Check if user has set any goal times
+                        const hasSetGoalTimes = athleteProfile && (
+                          athleteProfile.sprint60m100mGoal || 
+                          athleteProfile.sprint200mGoal || 
+                          athleteProfile.sprint400mGoal || 
+                          athleteProfile.hurdles100m110mGoal || 
+                          athleteProfile.hurdles400mGoal || 
+                          athleteProfile.otherEventGoal
+                        );
+                        
+                        if (!hasSetGoalTimes) {
+                          setShowGoalPrompt(true);
+                        } else {
+                          setPercentage(value);
+                        }
+                      }}
                       min={50}
                       max={100}
                       step={5}
