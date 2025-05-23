@@ -5,7 +5,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { DesktopSidebar, MobileSidebar, MobileSidebarButton } from "@/components/layout/minimal-sidebar";
-import { DebugHelper } from "@/components/debug-helper";
+
 import { OnboardingFlow } from "@/components/onboarding-flow";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
@@ -132,9 +132,6 @@ function MainApp() {
       )}
       
       <Toaster />
-      
-      {/* Debug Helper - Only in development */}
-      {process.env.NODE_ENV !== 'production' && <DebugHelper />}
     </div>
   );
 }
