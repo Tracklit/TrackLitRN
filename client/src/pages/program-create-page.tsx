@@ -97,7 +97,13 @@ export default function ProgramCreatePage() {
         return res.json();
       } else {
         // Regular program creation without file
-        const res = await apiRequest("POST", "/api/programs", data);
+        // Calculate program duration based on blocks
+        const totalDays = data.macroBlockSize * data.numberOfMacroBlocks * data.microBlockSize;
+        const programData = {
+          ...data,
+          duration: totalDays
+        };
+        const res = await apiRequest("POST", "/api/programs", programData);
         if (!res.ok) {
           const errorData = await res.json();
           throw new Error(errorData.error || "Failed to create program");
