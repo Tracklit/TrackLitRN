@@ -27,7 +27,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, Edit } from "lucide-react";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
 
 // Create a schema for the form with Zod
 const athleteProfileSchema = z.object({
@@ -44,7 +52,10 @@ const athleteProfileSchema = z.object({
   hurdles100m110mGoal: z.string().optional().transform(val => val ? parseFloat(val) : null),
   hurdles400mGoal: z.string().optional().transform(val => val ? parseFloat(val) : null),
   otherEventGoal: z.string().optional().transform(val => val ? parseFloat(val) : null),
+  otherEventDistance: z.string().optional(),
   timingPreference: z.enum(["on_movement", "first_foot"]).default("on_movement"),
+  
+
 });
 
 type AthleteProfileFormValues = z.infer<typeof athleteProfileSchema>;
@@ -521,6 +532,107 @@ export default function AthleteProfilePage() {
           </Form>
         </CardContent>
       </Card>
+      
+      {/* Pace Table */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Target Times Table</CardTitle>
+          <CardDescription>
+            This table shows your target times at different percentages based on your goal times. 
+            The 100% column represents first foot contact timing (-0.55s from goal time).
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[100px]">Distance</TableHead>
+                <TableHead>80%</TableHead>
+                <TableHead>90%</TableHead>
+                <TableHead>92%</TableHead>
+                <TableHead>95%</TableHead>
+                <TableHead>98%</TableHead>
+                <TableHead>100%</TableHead>
+                <TableHead>Goal Time</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {[
+                { distance: "50m", factorFrom100m: 0.5 },
+                { distance: "60m", factorFrom100m: 0.6 },
+                { distance: "80m", factorFrom100m: 0.78 },
+                { distance: "100m", factorFrom100m: 1 },
+                { distance: "120m", factorFrom100m: 1.22 },
+                { distance: "150m", factorFrom100m: 1.24 * 1.22 },
+                { distance: "200m", factorFrom100m: 2 },
+                { distance: "220m", factorFrom100m: 2.2 },
+                { distance: "250m", factorFrom100m: 2.5 },
+                { distance: "300m", factorFrom100m: 3 },
+                { distance: "350m", factorFrom100m: 3.5 },
+                { distance: "400m", factorFrom100m: 4 }
+              ].map((item) => {
+                // Determine which goal time to use
+                let goalTime = null;
+                if (
+                  profile?.sprint60m100mGoal && 
+                  (item.distance === "50m" || item.distance === "60m" || item.distance === "80m" || item.distance === "100m")
+                ) {
+                  goalTime = parseFloat(profile.sprint60m100mGoal);
+                } else if (
+                  profile?.sprint200mGoal && 
+                  (item.distance === "120m" || item.distance === "150m" || item.distance === "200m" || item.distance === "220m")
+                ) {
+                  goalTime = parseFloat(profile.sprint200mGoal);
+                } else if (
+                  profile?.sprint400mGoal && 
+                  (item.distance === "250m" || item.distance === "300m" || item.distance === "350m" || item.distance === "400m")
+                ) {
+                  goalTime = parseFloat(profile.sprint400mGoal);
+                }
+                
+                // If no relevant goal time, skip this row
+                if (!goalTime) return null;
+                
+                // Calculate scaled goal time for this distance
+                const scaledGoalTime = goalTime * (item.factorFrom100m);
+                
+                // Calculate time at various percentages
+                const percent80 = (scaledGoalTime / 0.8).toFixed(2);
+                const percent90 = (scaledGoalTime / 0.9).toFixed(2);
+                const percent92 = (scaledGoalTime / 0.92).toFixed(2);
+                const percent95 = (scaledGoalTime / 0.95).toFixed(2);
+                const percent98 = (scaledGoalTime / 0.98).toFixed(2);
+                const percent100 = (scaledGoalTime - 0.55).toFixed(2); // First foot timing
+                
+                return (
+                  <TableRow key={item.distance}>
+                    <TableCell className="font-medium">{item.distance}</TableCell>
+                    <TableCell>{percent80}s</TableCell>
+                    <TableCell>{percent90}s</TableCell>
+                    <TableCell>{percent92}s</TableCell>
+                    <TableCell>{percent95}s</TableCell>
+                    <TableCell>{percent98}s</TableCell>
+                    <TableCell>{percent100}s</TableCell>
+                    <TableCell className="font-bold">{scaledGoalTime.toFixed(2)}s</TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+          
+          <div className="mt-4 text-xs text-muted-foreground">
+            <p>* The table shows times based on your goal times and scaled for each distance.</p>
+            <p>* For distances longer than 100m, a deceleration factor is applied to account for speed endurance.</p>
+            <p>* The 100% column shows times with first foot contact timing (-0.55s from goal time).</p>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <div className="mt-8 flex justify-center">
+        <Button onClick={() => window.history.back()} variant="outline">
+          Back
+        </Button>
+      </div>
     </div>
   );
 }
