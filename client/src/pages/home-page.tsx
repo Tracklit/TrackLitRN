@@ -196,7 +196,7 @@ export default function HomePage() {
                 key={activeSessionIndex} // Key helps with animation
               >
                 <div 
-                  className="flex items-center gap-2 bg-primary/5 border border-primary/10 px-3 py-2 rounded-md hover:bg-primary/10 transition-all duration-300"
+                  className="flex items-center gap-2 bg-primary/5 px-3 py-2 rounded-md hover:bg-primary/10 transition-all duration-300"
                 >
                   <div className="rounded-full bg-primary/15 h-8 w-8 flex items-center justify-center flex-shrink-0">
                     <UserCircle className="h-4 w-4 text-primary" />
