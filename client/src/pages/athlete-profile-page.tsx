@@ -534,61 +534,55 @@ export default function AthleteProfilePage() {
       </Card>
       
       {/* Pace Table */}
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Target Times Table</CardTitle>
-          <CardDescription>
-            This table shows your target times at different percentages based on your goal times. 
-            The 100% column represents first foot contact timing (-0.55s from goal time).
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[100px] sticky left-0 bg-background shadow-sm z-10">Distance</TableHead>
-                <TableHead>80%</TableHead>
-                <TableHead>90%</TableHead>
-                <TableHead>92%</TableHead>
-                <TableHead>95%</TableHead>
-                <TableHead>98%</TableHead>
-                <TableHead>100%</TableHead>
-                <TableHead>Goal Time</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {[
-                { distance: "50m", baseDistance: "100m", factor: 0.5 },
-                { distance: "60m", baseDistance: "100m", factor: 0.6 },
-                { distance: "80m", baseDistance: "100m", factor: 0.8 },
-                { distance: "100m", baseDistance: "100m", factor: 1.0 },
-                { distance: "120m", baseDistance: "100m", factor: 1.2 },
-                { distance: "150m", baseDistance: "120m", factor: 1.25 },
-                { distance: "200m", baseDistance: "150m", factor: 1.33 },
-                { distance: "220m", baseDistance: "200m", factor: 1.1 },
-                { distance: "250m", baseDistance: "220m", factor: 1.14 },
-                { distance: "300m", baseDistance: "250m", factor: 1.2 },
-                { distance: "350m", baseDistance: "300m", factor: 1.17 },
-                { distance: "400m", baseDistance: "350m", factor: 1.14 }
-              ].map((item) => {
-                // Calculate all times based on cascading values
+      <div className="mt-6 overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
+        <div className="bg-gray-100 dark:bg-gray-800 px-4 py-3">
+          <h3 className="text-lg font-semibold">Target Times</h3>
+          <p className="text-sm text-muted-foreground">
+            Based on your goal times, the 100% column shows first foot contact timing (-0.55s)
+          </p>
+        </div>
+        
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                <th className="sticky left-0 z-10 bg-inherit whitespace-nowrap px-3 py-3 text-left font-medium">
+                  Distance
+                </th>
+                <th className="px-3 py-3 text-right font-medium">80%</th>
+                <th className="px-3 py-3 text-right font-medium">90%</th>
+                <th className="px-3 py-3 text-right font-medium">92%</th>
+                <th className="px-3 py-3 text-right font-medium">95%</th>
+                <th className="px-3 py-3 text-right font-medium">98%</th>
+                <th className="px-3 py-3 text-right font-medium">100%</th>
+                <th className="px-3 py-3 text-right font-medium">Goal</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* Pace calculations */}
+              {(() => {
+                // Create pace calculation
+                const distances = [
+                  "50m", "60m", "80m", "100m", "120m", 
+                  "150m", "200m", "220m", "250m", "300m", 
+                  "350m", "400m"
+                ];
                 
-                // Find the base time for the cascading calculation
-                let baseTime = null;
-                // Find all defined distances and their times
+                // Calculate all times for all distances
                 const timesByDistance = new Map();
                 
                 // Start with the direct goal times from the user's profile
                 if (profile?.sprint60m100mGoal) {
                   // Determine if it's 60m or 100m based on the value
-                  if (parseFloat(profile.sprint60m100mGoal) < 10) {
-                    timesByDistance.set("60m", parseFloat(profile.sprint60m100mGoal));
+                  const value = parseFloat(profile.sprint60m100mGoal);
+                  if (value < 10) {
+                    timesByDistance.set("60m", value);
                     // Calculate the corresponding 100m time
-                    timesByDistance.set("100m", parseFloat(profile.sprint60m100mGoal) * 1.67);
+                    timesByDistance.set("100m", value * 1.67);
                   } else {
-                    timesByDistance.set("100m", parseFloat(profile.sprint60m100mGoal));
+                    timesByDistance.set("100m", value);
                     // Calculate the corresponding 60m time
-                    timesByDistance.set("60m", parseFloat(profile.sprint60m100mGoal) * 0.6);
+                    timesByDistance.set("60m", value * 0.6);
                   }
                   // Calculate 50m and 80m based on 100m time
                   timesByDistance.set("50m", timesByDistance.get("100m") * 0.5);
@@ -635,55 +629,46 @@ export default function AthleteProfilePage() {
                 if (!timesByDistance.has("400m") && timesByDistance.has("350m")) {
                   timesByDistance.set("400m", timesByDistance.get("350m") * 1.14);
                 }
-                
-                // Get the scaled goal time for this row's distance
-                const scaledGoalTime = timesByDistance.get(item.distance);
-                
-                // If there's no time for this distance after all calculations, skip row
-                if (!scaledGoalTime) return null;
-                
-                // Calculate time at various percentages
-                const percent80 = (scaledGoalTime / 0.8).toFixed(2);
-                const percent90 = (scaledGoalTime / 0.9).toFixed(2);
-                const percent92 = (scaledGoalTime / 0.92).toFixed(2);
-                const percent95 = (scaledGoalTime / 0.95).toFixed(2);
-                const percent98 = (scaledGoalTime / 0.98).toFixed(2);
-                const percent100 = (scaledGoalTime - 0.55).toFixed(2); // First foot timing
-                
-                return (
-                  <TableRow 
-                    key={item.distance} 
-                    className={
-                      item.distance === "50m" || 
-                      item.distance === "80m" || 
-                      item.distance === "200m" || 
-                      item.distance === "300m" || 
-                      item.distance === "350m" 
-                        ? "bg-gray-200/80 dark:bg-gray-700/30" 
-                        : "bg-white dark:bg-slate-900"
-                    }
-                  >
-                    <TableCell className="font-medium sticky left-0 bg-inherit shadow-sm">{item.distance}</TableCell>
-                    <TableCell>{percent80}s</TableCell>
-                    <TableCell>{percent90}s</TableCell>
-                    <TableCell>{percent92}s</TableCell>
-                    <TableCell>{percent95}s</TableCell>
-                    <TableCell>{percent98}s</TableCell>
-                    <TableCell>{percent100}s</TableCell>
-                    <TableCell className="font-bold">{scaledGoalTime.toFixed(2)}s</TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-          
-          <div className="mt-4 text-xs text-muted-foreground">
-            <p>* The table shows times based on your goal times and scaled for each distance.</p>
-            <p>* For distances longer than 100m, a deceleration factor is applied to account for speed endurance.</p>
-            <p>* The 100% column shows times with first foot contact timing (-0.55s from goal time).</p>
-          </div>
-        </CardContent>
-      </Card>
+              
+                // Render the rows with alternating backgrounds
+                return distances.map((distance, index) => {
+                  const time = timesByDistance.get(distance);
+                  if (!time) return null;
+                  
+                  // Calculate percentages
+                  const percent80 = (time / 0.8).toFixed(2);
+                  const percent90 = (time / 0.9).toFixed(2);
+                  const percent92 = (time / 0.92).toFixed(2);
+                  const percent95 = (time / 0.95).toFixed(2);
+                  const percent98 = (time / 0.98).toFixed(2);
+                  const percent100 = (time - 0.55).toFixed(2); // First foot timing
+                  
+                  // Alternating backgrounds for even/odd rows
+                  const isEvenRow = index % 2 === 0;
+                  const rowBgClass = isEvenRow ? 
+                    "bg-gray-100 dark:bg-gray-800" : 
+                    "bg-white dark:bg-gray-900";
+                  
+                  return (
+                    <tr key={distance} className={`${rowBgClass} border-b border-gray-200 dark:border-gray-700`}>
+                      <td className="sticky left-0 z-10 bg-inherit whitespace-nowrap px-3 py-3 font-medium">
+                        {distance}
+                      </td>
+                      <td className="px-3 py-3 text-right">{percent80}s</td>
+                      <td className="px-3 py-3 text-right">{percent90}s</td>
+                      <td className="px-3 py-3 text-right">{percent92}s</td>
+                      <td className="px-3 py-3 text-right">{percent95}s</td>
+                      <td className="px-3 py-3 text-right">{percent98}s</td>
+                      <td className="px-3 py-3 text-right">{percent100}s</td>
+                      <td className="px-3 py-3 text-right font-bold">{time.toFixed(2)}s</td>
+                    </tr>
+                  );
+                });
+              })()}
+            </tbody>
+          </table>
+        </div>
+      </div>
       
       <div className="mt-8 flex justify-center">
         <Button onClick={() => window.history.back()} variant="outline">
