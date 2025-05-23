@@ -178,15 +178,17 @@ export default function HomePage() {
     <div className="min-h-screen text-foreground pb-16">
       {/* Session Preview Ticker */}
       {isTickerVisible && (
-        <div className="relative left-0 right-0 z-10 pt-8 pb-3 px-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0 mb-2"
-            onClick={() => setIsTickerVisible(false)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
+        <div className="relative left-0 right-0 z-10 pt-4 px-4">
+          <div className="flex justify-start mb-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 ml-0"
+              onClick={() => setIsTickerVisible(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
           
           <div>
             {sessionPreviews && (
