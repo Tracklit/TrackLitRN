@@ -108,16 +108,10 @@ export default function AthleteProfilePage() {
     mutationFn: async (data: AthleteProfileFormValues) => {
       if (profile) {
         // Update existing profile
-        return apiRequest("/api/athlete-profile", {
-          method: "PATCH",
-          data: data,
-        });
+        return apiRequest("PATCH", "/api/athlete-profile", data);
       } else {
         // Create new profile
-        return apiRequest("/api/athlete-profile", {
-          method: "POST",
-          data: data,
-        });
+        return apiRequest("POST", "/api/athlete-profile", data);
       }
     },
     onSuccess: () => {
