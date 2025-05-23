@@ -535,9 +535,9 @@ export default function AthleteProfilePage() {
       
       {/* Pace Table */}
       <div className="mt-6 overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
-        <div className="bg-gray-100 dark:bg-gray-800 px-4 py-3">
+        <div className="bg-blue-900 text-white px-4 py-3">
           <h3 className="text-lg font-semibold">Target Times</h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-blue-200">
             Based on your goal times, the 100% column shows first foot contact timing (-0.55s)
           </p>
         </div>
@@ -545,7 +545,7 @@ export default function AthleteProfilePage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+              <tr className="bg-blue-900 text-white border-b border-blue-700">
                 <th className="sticky left-0 z-10 bg-inherit whitespace-nowrap px-3 py-3 text-left font-medium">
                   Distance
                 </th>
@@ -646,11 +646,11 @@ export default function AthleteProfilePage() {
                   // Alternating backgrounds for even/odd rows
                   const isEvenRow = index % 2 === 0;
                   const rowBgClass = isEvenRow ? 
-                    "bg-gray-100 dark:bg-gray-800" : 
-                    "bg-white dark:bg-gray-900";
+                    "bg-blue-800 text-white" : 
+                    "bg-blue-700 text-white";
                   
                   return (
-                    <tr key={distance} className={`${rowBgClass} border-b border-gray-200 dark:border-gray-700`}>
+                    <tr key={distance} className={`${rowBgClass} border-b border-blue-600`}>
                       <td className="sticky left-0 z-10 bg-inherit whitespace-nowrap px-3 py-3 font-medium">
                         {distance}
                       </td>
