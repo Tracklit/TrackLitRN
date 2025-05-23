@@ -46,7 +46,7 @@ export function UpcomingMeetCard({ meet, onViewPreparation }: UpcomingMeetCardPr
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `Track Pro: ${meet.name}`,
+          title: `TrackLit: ${meet.name}`,
           text: `Join me at ${meet.name} on ${formatDateTime(meet.date)} at ${meet.location}`,
           url: window.location.href,
         });

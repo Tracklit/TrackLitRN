@@ -21,21 +21,11 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
     <header className={cn("bg-white shadow-sm fixed top-0 left-0 right-0 z-30", className)}>
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6 text-primary"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M13 12a4 4 0 0 1-4 4a4 4 0 0 1-4-4a4 4 0 0 1 4-4a4 4 0 0 1 4 4z"></path>
-            <path d="M18.6 14a4 4 0 0 0 .1-6a9 9 0 0 0-9.6-1.3a4 4 0 1 0 2.2 7.1"></path>
-            <path d="M18.6 10A4 4 0 0 0 16 8"></path>
-            <line x1="16" y1="16" x2="16.01" y2="16"></line>
-          </svg>
+          <img 
+            src="/images/tracklit-logo.jpeg" 
+            alt="TrackLit Logo" 
+            className="h-8 w-auto" 
+          />
           <h1 className="text-xl font-bold">{title}</h1>
         </div>
         

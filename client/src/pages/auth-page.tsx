@@ -79,8 +79,8 @@ export default function AuthPage() {
       <div className="flex flex-col justify-center p-6 md:p-12">
         <div className="mx-auto w-full max-w-md">
           <div className="flex items-center mb-8">
-            <Terminal className="h-8 w-8 text-primary mr-2" />
-            <h1 className="text-3xl font-bold">Track Pro</h1>
+            <img src="/images/tracklit-logo.jpeg" alt="TrackLit Logo" className="h-9 w-auto mr-2" />
+            <h1 className="text-3xl font-bold">TrackLit</h1>
           </div>
           
           <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'login' | 'register')}>

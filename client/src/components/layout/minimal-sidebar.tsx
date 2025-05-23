@@ -48,7 +48,7 @@ export function DesktopSidebar() {
   return (
     <aside className="hidden md:flex flex-col bg-white border-r border-gray-200 w-64 h-screen fixed top-0 left-0 z-20">
       <div className="p-4">
-        <h2 className="text-lg font-bold mb-4">Track Pro</h2>
+        <h2 className="text-lg font-bold mb-4">TrackLit</h2>
         
         <ul className="space-y-1">
           <NavItem 
@@ -174,7 +174,7 @@ export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-center items-center p-4 border-b border-sidebar-border">
-          <h2 className="text-lg font-bold text-foreground">Track Pro</h2>
+          <h2 className="text-lg font-bold text-foreground">TrackLit</h2>
         </div>
         
         <div 
