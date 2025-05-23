@@ -427,7 +427,7 @@ export default function PracticePage() {
                           {/* Title removed as requested */}
                           <div className="space-y-3">
                             {activeSessionData.isRestDay ? (
-                              <div className="p-3 bg-background rounded-md border border-border/50">
+                              <div className="p-3">
                                 <p className="text-center font-medium">Rest Day</p>
                                 <p className="text-sm text-center text-muted-foreground">
                                   Take time to recover and prepare for your next training session.
@@ -437,7 +437,7 @@ export default function PracticePage() {
                               <>
                                 {/* Pre-activation exercises - Moved to top of session area */}
                                 {activeSessionData.preActivation1 && activeSessionData.preActivation1.trim() !== "" && (
-                                  <div className="p-2 bg-background/50 rounded border border-border/50">
+                                  <div className="p-2">
                                     <p className="font-medium text-sm mb-2">Pre-Activation</p>
                                     <div className="whitespace-pre-line text-sm mt-1 pl-2 border-l-2 border-primary/30">
                                       {/* Remove any starting/ending quotes from the displayed text */}
@@ -448,7 +448,7 @@ export default function PracticePage() {
                               
                                 {/* Show imported workout information with proper hierarchy */}
                                 {activeSessionData.shortDistanceWorkout && activeSessionData.shortDistanceWorkout.trim() !== "" && (
-                                  <div className="p-2 bg-background/50 rounded border border-border/50">
+                                  <div className="p-2">
                                     <div className="flex items-start">
                                       <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
                                         <Dumbbell className="h-4 w-4 text-primary" />
@@ -464,7 +464,7 @@ export default function PracticePage() {
                                 )}
                                 
                                 {activeSessionData.mediumDistanceWorkout && activeSessionData.mediumDistanceWorkout.trim() !== "" && (
-                                  <div className="p-2 bg-background/50 rounded border border-border/50">
+                                  <div className="p-2">
                                     <div className="flex items-start">
                                       <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
                                         <Dumbbell className="h-4 w-4 text-primary" />
@@ -480,7 +480,7 @@ export default function PracticePage() {
                                 )}
                                 
                                 {activeSessionData.longDistanceWorkout && activeSessionData.longDistanceWorkout.trim() !== "" && (
-                                  <div className="p-2 bg-background/50 rounded border border-border/50">
+                                  <div className="p-2">
                                     <div className="flex items-start">
                                       <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
                                         <Dumbbell className="h-4 w-4 text-primary" />
@@ -497,7 +497,7 @@ export default function PracticePage() {
                                 
                                 {/* Post-Workout data - Column C */}
                                 {activeSessionData.preActivation2 && activeSessionData.preActivation2.trim() !== "" && (
-                                  <div className="p-2 bg-background/50 rounded border border-border/50">
+                                  <div className="p-2">
                                     <p className="font-medium text-sm mb-2">Post-Workout</p>
                                     <div className="whitespace-pre-line text-sm mt-1 pl-2 border-l-2 border-primary/30">
                                       {/* Remove any starting/ending quotes from the displayed text */}
@@ -508,7 +508,7 @@ export default function PracticePage() {
                                 
                                 {/* Extra session - Column G, only if not empty */}
                                 {activeSessionData.extraSession && activeSessionData.extraSession.trim() !== "" && (
-                                  <div className="p-2 bg-background/50 rounded border border-border/50">
+                                  <div className="p-2">
                                     <p className="font-medium text-sm mb-1">Extra Session</p>
                                     <div className="whitespace-pre-line text-sm">
                                       {activeSessionData.extraSession.replace(/^"|"$/g, '')}
