@@ -86,6 +86,8 @@ export default function PracticePage() {
   const [percentage, setPercentage] = useState<number[]>([85]);
   const [distance, setDistance] = useState<number[]>([150]);
   const [calculatorOpen, setCalculatorOpen] = useState<boolean>(false);
+  const [useFirstFootTiming, setUseFirstFootTiming] = useState<boolean>(false);
+  const [useMovementTiming, setUseMovementTiming] = useState<boolean>(false);
   
   // Set the selected program when assigned programs load
   useEffect(() => {
@@ -687,24 +689,76 @@ export default function PracticePage() {
                     </div>
                   </div>
                   
+                  <div className="mb-3">
+                    <div className="flex flex-col space-y-2 bg-muted/30 p-2 rounded">
+                      <div className="text-xs font-medium">Timing Options</div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="first-foot" 
+                            checked={useFirstFootTiming}
+                            onCheckedChange={(checked) => setUseFirstFootTiming(checked === true)}
+                          />
+                          <label 
+                            htmlFor="first-foot" 
+                            className="text-xs cursor-pointer"
+                          >
+                            First foot (-0.55s)
+                          </label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="movement" 
+                            checked={useMovementTiming}
+                            onCheckedChange={(checked) => setUseMovementTiming(checked === true)}
+                          />
+                          <label 
+                            htmlFor="movement" 
+                            className="text-xs cursor-pointer"
+                          >
+                            Movement (-0.15s)
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
                   <div className="bg-primary/10 p-2 rounded text-center">
                     <p className="text-sm font-medium">Target Time:</p>
                     <p className="text-2xl font-bold text-primary">
-                      {athleteProfile && ((
-                        // Get the goal time based on the closest event distance
-                        (athleteProfile.sprint60m100mGoal && (distance[0] <= 100)) ? 
-                          (parseFloat(athleteProfile.sprint60m100mGoal) * (distance[0] / (distance[0] <= 70 ? 60 : 100)) * (100 / percentage[0])).toFixed(1) :
-                        (athleteProfile.sprint200mGoal && (distance[0] > 100 && distance[0] <= 200)) ? 
-                          (parseFloat(athleteProfile.sprint200mGoal) * (distance[0] / 200) * (100 / percentage[0])).toFixed(1) :
-                        (athleteProfile.sprint400mGoal && (distance[0] > 200 && distance[0] <= 400)) ? 
-                          (parseFloat(athleteProfile.sprint400mGoal) * (distance[0] / 400) * (100 / percentage[0])).toFixed(1) :
-                        (athleteProfile.otherEventGoal && athleteProfile.otherEventDistance) ? 
-                          (parseFloat(athleteProfile.otherEventGoal) * (distance[0] / parseFloat(athleteProfile.otherEventDistance)) * (100 / percentage[0])).toFixed(1) :
-                        ((distance[0] / 3) * (100 / percentage[0])).toFixed(1) // Fallback if no matching goal time
-                      )) || ((distance[0] / 3) * (100 / percentage[0])).toFixed(1)}s
+                      {(() => {
+                        // Calculate base time
+                        let baseTime = athleteProfile ? 
+                          ((athleteProfile.sprint60m100mGoal && (distance[0] <= 100)) ? 
+                            (parseFloat(athleteProfile.sprint60m100mGoal) * (distance[0] / (distance[0] <= 70 ? 60 : 100)) * (100 / percentage[0])) :
+                          (athleteProfile.sprint200mGoal && (distance[0] > 100 && distance[0] <= 200)) ? 
+                            (parseFloat(athleteProfile.sprint200mGoal) * (distance[0] / 200) * (100 / percentage[0])) :
+                          (athleteProfile.sprint400mGoal && (distance[0] > 200 && distance[0] <= 400)) ? 
+                            (parseFloat(athleteProfile.sprint400mGoal) * (distance[0] / 400) * (100 / percentage[0])) :
+                          (athleteProfile.otherEventGoal && athleteProfile.otherEventDistance) ? 
+                            (parseFloat(athleteProfile.otherEventGoal) * (distance[0] / parseFloat(athleteProfile.otherEventDistance)) * (100 / percentage[0])) :
+                          ((distance[0] / 3) * (100 / percentage[0]))) // Fallback if no matching goal time
+                        : ((distance[0] / 3) * (100 / percentage[0]));
+                        
+                        // Apply timing deductions
+                        if (useFirstFootTiming) baseTime -= 0.55;
+                        if (useMovementTiming) baseTime -= 0.15;
+                        
+                        // Ensure time doesn't go below 0
+                        baseTime = Math.max(baseTime, 0);
+                        
+                        return baseTime.toFixed(1);
+                      })()}s
                     </p>
                     <p className="text-xs text-muted-foreground">
                       at {percentage[0]}% effort for {distance[0]}m
+                      {(useFirstFootTiming || useMovementTiming) && (
+                        <span className="block mt-1">
+                          {useFirstFootTiming && "First foot timing"}
+                          {useFirstFootTiming && useMovementTiming && " + "}
+                          {useMovementTiming && "Movement timing"}
+                        </span>
+                      )}
                     </p>
                   </div>
                 </CollapsibleContent>
