@@ -704,63 +704,60 @@ export default function PracticePage() {
           </CardContent>
         </Card>
         
-        {/* Media Upload Section */}
-        <div className="mb-6">
-          <h3 className="font-medium text-lg mb-3">Media</h3>
-          <div className="grid grid-cols-2 gap-3 mb-3">
-            <div className="aspect-square bg-muted/40 rounded-md flex items-center justify-center border border-dashed border-border">
-              <div className="text-center p-4">
-                <div className="bg-primary/10 h-10 w-10 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <Upload className="h-5 w-5 text-primary" />
+        {/* Media Upload Section - Collapsible */}
+        <Collapsible className="mb-6 border border-border/30 rounded-md overflow-hidden">
+          <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-3 bg-muted/30 hover:bg-muted/40 transition-colors">
+            <div className="flex items-center gap-2">
+              <Camera className="h-4 w-4 text-muted-foreground" />
+              <h3 className="font-medium text-sm">Media</h3>
+            </div>
+            <ChevronDown className="h-4 w-4 text-muted-foreground ui-open:rotate-180 transition-transform duration-200" />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="px-4 py-3">
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div className="aspect-square bg-muted/40 rounded-md flex items-center justify-center border border-dashed border-border">
+                <div className="text-center p-4">
+                  <div className="bg-primary/10 h-10 w-10 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <Upload className="h-5 w-5 text-primary" />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Upload photo/video
+                  </p>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Upload photo/video
-                </p>
+              </div>
+              
+              <div className="aspect-square bg-muted/40 rounded-md border border-dashed border-border flex items-center justify-center">
+                <div className="text-center p-4">
+                  <div className="bg-primary/10 h-10 w-10 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <Camera className="h-5 w-5 text-primary" />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Capture photo
+                  </p>
+                </div>
               </div>
             </div>
             
-            <div className="aspect-square bg-muted/40 rounded-md border border-dashed border-border flex items-center justify-center">
-              <div className="text-center p-4">
-                <div className="bg-primary/10 h-10 w-10 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <Camera className="h-5 w-5 text-primary" />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Capture photo
-                </p>
-              </div>
+            <div className="flex justify-center">
+              <Button variant="outline" className="w-full">
+                <Camera className="h-5 w-5 mr-3" />
+                <span className="text-sm">Add Media</span>
+              </Button>
             </div>
-          </div>
-          
-          <div className="flex justify-center">
-            <Button variant="outline" className="w-full">
-              <Camera className="h-5 w-5 mr-3" />
-              <span className="text-base">Add Media</span>
-            </Button>
-          </div>
-        </div>
+          </CollapsibleContent>
+        </Collapsible>
         
-        {/* Assigned Programs Section - Moved to bottom */}
+        {/* Assigned Programs Section - Collapsible */}
         {(assignedPrograms && assignedPrograms.length > 0) && (
-          <div className="mt-6 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="p-0 hover:bg-transparent"
-                onClick={() => setShowAssignedPrograms(!showAssignedPrograms)}
-              >
-                <ClipboardList className="h-6 w-6 text-primary" />
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setShowAssignedPrograms(!showAssignedPrograms)}
-              >
-                {showAssignedPrograms ? "Hide" : "Show Programs"}
-              </Button>
-            </div>
-            
-            {showAssignedPrograms && (
+          <Collapsible className="mt-6 mb-6 border border-border/30 rounded-md overflow-hidden">
+            <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-3 bg-muted/30 hover:bg-muted/40 transition-colors">
+              <div className="flex items-center gap-2">
+                <ClipboardList className="h-4 w-4 text-muted-foreground" />
+                <h3 className="font-medium text-sm">My Programs</h3>
+              </div>
+              <ChevronDown className="h-4 w-4 text-muted-foreground ui-open:rotate-180 transition-transform duration-200" />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="px-4 py-3">
               <div className="space-y-3">
                 {isLoadingPrograms ? (
                   <div className="flex justify-center py-8">
@@ -773,18 +770,18 @@ export default function PracticePage() {
                         key={program.id} 
                         className={cn(
                           "cursor-pointer hover:border-primary/50 transition-all",
-                          selectedProgram?.id === program.id ? "border-primary" : ""
+                          selectedProgram?.id === program.id ? "border-primary bg-primary/5" : ""
                         )}
                         onClick={() => setSelectedProgram(program)}
                       >
-                        <CardContent className="p-4">
+                        <CardContent className="p-3">
                           <div className="flex items-center gap-3">
                             <div className="bg-primary/10 p-2 rounded-full">
-                              <ClipboardList className="h-5 w-5 text-primary" />
+                              <ClipboardList className="h-4 w-4 text-primary" />
                             </div>
                             <div>
-                              <h3 className="font-medium">{program.program?.title || "Program"}</h3>
-                              <p className="text-sm text-muted-foreground">
+                              <h3 className="font-medium text-sm">{program.program?.title || ""}</h3>
+                              <p className="text-xs text-muted-foreground">
                                 {program.status === 'accepted' ? 'In Progress' : program.status}
                               </p>
                             </div>
@@ -795,8 +792,8 @@ export default function PracticePage() {
                   </div>
                 )}
               </div>
-            )}
-          </div>
+            </CollapsibleContent>
+          </Collapsible>
         )}
       </div>
 
