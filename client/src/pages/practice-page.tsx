@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import {
   Collapsible,
@@ -88,6 +89,26 @@ export default function PracticePage() {
   const [calculatorOpen, setCalculatorOpen] = useState<boolean>(false);
   const [useFirstFootTiming, setUseFirstFootTiming] = useState<boolean>(false);
   const [useMovementTiming, setUseMovementTiming] = useState<boolean>(false);
+  
+  // Set timing options based on athlete profile when it loads
+  useEffect(() => {
+    if (athleteProfile) {
+      if (athleteProfile.preferredTiming === 'firstFoot') {
+        setUseFirstFootTiming(true);
+        setUseMovementTiming(false);
+      } else if (athleteProfile.preferredTiming === 'movement') {
+        setUseFirstFootTiming(false);
+        setUseMovementTiming(true);
+      } else if (athleteProfile.preferredTiming === 'both') {
+        setUseFirstFootTiming(true);
+        setUseMovementTiming(true);
+      } else {
+        // Default or 'none'
+        setUseFirstFootTiming(false);
+        setUseMovementTiming(false);
+      }
+    }
+  }, [athleteProfile]);
   
   // Set the selected program when assigned programs load
   useEffect(() => {
