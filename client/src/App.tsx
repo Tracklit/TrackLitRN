@@ -69,7 +69,15 @@ function Router() {
 function MainApp() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(true);
-  const { user } = useAuth();
+  const { user, loginMutation } = useAuth();
+  
+  // This will help us test the onboarding flow whenever login happens
+  useEffect(() => {
+    // Reset onboarding any time a login happens
+    if (loginMutation.isSuccess) {
+      setShowOnboarding(true);
+    }
+  }, [loginMutation.isSuccess]);
   
   const toggleMenu = () => {
     const newMenuState = !isMenuOpen;

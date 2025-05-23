@@ -34,77 +34,80 @@ export function OnboardingFlow({ onComplete, isFirstTimeUser = true }: Onboardin
     {
       title: "Welcome to TrackLit",
       description: (
-        <div className="space-y-4">
-          <p>Your complete track and field training companion.</p>
-          <p>TrackLit helps you track workouts, manage programs, and analyze performance to reach your athletic potential.</p>
+        <>
+          Your complete track and field training companion.
+          <div className="mt-2"></div>
+          TrackLit helps you track workouts, manage programs, and analyze performance to reach your athletic potential.
           
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 text-sm">
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 text-sm mt-4">
             <Info className="h-5 w-5 text-primary flex-shrink-0" />
-            <p>We've created a sample training program so you can explore right away.</p>
+            <span>We've created a sample training program so you can explore right away.</span>
           </div>
-        </div>
+        </>
       ),
       icon: <Sparkles className="h-8 w-8 text-primary" />
     },
     {
       title: "Spikes: Your Rewards Currency",
       description: (
-        <div className="space-y-4">
-          <p>Earn Spikes by completing workouts, attending meets, and achieving personal bests.</p>
+        <>
+          Earn Spikes by completing workouts, attending meets, and achieving personal bests.
           
           <div className="grid grid-cols-2 gap-3 mt-4">
             <div className="p-3 rounded-md bg-muted/60 text-center">
-              <p className="font-medium mb-1">+5 Spikes</p>
-              <p className="text-xs text-muted-foreground">Complete a workout</p>
+              <span className="font-medium block mb-1">+5 Spikes</span>
+              <span className="text-xs text-muted-foreground">Complete a workout</span>
             </div>
             <div className="p-3 rounded-md bg-muted/60 text-center">
-              <p className="font-medium mb-1">+10 Spikes</p>
-              <p className="text-xs text-muted-foreground">Participate in a meet</p>
+              <span className="font-medium block mb-1">+10 Spikes</span>
+              <span className="text-xs text-muted-foreground">Participate in a meet</span>
             </div>
             <div className="p-3 rounded-md bg-muted/60 text-center">
-              <p className="font-medium mb-1">+20 Spikes</p>
-              <p className="text-xs text-muted-foreground">Set a personal record</p>
+              <span className="font-medium block mb-1">+20 Spikes</span>
+              <span className="text-xs text-muted-foreground">Set a personal record</span>
             </div>
             <div className="p-3 rounded-md bg-muted/60 text-center">
-              <p className="font-medium mb-1">+15 Spikes</p>
-              <p className="text-xs text-muted-foreground">Install the app</p>
+              <span className="font-medium block mb-1">+15 Spikes</span>
+              <span className="text-xs text-muted-foreground">Install the app</span>
             </div>
           </div>
           
-          <p className="text-sm text-muted-foreground">Use Spikes to unlock premium features and training programs.</p>
-        </div>
+          <div className="text-sm text-muted-foreground mt-4">
+            Use Spikes to unlock premium features and training programs.
+          </div>
+        </>
       ),
       icon: <Sparkles className="h-8 w-8 text-primary" />
     },
     {
       title: "Install TrackLit for Easy Access",
       description: (
-        <div className="space-y-4">
-          <p>Add TrackLit to your home screen for quick access to your training programs.</p>
+        <>
+          Add TrackLit to your home screen for quick access to your training programs.
           
-          <div className="p-4 border border-border rounded-md">
-            <h4 className="text-sm font-medium mb-2">How to install:</h4>
-            <ul className="text-sm space-y-3">
-              <li className="flex items-start gap-2">
+          <div className="p-4 border border-border rounded-md mt-4">
+            <span className="text-sm font-medium block mb-2">How to install:</span>
+            <div className="text-sm space-y-3">
+              <div className="flex items-start gap-2">
                 <span className="bg-primary/10 text-primary h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
                 <span>Tap the share button in your browser</span>
-              </li>
-              <li className="flex items-start gap-2">
+              </div>
+              <div className="flex items-start gap-2">
                 <span className="bg-primary/10 text-primary h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
                 <span>Select "Add to Home Screen"</span>
-              </li>
-              <li className="flex items-start gap-2">
+              </div>
+              <div className="flex items-start gap-2">
                 <span className="bg-primary/10 text-primary h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
                 <span>Tap "Add" to confirm</span>
-              </li>
-            </ul>
+              </div>
+            </div>
           </div>
           
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 text-sm">
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 text-sm mt-4">
             <Sparkles className="h-5 w-5 text-primary flex-shrink-0" />
-            <p>Earn 15 Spikes when you install the app!</p>
+            <span>Earn 15 Spikes when you install the app!</span>
           </div>
-        </div>
+        </>
       ),
       icon: <Smartphone className="h-8 w-8 text-primary" />
     },
@@ -165,9 +168,9 @@ export function OnboardingFlow({ onComplete, isFirstTimeUser = true }: Onboardin
           </DialogHeader>
           
           <div className={animationClass}>
-            <DialogDescription className="text-center">
+            <div className="text-center text-muted-foreground my-4">
               {steps[currentStep].description}
-            </DialogDescription>
+            </div>
           </div>
           
           <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:justify-between mt-4">
