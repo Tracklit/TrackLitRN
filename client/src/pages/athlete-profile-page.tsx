@@ -57,7 +57,7 @@ export default function AthleteProfilePage() {
   // Fetch the user's profile data
   const { data: profile, isLoading: isProfileLoading } = useQuery({
     queryKey: ["/api/athlete-profile"],
-    enabled: isAuthenticated,
+    enabled: !!user,
   });
 
   // Create form with react-hook-form and zod resolver
@@ -110,13 +110,13 @@ export default function AthleteProfilePage() {
         // Update existing profile
         return apiRequest("/api/athlete-profile", {
           method: "PATCH",
-          data,
+          data: data,
         });
       } else {
         // Create new profile
         return apiRequest("/api/athlete-profile", {
           method: "POST",
-          data,
+          data: data,
         });
       }
     },
