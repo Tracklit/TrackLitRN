@@ -333,9 +333,6 @@ export default function PracticePage() {
       breadcrumbs={[
         { name: "Practice", href: "/practice" }
       ]}
-      title={currentDayOffset === 0 ? 
-             "Today's Practice" : 
-             `Practice for ${formatMonthDay(new Date(new Date().setDate(new Date().getDate() + currentDayOffset)))}`}
     >
       {/* Removed tracking sessions text */}
       
