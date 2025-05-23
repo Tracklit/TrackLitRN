@@ -94,108 +94,7 @@ export default function PracticePage() {
     }
   }, [assignedPrograms, selectedProgram]);
   
-  // Calculate target time based on goal times and current settings
-  // Calculate target time on component mount and when sliders change
-  const calculateTargetTime = () => {
-    if (!athleteProfile) return;
-    
-    // Find the closest event distance to the selected distance
-    const currentDistance = distance[0];
-    const currentEffort = percentage[0] / 100;
-    
-    // Get available goal times
-    const goalTimes: {[key: string]: {distance: number, time: number}} = {};
-    
-    if (athleteProfile.sprint60m100mGoal) {
-      // Determine if it's 60m or 100m based on the goal time
-      const isLikely60m = parseFloat(athleteProfile.sprint60m100mGoal) < 10;
-      goalTimes['sprint60m100m'] = {
-        distance: isLikely60m ? 60 : 100,
-        time: parseFloat(athleteProfile.sprint60m100mGoal)
-      };
-    }
-    
-    if (athleteProfile.sprint200mGoal) {
-      goalTimes['sprint200m'] = {
-        distance: 200,
-        time: parseFloat(athleteProfile.sprint200mGoal)
-      };
-    }
-    
-    if (athleteProfile.sprint400mGoal) {
-      goalTimes['sprint400m'] = {
-        distance: 400,
-        time: parseFloat(athleteProfile.sprint400mGoal)
-      };
-    }
-    
-    if (athleteProfile.hurdles100m110mGoal) {
-      // Determine if it's 100m or 110m based on the goal time (rough approximation)
-      const isLikely100m = parseFloat(athleteProfile.hurdles100m110mGoal) < 15;
-      goalTimes['hurdles100m110m'] = {
-        distance: isLikely100m ? 100 : 110,
-        time: parseFloat(athleteProfile.hurdles100m110mGoal)
-      };
-    }
-    
-    if (athleteProfile.hurdles400mGoal) {
-      goalTimes['hurdles400m'] = {
-        distance: 400,
-        time: parseFloat(athleteProfile.hurdles400mGoal)
-      };
-    }
-    
-    if (athleteProfile.otherEventGoal && athleteProfile.otherEventDistance) {
-      goalTimes['otherEvent'] = {
-        distance: parseFloat(athleteProfile.otherEventDistance),
-        time: parseFloat(athleteProfile.otherEventGoal)
-      };
-    }
-    
-    // If we have goal times
-    if (Object.keys(goalTimes).length > 0) {
-      // Find the closest event by distance
-      let closestEvent = '';
-      let smallestDiff = Infinity;
-      
-      for (const [event, data] of Object.entries(goalTimes)) {
-        const diff = Math.abs(data.distance - currentDistance);
-        if (diff < smallestDiff) {
-          smallestDiff = diff;
-          closestEvent = event;
-        }
-      }
-      
-      if (closestEvent) {
-        const baseEvent = goalTimes[closestEvent];
-        
-        // Calculate pace per meter based on the goal time
-        const pacePerMeter = baseEvent.time / baseEvent.distance;
-        
-        // Calculate target time scaling with distance and adjusting for effort level
-        // Effort factor: 100% = 1.0, 90% = ~1.1, 80% = ~1.25, etc.
-        // This makes the target time slower as the effort decreases
-        const effortFactor = 1 / (currentEffort * currentEffort);
-        
-        // Calculate target time for the current distance at the specified effort level
-        const targetTime = pacePerMeter * currentDistance * effortFactor;
-        
-        // Round to 2 decimal places
-        return Math.round(targetTime * 100) / 100;
-      }
-    }
-    
-    // If no goal times set, use a default calculation
-    return Math.round((currentDistance / (currentEffort * 5)) * 10) / 10;
-  };
-  
-  // Update calculated time when inputs change
-  useEffect(() => {
-    const newTime = calculateTargetTime();
-    if (newTime) {
-      setCalculatedTime(newTime);
-    }
-  }, [athleteProfile, distance, percentage]);
+  // We're using direct inline calculation now instead of complex state management
   
   // Format Month-Day from Date object
   const formatMonthDay = (date: Date) => {
@@ -460,21 +359,7 @@ export default function PracticePage() {
   // Calculate distance marks at specific points
   const distanceMarks = [50, 60, 80, 90, 100, 110, 120, 150, 180, 200, 220, 250, 280, 300, 350, 400, 500, 600];
   
-  // Calculate goal time based on percentage and distance
-  useEffect(() => {
-    // Find closest standard distance
-    const closestDistance = distanceMarks.reduce((prev, curr) => {
-      return (Math.abs(curr - distance[0]) < Math.abs(prev - distance[0])) ? curr : prev;
-    });
-    
-    // Get best time for that distance (or calculate if not available)
-    const bestTime = bestTimes[closestDistance.toString()] || (bestTimes["100"] * (closestDistance / 100));
-    
-    // Calculate time based on selected percentage
-    const targetTime = bestTime * (100 / percentage[0]);
-    
-    setCalculatedTime(parseFloat(targetTime.toFixed(2)));
-  }, [percentage, distance]);
+  // We're using direct inline calculation now, so no need for this effect
   
   return (
     <PageContainer
@@ -998,7 +883,7 @@ export default function PracticePage() {
         performance: {
           percentage: percentage[0],
           distance: distance[0],
-          calculatedTime: calculatedTime
+          calculatedTime: ((distance[0] / 3) * (100 / percentage[0])).toFixed(1)
         }
       };
       
@@ -1012,7 +897,7 @@ export default function PracticePage() {
           title: selectedProgram?.program?.title || activeSessionData?.title || "Training Session",
           description: diaryNotes,
           category: "completed",
-          content: workoutContent,
+          content: workoutContent || "",
           isPublic: true,
           completedAt: new Date().toISOString()
         })
