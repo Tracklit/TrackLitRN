@@ -85,7 +85,7 @@ export default function PracticePage() {
   // State for Training Performance inputs
   const [percentage, setPercentage] = useState<number[]>([85]);
   const [distance, setDistance] = useState<number[]>([150]);
-  const [calculatedTime, setCalculatedTime] = useState<number>(18.3);
+  const [calculatedTime, setCalculatedTime] = useState<number>(0);
   const [calculatorOpen, setCalculatorOpen] = useState<boolean>(false);
   const [showGoalPrompt, setShowGoalPrompt] = useState<boolean>(false);
   
@@ -95,6 +95,97 @@ export default function PracticePage() {
       setSelectedProgram(assignedPrograms[0]);
     }
   }, [assignedPrograms, selectedProgram]);
+  
+  // Calculate target time based on goal times and current settings
+  useEffect(() => {
+    if (!athleteProfile) return;
+    
+    // Find the closest event distance to the selected distance
+    const currentDistance = distance[0];
+    const currentEffort = percentage[0] / 100;
+    
+    // Get available goal times
+    const goalTimes: {[key: string]: {distance: number, time: number}} = {};
+    
+    if (athleteProfile.sprint60m100mGoal) {
+      // Determine if it's 60m or 100m based on the goal time
+      const isLikely60m = parseFloat(athleteProfile.sprint60m100mGoal) < 10;
+      goalTimes['sprint60m100m'] = {
+        distance: isLikely60m ? 60 : 100,
+        time: parseFloat(athleteProfile.sprint60m100mGoal)
+      };
+    }
+    
+    if (athleteProfile.sprint200mGoal) {
+      goalTimes['sprint200m'] = {
+        distance: 200,
+        time: parseFloat(athleteProfile.sprint200mGoal)
+      };
+    }
+    
+    if (athleteProfile.sprint400mGoal) {
+      goalTimes['sprint400m'] = {
+        distance: 400,
+        time: parseFloat(athleteProfile.sprint400mGoal)
+      };
+    }
+    
+    if (athleteProfile.hurdles100m110mGoal) {
+      // Determine if it's 100m or 110m based on the goal time (rough approximation)
+      const isLikely100m = parseFloat(athleteProfile.hurdles100m110mGoal) < 15;
+      goalTimes['hurdles100m110m'] = {
+        distance: isLikely100m ? 100 : 110,
+        time: parseFloat(athleteProfile.hurdles100m110mGoal)
+      };
+    }
+    
+    if (athleteProfile.hurdles400mGoal) {
+      goalTimes['hurdles400m'] = {
+        distance: 400,
+        time: parseFloat(athleteProfile.hurdles400mGoal)
+      };
+    }
+    
+    if (athleteProfile.otherEventGoal && athleteProfile.otherEventDistance) {
+      goalTimes['otherEvent'] = {
+        distance: parseFloat(athleteProfile.otherEventDistance),
+        time: parseFloat(athleteProfile.otherEventGoal)
+      };
+    }
+    
+    // If we have goal times
+    if (Object.keys(goalTimes).length > 0) {
+      // Find the closest event by distance
+      let closestEvent = '';
+      let smallestDiff = Infinity;
+      
+      for (const [event, data] of Object.entries(goalTimes)) {
+        const diff = Math.abs(data.distance - currentDistance);
+        if (diff < smallestDiff) {
+          smallestDiff = diff;
+          closestEvent = event;
+        }
+      }
+      
+      if (closestEvent) {
+        const baseEvent = goalTimes[closestEvent];
+        
+        // Calculate pace per meter based on the goal time
+        const pacePerMeter = baseEvent.time / baseEvent.distance;
+        
+        // Calculate target time scaling with distance and adjusting for effort level
+        // The formula adjusts time based on effort level (slower at lower efforts)
+        // We use an exponential function that approximates performance decrease at lower efforts
+        const effortFactor = Math.pow(2 - currentEffort, 1.5);
+        
+        // Calculate target time for the current distance at the specified effort level
+        const targetTime = pacePerMeter * currentDistance * effortFactor;
+        
+        // Round to 2 decimal places
+        setCalculatedTime(Math.round(targetTime * 100) / 100);
+      }
+    }
+  }, [athleteProfile, distance, percentage]);
   
   // Format Month-Day from Date object
   const formatMonthDay = (date: Date) => {
