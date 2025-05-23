@@ -178,7 +178,7 @@ export default function HomePage() {
     <div className="min-h-screen text-foreground pb-16">
       {/* Session Preview Ticker */}
       {isTickerVisible && (
-        <div className="relative left-0 right-0 z-10 pt-4 px-4">
+        <div className="relative left-0 right-0 z-10 pt-2 px-4">
           <div>
             {sessionPreviews && (
               <div 
