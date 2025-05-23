@@ -558,43 +558,89 @@ export default function AthleteProfilePage() {
             </TableHeader>
             <TableBody>
               {[
-                { distance: "50m", factorFrom100m: 0.5 },
-                { distance: "60m", factorFrom100m: 0.6 },
-                { distance: "80m", factorFrom100m: 0.78 },
-                { distance: "100m", factorFrom100m: 1 },
-                { distance: "120m", factorFrom100m: 1.22 },
-                { distance: "150m", factorFrom100m: 1.24 * 1.22 },
-                { distance: "200m", factorFrom100m: 2 },
-                { distance: "220m", factorFrom100m: 2.2 },
-                { distance: "250m", factorFrom100m: 2.5 },
-                { distance: "300m", factorFrom100m: 3 },
-                { distance: "350m", factorFrom100m: 3.5 },
-                { distance: "400m", factorFrom100m: 4 }
+                { distance: "50m", baseDistance: "100m", factor: 0.5 },
+                { distance: "60m", baseDistance: "100m", factor: 0.6 },
+                { distance: "80m", baseDistance: "100m", factor: 0.8 },
+                { distance: "100m", baseDistance: "100m", factor: 1.0 },
+                { distance: "120m", baseDistance: "100m", factor: 1.2 },
+                { distance: "150m", baseDistance: "120m", factor: 1.25 },
+                { distance: "200m", baseDistance: "150m", factor: 1.33 },
+                { distance: "220m", baseDistance: "200m", factor: 1.1 },
+                { distance: "250m", baseDistance: "220m", factor: 1.14 },
+                { distance: "300m", baseDistance: "250m", factor: 1.2 },
+                { distance: "350m", baseDistance: "300m", factor: 1.17 },
+                { distance: "400m", baseDistance: "350m", factor: 1.14 }
               ].map((item) => {
-                // Determine which goal time to use
-                let goalTime = null;
-                if (
-                  profile?.sprint60m100mGoal && 
-                  (item.distance === "50m" || item.distance === "60m" || item.distance === "80m" || item.distance === "100m")
-                ) {
-                  goalTime = parseFloat(profile.sprint60m100mGoal);
-                } else if (
-                  profile?.sprint200mGoal && 
-                  (item.distance === "120m" || item.distance === "150m" || item.distance === "200m" || item.distance === "220m")
-                ) {
-                  goalTime = parseFloat(profile.sprint200mGoal);
-                } else if (
-                  profile?.sprint400mGoal && 
-                  (item.distance === "250m" || item.distance === "300m" || item.distance === "350m" || item.distance === "400m")
-                ) {
-                  goalTime = parseFloat(profile.sprint400mGoal);
+                // Calculate all times based on cascading values
+                
+                // Find the base time for the cascading calculation
+                let baseTime = null;
+                // Find all defined distances and their times
+                const timesByDistance = new Map();
+                
+                // Start with the direct goal times from the user's profile
+                if (profile?.sprint60m100mGoal) {
+                  // Determine if it's 60m or 100m based on the value
+                  if (parseFloat(profile.sprint60m100mGoal) < 10) {
+                    timesByDistance.set("60m", parseFloat(profile.sprint60m100mGoal));
+                    // Calculate the corresponding 100m time
+                    timesByDistance.set("100m", parseFloat(profile.sprint60m100mGoal) * 1.67);
+                  } else {
+                    timesByDistance.set("100m", parseFloat(profile.sprint60m100mGoal));
+                    // Calculate the corresponding 60m time
+                    timesByDistance.set("60m", parseFloat(profile.sprint60m100mGoal) * 0.6);
+                  }
+                  // Calculate 50m and 80m based on 100m time
+                  timesByDistance.set("50m", timesByDistance.get("100m") * 0.5);
+                  timesByDistance.set("80m", timesByDistance.get("100m") * 0.8);
                 }
                 
-                // If no relevant goal time, skip this row
-                if (!goalTime) return null;
+                if (profile?.sprint200mGoal) {
+                  timesByDistance.set("200m", parseFloat(profile.sprint200mGoal));
+                }
                 
-                // Calculate scaled goal time for this distance
-                const scaledGoalTime = goalTime * (item.factorFrom100m);
+                if (profile?.sprint400mGoal) {
+                  timesByDistance.set("400m", parseFloat(profile.sprint400mGoal));
+                }
+                
+                // Create cascading calculation for distances not directly set by user
+                if (!timesByDistance.has("120m") && timesByDistance.has("100m")) {
+                  timesByDistance.set("120m", timesByDistance.get("100m") * 1.2);
+                }
+                
+                if (!timesByDistance.has("150m") && timesByDistance.has("120m")) {
+                  timesByDistance.set("150m", timesByDistance.get("120m") * 1.25);
+                }
+                
+                if (!timesByDistance.has("200m") && timesByDistance.has("150m")) {
+                  timesByDistance.set("200m", timesByDistance.get("150m") * 1.33);
+                }
+                
+                if (!timesByDistance.has("220m") && timesByDistance.has("200m")) {
+                  timesByDistance.set("220m", timesByDistance.get("200m") * 1.1);
+                }
+                
+                if (!timesByDistance.has("250m") && timesByDistance.has("220m")) {
+                  timesByDistance.set("250m", timesByDistance.get("220m") * 1.14);
+                }
+                
+                if (!timesByDistance.has("300m") && timesByDistance.has("250m")) {
+                  timesByDistance.set("300m", timesByDistance.get("250m") * 1.2);
+                }
+                
+                if (!timesByDistance.has("350m") && timesByDistance.has("300m")) {
+                  timesByDistance.set("350m", timesByDistance.get("300m") * 1.17);
+                }
+                
+                if (!timesByDistance.has("400m") && timesByDistance.has("350m")) {
+                  timesByDistance.set("400m", timesByDistance.get("350m") * 1.14);
+                }
+                
+                // Get the scaled goal time for this row's distance
+                const scaledGoalTime = timesByDistance.get(item.distance);
+                
+                // If there's no time for this distance after all calculations, skip row
+                if (!scaledGoalTime) return null;
                 
                 // Calculate time at various percentages
                 const percent80 = (scaledGoalTime / 0.8).toFixed(2);
