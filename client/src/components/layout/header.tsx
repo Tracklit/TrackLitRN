@@ -10,7 +10,7 @@ interface HeaderProps {
   className?: string;
 }
 
-export function Header({ title = "Track Pro", className }: HeaderProps) {
+export function Header({ title = "TrackLit", className }: HeaderProps) {
   const { user, logoutMutation } = useAuth();
 
   const handleLogout = () => {
