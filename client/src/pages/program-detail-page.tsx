@@ -19,10 +19,11 @@ import {
   Tag, 
   TrendingUp, 
   Dumbbell, 
-  CheckCircle2
+  CheckCircle2,
+  Edit,
+  Loader2
 } from "lucide-react";
 import { AssignProgramDialog } from "@/components/assign-program-dialog";
-import { Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -208,13 +209,23 @@ function ProgramDetail() {
   
   return (
     <div className="container max-w-screen-xl mx-auto p-4 pt-20 md:pt-24 md:pl-72 pb-20">
-      <div className="mb-6">
+      <div className="mb-6 flex justify-between items-center">
         <Button variant="outline" asChild>
           <Link href="/programs">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Programs
           </Link>
         </Button>
+        
+        {/* Show Edit button only if user is the program creator */}
+        {program.userId === user?.id && !program.isUploadedProgram && (
+          <Button variant="outline" asChild>
+            <Link href={`/programs/${id}/edit`}>
+              <Edit className="h-4 w-4 mr-2" />
+              Edit Program
+            </Link>
+          </Button>
+        )}
       </div>
       
       <PageHeader 

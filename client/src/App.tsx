@@ -25,6 +25,7 @@ import SpikesPage from "@/pages/spikes-page";
 import { Component as ProgramsPage } from "@/pages/programs-page";
 import { Component as ProgramCreatePage } from "@/pages/program-create-page";
 import { Component as ProgramDetailPage } from "@/pages/program-detail-page";
+import { Component as ProgramEditorPage } from "@/pages/program-editor-page";
 import { Component as AssignedProgramsPage } from "@/pages/assigned-programs-page";
 import AthleteProfilePage from "@/pages/athlete-profile-page";
 import { ProtectedRoute } from "@/lib/protected-route";
@@ -42,6 +43,7 @@ function Router() {
       <ProtectedRoute path="/programs" component={ProgramsPage} />
       <ProtectedRoute path="/programs/create" component={ProgramCreatePage} />
       <ProtectedRoute path="/programs/:id" component={ProgramDetailPage} />
+      <ProtectedRoute path="/programs/:id/edit" component={ProgramEditorPage} />
       <ProtectedRoute path="/assigned-programs" component={AssignedProgramsPage} />
       
       {/* Competition */}
