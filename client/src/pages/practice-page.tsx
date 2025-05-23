@@ -675,7 +675,20 @@ export default function PracticePage() {
                         );
                         
                         if (!hasSetGoalTimes) {
-                          setShowGoalPrompt(true);
+                          toast({
+                            title: "Goal Times Required",
+                            description: "Please set your goal times in the Athlete Profile page to use this calculator.",
+                            variant: "warning",
+                            action: (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => window.location.href = '/athlete-profile'}
+                              >
+                                Go to Profile
+                              </Button>
+                            ),
+                          });
                         } else {
                           setPercentage(value);
                         }
@@ -701,7 +714,36 @@ export default function PracticePage() {
                     </div>
                     <Slider
                       value={distance}
-                      onValueChange={setDistance}
+                      onValueChange={(value) => {
+                        // Check if user has set any goal times
+                        const hasSetGoalTimes = athleteProfile && (
+                          athleteProfile.sprint60m100mGoal || 
+                          athleteProfile.sprint200mGoal || 
+                          athleteProfile.sprint400mGoal || 
+                          athleteProfile.hurdles100m110mGoal || 
+                          athleteProfile.hurdles400mGoal || 
+                          athleteProfile.otherEventGoal
+                        );
+                        
+                        if (!hasSetGoalTimes) {
+                          toast({
+                            title: "Goal Times Required",
+                            description: "Please set your goal times in the Athlete Profile page to use this calculator.",
+                            variant: "warning",
+                            action: (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => window.location.href = '/athlete-profile'}
+                              >
+                                Go to Profile
+                              </Button>
+                            ),
+                          });
+                        } else {
+                          setDistance(value);
+                        }
+                      }}
                       min={50}
                       max={600}
                       step={10}
