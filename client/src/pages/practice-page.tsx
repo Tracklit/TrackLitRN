@@ -767,33 +767,7 @@ export default function PracticePage() {
                     <Slider
                       value={percentage}
                       onValueChange={(value) => {
-                        // Check if user has set any goal times
-                        const hasSetGoalTimes = athleteProfile && (
-                          athleteProfile.sprint60m100mGoal || 
-                          athleteProfile.sprint200mGoal || 
-                          athleteProfile.sprint400mGoal || 
-                          athleteProfile.hurdles100m110mGoal || 
-                          athleteProfile.hurdles400mGoal || 
-                          athleteProfile.otherEventGoal
-                        );
-                        
-                        if (!hasSetGoalTimes) {
-                          toast({
-                            title: "Goal Times Required",
-                            description: "Please set your goal times in the Athlete Profile page to use this calculator.",
-                            action: (
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => window.location.href = '/athlete-profile'}
-                              >
-                                Go to Profile
-                              </Button>
-                            ),
-                          });
-                        } else {
-                          setPercentage(value);
-                        }
+                        setPercentage(value);
                       }}
                       min={50}
                       max={100}
@@ -817,33 +791,7 @@ export default function PracticePage() {
                     <Slider
                       value={distance}
                       onValueChange={(value) => {
-                        // Check if user has set any goal times
-                        const hasSetGoalTimes = athleteProfile && (
-                          athleteProfile.sprint60m100mGoal || 
-                          athleteProfile.sprint200mGoal || 
-                          athleteProfile.sprint400mGoal || 
-                          athleteProfile.hurdles100m110mGoal || 
-                          athleteProfile.hurdles400mGoal || 
-                          athleteProfile.otherEventGoal
-                        );
-                        
-                        if (!hasSetGoalTimes) {
-                          toast({
-                            title: "Goal Times Required",
-                            description: "Please set your goal times in the Athlete Profile page to use this calculator.",
-                            action: (
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => window.location.href = '/athlete-profile'}
-                              >
-                                Go to Profile
-                              </Button>
-                            ),
-                          });
-                        } else {
-                          setDistance(value);
-                        }
+                        setDistance(value);
                       }}
                       min={50}
                       max={600}
