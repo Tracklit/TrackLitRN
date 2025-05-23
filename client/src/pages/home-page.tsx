@@ -300,9 +300,6 @@ export default function HomePage() {
               <CardHeader className="pb-2 pt-3 px-3">
                 <div className="flex justify-between items-start">
                   <div>
-                    <Badge className="mb-1 bg-primary/20 text-primary hover:bg-primary/30 text-xs px-2 py-0.5">
-                      Workout
-                    </Badge>
                     <CardTitle className="text-lg">{`${todayDate} Training Session`}</CardTitle>
                     <CardDescription className="flex items-center gap-2 mt-0.5 text-xs">
                       {todaySession.isRestDay && (
