@@ -534,7 +534,7 @@ export default function AthleteProfilePage() {
       </Card>
       
       {/* Pace Table */}
-      <div className="mt-6 overflow-hidden rounded-md border border-gray-200 dark:border-gray-800">
+      <div className="mt-6 overflow-hidden rounded-md border border-amber-500">
         <div className="bg-[#111827] text-white px-4 py-3">
           <h3 className="text-lg font-bold">Target Times</h3>
           <p className="text-sm text-blue-200">
@@ -545,7 +545,7 @@ export default function AthleteProfilePage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-[#111827] text-white border-b border-blue-700">
+              <tr className="bg-[#111827] text-white border-b border-amber-500">
                 <th className="sticky left-0 z-10 bg-inherit whitespace-nowrap px-3 py-3 text-left font-bold">
                   Distance
                 </th>
@@ -650,7 +650,7 @@ export default function AthleteProfilePage() {
                     "bg-[#1e293b] text-white";
                   
                   return (
-                    <tr key={distance} className={`${rowBgClass} border-b border-blue-600`}>
+                    <tr key={distance} className={`${rowBgClass} border-b border-amber-500`}>
                       <td className="sticky left-0 z-10 bg-inherit whitespace-nowrap px-3 py-3 font-bold">
                         {distance}
                       </td>
