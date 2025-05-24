@@ -255,6 +255,45 @@ function ProgramEditorPage() {
     staleTime: 0, // Always fetch fresh data
   });
 
+  // Delete document mutation
+  const deleteDocument = useMutation({
+    mutationFn: async () => {
+      // Make a PUT request to update the program and remove the document
+      const response = await apiRequest('PUT', `/api/programs/${programId}`, {
+        programFileUrl: null,
+        programFileType: null,
+        isUploadedProgram: false
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete document');
+      }
+      
+      return response;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Document deleted",
+        description: "The document has been removed from this program.",
+      });
+      
+      // Refresh program data
+      queryClient.invalidateQueries({ queryKey: ['/api/programs', programId] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error deleting document",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Handle document deletion
+  const handleDeleteDocument = () => {
+    deleteDocument.mutate();
+  };
+  
   // Upload document mutation
   const uploadDocument = useMutation({
     mutationFn: async (file: File) => {
@@ -1025,6 +1064,14 @@ function ProgramEditorPage() {
                     <ExternalLink className="h-4 w-4 mr-2" />
                     Open
                   </a>
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  size="sm" 
+                  onClick={() => handleDeleteDocument()}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
                 </Button>
               </div>
             </div>
