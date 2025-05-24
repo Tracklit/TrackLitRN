@@ -30,7 +30,7 @@ const programFormSchema = z.object({
   price: z.coerce.number().min(0, { message: "Price cannot be negative" }).optional(),
   // File upload related fields
   useFileUpload: z.boolean().default(false),
-  programFile: z.instanceof(File).optional(),
+  programFile: z.any().optional(),
 });
 
 export default function ProgramCreatePage() {

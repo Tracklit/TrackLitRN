@@ -365,8 +365,18 @@ function ProgramEditorPage() {
   }, [program, form]);
 
   // Check if the program is an uploaded document
+  // Add detailed logging to debug uploaded document detection
+  console.log("Program data for document detection:", {
+    programId,
+    isUploadedProgram: program?.isUploadedProgram,
+    programFileUrl: program?.programFileUrl,
+    programFileType: program?.programFileType
+  });
+  
   const isUploadedDocumentProgram = program && 
-    (program.isUploadedProgram || program.programFileUrl) ? true : false;
+    (program.isUploadedProgram === true || (program.programFileUrl && program.programFileUrl.length > 0)) ? true : false;
+    
+  console.log("Is uploaded document program:", isUploadedDocumentProgram);
 
   // Organize sessions into weeks when data is loaded
   useEffect(() => {
