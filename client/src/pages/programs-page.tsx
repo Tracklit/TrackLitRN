@@ -460,7 +460,7 @@ function ProgramCard({ program, type, creator, viewMode }: {
                 </a>
               </Button>
               <Button variant="default" size="sm" asChild className="flex-1">
-                <Link href={`/programs/${program.id}/edit`}><FileText className="h-3.5 w-3.5 mr-1.5" />Edit</Link>
+                <Link href={`/programs/${program.id}`}><FileText className="h-3.5 w-3.5 mr-1.5" />Edit</Link>
               </Button>
               <AssignProgramDialog 
                 program={program} 
