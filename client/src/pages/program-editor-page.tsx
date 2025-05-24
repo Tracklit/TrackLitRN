@@ -2,14 +2,12 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, useLocation, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth";
-import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -176,7 +174,7 @@ function EditableCell({
   );
 }
 
-export default function ProgramEditorPage() {
+function ProgramEditorPage() {
   const params = useParams<{ id: string }>();
   const programId = parseInt(params.id);
   const { toast } = useToast();
@@ -400,7 +398,7 @@ export default function ProgramEditorPage() {
     const date = getDateForWeekDay(weekNumber, dayNumber);
     
     // Check if session exists already
-    const existingSession = sessions?.find((s: Session) => 
+    const existingSession = sessions.find((s: Session) => 
       s.weekNumber === weekNumber && s.dayNumber === dayNumber
     );
     
@@ -444,7 +442,7 @@ export default function ProgramEditorPage() {
 
   // Get cell content for a specific week and day
   const getCellContent = (weekNumber: number, dayNumber: number) => {
-    const session = sessions?.find((s: Session) => 
+    const session = sessions.find((s: Session) => 
       s.weekNumber === weekNumber && s.dayNumber === dayNumber
     );
     
@@ -462,282 +460,264 @@ export default function ProgramEditorPage() {
   };
 
   return (
-    <ProtectedRoute>
-      <div className="container max-w-full p-4">
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/programs")}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-2xl font-bold">Program Editor</h1>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => navigate(`/programs/${programId}`)}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={form.handleSubmit(onSubmit)}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Save Program
-                </>
-              )}
-            </Button>
-          </div>
+    <div className="container max-w-full p-4">
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/programs")}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-2xl font-bold">Program Editor</h1>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Program Details</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Title</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Program title" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Program description"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="category"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Category</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select category" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="sprint">Sprint</SelectItem>
-                              <SelectItem value="middle_distance">Middle Distance</SelectItem>
-                              <SelectItem value="long_distance">Long Distance</SelectItem>
-                              <SelectItem value="jumps">Jumps</SelectItem>
-                              <SelectItem value="throws">Throws</SelectItem>
-                              <SelectItem value="multi">Multi-events</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="level"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Level</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select level" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="beginner">Beginner</SelectItem>
-                              <SelectItem value="intermediate">Intermediate</SelectItem>
-                              <SelectItem value="advanced">Advanced</SelectItem>
-                              <SelectItem value="elite">Elite</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <FormField
-                    control={form.control}
-                    name="startDate"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Start Date</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant={"outline"}
-                                className={`w-full pl-3 text-left font-normal ${
-                                  !field.value ? "text-muted-foreground" : ""
-                                }`}
-                              >
-                                {field.value ? (
-                                  format(new Date(field.value), "PPP")
-                                ) : (
-                                  <span>Pick a date</span>
-                                )}
-                                <CalendarDays className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <CalendarComponent
-                              mode="single"
-                              selected={field.value ? new Date(field.value) : undefined}
-                              onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-2">Training Schedule</h2>
-          <p className="text-sm text-gray-600 mb-4">
-            Click on any cell to add or edit workout details. You can mark days as rest days.
-          </p>
-          
-          <ScrollArea className="w-full border rounded-lg">
-            <div className="p-4 min-w-[1000px]">
-              {isLoading ? (
-                <div className="flex items-center justify-center p-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : (
-                <div className="space-y-8">
-                  {weeks.map((week, weekIndex) => (
-                    <div key={week.weekNumber} className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <h3 className="text-lg font-medium">
-                          Week {week.weekNumber + 1}: {format(week.startDate, "MMM d")} - {format(addDays(week.startDate, 6), "MMM d, yyyy")}
-                        </h3>
-                      </div>
-                      
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-1/8">Sunday</TableHead>
-                            <TableHead className="w-1/8">Monday</TableHead>
-                            <TableHead className="w-1/8">Tuesday</TableHead>
-                            <TableHead className="w-1/8">Wednesday</TableHead>
-                            <TableHead className="w-1/8">Thursday</TableHead>
-                            <TableHead className="w-1/8">Friday</TableHead>
-                            <TableHead className="w-1/8">Saturday</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          <TableRow>
-                            {[0, 1, 2, 3, 4, 5, 6].map((dayNumber) => {
-                              const cellData = getCellContent(week.weekNumber, dayNumber);
-                              return (
-                                <EditableCell
-                                  key={`${week.weekNumber}-${dayNumber}`}
-                                  content={cellData.content}
-                                  isRestDay={cellData.isRestDay}
-                                  date={cellData.date}
-                                  isWeekend={isWeekendDay(dayNumber)}
-                                  onSave={(content, isRest) => 
-                                    handleCellUpdate(week.weekNumber, dayNumber, content, isRest)
-                                  }
-                                />
-                              );
-                            })}
-                          </TableRow>
-                        </TableBody>
-                      </Table>
-                    </div>
-                  ))}
-                  
-                  <div className="flex justify-center gap-4 pt-4">
-                    <Button 
-                      variant="outline" 
-                      onClick={handleAddWeek}
-                      disabled={isAddingWeek}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Week
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      onClick={handleAddFiveWeeks}
-                      disabled={isAddingWeek}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add 5 Weeks
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </ScrollArea>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => navigate(`/programs/${programId}`)}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={form.handleSubmit(onSubmit)}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Save Program
+              </>
+            )}
+          </Button>
         </div>
       </div>
-    </ProtectedRoute>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Program Details</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Program title" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Program description"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="category"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Category</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select category" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="sprint">Sprint</SelectItem>
+                            <SelectItem value="middle_distance">Middle Distance</SelectItem>
+                            <SelectItem value="long_distance">Long Distance</SelectItem>
+                            <SelectItem value="jumps">Jumps</SelectItem>
+                            <SelectItem value="throws">Throws</SelectItem>
+                            <SelectItem value="multi">Multi-events</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="level"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Level</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select level" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="beginner">Beginner</SelectItem>
+                            <SelectItem value="intermediate">Intermediate</SelectItem>
+                            <SelectItem value="advanced">Advanced</SelectItem>
+                            <SelectItem value="elite">Elite</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <FormField
+                  control={form.control}
+                  name="startDate"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Start Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={`w-full pl-3 text-left font-normal ${
+                                !field.value ? "text-muted-foreground" : ""
+                              }`}
+                            >
+                              {field.value ? (
+                                format(new Date(field.value), "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                              <CalendarDays className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <CalendarComponent
+                            mode="single"
+                            selected={field.value ? new Date(field.value) : undefined}
+                            onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold mb-2">Training Schedule</h2>
+        <p className="text-sm text-gray-600 mb-4">
+          Click on any cell to add or edit workout details. You can mark days as rest days.
+        </p>
+        
+        <ScrollArea className="w-full border rounded-lg">
+          <div className="p-4 min-w-[1000px]">
+            {isLoading ? (
+              <div className="flex items-center justify-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <div className="space-y-8">
+                {weeks.map((week) => (
+                  <div key={week.weekNumber} className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-lg font-medium">
+                        Week {week.weekNumber + 1}: {format(week.startDate, "MMM d")} - {format(addDays(week.startDate, 6), "MMM d, yyyy")}
+                      </h3>
+                    </div>
+                    
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-1/8">Sunday</TableHead>
+                          <TableHead className="w-1/8">Monday</TableHead>
+                          <TableHead className="w-1/8">Tuesday</TableHead>
+                          <TableHead className="w-1/8">Wednesday</TableHead>
+                          <TableHead className="w-1/8">Thursday</TableHead>
+                          <TableHead className="w-1/8">Friday</TableHead>
+                          <TableHead className="w-1/8">Saturday</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        <TableRow>
+                          {[0, 1, 2, 3, 4, 5, 6].map((dayNumber) => {
+                            const cellData = getCellContent(week.weekNumber, dayNumber);
+                            return (
+                              <EditableCell
+                                key={`${week.weekNumber}-${dayNumber}`}
+                                content={cellData.content}
+                                isRestDay={cellData.isRestDay}
+                                date={cellData.date}
+                                isWeekend={isWeekendDay(dayNumber)}
+                                onSave={(content, isRest) => 
+                                  handleCellUpdate(week.weekNumber, dayNumber, content, isRest)
+                                }
+                              />
+                            );
+                          })}
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </div>
+                ))}
+                
+                <div className="flex justify-center gap-4 pt-4">
+                  <Button 
+                    variant="outline" 
+                    onClick={handleAddWeek}
+                    disabled={isAddingWeek}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Week
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={handleAddFiveWeeks}
+                    disabled={isAddingWeek}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add 5 Weeks
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+      </div>
+    </div>
   );
 }
 
 export function Component() {
-  const { user, isLoading } = useAuth();
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-border" />
-      </div>
-    );
-  }
-
-  if (!user) {
-    // Redirect to auth page if not logged in
-    window.location.href = "/auth";
-    return null;
-  }
-
   return <ProgramEditorPage />;
 }
