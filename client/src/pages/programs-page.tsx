@@ -272,6 +272,40 @@ function ProgramCard({ program, type, creator, viewMode }: {
   const queryClient = useQueryClient();
   const [isRefreshing, setIsRefreshing] = useState(false);
   
+  // Create mutation for deleting programs
+  const deleteProgramMutation = useMutation({
+    mutationFn: async (programId: number) => {
+      const response = await apiRequest("DELETE", `/api/programs/${programId}`, {});
+      
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error || "Failed to delete program");
+      }
+      
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Program deleted",
+        description: "The program has been successfully deleted",
+      });
+      // Refresh the programs list
+      queryClient.invalidateQueries({ queryKey: ['/api/programs'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error deleting program",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Handle program deletion
+  const handleDeleteProgram = () => {
+    deleteProgramMutation.mutate(program.id);
+  };
+  
   // Create mutation for refreshing Google Sheet data
   const refreshSheetMutation = useMutation({
     mutationFn: async (programId: number) => {
@@ -488,7 +522,8 @@ function ProgramCard({ program, type, creator, viewMode }: {
                 programId={program.id}
                 programTitle={program.title}
                 buttonSize="sm"
-                iconOnly={true}
+                className="flex-1"
+                buttonText="Delete"
               />
             </div>
           )
