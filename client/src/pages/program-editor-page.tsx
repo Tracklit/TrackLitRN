@@ -484,11 +484,11 @@ function ProgramEditorPage() {
   // Use the actual document URL from the program data
   const pdfViewerUrl = "https://docs.google.com/viewer?embedded=true&url=";
   
-  // For program #1, use the actual file URL that has been uploaded
+  // Get the actual file URL that has been uploaded
   const actualProgramFileUrl = program?.programFileUrl || "";
   
   // Determine if we should show document view or weekly schedule
-  const isUploadedDocumentProgram = hasUploadedDocument || (programId === 1); 
+  const isUploadedDocumentProgram = hasUploadedDocument;
   
   // For embedding in iframe, use Google Docs viewer to ensure compatibility
   const documentUrl = `${pdfViewerUrl}${encodeURIComponent(actualProgramFileUrl)}`;

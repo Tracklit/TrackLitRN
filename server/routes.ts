@@ -2788,7 +2788,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         duration: parseInt(req.body.duration),
         visibility: req.body.visibility,
         price: req.body.price ? parseFloat(req.body.price) : 0,
-        isUploadedProgram: req.body.isUploadedProgram === 'true',
+        isUploadedProgram: true,  // Ensure this is set to true for uploaded documents
         programFileUrl: fileUrl,
         programFileType: fileType
       };
