@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, useLocation, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { ProtectedRoute } from "@/lib/protected-route";
+import { useAuth } from "@/hooks/use-auth";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -201,13 +201,13 @@ export default function ProgramEditorPage() {
   });
 
   // Fetch program data
-  const { data: program, isLoading: programLoading } = useQuery({
+  const { data: program = {}, isLoading: programLoading } = useQuery<any>({
     queryKey: ['/api/programs', programId],
     enabled: !isNaN(programId),
   });
 
   // Fetch program sessions
-  const { data: sessions, isLoading: sessionsLoading } = useQuery({
+  const { data: sessions = [], isLoading: sessionsLoading } = useQuery<Session[]>({
     queryKey: ['/api/programs', programId, 'sessions'],
     enabled: !isNaN(programId),
   });
@@ -215,10 +215,7 @@ export default function ProgramEditorPage() {
   // Update program mutation
   const updateProgram = useMutation({
     mutationFn: async (data: z.infer<typeof programEditorSchema>) => {
-      return apiRequest(`/api/programs/${programId}`, {
-        method: 'PUT',
-        data,
-      });
+      return apiRequest(`/api/programs/${programId}`, 'PUT', data);
     },
     onSuccess: () => {
       toast({
@@ -240,15 +237,9 @@ export default function ProgramEditorPage() {
   const updateSession = useMutation({
     mutationFn: async (data: Partial<Session>) => {
       if (data.id) {
-        return apiRequest(`/api/programs/${programId}/sessions/${data.id}`, {
-          method: 'PUT',
-          data,
-        });
+        return apiRequest(`/api/programs/${programId}/sessions/${data.id}`, 'PUT', data);
       } else {
-        return apiRequest(`/api/programs/${programId}/sessions`, {
-          method: 'POST',
-          data,
-        });
+        return apiRequest(`/api/programs/${programId}/sessions`, 'POST', data);
       }
     },
     onSuccess: () => {
@@ -270,9 +261,7 @@ export default function ProgramEditorPage() {
   // Delete session mutation
   const deleteSession = useMutation({
     mutationFn: async (sessionId: number) => {
-      return apiRequest(`/api/programs/${programId}/sessions/${sessionId}`, {
-        method: 'DELETE',
-      });
+      return apiRequest(`/api/programs/${programId}/sessions/${sessionId}`, 'DELETE');
     },
     onSuccess: () => {
       toast({
@@ -305,36 +294,39 @@ export default function ProgramEditorPage() {
 
   // Organize sessions into weeks when data is loaded
   useEffect(() => {
-    if (sessions && program?.startDate) {
-      const startDate = new Date(program.startDate);
-      const weeklyData: { [key: number]: Session[] } = {};
+    if (program) {
+      // Use program start date or today if not available
+      const startDate = program.startDate ? new Date(program.startDate) : new Date();
       
-      // Group sessions by week number
-      sessions.forEach((session: Session) => {
-        const weekNum = session.weekNumber || 0;
-        if (!weeklyData[weekNum]) {
-          weeklyData[weekNum] = [];
-        }
-        weeklyData[weekNum].push(session);
-      });
-      
-      // Convert grouped data to weeks array
-      const weeksArray: WeekData[] = Object.keys(weeklyData).map((weekNum) => {
-        const weekNumber = parseInt(weekNum);
-        const weekStartDate = addWeeks(startDate, weekNumber);
+      if (sessions && sessions.length > 0) {
+        const weeklyData: { [key: number]: Session[] } = {};
         
-        return {
-          weekNumber,
-          startDate: weekStartDate,
-          days: weeklyData[weekNumber],
-        };
-      });
-      
-      // Sort weeks by number
-      weeksArray.sort((a, b) => a.weekNumber - b.weekNumber);
-      
-      // If no weeks exist, create the first 5 weeks
-      if (weeksArray.length === 0) {
+        // Group sessions by week number
+        sessions.forEach((session: Session) => {
+          const weekNum = session.weekNumber || 0;
+          if (!weeklyData[weekNum]) {
+            weeklyData[weekNum] = [];
+          }
+          weeklyData[weekNum].push(session);
+        });
+        
+        // Convert grouped data to weeks array
+        const weeksArray: WeekData[] = Object.keys(weeklyData).map((weekNum) => {
+          const weekNumber = parseInt(weekNum);
+          const weekStartDate = addWeeks(startDate, weekNumber);
+          
+          return {
+            weekNumber,
+            startDate: weekStartDate,
+            days: weeklyData[weekNumber],
+          };
+        });
+        
+        // Sort weeks by number
+        weeksArray.sort((a, b) => a.weekNumber - b.weekNumber);
+        setWeeks(weeksArray);
+      } else {
+        // Create default 5 weeks if no sessions exist
         const newWeeks: WeekData[] = [];
         for (let i = 0; i < 5; i++) {
           newWeeks.push({
@@ -344,8 +336,6 @@ export default function ProgramEditorPage() {
           });
         }
         setWeeks(newWeeks);
-      } else {
-        setWeeks(weeksArray);
       }
     }
   }, [sessions, program]);
@@ -475,18 +465,16 @@ export default function ProgramEditorPage() {
     <ProtectedRoute>
       <div className="container max-w-full p-4">
         <div className="flex justify-between items-center mb-4">
-          <PageHeader>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate("/programs")}
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <h1 className="text-2xl font-bold">Program Editor</h1>
-            </div>
-          </PageHeader>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/programs")}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-2xl font-bold">Program Editor</h1>
+          </div>
           <div className="flex gap-2">
             <Button
               variant="outline"
@@ -735,5 +723,21 @@ export default function ProgramEditorPage() {
 }
 
 export function Component() {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-border" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    // Redirect to auth page if not logged in
+    window.location.href = "/auth";
+    return null;
+  }
+
   return <ProgramEditorPage />;
 }
