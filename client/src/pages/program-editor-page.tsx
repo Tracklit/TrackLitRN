@@ -555,7 +555,7 @@ export default function ProgramEditorPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-6">
-          <div className="grid grid-cols-7 gap-2">
+          <div className="grid grid-cols-7 gap-2 overflow-x-auto pb-2">
             {weekDates.map((day) => (
               <div key={day.dayNumber} className="flex flex-col">
                 <div className={`text-center p-2 rounded-t-md ${day.isWeekend ? 'bg-muted/70' : 'bg-muted/30'}`}>
@@ -565,12 +565,12 @@ export default function ProgramEditorPage() {
                 </div>
                 
                 <div 
-                  className={`min-h-[150px] border rounded-b-md p-2 flex flex-col gap-2 ${day.isWeekend ? 'bg-muted/50' : ''}`}
+                  className={`min-h-[180px] border rounded-b-md p-2 flex flex-col gap-2 ${day.isWeekend ? 'bg-muted/50' : ''}`}
                 >
                   {getSessionsForDay(day.dayNumber).map((session) => (
                     <div 
                       key={session.id} 
-                      className="bg-primary/10 hover:bg-primary/20 transition-colors rounded-md p-2 cursor-pointer text-xs"
+                      className="bg-primary/10 hover:bg-primary/20 transition-colors rounded-md p-2 cursor-pointer text-xs relative group"
                       onClick={() => handleOpenSessionDialog(day.date, day.dayNumber, session)}
                     >
                       <div className="font-medium truncate">{session.title}</div>
@@ -579,17 +579,23 @@ export default function ProgramEditorPage() {
                       ) : (
                         <>
                           {session.shortDistanceWorkout && (
-                            <div className="mt-1 truncate">{session.shortDistanceWorkout}</div>
+                            <div className="mt-1 truncate text-muted-foreground">{session.shortDistanceWorkout}</div>
+                          )}
+                          {session.preActivation1 && (
+                            <div className="mt-1 truncate text-xs text-muted-foreground/80">Pre: {session.preActivation1}</div>
                           )}
                         </>
                       )}
+                      <div className="absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Edit className="h-3 w-3 text-muted-foreground" />
+                      </div>
                     </div>
                   ))}
                   
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="mt-auto justify-start h-auto py-1 text-xs"
+                    className="mt-auto justify-start h-auto py-1 text-xs bg-muted/30 hover:bg-muted/50"
                     onClick={() => handleOpenSessionDialog(day.date, day.dayNumber)}
                   >
                     <Plus className="h-3 w-3 mr-1" />
