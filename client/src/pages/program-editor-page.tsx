@@ -480,20 +480,15 @@ export default function ProgramEditorPage() {
     },
   });
   
-  // Function to open the move session dialog
-  const handleOpenMoveDialog = (session: any) => {
-    setSessionToMove(session);
-    setTargetDayNumber(session.dayNumber);
-    setMoveSessionDialogOpen(true);
-  };
-  
-  // Function to move a session to a different day
-  const handleMoveSession = async () => {
-    if (!sessionToMove || !targetDayNumber) return;
+  // Function to handle drag-and-drop session movement between days
+  const handleMoveSession = async (sessionId: number, newDayNumber: number) => {
+    // Find the session in the program data
+    const sessionToMove = program?.sessions.find(s => s.id === sessionId);
+    
+    if (!sessionToMove) return;
     
     // Skip if moving to the same day
-    if (sessionToMove.dayNumber === targetDayNumber) {
-      setMoveSessionDialogOpen(false);
+    if (sessionToMove.dayNumber === newDayNumber) {
       return;
     }
     
@@ -501,13 +496,13 @@ export default function ProgramEditorPage() {
       // Update the session with the new day number
       const updatedSession = {
         ...sessionToMove,
-        dayNumber: targetDayNumber
+        dayNumber: newDayNumber
       };
       
       // Call the API to update the session
       const response = await apiRequest(
         "PUT", 
-        `/api/programs/${programId}/sessions/${sessionToMove.id}`, 
+        `/api/programs/${programId}/sessions/${sessionId}`, 
         updatedSession
       );
       
@@ -518,13 +513,8 @@ export default function ProgramEditorPage() {
       // Show success message
       toast({
         title: "Session moved",
-        description: `Session moved to day ${targetDayNumber}`,
+        description: `Session moved to day ${newDayNumber}`,
       });
-      
-      // Close dialog and reset state
-      setMoveSessionDialogOpen(false);
-      setSessionToMove(null);
-      setTargetDayNumber(null);
       
       // Refresh program data
       queryClient.invalidateQueries({ queryKey: [`/api/programs/${programId}`] });
