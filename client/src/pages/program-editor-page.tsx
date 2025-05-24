@@ -207,7 +207,6 @@ export default function ProgramEditorPage() {
   const [isSessionDialogOpen, setIsSessionDialogOpen] = useState(false);
   const [editingSession, setEditingSession] = useState<Session | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [currentWeek, setCurrentWeek] = useState(0);
   
   // Program query
   const { data: program, isLoading, error } = useQuery({
@@ -1120,62 +1119,7 @@ export default function ProgramEditorPage() {
         </DialogContent>
       </Dialog>
       
-      {/* Move Session Dialog */}
-      <Dialog open={moveSessionDialogOpen} onOpenChange={setMoveSessionDialogOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Move Session</DialogTitle>
-            <DialogDescription>
-              Move this session to a different day in your program
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="session-title">Session</Label>
-              <div className="p-2 border rounded-md bg-muted/50 mt-1">
-                {sessionToMove?.title}
-              </div>
-            </div>
-            
-            <div>
-              <Label htmlFor="current-day">Current Day</Label>
-              <div className="p-2 border rounded-md bg-muted/50 mt-1">
-                Day {sessionToMove?.dayNumber}
-              </div>
-            </div>
-            
-            <div>
-              <Label htmlFor="target-day">Target Day</Label>
-              <Select 
-                value={targetDayNumber?.toString()} 
-                onValueChange={(value) => setTargetDayNumber(parseInt(value))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select day" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: getTotalDays() }, (_, i) => i + 1).map((day) => (
-                    <SelectItem key={day} value={day.toString()}>
-                      Day {day}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setMoveSessionDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleMoveSession}>
-              <MoveHorizontal className="h-4 w-4 mr-2" />
-              Move Session
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Move Session Dialog removed - using direct drag and drop instead */}
     </div>
   );
 }
