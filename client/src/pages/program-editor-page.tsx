@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
@@ -164,10 +165,23 @@ function EditableCell({
             )}
           </div>
           <div className="mt-1 flex-1 text-sm whitespace-pre-wrap">
-            {value || content || (
-              <span className="text-gray-300">
-                Click to add workout...
-              </span>
+            {value || content ? (
+              <span>{value || content}</span>
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-300">
+                <span className="font-medium">Rest Day</span>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="ml-2 p-0 h-6 w-6 rounded-full hover:bg-gray-800"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsEditing(true);
+                  }}
+                >
+                  <Plus className="h-3 w-3" />
+                </Button>
+              </div>
             )}
           </div>
           <div className="flex justify-end opacity-0 hover:opacity-100 transition-opacity">
