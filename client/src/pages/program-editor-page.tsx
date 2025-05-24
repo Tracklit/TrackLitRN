@@ -1045,7 +1045,13 @@ function ProgramEditorPage() {
                   <p className="text-center text-gray-600 dark:text-gray-400 mb-6 max-w-md">
                     This program doesn't have an uploaded document yet. Upload a PDF file to see it displayed here.
                   </p>
-                  <Button onClick={() => setUploadDialogOpen(true)} className="flex items-center px-4 py-2">
+                  <Button 
+                    onClick={() => {
+                      console.log("Opening upload dialog");
+                      setUploadDialogOpen(true);
+                    }} 
+                    className="flex items-center px-4 py-2"
+                  >
                     <Upload className="h-4 w-4 mr-2" />
                     Upload Document
                   </Button>
@@ -1167,7 +1173,83 @@ function ProgramEditorPage() {
   // Standard program with weekly schedule view
   return (
     <div className="container max-w-full p-4">
-      {renderUploadDialog()}
+      <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Upload Document</DialogTitle>
+            <DialogDescription>
+              Upload a PDF document to attach to this program. This will be displayed instead of the weekly schedule.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="flex flex-col gap-4 items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg">
+              {selectedFile ? (
+                <>
+                  <div className="flex items-center gap-2 mb-2">
+                    <FileText className="h-8 w-8 text-blue-500" />
+                    <span className="font-medium">{selectedFile.name}</span>
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                  </div>
+                </>
+              ) : (
+                <>
+                  <FileUp className="h-12 w-12 text-gray-400" />
+                  <p className="text-center text-sm">
+                    Drag and drop a PDF file here, or click to browse
+                  </p>
+                </>
+              )}
+              
+              <Input
+                type="file"
+                id="document-upload"
+                className="hidden"
+                accept=".pdf"
+                onChange={handleFileChange}
+              />
+              <Button 
+                variant="outline" 
+                onClick={() => document.getElementById('document-upload')?.click()}
+                className="mt-2"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                {selectedFile ? 'Choose a Different File' : 'Select PDF File'}
+              </Button>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="ghost" 
+              onClick={() => {
+                setUploadDialogOpen(false);
+                setSelectedFile(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleUploadDocument}
+              disabled={!selectedFile || isUploading}
+            >
+              {isUploading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload Document
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-2">
           <Button
