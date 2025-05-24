@@ -422,7 +422,7 @@ function ProgramCard({ program, type, creator, viewMode }: {
               <Button variant="outline" size="sm" asChild className="flex-1">
                 <a href={program.programFileUrl} target="_blank" rel="noopener noreferrer">
                   <FileText className="h-3.5 w-3.5 mr-1.5" />
-                  View
+                  Document
                 </a>
               </Button>
               <Button variant="outline" size="sm" asChild className="flex-1">
@@ -437,12 +437,6 @@ function ProgramCard({ program, type, creator, viewMode }: {
             </div>
           ) : program.importedFromSheet ? (
             <div className="flex w-full gap-2">
-              <Button variant="outline" size="sm" asChild className="flex-1">
-                <Link href={`/programs/${program.id}`}>
-                  <FileText className="h-3.5 w-3.5 mr-1.5" />
-                  View
-                </Link>
-              </Button>
               <Button variant="outline" size="sm" asChild className="flex-1">
                 <a href={program.googleSheetUrl} target="_blank" rel="noopener noreferrer">
                   <FileText className="h-3.5 w-3.5 mr-1.5" />
@@ -481,12 +475,6 @@ function ProgramCard({ program, type, creator, viewMode }: {
             </div>
           ) : (
             <div className="flex w-full gap-2">
-              <Button variant="outline" size="sm" asChild className="flex-1">
-                <Link href={`/programs/${program.id}`}>
-                  <FileText className="h-3.5 w-3.5 mr-1.5" />
-                  View
-                </Link>
-              </Button>
               <Button variant="outline" size="sm" asChild className="flex-1">
                 <Link href={`/programs/${program.id}/edit`}>Edit</Link>
               </Button>
