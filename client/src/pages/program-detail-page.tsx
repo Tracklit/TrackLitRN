@@ -224,12 +224,14 @@ function ProgramDetail() {
         {/* Show action buttons if user is the program creator */}
         {program.userId === user?.id && (
           <div className="flex gap-2">
-            <Button variant="outline" asChild>
-              <Link href={`/programs/${id}/edit`}>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Program
-              </Link>
-            </Button>
+            {!program.isUploadedProgram && (
+              <Button variant="outline" asChild>
+                <Link href={`/programs/${id}/edit`}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Program
+                </Link>
+              </Button>
+            )}
             <DeleteProgramDialog
               programId={program.id}
               programTitle={program.title}
