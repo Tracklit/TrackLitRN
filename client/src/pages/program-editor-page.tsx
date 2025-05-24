@@ -19,7 +19,8 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { 
   ArrowLeft, Calendar, CalendarDays, Copy, Clock, Edit, 
-  Info, Loader2, Plus, Save, Trash2, AlertCircle, Check, ChevronDown, ChevronUp
+  Info, Loader2, Plus, Save, Trash2, AlertCircle, Check, ChevronDown, ChevronUp,
+  FileText, ExternalLink, Download
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useForm } from "react-hook-form";
@@ -363,9 +364,13 @@ function ProgramEditorPage() {
     }
   }, [program, form]);
 
+  // Check if the program is an uploaded document
+  const isUploadedDocumentProgram = program && 
+    (program.isUploadedProgram || program.programFileUrl) ? true : false;
+
   // Organize sessions into weeks when data is loaded
   useEffect(() => {
-    if (program) {
+    if (program && !isUploadedDocumentProgram) {
       // Use program start date or today if not available
       const startDate = program.startDate ? new Date(program.startDate) : new Date();
       
@@ -718,6 +723,253 @@ function ProgramEditorPage() {
     return dayNumber === 0 || dayNumber === 6; // Sunday or Saturday
   };
 
+  // Special handling for uploaded document programs
+  if (isUploadedDocumentProgram) {
+    const fileType = program.programFileType || '';
+    const fileName = program.programFileUrl?.split('/').pop() || "Program Document";
+    
+    return (
+      <div className="container max-w-full p-4">
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/programs")}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-2xl font-bold">Document Program Editor</h1>
+          </div>
+          
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => navigate(`/programs/${programId}`)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="program-editor-form"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Save
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+        
+        {/* Program Details Card */}
+        <Card className="mb-6">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle>Program Details</CardTitle>
+              <Button variant="ghost" size="icon" className="h-8 w-8 p-0" onClick={(e) => {
+                e.stopPropagation();
+                setDetailsExpanded(!detailsExpanded);
+              }}>
+                {detailsExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className={`p-4 ${detailsExpanded ? 'block' : 'hidden'}`}>
+            <Form {...form}>
+              <form id="program-editor-form" onSubmit={form.handleSubmit(onSubmit)}>
+                <div className="flex flex-wrap gap-4 items-end">
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem className="flex-1 min-w-[200px]">
+                        <FormLabel>Title</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Program title" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="startDate"
+                    render={({ field }) => (
+                      <FormItem className="w-40">
+                        <FormLabel>Start Date</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={`w-full justify-start text-left font-normal ${!field.value && "text-muted-foreground"}`}
+                              >
+                                {field.value ? (
+                                  format(new Date(field.value), "MMM d, yyyy")
+                                ) : (
+                                  <span>Pick a date</span>
+                                )}
+                                <Calendar className="ml-auto h-4 w-4" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <CalendarComponent
+                              mode="single"
+                              selected={field.value ? new Date(field.value) : undefined}
+                              onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Program description" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="category"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Category</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="sprint">Sprint</SelectItem>
+                              <SelectItem value="middle-distance">Middle Distance</SelectItem>
+                              <SelectItem value="long-distance">Long Distance</SelectItem>
+                              <SelectItem value="jumps">Jumps</SelectItem>
+                              <SelectItem value="throws">Throws</SelectItem>
+                              <SelectItem value="multi">Multi-Events</SelectItem>
+                              <SelectItem value="general">General</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="level"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Level</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="beginner">Beginner</SelectItem>
+                              <SelectItem value="intermediate">Intermediate</SelectItem>
+                              <SelectItem value="advanced">Advanced</SelectItem>
+                              <SelectItem value="elite">Elite</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+        
+        {/* Document Viewer Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Uploaded Document</CardTitle>
+            <p className="text-sm text-muted-foreground">This program uses an uploaded document instead of a weekly schedule</p>
+          </CardHeader>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-4 p-3 border rounded-lg bg-slate-50">
+              <div className="flex items-center">
+                <FileText className="h-5 w-5 mr-2 text-blue-500" />
+                <p className="font-medium">{fileName}</p>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" asChild>
+                  <a href={program.programFileUrl} download>
+                    <Download className="h-4 w-4 mr-2" />
+                    Download
+                  </a>
+                </Button>
+                <Button size="sm" asChild>
+                  <a href={program.programFileUrl} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Open
+                  </a>
+                </Button>
+              </div>
+            </div>
+            
+            {/* PDF Viewer */}
+            {fileType.includes('pdf') ? (
+              <div className="w-full h-[600px] border rounded-lg overflow-hidden">
+                <iframe 
+                  src={`${program.programFileUrl}#toolbar=0&view=FitH`} 
+                  className="w-full h-full"
+                  title="PDF Document"
+                />
+              </div>
+            ) : (
+              <div className="text-center py-12 border rounded-lg bg-slate-50">
+                <FileText className="h-12 w-12 mx-auto mb-4 text-blue-500" />
+                <p className="text-lg font-semibold mb-2">Document Preview Not Available</p>
+                <p className="text-sm text-gray-500 mb-4">
+                  This document type cannot be previewed directly in the browser.
+                </p>
+                <Button asChild>
+                  <a href={program.programFileUrl} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Open Document
+                  </a>
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Standard program with weekly schedule view
   return (
     <div className="container max-w-full p-4">
       <div className="flex justify-between items-center mb-4">
