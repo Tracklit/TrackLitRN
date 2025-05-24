@@ -130,21 +130,13 @@ function EditableCell({
     >
       {isEditing ? (
         <div className="p-2 h-full">
-          <div className="flex justify-end items-center mb-2">
-            <div className="flex items-center gap-2">
-              <span className="text-xs">Rest day</span>
-              <Switch 
-                checked={isRest} 
-                onCheckedChange={setIsRest} 
-              />
-            </div>
-          </div>
+          {/* Removed Rest Day toggle as requested */}
           <Textarea
             ref={inputRef}
             value={value}
             onChange={(e) => setValue(e.target.value)}
             placeholder="Enter workout details..."
-            className="min-h-[80px] text-sm p-2 border-0 focus:ring-0"
+            className="min-h-[80px] font-sans text-sm p-2 border-0 focus:ring-0"
           />
           <div className="flex justify-end gap-2 mt-2">
             <Button variant="outline" size="sm" className="h-7 px-3" onClick={() => setIsEditing(false)}>
@@ -157,14 +149,8 @@ function EditableCell({
         </div>
       ) : (
         <div className="p-2 min-h-[100px] h-full flex flex-col">
-          <div className="flex justify-end">
-            {isRest && (
-              <Badge variant="secondary" className="text-xs">
-                Rest Day
-              </Badge>
-            )}
-          </div>
-          <div className="mt-1 flex-1 text-sm whitespace-pre-wrap">
+          {/* Removed Rest Day badge as requested */}
+          <div className="mt-1 flex-1 font-sans text-sm whitespace-pre-wrap">
             {value || content ? (
               <span>{value || content}</span>
             ) : (
