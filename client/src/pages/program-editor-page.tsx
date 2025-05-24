@@ -468,8 +468,17 @@ function ProgramEditorPage() {
       s.weekNumber === weekNumber && s.dayNumber === dayNumber
     );
     
+    // Prioritize the fields to display in this order:
+    // 1. description (where we save the content)
+    // 2. shortDistanceWorkout (from imported sheet)
+    // 3. fallback to empty string
+    const displayContent = session?.description || 
+                          session?.shortDistanceWorkout || 
+                          session?.content || 
+                          "";
+    
     return {
-      content: session?.content || session?.description || "",
+      content: displayContent,
       isRestDay: session?.isRestDay || false,
       date: session?.date || format(getDateForWeekDay(weekNumber, dayNumber), "yyyy-MM-dd"),
       id: session?.id,
