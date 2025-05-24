@@ -209,7 +209,7 @@ function ProgramEditorPage() {
   // Update program mutation
   const updateProgram = useMutation({
     mutationFn: async (data: z.infer<typeof programEditorSchema>) => {
-      return apiRequest(`/api/programs/${programId}`, 'PUT', data);
+      return apiRequest('PUT', `/api/programs/${programId}`, data);
     },
     onSuccess: () => {
       toast({
