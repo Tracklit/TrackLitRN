@@ -349,11 +349,6 @@ export default function ProgramEditorPage() {
   
   return (
     <div className="container max-w-screen-xl mx-auto p-4 pt-20 md:pt-24 md:pl-72 pb-20">
-      <PageHeader
-        title={program?.title || "Program Editor"}
-        description="Create and manage your training program sessions"
-      />
-      
       <div className="mb-6 flex justify-between items-center">
         <Button variant="outline" asChild>
           <Link href="/programs">
@@ -377,7 +372,7 @@ export default function ProgramEditorPage() {
       {/* Program Details Form */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Program Details</CardTitle>
+          <CardTitle>{program?.title || "Program Editor"}</CardTitle>
           <CardDescription>Edit your program's basic information</CardDescription>
         </CardHeader>
         <CardContent>
