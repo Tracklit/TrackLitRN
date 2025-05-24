@@ -59,7 +59,11 @@ const programEditorSchema = z.object({
 type Session = z.infer<typeof sessionFormSchema>;
 
 // Session component with move capability
-function SessionCard({ session, onClick, onMoveSession }) {
+function SessionCard({ session, onClick, onMoveSession }: { 
+  session: Session & { id?: number }, 
+  onClick: () => void, 
+  onMoveSession: (session: Session & { id?: number }) => void 
+}) {
   return (
     <div 
       className="bg-primary/10 hover:bg-primary/20 transition-colors rounded-md p-2 cursor-pointer text-xs relative group"
@@ -445,24 +449,39 @@ export default function ProgramEditorPage() {
     );
   }
   
+  // State for move session dialog
+  const [moveSessionDialogOpen, setMoveSessionDialogOpen] = useState(false);
+  const [sessionToMove, setSessionToMove] = useState<Session | null>(null);
+  const [targetDayNumber, setTargetDayNumber] = useState<number | null>(null);
+  
+  // Function to open the move session dialog
+  const handleOpenMoveDialog = (session: Session) => {
+    setSessionToMove(session);
+    setTargetDayNumber(session.dayNumber);
+    setMoveSessionDialogOpen(true);
+  };
+  
   // Function to move a session to a different day
-  const handleMoveSession = async (session, newDayNumber) => {
+  const handleMoveSession = async () => {
+    if (!sessionToMove || !targetDayNumber) return;
+    
     // Skip if moving to the same day
-    if (session.dayNumber === newDayNumber) {
+    if (sessionToMove.dayNumber === targetDayNumber) {
+      setMoveSessionDialogOpen(false);
       return;
     }
     
     try {
       // Update the session with the new day number
       const updatedSession = {
-        ...session,
-        dayNumber: newDayNumber
+        ...sessionToMove,
+        dayNumber: targetDayNumber
       };
       
       // Call the API to update the session
       const response = await apiRequest(
         "PUT", 
-        `/api/programs/${programId}/sessions/${session.id}`, 
+        `/api/programs/${programId}/sessions/${sessionToMove.id}`, 
         updatedSession
       );
       
@@ -473,8 +492,13 @@ export default function ProgramEditorPage() {
       // Show success message
       toast({
         title: "Session moved",
-        description: `Session moved to day ${newDayNumber}`,
+        description: `Session moved to day ${targetDayNumber}`,
       });
+      
+      // Close dialog and reset state
+      setMoveSessionDialogOpen(false);
+      setSessionToMove(null);
+      setTargetDayNumber(null);
       
       // Refresh program data
       queryClient.invalidateQueries({ queryKey: [`/api/programs/${programId}`] });
@@ -489,7 +513,6 @@ export default function ProgramEditorPage() {
   };
 
   return (
-    <DndProvider backend={HTML5Backend}>
       <div className="container max-w-screen-xl mx-auto p-4 pt-20 md:pt-24 md:pl-72 pb-20">
         <div className="mb-6 flex justify-between items-center">
           <Button variant="outline" asChild>
@@ -699,33 +722,101 @@ export default function ProgramEditorPage() {
         <CardContent className="pt-6">
           <div className="grid grid-cols-7 gap-2 overflow-x-auto pb-2">
             {weekDates.map((day) => (
-              <DroppableDay
-                key={day.dayNumber}
-                day={day}
-                sessions={getSessionsForDay(day.dayNumber)}
-                onOpenSessionDialog={(date, dayNumber, session) => 
-                  handleOpenSessionDialog(date, dayNumber, session)
-                }
-                onAddSession={(date, dayNumber) => 
-                  handleOpenSessionDialog(date, dayNumber)
-                }
-                onMoveSession={handleMoveSession}
-              />
+              <div key={day.dayNumber} className="flex flex-col">
+                <div className={`text-center p-2 rounded-t-md ${day.isWeekend ? 'bg-muted/70' : 'bg-muted/30'}`}>
+                  <div className="text-xs font-medium">{day.dayOfWeek}</div>
+                  <div className="text-lg font-bold">{day.dayOfMonth}</div>
+                  <div className="text-xs text-muted-foreground">{day.month}</div>
+                </div>
+                
+                <div 
+                  className={`min-h-[180px] border rounded-b-md p-2 flex flex-col gap-2 ${day.isWeekend ? 'bg-muted/50' : ''}`}
+                >
+                  {getSessionsForDay(day.dayNumber).map((session) => (
+                    <SessionCard 
+                      key={session.id} 
+                      session={session} 
+                      onClick={() => handleOpenSessionDialog(day.date, day.dayNumber, session)}
+                      onMoveSession={handleOpenMoveDialog}
+                    />
+                  ))}
+                  
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="mt-auto justify-start h-auto py-1 text-xs bg-muted/30 hover:bg-muted/50"
+                    onClick={() => handleOpenSessionDialog(day.date, day.dayNumber)}
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    Add Session
+                  </Button>
+                </div>
+              </div>
             ))}
           </div>
           
           <div className="mt-6 p-3 bg-primary/5 rounded-md border border-dashed border-primary/20">
             <div className="flex items-center mb-2">
               <Info className="h-4 w-4 mr-2 text-primary" />
-              <span className="text-sm font-medium">Drag & Drop Tips</span>
+              <span className="text-sm font-medium">Session Management</span>
             </div>
             <p className="text-xs text-muted-foreground">
-              You can drag and drop sessions between days to rearrange your training schedule. 
+              You can move sessions between days by clicking the move icon. 
               Click on a session to edit its details or add new sessions using the "Add Session" button.
             </p>
           </div>
         </CardContent>
       </Card>
+      
+      {/* Move Session Dialog */}
+      <Dialog open={moveSessionDialogOpen} onOpenChange={setMoveSessionDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Move Session</DialogTitle>
+            <DialogDescription>
+              Choose which day to move this session to
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="sessionTitle">Session</Label>
+              <div className="font-medium text-sm">{sessionToMove?.title}</div>
+              <div className="text-muted-foreground text-xs">
+                Currently on Day {sessionToMove?.dayNumber}
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="targetDay">Move to Day</Label>
+              <Select 
+                value={targetDayNumber?.toString()} 
+                onValueChange={(value) => setTargetDayNumber(parseInt(value))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a day" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: getTotalDays() }, (_, i) => i + 1).map((day) => (
+                    <SelectItem key={day} value={day.toString()}>
+                      Day {day}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMoveSessionDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleMoveSession} disabled={!targetDayNumber}>
+              Move Session
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
       {/* Session Edit Dialog */}
       <Dialog open={isSessionDialogOpen} onOpenChange={setIsSessionDialogOpen}>
@@ -960,21 +1051,7 @@ export default function ProgramEditorPage() {
   );
 }
 
-// Missing component import
-function Link({ href, children, ...props }: { href: string, children: React.ReactNode, [key: string]: any }) {
-  const [, navigate] = useLocation();
-  
-  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-    navigate(href);
-  };
-  
-  return (
-    <a href={href} onClick={handleClick} {...props}>
-      {children}
-    </a>
-  );
-}
+
 
 // Protected route wrapper
 export function Component() {
