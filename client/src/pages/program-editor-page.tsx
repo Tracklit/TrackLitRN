@@ -1138,7 +1138,7 @@ export default function ProgramEditorPage() {
         </DialogContent>
       </Dialog>
       
-      {/* No move session dialog - using direct drag and drop instead */}
+
     </div>
   );
 }
