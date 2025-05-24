@@ -86,6 +86,16 @@ function EditableCell({
   const [isRest, setIsRest] = useState(isRestDay);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
+  // Update the value when content prop changes
+  useEffect(() => {
+    setValue(content);
+  }, [content]);
+  
+  // Update isRest when isRestDay prop changes
+  useEffect(() => {
+    setIsRest(isRestDay);
+  }, [isRestDay]);
+
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
@@ -209,14 +219,26 @@ function ProgramEditorPage() {
   // Update program mutation
   const updateProgram = useMutation({
     mutationFn: async (data: z.infer<typeof programEditorSchema>) => {
+      console.log("Making PUT request to /api/programs/" + programId, data);
       return apiRequest('PUT', `/api/programs/${programId}`, data);
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: "Program updated",
         description: "Your program has been successfully updated.",
       });
+      // Update form with the latest data
+      if (data) {
+        form.reset({
+          title: data.title || "",
+          description: data.description || "",
+          category: data.category || "",
+          level: data.level || "",
+          startDate: data.startDate ? format(new Date(data.startDate), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ['/api/programs', programId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/programs'] });
     },
     onError: (error: Error) => {
       toast({
