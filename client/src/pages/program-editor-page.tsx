@@ -948,29 +948,37 @@ function ProgramEditorPage() {
               </div>
             </div>
             
-            {/* We'll skip the document preview and just show the file info */}
-            <div className="flex flex-col items-center justify-center py-12 border rounded-lg bg-slate-50">
-              <FileText className="h-16 w-16 mb-4 text-blue-500" />
-              <h3 className="text-lg font-semibold mb-2">Document Program</h3>
+            {/* Document icon and info */}
+            <div className="flex flex-col items-center justify-center py-12 border rounded-lg bg-white">
+              <div className="text-blue-500 mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="8" y1="13" x2="16" y2="13"></line>
+                  <line x1="8" y1="17" x2="16" y2="17"></line>
+                  <line x1="10" y1="9" x2="14" y2="9"></line>
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold mb-2 text-center">Document Program</h3>
               <p className="text-sm text-gray-500 mb-4 max-w-md text-center">
-                This program uses a document format instead of the weekly schedule editor.
+                This program uses a document format instead of the weekly schedule editor. 
                 Use the buttons below to access the document.
               </p>
             </div>
             
-            {/* Fallback message with download/view links */}
+            {/* Document action buttons */}
             <div className="mt-4 text-center">
-              <p className="text-sm text-muted-foreground mb-2">
+              <p className="text-sm text-gray-400 mb-4">
                 If the document doesn't display correctly, you can download it or open it in a new tab.
               </p>
               <div className="flex justify-center gap-4">
-                <Button variant="outline" size="sm" asChild>
+                <Button variant="outline" className="flex items-center px-4 py-2" asChild>
                   <a href={documentUrl} download>
                     <Download className="h-4 w-4 mr-2" />
                     Download Document
                   </a>
                 </Button>
-                <Button size="sm" asChild>
+                <Button className="flex items-center px-4 py-2 bg-amber-400 hover:bg-amber-500 text-black" asChild>
                   <a href={documentUrl} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="h-4 w-4 mr-2" />
                     Open in New Tab
