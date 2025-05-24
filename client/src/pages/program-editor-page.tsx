@@ -133,10 +133,10 @@ function EditableCell({
             className="min-h-[80px] text-sm p-2 border-0 focus:ring-0"
           />
           <div className="flex justify-end gap-2 mt-2">
-            <Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>
+            <Button variant="outline" size="sm" className="h-7 px-3" onClick={() => setIsEditing(false)}>
               Cancel
             </Button>
-            <Button size="sm" onClick={handleSave}>
+            <Button size="sm" className="h-7 px-3" onClick={handleSave}>
               Save
             </Button>
           </div>
@@ -393,6 +393,34 @@ function ProgramEditorPage() {
     }
   };
 
+  // Handle deleting a week
+  const handleDeleteWeek = (weekNumber: number) => {
+    // Find any sessions in this week
+    const weekSessions = sessions.filter((s: Session) => s.weekNumber === weekNumber);
+    
+    // If there are sessions, confirm deletion
+    if (weekSessions.length > 0) {
+      if (!confirm(`This will delete ${weekSessions.length} session(s) in Week ${weekNumber + 1}. Continue?`)) {
+        return;
+      }
+      
+      // Delete all sessions in this week
+      weekSessions.forEach((session: Session) => {
+        if (session.id) {
+          deleteSession.mutate(session.id);
+        }
+      });
+    }
+    
+    // Remove the week from the UI
+    setWeeks(weeks.filter(w => w.weekNumber !== weekNumber));
+    
+    toast({
+      title: "Week deleted",
+      description: `Week ${weekNumber + 1} has been removed from the program.`,
+    });
+  };
+
   // Handle session content update
   const handleCellUpdate = (weekNumber: number, dayNumber: number, content: string, isRestDay: boolean) => {
     const date = getDateForWeekDay(weekNumber, dayNumber);
@@ -598,6 +626,15 @@ function ProgramEditorPage() {
                       <h3 className="text-lg font-medium">
                         Week {week.weekNumber + 1}: {format(week.startDate, "MMM d")} - {format(addDays(week.startDate, 6), "MMM d, yyyy")}
                       </h3>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                        onClick={() => handleDeleteWeek(week.weekNumber)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Delete Week
+                      </Button>
                     </div>
                     
                     <Table>
