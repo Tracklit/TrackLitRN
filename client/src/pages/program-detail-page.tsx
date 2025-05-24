@@ -217,14 +217,21 @@ function ProgramDetail() {
           </Link>
         </Button>
         
-        {/* Show Edit button only if user is the program creator */}
+        {/* Show action buttons if user is the program creator */}
         {program.userId === user?.id && (
-          <Button variant="outline" asChild>
-            <Link href={`/programs/${id}/edit`}>
-              <Edit className="h-4 w-4 mr-2" />
-              Edit Program
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" asChild>
+              <Link href={`/programs/${id}/edit`}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Program
+              </Link>
+            </Button>
+            <DeleteProgramDialog
+              programId={program.id}
+              programTitle={program.title}
+              buttonVariant="outline"
+            />
+          </div>
         )}
       </div>
       
