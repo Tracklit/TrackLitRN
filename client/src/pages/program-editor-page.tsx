@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useLocation } from "wouter";
+import { useParams, useLocation, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { ProtectedRoute } from "@/lib/protected-route";
@@ -17,7 +17,10 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, Calendar, CalendarDays, ChevronLeft, ChevronRight, Clock, Edit, Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { 
+  ArrowLeft, Calendar, CalendarDays, ChevronLeft, ChevronRight, Clock, Edit, 
+  Info, Loader2, Plus, Save, Trash2, MoveHorizontal, ArrowDownUp 
+} from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -54,6 +57,47 @@ const programEditorSchema = z.object({
 });
 
 type Session = z.infer<typeof sessionFormSchema>;
+
+// Session component with move capability
+function SessionCard({ session, onClick, onMoveSession }) {
+  return (
+    <div 
+      className="bg-primary/10 hover:bg-primary/20 transition-colors rounded-md p-2 cursor-pointer text-xs relative group"
+      onClick={onClick}
+    >
+      <div className="font-medium truncate">{session.title}</div>
+      {session.isRestDay ? (
+        <Badge variant="outline" className="mt-1">Rest Day</Badge>
+      ) : (
+        <>
+          {session.shortDistanceWorkout && (
+            <div className="mt-1 truncate text-muted-foreground">{session.shortDistanceWorkout}</div>
+          )}
+          {session.preActivation1 && (
+            <div className="mt-1 truncate text-xs text-muted-foreground/80">Pre: {session.preActivation1}</div>
+          )}
+        </>
+      )}
+      
+      <div className="absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-5 w-5" 
+          onClick={(e) => {
+            e.stopPropagation();
+            onMoveSession(session);
+          }}
+        >
+          <MoveHorizontal className="h-3 w-3 text-muted-foreground" />
+        </Button>
+        <Button variant="ghost" size="icon" className="h-5 w-5">
+          <Edit className="h-3 w-3 text-muted-foreground" />
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 export default function ProgramEditorPage() {
   const params = useParams<{ id: string }>();
@@ -401,27 +445,71 @@ export default function ProgramEditorPage() {
     );
   }
   
+  // Function to move a session to a different day
+  const handleMoveSession = async (session, newDayNumber) => {
+    // Skip if moving to the same day
+    if (session.dayNumber === newDayNumber) {
+      return;
+    }
+    
+    try {
+      // Update the session with the new day number
+      const updatedSession = {
+        ...session,
+        dayNumber: newDayNumber
+      };
+      
+      // Call the API to update the session
+      const response = await apiRequest(
+        "PUT", 
+        `/api/programs/${programId}/sessions/${session.id}`, 
+        updatedSession
+      );
+      
+      if (!response.ok) {
+        throw new Error("Failed to move session");
+      }
+      
+      // Show success message
+      toast({
+        title: "Session moved",
+        description: `Session moved to day ${newDayNumber}`,
+      });
+      
+      // Refresh program data
+      queryClient.invalidateQueries({ queryKey: [`/api/programs/${programId}`] });
+    } catch (error) {
+      console.error("Error moving session:", error);
+      toast({
+        title: "Error",
+        description: "Failed to move session. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
-    <div className="container max-w-screen-xl mx-auto p-4 pt-20 md:pt-24 md:pl-72 pb-20">
-      <div className="mb-6 flex justify-between items-center">
-        <Button variant="outline" asChild>
-          <Link href="/programs">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Programs
-          </Link>
-        </Button>
-        
-        <Button 
-          onClick={handleSaveProgram}
-          disabled={updateProgramMutation.isPending}
-        >
-          {updateProgramMutation.isPending && (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          )}
-          <Save className="h-4 w-4 mr-2" />
-          Save Program
-        </Button>
-      </div>
+    <DndProvider backend={HTML5Backend}>
+      <div className="container max-w-screen-xl mx-auto p-4 pt-20 md:pt-24 md:pl-72 pb-20">
+        <div className="mb-6 flex justify-between items-center">
+          <Button variant="outline" asChild>
+            <Link href="/programs">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Programs
+            </Link>
+          </Button>
+          
+          <Button 
+            onClick={handleSaveProgram}
+            disabled={updateProgramMutation.isPending}
+          >
+            {updateProgramMutation.isPending && (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            )}
+            <Save className="h-4 w-4 mr-2" />
+            Save Program
+          </Button>
+        </div>
       
       {/* Program Details Form */}
       <Card className="mb-6">
@@ -611,53 +699,30 @@ export default function ProgramEditorPage() {
         <CardContent className="pt-6">
           <div className="grid grid-cols-7 gap-2 overflow-x-auto pb-2">
             {weekDates.map((day) => (
-              <div key={day.dayNumber} className="flex flex-col">
-                <div className={`text-center p-2 rounded-t-md ${day.isWeekend ? 'bg-muted/70' : 'bg-muted/30'}`}>
-                  <div className="text-xs font-medium">{day.dayOfWeek}</div>
-                  <div className="text-lg font-bold">{day.dayOfMonth}</div>
-                  <div className="text-xs text-muted-foreground">{day.month}</div>
-                </div>
-                
-                <div 
-                  className={`min-h-[180px] border rounded-b-md p-2 flex flex-col gap-2 ${day.isWeekend ? 'bg-muted/50' : ''}`}
-                >
-                  {getSessionsForDay(day.dayNumber).map((session) => (
-                    <div 
-                      key={session.id} 
-                      className="bg-primary/10 hover:bg-primary/20 transition-colors rounded-md p-2 cursor-pointer text-xs relative group"
-                      onClick={() => handleOpenSessionDialog(day.date, day.dayNumber, session)}
-                    >
-                      <div className="font-medium truncate">{session.title}</div>
-                      {session.isRestDay ? (
-                        <Badge variant="outline" className="mt-1">Rest Day</Badge>
-                      ) : (
-                        <>
-                          {session.shortDistanceWorkout && (
-                            <div className="mt-1 truncate text-muted-foreground">{session.shortDistanceWorkout}</div>
-                          )}
-                          {session.preActivation1 && (
-                            <div className="mt-1 truncate text-xs text-muted-foreground/80">Pre: {session.preActivation1}</div>
-                          )}
-                        </>
-                      )}
-                      <div className="absolute right-1 top-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Edit className="h-3 w-3 text-muted-foreground" />
-                      </div>
-                    </div>
-                  ))}
-                  
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="mt-auto justify-start h-auto py-1 text-xs bg-muted/30 hover:bg-muted/50"
-                    onClick={() => handleOpenSessionDialog(day.date, day.dayNumber)}
-                  >
-                    <Plus className="h-3 w-3 mr-1" />
-                    Add Session
-                  </Button>
-                </div>
-              </div>
+              <DroppableDay
+                key={day.dayNumber}
+                day={day}
+                sessions={getSessionsForDay(day.dayNumber)}
+                onOpenSessionDialog={(date, dayNumber, session) => 
+                  handleOpenSessionDialog(date, dayNumber, session)
+                }
+                onAddSession={(date, dayNumber) => 
+                  handleOpenSessionDialog(date, dayNumber)
+                }
+                onMoveSession={handleMoveSession}
+              />
             ))}
+          </div>
+          
+          <div className="mt-6 p-3 bg-primary/5 rounded-md border border-dashed border-primary/20">
+            <div className="flex items-center mb-2">
+              <Info className="h-4 w-4 mr-2 text-primary" />
+              <span className="text-sm font-medium">Drag & Drop Tips</span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              You can drag and drop sessions between days to rearrange your training schedule. 
+              Click on a session to edit its details or add new sessions using the "Add Session" button.
+            </p>
           </div>
         </CardContent>
       </Card>
