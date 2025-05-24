@@ -1,0 +1,842 @@
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "wouter";
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Separator } from "@/components/ui/separator";
+import { 
+  ArrowLeft, Calendar, CalendarDays, Copy, Clock, Edit, 
+  Info, Loader2, Plus, Save, Trash2, AlertCircle, Check, ChevronDown, ChevronUp
+} from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { format, addDays, parse, addWeeks, startOfWeek, getDay, isValid, parseISO } from "date-fns";
+import { ProgramCoverUpload } from "@/components/program-cover-upload";
+
+// Program editor form schema
+const programEditorSchema = z.object({
+  title: z.string().min(3, { message: "Title must be at least 3 characters" }),
+  description: z.string().optional(),
+  category: z.string().optional(),
+  level: z.string().optional(),
+  startDate: z.string().optional(),
+});
+
+// Session schema
+interface Session {
+  id?: number;
+  programId: number;
+  title: string;
+  description: string;
+  dayNumber: number;
+  date?: string;
+  isRestDay: boolean;
+  createdAt?: string;
+  weekNumber?: number;
+  columnA?: string;
+  columnB?: string;
+  columnC?: string;
+  columnD?: string;
+  columnE?: string;
+  columnF?: string;
+  columnG?: string;
+}
+
+interface WeekData {
+  weekNumber: number;
+  startDate: Date;
+  days: Session[];
+}
+
+function EditableCell({ 
+  value, 
+  onChange,
+  isRestDay = false,
+  highlightActive = false,
+  onBlur
+}: { 
+  value: string; 
+  onChange: (newValue: string) => void; 
+  isRestDay?: boolean;
+  highlightActive?: boolean;
+  onBlur?: () => void;
+}) {
+  // Use local state to handle editing and preserve cursor position
+  const [localValue, setLocalValue] = useState(value);
+  const [isEditing, setIsEditing] = useState(false);
+  
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+  
+  // Update parent when cell loses focus
+  const handleBlur = () => {
+    if (isEditing) {
+      setIsEditing(false);
+      onChange(localValue);
+      if (onBlur) onBlur();
+    }
+  };
+  
+  // Handle cell click - enable editing
+  const handleClick = () => {
+    if (!isRestDay) {
+      setIsEditing(true);
+    }
+  };
+  
+  // Handle local content changes
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setLocalValue(e.target.value);
+  };
+  
+  const hasContent = localValue.trim().length > 0;
+  
+  return (
+    <div 
+      className={`relative h-32 p-1 border border-gray-800 ${
+        isRestDay 
+          ? 'bg-gray-800 cursor-not-allowed'
+          : hasContent 
+            ? 'bg-gray-950' 
+            : 'bg-gray-700'
+      } ${
+        highlightActive ? 'ring-2 ring-amber-500' : ''
+      }`}
+      onClick={handleClick}
+    >
+      {isEditing ? (
+        <Textarea
+          autoFocus
+          value={localValue}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          className="w-full h-full bg-transparent border-none resize-none"
+          placeholder="Add workout details"
+        />
+      ) : (
+        <div className="w-full h-full overflow-auto text-sm">
+          {isRestDay ? (
+            <div className="flex items-center justify-center h-full text-gray-400">
+              Rest Day
+            </div>
+          ) : (
+            localValue || ""
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProgramEditorPage() {
+  const params = useParams();
+  const programId = parseInt(params.id);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const [weeks, setWeeks] = useState<WeekData[]>([]);
+  const [isAddingWeek, setIsAddingWeek] = useState(false);
+  const [sessionDialogOpen, setSessionDialogOpen] = useState(false);
+  const [currentSession, setCurrentSession] = useState<Session | null>(null);
+  const [detailsExpanded, setDetailsExpanded] = useState(false);
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
+
+  // Program details form
+  const form = useForm<z.infer<typeof programEditorSchema>>({
+    resolver: zodResolver(programEditorSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      category: "",
+      level: "",
+      startDate: format(new Date(), "yyyy-MM-dd")
+    }
+  });
+
+  // API queries
+  const { 
+    data: program, 
+    isLoading: programLoading,
+    error: programError
+  } = useQuery({
+    queryKey: ['/api/programs', programId],
+    select: (data) => {
+      console.log("Fetched program", programId, "with:", data);
+      return data;
+    }
+  });
+
+  const { 
+    data: sessions, 
+    isLoading: sessionsLoading,
+    error: sessionsError
+  } = useQuery({
+    queryKey: ['/api/programs', programId, 'sessions'],
+    select: (data) => {
+      if (data && data.length > 0) {
+        console.log("First session data:", data[0]);
+      }
+      return data;
+    }
+  });
+
+  // Update program mutation
+  const updateProgram = useMutation({
+    mutationFn: async (data: z.infer<typeof programEditorSchema>) => {
+      const response = await apiRequest('PUT', `/api/programs/${programId}`, data);
+      console.log("Response status:", response.status);
+      return response.data;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Program updated",
+        description: "Your changes have been saved successfully."
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['/api/programs'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/programs', programId] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error updating program",
+        description: "There was a problem saving your changes.",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Create session mutation
+  const createSession = useMutation({
+    mutationFn: async (data: Partial<Session>) => {
+      return await apiRequest('POST', `/api/programs/${programId}/sessions`, data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Session created",
+        description: "New workout session has been added."
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['/api/programs', programId, 'sessions'] });
+      setSessionDialogOpen(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error creating session",
+        description: "There was a problem saving your workout.",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Update session mutation
+  const updateSession = useMutation({
+    mutationFn: async (data: Partial<Session>) => {
+      return await apiRequest('PUT', `/api/programs/${programId}/sessions/${data.id}`, data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Session updated",
+        description: "Workout has been updated successfully."
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['/api/programs', programId, 'sessions'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error updating session",
+        description: "There was a problem saving your workout.",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Delete session mutation
+  const deleteSession = useMutation({
+    mutationFn: async (sessionId: number) => {
+      return await apiRequest('DELETE', `/api/programs/${programId}/sessions/${sessionId}`, {});
+    },
+    onSuccess: () => {
+      toast({
+        title: "Session deleted",
+        description: "Workout has been removed successfully."
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['/api/programs', programId, 'sessions'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error deleting session",
+        description: "There was a problem removing your workout.",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Update form with program data when loaded
+  useEffect(() => {
+    if (program) {
+      form.reset({
+        title: program.title || "",
+        description: program.description || "",
+        category: program.category || "",
+        level: program.level || "",
+        startDate: program.startDate ? format(new Date(program.startDate), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd")
+      });
+
+      // Expand program details card if it's a new program
+      if (!program.title) {
+        setDetailsExpanded(true);
+      }
+    }
+  }, [program, form]);
+
+  // Organize sessions into weeks when sessions data changes
+  useEffect(() => {
+    if (sessions && sessions.length > 0) {
+      const startDateStr = program?.startDate || form.getValues().startDate || format(new Date(), "yyyy-MM-dd");
+      let programStartDate = new Date();
+      
+      try {
+        programStartDate = parseISO(startDateStr);
+        if (!isValid(programStartDate)) {
+          programStartDate = new Date();
+        }
+      } catch (e) {
+        console.error("Invalid date format:", startDateStr);
+        programStartDate = new Date();
+      }
+      
+      // Get the current week start date (Sunday)
+      const programStartWeek = startOfWeek(programStartDate);
+      
+      // Create weeks array with proper start dates
+      const weeksData: WeekData[] = [];
+      const weekMap: Record<number, WeekData> = {};
+      
+      // First, group sessions by week number
+      sessions.forEach((session: Session) => {
+        // Calculate week number based on day number
+        const weekNumber = Math.floor(session.dayNumber / 7);
+        
+        if (!weekMap[weekNumber]) {
+          const weekStartDate = addWeeks(programStartWeek, weekNumber);
+          weekMap[weekNumber] = {
+            weekNumber,
+            startDate: weekStartDate,
+            days: []
+          };
+        }
+        
+        // Add session to the corresponding week
+        session.weekNumber = weekNumber;
+        weekMap[weekNumber].days.push(session);
+      });
+      
+      // Convert map to array and sort by week number
+      Object.values(weekMap).forEach(week => {
+        weeksData.push(week);
+      });
+      
+      // Sort weeks by week number
+      weeksData.sort((a, b) => a.weekNumber - b.weekNumber);
+      
+      // If no weeks, create at least one week
+      if (weeksData.length === 0) {
+        weeksData.push({
+          weekNumber: 0,
+          startDate: programStartWeek,
+          days: []
+        });
+      }
+      
+      setWeeks(weeksData);
+    } else {
+      // Create a default first week if no sessions
+      const startDateStr = program?.startDate || form.getValues().startDate || format(new Date(), "yyyy-MM-dd");
+      let programStartDate = new Date();
+      
+      try {
+        programStartDate = parseISO(startDateStr);
+        if (!isValid(programStartDate)) {
+          programStartDate = new Date();
+        }
+      } catch (e) {
+        console.error("Invalid date format:", startDateStr);
+        programStartDate = new Date();
+      }
+      
+      // Get the week start (Sunday)
+      const programStartWeek = startOfWeek(programStartDate);
+      
+      setWeeks([{
+        weekNumber: 0,
+        startDate: programStartWeek,
+        days: []
+      }]);
+    }
+  }, [sessions, program, form]);
+
+  // Handle saving session content from cell edits
+  const handleCellContentChange = async (weekNumber: number, dayNumber: number, content: string) => {
+    if (!content.trim() && !sessions) return;
+    
+    // Get day index within the week (0-6)
+    const dayIndex = dayNumber % 7;
+    
+    // Get the full day number across all weeks
+    const fullDayNumber = weekNumber * 7 + dayIndex;
+    
+    // Check if session exists for this day
+    const existingSession = sessions?.find((s: Session) => 
+      s.dayNumber === fullDayNumber && !s.isRestDay
+    );
+    
+    if (existingSession) {
+      // Update existing session
+      updateSession.mutate({
+        ...existingSession,
+        description: content,
+      });
+      
+      // Also save to localStorage as backup
+      if (programId) {
+        const cellKey = `${weekNumber}-${dayIndex}`;
+        const storageKey = `program_${programId}_session_${cellKey}`;
+        localStorage.setItem(storageKey, content);
+      }
+    } else if (content.trim()) {
+      // Create new session if content is not empty
+      createSession.mutate({
+        programId,
+        title: `Day ${fullDayNumber + 1}`,
+        description: content,
+        dayNumber: fullDayNumber,
+        isRestDay: false,
+        date: format(addDays(getDateForWeekDay(weekNumber, dayIndex), 0), 'yyyy-MM-dd')
+      });
+      
+      // Also save to localStorage as backup
+      if (programId) {
+        const cellKey = `${weekNumber}-${dayIndex}`;
+        const storageKey = `program_${programId}_session_${cellKey}`;
+        localStorage.setItem(storageKey, content);
+      }
+    }
+  };
+
+  // Toggle rest day status for a cell
+  const toggleRestDay = async (weekNumber: number, dayNumber: number) => {
+    // Get day index within the week (0-6)
+    const dayIndex = dayNumber % 7;
+    
+    // Get the full day number across all weeks
+    const fullDayNumber = weekNumber * 7 + dayIndex;
+    
+    // Check if session exists for this day
+    const existingSession = sessions?.find((s: Session) => 
+      s.dayNumber === fullDayNumber
+    );
+    
+    if (existingSession) {
+      // Toggle rest day status
+      updateSession.mutate({
+        ...existingSession,
+        isRestDay: !existingSession.isRestDay,
+        description: existingSession.isRestDay ? existingSession.description : "Rest Day"
+      });
+    } else {
+      // Create new rest day session
+      createSession.mutate({
+        programId,
+        title: `Day ${fullDayNumber + 1}`,
+        description: "Rest Day",
+        dayNumber: fullDayNumber,
+        isRestDay: true,
+        date: format(addDays(getDateForWeekDay(weekNumber, dayIndex), 0), 'yyyy-MM-dd')
+      });
+    }
+  };
+
+  // Helper to get date for a specific week and day
+  const getDateForWeekDay = (weekNumber: number, dayNumber: number) => {
+    const week = weeks.find(w => w.weekNumber === weekNumber);
+    if (!week) return new Date();
+    
+    return addDays(week.startDate, dayNumber);
+  };
+
+  // Form submission handler
+  const onSubmit = (data: z.infer<typeof programEditorSchema>) => {
+    updateProgram.mutate(data);
+  };
+
+  const isLoading = programLoading || sessionsLoading;
+  const isSubmitting = updateProgram.isPending;
+
+  // Load saved sessions from localStorage on component mount
+  useEffect(() => {
+    if (programId) {
+      const savedSessionData: Record<string, string> = {};
+      
+      // Check for saved sessions in localStorage
+      for (let week = 0; week < 12; week++) {
+        for (let day = 0; day < 7; day++) {
+          const cellKey = `${week}-${day}`;
+          const storageKey = `program_${programId}_session_${cellKey}`;
+          
+          try {
+            const savedContent = localStorage.getItem(storageKey);
+            if (savedContent) {
+              savedSessionData[cellKey] = savedContent;
+              console.log("Content prop changed:", savedContent);
+            }
+          } catch (e) {
+            console.error("Error reading from localStorage:", e);
+          }
+        }
+      }
+    }
+  }, [programId]);
+
+  // Error state
+  if (programError) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center space-x-2 text-red-500 mb-4">
+          <AlertCircle size={20} />
+          <h2 className="text-xl font-semibold">Error Loading Program</h2>
+        </div>
+        <p className="mb-4 text-gray-300">There was a problem loading the program data. Please try again.</p>
+        <Button onClick={() => navigate("/programs")}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Programs
+        </Button>
+      </div>
+    );
+  }
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[500px]">
+        <div className="flex flex-col items-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+          <p>Loading program data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">Edit Program</h1>
+          <p className="text-muted-foreground mb-4 md:mb-0">
+            Edit your training program details and schedule
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => navigate(`/programs/${programId}`)}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            form="program-editor-form"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Save Program
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+
+      <div className="mb-6">
+        <Card>
+          <div 
+            className="flex items-center justify-between p-4 cursor-pointer border-b border-gray-800"
+            onClick={() => setDetailsExpanded(!detailsExpanded)}
+          >
+            <div className="font-medium">Program Details</div>
+            <div className="flex items-center gap-3">
+              <div className="text-sm text-muted-foreground">
+                {program?.title || "Untitled Program"}
+                {program?.startDate && ` • Started ${format(new Date(program.startDate), "MMM d, yyyy")}`}
+              </div>
+              <Button variant="ghost" size="icon" className="h-8 w-8 p-0" onClick={(e) => {
+                e.stopPropagation();
+                setDetailsExpanded(!detailsExpanded);
+              }}>
+                {detailsExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+          <CardContent className={`p-4 ${detailsExpanded ? 'block' : 'hidden'}`}>
+            <Form {...form}>
+              <form id="program-editor-form" onSubmit={form.handleSubmit(onSubmit)}>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Left column: Cover image upload */}
+                  <div>
+                    <ProgramCoverUpload 
+                      programId={programId}
+                      initialImageUrl={program?.coverImageUrl || ''}
+                    />
+                  </div>
+                  
+                  {/* Right column: Program details */}
+                  <div className="lg:col-span-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="title"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Program Title</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Program title" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="startDate"
+                        render={({ field }) => (
+                          <FormItem className="w-auto">
+                            <FormLabel>Start Date</FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    type="button"
+                                    variant={"outline"}
+                                    className={`pl-3 text-left font-normal ${
+                                      !field.value ? "text-muted-foreground" : ""
+                                    }`}
+                                  >
+                                    {field.value ? (
+                                      format(new Date(field.value), "PPP")
+                                    ) : (
+                                      <span>Pick a date</span>
+                                    )}
+                                    <CalendarDays className="ml-auto h-4 w-4 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <CalendarComponent
+                                  mode="single"
+                                  selected={field.value ? new Date(field.value) : undefined}
+                                  onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="description"
+                        render={({ field }) => (
+                          <FormItem className="md:col-span-2">
+                            <FormLabel>Description</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="Program description"
+                                {...field}
+                                rows={2}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold mb-2">Training Schedule</h2>
+        <p className="text-sm text-gray-600 mb-4">
+          Click on any cell to add or edit workout details. You can mark days as rest days.
+        </p>
+        
+        <ScrollArea className="w-full border rounded-lg">
+          <div className="min-w-[900px]">
+            {/* Week headers */}
+            {weeks.map((week) => (
+              <div key={`week-${week.weekNumber}`} className="mb-6">
+                <div className="bg-gray-800 p-2 mb-2 flex justify-between items-center">
+                  <h3 className="font-medium">
+                    Week {week.weekNumber + 1}
+                    <span className="ml-2 text-sm text-gray-400">
+                      {format(week.startDate, "MMM d")} - {format(addDays(week.startDate, 6), "MMM d, yyyy")}
+                    </span>
+                  </h3>
+                </div>
+
+                {/* Day headers */}
+                <div className="grid grid-cols-7 gap-1 mb-1">
+                  {Array.from({ length: 7 }).map((_, dayIndex) => {
+                    const date = addDays(week.startDate, dayIndex);
+                    return (
+                      <div key={`week-${week.weekNumber}-day-${dayIndex}-header`} className="text-center py-1 bg-gray-800 text-sm">
+                        {format(date, "EEE")}
+                        <div className="text-xs text-gray-400">
+                          {format(date, "MMM d")}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Session cells */}
+                <div className="grid grid-cols-7 gap-1">
+                  {Array.from({ length: 7 }).map((_, dayIndex) => {
+                    // Calculate the full day number
+                    const fullDayNumber = week.weekNumber * 7 + dayIndex;
+                    
+                    // Find session for this day, if any
+                    const session = sessions?.find((s: Session) => 
+                      s.dayNumber === fullDayNumber
+                    );
+                    
+                    // Get content from session or localStorage
+                    const cellKey = `${week.weekNumber}-${dayIndex}`;
+                    const storageKey = `program_${programId}_session_${cellKey}`;
+                    let savedContent = "";
+                    
+                    try {
+                      const storedContent = localStorage.getItem(storageKey);
+                      if (storedContent) savedContent = storedContent;
+                    } catch (e) {
+                      console.error("Error reading from localStorage:", e);
+                    }
+                    
+                    const cellContent = session?.description || savedContent || "";
+                    
+                    return (
+                      <div key={`week-${week.weekNumber}-day-${dayIndex}`} className="relative">
+                        <EditableCell
+                          value={cellContent}
+                          onChange={(newValue) => handleCellContentChange(week.weekNumber, dayIndex, newValue)}
+                          isRestDay={session?.isRestDay || false}
+                          onBlur={() => {
+                            // Any additional actions on blur
+                          }}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-1 right-1 h-6 w-6 p-0 bg-gray-800 bg-opacity-50 hover:bg-opacity-80"
+                          onClick={() => toggleRestDay(week.weekNumber, dayIndex)}
+                          title={session?.isRestDay ? "Make this a workout day" : "Mark as rest day"}
+                        >
+                          {session?.isRestDay ? (
+                            <Clock className="h-3 w-3" />
+                          ) : (
+                            <Clock className="h-3 w-3" />
+                          )}
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+
+            {/* Add week button */}
+            <div className="flex justify-center py-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  // Add a new week
+                  const newWeekNumber = weeks.length > 0 ? Math.max(...weeks.map(w => w.weekNumber)) + 1 : 0;
+                  const lastWeek = weeks[weeks.length - 1];
+                  const newStartDate = lastWeek ? addDays(lastWeek.startDate, 7) : new Date();
+                  
+                  setWeeks([...weeks, {
+                    weekNumber: newWeekNumber,
+                    startDate: newStartDate,
+                    days: []
+                  }]);
+                }}
+                disabled={isAddingWeek}
+              >
+                {isAddingWeek ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Adding...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Week
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </ScrollArea>
+      </div>
+    </div>
+  );
+}
+
+export function Component() {
+  return <ProgramEditorPage />;
+}
