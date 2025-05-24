@@ -125,7 +125,7 @@ function EditableCell({
 
   return (
     <TableCell 
-      className={`border p-0 relative min-h-[100px] bg-gray-900 ${isWeekend ? 'bg-gray-950' : ''} ${isRest ? 'bg-gray-800' : ''}`}
+      className={`border p-0 relative min-h-[100px] ${(value || content) ? 'bg-gray-700' : 'bg-gray-800'}`}
       onClick={() => !isEditing && setIsEditing(true)}
     >
       {isEditing ? (
@@ -170,17 +170,6 @@ function EditableCell({
             ) : (
               <div className="flex items-center justify-center h-full text-gray-300">
                 <span className="font-medium">Rest Day</span>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="ml-2 p-0 h-6 w-6 rounded-full hover:bg-gray-800"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsEditing(true);
-                  }}
-                >
-                  <Plus className="h-3 w-3" />
-                </Button>
               </div>
             )}
           </div>
