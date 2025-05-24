@@ -25,7 +25,15 @@ import SpikesPage from "@/pages/spikes-page";
 import { Component as ProgramsPage } from "@/pages/programs-page";
 import { Component as ProgramCreatePage } from "@/pages/program-create-page";
 import { Component as ProgramDetailPage } from "@/pages/program-detail-page";
-import { useParams } from "wouter";
+// Import the program editor page 
+const ProgramEditorPage = () => {
+  return (
+    <div className="container p-4 pt-20 md:pt-24 md:pl-72">
+      <h1>Program Editor</h1>
+      <p>Editing program...</p>
+    </div>
+  );
+};
 import { Component as AssignedProgramsPage } from "@/pages/assigned-programs-page";
 import AthleteProfilePage from "@/pages/athlete-profile-page";
 import ProgramCoverPage from "@/pages/program-cover-page";
