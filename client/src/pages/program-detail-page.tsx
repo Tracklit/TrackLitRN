@@ -256,7 +256,40 @@ function ProgramDetail() {
             </CardHeader>
             
             <CardContent>
-              <ProgramDetailContent program={program} />
+              {program.isUploadedProgram && program.programFileUrl ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <FileText className="h-5 w-5 mr-2 text-blue-500" />
+                      <span className="text-lg font-medium">Document-Based Program</span>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button variant="outline" size="sm" asChild>
+                        <a href={program.programFileUrl} download>
+                          <Download className="h-4 w-4 mr-2" />
+                          Download
+                        </a>
+                      </Button>
+                      <Button size="sm" asChild>
+                        <a href={program.programFileUrl} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          View Document
+                        </a>
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="rounded-lg border overflow-hidden">
+                    <iframe 
+                      src={`https://docs.google.com/viewer?embedded=true&url=${encodeURIComponent(window.location.origin + program.programFileUrl)}`}
+                      className="w-full min-h-[600px] border-0"
+                      title="Program Document"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <ProgramDetailContent program={program} />
+              )}
             </CardContent>
           </Card>
         </div>
