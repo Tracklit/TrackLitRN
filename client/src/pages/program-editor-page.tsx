@@ -81,21 +81,27 @@ function EditableCell({
   isWeekend?: boolean;
   date?: string;
 }) {
+  // Initialize component state
   const [isEditing, setIsEditing] = useState(false);
+  // Very important: Initialize with content or empty string
   const [value, setValue] = useState(content || "");
   const [isRest, setIsRest] = useState(isRestDay);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-
-  // Always update local state when props change
+  
+  // Keep value in sync with external content
   useEffect(() => {
-    setValue(content || "");
+    console.log("Content prop changed:", content);
+    if (content) {
+      setValue(content);
+    }
   }, [content]);
   
-  // Always update rest state when props change
+  // Keep rest state in sync with external isRestDay
   useEffect(() => {
     setIsRest(isRestDay);
   }, [isRestDay]);
 
+  // Auto-focus text area when editing starts
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
@@ -158,7 +164,7 @@ function EditableCell({
             )}
           </div>
           <div className="mt-1 flex-1 text-sm whitespace-pre-wrap">
-            {content || (
+            {value || content || (
               <span className="text-gray-300">
                 Click to add workout...
               </span>
@@ -602,17 +608,25 @@ function ProgramEditorPage() {
   const isLoading = programLoading || sessionsLoading;
   const isSubmitting = updateProgram.isPending;
 
-  // Get cell content for a specific week and day
+  // Enhanced function to get cell content for a specific week and day
   const getCellContent = (weekNumber: number, dayNumber: number) => {
-    // First check - direct database saved sessions
-    const session = sessions.find((s: Session) => {
+    // Find all matching sessions for this week and day (there might be duplicates)
+    const matchingSessions = sessions.filter((s: Session) => {
       return Number(s.weekNumber) === Number(weekNumber) && Number(s.dayNumber) === Number(dayNumber);
     });
     
-    // Check all possible content fields
+    // If we have multiple matching sessions, use the most recent one (highest ID)
+    const session = matchingSessions.length > 0 
+      ? matchingSessions.reduce((latest, current) => {
+          return (!latest.id || (current.id && current.id > latest.id)) ? current : latest;
+        }, {} as Session)
+      : null;
+    
+    // Extract content from the session object, trying all possible fields
     let displayContent = "";
     
     if (session) {
+      // Look for content in all possible fields, prioritizing shortDistanceWorkout
       if (session.shortDistanceWorkout && session.shortDistanceWorkout.trim() !== "") {
         displayContent = session.shortDistanceWorkout;
       } else if (session.description && session.description.trim() !== "") {
@@ -621,12 +635,16 @@ function ProgramEditorPage() {
         displayContent = session.content;
       }
       
-      // Log found session for debugging
-      console.log(`Found session for week ${weekNumber}, day ${dayNumber}:`, 
-        { id: session.id, content: displayContent });
+      // Log found session data for debugging
+      console.log(`Session for week ${weekNumber}, day ${dayNumber}:`, { 
+        id: session.id, 
+        content: displayContent,
+        shortDistance: session.shortDistanceWorkout,
+        description: session.description
+      });
     }
     
-    // Build the cell data object
+    // Build the cell data object with all necessary information
     return {
       content: displayContent,
       isRestDay: session?.isRestDay || false,
