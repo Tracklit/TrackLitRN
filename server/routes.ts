@@ -7,6 +7,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { programCoverUpload } from "./upload-config";
+import { handleProgramCoverUpload } from "./program-cover-upload";
 import { GoogleSpreadsheet } from "google-spreadsheet";
 import { insertAthleteProfileSchema } from "@shared/athlete-profile-schema";
 import { 
@@ -3088,6 +3089,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to delete program session" });
     }
   });
+  
+  // Add program cover image upload endpoint
+  app.post("/api/programs/:id/cover-image", programCoverUpload.single('file'), handleProgramCoverUpload);
   
   // 5. Delete a program
   app.delete("/api/programs/:id", async (req: Request, res: Response) => {
