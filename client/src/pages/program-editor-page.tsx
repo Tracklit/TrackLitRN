@@ -184,6 +184,7 @@ function ProgramEditorPage() {
   const [isAddingWeek, setIsAddingWeek] = useState(false);
   const [sessionDialogOpen, setSessionDialogOpen] = useState(false);
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
+  const [detailsExpanded, setDetailsExpanded] = useState(false);
 
   // Program details form
   const form = useForm<z.infer<typeof programEditorSchema>>({
@@ -759,7 +760,25 @@ function ProgramEditorPage() {
 
       <div className="mb-6">
         <Card>
-          <CardContent className="p-4">
+          <div 
+            className="flex items-center justify-between p-4 cursor-pointer border-b border-gray-800"
+            onClick={() => setDetailsExpanded(!detailsExpanded)}
+          >
+            <div className="font-medium">Program Details</div>
+            <div className="flex items-center gap-3">
+              <div className="text-sm text-muted-foreground">
+                {program?.title || "Untitled Program"}
+                {program?.startDate && ` • Started ${format(new Date(program.startDate), "MMM d, yyyy")}`}
+              </div>
+              <Button variant="ghost" size="icon" className="h-8 w-8 p-0" onClick={(e) => {
+                e.stopPropagation();
+                setDetailsExpanded(!detailsExpanded);
+              }}>
+                {detailsExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+          <CardContent className={`p-4 ${detailsExpanded ? 'block' : 'hidden'}`}>
             <Form {...form}>
               <form id="program-editor-form" onSubmit={form.handleSubmit(onSubmit)}>
                 <div className="flex flex-wrap gap-4 items-end">
