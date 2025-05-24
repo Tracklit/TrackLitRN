@@ -21,9 +21,13 @@ import {
   Dumbbell, 
   CheckCircle2,
   Edit,
-  Loader2
+  Loader2,
+  Download,
+  ExternalLink
 } from "lucide-react";
+import { ProgramDocumentPreview } from "@/components/program-document-preview";
 import { AssignProgramDialog } from "@/components/assign-program-dialog";
+import { DeleteProgramDialog } from "@/components/delete-program-dialog";
 import {
   Dialog,
   DialogContent,
