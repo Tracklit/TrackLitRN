@@ -89,14 +89,20 @@ function SessionCard({ session, onClick }: {
       onClick={onClick}
       style={{ cursor: 'move' }}
     >
-      <div className="font-medium truncate">{session.title}</div>
       {session.isRestDay ? (
-        <Badge variant="outline" className="mt-1">Rest Day</Badge>
+        <Badge variant="outline">Rest Day</Badge>
       ) : (
         <>
-          {session.shortDistanceWorkout && (
-            <div className="mt-1 truncate text-muted-foreground">{session.shortDistanceWorkout}</div>
+          {session.shortDistanceWorkout ? (
+            <div className="font-medium truncate">{session.shortDistanceWorkout}</div>
+          ) : session.mediumDistanceWorkout ? (
+            <div className="font-medium truncate">{session.mediumDistanceWorkout}</div>
+          ) : session.longDistanceWorkout ? (
+            <div className="font-medium truncate">{session.longDistanceWorkout}</div>
+          ) : (
+            <div className="font-medium truncate">{session.title}</div>
           )}
+          
           {session.preActivation1 && (
             <div className="mt-1 truncate text-xs text-muted-foreground/80">Pre: {session.preActivation1}</div>
           )}
@@ -155,11 +161,11 @@ function DayContainer({ day, sessions, onAddSession, onEditSession, onMoveSessio
     <div 
       ref={ref}
       className={`rounded-lg overflow-hidden ${day.isWeekend ? 'bg-muted/50' : 'bg-card'} 
-        ${isOver ? 'ring-2 ring-primary' : ''} border min-h-[200px] flex flex-col`}
+        ${isOver ? 'ring-2 ring-primary' : ''} border min-h-[200px] flex flex-col text-xs`}
     >
-      <div className={`p-2 text-center ${day.isWeekend ? 'bg-muted' : 'bg-primary/10'}`}>
-        <div className="text-xs font-medium">{day.dayOfWeek}</div>
-        <div className="text-sm font-bold">{day.dayOfMonth}</div>
+      <div className={`p-1 text-center ${day.isWeekend ? 'bg-muted' : 'bg-primary/10'}`}>
+        <div className="text-xs font-medium">{day.dayOfWeek.substring(0, 3)}</div>
+        <div className="text-xs font-bold">{day.dayOfMonth}</div>
         <div className="text-xs">{day.month}</div>
       </div>
       
@@ -635,7 +641,7 @@ export default function ProgramEditorPage() {
   
   if (error) {
     return (
-      <div className="container max-w-screen-xl mx-auto p-4 pt-20 md:pt-24 md:pl-72 pb-20">
+      <div className="container max-w-full mx-auto p-4 pt-20 md:pt-24 md:pl-72 pb-20">
         <div className="text-center">
           <h2 className="text-xl font-semibold mb-2">Error Loading Program</h2>
           <p className="text-muted-foreground">
@@ -701,7 +707,7 @@ export default function ProgramEditorPage() {
             return (
               <div key={weekIndex} className="space-y-2">
                 <h3 className="text-lg font-semibold mb-2">Week {weekIndex + 1}</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-7 gap-3">
+                <div className="grid grid-cols-7 gap-2 overflow-x-auto" style={{ minWidth: "min-content" }}>
                   {weekDayNums.map((dayNum) => {
                     const day = allDays.find(d => d.dayNumber === dayNum) || allDays[0];
                     return (
