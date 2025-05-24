@@ -155,7 +155,7 @@ function DayContainer({ day, sessions, onAddSession, onEditSession, onMoveSessio
     <div 
       ref={ref}
       className={`rounded-lg overflow-hidden ${day.isWeekend ? 'bg-muted/50' : 'bg-card'} 
-        ${isOver ? 'ring-2 ring-primary' : ''}`}
+        ${isOver ? 'ring-2 ring-primary' : ''} border min-h-[200px] flex flex-col`}
     >
       <div className={`p-2 text-center ${day.isWeekend ? 'bg-muted' : 'bg-primary/10'}`}>
         <div className="text-xs font-medium">{day.dayOfWeek}</div>
@@ -163,7 +163,7 @@ function DayContainer({ day, sessions, onAddSession, onEditSession, onMoveSessio
         <div className="text-xs">{day.month}</div>
       </div>
       
-      <div className="p-2">
+      <div className="p-2 flex-1 flex flex-col">
         <div className="text-xs mb-2 flex items-center justify-between">
           <span>Day {day.dayNumber}</span>
           <Button 
@@ -176,7 +176,7 @@ function DayContainer({ day, sessions, onAddSession, onEditSession, onMoveSessio
           </Button>
         </div>
         
-        <div className="space-y-2 max-h-[350px] overflow-y-auto">
+        <div className="space-y-2 max-h-[350px] overflow-y-auto flex-1 flex flex-col">
           {sessions.length > 0 ? (
             sessions.map((session) => (
               <SessionCard 
@@ -186,8 +186,8 @@ function DayContainer({ day, sessions, onAddSession, onEditSession, onMoveSessio
               />
             ))
           ) : (
-            <div className="text-xs text-center py-4 text-muted-foreground">
-              No sessions
+            <div className="text-xs text-center py-4 text-muted-foreground flex-1 flex items-center justify-center border border-dashed rounded-md">
+              Drop sessions here
             </div>
           )}
         </div>
