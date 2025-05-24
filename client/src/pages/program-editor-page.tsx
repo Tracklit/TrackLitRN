@@ -564,7 +564,8 @@ function ProgramEditorPage() {
             Cancel
           </Button>
           <Button
-            onClick={form.handleSubmit(onSubmit)}
+            type="submit"
+            form="program-editor-form"
             disabled={isSubmitting}
           >
             {isSubmitting ? (
@@ -586,7 +587,7 @@ function ProgramEditorPage() {
         <Card>
           <CardContent className="p-4">
             <Form {...form}>
-              <form>
+              <form id="program-editor-form" onSubmit={form.handleSubmit(onSubmit)}>
                 <div className="flex flex-wrap gap-4 items-end">
                   <FormField
                     control={form.control}
@@ -611,6 +612,7 @@ function ProgramEditorPage() {
                           <PopoverTrigger asChild>
                             <FormControl>
                               <Button
+                                type="button"
                                 variant={"outline"}
                                 className={`pl-3 text-left font-normal ${
                                   !field.value ? "text-muted-foreground" : ""
