@@ -60,9 +60,9 @@ type Session = z.infer<typeof sessionFormSchema>;
 
 // Session component with move capability
 function SessionCard({ session, onClick, onMoveSession }: { 
-  session: Session & { id?: number }, 
+  session: any, 
   onClick: () => void, 
-  onMoveSession: (session: Session & { id?: number }) => void 
+  onMoveSession: (session: any) => void 
 }) {
   return (
     <div 
@@ -399,6 +399,8 @@ export default function ProgramEditorPage() {
     })();
   };
   
+
+  
   // Delete session handler
   const handleDeleteSession = () => {
     if (editingSession?.id) {
@@ -449,13 +451,25 @@ export default function ProgramEditorPage() {
     );
   }
   
+  // Function to calculate the total number of days in the program
+  const getTotalDays = (): number => {
+    if (program?.sessions && program.sessions.length > 0) {
+      // Find the highest day number from sessions
+      const maxDay = Math.max(...program.sessions.map(session => session.dayNumber || 0));
+      return Math.max(maxDay, 1);
+    }
+    
+    // Default to at least 7 days (1 week) if no sessions are available
+    return 7;
+  };
+  
   // State for move session dialog
   const [moveSessionDialogOpen, setMoveSessionDialogOpen] = useState(false);
-  const [sessionToMove, setSessionToMove] = useState<Session | null>(null);
+  const [sessionToMove, setSessionToMove] = useState<any>(null);
   const [targetDayNumber, setTargetDayNumber] = useState<number | null>(null);
   
   // Function to open the move session dialog
-  const handleOpenMoveDialog = (session: Session) => {
+  const handleOpenMoveDialog = (session: any) => {
     setSessionToMove(session);
     setTargetDayNumber(session.dayNumber);
     setMoveSessionDialogOpen(true);
