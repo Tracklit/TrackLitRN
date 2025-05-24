@@ -225,7 +225,7 @@ function ProgramDetail() {
         {program.userId === user?.id && (
           <div className="flex gap-2">
             <Button variant="outline" asChild>
-              <Link href={`/program-editor/${id}`}>
+              <Link href={`/programs/${id}/edit`}>
                 <Edit className="h-4 w-4 mr-2" />
                 Edit Program
               </Link>
