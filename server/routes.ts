@@ -2967,6 +2967,116 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // 4.1 Create a program session
+  app.post("/api/programs/:id/sessions", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const programId = parseInt(req.params.id);
+      if (isNaN(programId)) {
+        return res.status(400).json({ error: "Invalid program ID" });
+      }
+      
+      // Get the program
+      const program = await dbStorage.getProgram(programId);
+      if (!program) {
+        return res.status(404).json({ error: "Program not found" });
+      }
+      
+      // Check if user is the owner of this program
+      if (program.userId !== req.user!.id) {
+        return res.status(403).json({ error: "You don't have permission to add sessions to this program" });
+      }
+      
+      // Create the session
+      const sessionData = {
+        ...req.body,
+        programId
+      };
+      
+      const newSession = await dbStorage.createProgramSession(sessionData);
+      res.json(newSession);
+    } catch (error) {
+      console.error("Error creating program session:", error);
+      res.status(500).json({ error: "Failed to create program session" });
+    }
+  });
+  
+  // 4.2 Update a program session
+  app.put("/api/programs/:programId/sessions/:sessionId", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const programId = parseInt(req.params.programId);
+      const sessionId = parseInt(req.params.sessionId);
+      
+      if (isNaN(programId) || isNaN(sessionId)) {
+        return res.status(400).json({ error: "Invalid ID parameters" });
+      }
+      
+      // Get the program
+      const program = await dbStorage.getProgram(programId);
+      if (!program) {
+        return res.status(404).json({ error: "Program not found" });
+      }
+      
+      // Check if user is the owner of this program
+      if (program.userId !== req.user!.id) {
+        return res.status(403).json({ error: "You don't have permission to update sessions in this program" });
+      }
+      
+      // Update the session
+      const sessionData = {
+        ...req.body,
+        programId
+      };
+      
+      const updatedSession = await dbStorage.updateProgramSession(sessionId, sessionData);
+      res.json(updatedSession);
+    } catch (error) {
+      console.error("Error updating program session:", error);
+      res.status(500).json({ error: "Failed to update program session" });
+    }
+  });
+  
+  // 4.3 Delete a program session
+  app.delete("/api/programs/:programId/sessions/:sessionId", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const programId = parseInt(req.params.programId);
+      const sessionId = parseInt(req.params.sessionId);
+      
+      if (isNaN(programId) || isNaN(sessionId)) {
+        return res.status(400).json({ error: "Invalid ID parameters" });
+      }
+      
+      // Get the program
+      const program = await dbStorage.getProgram(programId);
+      if (!program) {
+        return res.status(404).json({ error: "Program not found" });
+      }
+      
+      // Check if user is the owner of this program
+      if (program.userId !== req.user!.id) {
+        return res.status(403).json({ error: "You don't have permission to delete sessions in this program" });
+      }
+      
+      // Delete the session
+      await dbStorage.deleteProgramSession(sessionId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting program session:", error);
+      res.status(500).json({ error: "Failed to delete program session" });
+    }
+  });
+  
   // 5. Delete a program
   app.delete("/api/programs/:id", async (req: Request, res: Response) => {
     try {
