@@ -125,7 +125,7 @@ function EditableCell({
 
   return (
     <TableCell 
-      className={`border p-0 relative min-h-[100px] ${(value || content) ? 'bg-gray-700' : 'bg-gray-800'}`}
+      className={`border p-0 relative min-h-[100px] ${(value || content) ? 'bg-gray-700' : 'bg-gray-950'}`}
       onClick={() => !isEditing && setIsEditing(true)}
     >
       {isEditing ? (
@@ -168,8 +168,8 @@ function EditableCell({
             {value || content ? (
               <span>{value || content}</span>
             ) : (
-              <div className="flex items-center justify-center h-full text-gray-300">
-                <span className="font-medium">Rest Day</span>
+              <div className="flex items-center justify-center h-full">
+                {/* Empty cell - no text */}
               </div>
             )}
           </div>
