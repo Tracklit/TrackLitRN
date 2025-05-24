@@ -204,13 +204,10 @@ export default function ProgramEditorPage() {
   const queryClient = useQueryClient();
   
   // All state declarations in one place
-  const [currentWeek, setCurrentWeek] = useState(0);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isSessionDialogOpen, setIsSessionDialogOpen] = useState(false);
   const [editingSession, setEditingSession] = useState<Session | null>(null);
-  const [moveSessionDialogOpen, setMoveSessionDialogOpen] = useState(false);
-  const [sessionToMove, setSessionToMove] = useState<any>(null);
-  const [targetDayNumber, setTargetDayNumber] = useState<number | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [currentWeek, setCurrentWeek] = useState(0);
   
   // Program query
   const { data: program, isLoading, error } = useQuery({
@@ -314,9 +311,6 @@ export default function ProgramEditorPage() {
     });
   };
   
-  // Current week dates
-  const weekDates = getWeekDates(currentWeek);
-  
   // Function to calculate the total number of days in the program
   const getTotalDays = (): number => {
     if (program?.sessions && program.sessions.length > 0) {
@@ -328,6 +322,36 @@ export default function ProgramEditorPage() {
     // Default to at least 7 days (1 week) if no sessions are available
     return 7;
   };
+  
+  // Calculate total days and weeks
+  const totalDays = getTotalDays();
+  
+  // Generate all day objects for the entire program
+  const getAllDays = () => {
+    const startDate = startOfWeek(new Date()); // Start from current week
+    
+    return Array.from({ length: totalDays }, (_, i) => {
+      const dayNumber = i + 1;
+      const weekIndex = Math.floor(i / 7);
+      const dayInWeek = i % 7;
+      const date = addDays(startDate, i);
+      
+      return {
+        date,
+        dayOfWeek: format(date, 'EEEE'),
+        dayOfMonth: format(date, 'd'),
+        month: format(date, 'MMM'),
+        isWeekend: isWeekend(date),
+        dayNumber
+      };
+    });
+  };
+  
+  // Generate all days
+  const allDays = getAllDays();
+  
+  // Current week dates (keeping for compatibility)
+  const weekDates = getWeekDates(currentWeek);
   
   // Filter sessions for current week
   const weekSessions = program?.sessions?.filter((session: any) => {
@@ -626,7 +650,7 @@ export default function ProgramEditorPage() {
   }
   
   return (
-    <div className="container max-w-screen-xl mx-auto p-4 pt-20 md:pt-24 md:pl-72 pb-20">
+    <div className="container max-w-[95%] mx-auto p-4 pt-20 md:pt-24 md:pl-72 pb-20">
       <PageHeader
         title={program?.title || "Program Editor"}
         description="Create and manage your training program"
@@ -654,41 +678,44 @@ export default function ProgramEditorPage() {
           </TabsList>
           
           <div className="flex items-center space-x-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={goToPreviousWeek}
-              disabled={currentWeek === 0}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
             <span className="text-sm font-medium">
-              Week {currentWeek + 1} of {totalWeeks}
+              Total Weeks: {totalWeeks}
             </span>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={goToNextWeek}
-              disabled={currentWeek >= totalWeeks - 1}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
           </div>
         </div>
         
-        <TabsContent value="weekly" className="space-y-4">
-          <div className="grid grid-cols-7 gap-4">
-            {weekDates.map((day) => (
-              <DayContainer 
-                key={day.dayNumber}
-                day={day}
-                sessions={getSessionsForDay(day.dayNumber)}
-                onAddSession={handleOpenSessionDialog}
-                onEditSession={(session) => handleOpenSessionDialog(day.date, day.dayNumber, session)}
-                onMoveSession={handleMoveSession}
-              />
-            ))}
-          </div>
+        <TabsContent value="weekly" className="space-y-8">
+          {/* Display all weeks one after another */}
+          {Array.from({ length: totalWeeks }).map((_, weekIndex) => {
+            // Calculate the week's dates
+            const weekStartDay = weekIndex * 7 + 1;
+            const weekEndDay = Math.min(weekStartDay + 6, totalDays);
+            const weekDayNums = Array.from(
+              { length: weekEndDay - weekStartDay + 1 },
+              (_, i) => weekStartDay + i
+            );
+            
+            return (
+              <div key={weekIndex} className="space-y-2">
+                <h3 className="text-lg font-semibold mb-2">Week {weekIndex + 1}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
+                  {weekDayNums.map((dayNum) => {
+                    const day = allDays.find(d => d.dayNumber === dayNum) || allDays[0];
+                    return (
+                      <DayContainer 
+                        key={dayNum}
+                        day={day}
+                        sessions={getSessionsForDay(dayNum)}
+                        onAddSession={handleOpenSessionDialog}
+                        onEditSession={(session) => handleOpenSessionDialog(day.date, dayNum, session)}
+                        onMoveSession={handleMoveSession}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
         </TabsContent>
         
         <TabsContent value="settings">
