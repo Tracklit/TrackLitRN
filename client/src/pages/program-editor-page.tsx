@@ -169,13 +169,13 @@ function DayContainer({ day, sessions, onAddSession, onEditSession, onMoveSessio
         <div className="text-xs">{day.month}</div>
       </div>
       
-      <div className="p-2 flex-1 flex flex-col">
-        <div className="text-xs mb-2 flex items-center justify-between">
-          <span>Day {day.dayNumber}</span>
+      <div className="p-1 flex-1 flex flex-col">
+        <div className="text-xs mb-1 flex items-center justify-between">
+          <span className="text-xs">Day {day.dayNumber}</span>
           <Button 
             variant="ghost" 
             size="icon" 
-            className="h-5 w-5"
+            className="h-4 w-4"
             onClick={() => onAddSession(day.date, day.dayNumber)}
           >
             <Plus className="h-3 w-3" />
