@@ -1,11 +1,11 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Upload, X, Image as ImageIcon } from "lucide-react";
 
 interface ImageUploadProps {
   initialImageUrl?: string;
-  onImageUploaded: (imageUrl: string) => void;
+  onImageUploaded: (imageUrl: string | File) => void;
   className?: string;
 }
 
@@ -17,6 +17,13 @@ export function ImageUpload({
   const [imageUrl, setImageUrl] = useState<string>(initialImageUrl || "");
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Update image URL when initialImageUrl prop changes
+  useEffect(() => {
+    if (initialImageUrl !== undefined) {
+      setImageUrl(initialImageUrl);
+    }
+  }, [initialImageUrl]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -25,12 +32,16 @@ export function ImageUpload({
     try {
       setIsUploading(true);
       
+      // Create a temporary URL for the image preview
+      const previewUrl = URL.createObjectURL(file);
+      setImageUrl(previewUrl);
+      
       // Call the onImageUploaded callback with the file
       // This allows parent components to handle the upload process
-      onImageUploaded(file as unknown as string);
+      onImageUploaded(file);
       
-      // We'll set the imageUrl if the parent successfully uploads and provides a URL
-      // Otherwise this component will just be used to capture the file
+      // The actual URL will be set via the initialImageUrl prop
+      // when the parent component completes the upload
     } catch (error) {
       console.error('Error handling image:', error);
     } finally {
