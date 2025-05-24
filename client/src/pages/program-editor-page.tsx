@@ -367,19 +367,21 @@ function ProgramEditorPage() {
   // Check if the program has an uploaded document
   const hasUploadedDocument = program && 
     (program.isUploadedProgram === true || (program.programFileUrl && program.programFileUrl.length > 0));
-    
-  // For demo purposes, provide a fallback document URL that's guaranteed to work within an iframe
-  // Use a Google PDF Viewer to load our test PDF - this avoids cross-origin issues
+  
+  // Use the actual document URL from the program data
   const pdfViewerUrl = "https://docs.google.com/viewer?embedded=true&url=";
-  const testDocumentUrl = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf";
-  const embeddedPdfUrl = `${pdfViewerUrl}${encodeURIComponent(testDocumentUrl)}`;
+  
+  // For program #1, use the actual file URL that has been uploaded
+  const actualProgramFileUrl = program?.programFileUrl || "";
   
   // Determine if we should show document view or weekly schedule
-  const isUploadedDocumentProgram = hasUploadedDocument || (programId === 1); // Show document view for program #1 for demo
-  const rawDocumentUrl = program?.programFileUrl || testDocumentUrl;
-  const documentUrl = program?.programFileUrl ? 
-    `${pdfViewerUrl}${encodeURIComponent(program.programFileUrl)}` : 
-    embeddedPdfUrl;
+  const isUploadedDocumentProgram = hasUploadedDocument || (programId === 1); 
+  
+  // For embedding in iframe, use Google Docs viewer to ensure compatibility
+  const documentUrl = `${pdfViewerUrl}${encodeURIComponent(actualProgramFileUrl)}`;
+  
+  // For direct download/open links, use the raw URL
+  const rawDocumentUrl = actualProgramFileUrl;
   const documentType = program?.programFileType || "application/pdf";
 
   // Organize sessions into weeks when data is loaded
@@ -970,13 +972,13 @@ function ProgramEditorPage() {
               </p>
               <div className="flex justify-center gap-4">
                 <Button variant="outline" className="flex items-center px-4 py-2" asChild>
-                  <a href={documentUrl} download>
+                  <a href={rawDocumentUrl} download>
                     <Download className="h-4 w-4 mr-2" />
                     Download Document
                   </a>
                 </Button>
                 <Button className="flex items-center px-4 py-2 bg-amber-400 hover:bg-amber-500 text-black" asChild>
-                  <a href={documentUrl} target="_blank" rel="noopener noreferrer">
+                  <a href={rawDocumentUrl} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="h-4 w-4 mr-2" />
                     Open in New Tab
                   </a>
