@@ -219,20 +219,11 @@ function ProgramDetail() {
         
         {/* Show Edit button only if user is the program creator */}
         {program.userId === user?.id && !program.isUploadedProgram && (
-          <Button 
-            variant="outline" 
-            onClick={() => {
-              // Using the location API to navigate programmatically
-              const url = new URL(window.location.href);
-              const pathParts = url.pathname.split('/');
-              const programId = pathParts[pathParts.length - 1];
-              
-              // Navigate to the edit page
-              window.location.href = `/programs/${programId}/edit`;
-            }}
-          >
-            <Edit className="h-4 w-4 mr-2" />
-            Edit Program
+          <Button variant="outline" asChild>
+            <Link href={`/programs/${id}/edit`}>
+              <Edit className="h-4 w-4 mr-2" />
+              Edit Program
+            </Link>
           </Button>
         )}
       </div>

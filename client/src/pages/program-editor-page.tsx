@@ -105,7 +105,7 @@ function SessionCard({ session, onClick, onMoveSession }: {
 
 export default function ProgramEditorPage() {
   const params = useParams<{ id: string }>();
-  const programId = Number(params.id);
+  const programId = parseInt(params.id);
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
