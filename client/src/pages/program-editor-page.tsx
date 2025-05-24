@@ -234,12 +234,23 @@ function ProgramEditorPage() {
         return apiRequest('POST', `/api/programs/${programId}/sessions`, data);
       }
     },
-    onSuccess: () => {
+    onSuccess: (response) => {
+      // Log response for debugging
+      console.log("Session update response:", response);
+      
       toast({
         title: "Session updated",
         description: "Your session has been successfully updated.",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/programs', programId, 'sessions'] });
+      
+      // Force reload the program and its sessions
+      queryClient.invalidateQueries({ queryKey: ['/api/programs'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/programs', programId] });
+      
+      // Important: This ensures we get fresh session data
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['/api/programs', programId, 'sessions'] });
+      }, 100);
     },
     onError: (error: Error) => {
       toast({
@@ -431,6 +442,7 @@ function ProgramEditorPage() {
         isRestDay,
         title: content.split('\n')[0] || "Training Session",
         description: content,
+        shortDistanceWorkout: content, // Add to this field for compatibility
       });
     } else {
       updateSession.mutate({
@@ -442,6 +454,7 @@ function ProgramEditorPage() {
         date: format(date, "yyyy-MM-dd"),
         title: content.split('\n')[0] || "Training Session",
         description: content,
+        shortDistanceWorkout: content, // Add to this field for compatibility
       });
     }
   };
