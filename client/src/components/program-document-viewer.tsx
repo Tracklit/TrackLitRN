@@ -2,8 +2,14 @@ import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, RefreshCw, FileText } from "lucide-react";
-import { Program } from "@shared/schema";
-import DocumentUploadDialog from "./document-upload-dialog";
+import DocumentUploadDialog from "@/components/document-upload-dialog";
+
+interface Program {
+  id: number;
+  title: string;
+  programFileUrl?: string | null;
+  isUploadedProgram?: boolean;
+}
 
 interface ProgramDocumentViewerProps {
   program: Program;

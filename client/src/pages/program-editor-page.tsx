@@ -27,6 +27,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format, addDays, parse, addWeeks, startOfWeek, getDay, isValid, parseISO } from "date-fns";
+import DocumentUploadDialog from "@/components/document-upload-dialog";
+import ProgramDocumentViewer from "@/components/program-document-viewer";
 
 // Program editor form schema
 const programEditorSchema = z.object({
