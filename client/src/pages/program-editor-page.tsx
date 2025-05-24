@@ -948,22 +948,14 @@ function ProgramEditorPage() {
               </div>
             </div>
             
-            {/* Document icon and info */}
-            <div className="flex flex-col items-center justify-center py-12 border rounded-lg bg-white">
-              <div className="text-blue-500 mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                  <polyline points="14 2 14 8 20 8"></polyline>
-                  <line x1="8" y1="13" x2="16" y2="13"></line>
-                  <line x1="8" y1="17" x2="16" y2="17"></line>
-                  <line x1="10" y1="9" x2="14" y2="9"></line>
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold mb-2 text-center">Document Program</h3>
-              <p className="text-sm text-gray-500 mb-4 max-w-md text-center">
-                This program uses a document format instead of the weekly schedule editor. 
-                Use the buttons below to access the document.
-              </p>
+            {/* Document preview iframe */}
+            <div className="w-full h-[600px] border rounded-lg overflow-hidden bg-white">
+              <iframe 
+                src={documentUrl} 
+                className="w-full h-full"
+                title="Document Preview"
+                sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+              />
             </div>
             
             {/* Document action buttons */}
