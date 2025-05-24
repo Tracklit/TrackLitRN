@@ -208,12 +208,31 @@ function ProgramEditorPage() {
     enabled: !isNaN(programId),
   });
 
-  // Fetch program sessions
+  // Fetch program sessions with direct access to the API
   const { data: sessions = [], isLoading: sessionsLoading, refetch: refetchSessions } = useQuery<Session[]>({
     queryKey: ['/api/programs', programId, 'sessions'],
+    queryFn: async () => {
+      if (!programId) return [];
+      
+      try {
+        const response = await fetch(`/api/programs/${programId}`);
+        if (!response.ok) throw new Error('Failed to fetch program sessions');
+        
+        const data = await response.json();
+        console.log("Program data with sessions:", data);
+        
+        if (data.sessions && Array.isArray(data.sessions)) {
+          return data.sessions;
+        }
+        return [];
+      } catch (err) {
+        console.error("Error fetching sessions:", err);
+        return [];
+      }
+    },
     enabled: !isNaN(programId),
     refetchOnWindowFocus: true,
-    staleTime: 1000, // Consider data stale after 1 second
+    staleTime: 1000,
   });
 
   // Update program mutation
@@ -245,14 +264,28 @@ function ProgramEditorPage() {
   // Add/update session mutation
   const updateSession = useMutation({
     mutationFn: async (data: Partial<Session>) => {
+      // Create a complete copy of the data to ensure it's properly sent
+      const completeData = {
+        programId,
+        weekNumber: data.weekNumber,
+        dayNumber: data.dayNumber,
+        content: data.content || "",
+        shortDistanceWorkout: data.content || "", // Ensure this field is always set
+        description: data.content || "",          // Ensure this field is always set
+        title: data.content?.split('\n')[0] || "Training Session",
+        isRestDay: data.isRestDay || false,
+        date: data.date || format(new Date(), "yyyy-MM-dd"),
+      };
+      
+      console.log("Sending session data:", completeData);
+      
       if (data.id) {
-        return apiRequest('PUT', `/api/programs/${programId}/sessions/${data.id}`, data);
+        return apiRequest('PUT', `/api/programs/${programId}/sessions/${data.id}`, completeData);
       } else {
-        return apiRequest('POST', `/api/programs/${programId}/sessions`, data);
+        return apiRequest('POST', `/api/programs/${programId}/sessions`, completeData);
       }
     },
     onSuccess: (response) => {
-      // Log response for debugging
       console.log("Session update response:", response);
       
       toast({
@@ -260,15 +293,18 @@ function ProgramEditorPage() {
         description: "Your session has been successfully updated.",
       });
       
-      // Force reload the program and its sessions
+      // Force reload all related data to ensure UI is updated
       queryClient.invalidateQueries({ queryKey: ['/api/programs'] });
       queryClient.invalidateQueries({ queryKey: ['/api/programs', programId] });
       queryClient.invalidateQueries({ queryKey: ['/api/programs', programId, 'sessions'] });
       
-      // Force a refetch to update the UI with the latest data
-      refetchSessions();
+      // Force an immediate refetch to update the UI
+      setTimeout(() => {
+        refetchSessions();
+      }, 100);
     },
     onError: (error: Error) => {
+      console.error("Error updating session:", error);
       toast({
         title: "Error updating session",
         description: error.message,
@@ -453,23 +489,16 @@ function ProgramEditorPage() {
   // Handle session content update
   const handleCellUpdate = (weekNumber: number, dayNumber: number, content: string, isRestDay: boolean) => {
     const date = getDateForWeekDay(weekNumber, dayNumber);
-    const cellKey = `${weekNumber}-${dayNumber}`;
-    
-    // Update local state first for immediate UI display
-    setLocalSessionContent(prev => ({
-      ...prev,
-      [cellKey]: {
-        content,
-        isRestDay
-      }
-    }));
     
     // Check if session exists already
     const existingSession = sessions.find((s: Session) => 
       s.weekNumber === weekNumber && s.dayNumber === dayNumber
     );
     
+    console.log("Saving session content:", content);
+    
     if (existingSession) {
+      console.log("Updating existing session:", existingSession.id);
       updateSession.mutate({
         ...existingSession,
         content,
@@ -481,6 +510,7 @@ function ProgramEditorPage() {
         dayNumber: dayNumber,   // Explicitly set the day number
       });
     } else {
+      console.log("Creating new session for week", weekNumber, "day", dayNumber);
       updateSession.mutate({
         programId,
         weekNumber,
@@ -513,19 +543,6 @@ function ProgramEditorPage() {
 
   // Get cell content for a specific week and day
   const getCellContent = (weekNumber: number, dayNumber: number) => {
-    const cellKey = `${weekNumber}-${dayNumber}`;
-    const localData = localSessionContent[cellKey];
-    
-    // Check local state first for immediate feedback
-    if (localData) {
-      return {
-        content: localData.content,
-        isRestDay: localData.isRestDay,
-        date: format(getDateForWeekDay(weekNumber, dayNumber), "yyyy-MM-dd"),
-        id: undefined, // We don't have the ID in local state
-      };
-    }
-    
     // Find the matching session for this week and day
     const session = sessions.find((s: Session) => {
       return Number(s.weekNumber) === Number(weekNumber) && Number(s.dayNumber) === Number(dayNumber);
@@ -542,6 +559,12 @@ function ProgramEditorPage() {
       } else if (session.content && session.content.trim() !== "") {
         displayContent = session.content;
       }
+    }
+    
+    // For debugging
+    if (session) {
+      console.log(`Found session for week ${weekNumber}, day ${dayNumber}:`, 
+        { id: session.id, content: displayContent, shortDistance: session.shortDistanceWorkout });
     }
     
     return {
