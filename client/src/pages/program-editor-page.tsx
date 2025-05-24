@@ -542,11 +542,7 @@ export default function ProgramEditorPage() {
         throw new Error("Failed to move session");
       }
       
-      // Show success message
-      toast({
-        title: "Session moved",
-        description: `Session moved to day ${newDayNumber}`,
-      });
+      // No longer showing toast notifications for session moves to keep the UI clean
       
       // Refresh program data
       queryClient.invalidateQueries({ queryKey: [`/api/programs/${programId}`] });
