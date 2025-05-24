@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, ChangeEvent } from "react";
 import { useParams, useLocation, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -20,7 +20,7 @@ import { Switch } from "@/components/ui/switch";
 import { 
   ArrowLeft, Calendar, CalendarDays, Copy, Clock, Edit, 
   Info, Loader2, Plus, Save, Trash2, AlertCircle, Check, ChevronDown, ChevronUp,
-  FileText, ExternalLink, Download
+  FileText, ExternalLink, Download, Upload, FileUp
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useForm } from "react-hook-form";
@@ -187,6 +187,8 @@ function ProgramEditorPage() {
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
   const [detailsExpanded, setDetailsExpanded] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Program details form
   const form = useForm<z.infer<typeof programEditorSchema>>({
@@ -253,6 +255,77 @@ function ProgramEditorPage() {
     staleTime: 0, // Always fetch fresh data
   });
 
+  // Upload document mutation
+  const uploadDocument = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      // Make a POST request to upload the document
+      const response = await fetch(`/api/programs/${programId}/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to upload document');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Document uploaded",
+        description: "Your document has been successfully uploaded to the program.",
+      });
+      
+      // Close the upload dialog
+      setUploadDialogOpen(false);
+      
+      // Reset the selected file
+      setSelectedFile(null);
+      
+      // Reset upload state
+      setIsUploading(false);
+      
+      // Refresh program data
+      queryClient.invalidateQueries({ queryKey: ['/api/programs', programId] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error uploading document",
+        description: error.message,
+        variant: "destructive",
+      });
+      
+      // Reset upload state
+      setIsUploading(false);
+    }
+  });
+  
+  // Handle file selection
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      setSelectedFile(file);
+    }
+  };
+  
+  // Handle document upload
+  const handleUploadDocument = () => {
+    if (selectedFile) {
+      setIsUploading(true);
+      uploadDocument.mutate(selectedFile);
+    } else {
+      toast({
+        title: "No file selected",
+        description: "Please select a PDF file to upload.",
+        variant: "destructive",
+      });
+    }
+  };
+  
   // Update program mutation
   const updateProgram = useMutation({
     mutationFn: async (data: z.infer<typeof programEditorSchema>) => {
@@ -973,7 +1046,7 @@ function ProgramEditorPage() {
                     This program doesn't have an uploaded document yet. Upload a PDF file to see it displayed here.
                   </p>
                   <Button onClick={() => setUploadDialogOpen(true)} className="flex items-center px-4 py-2">
-                    <FileText className="h-4 w-4 mr-2" />
+                    <Upload className="h-4 w-4 mr-2" />
                     Upload Document
                   </Button>
                 </div>
@@ -1008,9 +1081,93 @@ function ProgramEditorPage() {
     );
   }
 
+  // Create the upload document dialog component
+  const renderUploadDialog = () => {
+    return (
+      <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Upload Document</DialogTitle>
+            <DialogDescription>
+              Upload a PDF document to attach to this program. This will be displayed instead of the weekly schedule.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="flex flex-col gap-4 items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg">
+              {selectedFile ? (
+                <>
+                  <div className="flex items-center gap-2 mb-2">
+                    <FileText className="h-8 w-8 text-blue-500" />
+                    <span className="font-medium">{selectedFile.name}</span>
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                  </div>
+                </>
+              ) : (
+                <>
+                  <FileUp className="h-12 w-12 text-gray-400" />
+                  <p className="text-center text-sm">
+                    Drag and drop a PDF file here, or click to browse
+                  </p>
+                </>
+              )}
+              
+              <Input
+                type="file"
+                id="document-upload"
+                className="hidden"
+                accept=".pdf"
+                onChange={handleFileChange}
+              />
+              <Button 
+                variant="outline" 
+                onClick={() => document.getElementById('document-upload')?.click()}
+                className="mt-2"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                {selectedFile ? 'Choose a Different File' : 'Select PDF File'}
+              </Button>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="ghost" 
+              onClick={() => {
+                setUploadDialogOpen(false);
+                setSelectedFile(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleUploadDocument}
+              disabled={!selectedFile || isUploading}
+            >
+              {isUploading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload Document
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  };
+
   // Standard program with weekly schedule view
   return (
     <div className="container max-w-full p-4">
+      {renderUploadDialog()}
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-2">
           <Button
