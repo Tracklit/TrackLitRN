@@ -108,7 +108,7 @@ function EditableCell({
 
   return (
     <TableCell 
-      className={`border p-0 relative min-h-[100px] ${isWeekend ? 'bg-gray-50' : ''} ${isRest ? 'bg-gray-100' : ''}`}
+      className={`border p-0 relative min-h-[100px] bg-gray-900 ${isWeekend ? 'bg-gray-950' : ''} ${isRest ? 'bg-gray-800' : ''}`}
       onClick={() => !isEditing && setIsEditing(true)}
     >
       {isEditing ? (
@@ -155,7 +155,7 @@ function EditableCell({
           </div>
           <div className="mt-1 flex-1 text-sm whitespace-pre-wrap">
             {content || (
-              <span className="text-gray-400 italic">
+              <span className="text-gray-300">
                 Click to add workout...
               </span>
             )}
