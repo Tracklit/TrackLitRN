@@ -698,7 +698,7 @@ export default function ProgramEditorPage() {
             return (
               <div key={weekIndex} className="space-y-2">
                 <h3 className="text-lg font-semibold mb-2">Week {weekIndex + 1}</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-7 gap-3">
                   {weekDayNums.map((dayNum) => {
                     const day = allDays.find(d => d.dayNumber === dayNum) || allDays[0];
                     return (
@@ -1131,62 +1131,7 @@ export default function ProgramEditorPage() {
         </DialogContent>
       </Dialog>
       
-      {/* Move Session Dialog */}
-      <Dialog open={moveSessionDialogOpen} onOpenChange={setMoveSessionDialogOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Move Session</DialogTitle>
-            <DialogDescription>
-              Move this session to a different day in your program
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="session-title">Session</Label>
-              <div className="p-2 border rounded-md bg-muted/50 mt-1">
-                {sessionToMove?.title}
-              </div>
-            </div>
-            
-            <div>
-              <Label htmlFor="current-day">Current Day</Label>
-              <div className="p-2 border rounded-md bg-muted/50 mt-1">
-                Day {sessionToMove?.dayNumber}
-              </div>
-            </div>
-            
-            <div>
-              <Label htmlFor="target-day">Target Day</Label>
-              <Select 
-                value={targetDayNumber?.toString()} 
-                onValueChange={(value) => setTargetDayNumber(parseInt(value))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select day" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: getTotalDays() }, (_, i) => i + 1).map((day) => (
-                    <SelectItem key={day} value={day.toString()}>
-                      Day {day}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setMoveSessionDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleMoveSession}>
-              <MoveHorizontal className="h-4 w-4 mr-2" />
-              Move Session
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* No move session dialog - using direct drag and drop instead */}
     </div>
   );
 }
