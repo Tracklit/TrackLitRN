@@ -229,8 +229,8 @@ function ProgramDetail() {
             </Button>
             <Button variant="outline" asChild>
               <Link href={`/programs/${id}/cover`}>
-                <Image className="h-4 w-4 mr-2" />
-                Upload Cover Image
+                <img src={program.coverImageUrl || ''} alt="" className="h-4 w-4 mr-2 rounded-full object-cover" />
+                {program.coverImageUrl ? "Change Cover" : "Upload Cover"}
               </Link>
             </Button>
           </div>
