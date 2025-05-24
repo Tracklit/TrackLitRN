@@ -512,9 +512,27 @@ function ProgramEditorPage() {
     }
   }>({});
   
-  // Enhanced session content update handler with proper data persistence
+  // Maintain a local cache of session content
+  const [savedSessions, setSavedSessions] = useState<Record<string, string>>({});
+  
+  // Session content update handler with persistent local storage
   const handleCellUpdate = (weekNumber: number, dayNumber: number, content: string, isRestDay: boolean) => {
     const date = getDateForWeekDay(weekNumber, dayNumber);
+    const cellKey = `${weekNumber}-${dayNumber}`;
+    
+    // First, update our local cache
+    setSavedSessions(prev => ({
+      ...prev,
+      [cellKey]: content
+    }));
+    
+    // Store in localStorage for persistence between page navigations
+    try {
+      const storageKey = `program_${programId}_session_${cellKey}`;
+      localStorage.setItem(storageKey, content);
+    } catch (e) {
+      console.error("Could not save to localStorage:", e);
+    }
     
     // Check if session exists already
     const existingSession = sessions.find((s: Session) => 
@@ -575,19 +593,25 @@ function ProgramEditorPage() {
       })
       .then(response => {
         if (response.ok) {
-          toast({
-            title: "Session created",
-            description: "Your workout has been saved successfully.",
-          });
-          // Force a complete data refresh
-          refetchSessions();
+          return response.json();
         } else {
-          toast({
-            title: "Error creating session",
-            description: "There was a problem saving your workout.",
-            variant: "destructive"
-          });
+          throw new Error("Failed to create session");
         }
+      })
+      .then(data => {
+        toast({
+          title: "Session created",
+          description: "Your workout has been saved successfully.",
+        });
+        // Force a complete data refresh
+        refetchSessions();
+      })
+      .catch(error => {
+        toast({
+          title: "Error creating session",
+          description: "There was a problem saving your workout.",
+          variant: "destructive"
+        });
       });
     }
   };
@@ -608,8 +632,46 @@ function ProgramEditorPage() {
   const isLoading = programLoading || sessionsLoading;
   const isSubmitting = updateProgram.isPending;
 
+  // Load saved sessions from localStorage on component mount
+  useEffect(() => {
+    if (programId) {
+      const savedSessionData: Record<string, string> = {};
+      
+      // Check for saved sessions in localStorage
+      for (let week = 0; week < 12; week++) {
+        for (let day = 0; day < 7; day++) {
+          const cellKey = `${week}-${day}`;
+          const storageKey = `program_${programId}_session_${cellKey}`;
+          
+          try {
+            const savedContent = localStorage.getItem(storageKey);
+            if (savedContent) {
+              savedSessionData[cellKey] = savedContent;
+            }
+          } catch (e) {
+            console.error("Error reading from localStorage:", e);
+          }
+        }
+      }
+      
+      setSavedSessions(savedSessionData);
+    }
+  }, [programId]);
+  
   // Enhanced function to get cell content for a specific week and day
   const getCellContent = (weekNumber: number, dayNumber: number) => {
+    const cellKey = `${weekNumber}-${dayNumber}`;
+    
+    // First check localStorage/saved state
+    if (savedSessions[cellKey]) {
+      return {
+        content: savedSessions[cellKey],
+        isRestDay: false,
+        date: format(getDateForWeekDay(weekNumber, dayNumber), "yyyy-MM-dd"),
+        id: undefined,
+      };
+    }
+    
     // Find all matching sessions for this week and day (there might be duplicates)
     const matchingSessions = sessions.filter((s: Session) => {
       return Number(s.weekNumber) === Number(weekNumber) && Number(s.dayNumber) === Number(dayNumber);
@@ -635,13 +697,21 @@ function ProgramEditorPage() {
         displayContent = session.content;
       }
       
-      // Log found session data for debugging
-      console.log(`Session for week ${weekNumber}, day ${dayNumber}:`, { 
-        id: session.id, 
-        content: displayContent,
-        shortDistance: session.shortDistanceWorkout,
-        description: session.description
-      });
+      // Also save this content to localStorage for persistence
+      if (displayContent) {
+        try {
+          const storageKey = `program_${programId}_session_${cellKey}`;
+          localStorage.setItem(storageKey, displayContent);
+          
+          // Update our local state as well
+          setSavedSessions(prev => ({
+            ...prev,
+            [cellKey]: displayContent
+          }));
+        } catch (e) {
+          console.error("Could not save to localStorage:", e);
+        }
+      }
     }
     
     // Build the cell data object with all necessary information
