@@ -219,11 +219,12 @@ function ProgramDetail() {
         
         {/* Show Edit button only if user is the program creator */}
         {program.userId === user?.id && !program.isUploadedProgram && (
-          <Button variant="outline" asChild>
-            <Link href={`/programs/${id}/edit`}>
-              <Edit className="h-4 w-4 mr-2" />
-              Edit Program
-            </Link>
+          <Button 
+            variant="outline" 
+            onClick={() => window.location.href = `/programs/${id}/edit`}
+          >
+            <Edit className="h-4 w-4 mr-2" />
+            Edit Program
           </Button>
         )}
       </div>
