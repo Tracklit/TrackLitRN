@@ -110,11 +110,14 @@ export default function ProgramEditorPage() {
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
   
-  // State for weekly view
+  // All state declarations in one place
   const [currentWeek, setCurrentWeek] = useState(0);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isSessionDialogOpen, setIsSessionDialogOpen] = useState(false);
   const [editingSession, setEditingSession] = useState<Session | null>(null);
+  const [moveSessionDialogOpen, setMoveSessionDialogOpen] = useState(false);
+  const [sessionToMove, setSessionToMove] = useState<any>(null);
+  const [targetDayNumber, setTargetDayNumber] = useState<number | null>(null);
   
   // Program query
   const { data: program, isLoading, error } = useQuery({
@@ -159,10 +162,10 @@ export default function ProgramEditorPage() {
   useEffect(() => {
     if (program) {
       programForm.reset({
-        title: program.title,
+        title: program.title || "",
         description: program.description || "",
-        category: program.category,
-        level: program.level,
+        category: program.category || "",
+        level: program.level || "",
         macroBlockSize: program.macroBlockSize || 4,
         numberOfMacroBlocks: program.numberOfMacroBlocks || 3,
         microBlockSize: program.microBlockSize || 7,
@@ -199,15 +202,27 @@ export default function ProgramEditorPage() {
   // Current week dates
   const weekDates = getWeekDates(currentWeek);
   
+  // Function to calculate the total number of days in the program
+  const getTotalDays = (): number => {
+    if (program?.sessions && program.sessions.length > 0) {
+      // Find the highest day number from sessions
+      const maxDay = Math.max(...program.sessions.map((session: any) => session.dayNumber || 0));
+      return Math.max(maxDay, 1);
+    }
+    
+    // Default to at least 7 days (1 week) if no sessions are available
+    return 7;
+  };
+  
   // Filter sessions for current week
-  const weekSessions = program?.sessions?.filter(session => {
+  const weekSessions = program?.sessions?.filter((session: any) => {
     const sessionDayNumber = session.dayNumber;
     return sessionDayNumber > currentWeek * 7 && sessionDayNumber <= (currentWeek + 1) * 7;
   }) || [];
   
   // Get sessions for a specific day
   const getSessionsForDay = (dayNumber: number) => {
-    return weekSessions.filter(session => session.dayNumber === dayNumber);
+    return weekSessions.filter((session: any) => session.dayNumber === dayNumber);
   };
   
   // Update program mutation
@@ -350,124 +365,6 @@ export default function ProgramEditorPage() {
     },
   });
   
-  // Save program handler
-  const handleSaveProgram = () => {
-    programForm.handleSubmit((data) => {
-      updateProgramMutation.mutate(data);
-    })();
-  };
-  
-  // Open session dialog
-  const handleOpenSessionDialog = (date: Date, dayNumber: number, session?: Session) => {
-    setSelectedDate(date);
-    setEditingSession(session || null);
-    
-    // Set default values based on day or existing session
-    sessionForm.reset({
-      title: session?.title || `Day ${dayNumber} Training`,
-      description: session?.description || "Training Session",
-      dayNumber: dayNumber,
-      orderInDay: session?.orderInDay || 1,
-      date: format(date, 'yyyy-MM-dd'),
-      shortDistanceWorkout: session?.shortDistanceWorkout || "",
-      mediumDistanceWorkout: session?.mediumDistanceWorkout || "",
-      longDistanceWorkout: session?.longDistanceWorkout || "",
-      preActivation1: session?.preActivation1 || "",
-      preActivation2: session?.preActivation2 || "",
-      extraSession: session?.extraSession || "",
-      isRestDay: session?.isRestDay || false,
-      notes: session?.notes || "",
-    });
-    
-    setIsSessionDialogOpen(true);
-  };
-  
-  // Close session dialog
-  const handleCloseSessionDialog = () => {
-    setIsSessionDialogOpen(false);
-    setEditingSession(null);
-    setSelectedDate(null);
-  };
-  
-  // Save session handler
-  const handleSaveSession = () => {
-    sessionForm.handleSubmit((data) => {
-      saveSessionMutation.mutate({
-        ...data,
-        id: editingSession?.id,
-      });
-    })();
-  };
-  
-
-  
-  // Delete session handler
-  const handleDeleteSession = () => {
-    if (editingSession?.id) {
-      deleteSessionMutation.mutate(editingSession.id);
-    }
-  };
-  
-  // Navigation handlers
-  const goToPreviousWeek = () => {
-    if (currentWeek > 0) {
-      setCurrentWeek(currentWeek - 1);
-    }
-  };
-  
-  const goToNextWeek = () => {
-    if (currentWeek < totalWeeks - 1) {
-      setCurrentWeek(currentWeek + 1);
-    }
-  };
-  
-  if (isLoading) {
-    return (
-      <div className="container max-w-screen-xl mx-auto p-4 pt-20 md:pt-24 md:pl-72 pb-20 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-          <p>Loading program...</p>
-        </div>
-      </div>
-    );
-  }
-  
-  if (error) {
-    return (
-      <div className="container max-w-screen-xl mx-auto p-4 pt-20 md:pt-24 md:pl-72 pb-20">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">Error Loading Program</h2>
-          <p className="text-muted-foreground">
-            There was a problem loading the program. Please try again later.
-          </p>
-          <Button variant="outline" className="mt-4" asChild>
-            <Link href="/programs">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Programs
-            </Link>
-          </Button>
-        </div>
-      </div>
-    );
-  }
-  
-  // Function to calculate the total number of days in the program
-  const getTotalDays = (): number => {
-    if (program?.sessions && program.sessions.length > 0) {
-      // Find the highest day number from sessions
-      const maxDay = Math.max(...program.sessions.map(session => session.dayNumber || 0));
-      return Math.max(maxDay, 1);
-    }
-    
-    // Default to at least 7 days (1 week) if no sessions are available
-    return 7;
-  };
-  
-  // State for move session dialog
-  const [moveSessionDialogOpen, setMoveSessionDialogOpen] = useState(false);
-  const [sessionToMove, setSessionToMove] = useState<any>(null);
-  const [targetDayNumber, setTargetDayNumber] = useState<number | null>(null);
-  
   // Function to open the move session dialog
   const handleOpenMoveDialog = (session: any) => {
     setSessionToMove(session);
@@ -520,295 +417,651 @@ export default function ProgramEditorPage() {
       console.error("Error moving session:", error);
       toast({
         title: "Error",
-        description: "Failed to move session. Please try again.",
+        description: "Failed to move session",
         variant: "destructive",
       });
     }
   };
-
-  return (
+  
+  // Save program handler
+  const handleSaveProgram = () => {
+    programForm.handleSubmit((data) => {
+      updateProgramMutation.mutate(data);
+    })();
+  };
+  
+  // Open session dialog
+  const handleOpenSessionDialog = (date: Date, dayNumber: number, session?: any) => {
+    setSelectedDate(date);
+    setEditingSession(session || null);
+    
+    // Set default values based on day or existing session
+    sessionForm.reset({
+      title: session?.title || `Day ${dayNumber} Training`,
+      description: session?.description || "Training Session",
+      dayNumber: dayNumber,
+      orderInDay: session?.orderInDay || 1,
+      date: format(date, 'yyyy-MM-dd'),
+      shortDistanceWorkout: session?.shortDistanceWorkout || "",
+      mediumDistanceWorkout: session?.mediumDistanceWorkout || "",
+      longDistanceWorkout: session?.longDistanceWorkout || "",
+      preActivation1: session?.preActivation1 || "",
+      preActivation2: session?.preActivation2 || "",
+      extraSession: session?.extraSession || "",
+      isRestDay: session?.isRestDay || false,
+      notes: session?.notes || "",
+    });
+    
+    setIsSessionDialogOpen(true);
+  };
+  
+  // Close session dialog
+  const handleCloseSessionDialog = () => {
+    setIsSessionDialogOpen(false);
+    setEditingSession(null);
+    setSelectedDate(null);
+  };
+  
+  // Save session handler
+  const handleSaveSession = () => {
+    sessionForm.handleSubmit((data) => {
+      saveSessionMutation.mutate(data);
+    })();
+  };
+  
+  // Delete session handler
+  const handleDeleteSession = () => {
+    if (editingSession?.id) {
+      deleteSessionMutation.mutate(editingSession.id);
+    }
+  };
+  
+  // Navigation handlers
+  const goToPreviousWeek = () => {
+    if (currentWeek > 0) {
+      setCurrentWeek(currentWeek - 1);
+    }
+  };
+  
+  const goToNextWeek = () => {
+    if (currentWeek < totalWeeks - 1) {
+      setCurrentWeek(currentWeek + 1);
+    }
+  };
+  
+  if (isLoading) {
+    return (
+      <div className="container max-w-screen-xl mx-auto p-4 pt-20 md:pt-24 md:pl-72 pb-20 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p>Loading program...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
       <div className="container max-w-screen-xl mx-auto p-4 pt-20 md:pt-24 md:pl-72 pb-20">
-        <div className="mb-6 flex justify-between items-center">
-          <Button variant="outline" asChild>
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-2">Error Loading Program</h2>
+          <p className="text-muted-foreground">
+            There was a problem loading the program. Please try again later.
+          </p>
+          <Button variant="outline" className="mt-4" asChild>
             <Link href="/programs">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Programs
             </Link>
           </Button>
-          
-          <Button 
-            onClick={handleSaveProgram}
-            disabled={updateProgramMutation.isPending}
-          >
-            {updateProgramMutation.isPending && (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            )}
-            <Save className="h-4 w-4 mr-2" />
-            Save Program
-          </Button>
         </div>
-      
-      {/* Program Details Form */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>{program?.title || "Program Editor"}</CardTitle>
-          <CardDescription>Edit your program's basic information</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...programForm}>
-            <div className="space-y-4">
-              <FormField
-                control={programForm.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Program Title</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={programForm.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} rows={3} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <FormField
-                  control={programForm.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Category</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a category" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="sprint">Sprinting</SelectItem>
-                          <SelectItem value="distance">Distance Running</SelectItem>
-                          <SelectItem value="jumps">Jumping Events</SelectItem>
-                          <SelectItem value="throws">Throwing Events</SelectItem>
-                          <SelectItem value="multi">Multi-Events</SelectItem>
-                          <SelectItem value="general">General Fitness</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={programForm.control}
-                  name="level"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Experience Level</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a level" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="beginner">Beginner</SelectItem>
-                          <SelectItem value="intermediate">Intermediate</SelectItem>
-                          <SelectItem value="advanced">Advanced</SelectItem>
-                          <SelectItem value="elite">Elite</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={programForm.control}
-                  name="macroBlockSize"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Macro Block Size (Weeks)</FormLabel>
-                      <FormControl>
-                        <Input type="number" min={1} max={12} {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={programForm.control}
-                  name="numberOfMacroBlocks"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Number of Macro Blocks</FormLabel>
-                      <FormControl>
-                        <Input type="number" min={1} max={12} {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={programForm.control}
-                  name="microBlockSize"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Micro Block Size (Days)</FormLabel>
-                      <FormControl>
-                        <Input type="number" min={1} max={14} {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              <div className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
-                <div className="flex items-center mb-1">
-                  <CalendarDays className="h-4 w-4 mr-2" />
-                  <span className="font-medium">Program Duration:</span> {totalProgramDays} days ({totalWeeks} weeks)
-                </div>
-                <div className="flex items-center">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  <span className="font-medium">Structure:</span> {programForm.watch("numberOfMacroBlocks")} macro blocks of {programForm.watch("macroBlockSize")} weeks each
-                </div>
-              </div>
-            </div>
-          </Form>
-        </CardContent>
-      </Card>
-      
-      {/* Weekly Session View */}
-      <Card>
-        <CardHeader className="pb-0">
-          <div className="flex justify-between items-center">
-            <CardTitle>Weekly Schedule</CardTitle>
-            <div className="flex items-center space-x-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={goToPreviousWeek}
-                disabled={currentWeek === 0}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="text-sm font-medium">
-                Week {currentWeek + 1} of {totalWeeks}
-              </span>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={goToNextWeek}
-                disabled={currentWeek >= totalWeeks - 1}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="container max-w-screen-xl mx-auto p-4 pt-20 md:pt-24 md:pl-72 pb-20">
+      <PageHeader
+        title={program?.title || "Program Editor"}
+        description="Create and manage your training program"
+        actions={
+          <div className="flex space-x-2">
+            <Button variant="outline" asChild>
+              <Link href="/programs">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
+              </Link>
+            </Button>
+            <Button onClick={handleSaveProgram}>
+              <Save className="h-4 w-4 mr-2" />
+              Save Changes
+            </Button>
           </div>
-          <CardDescription>
-            Create and edit sessions for each day of the week
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-7 gap-2 overflow-x-auto pb-2">
+        }
+      />
+      
+      <Tabs defaultValue="weekly">
+        <div className="flex justify-between items-center mb-4">
+          <TabsList>
+            <TabsTrigger value="weekly">Weekly View</TabsTrigger>
+            <TabsTrigger value="settings">Program Settings</TabsTrigger>
+          </TabsList>
+          
+          <div className="flex items-center space-x-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={goToPreviousWeek}
+              disabled={currentWeek === 0}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-sm font-medium">
+              Week {currentWeek + 1} of {totalWeeks}
+            </span>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={goToNextWeek}
+              disabled={currentWeek >= totalWeeks - 1}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+        
+        <TabsContent value="weekly" className="space-y-4">
+          <div className="grid grid-cols-7 gap-4">
             {weekDates.map((day) => (
-              <div key={day.dayNumber} className="flex flex-col">
-                <div className={`text-center p-2 rounded-t-md ${day.isWeekend ? 'bg-muted/70' : 'bg-muted/30'}`}>
+              <div 
+                key={day.dayNumber}
+                className={`rounded-lg overflow-hidden ${day.isWeekend ? 'bg-muted/50' : 'bg-card'}`}
+              >
+                <div className={`p-2 text-center ${day.isWeekend ? 'bg-muted' : 'bg-primary/10'}`}>
                   <div className="text-xs font-medium">{day.dayOfWeek}</div>
-                  <div className="text-lg font-bold">{day.dayOfMonth}</div>
-                  <div className="text-xs text-muted-foreground">{day.month}</div>
+                  <div className="text-sm font-bold">{day.dayOfMonth}</div>
+                  <div className="text-xs">{day.month}</div>
                 </div>
                 
-                <div 
-                  className={`min-h-[180px] border rounded-b-md p-2 flex flex-col gap-2 ${day.isWeekend ? 'bg-muted/50' : ''}`}
-                >
-                  {getSessionsForDay(day.dayNumber).map((session) => (
-                    <SessionCard 
-                      key={session.id} 
-                      session={session} 
-                      onClick={() => handleOpenSessionDialog(day.date, day.dayNumber, session)}
-                      onMoveSession={handleOpenMoveDialog}
-                    />
-                  ))}
+                <div className="p-2">
+                  <div className="text-xs mb-2 flex items-center justify-between">
+                    <span>Day {day.dayNumber}</span>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-5 w-5"
+                      onClick={() => handleOpenSessionDialog(day.date, day.dayNumber)}
+                    >
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                  </div>
                   
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="mt-auto justify-start h-auto py-1 text-xs bg-muted/30 hover:bg-muted/50"
-                    onClick={() => handleOpenSessionDialog(day.date, day.dayNumber)}
-                  >
-                    <Plus className="h-3 w-3 mr-1" />
-                    Add Session
-                  </Button>
+                  <div className="space-y-2 max-h-[350px] overflow-y-auto">
+                    {getSessionsForDay(day.dayNumber).length > 0 ? (
+                      getSessionsForDay(day.dayNumber).map((session: any) => (
+                        <SessionCard 
+                          key={session.id} 
+                          session={session} 
+                          onClick={() => handleOpenSessionDialog(day.date, day.dayNumber, session)}
+                          onMoveSession={handleOpenMoveDialog}
+                        />
+                      ))
+                    ) : (
+                      <div className="text-xs text-center py-4 text-muted-foreground">
+                        No sessions
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
           </div>
-          
-          <div className="mt-6 p-3 bg-primary/5 rounded-md border border-dashed border-primary/20">
-            <div className="flex items-center mb-2">
-              <Info className="h-4 w-4 mr-2 text-primary" />
-              <span className="text-sm font-medium">Session Management</span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              You can move sessions between days by clicking the move icon. 
-              Click on a session to edit its details or add new sessions using the "Add Session" button.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+        </TabsContent>
+        
+        <TabsContent value="settings">
+          <Card>
+            <CardHeader>
+              <CardTitle>Program Settings</CardTitle>
+              <CardDescription>Configure your program details and structure</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...programForm}>
+                <div className="space-y-4">
+                  <FormField
+                    control={programForm.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Program Title</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter program title" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={programForm.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Enter program description" 
+                            className="min-h-[100px]"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={programForm.control}
+                      name="category"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Category</FormLabel>
+                          <Select 
+                            onValueChange={field.onChange} 
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select category" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="sprint">Sprint</SelectItem>
+                              <SelectItem value="middle">Middle Distance</SelectItem>
+                              <SelectItem value="long">Long Distance</SelectItem>
+                              <SelectItem value="jumps">Jumps</SelectItem>
+                              <SelectItem value="throws">Throws</SelectItem>
+                              <SelectItem value="multi">Multi Events</SelectItem>
+                              <SelectItem value="general">General</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={programForm.control}
+                      name="level"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Level</FormLabel>
+                          <Select 
+                            onValueChange={field.onChange} 
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select level" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="beginner">Beginner</SelectItem>
+                              <SelectItem value="intermediate">Intermediate</SelectItem>
+                              <SelectItem value="advanced">Advanced</SelectItem>
+                              <SelectItem value="elite">Elite</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <Separator />
+                  
+                  <h3 className="text-lg font-medium">Program Structure</h3>
+                  
+                  <div className="grid grid-cols-3 gap-4">
+                    <FormField
+                      control={programForm.control}
+                      name="macroBlockSize"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Macro Block Size (weeks)</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              min="1"
+                              {...field}
+                              onChange={(e) => field.onChange(parseInt(e.target.value))}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={programForm.control}
+                      name="numberOfMacroBlocks"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Number of Macro Blocks</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number"
+                              min="1"
+                              {...field}
+                              onChange={(e) => field.onChange(parseInt(e.target.value))}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={programForm.control}
+                      name="microBlockSize"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Micro Block Size (days)</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number"
+                              min="1"
+                              {...field}
+                              onChange={(e) => field.onChange(parseInt(e.target.value))}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Usually 7 days (one week)
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="rounded-md bg-muted p-4">
+                    <div className="flex items-center space-x-2">
+                      <Info className="h-4 w-4 text-muted-foreground" />
+                      <h4 className="text-sm font-medium">Program Summary</h4>
+                    </div>
+                    <div className="mt-2 text-sm">
+                      <p>Total program length: {totalProgramDays} days ({totalWeeks} weeks)</p>
+                      <p className="mt-1">Structure: {programForm.watch("numberOfMacroBlocks")} macro blocks of {programForm.watch("macroBlockSize")} weeks each</p>
+                    </div>
+                  </div>
+                </div>
+              </Form>
+            </CardContent>
+            <CardFooter className="flex justify-end">
+              <Button onClick={handleSaveProgram}>
+                <Save className="h-4 w-4 mr-2" />
+                Save Changes
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+      </Tabs>
       
-      {/* Move Session Dialog */}
-      <Dialog open={moveSessionDialogOpen} onOpenChange={setMoveSessionDialogOpen}>
+      {/* Session Dialog */}
+      <Dialog open={isSessionDialogOpen} onOpenChange={setIsSessionDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Move Session</DialogTitle>
+            <DialogTitle>
+              {editingSession ? "Edit Training Session" : "Add Training Session"}
+            </DialogTitle>
             <DialogDescription>
-              Choose which day to move this session to
+              {selectedDate && (
+                <div className="flex items-center space-x-2 text-muted-foreground">
+                  <Calendar className="h-4 w-4" />
+                  <span>{format(selectedDate, 'EEEE, MMMM d, yyyy')}</span>
+                </div>
+              )}
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="sessionTitle">Session</Label>
-              <div className="font-medium text-sm">{sessionToMove?.title}</div>
-              <div className="text-muted-foreground text-xs">
-                Currently on Day {sessionToMove?.dayNumber}
+          <Form {...sessionForm}>
+            <div className="grid gap-4">
+              <FormField
+                control={sessionForm.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Session Title</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter session title" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={sessionForm.control}
+                name="isRestDay"
+                render={({ field }) => (
+                  <FormItem className="flex items-center justify-between rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                      <FormLabel>Rest Day</FormLabel>
+                      <FormDescription>
+                        Mark this as a rest or recovery day
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              <Tabs defaultValue="sprints">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="sprints">Sprint</TabsTrigger>
+                  <TabsTrigger value="middle">Middle</TabsTrigger>
+                  <TabsTrigger value="long">Long</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="sprints">
+                  <FormField
+                    control={sessionForm.control}
+                    name="shortDistanceWorkout"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Sprint Workout</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Enter workout details for sprint athletes" 
+                            className="min-h-[100px]"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </TabsContent>
+                
+                <TabsContent value="middle">
+                  <FormField
+                    control={sessionForm.control}
+                    name="mediumDistanceWorkout"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Middle Distance Workout</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Enter workout details for middle distance athletes" 
+                            className="min-h-[100px]"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </TabsContent>
+                
+                <TabsContent value="long">
+                  <FormField
+                    control={sessionForm.control}
+                    name="longDistanceWorkout"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Long Distance Workout</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Enter workout details for long distance athletes" 
+                            className="min-h-[100px]"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </TabsContent>
+              </Tabs>
+              
+              <FormField
+                control={sessionForm.control}
+                name="preActivation1"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Pre-Activation 1</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Warm-up or pre-activation routine" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={sessionForm.control}
+                name="preActivation2"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Pre-Activation 2</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Additional warm-up details" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={sessionForm.control}
+                name="extraSession"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Extra Session</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Additional training (e.g., evening session)" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={sessionForm.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Notes</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Additional notes or instructions" 
+                        className="min-h-[80px]"
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </Form>
+          
+          <DialogFooter className="flex justify-between items-center">
+            {editingSession && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleDeleteSession}
+                disabled={deleteSessionMutation.isPending}
+              >
+                {deleteSessionMutation.isPending && (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                )}
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </Button>
+            )}
+            <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                onClick={handleCloseSessionDialog}
+                disabled={saveSessionMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSaveSession}
+                disabled={saveSessionMutation.isPending}
+              >
+                {saveSessionMutation.isPending && (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                )}
+                <Save className="h-4 w-4 mr-2" />
+                {editingSession ? "Update" : "Create"}
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Move Session Dialog */}
+      <Dialog open={moveSessionDialogOpen} onOpenChange={setMoveSessionDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Move Session</DialogTitle>
+            <DialogDescription>
+              Move this session to a different day in your program
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="session-title">Session</Label>
+              <div className="p-2 border rounded-md bg-muted/50 mt-1">
+                {sessionToMove?.title}
               </div>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="targetDay">Move to Day</Label>
+            <div>
+              <Label htmlFor="current-day">Current Day</Label>
+              <div className="p-2 border rounded-md bg-muted/50 mt-1">
+                Day {sessionToMove?.dayNumber}
+              </div>
+            </div>
+            
+            <div>
+              <Label htmlFor="target-day">Target Day</Label>
               <Select 
                 value={targetDayNumber?.toString()} 
                 onValueChange={(value) => setTargetDayNumber(parseInt(value))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a day" />
+                  <SelectValue placeholder="Select day" />
                 </SelectTrigger>
                 <SelectContent>
                   {Array.from({ length: getTotalDays() }, (_, i) => i + 1).map((day) => (
@@ -825,239 +1078,10 @@ export default function ProgramEditorPage() {
             <Button variant="outline" onClick={() => setMoveSessionDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleMoveSession} disabled={!targetDayNumber}>
+            <Button onClick={handleMoveSession}>
+              <MoveHorizontal className="h-4 w-4 mr-2" />
               Move Session
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Session Edit Dialog */}
-      <Dialog open={isSessionDialogOpen} onOpenChange={setIsSessionDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-screen overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingSession ? "Edit Session" : "Create New Session"}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedDate && `${format(selectedDate, 'EEEE, MMMM d, yyyy')} (Day ${sessionForm.watch("dayNumber")})`}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <Form {...sessionForm}>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={sessionForm.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Session Title</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={sessionForm.control}
-                  name="isRestDay"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between space-y-0 rounded-md border p-4">
-                      <div>
-                        <FormLabel>Rest Day</FormLabel>
-                        <FormDescription>
-                          Mark this as a recovery day
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              <FormField
-                control={sessionForm.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} rows={2} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <Tabs defaultValue="short" className="w-full">
-                <TabsList className="grid grid-cols-3">
-                  <TabsTrigger value="short">Short Distance</TabsTrigger>
-                  <TabsTrigger value="medium">Medium Distance</TabsTrigger>
-                  <TabsTrigger value="long">Long Distance</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="short" className="space-y-4">
-                  <FormField
-                    control={sessionForm.control}
-                    name="shortDistanceWorkout"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Short Distance Workout</FormLabel>
-                        <FormControl>
-                          <Textarea {...field} rows={4} />
-                        </FormControl>
-                        <FormDescription>
-                          Training for short distance events (60m-200m)
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </TabsContent>
-                
-                <TabsContent value="medium" className="space-y-4">
-                  <FormField
-                    control={sessionForm.control}
-                    name="mediumDistanceWorkout"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Medium Distance Workout</FormLabel>
-                        <FormControl>
-                          <Textarea {...field} rows={4} />
-                        </FormControl>
-                        <FormDescription>
-                          Training for medium distance events (400m-800m)
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </TabsContent>
-                
-                <TabsContent value="long" className="space-y-4">
-                  <FormField
-                    control={sessionForm.control}
-                    name="longDistanceWorkout"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Long Distance Workout</FormLabel>
-                        <FormControl>
-                          <Textarea {...field} rows={4} />
-                        </FormControl>
-                        <FormDescription>
-                          Training for long distance events (1500m+)
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </TabsContent>
-              </Tabs>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={sessionForm.control}
-                  name="preActivation1"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Pre-Activation 1</FormLabel>
-                      <FormControl>
-                        <Textarea {...field} rows={3} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={sessionForm.control}
-                  name="preActivation2"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Pre-Activation 2</FormLabel>
-                      <FormControl>
-                        <Textarea {...field} rows={3} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              <FormField
-                control={sessionForm.control}
-                name="extraSession"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Extra Session</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} rows={3} />
-                    </FormControl>
-                    <FormDescription>
-                      Additional training activities or supplementary work
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={sessionForm.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Notes</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} rows={3} />
-                    </FormControl>
-                    <FormDescription>
-                      Additional notes or instructions for this session
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </Form>
-          
-          <DialogFooter className="flex justify-between">
-            <div>
-              {editingSession && (
-                <Button 
-                  variant="destructive" 
-                  onClick={handleDeleteSession}
-                  disabled={deleteSessionMutation.isPending}
-                >
-                  {deleteSessionMutation.isPending && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete
-                </Button>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handleCloseSessionDialog}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleSaveSession}
-                disabled={saveSessionMutation.isPending}
-              >
-                {saveSessionMutation.isPending && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
-                {editingSession ? "Update" : "Create"} Session
-              </Button>
-            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1065,11 +1089,10 @@ export default function ProgramEditorPage() {
   );
 }
 
-
-
-// Protected route wrapper
 export function Component() {
   return (
-    <ProtectedRoute path="/programs/:id/edit" component={ProgramEditorPage} />
+    <ProtectedRoute>
+      <ProgramEditorPage />
+    </ProtectedRoute>
   );
 }
