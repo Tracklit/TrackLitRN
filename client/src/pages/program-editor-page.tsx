@@ -199,9 +199,11 @@ function ProgramEditorPage() {
   });
 
   // Fetch program sessions
-  const { data: sessions = [], isLoading: sessionsLoading } = useQuery<Session[]>({
+  const { data: sessions = [], isLoading: sessionsLoading, refetch: refetchSessions } = useQuery<Session[]>({
     queryKey: ['/api/programs', programId, 'sessions'],
     enabled: !isNaN(programId),
+    refetchOnWindowFocus: true,
+    staleTime: 1000, // Consider data stale after 1 second
   });
 
   // Update program mutation
@@ -426,9 +428,27 @@ function ProgramEditorPage() {
     });
   };
 
+  // Create a local state to store session content
+  const [localSessionContent, setLocalSessionContent] = useState<{
+    [key: string]: {
+      content: string,
+      isRestDay: boolean
+    }
+  }>({});
+  
   // Handle session content update
   const handleCellUpdate = (weekNumber: number, dayNumber: number, content: string, isRestDay: boolean) => {
     const date = getDateForWeekDay(weekNumber, dayNumber);
+    const cellKey = `${weekNumber}-${dayNumber}`;
+    
+    // Update local state first for immediate UI display
+    setLocalSessionContent(prev => ({
+      ...prev,
+      [cellKey]: {
+        content,
+        isRestDay
+      }
+    }));
     
     // Check if session exists already
     const existingSession = sessions.find((s: Session) => 
@@ -443,6 +463,8 @@ function ProgramEditorPage() {
         title: content.split('\n')[0] || "Training Session",
         description: content,
         shortDistanceWorkout: content, // Add to this field for compatibility
+        weekNumber: weekNumber, // Explicitly set the week number
+        dayNumber: dayNumber,   // Explicitly set the day number
       });
     } else {
       updateSession.mutate({
@@ -477,18 +499,36 @@ function ProgramEditorPage() {
 
   // Get cell content for a specific week and day
   const getCellContent = (weekNumber: number, dayNumber: number) => {
-    const session = sessions.find((s: Session) => 
-      s.weekNumber === weekNumber && s.dayNumber === dayNumber
-    );
+    const cellKey = `${weekNumber}-${dayNumber}`;
+    const localData = localSessionContent[cellKey];
     
-    // Prioritize the fields to display in this order:
-    // 1. description (where we save the content)
-    // 2. shortDistanceWorkout (from imported sheet)
-    // 3. fallback to empty string
-    const displayContent = session?.description || 
-                          session?.shortDistanceWorkout || 
-                          session?.content || 
-                          "";
+    // Check local state first for immediate feedback
+    if (localData) {
+      return {
+        content: localData.content,
+        isRestDay: localData.isRestDay,
+        date: format(getDateForWeekDay(weekNumber, dayNumber), "yyyy-MM-dd"),
+        id: undefined, // We don't have the ID in local state
+      };
+    }
+    
+    // Find the matching session for this week and day
+    const session = sessions.find((s: Session) => {
+      return Number(s.weekNumber) === Number(weekNumber) && Number(s.dayNumber) === Number(dayNumber);
+    });
+    
+    // Check all possible content fields
+    let displayContent = "";
+    
+    if (session) {
+      if (session.shortDistanceWorkout && session.shortDistanceWorkout.trim() !== "") {
+        displayContent = session.shortDistanceWorkout;
+      } else if (session.description && session.description.trim() !== "") {
+        displayContent = session.description;
+      } else if (session.content && session.content.trim() !== "") {
+        displayContent = session.content;
+      }
+    }
     
     return {
       content: displayContent,
