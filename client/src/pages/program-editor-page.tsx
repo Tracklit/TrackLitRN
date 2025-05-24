@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useLocation, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -19,13 +19,15 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { 
   ArrowLeft, Calendar, CalendarDays, ChevronLeft, ChevronRight, Clock, Edit, 
-  Info, Loader2, Plus, Save, Trash2, MoveHorizontal, ArrowDownUp 
+  Info, Loader2, Plus, Save, Trash2, MoveHorizontal, ArrowDownUp, GripVertical
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format, addDays, startOfWeek, endOfWeek, isSameDay, isWeekend } from "date-fns";
+import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 
 // Session form validation schema
 const sessionFormSchema = z.object({
@@ -59,15 +61,33 @@ const programEditorSchema = z.object({
 type Session = z.infer<typeof sessionFormSchema>;
 
 // Session component with move capability
-function SessionCard({ session, onClick, onMoveSession }: { 
+// Draggable session card
+function SessionCard({ session, onClick }: { 
   session: any, 
-  onClick: () => void, 
-  onMoveSession: (session: any) => void 
+  onClick: () => void
 }) {
+  const ref = useRef(null);
+  
+  const [{ isDragging }, drag] = useDrag({
+    type: 'SESSION',
+    item: { 
+      id: session.id, 
+      dayNumber: session.dayNumber
+    },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging()
+    })
+  });
+  
+  drag(ref);
+  
   return (
     <div 
-      className="bg-primary/10 hover:bg-primary/20 transition-colors rounded-md p-2 cursor-pointer text-xs relative group"
+      ref={ref}
+      className={`bg-primary/10 hover:bg-primary/20 transition-colors rounded-md p-2 text-xs relative group
+        ${isDragging ? 'opacity-50' : 'opacity-100'}`}
       onClick={onClick}
+      style={{ cursor: 'move' }}
     >
       <div className="font-medium truncate">{session.title}</div>
       {session.isRestDay ? (
@@ -87,17 +107,67 @@ function SessionCard({ session, onClick, onMoveSession }: {
         <Button 
           variant="ghost" 
           size="icon" 
-          className="h-5 w-5" 
+          className="h-5 w-5"
           onClick={(e) => {
             e.stopPropagation();
-            onMoveSession(session);
+            onClick();
           }}
         >
-          <MoveHorizontal className="h-3 w-3 text-muted-foreground" />
-        </Button>
-        <Button variant="ghost" size="icon" className="h-5 w-5">
           <Edit className="h-3 w-3 text-muted-foreground" />
         </Button>
+        <div className="h-5 w-5 flex items-center justify-center">
+          <GripVertical className="h-3 w-3 text-muted-foreground" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Define the day container that can receive dragged sessions
+function DroppableDayContainer({ dayNumber, dayOfWeek, dayOfMonth, month, isWeekend, date, children, onAddSession }) {
+  const ref = useRef(null);
+  
+  const [{ isOver }, drop] = useDrop({
+    accept: 'SESSION',
+    drop: (item) => {
+      // This will be handled by the parent component
+      return { targetDayNumber: dayNumber };
+    },
+    collect: (monitor) => ({
+      isOver: monitor.isOver(),
+    }),
+  });
+  
+  drop(ref);
+  
+  return (
+    <div 
+      ref={ref}
+      className={`rounded-lg overflow-hidden ${isWeekend ? 'bg-muted/50' : 'bg-card'} 
+      ${isOver ? 'ring-2 ring-primary/50' : ''}`}
+    >
+      <div className={`p-2 text-center ${isWeekend ? 'bg-muted' : 'bg-primary/10'}`}>
+        <div className="text-xs font-medium">{dayOfWeek}</div>
+        <div className="text-sm font-bold">{dayOfMonth}</div>
+        <div className="text-xs">{month}</div>
+      </div>
+      
+      <div className="p-2">
+        <div className="text-xs mb-2 flex items-center justify-between">
+          <span>Day {dayNumber}</span>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-5 w-5"
+            onClick={() => onAddSession(date, dayNumber)}
+          >
+            <Plus className="h-3 w-3" />
+          </Button>
+        </div>
+        
+        <div className="space-y-2 max-h-[350px] overflow-y-auto">
+          {children}
+        </div>
       </div>
     </div>
   );
@@ -1114,5 +1184,9 @@ export default function ProgramEditorPage() {
 }
 
 export function Component() {
-  return <ProgramEditorPage />;
+  return (
+    <DndProvider backend={HTML5Backend}>
+      <ProgramEditorPage />
+    </DndProvider>
+  );
 }
