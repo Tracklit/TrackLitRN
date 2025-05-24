@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Link, useRoute } from "wouter";
 import { useState, useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -25,15 +25,25 @@ import SpikesPage from "@/pages/spikes-page";
 import { Component as ProgramsPage } from "@/pages/programs-page";
 import { Component as ProgramCreatePage } from "@/pages/program-create-page";
 import { Component as ProgramDetailPage } from "@/pages/program-detail-page";
-// Import the program editor page 
-const ProgramEditorPage = () => {
+import { Button } from "@/components/ui/button";
+
+// Temporary program editor placeholder while we fix the main editor
+function SimpleProgramEditorPage() {
+  const [, params] = useRoute('/programs/:id/edit');
+  const id = params?.id;
+  
   return (
     <div className="container p-4 pt-20 md:pt-24 md:pl-72">
-      <h1>Program Editor</h1>
-      <p>Editing program...</p>
+      <h1 className="text-xl font-bold mb-4">Program Editor</h1>
+      <p className="mb-4">Editing program {id}</p>
+      <Button asChild>
+        <Link href={`/programs/${id}`}>
+          Back to Program Details
+        </Link>
+      </Button>
     </div>
   );
-};
+}
 import { Component as AssignedProgramsPage } from "@/pages/assigned-programs-page";
 import AthleteProfilePage from "@/pages/athlete-profile-page";
 import ProgramCoverPage from "@/pages/program-cover-page";
@@ -52,7 +62,7 @@ function Router() {
       <ProtectedRoute path="/programs" component={ProgramsPage} />
       <ProtectedRoute path="/programs/create" component={ProgramCreatePage} />
       <ProtectedRoute path="/programs/:id" component={ProgramDetailPage} />
-      <ProtectedRoute path="/programs/:id/edit" component={ProgramEditorPage} />
+      <ProtectedRoute path="/programs/:id/edit" component={SimpleProgramEditorPage} />
       <ProtectedRoute path="/programs/:id/cover" component={ProgramCoverPage} />
       <ProtectedRoute path="/assigned-programs" component={AssignedProgramsPage} />
       
