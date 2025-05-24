@@ -123,15 +123,26 @@ function SessionCard({ session, onClick }: {
   );
 }
 
-// Define the day container that can receive dragged sessions
-function DroppableDayContainer({ dayNumber, dayOfWeek, dayOfMonth, month, isWeekend, date, children, onAddSession }) {
+// Define a moveSession function type for use in the next components
+type MoveSessionFunction = (sessionId: number, newDayNumber: number) => void;
+
+// Day container component with drop target functionality 
+function DayContainer({ day, sessions, onAddSession, onEditSession, onMoveSession }: { 
+  day: any, 
+  sessions: any[], 
+  onAddSession: (date: Date, dayNumber: number) => void,
+  onEditSession: (session: any) => void,
+  onMoveSession: MoveSessionFunction
+}) {
   const ref = useRef(null);
   
   const [{ isOver }, drop] = useDrop({
     accept: 'SESSION',
     drop: (item) => {
-      // This will be handled by the parent component
-      return { targetDayNumber: dayNumber };
+      if (item.dayNumber !== day.dayNumber) {
+        onMoveSession(item.id, day.dayNumber);
+      }
+      return undefined;
     },
     collect: (monitor) => ({
       isOver: monitor.isOver(),
@@ -143,30 +154,42 @@ function DroppableDayContainer({ dayNumber, dayOfWeek, dayOfMonth, month, isWeek
   return (
     <div 
       ref={ref}
-      className={`rounded-lg overflow-hidden ${isWeekend ? 'bg-muted/50' : 'bg-card'} 
-      ${isOver ? 'ring-2 ring-primary/50' : ''}`}
+      className={`rounded-lg overflow-hidden ${day.isWeekend ? 'bg-muted/50' : 'bg-card'} 
+        ${isOver ? 'ring-2 ring-primary' : ''}`}
     >
-      <div className={`p-2 text-center ${isWeekend ? 'bg-muted' : 'bg-primary/10'}`}>
-        <div className="text-xs font-medium">{dayOfWeek}</div>
-        <div className="text-sm font-bold">{dayOfMonth}</div>
-        <div className="text-xs">{month}</div>
+      <div className={`p-2 text-center ${day.isWeekend ? 'bg-muted' : 'bg-primary/10'}`}>
+        <div className="text-xs font-medium">{day.dayOfWeek}</div>
+        <div className="text-sm font-bold">{day.dayOfMonth}</div>
+        <div className="text-xs">{day.month}</div>
       </div>
       
       <div className="p-2">
         <div className="text-xs mb-2 flex items-center justify-between">
-          <span>Day {dayNumber}</span>
+          <span>Day {day.dayNumber}</span>
           <Button 
             variant="ghost" 
             size="icon" 
             className="h-5 w-5"
-            onClick={() => onAddSession(date, dayNumber)}
+            onClick={() => onAddSession(day.date, day.dayNumber)}
           >
             <Plus className="h-3 w-3" />
           </Button>
         </div>
         
         <div className="space-y-2 max-h-[350px] overflow-y-auto">
-          {children}
+          {sessions.length > 0 ? (
+            sessions.map((session) => (
+              <SessionCard 
+                key={session.id} 
+                session={session} 
+                onClick={() => onEditSession(session)}
+              />
+            ))
+          ) : (
+            <div className="text-xs text-center py-4 text-muted-foreground">
+              No sessions
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -665,47 +688,14 @@ export default function ProgramEditorPage() {
         <TabsContent value="weekly" className="space-y-4">
           <div className="grid grid-cols-7 gap-4">
             {weekDates.map((day) => (
-              <div 
+              <DayContainer 
                 key={day.dayNumber}
-                className={`rounded-lg overflow-hidden ${day.isWeekend ? 'bg-muted/50' : 'bg-card'}`}
-              >
-                <div className={`p-2 text-center ${day.isWeekend ? 'bg-muted' : 'bg-primary/10'}`}>
-                  <div className="text-xs font-medium">{day.dayOfWeek}</div>
-                  <div className="text-sm font-bold">{day.dayOfMonth}</div>
-                  <div className="text-xs">{day.month}</div>
-                </div>
-                
-                <div className="p-2">
-                  <div className="text-xs mb-2 flex items-center justify-between">
-                    <span>Day {day.dayNumber}</span>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-5 w-5"
-                      onClick={() => handleOpenSessionDialog(day.date, day.dayNumber)}
-                    >
-                      <Plus className="h-3 w-3" />
-                    </Button>
-                  </div>
-                  
-                  <div className="space-y-2 max-h-[350px] overflow-y-auto">
-                    {getSessionsForDay(day.dayNumber).length > 0 ? (
-                      getSessionsForDay(day.dayNumber).map((session: any) => (
-                        <SessionCard 
-                          key={session.id} 
-                          session={session} 
-                          onClick={() => handleOpenSessionDialog(day.date, day.dayNumber, session)}
-                          onMoveSession={handleOpenMoveDialog}
-                        />
-                      ))
-                    ) : (
-                      <div className="text-xs text-center py-4 text-muted-foreground">
-                        No sessions
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+                day={day}
+                sessions={getSessionsForDay(day.dayNumber)}
+                onAddSession={handleOpenSessionDialog}
+                onEditSession={(session) => handleOpenSessionDialog(day.date, day.dayNumber, session)}
+                onMoveSession={handleMoveSession}
+              />
             ))}
           </div>
         </TabsContent>
