@@ -208,20 +208,40 @@ function ProgramEditorPage() {
     enabled: !isNaN(programId),
   });
 
-  // Fetch program sessions with direct access to the API
+  // Fetch program sessions with direct access to the API and simpler data handling
   const { data: sessions = [], isLoading: sessionsLoading, refetch: refetchSessions } = useQuery<Session[]>({
     queryKey: ['/api/programs', programId, 'sessions'],
     queryFn: async () => {
       if (!programId) return [];
       
+      // Direct fetch of the program with sessions
       try {
         const response = await fetch(`/api/programs/${programId}`);
         if (!response.ok) throw new Error('Failed to fetch program sessions');
         
         const data = await response.json();
-        console.log("Program data with sessions:", data);
+        // Add more detailed logging to see exactly what data we're getting
+        console.log(`Fetched program ${programId} with:`, {
+          title: data.title,
+          description: data.description,
+          sessionCount: data.sessions?.length || 0
+        });
+        
+        // Extra check to make data visible in console
+        if (data.sessions && data.sessions.length > 0) {
+          console.log("First session data:", data.sessions[0]);
+        }
         
         if (data.sessions && Array.isArray(data.sessions)) {
+          // Immediately save the program details to the form
+          form.reset({
+            title: data.title || "",
+            description: data.description || "",
+            category: data.category || "",
+            level: data.level || "",
+            startDate: data.startDate ? format(new Date(data.startDate), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
+          });
+          
           return data.sessions;
         }
         return [];
@@ -231,8 +251,8 @@ function ProgramEditorPage() {
       }
     },
     enabled: !isNaN(programId),
-    refetchOnWindowFocus: true,
-    staleTime: 1000,
+    refetchOnWindowFocus: false, // Disable automatic refetching
+    staleTime: 0, // Always fetch fresh data
   });
 
   // Update program mutation
@@ -486,41 +506,82 @@ function ProgramEditorPage() {
     }
   }>({});
   
-  // Handle session content update
+  // Enhanced session content update handler with proper data persistence
   const handleCellUpdate = (weekNumber: number, dayNumber: number, content: string, isRestDay: boolean) => {
     const date = getDateForWeekDay(weekNumber, dayNumber);
     
     // Check if session exists already
     const existingSession = sessions.find((s: Session) => 
-      s.weekNumber === weekNumber && s.dayNumber === dayNumber
+      Number(s.weekNumber) === Number(weekNumber) && Number(s.dayNumber) === Number(dayNumber)
     );
     
-    console.log("Saving session content:", content);
+    console.log("Saving session content:", { content, weekNumber, dayNumber });
     
-    if (existingSession) {
+    // Prepare complete session data to ensure all fields are properly set
+    const sessionData = {
+      programId,
+      weekNumber,
+      dayNumber,
+      content,
+      isRestDay,
+      date: format(date, "yyyy-MM-dd"),
+      title: content.split('\n')[0] || "Training Session",
+      description: content,
+      shortDistanceWorkout: content, // Critical for display
+    };
+    
+    if (existingSession && existingSession.id) {
       console.log("Updating existing session:", existingSession.id);
-      updateSession.mutate({
-        ...existingSession,
-        content,
-        isRestDay,
-        title: content.split('\n')[0] || "Training Session",
-        description: content,
-        shortDistanceWorkout: content, // Add to this field for compatibility
-        weekNumber: weekNumber, // Explicitly set the week number
-        dayNumber: dayNumber,   // Explicitly set the day number
+      
+      // Send a direct API request instead of using the mutation to ensure it's properly saved
+      fetch(`/api/programs/${programId}/sessions/${existingSession.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...existingSession,
+          ...sessionData
+        })
+      })
+      .then(response => {
+        if (response.ok) {
+          toast({
+            title: "Session updated",
+            description: "Your workout has been saved successfully.",
+          });
+          // Force a complete data refresh
+          refetchSessions();
+        } else {
+          toast({
+            title: "Error saving session",
+            description: "There was a problem saving your workout.",
+            variant: "destructive"
+          });
+        }
       });
     } else {
-      console.log("Creating new session for week", weekNumber, "day", dayNumber);
-      updateSession.mutate({
-        programId,
-        weekNumber,
-        dayNumber,
-        content,
-        isRestDay,
-        date: format(date, "yyyy-MM-dd"),
-        title: content.split('\n')[0] || "Training Session",
-        description: content,
-        shortDistanceWorkout: content, // Add to this field for compatibility
+      console.log("Creating new session");
+      
+      // Send a direct API request for session creation
+      fetch(`/api/programs/${programId}/sessions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sessionData)
+      })
+      .then(response => {
+        if (response.ok) {
+          toast({
+            title: "Session created",
+            description: "Your workout has been saved successfully.",
+          });
+          // Force a complete data refresh
+          refetchSessions();
+        } else {
+          toast({
+            title: "Error creating session",
+            description: "There was a problem saving your workout.",
+            variant: "destructive"
+          });
+        }
       });
     }
   };
