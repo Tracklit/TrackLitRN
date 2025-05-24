@@ -616,6 +616,63 @@ function ProgramEditorPage() {
     return addDays(week.startDate, dayNumber);
   };
 
+  // Handle cover image upload
+  const handleCoverImageUpload = async (fileOrUrl: string | File) => {
+    // If it's a string URL and not a File object, we're just setting the initial state
+    if (typeof fileOrUrl === 'string') {
+      // If empty string, it means we're clearing the image
+      if (!fileOrUrl) {
+        // Here we would handle clearing the image, but we'll keep it simple for now
+        return null;
+      }
+      return fileOrUrl;
+    }
+    
+    // Otherwise, it's a File object from the file input
+    const file = fileOrUrl as File;
+    if (!programId || !file) return null;
+    
+    try {
+      setIsUploadingCover(true);
+      
+      // Create form data for the upload
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      // Upload the image
+      const response = await fetch(`/api/programs/${programId}/cover-image`, {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to upload cover image');
+      }
+      
+      const data = await response.json();
+      
+      // Refresh program data
+      queryClient.invalidateQueries({ queryKey: ['/api/programs', programId] });
+      
+      toast({
+        title: "Cover image updated",
+        description: "Program preview image has been updated successfully."
+      });
+      
+      return data.coverImageUrl;
+    } catch (error) {
+      console.error("Error updating cover image:", error);
+      toast({
+        title: "Error updating cover image",
+        description: "Failed to update program cover image.",
+        variant: "destructive"
+      });
+      return null;
+    } finally {
+      setIsUploadingCover(false);
+    }
+  };
+
   // Form submission handler
   const onSubmit = (data: z.infer<typeof programEditorSchema>) => {
     updateProgram.mutate(data);
@@ -797,6 +854,22 @@ function ProgramEditorPage() {
                       </FormItem>
                     )}
                   />
+                  <div className="flex-1 min-w-[200px]">
+                    <label className="text-sm font-medium">Cover Image</label>
+                    <div className="mt-1">
+                      <ImageUpload 
+                        initialImageUrl={program?.coverImageUrl || ''} 
+                        onImageUploaded={(file) => handleCoverImageUpload(file as unknown as File)} 
+                        className="h-[140px] w-full max-w-[250px]"
+                      />
+                      {isUploadingCover && (
+                        <div className="mt-2 flex items-center text-sm text-muted-foreground">
+                          <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                          Uploading image...
+                        </div>
+                      )}
+                    </div>
+                  </div>
                   <FormField
                     control={form.control}
                     name="startDate"

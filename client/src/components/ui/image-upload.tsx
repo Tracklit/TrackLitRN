@@ -22,31 +22,17 @@ export function ImageUpload({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Create form data for the upload
-    const formData = new FormData();
-    formData.append('file', file);
-    
     try {
       setIsUploading(true);
       
-      // Upload the file
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error('Upload failed');
-      }
-
-      const data = await response.json();
-      const uploadedUrl = data.url;
+      // Call the onImageUploaded callback with the file
+      // This allows parent components to handle the upload process
+      onImageUploaded(file as unknown as string);
       
-      // Update the state and call the callback
-      setImageUrl(uploadedUrl);
-      onImageUploaded(uploadedUrl);
+      // We'll set the imageUrl if the parent successfully uploads and provides a URL
+      // Otherwise this component will just be used to capture the file
     } catch (error) {
-      console.error('Error uploading image:', error);
+      console.error('Error handling image:', error);
     } finally {
       setIsUploading(false);
     }
