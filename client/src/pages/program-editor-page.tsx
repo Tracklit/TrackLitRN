@@ -543,7 +543,7 @@ function ProgramEditorPage() {
 
   // Get cell content for a specific week and day
   const getCellContent = (weekNumber: number, dayNumber: number) => {
-    // Find the matching session for this week and day
+    // First check - direct database saved sessions
     const session = sessions.find((s: Session) => {
       return Number(s.weekNumber) === Number(weekNumber) && Number(s.dayNumber) === Number(dayNumber);
     });
@@ -559,14 +559,13 @@ function ProgramEditorPage() {
       } else if (session.content && session.content.trim() !== "") {
         displayContent = session.content;
       }
-    }
-    
-    // For debugging
-    if (session) {
+      
+      // Log found session for debugging
       console.log(`Found session for week ${weekNumber}, day ${dayNumber}:`, 
-        { id: session.id, content: displayContent, shortDistance: session.shortDistanceWorkout });
+        { id: session.id, content: displayContent });
     }
     
+    // Build the cell data object
     return {
       content: displayContent,
       isRestDay: session?.isRestDay || false,
