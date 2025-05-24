@@ -1076,3 +1076,5 @@ function ProgramEditorPage() {
 export function Component() {
   return <ProgramEditorPage />;
 }
+
+export default ProgramEditorPage;

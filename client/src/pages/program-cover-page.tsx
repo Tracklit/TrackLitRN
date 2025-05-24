@@ -103,10 +103,5 @@ function ProgramCoverPage() {
   );
 }
 
-export default function ProtectedProgramCoverPage() {
-  return (
-    <ProtectedRoute>
-      <ProgramCoverPage />
-    </ProtectedRoute>
-  );
-}
+// Export the component to be used in App.tsx with the route
+export default ProgramCoverPage;
