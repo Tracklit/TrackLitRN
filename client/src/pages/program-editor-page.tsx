@@ -82,16 +82,16 @@ function EditableCell({
   date?: string;
 }) {
   const [isEditing, setIsEditing] = useState(false);
-  const [value, setValue] = useState(content);
+  const [value, setValue] = useState(content || "");
   const [isRest, setIsRest] = useState(isRestDay);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Update the value when content prop changes
+  // Always update local state when props change
   useEffect(() => {
-    setValue(content);
+    setValue(content || "");
   }, [content]);
   
-  // Update isRest when isRestDay prop changes
+  // Always update rest state when props change
   useEffect(() => {
     setIsRest(isRestDay);
   }, [isRestDay]);
@@ -220,23 +220,16 @@ function ProgramEditorPage() {
   const updateProgram = useMutation({
     mutationFn: async (data: z.infer<typeof programEditorSchema>) => {
       console.log("Making PUT request to /api/programs/" + programId, data);
-      return apiRequest('PUT', `/api/programs/${programId}`, data);
+      const response = await apiRequest('PUT', `/api/programs/${programId}`, data);
+      return response;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast({
         title: "Program updated",
         description: "Your program has been successfully updated.",
       });
-      // Update form with the latest data
-      if (data) {
-        form.reset({
-          title: data.title || "",
-          description: data.description || "",
-          category: data.category || "",
-          level: data.level || "",
-          startDate: data.startDate ? format(new Date(data.startDate), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
-        });
-      }
+      
+      // Get latest program data by forcing a refresh
       queryClient.invalidateQueries({ queryKey: ['/api/programs', programId] });
       queryClient.invalidateQueries({ queryKey: ['/api/programs'] });
     },
@@ -270,11 +263,10 @@ function ProgramEditorPage() {
       // Force reload the program and its sessions
       queryClient.invalidateQueries({ queryKey: ['/api/programs'] });
       queryClient.invalidateQueries({ queryKey: ['/api/programs', programId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/programs', programId, 'sessions'] });
       
-      // Important: This ensures we get fresh session data
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['/api/programs', programId, 'sessions'] });
-      }, 100);
+      // Force a refetch to update the UI with the latest data
+      refetchSessions();
     },
     onError: (error: Error) => {
       toast({
