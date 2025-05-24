@@ -29,8 +29,9 @@ import { Button } from "@/components/ui/button";
 
 // Temporary program editor placeholder while we fix the main editor
 function SimpleProgramEditorPage() {
-  const [, params] = useRoute('/programs/:id/edit');
-  const id = params?.id;
+  // Use params in a way that's compatible with wouter
+  const params = window.location.pathname.split('/');
+  const id = params[2]; // /programs/ID/edit
   
   return (
     <div className="container p-4 pt-20 md:pt-24 md:pl-72">
