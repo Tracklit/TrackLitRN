@@ -313,17 +313,24 @@ export default function ProgramEditorPage() {
   
   // Function to calculate the total number of days in the program
   const getTotalDays = (): number => {
+    // Calculate from program form settings first
+    const daysFromSettings = programForm.watch("macroBlockSize") 
+      * programForm.watch("numberOfMacroBlocks") 
+      * programForm.watch("microBlockSize");
+    
+    // Also check existing sessions
     if (program?.sessions && program.sessions.length > 0) {
       // Find the highest day number from sessions
       const maxDay = Math.max(...program.sessions.map((session: any) => session.dayNumber || 0));
-      return Math.max(maxDay, 1);
+      // Return the larger of the two calculations
+      return Math.max(maxDay, daysFromSettings);
     }
     
-    // Default to at least 7 days (1 week) if no sessions are available
-    return 7;
+    // Return the days calculated from settings, or at least 7 days
+    return Math.max(daysFromSettings, 7);
   };
   
-  // Calculate total days and weeks
+  // Calculate total days
   const totalDays = getTotalDays();
   
   // Generate all day objects for the entire program
