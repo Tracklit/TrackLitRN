@@ -6,6 +6,7 @@ import { z } from "zod";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { programCoverUpload } from "./upload-config";
 import { GoogleSpreadsheet } from "google-spreadsheet";
 import { insertAthleteProfileSchema } from "@shared/athlete-profile-schema";
 import { 
