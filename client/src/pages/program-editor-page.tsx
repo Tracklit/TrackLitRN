@@ -125,7 +125,7 @@ function EditableCell({
 
   return (
     <TableCell 
-      className={`border p-0 relative min-h-[100px] ${(value || content) ? 'bg-gray-700' : 'bg-gray-950'}`}
+      className={`border p-0 relative min-h-[100px] ${(value || content) ? 'bg-gray-950' : 'bg-gray-700'}`}
       onClick={() => !isEditing && setIsEditing(true)}
     >
       {isEditing ? (
