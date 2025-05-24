@@ -317,55 +317,9 @@ export default function ProgramCreatePage() {
                     />
                   )}
                   
-                  <FormField
-                    control={form.control}
-                    name="useFileUpload"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel>Upload document instead of creating weekly sessions</FormLabel>
-                          <FormDescription>
-                            Upload a PDF, Excel or other document containing your training program
-                          </FormDescription>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
+                  {/* Second upload toggle removed to avoid duplication */}
                   
-                  {form.watch("useFileUpload") && (
-                    <FormField
-                      control={form.control}
-                      name="programFile"
-                      render={({ field: { value, onChange, ...field } }) => (
-                        <FormItem>
-                          <FormLabel>Program Document</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="file"
-                              accept=".pdf,.doc,.docx,.xls,.xlsx,.txt"
-                              onChange={(e) => {
-                                const files = e.target.files;
-                                if (files && files.length > 0) {
-                                  onChange(files[0]);
-                                }
-                              }}
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            Upload your program document (PDF recommended for best viewing experience)
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
+                  {/* The file upload section has been moved to the top of the form */}
                   
                   <div className="flex justify-end space-x-2 pt-4">
                     <Button variant="outline" type="button" asChild>
