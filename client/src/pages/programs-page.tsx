@@ -425,8 +425,8 @@ function ProgramCard({ program, type, creator, viewMode }: {
                   Document
                 </a>
               </Button>
-              <Button variant="outline" size="sm" asChild className="flex-1">
-                <Link href={`/programs/${program.id}/edit`}>Edit</Link>
+              <Button variant="default" size="sm" asChild className="flex-1">
+                <Link href={`/programs/${program.id}/edit`}><FileText className="h-3.5 w-3.5 mr-1.5" />Edit</Link>
               </Button>
               <AssignProgramDialog 
                 program={program} 
@@ -475,8 +475,8 @@ function ProgramCard({ program, type, creator, viewMode }: {
             </div>
           ) : (
             <div className="flex w-full gap-2">
-              <Button variant="outline" size="sm" asChild className="flex-1">
-                <Link href={`/programs/${program.id}/edit`}>Edit</Link>
+              <Button variant="default" size="sm" asChild className="flex-1">
+                <Link href={`/programs/${program.id}/edit`}><FileText className="h-3.5 w-3.5 mr-1.5" />Edit</Link>
               </Button>
               <AssignProgramDialog 
                 program={program}
