@@ -2653,6 +2653,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const programId = parseInt(req.params.id);
+      
+      if (isNaN(programId)) {
+        return res.status(400).json({ error: "Invalid program ID" });
+      }
+      
       const program = await dbStorage.getProgram(programId);
       
       if (!program) {

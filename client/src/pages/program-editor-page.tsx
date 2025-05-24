@@ -122,7 +122,17 @@ export default function ProgramEditorPage() {
   // Program query
   const { data: program, isLoading, error } = useQuery({
     queryKey: [`/api/programs/${programId}`],
-    enabled: !!programId,
+    queryFn: async () => {
+      if (!programId || isNaN(programId)) {
+        throw new Error("Invalid program ID");
+      }
+      const response = await fetch(`/api/programs/${programId}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch program");
+      }
+      return response.json();
+    },
+    enabled: !!programId && !isNaN(programId),
   });
   
   // Program editor form
