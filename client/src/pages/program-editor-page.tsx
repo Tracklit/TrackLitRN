@@ -27,6 +27,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format, addDays, parse, addWeeks, startOfWeek, getDay, isValid, parseISO } from "date-fns";
 import { ImageUpload } from "@/components/ui/image-upload";
+import { ProgramCoverUpload } from "@/components/program-cover-upload";
 
 // Program editor form schema
 const programEditorSchema = z.object({
