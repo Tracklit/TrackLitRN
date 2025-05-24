@@ -196,13 +196,40 @@ export default function ProgramEditorPage() {
         : `/api/programs/${programId}/sessions`;
       
       const method = editingSession?.id ? "PUT" : "POST";
-      const res = await apiRequest(method, url, data);
       
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to save session");
+      try {
+        const res = await apiRequest(method, url, data);
+        
+        if (!res.ok) {
+          const errorText = await res.text();
+          let errorMessage = "Failed to save session";
+          
+          try {
+            // Try to parse as JSON first
+            const errorData = JSON.parse(errorText);
+            errorMessage = errorData.error || errorMessage;
+          } catch (e) {
+            // If parsing fails, use the text directly
+            errorMessage = errorText.length > 100 ? errorText.substring(0, 100) + "..." : errorText;
+          }
+          
+          throw new Error(errorMessage);
+        }
+        
+        // Handle successful response
+        const responseText = await res.text();
+        if (!responseText) return {};
+        
+        try {
+          return JSON.parse(responseText);
+        } catch (e) {
+          console.error("Error parsing success response:", e);
+          return {};
+        }
+      } catch (error) {
+        console.error("Session save error:", error);
+        throw error;
       }
-      return res.json();
     },
     onSuccess: () => {
       toast({
@@ -224,12 +251,39 @@ export default function ProgramEditorPage() {
   // Delete session mutation
   const deleteSessionMutation = useMutation({
     mutationFn: async (sessionId: number) => {
-      const res = await apiRequest("DELETE", `/api/programs/${programId}/sessions/${sessionId}`);
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to delete session");
+      try {
+        const res = await apiRequest("DELETE", `/api/programs/${programId}/sessions/${sessionId}`);
+        
+        if (!res.ok) {
+          const errorText = await res.text();
+          let errorMessage = "Failed to delete session";
+          
+          try {
+            // Try to parse as JSON first
+            const errorData = JSON.parse(errorText);
+            errorMessage = errorData.error || errorMessage;
+          } catch (e) {
+            // If parsing fails, use the text directly
+            errorMessage = errorText.length > 100 ? errorText.substring(0, 100) + "..." : errorText;
+          }
+          
+          throw new Error(errorMessage);
+        }
+        
+        // Handle successful response
+        const responseText = await res.text();
+        if (!responseText) return {};
+        
+        try {
+          return JSON.parse(responseText);
+        } catch (e) {
+          console.error("Error parsing success response:", e);
+          return {};
+        }
+      } catch (error) {
+        console.error("Session delete error:", error);
+        throw error;
       }
-      return res.json();
     },
     onSuccess: () => {
       toast({
