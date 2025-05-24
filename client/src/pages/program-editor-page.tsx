@@ -126,13 +126,25 @@ export default function ProgramEditorPage() {
       if (!programId || isNaN(programId)) {
         throw new Error("Invalid program ID");
       }
-      const response = await fetch(`/api/programs/${programId}`);
+      
+      // Add credentials to ensure authentication works
+      const response = await fetch(`/api/programs/${programId}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
       if (!response.ok) {
-        throw new Error("Failed to fetch program");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to fetch program");
       }
+      
       return response.json();
     },
     enabled: !!programId && !isNaN(programId),
+    retry: 1,
   });
   
   // Program editor form
@@ -1100,9 +1112,5 @@ export default function ProgramEditorPage() {
 }
 
 export function Component() {
-  return (
-    <ProtectedRoute>
-      <ProgramEditorPage />
-    </ProtectedRoute>
-  );
+  return <ProgramEditorPage />;
 }
