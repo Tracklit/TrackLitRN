@@ -368,13 +368,18 @@ function ProgramEditorPage() {
   const hasUploadedDocument = program && 
     (program.isUploadedProgram === true || (program.programFileUrl && program.programFileUrl.length > 0));
     
-  // For demo purposes, provide a fallback document URL if needed
-  // This can be removed in production
+  // For demo purposes, provide a fallback document URL that's guaranteed to work within an iframe
+  // Use a Google PDF Viewer to load our test PDF - this avoids cross-origin issues
+  const pdfViewerUrl = "https://docs.google.com/viewer?embedded=true&url=";
   const testDocumentUrl = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf";
+  const embeddedPdfUrl = `${pdfViewerUrl}${encodeURIComponent(testDocumentUrl)}`;
   
   // Determine if we should show document view or weekly schedule
   const isUploadedDocumentProgram = hasUploadedDocument || (programId === 1); // Show document view for program #1 for demo
-  const documentUrl = program?.programFileUrl || testDocumentUrl;
+  const rawDocumentUrl = program?.programFileUrl || testDocumentUrl;
+  const documentUrl = program?.programFileUrl ? 
+    `${pdfViewerUrl}${encodeURIComponent(program.programFileUrl)}` : 
+    embeddedPdfUrl;
   const documentType = program?.programFileType || "application/pdf";
 
   // Organize sessions into weeks when data is loaded
