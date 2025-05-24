@@ -846,8 +846,9 @@ export default function ProgramEditorPage() {
             </DialogDescription>
           </DialogHeader>
           
-          <Form {...sessionForm}>
-            <div className="grid gap-4">
+          <div className="overflow-y-auto pr-1 my-4" style={{ maxHeight: "60vh" }}>
+            <Form {...sessionForm}>
+              <div className="grid gap-4">
               <FormField
                 control={sessionForm.control}
                 name="title"
@@ -1010,10 +1011,11 @@ export default function ProgramEditorPage() {
                   </FormItem>
                 )}
               />
-            </div>
-          </Form>
+              </div>
+            </Form>
+          </div>
           
-          <DialogFooter className="flex justify-between items-center">
+          <DialogFooter className="flex justify-between items-center mt-4">
             {editingSession && (
               <Button
                 variant="destructive"
