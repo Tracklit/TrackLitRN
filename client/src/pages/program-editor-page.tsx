@@ -186,6 +186,7 @@ function ProgramEditorPage() {
   const [sessionDialogOpen, setSessionDialogOpen] = useState(false);
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
   const [detailsExpanded, setDetailsExpanded] = useState(false);
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
   // Program details form
   const form = useForm<z.infer<typeof programEditorSchema>>({
@@ -956,35 +957,51 @@ function ProgramEditorPage() {
             </div>
             
             {/* Document preview iframe */}
-            <div className="w-full h-[600px] border rounded-lg overflow-hidden bg-white">
-              <iframe 
-                src={documentUrl} 
-                className="w-full h-full"
-                title="Document Preview"
-                sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-              />
+            <div className="w-full h-[600px] border rounded-lg overflow-hidden">
+              {actualProgramFileUrl ? (
+                <iframe 
+                  src={documentUrl} 
+                  className="w-full h-full"
+                  title="Document Preview"
+                  sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full bg-gray-100 dark:bg-gray-900">
+                  <FileText className="h-16 w-16 text-gray-400 mb-4" />
+                  <h3 className="text-xl font-semibold mb-2 text-gray-800 dark:text-gray-200">No Document Uploaded</h3>
+                  <p className="text-center text-gray-600 dark:text-gray-400 mb-6 max-w-md">
+                    This program doesn't have an uploaded document yet. Upload a PDF file to see it displayed here.
+                  </p>
+                  <Button onClick={() => setUploadDialogOpen(true)} className="flex items-center px-4 py-2">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Upload Document
+                  </Button>
+                </div>
+              )}
             </div>
             
             {/* Document action buttons */}
-            <div className="mt-4 text-center">
-              <p className="text-sm text-gray-400 mb-4">
-                If the document doesn't display correctly, you can download it or open it in a new tab.
-              </p>
-              <div className="flex justify-center gap-4">
-                <Button variant="outline" className="flex items-center px-4 py-2" asChild>
-                  <a href={rawDocumentUrl} download>
-                    <Download className="h-4 w-4 mr-2" />
-                    Download Document
-                  </a>
-                </Button>
-                <Button className="flex items-center px-4 py-2 bg-amber-400 hover:bg-amber-500 text-black" asChild>
-                  <a href={rawDocumentUrl} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    Open in New Tab
-                  </a>
-                </Button>
+            {actualProgramFileUrl && (
+              <div className="mt-4 text-center">
+                <p className="text-sm text-gray-400 mb-4">
+                  If the document doesn't display correctly, you can download it or open it in a new tab.
+                </p>
+                <div className="flex justify-center gap-4">
+                  <Button variant="outline" className="flex items-center px-4 py-2" asChild>
+                    <a href={rawDocumentUrl} download>
+                      <Download className="h-4 w-4 mr-2" />
+                      Download Document
+                    </a>
+                  </Button>
+                  <Button className="flex items-center px-4 py-2 bg-amber-400 hover:bg-amber-500 text-black" asChild>
+                    <a href={rawDocumentUrl} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Open in New Tab
+                    </a>
+                  </Button>
+                </div>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>
