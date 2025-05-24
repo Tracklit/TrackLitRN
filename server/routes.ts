@@ -3035,11 +3035,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Update the session
-      const sessionData = {
-        ...req.body,
-        programId
-      };
+      // When moving sessions between days, we only need to update specific fields
+      // This prevents issues with date formatting during updates
+      const { dayNumber } = req.body;
       
+      // If we're just updating the day number (for drag and drop), only send that field
+      // Otherwise send the full update data
+      const sessionData = dayNumber !== undefined && Object.keys(req.body).length <= 3
+        ? { dayNumber, programId } // For drag and drop operations
+        : { ...req.body, programId }; // For full updates
+      
+      console.log("Updating session with data:", sessionData);
       const updatedSession = await dbStorage.updateProgramSession(sessionId, sessionData);
       res.json(updatedSession);
     } catch (error) {

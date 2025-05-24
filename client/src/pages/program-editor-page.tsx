@@ -493,9 +493,10 @@ export default function ProgramEditorPage() {
     }
     
     try {
-      // Update the session with the new day number
+      // Only send the necessary fields to update, avoiding date-related issues
       const updatedSession = {
-        ...sessionToMove,
+        id: sessionId,
+        programId: programId,
         dayNumber: newDayNumber
       };
       
