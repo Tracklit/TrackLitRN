@@ -229,9 +229,9 @@ function ProgramEditorPage() {
   const updateSession = useMutation({
     mutationFn: async (data: Partial<Session>) => {
       if (data.id) {
-        return apiRequest(`/api/programs/${programId}/sessions/${data.id}`, 'PUT', data);
+        return apiRequest('PUT', `/api/programs/${programId}/sessions/${data.id}`, data);
       } else {
-        return apiRequest(`/api/programs/${programId}/sessions`, 'POST', data);
+        return apiRequest('POST', `/api/programs/${programId}/sessions`, data);
       }
     },
     onSuccess: () => {
@@ -253,7 +253,7 @@ function ProgramEditorPage() {
   // Delete session mutation
   const deleteSession = useMutation({
     mutationFn: async (sessionId: number) => {
-      return apiRequest(`/api/programs/${programId}/sessions/${sessionId}`, 'DELETE');
+      return apiRequest('DELETE', `/api/programs/${programId}/sessions/${sessionId}`);
     },
     onSuccess: () => {
       toast({
