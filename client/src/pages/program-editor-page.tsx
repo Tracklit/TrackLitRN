@@ -113,10 +113,7 @@ function EditableCell({
     >
       {isEditing ? (
         <div className="p-2 h-full">
-          <div className="flex justify-between items-center mb-2">
-            <Badge variant="outline" className="text-xs">
-              {formatDate(date)}
-            </Badge>
+          <div className="flex justify-end items-center mb-2">
             <div className="flex items-center gap-2">
               <span className="text-xs">Rest day</span>
               <Switch 
@@ -143,10 +140,7 @@ function EditableCell({
         </div>
       ) : (
         <div className="p-2 min-h-[100px] h-full flex flex-col">
-          <div className="flex justify-between">
-            <Badge variant="outline" className="text-xs">
-              {formatDate(date)}
-            </Badge>
+          <div className="flex justify-end">
             {isRest && (
               <Badge variant="secondary" className="text-xs">
                 Rest Day
