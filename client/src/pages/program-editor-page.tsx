@@ -948,13 +948,14 @@ function ProgramEditorPage() {
               </div>
             </div>
             
-            {/* Document Viewer */}
-            <div className="w-full h-[600px] border rounded-lg overflow-hidden">
-              <iframe 
-                src={`${documentUrl}#toolbar=0&view=FitH`} 
-                className="w-full h-full"
-                title="Document Preview"
-              />
+            {/* We'll skip the document preview and just show the file info */}
+            <div className="flex flex-col items-center justify-center py-12 border rounded-lg bg-slate-50">
+              <FileText className="h-16 w-16 mb-4 text-blue-500" />
+              <h3 className="text-lg font-semibold mb-2">Document Program</h3>
+              <p className="text-sm text-gray-500 mb-4 max-w-md text-center">
+                This program uses a document format instead of the weekly schedule editor.
+                Use the buttons below to access the document.
+              </p>
             </div>
             
             {/* Fallback message with download/view links */}
