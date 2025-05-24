@@ -238,61 +238,7 @@ export default function ProgramCreatePage() {
                   
                   {/* Category and Experience Level fields removed */}
                   
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-medium">Program Structure</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="macroBlockSize"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Macro Block Size (Weeks)</FormLabel>
-                            <FormControl>
-                              <Input type="number" min={1} max={12} {...field} />
-                            </FormControl>
-                            <FormDescription>
-                              How many weeks in each macro block?
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="numberOfMacroBlocks"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Number of Macro Blocks</FormLabel>
-                            <FormControl>
-                              <Input type="number" min={1} max={12} {...field} />
-                            </FormControl>
-                            <FormDescription>
-                              How many macro blocks in this program?
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    <FormField
-                      control={form.control}
-                      name="microBlockSize"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Micro Block Size (Days)</FormLabel>
-                          <FormControl>
-                            <Input type="number" min={1} max={14} {...field} />
-                          </FormControl>
-                          <FormDescription>
-                            Days per micro block (typically 7 for a week)
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  {/* Program Structure section removed */}
                   
                   <FormField
                     control={form.control}
@@ -407,18 +353,11 @@ export default function ProgramCreatePage() {
               </p>
               <div className="flex items-center text-sm text-muted-foreground mb-2">
                 <CalendarDays className="h-4 w-4 mr-1" />
-                <span>
-                  {form.watch("macroBlockSize") * form.watch("numberOfMacroBlocks") * form.watch("microBlockSize") || 0} days
-                </span>
+                <span>28 days</span>
               </div>
               <div className="flex items-center text-sm text-muted-foreground">
                 <Clock className="h-4 w-4 mr-1" />
-                <span>
-                  {form.watch("level") === "beginner" ? "Beginner level" :
-                   form.watch("level") === "intermediate" ? "Intermediate level" :
-                   form.watch("level") === "advanced" ? "Advanced level" : 
-                   form.watch("level") === "elite" ? "Elite level" : "Select a level"}
-                </span>
+                <span>Intermediate level</span>
               </div>
               
               {form.watch("visibility") === "premium" && (
@@ -441,11 +380,9 @@ export default function ProgramCreatePage() {
                   </span>
                 )}
               </div>
-              {form.watch("category") && (
-                <div className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
-                  {form.watch("category")}
-                </div>
-              )}
+              <div className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
+                General
+              </div>
             </CardFooter>
           </Card>
           
