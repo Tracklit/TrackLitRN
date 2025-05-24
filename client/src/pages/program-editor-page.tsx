@@ -640,13 +640,48 @@ function ProgramEditorPage() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="w-1/8">Sunday</TableHead>
-                          <TableHead className="w-1/8">Monday</TableHead>
-                          <TableHead className="w-1/8">Tuesday</TableHead>
-                          <TableHead className="w-1/8">Wednesday</TableHead>
-                          <TableHead className="w-1/8">Thursday</TableHead>
-                          <TableHead className="w-1/8">Friday</TableHead>
-                          <TableHead className="w-1/8">Saturday</TableHead>
+                          <TableHead className="w-1/8">
+                            <div className="flex flex-col items-center">
+                              <span>Sunday</span>
+                              <span className="text-xs text-gray-400">{format(addDays(week.startDate, 0), "MMM d")}</span>
+                            </div>
+                          </TableHead>
+                          <TableHead className="w-1/8">
+                            <div className="flex flex-col items-center">
+                              <span>Monday</span>
+                              <span className="text-xs text-gray-400">{format(addDays(week.startDate, 1), "MMM d")}</span>
+                            </div>
+                          </TableHead>
+                          <TableHead className="w-1/8">
+                            <div className="flex flex-col items-center">
+                              <span>Tuesday</span>
+                              <span className="text-xs text-gray-400">{format(addDays(week.startDate, 2), "MMM d")}</span>
+                            </div>
+                          </TableHead>
+                          <TableHead className="w-1/8">
+                            <div className="flex flex-col items-center">
+                              <span>Wednesday</span>
+                              <span className="text-xs text-gray-400">{format(addDays(week.startDate, 3), "MMM d")}</span>
+                            </div>
+                          </TableHead>
+                          <TableHead className="w-1/8">
+                            <div className="flex flex-col items-center">
+                              <span>Thursday</span>
+                              <span className="text-xs text-gray-400">{format(addDays(week.startDate, 4), "MMM d")}</span>
+                            </div>
+                          </TableHead>
+                          <TableHead className="w-1/8">
+                            <div className="flex flex-col items-center">
+                              <span>Friday</span>
+                              <span className="text-xs text-gray-400">{format(addDays(week.startDate, 5), "MMM d")}</span>
+                            </div>
+                          </TableHead>
+                          <TableHead className="w-1/8">
+                            <div className="flex flex-col items-center">
+                              <span>Saturday</span>
+                              <span className="text-xs text-gray-400">{format(addDays(week.startDate, 6), "MMM d")}</span>
+                            </div>
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
