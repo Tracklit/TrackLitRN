@@ -24,11 +24,6 @@ import { Link, useLocation } from "wouter";
 const programFormSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters" }),
   description: z.string().min(10, { message: "Description must be at least 10 characters" }),
-  category: z.string().min(1, { message: "Please select a category" }),
-  level: z.string().min(1, { message: "Please select a level" }),
-  macroBlockSize: z.coerce.number().min(1, { message: "Macro block size must be at least 1 week" }),
-  numberOfMacroBlocks: z.coerce.number().min(1, { message: "Number of macro blocks must be at least 1" }),
-  microBlockSize: z.number().min(1, { message: "Micro block size must be at least 1 day" }).default(7),
   visibility: z.enum(["private", "public", "premium"], {
     required_error: "Please select a visibility option",
   }),
@@ -49,11 +44,6 @@ export default function ProgramCreatePage() {
     defaultValues: {
       title: "",
       description: "",
-      category: "",
-      level: "beginner",
-      macroBlockSize: 4, // 4 weeks per macro block by default
-      numberOfMacroBlocks: 3, // 3 macro blocks by default
-      microBlockSize: 7, // 7 days per micro block (1 week) by default
       visibility: "private",
       price: 0,
       useFileUpload: false,
@@ -70,11 +60,10 @@ export default function ProgramCreatePage() {
         // Add program metadata
         formData.append('title', data.title);
         formData.append('description', data.description || '');
-        formData.append('category', data.category);
-        formData.append('level', data.level);
-        // Calculate program duration based on blocks
-        const totalDays = data.macroBlockSize * data.numberOfMacroBlocks * data.microBlockSize;
-        formData.append('duration', totalDays.toString());
+        formData.append('category', 'general');
+        formData.append('level', 'intermediate');
+        // Set a default duration (4 weeks)
+        formData.append('duration', '28');
         formData.append('visibility', data.visibility);
         formData.append('price', data.price?.toString() || '0');
         formData.append('isUploadedProgram', 'true');
@@ -97,11 +86,12 @@ export default function ProgramCreatePage() {
         return res.json();
       } else {
         // Regular program creation without file
-        // Calculate program duration based on blocks
-        const totalDays = data.macroBlockSize * data.numberOfMacroBlocks * data.microBlockSize;
+        // Set default values for removed fields
         const programData = {
           ...data,
-          duration: totalDays
+          category: 'general',
+          level: 'intermediate',
+          duration: 28 // 4 weeks default duration
         };
         const res = await apiRequest("POST", "/api/programs", programData);
         if (!res.ok) {
@@ -246,69 +236,7 @@ export default function ProgramCreatePage() {
                     )}
                   />
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="category"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Category</FormLabel>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a category" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="sprint">Sprinting</SelectItem>
-                              <SelectItem value="distance">Distance Running</SelectItem>
-                              <SelectItem value="jumps">Jumping Events</SelectItem>
-                              <SelectItem value="throws">Throwing Events</SelectItem>
-                              <SelectItem value="multi">Multi-Events</SelectItem>
-                              <SelectItem value="general">General Fitness</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormDescription>
-                            Select the track & field specialty this program focuses on
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="level"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Experience Level</FormLabel>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a level" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="beginner">Beginner</SelectItem>
-                              <SelectItem value="intermediate">Intermediate</SelectItem>
-                              <SelectItem value="advanced">Advanced</SelectItem>
-                              <SelectItem value="elite">Elite</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormDescription>
-                            Target experience level for this program
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  {/* Category and Experience Level fields removed */}
                   
                   <div className="space-y-4">
                     <h3 className="text-sm font-medium">Program Structure</h3>
