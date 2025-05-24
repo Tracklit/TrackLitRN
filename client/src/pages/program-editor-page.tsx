@@ -170,8 +170,7 @@ function DayContainer({ day, sessions, onAddSession, onEditSession, onMoveSessio
       </div>
       
       <div className="p-1 flex-1 flex flex-col">
-        <div className="text-xs mb-1 flex items-center justify-between">
-          <span className="text-xs">Day {day.dayNumber}</span>
+        <div className="text-xs mb-1 flex justify-end">
           <Button 
             variant="ghost" 
             size="icon" 
