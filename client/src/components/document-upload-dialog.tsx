@@ -49,7 +49,6 @@ export default function DocumentUploadDialog({
       }
       
       return await response.json();
-      return response;
     },
     onSuccess: () => {
       toast({

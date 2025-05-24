@@ -2801,6 +2801,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // 3.2 Update program document
+  app.put("/api/programs/:id/document", upload.single('programFile'), async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const programId = parseInt(req.params.id);
+      if (isNaN(programId)) {
+        return res.status(400).json({ error: "Invalid program ID" });
+      }
+      
+      // Check if the program exists and user has permission
+      const program = await dbStorage.getProgram(programId);
+      if (!program) {
+        return res.status(404).json({ error: "Program not found" });
+      }
+      
+      if (program.userId !== req.user!.id) {
+        return res.status(403).json({ error: "You don't have permission to update this program" });
+      }
+      
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+      
+      // Get file info
+      const file = req.file;
+      const fileUrl = `/uploads/programs/${file.filename}`;
+      const fileType = file.mimetype;
+      
+      // Update the program with the document info
+      const updatedProgram = await dbStorage.updateProgram(programId, {
+        isUploadedProgram: true,
+        programFileUrl: fileUrl,
+        programFileType: fileType
+      });
+      
+      res.status(200).json(updatedProgram);
+    } catch (error) {
+      console.error("Error updating program document:", error);
+      res.status(500).json({ error: "Failed to update program document" });
+    }
+  });
+  
   // 3.2 Import program from Google Sheet
   app.post("/api/programs/import-sheet", async (req: Request, res: Response) => {
     try {
