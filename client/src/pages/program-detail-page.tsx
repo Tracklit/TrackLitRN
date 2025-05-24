@@ -21,8 +21,7 @@ import {
   Dumbbell, 
   CheckCircle2,
   Edit,
-  Loader2,
-  Image
+  Loader2
 } from "lucide-react";
 import { AssignProgramDialog } from "@/components/assign-program-dialog";
 import {
@@ -218,22 +217,14 @@ function ProgramDetail() {
           </Link>
         </Button>
         
-        {/* Show Edit and Cover Image buttons only if user is the program creator */}
+        {/* Show Edit button only if user is the program creator */}
         {program.userId === user?.id && !program.isUploadedProgram && (
-          <div className="flex gap-2">
-            <Button variant="outline" asChild>
-              <Link href={`/programs/${id}/edit`}>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Program
-              </Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href={`/programs/${id}/cover`}>
-                <img src={program.coverImageUrl || ''} alt="" className="h-4 w-4 mr-2 rounded-full object-cover" />
-                {program.coverImageUrl ? "Change Cover" : "Upload Cover"}
-              </Link>
-            </Button>
-          </div>
+          <Button variant="outline" asChild>
+            <Link href={`/programs/${id}/edit`}>
+              <Edit className="h-4 w-4 mr-2" />
+              Edit Program
+            </Link>
+          </Button>
         )}
       </div>
       

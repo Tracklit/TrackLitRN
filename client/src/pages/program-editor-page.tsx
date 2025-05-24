@@ -26,8 +26,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format, addDays, parse, addWeeks, startOfWeek, getDay, isValid, parseISO } from "date-fns";
-import { ImageUpload } from "@/components/ui/image-upload";
-import { ProgramCoverUpload } from "@/components/program-cover-upload";
 
 // Program editor form schema
 const programEditorSchema = z.object({
@@ -186,8 +184,7 @@ function ProgramEditorPage() {
   const [isAddingWeek, setIsAddingWeek] = useState(false);
   const [sessionDialogOpen, setSessionDialogOpen] = useState(false);
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
-  const [detailsExpanded, setDetailsExpanded] = useState(true);
-  const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const [detailsExpanded, setDetailsExpanded] = useState(false);
 
   // Program details form
   const form = useForm<z.infer<typeof programEditorSchema>>({
@@ -617,64 +614,6 @@ function ProgramEditorPage() {
     return addDays(week.startDate, dayNumber);
   };
 
-  // Handle cover image upload
-  const handleCoverImageUpload = async (fileOrUrl: string | File) => {
-    // If it's a string URL and not a File object, we're just setting the initial state
-    if (typeof fileOrUrl === 'string') {
-      // If empty string, it means we're clearing the image
-      if (!fileOrUrl) {
-        // Here we would handle clearing the image, but we'll keep it simple for now
-        return null;
-      }
-      return fileOrUrl;
-    }
-    
-    // Otherwise, it's a File object from the file input
-    const file = fileOrUrl as File;
-    if (!programId || !file) return null;
-    
-    try {
-      setIsUploadingCover(true);
-      
-      // Create form data for the upload
-      const formData = new FormData();
-      formData.append('file', file);
-      
-      // Upload the image using fetch directly
-      const response = await fetch(`/api/programs/${programId}/cover-image`, {
-        method: 'POST',
-        body: formData,
-        credentials: 'include'
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to upload cover image: ${response.status} ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      
-      // Refresh program data
-      queryClient.invalidateQueries({ queryKey: ['/api/programs', programId] });
-      
-      toast({
-        title: "Cover image updated",
-        description: "Program preview image has been updated successfully."
-      });
-      
-      return data.coverImageUrl;
-    } catch (error) {
-      console.error("Error updating cover image:", error);
-      toast({
-        title: "Error updating cover image",
-        description: "Failed to update program cover image.",
-        variant: "destructive"
-      });
-      return null;
-    } finally {
-      setIsUploadingCover(false);
-    }
-  };
-
   // Form submission handler
   const onSubmit = (data: z.infer<typeof programEditorSchema>) => {
     updateProgram.mutate(data);
@@ -842,50 +781,23 @@ function ProgramEditorPage() {
           <CardContent className={`p-4 ${detailsExpanded ? 'block' : 'hidden'}`}>
             <Form {...form}>
               <form id="program-editor-form" onSubmit={form.handleSubmit(onSubmit)}>
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* Left column: Cover image upload */}
-                  <div>
-                    <div className="flex flex-col space-y-2">
-                      <label className="text-sm font-medium">Program Cover Image</label>
-                      <div className="border border-gray-700 rounded-md p-1 bg-gray-900">
-                        <ImageUpload 
-                          initialImageUrl={program?.coverImageUrl || ''} 
-                          onImageUploaded={(file) => handleCoverImageUpload(file)} 
-                          className="h-[180px] w-full"
-                        />
-                        {isUploadingCover && (
-                          <div className="mt-2 flex items-center justify-center text-sm text-muted-foreground">
-                            <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                            Uploading image...
-                          </div>
-                        )}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        Upload a cover image to make your program more visually appealing.
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Right columns: Program details */}
-                  <div className="lg:col-span-2">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="title"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Program Title</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Program title" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="startDate"
+                <div className="flex flex-wrap gap-4 items-end">
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem className="flex-1 min-w-[200px]">
+                        <FormLabel>Title</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Program title" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="startDate"
                     render={({ field }) => (
                       <FormItem className="w-auto">
                         <FormLabel>Start Date</FormLabel>
@@ -1076,5 +988,3 @@ function ProgramEditorPage() {
 export function Component() {
   return <ProgramEditorPage />;
 }
-
-export default ProgramEditorPage;

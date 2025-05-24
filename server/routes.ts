@@ -6,8 +6,6 @@ import { z } from "zod";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import { programCoverUpload } from "./upload-config";
-import { handleProgramCoverUpload } from "./program-cover-upload";
 import { GoogleSpreadsheet } from "google-spreadsheet";
 import { insertAthleteProfileSchema } from "@shared/athlete-profile-schema";
 import { 
@@ -2765,45 +2763,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // 3.1 Create a new program with file upload
-  // Handle program cover image uploads
-  app.post("/api/programs/:id/upload", upload.single('file'), async (req: Request, res: Response) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    
-    try {
-      const userId = req.user!.id;
-      const programId = parseInt(req.params.id);
-      
-      if (isNaN(programId)) {
-        return res.status(400).send("Invalid program ID");
-      }
-      
-      // Get the program to verify ownership
-      const program = await dbStorage.getProgram(programId);
-      
-      if (!program) {
-        return res.status(404).send("Program not found");
-      }
-      
-      // Verify ownership
-      if (program.userId !== userId) {
-        return res.status(403).send("You don't have permission to modify this program");
-      }
-      
-      if (!req.file) {
-        return res.status(400).send("No file uploaded");
-      }
-      
-      // Save the cover image URL to the database
-      const coverImageUrl = `/uploads/program-covers/${req.file.filename}`;
-      await dbStorage.updateProgramCoverImage(programId, coverImageUrl);
-      
-      return res.status(200).json({ coverImageUrl });
-    } catch (error) {
-      console.error("Error uploading program cover image:", error);
-      return res.status(500).send("Server error uploading cover image");
-    }
-  });
-  
   app.post("/api/programs/upload", upload.single('programFile'), async (req: Request, res: Response) => {
     try {
       if (!req.isAuthenticated()) {
@@ -3128,9 +3087,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to delete program session" });
     }
   });
-  
-  // Add program cover image upload endpoint
-  app.post("/api/programs/:id/cover-image", programCoverUpload.single('file'), handleProgramCoverUpload);
   
   // 5. Delete a program
   app.delete("/api/programs/:id", async (req: Request, res: Response) => {

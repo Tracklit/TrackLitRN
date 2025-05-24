@@ -210,7 +210,6 @@ export interface IStorage {
   getProgramsFromSheets(): Promise<TrainingProgram[]>;
   createProgram(program: InsertTrainingProgram): Promise<TrainingProgram>;
   updateProgram(id: number, data: Partial<TrainingProgram>): Promise<TrainingProgram | undefined>;
-  updateProgramCoverImage(id: number, coverImageUrl: string): Promise<TrainingProgram | undefined>;
   deleteProgram(id: number): Promise<boolean>;
   
   // Program sessions
@@ -1572,10 +1571,6 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return updatedProgram;
-  }
-  
-  async updateProgramCoverImage(id: number, coverImageUrl: string): Promise<TrainingProgram | undefined> {
-    return this.updateProgram(id, { coverImageUrl });
   }
   
   async deleteProgram(id: number): Promise<boolean> {
