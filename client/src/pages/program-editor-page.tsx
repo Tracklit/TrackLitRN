@@ -948,30 +948,35 @@ function ProgramEditorPage() {
               </div>
             </div>
             
-            {/* PDF Viewer */}
-            {fileType.includes('pdf') ? (
-              <div className="w-full h-[600px] border rounded-lg overflow-hidden">
-                <iframe 
-                  src={`${program.programFileUrl}#toolbar=0&view=FitH`} 
-                  className="w-full h-full"
-                  title="PDF Document"
-                />
-              </div>
-            ) : (
-              <div className="text-center py-12 border rounded-lg bg-slate-50">
-                <FileText className="h-12 w-12 mx-auto mb-4 text-blue-500" />
-                <p className="text-lg font-semibold mb-2">Document Preview Not Available</p>
-                <p className="text-sm text-gray-500 mb-4">
-                  This document type cannot be previewed directly in the browser.
-                </p>
-                <Button asChild>
-                  <a href={program.programFileUrl} target="_blank" rel="noopener noreferrer">
+            {/* Document Viewer */}
+            <div className="w-full h-[600px] border rounded-lg overflow-hidden">
+              <iframe 
+                src={`${documentUrl}#toolbar=0&view=FitH`} 
+                className="w-full h-full"
+                title="Document Preview"
+              />
+            </div>
+            
+            {/* Fallback message with download/view links */}
+            <div className="mt-4 text-center">
+              <p className="text-sm text-muted-foreground mb-2">
+                If the document doesn't display correctly, you can download it or open it in a new tab.
+              </p>
+              <div className="flex justify-center gap-4">
+                <Button variant="outline" size="sm" asChild>
+                  <a href={documentUrl} download>
+                    <Download className="h-4 w-4 mr-2" />
+                    Download Document
+                  </a>
+                </Button>
+                <Button size="sm" asChild>
+                  <a href={documentUrl} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="h-4 w-4 mr-2" />
-                    Open Document
+                    Open in New Tab
                   </a>
                 </Button>
               </div>
-            )}
+            </div>
           </CardContent>
         </Card>
       </div>
