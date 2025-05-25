@@ -1401,12 +1401,14 @@ export default function PracticePage() {
     </PageContainer>
   );
   
-  // Function to save the workout and journal entry
+  // Function to save the workout and journal entry directly to database
   async function saveWorkout() {
     if (!user) return;
     
     setIsSaving(true);
     console.log('Starting workout save process...');
+    
+    // Create a direct save function that doesn't rely on any modals
     
     try {
       // Create a more meaningful workout content object based on actual session data
