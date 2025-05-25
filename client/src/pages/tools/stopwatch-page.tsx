@@ -65,17 +65,19 @@ export default function StopwatchPage() {
   // Setup volume button handler for mobile devices
   useEffect(() => {
     // Handle various volume button mappings across different devices
-    const handleVolumeButton = (e: KeyboardEvent) => {
-      console.log(`Key detected: ${e.key}, Code: ${e.code}, KeyCode: ${e.keyCode}`);
+    const handleVolumeButton = (e: Event) => {
+      // Cast the event to KeyboardEvent if it is one
+      const keyEvent = e as KeyboardEvent;
+      console.log(`Key detected: ${keyEvent.key}, Code: ${keyEvent.code}, KeyCode: ${keyEvent.keyCode}`);
       
       // Check for various volume key representations
       if (
-        e.key === 'AudioVolumeUp' || 
-        e.key === 'VolumeUp' || 
-        e.code === 'AudioVolumeUp' ||
-        e.keyCode === 175 ||  // Common code for volume up
-        e.keyCode === 38 ||   // Arrow up (sometimes mapped to volume)
-        e.key === 'ArrowUp'   // Arrow up key
+        keyEvent.key === 'AudioVolumeUp' || 
+        keyEvent.key === 'VolumeUp' || 
+        keyEvent.code === 'AudioVolumeUp' ||
+        keyEvent.keyCode === 175 ||  // Common code for volume up
+        keyEvent.keyCode === 38 ||   // Arrow up (sometimes mapped to volume)
+        keyEvent.key === 'ArrowUp'   // Arrow up key
       ) {
         console.log('Volume up detected - toggling stopwatch!');
         e.preventDefault();
@@ -93,80 +95,105 @@ export default function StopwatchPage() {
       }
     };
     
-    // Add listeners for different key events to maximize compatibility
-    const eventTypes = ['keydown', 'keyup', 'keypress'];
-    eventTypes.forEach(eventType => {
-      window.addEventListener(eventType, handleVolumeButton);
-    });
+    // Create a simpler handler specifically for mobile devices
+    const handleMobileVolumeButton = () => {
+      // This is a special case for iOS/Android where we create a global handler
+      // that gets called by injected event listeners in the native app layer
+      (window as any).handleVolumeButtonPress = () => {
+        console.log('Volume button press detected via mobile bridge');
+        handleStartStop();
+      };
+    };
     
-    // Special handler for mobile - experiment with direct user media controls
-    if ('mediaSession' in navigator) {
-      try {
-        navigator.mediaSession.setActionHandler('play', () => {
-          console.log('Media play button pressed');
-          handleStartStop();
+    // Setup the handlers
+    window.addEventListener('keydown', handleVolumeButton);
+    
+    // For iOS and Safari, we might need to handle hardware buttons differently
+    if (typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Safari/i.test(navigator.userAgent)) {
+      document.addEventListener('touchend', () => {
+        // Initialize audio on first touch (iOS requires this)
+        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        ctx.resume().then(() => {
+          console.log('Audio context enabled on iOS device');
         });
-        navigator.mediaSession.setActionHandler('pause', () => {
-          console.log('Media pause button pressed');
-          handleStartStop();
-        });
-      } catch (error) {
-        console.error('Error setting up media session handlers:', error);
-      }
+      }, { once: true });
     }
     
+    // Set up mobile volume handler
+    handleMobileVolumeButton();
+    
     return () => {
-      // Clean up all event listeners
-      eventTypes.forEach(eventType => {
-        window.removeEventListener(eventType, handleVolumeButton);
-      });
+      // Clean up listeners
+      window.removeEventListener('keydown', handleVolumeButton);
       
-      // Clean up media session handlers if applicable
-      if ('mediaSession' in navigator) {
-        try {
-          navigator.mediaSession.setActionHandler('play', null);
-          navigator.mediaSession.setActionHandler('pause', null);
-        } catch (error) {
-          console.error('Error cleaning up media session handlers:', error);
-        }
+      // Clean up the global handler
+      if ((window as any).handleVolumeButtonPress) {
+        (window as any).handleVolumeButtonPress = undefined;
       }
     };
   }, [isRunning, showTip, toast]);
 
-  // Create an audio context and sound on demand (better for mobile)
+  // Function to create and play sounds - using a simpler approach that works better on mobile
   const playSound = (frequency: number, duration: number) => {
+    // Create a fallback for devices without WebAudio support
+    const fallbackBeep = () => {
+      try {
+        // Create a very short audio element with a data URI of a simple beep sound
+        const audio = new Audio("data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU9vT18AAAAA");
+        audio.volume = 0.7;
+        audio.play().catch(e => console.error("Fallback audio failed:", e));
+        return true;
+      } catch (err) {
+        console.error("Fallback sound failed:", err);
+        return false;
+      }
+    };
+
     try {
-      // Create a new audio context each time
+      // Try to use Web Audio API first
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      
-      // Create oscillator for the beep
-      const oscillator = audioContext.createOscillator();
-      oscillator.type = 'sine';
-      oscillator.frequency.value = frequency;
-      
-      // Create gain node for volume control
-      const gainNode = audioContext.createGain();
-      gainNode.gain.value = 0.7;
-      
-      // Connect nodes
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      // Play the sound
-      oscillator.start();
-      
-      // Schedule stop and cleanup
-      setTimeout(() => {
-        oscillator.stop();
-        oscillator.disconnect();
-        gainNode.disconnect();
-        audioContext.close().catch(e => console.error("Error closing audio context:", e));
-      }, duration);
+      audioContext.resume().then(() => {
+        try {
+          // Create oscillator for the beep
+          const oscillator = audioContext.createOscillator();
+          oscillator.type = 'sine';
+          oscillator.frequency.value = frequency;
+          
+          // Create gain node for volume control
+          const gainNode = audioContext.createGain();
+          gainNode.gain.value = 0.7;
+          
+          // Connect nodes
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          
+          // Play the sound
+          oscillator.start();
+          
+          // Schedule stop and cleanup
+          setTimeout(() => {
+            try {
+              oscillator.stop();
+              oscillator.disconnect();
+              gainNode.disconnect();
+              audioContext.close().catch(() => {/* ignore error */});
+            } catch (e) {
+              console.error("Error cleaning up audio:", e);
+            }
+          }, duration);
+        } catch (innerError) {
+          console.error("Error playing oscillator:", innerError);
+          return fallbackBeep();
+        }
+      }).catch(e => {
+        console.error("Could not resume audio context:", e);
+        return fallbackBeep();
+      });
       
       return true;
     } catch (e) {
-      console.error("Error playing sound:", e);
-      return false;
+      console.error("Error creating audio context:", e);
+      return fallbackBeep();
     }
   };
 
@@ -262,7 +289,7 @@ export default function StopwatchPage() {
                 className={`w-48 h-48 rounded-full flex items-center justify-center shadow-[0_10px_25px_-5px_rgba(0,0,0,0.2)] hover:shadow-[0_20px_25px_-5px_rgba(0,0,0,0.3)] transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 ${
                   isRunning 
                     ? "bg-destructive hover:bg-destructive/90 text-white focus:ring-destructive/20 danger-pulse-effect" 
-                    : "bg-[hsl(215,70%,13%)] hover:bg-[hsl(215,70%,20%)] text-white focus:ring-primary/20 pulse-effect"
+                    : "bg-[hsl(215,70%,13%)] hover:bg-[hsl(215,70%,20%)] text-white focus:ring-primary/20"
                 }`}
               >
                 <div className="flex flex-col items-center">
