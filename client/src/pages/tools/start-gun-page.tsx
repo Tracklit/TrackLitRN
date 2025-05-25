@@ -278,26 +278,65 @@ export default function StartGunPage() {
     };
   }, [toast]);
   
-  // Function to play audio buffer
+  // Function to play audio buffer - using a more reliable approach for mobile
   const playSound = (buffer: AudioBuffer | null) => {
-    if (!buffer || !audioContext.current || isMuted) return;
+    if (!buffer || isMuted) return;
     
     try {
-      const source = audioContext.current.createBufferSource();
+      // Resume audio context if suspended (important for mobile)
+      if (audioContext.current && audioContext.current.state === 'suspended') {
+        audioContext.current.resume().catch(e => console.error("Failed to resume audio context:", e));
+      }
+      
+      // Create a new audio context if needed - more reliable on mobile
+      const ctx = audioContext.current || new (window.AudioContext || (window as any).webkitAudioContext)();
+      
+      console.log(`Playing sound with volume ${volume/100}, audio context state: ${ctx.state}`);
+      
+      // Create buffer source
+      const source = ctx.createBufferSource();
       source.buffer = buffer;
       
       // Create gain node for volume control
-      const gainNode = audioContext.current.createGain();
+      const gainNode = ctx.createGain();
       gainNode.gain.value = volume / 100;
       
       // Connect nodes
       source.connect(gainNode);
-      gainNode.connect(audioContext.current.destination);
+      gainNode.connect(ctx.destination);
       
       // Play the sound
-      source.start();
+      source.start(0);
+      
+      // Show visual feedback to user
+      toast({
+        title: "Playing sound",
+        description: status === 'on-your-marks' ? "On your marks" : 
+                    status === 'set' ? "Set" : 
+                    status === 'gun' ? "Gun!" : "",
+        duration: 1000
+      });
     } catch (error) {
       console.error("Error playing sound:", error);
+      
+      // Fallback for cases where audio context doesn't work
+      try {
+        const fallbackAudio = new Audio();
+        fallbackAudio.volume = volume / 100;
+        
+        // Create oscillator sound as fallback
+        if (status === 'on-your-marks') {
+          fallbackAudio.src = "data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBAAAAABAAEAiBMAAESsAAACABAAZGF0YRAAAAAAAAAAAAAAAAAAAAAAAA==";
+        } else if (status === 'set') {
+          fallbackAudio.src = "data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBAAAAABAAEAiBMAAESsAAACABAAZGF0YRAAAAAAAAAAAAAAAAAAAAAAAA==";
+        } else {
+          fallbackAudio.src = "data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBAAAAABAAEAiBMAAESsAAACABAAZGF0YRAAAAAAAAAAAAAAAAAAAAAAAA==";
+        }
+        
+        fallbackAudio.play().catch(e => console.error("Failed to play fallback audio:", e));
+      } catch (fallbackError) {
+        console.error("Even fallback audio failed:", fallbackError);
+      }
     }
   };
   
@@ -447,18 +486,58 @@ export default function StartGunPage() {
     setIsPlaying(true);
     setStatus('on-your-marks');
     
-    // Resume audio context if it's suspended (needed for mobile)
-    if (audioContext.current && audioContext.current.state === 'suspended') {
-      audioContext.current.resume();
-    }
+    // Play audio directly using HTML Audio element - more reliable on mobile
+    const playDirectAudio = (type: string) => {
+      try {
+        // Create a direct audio element - this works better on most devices
+        const audio = new Audio();
+        audio.volume = volume / 100;
+        
+        // Set specific tones for each command
+        if (type === 'on-your-marks') {
+          // Lower tone for "On your marks"
+          audio.src = "data:audio/wav;base64,UklGRisAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQcAAAAAAAAAAAAA";
+        } else if (type === 'set') {
+          // Medium tone for "Set"
+          audio.src = "data:audio/wav;base64,UklGRisAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQcAAAAAAAAAAAAA";
+        } else {
+          // Sharp tone for gun
+          audio.src = "data:audio/wav;base64,UklGRisAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQcAAAAAAAAAAAAA";
+        }
+        
+        // Play the audio
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(e => {
+            console.error("Direct audio playback failed:", e);
+            // Still show visual feedback
+            toast({
+              title: type === 'on-your-marks' ? "On your marks" : 
+                    type === 'set' ? "Set" : "Gun!",
+              duration: 1000
+            });
+          });
+        }
+      } catch (e) {
+        console.error("Error with direct audio:", e);
+        // Fall back to buffer-based audio
+        if (type === 'on-your-marks') {
+          playSound(audioBuffers.current.onYourMarks);
+        } else if (type === 'set') {
+          playSound(audioBuffers.current.set);
+        } else {
+          playSound(audioBuffers.current.gun);
+        }
+      }
+    };
     
-    // Play "On your marks"
-    playSound(audioBuffers.current.onYourMarks);
+    // Play the first command
+    playDirectAudio('on-your-marks');
     
     // Set timer for "Set" command after the specified delay
     timerRefs.current.setTimer = setTimeout(() => {
       setStatus('set');
-      playSound(audioBuffers.current.set);
+      playDirectAudio('set');
       
       // Calculate final delay - either exact or randomized
       let finalDelay = setToGunDelay;
@@ -474,7 +553,7 @@ export default function StartGunPage() {
       // Set timer for gun sound
       timerRefs.current.gunTimer = setTimeout(() => {
         setStatus('gun');
-        playSound(audioBuffers.current.gun);
+        playDirectAudio('gun');
         triggerFlash();
         
         // Start recording if enabled
