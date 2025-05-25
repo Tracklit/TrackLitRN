@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
+import { Button } from '@/components/ui/button';
 import {
   Home,
   Users,
@@ -57,9 +58,11 @@ export function SimpleMobileMenu() {
           className="flex items-center justify-between p-2 shadow-md"
           style={{ backgroundColor: 'hsl(220 40% 15%)' }}
         >
-          <button
+          <Button
             type="button"
-            className="p-2 text-foreground focus:outline-none"
+            variant="ghost"
+            size="icon"
+            className="text-white"
             onClick={() => setIsOpen(!isOpen)}
           >
             {isOpen ? (
@@ -68,7 +71,7 @@ export function SimpleMobileMenu() {
               <Menu className="h-5 w-5" />
             )}
             <span className="sr-only">{isOpen ? 'Close menu' : 'Open menu'}</span>
-          </button>
+          </Button>
           
           <div className="h-6 w-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-medium">
             {user.name ? user.name.charAt(0).toUpperCase() : user.username.charAt(0).toUpperCase()}
