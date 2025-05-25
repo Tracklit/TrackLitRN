@@ -299,7 +299,7 @@ export default function PracticePage() {
   const isPremiumUser = user?.isPremium || false;
   
   // State for mood tracking
-  const [moodValue, setMoodValue] = useState<number>(5); // Default mood value in the middle (5 out of 10)
+  const [moodValue, setMoodValue] = useState<number>(5.5); // Default mood value in the middle (5.5 out of 10)
   
   // State for premium feature modals
   const [showPremiumModal, setShowPremiumModal] = useState<boolean>(false);
@@ -1057,15 +1057,20 @@ export default function PracticePage() {
                         value={[moodValue]}
                         min={1}
                         max={10}
-                        step={1}
+                        step={0.5}
                         onValueChange={(value) => setMoodValue(value[0])}
                         className="mood-slider"
                       />
                     </div>
                     <div className="flex justify-between mt-1 text-xs">
                       <span className="text-red-500">Poor</span>
-                      <span className="text-amber-500">Average</span>
+                      <span className="text-amber-500">Average (5.5)</span>
                       <span className="text-green-500">Excellent</span>
+                    </div>
+                    <div className="flex justify-between px-1 mt-1">
+                      <div className="text-[9px] text-muted-foreground">1</div>
+                      <div className="text-[9px] text-muted-foreground">5.5</div>
+                      <div className="text-[9px] text-muted-foreground">10</div>
                     </div>
                   </div>
                   
