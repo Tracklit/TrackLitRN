@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { ProtectedRoute } from "@/lib/protected-route";
 import OpenAI from "openai";
 import { useAuth } from "@/hooks/use-auth";
+import { toast } from "@/hooks/use-toast";
 import { useAssignedPrograms } from "@/hooks/use-assigned-programs";
 import { useProgramSessions } from "@/hooks/use-program-sessions";
 import { useQuery } from "@tanstack/react-query";
@@ -1084,9 +1085,17 @@ export default function PracticePage() {
                   <div className="flex justify-end mt-3">
                     <Button 
                       className="bg-primary hover:bg-primary/90 text-white"
-                      onClick={() => setSessionCompleteOpen(true)}
+                      onClick={saveWorkout}
+                      disabled={isSaving}
                     >
-                      Save Entry
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        "Save Entry"
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -1393,7 +1402,7 @@ export default function PracticePage() {
   );
   
   // Function to save the workout and journal entry
-  async function saveWorkout(navigateToLibrary: boolean = false) {
+  async function saveWorkout() {
     if (!user) return;
     
     setIsSaving(true);
