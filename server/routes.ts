@@ -3518,6 +3518,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Journal API routes
+  app.get('/api/journal', getUserJournalEntries);
+  app.post('/api/journal', createJournalEntry);
+  app.put('/api/journal/:id', updateJournalEntry);
+  app.delete('/api/journal/:id', deleteJournalEntry);
+  
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Breadcrumb } from "@/components/breadcrumb";
-import { Search, Calendar, ChevronDown, ChevronUp, BookOpen, Edit, Trash2, BadgeInfo, MoreVertical } from "lucide-react";
+import { Search, Calendar, ChevronDown, ChevronUp, BookOpen, Edit, Trash2, BadgeInfo, MoreVertical, Activity } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,142 +25,110 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-// Define the workout note type
-interface WorkoutNote {
-  id: string;
-  date: string;
+// Define the journal entry type
+interface JournalEntry {
+  id: number;
+  userId: number;
   title: string;
-  content: string;
-  workoutType: string;
-  isSystemGenerated?: boolean;
+  notes: string;
+  type: string;
+  content: any; // This will store mood ratings and workout details
+  isPublic: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
-
-// Sample workout notes data
-const mockNotes: WorkoutNote[] = [
-  {
-    id: "1",
-    date: "2025-05-25",
-    title: "Morning Run",
-    content: "5km run at steady pace. Felt good, maintained 5:30/km pace throughout.",
-    workoutType: "Running"
-  },
-  {
-    id: "2",
-    date: "2025-05-23",
-    title: "Sprint Training",
-    content: "10x100m sprints with 2 min recovery. Times ranging from 13.2s to 14.1s.",
-    workoutType: "Sprints"
-  },
-  {
-    id: "3",
-    date: "2025-05-20",
-    title: "Endurance Work",
-    content: "Long slow distance run, 12km total. Focused on keeping heart rate below 150bpm.",
-    workoutType: "Running"
-  },
-  {
-    id: "4",
-    date: "2025-05-18",
-    title: "Track Session",
-    content: "400m repeats x 8 with 2 min rest. Average time 68 seconds.",
-    workoutType: "Track"
-  },
-  {
-    id: "5",
-    date: "2025-05-15",
-    title: "Recovery Day",
-    content: "Easy 3km jog followed by stretching routine. Feeling recovered after yesterday's hard session.",
-    workoutType: "Recovery"
-  }
-];
-
-// Workout logs from training sessions
-const trainingSessionNotes: WorkoutNote[] = [
-  {
-    id: "workout-101",
-    date: "2025-05-24",
-    title: "Completed Training Session",
-    content: "6x400m repeats at race pace. Felt strong throughout, especially on the last two. Need to focus more on maintaining form during the final 100m of each rep.\n\nAverage times: 68.2s, 67.9s, 68.5s, 67.7s, 67.4s, 66.8s\n\nRecovery: 2 min jogging between reps",
-    workoutType: "Track",
-    isSystemGenerated: true
-  },
-  {
-    id: "workout-102",
-    date: "2025-05-21",
-    title: "Hill Sprint Session",
-    content: "10x60m hill sprints with walk back recovery. Focused on driving knees and arm action. Felt some tightness in right hamstring after 7th rep - need to monitor this.",
-    workoutType: "Sprints",
-    isSystemGenerated: true
-  },
-  {
-    id: "workout-103",
-    date: "2025-05-16",
-    title: "Block Start Practice",
-    content: "Worked on block starts for 45 minutes. Focused on first 3 steps and drive phase. Coach suggested adjusting block spacing slightly - moved front block forward 2cm.\n\nCompleted 12 starts with full recovery. Reaction times improved throughout session.",
-    workoutType: "Technical",
-    isSystemGenerated: true
-  }
-];
 
 export function Component() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [notes, setNotes] = useState<WorkoutNote[]>(mockNotes);
-  const [sessionNotes, setSessionNotes] = useState<WorkoutNote[]>(trainingSessionNotes);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
-  const [editingNote, setEditingNote] = useState<WorkoutNote | null>(null);
+  const [editingEntry, setEditingEntry] = useState<JournalEntry | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
-  // In a real application, we would fetch both manual notes and workout logs from the API
-  // useEffect(() => {
-  //   const fetchAllNotes = async () => {
-  //     try {
-  //       // Fetch manual journal notes
-  //       const manualNotesResponse = await fetch('/api/journal/notes');
-  //       const manualNotes = await manualNotesResponse.json();
-  //       
-  //       // Fetch workout logs
-  //       const workoutLogsResponse = await fetch('/api/journal/workout-notes');
-  //       const workoutLogs = await workoutLogsResponse.json();
-  //       
-  //       // Set both types of notes
-  //       setNotes(manualNotes);
-  //       setSessionNotes(workoutLogs);
-  //     } catch (error) {
-  //       console.error('Failed to fetch journal data:', error);
-  //       toast({
-  //         title: "Error",
-  //         description: "Failed to load journal entries. Please try again.",
-  //         variant: "destructive"
-  //       });
-  //     }
-  //   };
-  //   
-  //   fetchAllNotes();
-  // }, []);
+  // Fetch journal entries
+  const { data: journalEntries = [], isLoading, error } = useQuery({
+    queryKey: ["/api/journal"],
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
   
-  // Filter notes based on search term
-  const filteredManualNotes = notes.filter(note => 
-    note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    note.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    note.workoutType.toLowerCase().includes(searchTerm.toLowerCase())
+  // Filter journal entries based on search term
+  const filteredEntries = (journalEntries as JournalEntry[]).filter(entry => 
+    entry.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    entry.notes?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    entry.type?.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
-  const filteredSessionNotes = sessionNotes.filter(note => 
-    note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    note.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    note.workoutType.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  
-  // Combine both types of notes
-  const allFilteredNotes = [...filteredManualNotes, ...filteredSessionNotes];
-  
-  // Sort notes by date
-  const sortedNotes = [...allFilteredNotes].sort((a, b) => {
-    const dateA = new Date(a.date).getTime();
-    const dateB = new Date(b.date).getTime();
+  // Sort entries by date
+  const sortedEntries = [...filteredEntries].sort((a, b) => {
+    const dateA = new Date(a.createdAt).getTime();
+    const dateB = new Date(b.createdAt).getTime();
     return sortDirection === "desc" ? dateB - dateA : dateA - dateB;
+  });
+  
+  // Setup mutation for updating entries
+  const updateMutation = useMutation({
+    mutationFn: async (entry: JournalEntry) => {
+      const response = await fetch(`/api/journal/${entry.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(entry)
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update journal entry');
+      }
+      
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/journal'] });
+      toast({
+        title: "Journal Entry Updated",
+        description: "Your entry has been updated successfully.",
+        duration: 3000
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Update Failed",
+        description: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive",
+        duration: 5000
+      });
+    }
+  });
+  
+  // Setup mutation for deleting entries
+  const deleteMutation = useMutation({
+    mutationFn: async (entryId: number) => {
+      const response = await fetch(`/api/journal/${entryId}`, {
+        method: 'DELETE'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete journal entry');
+      }
+      
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/journal'] });
+      toast({
+        title: "Journal Entry Deleted",
+        description: "Your entry has been removed successfully.",
+        duration: 3000
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Delete Failed",
+        description: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive",
+        duration: 5000
+      });
+    }
   });
   
   // Toggle sort direction
@@ -178,48 +147,28 @@ export function Component() {
   };
   
   // Open edit dialog
-  const openEditDialog = (note: WorkoutNote) => {
-    setEditingNote({ ...note });
+  const openEditDialog = (entry: JournalEntry) => {
+    setEditingEntry({ ...entry });
     setIsEditDialogOpen(true);
   };
   
-  // Handler for saving edited note
+  // Handler for saving edited entry
   const handleSaveEdit = () => {
-    if (!editingNote) return;
-    
-    // Update the note in our local state
-    setNotes(notes.map(note => 
-      note.id === editingNote.id ? editingNote : note
-    ));
-    
-    // Close the dialog and reset the editing note
+    if (!editingEntry) return;
+    updateMutation.mutate(editingEntry);
     setIsEditDialogOpen(false);
-    setEditingNote(null);
-    
-    toast({
-      title: "Note Updated",
-      description: "Your workout note has been updated successfully.",
-      duration: 3000
-    });
+    setEditingEntry(null);
   };
   
   // Handler for canceling edit
   const handleCancelEdit = () => {
     setIsEditDialogOpen(false);
-    setEditingNote(null);
+    setEditingEntry(null);
   };
   
-  // Handler for deleting note
-  const handleDeleteNote = (noteId: string) => {
-    // In a real app, we would call an API to delete the note
-    // For now, we'll just remove it from the state
-    setNotes(notes.filter(note => note.id !== noteId));
-    
-    toast({
-      title: "Note Deleted",
-      description: "Your note has been removed successfully.",
-      duration: 3000
-    });
+  // Handler for deleting entry
+  const handleDeleteEntry = (entryId: number) => {
+    deleteMutation.mutate(entryId);
   };
   
   return (
@@ -245,7 +194,7 @@ export function Component() {
       <Card className="mb-6">
         <CardHeader className="pb-3">
           <CardTitle className="text-xl flex items-center justify-between">
-            <span>Your Workout Notes</span>
+            <span>Your Workout Journal</span>
             <Button 
               variant="ghost" 
               size="sm" 
@@ -261,7 +210,7 @@ export function Component() {
           <div className="relative">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search notes..."
+              placeholder="Search journal entries..."
               className="pl-8"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -270,29 +219,83 @@ export function Component() {
         </CardHeader>
         
         <CardContent>
-          {sortedNotes.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-16">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <p className="mt-2 text-muted-foreground">Loading your journal entries...</p>
+            </div>
+          ) : sortedEntries.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              No workout notes found.
+              No journal entries found. Complete a workout to add entries to your journal.
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {sortedNotes.map((note) => (
-                <Card key={note.id} className="overflow-hidden">
+              {sortedEntries.map((entry) => (
+                <Card key={entry.id} className="overflow-hidden">
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
                       <div>
-                        <CardTitle>{note.title}</CardTitle>
+                        <CardTitle>{entry.title}</CardTitle>
                         <CardDescription className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          {formatDate(note.date)}
+                          {formatDate(entry.createdAt)}
                         </CardDescription>
                       </div>
-                      <Badge variant="outline">{note.workoutType}</Badge>
+                      <Badge variant="outline">{entry.type}</Badge>
                     </div>
                   </CardHeader>
                   
                   <CardContent className="pt-2">
-                    <p className="text-sm whitespace-pre-wrap">{note.content}</p>
+                    {/* Display mood rating if it exists */}
+                    {entry.content?.moodRating !== undefined && (
+                      <div className="flex items-center gap-2 mb-3 bg-muted/20 p-2 rounded-md">
+                        <span className="text-sm font-medium">Mood:</span>
+                        <div className="flex items-center">
+                          <div 
+                            className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                            style={{ 
+                              background: entry.content.moodRating <= 3 ? '#ef4444' : 
+                                        entry.content.moodRating <= 6 ? '#f59e0b' : 
+                                        '#22c55e'
+                            }}
+                          >
+                            {entry.content.moodRating}
+                          </div>
+                          <span className="text-xs ml-1">/10</span>
+                        </div>
+                        <Activity className="h-4 w-4 text-muted-foreground ml-auto" />
+                      </div>
+                    )}
+                    
+                    {/* Notes content */}
+                    <p className="text-sm whitespace-pre-wrap">{entry.notes || "No notes for this entry."}</p>
+                    
+                    {/* Workout details if available */}
+                    {entry.content?.shortDistanceWorkout && (
+                      <div className="mt-2 pt-2 border-t">
+                        <p className="text-xs font-medium text-muted-foreground">Workout Details:</p>
+                        <ul className="text-xs mt-1 space-y-1">
+                          {entry.content.shortDistanceWorkout && (
+                            <li className="flex items-start gap-1">
+                              <span className="font-medium">Short:</span> 
+                              <span>{entry.content.shortDistanceWorkout}</span>
+                            </li>
+                          )}
+                          {entry.content.mediumDistanceWorkout && (
+                            <li className="flex items-start gap-1">
+                              <span className="font-medium">Medium:</span> 
+                              <span>{entry.content.mediumDistanceWorkout}</span>
+                            </li>
+                          )}
+                          {entry.content.longDistanceWorkout && (
+                            <li className="flex items-start gap-1">
+                              <span className="font-medium">Long:</span> 
+                              <span>{entry.content.longDistanceWorkout}</span>
+                            </li>
+                          )}
+                        </ul>
+                      </div>
+                    )}
                   </CardContent>
                   
                   <CardFooter className="flex justify-end pt-0 pb-3">
@@ -303,12 +306,12 @@ export function Component() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        {note.isSystemGenerated ? (
+                        {entry.type === "training" ? (
                           <DropdownMenuItem 
                             className="flex items-center gap-2 cursor-pointer"
                             onClick={() => toast({
                               title: "Training Log",
-                              description: "This is an automatically generated note from your training session.",
+                              description: "This entry was generated from your training session.",
                               duration: 3000
                             })}
                           >
@@ -319,14 +322,14 @@ export function Component() {
                           <>
                             <DropdownMenuItem 
                               className="flex items-center gap-2 cursor-pointer"
-                              onClick={() => openEditDialog(note)}
+                              onClick={() => openEditDialog(entry)}
                             >
                               <Edit className="h-4 w-4" />
                               <span>Edit</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               className="flex items-center gap-2 text-red-600 cursor-pointer"
-                              onClick={() => handleDeleteNote(note.id)}
+                              onClick={() => handleDeleteEntry(entry.id)}
                             >
                               <Trash2 className="h-4 w-4" />
                               <span>Delete</span>
@@ -345,20 +348,20 @@ export function Component() {
       
       <div className="text-center text-sm text-muted-foreground flex items-center justify-center gap-1">
         <BadgeInfo className="h-3.5 w-3.5" />
-        <p>Your workout notes are automatically collected from your training sessions.</p>
+        <p>Journal entries from your training sessions include mood ratings and workout details.</p>
       </div>
       
-      {/* Edit Note Dialog */}
+      {/* Edit Journal Entry Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[525px]">
           <DialogHeader>
-            <DialogTitle>Edit Workout Note</DialogTitle>
+            <DialogTitle>Edit Journal Entry</DialogTitle>
             <DialogDescription>
-              Make changes to your workout note here.
+              Make changes to your journal entry here.
             </DialogDescription>
           </DialogHeader>
           
-          {editingNote && (
+          {editingEntry && (
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <label htmlFor="title" className="text-right font-medium">
@@ -367,20 +370,8 @@ export function Component() {
                 <Input
                   id="title"
                   className="col-span-3"
-                  value={editingNote.title}
-                  onChange={(e) => setEditingNote({...editingNote, title: e.target.value})}
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <label htmlFor="date" className="text-right font-medium">
-                  Date
-                </label>
-                <Input
-                  id="date"
-                  type="date"
-                  className="col-span-3"
-                  value={editingNote.date}
-                  onChange={(e) => setEditingNote({...editingNote, date: e.target.value})}
+                  value={editingEntry.title}
+                  onChange={(e) => setEditingEntry({...editingEntry, title: e.target.value})}
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
@@ -390,21 +381,42 @@ export function Component() {
                 <Input
                   id="type"
                   className="col-span-3"
-                  value={editingNote.workoutType}
-                  onChange={(e) => setEditingNote({...editingNote, workoutType: e.target.value})}
+                  value={editingEntry.type}
+                  onChange={(e) => setEditingEntry({...editingEntry, type: e.target.value})}
                 />
               </div>
               <div className="grid grid-cols-4 items-start gap-4">
-                <label htmlFor="content" className="text-right font-medium">
-                  Content
+                <label htmlFor="notes" className="text-right font-medium">
+                  Notes
                 </label>
                 <Textarea
-                  id="content"
+                  id="notes"
                   className="col-span-3 min-h-[150px]"
-                  value={editingNote.content}
-                  onChange={(e) => setEditingNote({...editingNote, content: e.target.value})}
+                  value={editingEntry.notes || ""}
+                  onChange={(e) => setEditingEntry({...editingEntry, notes: e.target.value})}
                 />
               </div>
+              {editingEntry.content?.moodRating !== undefined && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <label htmlFor="mood" className="text-right font-medium">
+                    Mood Rating
+                  </label>
+                  <div className="col-span-3 flex items-center gap-2">
+                    <div 
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white"
+                      style={{ 
+                        background: editingEntry.content.moodRating <= 3 ? '#ef4444' : 
+                                  editingEntry.content.moodRating <= 6 ? '#f59e0b' : 
+                                  '#22c55e'
+                      }}
+                    >
+                      {editingEntry.content.moodRating}
+                    </div>
+                    <span className="text-sm">/10</span>
+                    <span className="text-sm text-muted-foreground ml-2">(Set during workout)</span>
+                  </div>
+                </div>
+              )}
             </div>
           )}
           
