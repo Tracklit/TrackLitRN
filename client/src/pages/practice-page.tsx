@@ -54,11 +54,12 @@ import {
   CalendarRange
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 export default function PracticePage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [, navigate] = useLocation(); // Add navigation hook
   const { assignedPrograms, isLoading: isLoadingPrograms } = useAssignedPrograms();
   
   // Fetch athlete profile for event preferences
@@ -304,6 +305,12 @@ export default function PracticePage() {
   // State for premium feature modals
   const [showPremiumModal, setShowPremiumModal] = useState<boolean>(false);
   const [showMediaPremiumModal, setShowMediaPremiumModal] = useState<boolean>(false);
+  
+  // Function to navigate to the Journal page
+  const navigateToJournal = () => {
+    setSessionCompleteOpen(false);
+    navigate('/tools/journal');
+  };
   
   // Initialize OpenAI client - We're using the server for API calls instead of direct browser access
   // This is handled in the transcribeAudio function to ensure secure API key usage
@@ -1319,10 +1326,10 @@ export default function PracticePage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CheckCircle className="text-green-500 h-5 w-5" />
-              Session Saved
+              Journal Entry Saved
             </DialogTitle>
             <DialogDescription>
-              Your training session has been completed and saved to your workout library.
+              Your training session has been completed and saved to your journal.
             </DialogDescription>
           </DialogHeader>
           
@@ -1364,7 +1371,7 @@ export default function PracticePage() {
             <Button 
               type="button"
               className="bg-primary text-white"
-              onClick={() => saveWorkout(true)}
+              onClick={() => navigateToJournal()}
               disabled={isSaving}
             >
               {isSaving ? (
@@ -1374,8 +1381,8 @@ export default function PracticePage() {
                 </>
               ) : (
                 <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Go to Workout Library
+                  <ClipboardList className="mr-2 h-4 w-4" />
+                  Go to Journal
                 </>
               )}
             </Button>
