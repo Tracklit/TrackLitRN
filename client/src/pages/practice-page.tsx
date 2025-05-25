@@ -1071,12 +1071,12 @@ export default function PracticePage() {
                     </div>
                     <div className="flex justify-between mt-1 text-xs">
                       <span className="text-red-500">Poor</span>
-                      <span className="text-amber-500">Average (5.5)</span>
+                      <span className="text-amber-500">Average (5)</span>
                       <span className="text-green-500">Excellent</span>
                     </div>
                     <div className="flex justify-between px-1 mt-1">
                       <div className="text-[9px] text-muted-foreground">1</div>
-                      <div className="text-[9px] text-muted-foreground">5.5</div>
+                      <div className="text-[9px] text-muted-foreground">5</div>
                       <div className="text-[9px] text-muted-foreground">10</div>
                     </div>
                   </div>
@@ -1344,7 +1344,7 @@ export default function PracticePage() {
                   className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-white"
                   style={{ 
                     background: moodValue <= 3 ? '#ef4444' : 
-                              moodValue <= 6 ? '#f59e0b' : 
+                              moodValue <= 5 ? '#f59e0b' : 
                               '#22c55e'
                   }}
                 >

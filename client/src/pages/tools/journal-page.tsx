@@ -255,7 +255,7 @@ export function Component() {
                             className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
                             style={{ 
                               background: entry.content.moodRating <= 3 ? '#ef4444' : 
-                                        entry.content.moodRating <= 6 ? '#f59e0b' : 
+                                        entry.content.moodRating <= 5 ? '#f59e0b' : 
                                         '#22c55e'
                             }}
                           >
@@ -406,7 +406,7 @@ export function Component() {
                       className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white"
                       style={{ 
                         background: editingEntry.content.moodRating <= 3 ? '#ef4444' : 
-                                  editingEntry.content.moodRating <= 6 ? '#f59e0b' : 
+                                  editingEntry.content.moodRating <= 5 ? '#f59e0b' : 
                                   '#22c55e'
                       }}
                     >
