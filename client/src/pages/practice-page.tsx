@@ -1427,27 +1427,40 @@ export default function PracticePage() {
       }
       
       // Save to the journal endpoint (not workout library)
+      const journalData = {
+        title: selectedProgram?.program?.title || activeSessionData?.title || "Training Session",
+        notes: diaryNotes || "",
+        type: "training",
+        content: {
+          ...workoutContent,
+          moodRating: moodValue // Add the mood rating to the journal entry
+        },
+        isPublic: isEntryPublic // Use the user's privacy preference from the toggle
+      };
+      
+      console.log('Saving journal entry:', journalData);
+      
       const response = await fetch('/api/journal', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          title: selectedProgram?.program?.title || activeSessionData?.title || "Training Session",
-          notes: diaryNotes,
-          type: "training",
-          content: {
-            ...workoutContent,
-            moodRating: moodValue // Add the mood rating to the journal entry
-          },
-          isPublic: isEntryPublic, // Use the user's privacy preference from the toggle
-          completedAt: new Date().toISOString()
-        })
+        body: JSON.stringify(journalData)
       });
+      
+      // Log the response for debugging
+      const responseData = await response.json();
+      console.log('Journal entry response:', responseData);
       
       if (!response.ok) {
         throw new Error('Failed to save journal entry');
       }
+      
+      // Force refresh of journal entries
+      fetch('/api/journal')
+        .then(res => res.json())
+        .then(data => console.log('Journal entries after save:', data))
+        .catch(err => console.error('Error fetching journal entries:', err));
       
       // Handle successful save
       setIsSaving(false);
