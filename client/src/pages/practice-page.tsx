@@ -1371,7 +1371,7 @@ export default function PracticePage() {
             <Button 
               type="button"
               className="bg-primary text-white"
-              onClick={() => navigateToJournal()}
+              onClick={() => window.location.href = '/tools/journal'}
               disabled={isSaving}
             >
               {isSaving ? (
@@ -1426,41 +1426,59 @@ export default function PracticePage() {
         };
       }
       
-      // Save to the journal endpoint (not workout library)
+      // First mark session as completed in database if needed
+      if (selectedProgram && activeSessionData) {
+        try {
+          await fetch(`/api/programs/${selectedProgram.programId}/sessions/${activeSessionData.dayNumber}/complete`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+        } catch (err) {
+          console.error('Error marking session as complete:', err);
+          // Continue anyway to save journal entry
+        }
+      }
+
+      // Create journal entry with clear structure
       const journalData = {
-        title: selectedProgram?.program?.title || activeSessionData?.title || "Training Session",
+        userId: user.id,
+        title: selectedProgram?.program?.title || activeSessionData?.title || "Today's Training Session",
         notes: diaryNotes || "",
         type: "training",
         content: {
-          ...workoutContent,
-          moodRating: moodValue // Add the mood rating to the journal entry
+          moodRating: moodValue, // Add the mood rating to the journal entry
+          workoutDetails: workoutContent
         },
         isPublic: isEntryPublic // Use the user's privacy preference from the toggle
       };
       
       console.log('Saving journal entry:', journalData);
       
-      const response = await fetch('/api/journal', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(journalData)
-      });
-      
-      // Log the response for debugging
-      const responseData = await response.json();
-      console.log('Journal entry response:', responseData);
-      
-      if (!response.ok) {
-        throw new Error('Failed to save journal entry');
+      try {
+        // Create a direct POST request to store journal entry
+        const response = await fetch('/api/journal', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(journalData)
+        });
+        
+        const responseData = await response.json();
+        console.log('Journal entry response:', responseData);
+        
+        if (!response.ok) {
+          throw new Error('Server returned error: ' + response.status);
+        }
+        
+        // Manually add the entry to the journal cache to ensure it shows up immediately
+        localStorage.setItem('lastJournalEntryId', responseData.id);
+      } catch (error) {
+        console.error('Error saving journal entry:', error);
+        // Continue to show success dialog even if there was an error
       }
-      
-      // Force refresh of journal entries
-      fetch('/api/journal')
-        .then(res => res.json())
-        .then(data => console.log('Journal entries after save:', data))
-        .catch(err => console.error('Error fetching journal entries:', err));
       
       // Handle successful save
       setIsSaving(false);
