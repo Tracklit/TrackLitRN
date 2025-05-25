@@ -375,7 +375,7 @@ export default function StartGunPage() {
           }
         }, { once: true });
         
-        audio.addEventListener('error', (e) => {
+        audio.addEventListener('error', (e: Event) => {
           console.error(`Error loading audio file ${filepath}:`, e);
           reject(e);
         }, { once: true });
@@ -401,7 +401,7 @@ export default function StartGunPage() {
         // On your marks
         console.log("Playing: On your marks");
         try {
-          await playAudioFile('/on-your-marks.mp3');
+          await playAudioFile('/sounds/on-your-marks.mp3');
         } catch (err) {
           console.error("Failed to play On Your Marks, using speech synthesis fallback");
           // Use speech synthesis as fallback
@@ -423,7 +423,7 @@ export default function StartGunPage() {
         // Play Set
         console.log("Playing: Set");
         try {
-          await playAudioFile('/set.mp3');
+          await playAudioFile('/sounds/set.mp3');
         } catch (err) {
           console.error("Failed to play Set, using speech synthesis fallback");
           // Use speech synthesis as fallback
@@ -453,7 +453,7 @@ export default function StartGunPage() {
         // Play gun sound
         console.log("Playing: Bang");
         try {
-          await playAudioFile('/bang.mp3');
+          await playAudioFile('/sounds/bang.mp3');
         } catch (err) {
           console.error("Failed to play Bang, using oscillator fallback", err);
           // Use oscillator as fallback
@@ -586,14 +586,20 @@ export default function StartGunPage() {
       <Breadcrumb items={[
         { label: 'Home', href: '/' },
         { label: 'Training Tools', href: '/training-tools' },
-        { label: 'Race Start Gun', href: '/tools/start-gun', active: true }
+        { label: 'Race Start Gun', href: '/tools/start-gun' }
       ]} />
       
-      <PageHeader 
-        title="Race Start Gun" 
-        description="Practice your starts with a realistic race start sequence."
-        icon={<Zap size={28} />}
-      />
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            <Zap className="h-6 w-6" />
+            Race Start Gun
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Practice your starts with a realistic race start sequence.
+          </p>
+        </div>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
         {/* Main card */}
@@ -798,9 +804,5 @@ export default function StartGunPage() {
 
 // Export also as a component for dynamic routes
 export function Component() {
-  return (
-    <ProtectedRoute>
-      <StartGunPage />
-    </ProtectedRoute>
-  );
+  return <StartGunPage />;
 }
