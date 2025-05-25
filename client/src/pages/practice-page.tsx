@@ -1421,18 +1421,22 @@ export default function PracticePage() {
       const today = new Date();
       const formattedDate = today.toLocaleDateString('en-CA'); // YYYY-MM-DD
       
-      // Simple direct save to journal
-      const response = await fetch('/api/journal/basic-save', {
+      // Use the standard journal endpoint instead
+      const response = await fetch('/api/journal', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: user.id,
           title: `${activeSessionData?.title || 'Training'} - ${formattedDate}`,
           notes: diaryNotes || `Completed workout with ${percentage[0]}% intensity.`,
-          moodRating: moodValue,
-          shortWorkout: activeSessionData?.shortDistanceWorkout || null,
-          mediumWorkout: activeSessionData?.mediumDistanceWorkout || null,
-          longWorkout: activeSessionData?.longDistanceWorkout || null
+          type: 'training',
+          content: {
+            moodRating: moodValue,
+            shortDistanceWorkout: activeSessionData?.shortDistanceWorkout || null,
+            mediumDistanceWorkout: activeSessionData?.mediumDistanceWorkout || null,
+            longDistanceWorkout: activeSessionData?.longDistanceWorkout || null,
+            date: new Date().toISOString()
+          },
+          isPublic: true
         })
       });
       

@@ -3524,7 +3524,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/journal/:id', updateJournalEntry);
   app.delete('/api/journal/:id', deleteJournalEntry);
   
-  // Simple direct journal entry creation
+  // Use the standard journal entry endpoint for the basic save operation
   app.post('/api/journal/basic-save', async (req: Request, res: Response) => {
     try {
       if (!req.user?.id) {
@@ -3547,19 +3547,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         date: new Date().toISOString()
       };
       
-      // Convert to JSON string for storage
-      const contentJson = JSON.stringify(contentObject);
+      // Use the Drizzle ORM to create the journal entry
+      const newEntry = await dbStorage.createJournalEntry({
+        userId: userId,
+        title: title,
+        notes: notes || 'Completed workout session',
+        type: 'training',
+        content: contentObject,
+        isPublic: true
+      });
       
-      // Use direct SQL with the imported pool from db.ts which we know works
-      const { pool } = require('./db');
-      const result = await pool.query(
-        'INSERT INTO journal_entries (user_id, title, notes, type, content, is_public, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW()) RETURNING *',
-        [userId, title, notes || 'Completed workout session', 'training', contentJson, true]
-      );
+      console.log('Successfully saved journal entry:', newEntry);
       
-      console.log('Successfully saved journal entry:', result[0]);
-      
-      return res.status(201).json(result[0]);
+      return res.status(201).json(newEntry);
     } catch (error) {
       console.error("Error creating journal entry:", error);
       return res.status(500).json({ message: "Failed to create journal entry", error: String(error) });
