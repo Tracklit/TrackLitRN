@@ -234,7 +234,7 @@ export function Component() {
       <Card className="mb-6">
         <CardHeader className="pb-3">
           <CardTitle className="text-xl flex items-center justify-between">
-            <span>Your Workout Journal</span>
+            <span></span>
             <Button 
               variant="ghost" 
               size="sm" 
@@ -271,12 +271,12 @@ export function Component() {
           ) : (
             <div className="grid grid-cols-1 gap-4">
               {sortedEntries.map((entry) => (
-                <Card key={entry.id} className="overflow-hidden bg-[#052c54] text-white border-none shadow-md">
+                <Card key={entry.id} className="overflow-hidden bg-[#010a18] text-white border-none shadow-md">
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
                       <div>
                         <CardTitle className="text-white">
-                          {entry.title.replace(/Day \d+ Training -\s?/, '')}
+                          {entry.title.replace(/Day \d+ Training -\s?/, '').replace(/\d{4}-\d{2}-\d{2}/, '')}
                         </CardTitle>
                         <CardDescription className="flex items-center gap-1 text-gray-200">
                           <Calendar className="h-3 w-3" />
