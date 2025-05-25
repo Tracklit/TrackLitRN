@@ -6,6 +6,7 @@ import { z } from "zod";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { transcribeAudioHandler, upload as audioUpload } from "./routes/transcribe";
 import { GoogleSpreadsheet } from "google-spreadsheet";
 import { insertAthleteProfileSchema } from "@shared/athlete-profile-schema";
 import { 
@@ -350,6 +351,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: error.message || 'Failed to delete media' });
     }
   });
+  
+  // Audio transcription endpoint
+  app.post('/api/transcribe', audioUpload.single('file'), transcribeAudioHandler);
   
   // Upload media
   app.post('/api/practice/media', upload.single('file'), async (req: Request, res: Response) => {
