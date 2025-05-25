@@ -154,14 +154,17 @@
   height: 100%;
 }
 
+/* Override all slider knob styles to ensure a single color */
 .mood-slider [role="slider"] {
-  height: 24px;
-  width: 24px;
-  background-color: #fbbf24; /* Fixed amber/gold color */
-  border-radius: 9999px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  margin-top: -7px;
-  transition: transform 0.2s ease;
+  height: 24px !important;
+  width: 24px !important;
+  background-color: #fbbf24 !important; /* Fixed amber/gold color with !important to override */
+  background: #fbbf24 !important; /* Double property for maximum browser compatibility */
+  border-radius: 9999px !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+  margin-top: -7px !important;
+  transition: transform 0.2s ease !important;
+  border: none !important;
 }
 
 /* Create gradient track for mood slider */
