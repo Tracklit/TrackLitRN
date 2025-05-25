@@ -1392,40 +1392,53 @@ export default function PracticePage() {
     </PageContainer>
   );
   
-  // Function to save the workout
+  // Function to save the workout and journal entry
   async function saveWorkout(navigateToLibrary: boolean = false) {
     if (!user) return;
     
     setIsSaving(true);
     
     try {
-      // Content would contain structured data about the workout
-      const workoutContent = {
-        exercises: [
-          { name: "3 x 200m", effort: "85% effort", rest: "2min rest" },
-          { name: "2 x 250m", effort: "90% effort", rest: "3min rest" },
-          { name: "1 x 300m", effort: "100% effort", rest: "all out" }
-        ],
-        performance: {
-          percentage: percentage[0],
-          distance: distance[0],
-          calculatedTime: ((distance[0] / 3) * (100 / percentage[0])).toFixed(1)
-        }
-      };
+      // Create a more meaningful workout content object based on actual session data
+      let workoutContent = {};
       
-      // Save to the workout library
-      const response = await fetch('/api/workout-library', {
+      // Use actual session data if available
+      if (activeSessionData) {
+        workoutContent = {
+          title: activeSessionData.title || "Training Session",
+          preActivation: activeSessionData.preActivation1,
+          postActivation: activeSessionData.preActivation2,
+          shortDistanceWorkout: activeSessionData.shortDistanceWorkout,
+          mediumDistanceWorkout: activeSessionData.mediumDistanceWorkout,
+          longDistanceWorkout: activeSessionData.longDistanceWorkout,
+          extraSession: activeSessionData.extraSession,
+          date: activeSessionData.date,
+          isRestDay: activeSessionData.isRestDay || false
+        };
+      } else {
+        // Fallback to basic data if no session is selected
+        workoutContent = {
+          performance: {
+            percentage: percentage[0],
+            distance: distance[0],
+            calculatedTime: ((distance[0] / 3) * (100 / percentage[0])).toFixed(1)
+          }
+        };
+      }
+      
+      // Save to the journal endpoint (not workout library)
+      const response = await fetch('/api/journal', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           title: selectedProgram?.program?.title || activeSessionData?.title || "Training Session",
-          description: diaryNotes,
-          category: "completed",
+          notes: diaryNotes,
+          type: "training",
           content: {
             ...workoutContent,
-            moodRating: moodValue // Add the mood rating to the workout content
+            moodRating: moodValue // Add the mood rating to the journal entry
           },
           isPublic: isEntryPublic, // Use the user's privacy preference from the toggle
           completedAt: new Date().toISOString()
@@ -1433,17 +1446,14 @@ export default function PracticePage() {
       });
       
       if (!response.ok) {
-        throw new Error('Failed to save workout');
+        throw new Error('Failed to save journal entry');
       }
       
       // Handle successful save
       setIsSaving(false);
       
-      // Optionally navigate to workout library
-      if (navigateToLibrary) {
-        // This would be implemented when we create the workout library page
-        console.log("Navigate to workout library");
-      }
+      // Show completion dialog
+      setSessionCompleteOpen(true);
     } catch (error) {
       console.error('Error saving workout:', error);
       setIsSaving(false);

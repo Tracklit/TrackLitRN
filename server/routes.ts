@@ -7,6 +7,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { transcribeAudioHandler, upload as audioUpload } from "./routes/transcribe";
+import { getUserJournalEntries, createJournalEntry, updateJournalEntry, deleteJournalEntry } from "./routes/journal";
 import { GoogleSpreadsheet } from "google-spreadsheet";
 import { insertAthleteProfileSchema } from "@shared/athlete-profile-schema";
 import { 
