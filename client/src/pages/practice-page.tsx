@@ -1397,6 +1397,7 @@ export default function PracticePage() {
     if (!user) return;
     
     setIsSaving(true);
+    console.log('Starting workout save process...');
     
     try {
       // Create a more meaningful workout content object based on actual session data
@@ -1443,6 +1444,7 @@ export default function PracticePage() {
 
       // Create journal entry with minimal structure to ensure compatibility
       const journalData = {
+        userId: user.id, // Explicitly include the user ID
         title: selectedProgram?.program?.title || activeSessionData?.title || "Today's Training Session",
         notes: diaryNotes || "",
         type: "training",
@@ -1459,7 +1461,9 @@ export default function PracticePage() {
       console.log('Saving journal entry:', journalData);
       
       try {
-        // Create a simple direct POST request to store journal entry
+        // Create a direct POST request with full details
+        console.log('About to send journal data:', JSON.stringify(journalData));
+        
         const response = await fetch('/api/journal', {
           method: 'POST',
           headers: {
@@ -1470,12 +1474,19 @@ export default function PracticePage() {
         
         if (!response.ok) {
           console.error('Server error response:', response.status);
+          const errorText = await response.text();
+          console.error('Error details:', errorText);
           throw new Error('Server returned error: ' + response.status);
         }
 
         // Get response data and show it
         const responseData = await response.json();
         console.log('Journal entry saved successfully:', responseData);
+        
+        // Force refresh journal entries cache
+        fetch('/api/journal').then(res => res.json())
+          .then(data => console.log('Journal refreshed with entries count:', data.length))
+          .catch(err => console.error('Failed to refresh journal:', err));
       } catch (error) {
         console.error('Error saving journal entry:', error);
         // Continue to show success dialog even if there was an error
