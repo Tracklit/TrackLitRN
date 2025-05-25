@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { useAuth } from "@/hooks/use-auth";
 import { useAssignedPrograms } from "@/hooks/use-assigned-programs";
@@ -277,6 +277,16 @@ export default function PracticePage() {
   // State for session completion
   const [sessionCompleteOpen, setSessionCompleteOpen] = useState<boolean>(false);
   const [diaryNotes, setDiaryNotes] = useState<string>("");
+  
+  // Voice recording and transcription state
+  const [isRecording, setIsRecording] = useState<boolean>(false);
+  const [isTranscribing, setIsTranscribing] = useState<boolean>(false);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  
+  // Check if user is premium
+  const isPremiumUser = user?.isPremium || false;
   const [isSaving, setIsSaving] = useState<boolean>(false);
   
   // State for fade animation
@@ -841,9 +851,34 @@ export default function PracticePage() {
                 </CollapsibleContent>
               </Collapsible>
               
-              {/* Practice Notes & Diary */}
+              {/* Practice Notes & Journal */}
               <div className="bg-muted/40 p-3 rounded-md">
-                <h4 className="text-sm font-medium mb-2">Diary Notes</h4>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-sm font-medium">Journal</h4>
+                  <div className="flex items-center gap-1">
+                    {isPremiumUser && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-7 px-2 text-xs flex items-center gap-1"
+                        onClick={toggleRecording}
+                        disabled={isTranscribing}
+                      >
+                        {isRecording ? (
+                          <>
+                            <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse mr-1"></span>
+                            Stop Recording
+                          </>
+                        ) : (
+                          <>
+                            <Mic className="h-3 w-3" />
+                            Record Voice
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                </div>
                 <textarea 
                   className="w-full h-24 p-2 rounded border border-border bg-background text-sm" 
                   placeholder="Add your training notes here..."
