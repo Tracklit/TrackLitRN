@@ -395,12 +395,12 @@ export default function StartGunPage() {
     setStatus('on-your-marks');
     
     // Create audio elements with direct paths to sound files - use absolute URLs
-    // Using a real gun sound for the final shot
+    // Using a real gun sound with powerful reverb for the final shot
     const baseUrl = window.location.origin;
     const audioFiles = {
       onYourMarks: new Audio(`${baseUrl}/sounds/on-your-marks.mp3`),
       set: new Audio(`${baseUrl}/sounds/set.mp3`),
-      gun: new Audio(`${baseUrl}/sounds/gun-shot-new.mp3`) // Using better gun sound
+      gun: new Audio(`${baseUrl}/sounds/gun-shot-reverb.mp3`) // Using gun sound with stadium-like reverb
     };
     
     // Use speech synthesis for more natural voice commands if available
