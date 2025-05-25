@@ -4,7 +4,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { SimpleMobileMenu } from "@/components/layout/simple-mobile-menu";
+import { BasicMobileMenu } from "@/components/layout/basic-mobile-menu";
 
 import { OnboardingFlow } from "@/components/onboarding-flow";
 import NotFound from "@/pages/not-found";
@@ -98,8 +98,8 @@ function MainApp() {
         background: "linear-gradient(135deg, hsl(220, 80%, 4%), hsl(215, 70%, 13%))",
         minHeight: "100vh" 
       }}>
-      {/* Simple Mobile Menu */}
-      <SimpleMobileMenu />
+      {/* Basic Mobile Menu */}
+      <BasicMobileMenu />
       
       {/* Main Content */}
       <main className="pt-12">
