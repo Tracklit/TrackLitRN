@@ -164,7 +164,7 @@ export default function StartGunPage() {
   }, []);
   
   // Function to play audio directly - focusing exclusively on MP3 playback
-  const playAudio = (audioType: 'marks' | 'set' | 'bang') => {
+  const playAudio = (audioType: 'marks' | 'set' | 'bang', onEnded?: () => void) => {
     if (isMuted) return;
     
     // Get the appropriate file path
@@ -194,6 +194,11 @@ export default function StartGunPage() {
         audio.volume = volume / 100;
         audio.preload = 'auto';
         
+        // Set up ended callback
+        if (onEnded) {
+          audio.addEventListener('ended', onEnded);
+        }
+        
         // Log when audio is ready to play
         audio.addEventListener('canplaythrough', () => {
           console.log(`${audioPath} is ready to play`);
@@ -205,6 +210,8 @@ export default function StartGunPage() {
           if (audioType === 'bang' && audioContext.current) {
             createGunOscillator();
           }
+          // Call the callback even if there's an error to prevent hangs
+          if (onEnded) onEnded();
         });
         
         // Attempt playback
@@ -217,6 +224,8 @@ export default function StartGunPage() {
             if (audioType === 'bang' && audioContext.current) {
               createGunOscillator();
             }
+            // Call the callback even if there's an error to prevent hangs
+            if (onEnded) onEnded();
           });
         }
       } catch (error) {
@@ -224,6 +233,8 @@ export default function StartGunPage() {
         if (audioType === 'bang' && audioContext.current) {
           createGunOscillator();
         }
+        // Call the callback even if there's an error to prevent hangs
+        if (onEnded) onEnded();
       }
     }
   };
@@ -427,47 +438,57 @@ export default function StartGunPage() {
     }
   };
   
-  // Function to start the sequence
+  // Function to start the sequence - now waiting for audio to end before proceeding
   const startSequence = () => {
     if (isPlaying) return;
     
     setIsPlaying(true);
     setStatus('on-your-marks');
     
-    // Play on your marks sound
-    playAudio('marks');
-    
-    // Schedule the set command
-    timerRefs.current.setTimer = setTimeout(() => {
-      setStatus('set');
-      playAudio('set');
+    // Play on your marks sound and wait for it to end before continuing
+    playAudio('marks', () => {
+      console.log("'On your marks' audio ended, waiting for delay");
       
-      // Calculate gun delay with randomization if enabled
-      let finalDelay = setToGunDelay;
-      if (useRandomizer) {
-        const randomOffset = (Math.random() * 2 - 1) * 1.0;
-        finalDelay = Math.max(0.1, setToGunDelay + randomOffset);
-      }
-      setCurrentSetToGunDelay(finalDelay);
-      
-      // Schedule the gun sound
-      timerRefs.current.gunTimer = setTimeout(() => {
-        setStatus('gun');
-        playAudio('bang');
+      // After the marks audio completes, wait for the set delay
+      setTimeout(() => {
+        setStatus('set');
         
-        // Flash and record if enabled
-        triggerFlash();
-        if (useCamera) {
-          startRecording();
-        }
-        
-        // Reset the state after a delay
-        setTimeout(() => {
-          setIsPlaying(false);
-          setStatus('idle');
-        }, 2000);
-      }, finalDelay * 1000);
-    }, marksToSetDelay * 1000);
+        // Play the set command and wait for it to end
+        playAudio('set', () => {
+          console.log("'Set' audio ended, waiting for gun delay");
+          
+          // Calculate gun delay with randomization if enabled
+          let finalDelay = setToGunDelay;
+          if (useRandomizer) {
+            const randomOffset = (Math.random() * 2 - 1) * 1.0;
+            finalDelay = Math.max(0.1, setToGunDelay + randomOffset);
+          }
+          setCurrentSetToGunDelay(finalDelay);
+          
+          // After the set audio completes, wait for the gun delay
+          timerRefs.current.gunTimer = setTimeout(() => {
+            setStatus('gun');
+            
+            // Play the bang sound
+            playAudio('bang', () => {
+              console.log("'Bang' audio ended");
+              
+              // Reset state after bang audio completes
+              setTimeout(() => {
+                setIsPlaying(false);
+                setStatus('idle');
+              }, 1000);
+            });
+            
+            // Flash and record if enabled (these should happen with the bang sound)
+            triggerFlash();
+            if (useCamera) {
+              startRecording();
+            }
+          }, finalDelay * 1000);
+        });
+      }, marksToSetDelay * 1000);
+    });
   };
   
   // Function to cancel the sequence
@@ -591,7 +612,7 @@ export default function StartGunPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Zap className="h-6 w-6" />
-              Race Start Simulator
+              Start Gun
             </CardTitle>
             <CardDescription>
               Train your reaction time with a realistic race start experience
@@ -601,11 +622,6 @@ export default function StartGunPage() {
           <CardContent className="flex flex-col items-center justify-center">
             {/* Status display */}
             <div className="mb-8 text-center">
-              <div className={`w-20 h-20 rounded-full mx-auto mb-2 flex items-center justify-center ${getStatusColor()} transition-colors duration-300`}>
-                <span className="text-white font-bold">
-                  {status === 'gun' ? <Zap size={32} /> : null}
-                </span>
-              </div>
               <h3 className="text-xl font-bold">{getStatusText()}</h3>
               {status === 'set' && currentSetToGunDelay > 0 && (
                 <p className="text-sm text-muted-foreground mt-1">
