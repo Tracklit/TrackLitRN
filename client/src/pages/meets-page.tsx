@@ -2,12 +2,10 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Header } from '@/components/layout/header';
 import { SidebarNavigation } from '@/components/layout/sidebar-navigation';
-import { BottomNavigation } from '@/components/layout/bottom-navigation';
 import { Meet } from '@shared/schema';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar, MapPin, Loader2, Plus } from 'lucide-react';
-import { UpcomingMeetCard } from '@/components/upcoming-meet-card';
 import { CreateMeetModal } from '@/components/create-meet-modal';
 import { PreparationTimeline } from '@/components/preparation-timeline';
 import { formatDate, formatTime } from '@/lib/utils';
@@ -32,163 +30,164 @@ export default function MeetsPage() {
   ) || [];
 
   return (
-    <div className="flex flex-col h-screen bg-[#010a18] text-white">
-      <Header title="Track Meets" />
-      
-      <main className="flex-1 overflow-auto pt-16 pb-16 md:pb-0 md:pt-16 md:pl-64">
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          <div className="flex items-center justify-between mb-6">
-            <Button
-              onClick={() => setIsCreateMeetOpen(true)}
-              className="ml-auto bg-blue-600 hover:bg-blue-700 text-white rounded-full w-12 h-12 shadow-lg"
-            >
-              <Plus className="h-6 w-6" />
-            </Button>
-          </div>
-          
-          <Tabs defaultValue="upcoming" className="mt-4">
-            <TabsList className="mb-6 bg-blue-800/30 border border-blue-700/30">
-              <TabsTrigger 
-                value="upcoming" 
-                className="data-[state=active]:bg-blue-700 data-[state=active]:text-white"
-              >
-                Upcoming
-              </TabsTrigger>
-              <TabsTrigger 
-                value="past"
-                className="data-[state=active]:bg-blue-700 data-[state=active]:text-white"
-              >
-                Past
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="upcoming">
-              {isLoading ? (
-                <div className="flex justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : upcomingMeets.length > 0 ? (
-                <div className="space-y-4">
-                  {upcomingMeets.map(meet => (
-                    <Card key={meet.id} className="bg-[#010a18] border border-blue-800/60 shadow-md">
-                      <CardContent className="p-4">
-                        <div className="flex flex-col">
-                          <h3 className="font-medium text-xl text-white mb-2">{meet.name}</h3>
-                          <div className="flex flex-col space-y-2 mb-3">
-                            <div className="flex items-center">
-                              <Calendar className="h-4 w-4 mr-2 text-blue-400" />
-                              <span className="text-blue-300">{formatDate(meet.date)} • {formatTime(meet.date)}</span>
-                            </div>
-                            <div className="flex items-center">
-                              <MapPin className="h-4 w-4 mr-2 text-blue-400" />
-                              <span className="text-blue-300">{meet.location}</span>
-                            </div>
-                          </div>
-                          
-                          <div className="flex flex-wrap gap-2 my-3">
-                            {meet.events?.map(event => (
-                              <Badge key={event} className="bg-blue-900/60 text-blue-200 hover:bg-blue-800">{event}</Badge>
-                            ))}
-                          </div>
-                          
-                          <div className="flex justify-between items-center mt-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              className="border-blue-600 text-blue-400 hover:bg-blue-800/30"
-                              onClick={() => setSelectedMeet(selectedMeet?.id === meet.id ? null : meet)}
-                            >
-                              {selectedMeet?.id === meet.id ? 'Hide Preparation' : 'View Preparation'}
-                            </Button>
-                            
-                            <Badge className="bg-amber-600 hover:bg-amber-700">{meet.status}</Badge>
-                          </div>
-                          
-                          {selectedMeet?.id === meet.id && (
-                            <div className="mt-4 border-t border-blue-800/60 pt-4">
-                              <PreparationTimeline 
-                                meet={meet}
-                                onCustomize={() => {
-                                  // This would open a customization modal in a real app
-                                }}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <Card className="bg-[#010a18] border border-blue-800/60 text-center p-8">
-                  <p className="text-blue-300 mb-4">No upcoming meets</p>
-                  <Button
-                    onClick={() => setIsCreateMeetOpen(true)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                  >
-                    Create Your First Meet
-                  </Button>
-                </Card>
-              )}
-            </TabsContent>
-            
-            <TabsContent value="past">
-              {isLoading ? (
-                <div className="flex justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : pastMeets.length > 0 ? (
-                <div className="space-y-4">
-                  {pastMeets.map(meet => (
-                    <Card key={meet.id} className="bg-[#010a18] border border-blue-800/60 shadow-md">
-                      <CardContent className="p-4">
-                        <div className="flex flex-col">
-                          <h3 className="font-medium text-xl text-white mb-2">{meet.name}</h3>
-                          <div className="flex flex-col space-y-2 mb-3">
-                            <div className="flex items-center">
-                              <Calendar className="h-4 w-4 mr-2 text-blue-400" />
-                              <span className="text-blue-300">{formatDate(meet.date)} • {formatTime(meet.date)}</span>
-                            </div>
-                            <div className="flex items-center">
-                              <MapPin className="h-4 w-4 mr-2 text-blue-400" />
-                              <span className="text-blue-300">{meet.location}</span>
-                            </div>
-                          </div>
-                          
-                          <div className="flex flex-wrap gap-2 my-3">
-                            {meet.events?.map(event => (
-                              <Badge key={event} className="bg-blue-900/60 text-blue-200 hover:bg-blue-800">{event}</Badge>
-                            ))}
-                          </div>
-                          
-                          <div className="flex justify-between items-center mt-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              className="border-blue-600 text-blue-400 hover:bg-blue-800/30"
-                            >
-                              View Results
-                            </Button>
-                            
-                            <Badge className="bg-green-700 hover:bg-green-800">Completed</Badge>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <Card className="bg-[#010a18] border border-blue-800/60 text-center p-8">
-                  <p className="text-blue-300">No past meets</p>
-                </Card>
-              )}
-            </TabsContent>
-          </Tabs>
-        </div>
-      </main>
-      
+    <div className="flex h-screen bg-[#010a18] text-white">
       <SidebarNavigation />
-      <BottomNavigation />
+      
+      <div className="flex-1 overflow-auto">
+        <Header title="Meets" />
+        
+        <main className="pt-16 pb-6">
+          <div className="max-w-3xl mx-auto px-4">
+            <div className="fixed bottom-8 right-8 z-10">
+              <Button
+                onClick={() => setIsCreateMeetOpen(true)}
+                className="bg-amber-500 hover:bg-amber-600 text-white rounded-full w-14 h-14 shadow-lg"
+              >
+                <Plus className="h-6 w-6" />
+              </Button>
+            </div>
+            
+            <Tabs defaultValue="upcoming" className="mt-4">
+              <TabsList className="mb-6 bg-blue-800/30 border border-blue-700/30">
+                <TabsTrigger 
+                  value="upcoming" 
+                  className="data-[state=active]:bg-blue-700 data-[state=active]:text-white"
+                >
+                  Upcoming
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="past"
+                  className="data-[state=active]:bg-blue-700 data-[state=active]:text-white"
+                >
+                  Past
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="upcoming">
+                {isLoading ? (
+                  <div className="flex justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+                  </div>
+                ) : upcomingMeets.length > 0 ? (
+                  <div className="space-y-4">
+                    {upcomingMeets.map(meet => (
+                      <Card key={meet.id} className="overflow-hidden bg-[#010a18] border border-blue-800/60 shadow-md">
+                        <CardContent className="p-4">
+                          <div className="flex flex-col">
+                            <h3 className="font-medium text-xl text-white mb-2">{meet.name}</h3>
+                            <div className="flex flex-col space-y-2 mb-3">
+                              <div className="flex items-center">
+                                <Calendar className="h-4 w-4 mr-2 text-blue-400" />
+                                <span className="text-blue-300">{formatDate(meet.date)} • {formatTime(meet.date)}</span>
+                              </div>
+                              <div className="flex items-center">
+                                <MapPin className="h-4 w-4 mr-2 text-blue-400" />
+                                <span className="text-blue-300">{meet.location}</span>
+                              </div>
+                            </div>
+                            
+                            <div className="flex flex-wrap gap-2 my-3">
+                              {meet.events?.map(event => (
+                                <Badge key={event} className="bg-blue-900/60 text-blue-200 hover:bg-blue-800">{event}</Badge>
+                              ))}
+                            </div>
+                            
+                            <div className="flex justify-between items-center mt-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                className="border-blue-600 text-blue-400 hover:bg-blue-800/30"
+                                onClick={() => setSelectedMeet(selectedMeet?.id === meet.id ? null : meet)}
+                              >
+                                {selectedMeet?.id === meet.id ? 'Hide Preparation' : 'View Preparation'}
+                              </Button>
+                              
+                              <Badge className="bg-amber-600 hover:bg-amber-700">{meet.status}</Badge>
+                            </div>
+                            
+                            {selectedMeet?.id === meet.id && (
+                              <div className="mt-4 border-t border-blue-800/60 pt-4">
+                                <PreparationTimeline 
+                                  meet={meet}
+                                  onCustomize={() => {
+                                    // This would open a customization modal in a real app
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <Card className="overflow-hidden bg-[#010a18] border border-blue-800/60 text-center p-8">
+                    <p className="text-blue-300 mb-4">No upcoming meets</p>
+                    <Button
+                      onClick={() => setIsCreateMeetOpen(true)}
+                      className="bg-amber-500 hover:bg-amber-600 text-white"
+                    >
+                      Create Your First Meet
+                    </Button>
+                  </Card>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="past">
+                {isLoading ? (
+                  <div className="flex justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+                  </div>
+                ) : pastMeets.length > 0 ? (
+                  <div className="space-y-4">
+                    {pastMeets.map(meet => (
+                      <Card key={meet.id} className="overflow-hidden bg-[#010a18] border border-blue-800/60 shadow-md">
+                        <CardContent className="p-4">
+                          <div className="flex flex-col">
+                            <h3 className="font-medium text-xl text-white mb-2">{meet.name}</h3>
+                            <div className="flex flex-col space-y-2 mb-3">
+                              <div className="flex items-center">
+                                <Calendar className="h-4 w-4 mr-2 text-blue-400" />
+                                <span className="text-blue-300">{formatDate(meet.date)} • {formatTime(meet.date)}</span>
+                              </div>
+                              <div className="flex items-center">
+                                <MapPin className="h-4 w-4 mr-2 text-blue-400" />
+                                <span className="text-blue-300">{meet.location}</span>
+                              </div>
+                            </div>
+                            
+                            <div className="flex flex-wrap gap-2 my-3">
+                              {meet.events?.map(event => (
+                                <Badge key={event} className="bg-blue-900/60 text-blue-200 hover:bg-blue-800">{event}</Badge>
+                              ))}
+                            </div>
+                            
+                            <div className="flex justify-between items-center mt-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                className="border-blue-600 text-blue-400 hover:bg-blue-800/30"
+                              >
+                                View Results
+                              </Button>
+                              
+                              <Badge className="bg-green-700 hover:bg-green-800">Completed</Badge>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <Card className="overflow-hidden bg-[#010a18] border border-blue-800/60 text-center p-8">
+                    <p className="text-blue-300">No past meets</p>
+                  </Card>
+                )}
+              </TabsContent>
+            </Tabs>
+          </div>
+        </main>
+      </div>
       
       <CreateMeetModal
         isOpen={isCreateMeetOpen}
