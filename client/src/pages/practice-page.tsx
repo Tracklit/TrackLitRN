@@ -1034,38 +1034,56 @@ export default function PracticePage() {
             <div className="flex items-center gap-2">
               <Camera className="h-4 w-4 text-muted-foreground" />
               <h3 className="font-medium text-sm">Media</h3>
+              {!isPremiumUser && <span className="ml-1 text-[8px] bg-amber-500 text-white px-1 rounded">PRO</span>}
             </div>
             <ChevronDown className="h-4 w-4 text-muted-foreground ui-open:rotate-180 transition-transform duration-200" />
           </CollapsibleTrigger>
           <CollapsibleContent className="px-4 py-3">
             <div className="grid grid-cols-2 gap-3 mb-3">
-              <div className="aspect-square bg-muted/40 rounded-md flex items-center justify-center border border-dashed border-border">
+              <div 
+                className="aspect-square bg-muted/40 rounded-md flex items-center justify-center border border-dashed border-border cursor-pointer"
+                onClick={isPremiumUser ? () => console.log('Upload photo/video') : () => setShowPremiumModal(true)}
+              >
                 <div className="text-center p-4">
                   <div className="bg-primary/10 h-10 w-10 rounded-full flex items-center justify-center mx-auto mb-2">
                     <Upload className="h-5 w-5 text-primary" />
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Upload photo/video
-                  </p>
+                  <div className="flex flex-col items-center">
+                    <p className="text-xs text-muted-foreground">
+                      Upload photo/video
+                    </p>
+                    {!isPremiumUser && <span className="text-[8px] bg-amber-500 text-white px-1 rounded mt-1">PRO</span>}
+                  </div>
                 </div>
               </div>
               
-              <div className="aspect-square bg-muted/40 rounded-md border border-dashed border-border flex items-center justify-center">
+              <div 
+                className="aspect-square bg-muted/40 rounded-md border border-dashed border-border flex items-center justify-center cursor-pointer"
+                onClick={isPremiumUser ? () => console.log('Capture photo') : () => setShowPremiumModal(true)}
+              >
                 <div className="text-center p-4">
                   <div className="bg-primary/10 h-10 w-10 rounded-full flex items-center justify-center mx-auto mb-2">
                     <Camera className="h-5 w-5 text-primary" />
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Capture photo
-                  </p>
+                  <div className="flex flex-col items-center">
+                    <p className="text-xs text-muted-foreground">
+                      Capture photo
+                    </p>
+                    {!isPremiumUser && <span className="text-[8px] bg-amber-500 text-white px-1 rounded mt-1">PRO</span>}
+                  </div>
                 </div>
               </div>
             </div>
             
             <div className="flex justify-center">
-              <Button variant="outline" className="w-full">
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={isPremiumUser ? () => console.log('Upload media') : () => setShowPremiumModal(true)}
+              >
                 <Camera className="h-5 w-5 mr-3" />
                 <span className="text-sm">Add Media</span>
+                {!isPremiumUser && <span className="ml-1 text-[8px] bg-amber-500 text-white px-1 rounded">PRO</span>}
               </Button>
             </div>
           </CollapsibleContent>
