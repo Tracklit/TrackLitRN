@@ -1445,16 +1445,7 @@ export default function PracticePage() {
         toast({
           title: "Workout Saved",
           description: "Your workout has been saved to your journal.",
-          action: (
-            <Button 
-              variant="secondary"
-              onClick={() => navigate('/tools/journal')}
-              size="sm"
-            >
-              View Journal
-            </Button>
-          ),
-          duration: 5000
+          duration: 3000
         });
       } else {
         const errorText = await response.text();
