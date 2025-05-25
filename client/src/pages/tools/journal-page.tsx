@@ -1,18 +1,12 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Breadcrumb } from "@/components/breadcrumb";
-import { Search, Calendar, ChevronDown, ChevronUp, BookOpen } from "lucide-react";
+import { Search, Calendar, ChevronDown, ChevronUp, BookOpen, Edit, Trash2, BadgeInfo } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
 // Define the workout note type
 interface WorkoutNote {
@@ -104,6 +98,27 @@ export function Component() {
     });
   };
   
+  // Handlers for edit and delete actions
+  const handleEditNote = (noteId: string) => {
+    toast({
+      title: "Edit Note",
+      description: "Edit functionality will be implemented soon.",
+      duration: 3000
+    });
+  };
+  
+  const handleDeleteNote = (noteId: string) => {
+    // In a real app, we would call an API to delete the note
+    // For now, we'll just remove it from the state
+    setNotes(notes.filter(note => note.id !== noteId));
+    
+    toast({
+      title: "Note Deleted",
+      description: "Your note has been removed successfully.",
+      duration: 3000
+    });
+  };
+  
   return (
     <div className="container mx-auto px-4 pb-16">
       <Breadcrumb items={[
@@ -135,8 +150,8 @@ export function Component() {
               className="flex items-center gap-1"
             >
               <Calendar className="h-4 w-4" />
-              Sort {sortDirection === "desc" ? "Oldest" : "Newest"}
-              {sortDirection === "desc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              Sort: {sortDirection === "desc" ? "Newest First" : "Oldest First"}
+              {sortDirection === "desc" ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
             </Button>
           </CardTitle>
           
@@ -157,46 +172,55 @@ export function Component() {
               No workout notes found.
             </div>
           ) : (
-            <div className="border rounded-md">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[120px]">Date</TableHead>
-                    <TableHead>Title</TableHead>
-                    <TableHead className="w-[100px]">Type</TableHead>
-                    <TableHead className="w-[80px] text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sortedNotes.map((note) => (
-                    <TableRow key={note.id}>
-                      <TableCell className="font-medium">{formatDate(note.date)}</TableCell>
-                      <TableCell>{note.title}</TableCell>
-                      <TableCell>{note.workoutType}</TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" onClick={() => toggleExpandNote(note.id)}>
-                          {expandedNote === note.id ? "Hide" : "View"}
-                        </Button>
-                      </TableCell>
-                      {expandedNote === note.id && (
-                        <TableRow>
-                          <TableCell colSpan={4} className="bg-muted/30 p-4">
-                            <div className="text-sm whitespace-pre-wrap">
-                              {note.content}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {sortedNotes.map((note) => (
+                <Card key={note.id} className="overflow-hidden">
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle>{note.title}</CardTitle>
+                        <CardDescription className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {formatDate(note.date)}
+                        </CardDescription>
+                      </div>
+                      <Badge variant="outline">{note.workoutType}</Badge>
+                    </div>
+                  </CardHeader>
+                  
+                  <CardContent className="pt-2">
+                    <p className="text-sm whitespace-pre-wrap">{note.content}</p>
+                  </CardContent>
+                  
+                  <CardFooter className="flex justify-end gap-2 pt-0 pb-3">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-8 px-2 text-blue-600"
+                      onClick={() => handleEditNote(note.id)}
+                    >
+                      <Edit className="h-4 w-4 mr-1" />
+                      Edit
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-8 px-2 text-red-600"
+                      onClick={() => handleDeleteNote(note.id)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Delete
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
             </div>
           )}
         </CardContent>
       </Card>
       
-      <div className="text-center text-sm text-muted-foreground">
+      <div className="text-center text-sm text-muted-foreground flex items-center justify-center gap-1">
+        <BadgeInfo className="h-3.5 w-3.5" />
         <p>Your workout notes are automatically collected from your training sessions.</p>
       </div>
     </div>
