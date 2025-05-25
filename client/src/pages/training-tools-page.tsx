@@ -27,10 +27,10 @@ export default function TrainingToolsPage() {
       href: "/tools/start-gun"
     },
     {
-      title: "Interval Timer",
-      description: "Set up customized intervals",
+      title: "Rep Starter",
+      description: "Countdown timer for repetitions",
       icon: <RefreshCw className="h-6 w-6 text-primary" />,
-      href: "/tools/interval-timer"
+      href: "/tools/rep-starter"
     },
     {
       title: "Pace Calculator",
