@@ -10,7 +10,7 @@ import { DesktopSidebar, MobileSidebar, MobileSidebarButton } from "@/components
 import { 
   StopwatchPage,
   StartGunPage,
-  IntervalTimerPage,
+  RepStarterPage,
   PaceCalculatorPage
 } from "@/pages/routes";
 
@@ -51,7 +51,7 @@ function Router() {
       <ProtectedRoute path="/training-tools" component={TrainingToolsPage} />
       <ProtectedRoute path="/tools/stopwatch" component={StopwatchPage} />
       <ProtectedRoute path="/tools/start-gun" component={StartGunPage} />
-      <ProtectedRoute path="/tools/interval-timer" component={IntervalTimerPage} />
+      <ProtectedRoute path="/tools/rep-starter" component={RepStarterPage} />
       <ProtectedRoute path="/tools/pace-calculator" component={PaceCalculatorPage} />
       <ProtectedRoute path="/programs" component={ProgramsPage} />
       <ProtectedRoute path="/programs/create" component={ProgramCreatePage} />
