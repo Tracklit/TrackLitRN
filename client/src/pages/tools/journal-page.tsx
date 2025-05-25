@@ -271,11 +271,13 @@ export function Component() {
           ) : (
             <div className="grid grid-cols-1 gap-4">
               {sortedEntries.map((entry) => (
-                <Card key={entry.id} className="overflow-hidden bg-[#0a3a64] text-white border-none shadow-md">
+                <Card key={entry.id} className="overflow-hidden bg-[#052c54] text-white border-none shadow-md">
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
                       <div>
-                        <CardTitle className="text-white">{entry.title}</CardTitle>
+                        <CardTitle className="text-white">
+                          {entry.title.replace(/Day \d+ Training -\s?/, '')}
+                        </CardTitle>
                         <CardDescription className="flex items-center gap-1 text-gray-200">
                           <Calendar className="h-3 w-3" />
                           {formatDate(entry.createdAt)}
