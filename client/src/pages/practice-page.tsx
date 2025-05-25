@@ -298,6 +298,9 @@ export default function PracticePage() {
   // Check if user is premium
   const isPremiumUser = user?.isPremium || false;
   
+  // State for mood tracking
+  const [moodValue, setMoodValue] = useState<number>(5); // Default mood value in the middle (5 out of 10)
+  
   // State for premium feature modals
   const [showPremiumModal, setShowPremiumModal] = useState<boolean>(false);
   const [showMediaPremiumModal, setShowMediaPremiumModal] = useState<boolean>(false);
@@ -1042,7 +1045,31 @@ export default function PracticePage() {
                       <span className="text-xs text-muted-foreground ml-1">(Visible on ticker)</span>
                     </div>
                   </div>
-                  <div className="flex justify-end">
+                  
+                  {/* Mood Tracking Slider */}
+                  <div className="p-3 bg-muted/30 rounded-md mt-2">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-sm font-medium">How did you feel today?</div>
+                      <div className="text-lg font-bold">{moodValue}/10</div>
+                    </div>
+                    <div className="px-1">
+                      <Slider
+                        value={[moodValue]}
+                        min={1}
+                        max={10}
+                        step={1}
+                        onValueChange={(value) => setMoodValue(value[0])}
+                        className="mood-slider"
+                      />
+                    </div>
+                    <div className="flex justify-between mt-1 text-xs">
+                      <span className="text-red-500">Poor</span>
+                      <span className="text-amber-500">Average</span>
+                      <span className="text-green-500">Excellent</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end mt-3">
                     <Button 
                       className="bg-primary hover:bg-primary/90 text-white"
                       onClick={() => setSessionCompleteOpen(true)}

@@ -85,16 +85,19 @@ function Router() {
 
 function MainApp() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const { user, loginMutation } = useAuth();
   
-  // This will help us test the onboarding flow whenever login happens
+  // Only show onboarding for new user registrations
   useEffect(() => {
-    // Reset onboarding any time a login happens
-    if (loginMutation.isSuccess) {
+    // For simplicity, check if the user has completed onboarding before
+    const hasCompletedOnboarding = localStorage.getItem('onboardingCompleted');
+    
+    // Only show onboarding if user hasn't completed it before
+    if (loginMutation.isSuccess && !hasCompletedOnboarding) {
       setShowOnboarding(true);
     }
-  }, [loginMutation.isSuccess]);
+  }, [loginMutation.isSuccess, loginMutation.data]);
   
   const toggleMenu = () => {
     const newMenuState = !isMenuOpen;
@@ -121,6 +124,9 @@ function MainApp() {
     // Award spikes to the user for completing onboarding (this could call an API)
     // Implementation would go here
     console.log("Onboarding completed!");
+    
+    // Mark onboarding as completed in localStorage
+    localStorage.setItem('onboardingCompleted', 'true');
   };
   
   return (
