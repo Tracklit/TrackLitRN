@@ -289,11 +289,8 @@ export default function PracticePage() {
   // Check if user is premium
   const isPremiumUser = user?.isPremium || false;
   
-  // Initialize OpenAI client
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-    dangerouslyAllowBrowser: true, // For client-side usage
-  });
+  // Initialize OpenAI client - We're using the server for API calls instead of direct browser access
+  // This is handled in the transcribeAudio function to ensure secure API key usage
   
   // Function to handle voice recording
   const toggleRecording = async () => {
@@ -350,7 +347,7 @@ export default function PracticePage() {
     }
   };
   
-  // Function to transcribe audio using OpenAI
+  // Function to transcribe audio using OpenAI via our server API
   const transcribeAudio = async (blob: Blob) => {
     if (!isPremiumUser) {
       toast({
@@ -368,22 +365,20 @@ export default function PracticePage() {
       // Convert blob to File
       const file = new File([blob], "recording.webm", { type: "audio/webm" });
       
-      // Create form data
+      // Create form data for server upload
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("model", "whisper-1");
       
-      // Call OpenAI API
-      const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+      // Send to our server API instead of directly to OpenAI
+      // This keeps our API key secure on the server
+      const response = await fetch("/api/transcribe", {
         method: "POST",
-        headers: {
-          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
-        },
         body: formData
       });
       
       if (!response.ok) {
-        throw new Error(`API Error: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.message || `API Error: ${response.status}`);
       }
       
       const data = await response.json();
@@ -1011,6 +1006,13 @@ export default function PracticePage() {
                   value={diaryNotes}
                   onChange={(e) => setDiaryNotes(e.target.value)}
                 ></textarea>
+                
+                {isTranscribing && (
+                  <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mt-2 p-2 bg-muted/60 rounded-md">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    Transcribing your voice recording...
+                  </div>
+                )}
                 <div className="flex justify-end mt-3">
                   <Button 
                     className="bg-primary hover:bg-primary/90 text-white"
