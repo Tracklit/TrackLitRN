@@ -6,6 +6,7 @@ import { Play, Pause, RotateCcw, Flag, Volume2, VolumeX } from "lucide-react";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { PageHeader } from "@/components/page-header";
 import { StopwatchBackground } from "@/components/stopwatch-background";
+import { useToast } from "@/hooks/use-toast";
 
 export default function StopwatchPage() {
   const [time, setTime] = useState(0);
@@ -13,56 +14,38 @@ export default function StopwatchPage() {
   const [laps, setLaps] = useState<number[]>([]);
   const [isMuted, setIsMuted] = useState(false);
   const [showTip, setShowTip] = useState(true);
+  const { toast } = useToast();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const startSoundRef = useRef<any>(null);
-  const stopSoundRef = useRef<any>(null);
   
-  // Setup audio context and sounds - using a simpler approach for mobile compatibility
+  // Initialize AudioContext for mobile
   useEffect(() => {
-    // Function to play a beep with the given frequency using a new audio context each time
-    const playBeep = (frequency: number, duration: number) => {
+    // Function to initialize audio context on mobile
+    const initAudio = () => {
       try {
-        // Create a fresh audio context each time to avoid issues on mobile
+        // Create a temporary audio context to enable audio on first interaction
         const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.type = 'sine';
-        oscillator.frequency.value = frequency;
-        gainNode.gain.value = 0.7;
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        // Start the sound
-        oscillator.start();
-        
-        // Stop the sound after duration
-        setTimeout(() => {
-          oscillator.stop();
-          // Clean up
-          oscillator.disconnect();
-          gainNode.disconnect();
-          audioContext.close().catch(e => console.error("Error closing audio context:", e));
-        }, duration);
-        
-        return true; // Successfully played
-      } catch (e) {
-        console.error("Error creating audio:", e);
-        return false; // Failed to play
+        audioContext.resume().then(() => {
+          console.log("Audio context enabled by user interaction");
+        });
+      } catch (err) {
+        console.error("Failed to initialize audio context:", err);
       }
     };
     
-    // Store the play functions
-    startSoundRef.current = {
-      play: () => playBeep(1200, 150) // Higher pitch for start
-    };
+    // Add touch event to initialize audio on first interaction
+    const events = ['touchstart', 'mousedown', 'keydown'];
+    events.forEach(event => {
+      document.addEventListener(event, initAudio, { once: true });
+    });
     
-    stopSoundRef.current = {
-      play: () => playBeep(800, 150)  // Lower pitch for stop
-    };
+    // Try it once on load just in case
+    initAudio();
     
-    // We don't need cleanup since we create a new context each time
+    return () => {
+      events.forEach(event => {
+        document.removeEventListener(event, initAudio);
+      });
+    };
   }, []);
 
   // Setup interval for timer
@@ -81,22 +64,9 @@ export default function StopwatchPage() {
   
   // Setup volume button handler for mobile devices
   useEffect(() => {
-    // Attempt to initialize audio context on first user interaction
-    const initAudio = () => {
-      try {
-        // Create a silent audio context to initialize audio on mobile
-        const tempContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        tempContext.resume().then(() => {
-          console.log("Audio context initialized on user interaction");
-        });
-      } catch (e) {
-        console.error("Failed to initialize audio:", e);
-      }
-    };
-
     // Handle various volume button mappings across different devices
     const handleVolumeButton = (e: KeyboardEvent) => {
-      console.log(`Key pressed: ${e.key}, Code: ${e.code}, KeyCode: ${e.keyCode}`);
+      console.log(`Key detected: ${e.key}, Code: ${e.code}, KeyCode: ${e.keyCode}`);
       
       // Check for various volume key representations
       if (
@@ -107,25 +77,98 @@ export default function StopwatchPage() {
         e.keyCode === 38 ||   // Arrow up (sometimes mapped to volume)
         e.key === 'ArrowUp'   // Arrow up key
       ) {
-        console.log('Volume up detected!');
+        console.log('Volume up detected - toggling stopwatch!');
         e.preventDefault();
         handleStartStop();
+        
+        // Show toast notification on first successful volume button press
+        if (showTip) {
+          toast({
+            title: "Volume Button Active",
+            description: "You can use the volume up button to start/stop the timer",
+            duration: 3000
+          });
+          setShowTip(false);
+        }
       }
     };
     
-    // Add touch event to initialize audio on first touch
-    document.addEventListener('touchstart', initAudio, { once: true });
+    // Add listeners for different key events to maximize compatibility
+    const eventTypes = ['keydown', 'keyup', 'keypress'];
+    eventTypes.forEach(eventType => {
+      window.addEventListener(eventType, handleVolumeButton);
+    });
     
-    // Add both keydown and keyup listeners to increase chances of capturing the event
-    window.addEventListener('keydown', handleVolumeButton);
-    window.addEventListener('keyup', handleVolumeButton);
+    // Special handler for mobile - experiment with direct user media controls
+    if ('mediaSession' in navigator) {
+      try {
+        navigator.mediaSession.setActionHandler('play', () => {
+          console.log('Media play button pressed');
+          handleStartStop();
+        });
+        navigator.mediaSession.setActionHandler('pause', () => {
+          console.log('Media pause button pressed');
+          handleStartStop();
+        });
+      } catch (error) {
+        console.error('Error setting up media session handlers:', error);
+      }
+    }
     
     return () => {
-      document.removeEventListener('touchstart', initAudio);
-      window.removeEventListener('keydown', handleVolumeButton);
-      window.removeEventListener('keyup', handleVolumeButton);
+      // Clean up all event listeners
+      eventTypes.forEach(eventType => {
+        window.removeEventListener(eventType, handleVolumeButton);
+      });
+      
+      // Clean up media session handlers if applicable
+      if ('mediaSession' in navigator) {
+        try {
+          navigator.mediaSession.setActionHandler('play', null);
+          navigator.mediaSession.setActionHandler('pause', null);
+        } catch (error) {
+          console.error('Error cleaning up media session handlers:', error);
+        }
+      }
     };
-  }, [isRunning]);
+  }, [isRunning, showTip, toast]);
+
+  // Create an audio context and sound on demand (better for mobile)
+  const playSound = (frequency: number, duration: number) => {
+    try {
+      // Create a new audio context each time
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      
+      // Create oscillator for the beep
+      const oscillator = audioContext.createOscillator();
+      oscillator.type = 'sine';
+      oscillator.frequency.value = frequency;
+      
+      // Create gain node for volume control
+      const gainNode = audioContext.createGain();
+      gainNode.gain.value = 0.7;
+      
+      // Connect nodes
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      // Play the sound
+      oscillator.start();
+      
+      // Schedule stop and cleanup
+      setTimeout(() => {
+        oscillator.stop();
+        oscillator.disconnect();
+        gainNode.disconnect();
+        audioContext.close().catch(e => console.error("Error closing audio context:", e));
+      }, duration);
+      
+      return true;
+    } catch (e) {
+      console.error("Error playing sound:", e);
+      return false;
+    }
+  };
 
   const handleStartStop = () => {
     const newRunningState = !isRunning;
@@ -134,10 +177,19 @@ export default function StopwatchPage() {
     // Play appropriate sound if not muted
     if (!isMuted) {
       try {
-        if (newRunningState && startSoundRef.current) {
-          startSoundRef.current.play();
-        } else if (!newRunningState && stopSoundRef.current) {
-          stopSoundRef.current.play();
+        if (newRunningState) {
+          // Start sound (higher pitch)
+          const soundPlayed = playSound(1200, 150);
+          if (!soundPlayed) {
+            toast({
+              title: "Sound playback",
+              description: "Tap the screen to enable sounds for the stopwatch",
+              duration: 3000
+            });
+          }
+        } else {
+          // Stop sound (lower pitch)
+          playSound(800, 150);
         }
       } catch (e) {
         console.error("Error playing sound:", e);
