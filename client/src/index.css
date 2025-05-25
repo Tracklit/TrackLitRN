@@ -3,9 +3,11 @@
 @tailwind utilities;
 
 /* Custom styling for hiding scrollbars while maintaining scroll functionality */
-body, div, aside, nav, main, section, article, .hamburger-menu {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+body, div, aside, nav, main, section, article, 
+.hamburger-menu, [data-radix-scroll-area-viewport], 
+[data-state=open], [data-sidebar] {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */
@@ -16,10 +18,29 @@ nav::-webkit-scrollbar,
 main::-webkit-scrollbar,
 section::-webkit-scrollbar,
 article::-webkit-scrollbar,
-.hamburger-menu::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
+.hamburger-menu::-webkit-scrollbar,
+[data-radix-scroll-area-viewport]::-webkit-scrollbar,
+[data-state=open]::-webkit-scrollbar,
+[data-sidebar]::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Target Radix UI components specifically */
+[role="dialog"],
+[role="menu"],
+[role="navigation"] {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+[role="dialog"]::-webkit-scrollbar,
+[role="menu"]::-webkit-scrollbar,
+[role="navigation"]::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 /* Pulsating effect for the start button */
