@@ -609,43 +609,38 @@ export default function StartGunPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
         {/* Main card */}
         <Card className="md:col-span-2">
-          {/* Simplified card header with just the title */}
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 justify-center">
-              <Zap className="h-6 w-6" />
-              Start Gun
-            </CardTitle>
-          </CardHeader>
+          {/* Removed header completely */}
           
-          <CardContent className="flex flex-col items-center justify-center">
-            {/* Status display - removed text, keeping only hidden status info */}
-            <div className="mb-8 text-center hidden">
+          <CardContent className="flex flex-col items-center justify-center pt-12 pb-12">
+            {/* Status display - hidden status info */}
+            <div className="hidden">
               {status === 'set' && currentSetToGunDelay > 0 && (
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm text-muted-foreground">
                   (Randomized delay: {currentSetToGunDelay.toFixed(2)}s)
                 </p>
               )}
             </div>
             
-            {/* Controls */}
-            <div className="w-full max-w-md">
-              <div className="flex gap-4 justify-center mb-8">
+            {/* Controls with improved spacing and centering */}
+            <div className="w-full max-w-md flex flex-col items-center">
+              {/* Main start/stop button with increased size */}
+              <div className="mb-12">
                 <Button
-                  className={`w-32 h-32 rounded-full text-lg font-bold ${
+                  className={`w-36 h-36 rounded-full text-lg font-bold ${
                     isPlaying 
                       ? 'bg-red-500 hover:bg-red-600 animate-pulse' 
-                      : 'bg-primary hover:bg-primary/90 pulse-animation shadow-lg'
+                      : 'bg-yellow-500 hover:bg-yellow-600 pulse-animation shadow-lg'
                   }`}
                   onClick={isPlaying ? cancelSequence : startSequence}
                   disabled={false}
                 >
-                  {isPlaying ? <StopCircle size={32} /> : <Play size={32} />}
+                  {isPlaying ? <StopCircle size={36} /> : <Play size={36} />}
                   <span className="sr-only">{isPlaying ? 'Cancel' : 'Start'}</span>
                 </Button>
               </div>
               
-              {/* Volume controls */}
-              <div className="flex items-center gap-4 mb-6">
+              {/* Volume controls with better spacing */}
+              <div className="flex items-center gap-4 w-full px-2">
                 <Button variant="outline" size="icon" onClick={toggleMute} className="shrink-0">
                   {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
                 </Button>
