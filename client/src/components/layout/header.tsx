@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Bell, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 
 interface HeaderProps {
   title?: string;
@@ -12,21 +12,13 @@ interface HeaderProps {
 
 export function Header({ title = "TrackLit", className }: HeaderProps) {
   const { user, logoutMutation } = useAuth();
-  const [location] = useLocation();
-
-  // Check if we're on a dark theme page
-  const isDarkThemePage = location === "/journal" || location === "/meets" || location.includes("/meets/");
 
   const handleLogout = () => {
     logoutMutation.mutate();
   };
 
   return (
-    <header className={cn(
-      "fixed top-0 left-0 right-0 z-30 shadow-sm", 
-      isDarkThemePage ? "bg-[#010a18] text-white" : "bg-white",
-      className
-    )}>
+    <header className={cn("bg-white shadow-sm fixed top-0 left-0 right-0 z-30", className)}>
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <img 
@@ -39,7 +31,7 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
         
         {user && (
           <div className="flex items-center space-x-4">
-            <button className={isDarkThemePage ? "text-blue-300" : "text-darkGray"} aria-label="Notifications">
+            <button className="text-darkGray" aria-label="Notifications">
               <Bell className="h-5 w-5" />
             </button>
             

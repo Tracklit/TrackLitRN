@@ -52,9 +52,6 @@ function NavItem({ href, icon, children, isActive, onClick }: NavItemProps) {
 export function HamburgerMenu() {
   const { user, logoutMutation } = useAuth();
   const [location] = useLocation();
-  
-  // Check if we're on a dark theme page
-  const isDarkThemePage = location === "/journal" || location === "/meets" || location.includes("/meets/");
 
   if (!user) return null;
 
@@ -64,15 +61,10 @@ export function HamburgerMenu() {
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50">
-      <div 
-        className={cn(
-          "flex items-center justify-between p-1 shadow-md",
-          isDarkThemePage ? "bg-[#010a18]" : "bg-[hsl(220,40%,15%)]"
-        )}
-      >
+      <div style={{ backgroundColor: 'hsl(220 40% 15%)' }} className="flex items-center justify-between p-1 shadow-md">
         <div className="flex items-center">
           <Link href="/">
-            <Button variant="ghost" size="icon" className="text-white">
+            <Button variant="ghost" size="icon" className="text-foreground">
               <Menu className="h-5 w-5" />
             </Button>
           </Link>
