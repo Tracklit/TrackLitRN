@@ -1420,13 +1420,33 @@ export default function PracticePage() {
       // Get today's date for title
       const today = new Date();
       const formattedDate = today.toLocaleDateString('en-CA'); // YYYY-MM-DD
+      const entryTitle = `${activeSessionData?.title || 'Training'} - ${formattedDate}`;
       
-      // Use the standard journal endpoint instead
+      // Check if there's already an entry for this session today
+      const checkResponse = await fetch('/api/journal');
+      if (checkResponse.ok) {
+        const existingEntries = await checkResponse.json();
+        const duplicateEntry = existingEntries.find(entry => entry.title === entryTitle);
+        
+        if (duplicateEntry) {
+          // Ask for confirmation to create another entry for the same session
+          const confirmCreate = window.confirm(
+            `You already have a journal entry for "${entryTitle}". Do you want to create another entry?`
+          );
+          
+          if (!confirmCreate) {
+            setIsSaving(false);
+            return;
+          }
+        }
+      }
+      
+      // Use the standard journal endpoint
       const response = await fetch('/api/journal', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: `${activeSessionData?.title || 'Training'} - ${formattedDate}`,
+          title: entryTitle,
           notes: diaryNotes || `Completed workout with ${percentage[0]}% intensity.`,
           type: 'training',
           content: {
@@ -1434,7 +1454,9 @@ export default function PracticePage() {
             shortDistanceWorkout: activeSessionData?.shortDistanceWorkout || null,
             mediumDistanceWorkout: activeSessionData?.mediumDistanceWorkout || null,
             longDistanceWorkout: activeSessionData?.longDistanceWorkout || null,
-            date: new Date().toISOString()
+            date: new Date().toISOString(),
+            sessionId: activeSessionData?.id || null,
+            programId: selectedProgram?.programId || null
           },
           isPublic: true
         })

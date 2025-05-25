@@ -319,36 +319,24 @@ export function Component() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        {entry.type === "training" ? (
-                          <DropdownMenuItem 
-                            className="flex items-center gap-2 cursor-pointer"
-                            onClick={() => toast({
-                              title: "Training Log",
-                              description: "This entry was generated from your training session.",
-                              duration: 3000
-                            })}
-                          >
-                            <BadgeInfo className="h-4 w-4" />
-                            <span>Generated from Training</span>
-                          </DropdownMenuItem>
-                        ) : (
-                          <>
-                            <DropdownMenuItem 
-                              className="flex items-center gap-2 cursor-pointer"
-                              onClick={() => openEditDialog(entry)}
-                            >
-                              <Edit className="h-4 w-4" />
-                              <span>Edit</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="flex items-center gap-2 text-red-600 cursor-pointer"
-                              onClick={() => handleDeleteEntry(entry.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              <span>Delete</span>
-                            </DropdownMenuItem>
-                          </>
-                        )}
+                        <DropdownMenuItem 
+                          className="flex items-center gap-2 cursor-pointer"
+                          onClick={() => openEditDialog(entry)}
+                        >
+                          <Edit className="h-4 w-4" />
+                          <span>Edit</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className="flex items-center gap-2 text-red-600 cursor-pointer"
+                          onClick={() => {
+                            if (window.confirm(`Are you sure you want to delete "${entry.title}"?`)) {
+                              handleDeleteEntry(entry.id);
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span>Delete</span>
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </CardFooter>
