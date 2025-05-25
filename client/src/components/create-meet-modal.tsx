@@ -212,75 +212,78 @@ export function CreateMeetModal({ isOpen, onClose }: CreateMeetModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto bg-[#0c1525] border-blue-800/50 text-white">
         <DialogHeader>
-          <DialogTitle className="text-lg font-bold">Create New Meet</DialogTitle>
-          <p className="text-sm text-muted-foreground">Fill in the details to create a new track meet</p>
+          <DialogTitle className="text-lg font-bold text-white">Create New Meet</DialogTitle>
+          <p className="text-sm text-blue-300">Fill in the details to create a new track meet</p>
         </DialogHeader>
         
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-2">
             <div>
-              <Label htmlFor="meet-name">Meet Name</Label>
+              <Label htmlFor="meet-name" className="text-white">Meet Name</Label>
               <Input 
                 id="meet-name" 
                 placeholder="e.g. City Championships"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
+                className="bg-[#081020] border-blue-800/50 text-white placeholder:text-blue-400/50"
               />
             </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="meet-date">Date</Label>
+                <Label htmlFor="meet-date" className="text-white">Date</Label>
                 <Input 
                   id="meet-date" 
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
                   required
+                  className="bg-[#081020] border-blue-800/50 text-white"
                 />
               </div>
               <div>
-                <Label htmlFor="meet-time">Time</Label>
+                <Label htmlFor="meet-time" className="text-white">Time</Label>
                 <Input 
                   id="meet-time" 
                   type="time"
                   value={time}
                   onChange={(e) => setTime(e.target.value)}
                   required
+                  className="bg-[#081020] border-blue-800/50 text-white"
                 />
               </div>
             </div>
             
             <div>
-              <Label>Location</Label>
+              <Label className="text-white">Location</Label>
               <LocationSearch 
                 onLocationSelect={handleLocationSelect}
                 defaultValue={location}
               />
               {coordinates && (
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-blue-300 mt-1">
                   Coordinates: {coordinates.latitude.toFixed(4)}, {coordinates.longitude.toFixed(4)}
                 </p>
               )}
             </div>
             
             <div>
-              <Label htmlFor="meet-events">Events</Label>
+              <Label htmlFor="meet-events" className="text-white">Events</Label>
               <div className="flex flex-wrap gap-2 mt-2 mb-2">
                 {events.map((event) => (
                   <Badge 
                     key={event} 
                     variant="outline"
-                    className="flex items-center gap-1"
+                    className="flex items-center gap-1 bg-blue-900/30 text-blue-200 border-blue-700/50"
                   >
                     {event}
                     <button 
                       type="button" 
                       onClick={() => removeEvent(event)}
-                      className="ml-1 focus:outline-none"
+                      className="ml-1 focus:outline-none text-blue-300 hover:text-blue-100"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -292,14 +295,14 @@ export function CreateMeetModal({ isOpen, onClose }: CreateMeetModalProps) {
                     placeholder="Add event"
                     value={newEvent}
                     onChange={(e) => setNewEvent(e.target.value)}
-                    className="rounded-r-none border-r-0 h-8 min-w-[100px] max-w-[150px]"
+                    className="rounded-r-none border-r-0 h-8 min-w-[100px] max-w-[150px] bg-[#081020] border-blue-800/50 text-white placeholder:text-blue-400/50"
                   />
                   <Button 
                     type="button" 
                     variant="secondary"
                     size="sm"
                     onClick={addEvent}
-                    className="rounded-l-none h-8"
+                    className="rounded-l-none h-8 bg-blue-800 hover:bg-blue-700 text-white"
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
@@ -308,12 +311,12 @@ export function CreateMeetModal({ isOpen, onClose }: CreateMeetModalProps) {
             </div>
             
             <div>
-              <Label>Preparation Settings</Label>
-              <div className="bg-gray-50 p-3 rounded-lg space-y-3 mt-2">
+              <Label className="text-white">Preparation Settings</Label>
+              <div className="bg-[#081020] border border-blue-800/50 p-3 rounded-lg space-y-3 mt-2">
                 <div>
                   <div className="flex justify-between items-center">
-                    <Label htmlFor="warmup-time" className="text-xs">When to start warm-up</Label>
-                    <span className="text-sm font-medium">{warmupTime} min</span>
+                    <Label htmlFor="warmup-time" className="text-xs text-blue-300">When to start warm-up</Label>
+                    <span className="text-sm font-medium text-amber-500">{warmupTime} min</span>
                   </div>
                   <Slider 
                     id="warmup-time"
@@ -328,8 +331,8 @@ export function CreateMeetModal({ isOpen, onClose }: CreateMeetModalProps) {
                 
                 <div>
                   <div className="flex justify-between items-center">
-                    <Label htmlFor="arrival-time" className="text-xs">Arrival time before event</Label>
-                    <span className="text-sm font-medium">{arrivalTime} min</span>
+                    <Label htmlFor="arrival-time" className="text-xs text-blue-300">Arrival time before event</Label>
+                    <span className="text-sm font-medium text-amber-500">{arrivalTime} min</span>
                   </div>
                   <Slider 
                     id="arrival-time"
@@ -346,12 +349,17 @@ export function CreateMeetModal({ isOpen, onClose }: CreateMeetModalProps) {
           </div>
           
           <DialogFooter className="mt-6">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={onClose}
+              className="border-blue-700 text-blue-300 hover:bg-blue-900/30 hover:text-blue-100"
+            >
               Cancel
             </Button>
             <Button 
               type="submit" 
-              className="bg-primary text-white"
+              className="bg-amber-500 hover:bg-amber-600 text-white"
               disabled={createMeetMutation.isPending}
             >
               {createMeetMutation.isPending ? 'Creating...' : 'Create Meet'}

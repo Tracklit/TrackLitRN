@@ -246,16 +246,16 @@ export function PreparationTimeline({ meet, reminders: initialReminders, onCusto
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-4">
+    <div className="bg-[#081020] border border-blue-800/60 rounded-xl shadow-md p-4">
       <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-darkGray">
-          Your preparation plan for <span className="font-medium">{meet.name}</span>
+        <p className="text-sm text-blue-300">
+          Your preparation plan for <span className="font-medium text-white">{meet.name}</span>
         </p>
         
         <Button 
           variant="ghost" 
           size="sm" 
-          className="h-7 text-xs"
+          className="h-7 text-xs text-blue-300 hover:text-white hover:bg-blue-800/30"
           onClick={() => setIsAddReminderOpen(true)}
         >
           <PlusCircle className="h-3.5 w-3.5 mr-1" />
@@ -265,11 +265,11 @@ export function PreparationTimeline({ meet, reminders: initialReminders, onCusto
       
       {/* Timeline */}
       {isLoading ? (
-        <div className="py-8 text-center text-sm text-muted-foreground">
+        <div className="py-8 text-center text-sm text-blue-400">
           Loading preparation plan...
         </div>
       ) : timelineItems.length === 0 ? (
-        <div className="py-8 text-center text-sm text-muted-foreground">
+        <div className="py-8 text-center text-sm text-blue-400">
           No preparation reminders yet. Add your first one to create a plan.
         </div>
       ) : (
@@ -282,18 +282,18 @@ export function PreparationTimeline({ meet, reminders: initialReminders, onCusto
                 <div className="flex flex-col items-center mr-4">
                   <div className={cn(
                     "w-8 h-8 rounded-full flex items-center justify-center",
-                    effectiveStatus === 'completed' ? "bg-success/10" : 
-                    effectiveStatus === 'current' ? "bg-primary" : "bg-lightGray"
+                    effectiveStatus === 'completed' ? "bg-green-800/30" : 
+                    effectiveStatus === 'current' ? "bg-amber-600" : "bg-blue-900/40"
                   )}>
                     <span className={cn(
-                      effectiveStatus === 'completed' ? "text-success" : 
-                      effectiveStatus === 'current' ? "text-white" : "text-darkGray"
+                      effectiveStatus === 'completed' ? "text-green-400" : 
+                      effectiveStatus === 'current' ? "text-white" : "text-blue-300"
                     )}>
                       {item.icon}
                     </span>
                   </div>
                   {index < timelineItems.length - 1 && (
-                    <div className="h-full w-0.5 bg-lightGray mt-1"></div>
+                    <div className="h-full w-0.5 bg-blue-800/40 mt-1"></div>
                   )}
                 </div>
                 
@@ -301,27 +301,35 @@ export function PreparationTimeline({ meet, reminders: initialReminders, onCusto
                   <div className="flex justify-between items-start">
                     <p className={cn(
                       "text-sm font-medium",
-                      effectiveStatus === 'completed' ? "line-through text-darkGray/60" : ""
+                      effectiveStatus === 'completed' 
+                        ? "line-through text-blue-400/60" 
+                        : effectiveStatus === 'current' 
+                          ? "text-white" 
+                          : "text-blue-200"
                     )}>
                       {item.title}
                     </p>
                     {effectiveStatus === 'current' && (
-                      <Badge variant="accent">TODAY</Badge>
+                      <Badge className="bg-amber-600 hover:bg-amber-700 text-white">TODAY</Badge>
                     )}
                   </div>
                   
                   {item.description && (
                     <p className={cn(
-                      "text-xs text-darkGray mt-1",
-                      effectiveStatus === 'completed' ? "text-darkGray/60" : ""
+                      "text-xs mt-1",
+                      effectiveStatus === 'completed' 
+                        ? "text-blue-400/60" 
+                        : "text-blue-300"
                     )}>
                       {item.description}
                     </p>
                   )}
                   
                   <p className={cn(
-                    "text-xs text-darkGray mt-2",
-                    effectiveStatus === 'completed' ? "text-darkGray/60" : ""
+                    "text-xs mt-2",
+                    effectiveStatus === 'completed' 
+                      ? "text-blue-400/60" 
+                      : "text-blue-400"
                   )}>
                     {item.timeDescription}
                   </p>
@@ -330,7 +338,7 @@ export function PreparationTimeline({ meet, reminders: initialReminders, onCusto
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="mt-2 h-8 text-primary p-0"
+                      className="mt-2 h-8 text-amber-500 hover:text-amber-400 hover:bg-blue-900/30 p-0"
                       onClick={() => handleMarkAsCompleted(item)}
                       disabled={updateReminderMutation.isPending}
                     >
@@ -346,7 +354,7 @@ export function PreparationTimeline({ meet, reminders: initialReminders, onCusto
       
       <div className="flex space-x-3 mt-4">
         <Button 
-          className="flex-1" 
+          className="flex-1 border-blue-700 text-blue-300 hover:bg-blue-900/30 hover:text-blue-100" 
           variant="outline"
           onClick={onCustomize}
         >
@@ -354,7 +362,7 @@ export function PreparationTimeline({ meet, reminders: initialReminders, onCusto
         </Button>
         
         <Button
-          className="flex-1"
+          className="flex-1 bg-amber-500 hover:bg-amber-600 text-white"
           variant="default"
           onClick={() => setIsAddReminderOpen(true)}
         >
