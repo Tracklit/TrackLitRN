@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import {
   Collapsible,
@@ -278,7 +279,14 @@ export default function PracticePage() {
   // State for session completion
   const [sessionCompleteOpen, setSessionCompleteOpen] = useState<boolean>(false);
   const [diaryNotes, setDiaryNotes] = useState<string>("");
-  const [isEntryPublic, setIsEntryPublic] = useState<boolean>(false);
+  
+  // Entry privacy state with local storage persistence
+  const [isEntryPublic, setIsEntryPublic] = useState<boolean>(() => {
+    // Try to get user's saved preference from localStorage
+    const savedPreference = localStorage.getItem('entryPrivacyPreference');
+    // Default to public if no preference is saved
+    return savedPreference ? savedPreference === 'public' : true;
+  });
   
   // Voice recording and transcription state
   const [isRecording, setIsRecording] = useState<boolean>(false);
@@ -1018,20 +1026,20 @@ export default function PracticePage() {
                   </div>
                 )}
                 <div className="flex flex-col gap-2 mt-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
+                  <div className="flex items-center justify-between p-2 bg-muted/30 rounded-md">
+                    <div className="flex items-center gap-2">
+                      <div className="text-sm font-medium">Private</div>
+                      <Switch 
                         id="entry-privacy" 
                         checked={isEntryPublic}
-                        onCheckedChange={(checked) => setIsEntryPublic(checked === true)}
+                        onCheckedChange={(checked) => {
+                          setIsEntryPublic(checked);
+                          // Save user preference to localStorage
+                          localStorage.setItem('entryPrivacyPreference', checked ? 'public' : 'private');
+                        }}
                       />
-                      <label 
-                        htmlFor="entry-privacy" 
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        Public Entry
-                      </label>
-                      <span className="text-xs text-muted-foreground">(Visible on ticker)</span>
+                      <div className="text-sm font-medium">Public</div>
+                      <span className="text-xs text-muted-foreground ml-1">(Visible on ticker)</span>
                     </div>
                   </div>
                   <div className="flex justify-end">
