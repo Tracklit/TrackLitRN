@@ -155,8 +155,13 @@
 }
 
 .mood-slider [role="slider"] {
-  @apply h-6 w-6 bg-primary rounded-full shadow-md transition-transform;
+  height: 24px;
+  width: 24px;
+  background-color: #fbbf24; /* Fixed amber/gold color */
+  border-radius: 9999px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   margin-top: -7px;
+  transition: transform 0.2s ease;
 }
 
 /* Create gradient track for mood slider */
