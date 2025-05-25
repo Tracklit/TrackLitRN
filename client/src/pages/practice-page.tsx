@@ -289,8 +289,9 @@ export default function PracticePage() {
   // Check if user is premium
   const isPremiumUser = user?.isPremium || false;
   
-  // State for premium feature modal
+  // State for premium feature modals
   const [showPremiumModal, setShowPremiumModal] = useState<boolean>(false);
+  const [showMediaPremiumModal, setShowMediaPremiumModal] = useState<boolean>(false);
   
   // Initialize OpenAI client - We're using the server for API calls instead of direct browser access
   // This is handled in the transcribeAudio function to ensure secure API key usage
@@ -1042,7 +1043,7 @@ export default function PracticePage() {
             <div className="grid grid-cols-2 gap-3 mb-3">
               <div 
                 className="aspect-square bg-muted/40 rounded-md flex items-center justify-center border border-dashed border-border cursor-pointer"
-                onClick={isPremiumUser ? () => console.log('Upload photo/video') : () => setShowPremiumModal(true)}
+                onClick={isPremiumUser ? () => console.log('Upload photo/video') : () => setShowMediaPremiumModal(true)}
               >
                 <div className="text-center p-4">
                   <div className="bg-primary/10 h-10 w-10 rounded-full flex items-center justify-center mx-auto mb-2">
@@ -1059,7 +1060,7 @@ export default function PracticePage() {
               
               <div 
                 className="aspect-square bg-muted/40 rounded-md border border-dashed border-border flex items-center justify-center cursor-pointer"
-                onClick={isPremiumUser ? () => console.log('Capture photo') : () => setShowPremiumModal(true)}
+                onClick={isPremiumUser ? () => console.log('Capture photo') : () => setShowMediaPremiumModal(true)}
               >
                 <div className="text-center p-4">
                   <div className="bg-primary/10 h-10 w-10 rounded-full flex items-center justify-center mx-auto mb-2">
@@ -1079,7 +1080,7 @@ export default function PracticePage() {
               <Button 
                 variant="outline" 
                 className="w-full"
-                onClick={isPremiumUser ? () => console.log('Upload media') : () => setShowPremiumModal(true)}
+                onClick={isPremiumUser ? () => console.log('Upload media') : () => setShowMediaPremiumModal(true)}
               >
                 <Camera className="h-5 w-5 mr-3" />
                 <span className="text-sm">Add Media</span>
@@ -1186,6 +1187,63 @@ export default function PracticePage() {
               onClick={() => {
                 // Navigate to premium upgrade page
                 setShowPremiumModal(false);
+                // Placeholder for premium upgrade navigation
+                window.location.href = '/premium';
+              }}
+            >
+              Upgrade Now
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Media Upload Premium Modal */}
+      <Dialog open={showMediaPremiumModal} onOpenChange={setShowMediaPremiumModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-primary">
+              <span className="h-5 w-5 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold">PRO</span>
+              Premium Feature
+            </DialogTitle>
+            <DialogDescription>
+              Media uploads for photos and videos are available exclusively for premium users.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="bg-muted/30 p-3 rounded-md space-y-2">
+              <h3 className="font-medium text-sm">With Premium Media You Get:</h3>
+              <ul className="text-sm space-y-1.5">
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="text-green-500 h-4 w-4" />
+                  Unlimited photo and video uploads
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="text-green-500 h-4 w-4" />
+                  Analyze your technique with slow-motion playback
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="text-green-500 h-4 w-4" />
+                  Create a visual record of your progress
+                </li>
+              </ul>
+            </div>
+          </div>
+          
+          <DialogFooter className="flex sm:justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowMediaPremiumModal(false)}
+            >
+              Maybe Later
+            </Button>
+            <Button
+              type="button"
+              className="bg-primary hover:bg-primary/90 text-white"
+              onClick={() => {
+                // Navigate to premium upgrade page
+                setShowMediaPremiumModal(false);
                 // Placeholder for premium upgrade navigation
                 window.location.href = '/premium';
               }}
