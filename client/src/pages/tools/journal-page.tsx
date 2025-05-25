@@ -269,27 +269,27 @@ export function Component() {
               No journal entries found. Complete a workout to add entries to your journal.
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               {sortedEntries.map((entry) => (
-                <Card key={entry.id} className="overflow-hidden">
+                <Card key={entry.id} className="overflow-hidden bg-[#0a3a64] text-white border-none shadow-md">
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
                       <div>
-                        <CardTitle>{entry.title}</CardTitle>
-                        <CardDescription className="flex items-center gap-1">
+                        <CardTitle className="text-white">{entry.title}</CardTitle>
+                        <CardDescription className="flex items-center gap-1 text-gray-200">
                           <Calendar className="h-3 w-3" />
                           {formatDate(entry.createdAt)}
                         </CardDescription>
                       </div>
-                      <Badge variant="outline">{entry.type}</Badge>
+                      <Badge variant="secondary" className="bg-blue-800 text-white hover:bg-blue-700">{entry.type}</Badge>
                     </div>
                   </CardHeader>
                   
-                  <CardContent className="pt-2">
+                  <CardContent className="pt-2 text-gray-100">
                     {/* Display mood rating if it exists */}
                     {entry.content?.moodRating !== undefined && (
-                      <div className="flex items-center gap-2 mb-3 bg-muted/20 p-2 rounded-md">
-                        <span className="text-sm font-medium">Mood:</span>
+                      <div className="flex items-center gap-2 mb-3 bg-blue-900/50 p-2 rounded-md">
+                        <span className="text-sm font-medium text-white">Mood:</span>
                         <div className="flex items-center">
                           <div 
                             className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
@@ -301,35 +301,35 @@ export function Component() {
                           >
                             {entry.content.moodRating}
                           </div>
-                          <span className="text-xs ml-1">/10</span>
+                          <span className="text-xs ml-1 text-white">/10</span>
                         </div>
-                        <Activity className="h-4 w-4 text-muted-foreground ml-auto" />
+                        <Activity className="h-4 w-4 text-blue-300 ml-auto" />
                       </div>
                     )}
                     
                     {/* Notes content */}
-                    <p className="text-sm whitespace-pre-wrap">{entry.notes || "No notes for this entry."}</p>
+                    <p className="text-sm whitespace-pre-wrap text-gray-100">{entry.notes || "No notes for this entry."}</p>
                     
                     {/* Workout details if available */}
                     {entry.content?.shortDistanceWorkout && (
-                      <div className="mt-2 pt-2 border-t">
-                        <p className="text-xs font-medium text-muted-foreground">Workout Details:</p>
-                        <ul className="text-xs mt-1 space-y-1">
+                      <div className="mt-2 pt-2 border-t border-blue-700">
+                        <p className="text-xs font-medium text-blue-300">Workout Details:</p>
+                        <ul className="text-xs mt-1 space-y-1 text-gray-100">
                           {entry.content.shortDistanceWorkout && (
                             <li className="flex items-start gap-1">
-                              <span className="font-medium">Short:</span> 
+                              <span className="font-medium text-blue-200">Short:</span> 
                               <span>{entry.content.shortDistanceWorkout}</span>
                             </li>
                           )}
                           {entry.content.mediumDistanceWorkout && (
                             <li className="flex items-start gap-1">
-                              <span className="font-medium">Medium:</span> 
+                              <span className="font-medium text-blue-200">Medium:</span> 
                               <span>{entry.content.mediumDistanceWorkout}</span>
                             </li>
                           )}
                           {entry.content.longDistanceWorkout && (
                             <li className="flex items-start gap-1">
-                              <span className="font-medium">Long:</span> 
+                              <span className="font-medium text-blue-200">Long:</span> 
                               <span>{entry.content.longDistanceWorkout}</span>
                             </li>
                           )}
@@ -341,20 +341,20 @@ export function Component() {
                   <CardFooter className="flex justify-end pt-0 pb-3">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-100 hover:bg-blue-800">
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
+                      <DropdownMenuContent align="end" className="bg-blue-900 border-blue-700 text-white">
                         <DropdownMenuItem 
-                          className="flex items-center gap-2 cursor-pointer"
+                          className="flex items-center gap-2 cursor-pointer hover:bg-blue-800 focus:bg-blue-800 focus:text-white"
                           onClick={() => openEditDialog(entry)}
                         >
                           <Edit className="h-4 w-4" />
                           <span>Edit</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem 
-                          className="flex items-center gap-2 text-red-600 cursor-pointer"
+                          className="flex items-center gap-2 text-red-400 cursor-pointer hover:bg-red-900/50 focus:bg-red-900/50 focus:text-red-300"
                           onClick={() => {
                             if (window.confirm(`Are you sure you want to delete "${entry.title}"?`)) {
                               handleDeleteEntry(entry.id);
