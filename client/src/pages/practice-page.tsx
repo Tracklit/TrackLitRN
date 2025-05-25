@@ -278,6 +278,7 @@ export default function PracticePage() {
   // State for session completion
   const [sessionCompleteOpen, setSessionCompleteOpen] = useState<boolean>(false);
   const [diaryNotes, setDiaryNotes] = useState<string>("");
+  const [isEntryPublic, setIsEntryPublic] = useState<boolean>(false);
   
   // Voice recording and transcription state
   const [isRecording, setIsRecording] = useState<boolean>(false);
@@ -1016,13 +1017,31 @@ export default function PracticePage() {
                     Transcribing your voice recording...
                   </div>
                 )}
-                <div className="flex justify-end mt-3">
-                  <Button 
-                    className="bg-primary hover:bg-primary/90 text-white"
-                    onClick={() => setSessionCompleteOpen(true)}
-                  >
-                    Complete Session
-                  </Button>
+                <div className="flex flex-col gap-2 mt-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="entry-privacy" 
+                        checked={isEntryPublic}
+                        onCheckedChange={(checked) => setIsEntryPublic(checked === true)}
+                      />
+                      <label 
+                        htmlFor="entry-privacy" 
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        Public Entry
+                      </label>
+                      <span className="text-xs text-muted-foreground">(Visible on ticker)</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <Button 
+                      className="bg-primary hover:bg-primary/90 text-white"
+                      onClick={() => setSessionCompleteOpen(true)}
+                    >
+                      Save Entry
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1339,7 +1358,7 @@ export default function PracticePage() {
           description: diaryNotes,
           category: "completed",
           content: workoutContent || "",
-          isPublic: true,
+          isPublic: isEntryPublic, // Use the user's privacy preference from the toggle
           completedAt: new Date().toISOString()
         })
       });
