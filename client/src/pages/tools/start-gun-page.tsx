@@ -97,38 +97,59 @@ export default function StartGunPage() {
       }
     };
     
-    // Synthesize sounds if files don't exist
+    // Create improved synthetic sounds for better quality
     const generateVoiceSound = (text: string, key: keyof AudioBuffers) => {
       try {
-        // Create oscillator for basic tone
-        const oscillator = ctx.createOscillator();
-        const gainNode = ctx.createGain();
-        oscillator.type = 'sine';
-        oscillator.frequency.value = key === 'onYourMarks' ? 200 : 250; // Different pitches
-        gainNode.gain.value = 0.8;
-        
-        // Create short buffer for the voice sound
-        const duration = key === 'onYourMarks' ? 1.0 : 0.5; // Longer for "on your marks"
+        // Improved voice synthesis
+        const duration = key === 'onYourMarks' ? 1.2 : 0.6; // Longer for "on your marks"
         const buffer = ctx.createBuffer(1, ctx.sampleRate * duration, ctx.sampleRate);
         const channelData = buffer.getChannelData(0);
         
-        // Fill with a simple synthesized "voice"
+        // Base frequency - deeper for "on your marks", higher for "set"
+        const baseFreq = key === 'onYourMarks' ? 180 : 220;
+        
+        // Fill with a richer synthesized "voice" sound
         for (let i = 0; i < buffer.length; i++) {
-          // Create an envelope to shape the sound
+          const t = i / ctx.sampleRate;
+          
+          // Create a more complex envelope for natural speech
           let envelope = 1;
-          if (i < 0.1 * ctx.sampleRate) {
-            envelope = i / (0.1 * ctx.sampleRate); // Attack
-          } else if (i > buffer.length - 0.2 * ctx.sampleRate) {
-            envelope = (buffer.length - i) / (0.2 * ctx.sampleRate); // Release
+          if (i < 0.05 * ctx.sampleRate) {
+            envelope = i / (0.05 * ctx.sampleRate); // Attack
+          } else if (i > buffer.length - 0.1 * ctx.sampleRate) {
+            envelope = (buffer.length - i) / (0.1 * ctx.sampleRate); // Release
           }
           
-          // Add some variation to sound more like speech
-          const variation = Math.sin(i * (key === 'onYourMarks' ? 0.01 : 0.02)) * 0.2;
-          channelData[i] = (Math.sin(i * 0.05) + variation) * envelope * 0.5;
+          // For "On your marks" create three distinct syllables
+          if (key === 'onYourMarks') {
+            // "On" (0-0.3)
+            if (t < 0.3) {
+              const syllableEnv = t < 0.15 ? t / 0.15 : (0.3 - t) / 0.15;
+              const freq = baseFreq * 0.9;
+              channelData[i] = Math.sin(2 * Math.PI * freq * t) * syllableEnv * envelope * 0.8;
+            } 
+            // "Your" (0.3-0.6)
+            else if (t < 0.7) {
+              const syllableEnv = (t - 0.3) < 0.2 ? (t - 0.3) / 0.2 : (0.7 - t) / 0.2;
+              const freq = baseFreq * 1.1;
+              channelData[i] = Math.sin(2 * Math.PI * freq * t) * syllableEnv * envelope * 0.8;
+            }
+            // "Marks" (0.6-1.0)
+            else {
+              const syllableEnv = (t - 0.7) < 0.15 ? (t - 0.7) / 0.15 : (1.2 - t) / 0.35;
+              const freq = baseFreq * 0.95;
+              channelData[i] = Math.sin(2 * Math.PI * freq * t) * syllableEnv * envelope * 0.8;
+            }
+          } 
+          // For "Set" - one sharp syllable
+          else {
+            const freq = baseFreq + (Math.sin(t * 25) * 10); // Add some variation
+            channelData[i] = Math.sin(2 * Math.PI * freq * t) * envelope * 0.8;
+          }
         }
         
         audioBuffers.current[key] = buffer;
-        console.log(`Generated ${key} sound`);
+        console.log(`Generated improved ${key} sound`);
       } catch (error) {
         console.error(`Error generating ${key} sound:`, error);
       }
@@ -136,26 +157,33 @@ export default function StartGunPage() {
     
     const generateGunSound = () => {
       try {
-        // Create a short, loud "bang" sound
-        const duration = 0.3;
+        // Create a more realistic gun sound with initial crack and decay
+        const duration = 0.5;
         const buffer = ctx.createBuffer(1, ctx.sampleRate * duration, ctx.sampleRate);
         const channelData = buffer.getChannelData(0);
         
-        // Fill with noise for the gun sound
+        // Fill with a more realistic gun sound
         for (let i = 0; i < buffer.length; i++) {
-          let envelope = 1;
-          if (i < 0.01 * ctx.sampleRate) {
-            envelope = i / (0.01 * ctx.sampleRate); // Very fast attack
-          } else {
-            envelope = Math.max(0, 1 - (i / (0.3 * ctx.sampleRate))); // Fast decay
-          }
+          const t = i / ctx.sampleRate;
           
-          // Random noise with sharp attack and decay
-          channelData[i] = (Math.random() * 2 - 1) * envelope;
+          // Initial crack (fast attack, very loud)
+          if (t < 0.02) {
+            // Sharp attack for the initial bang
+            const crackEnvelope = t < 0.005 ? t / 0.005 : (0.02 - t) / 0.015;
+            channelData[i] = (Math.random() * 2 - 1) * crackEnvelope * 0.95;
+          } 
+          // Echo and decay (longer decay phase)
+          else {
+            const decayEnvelope = Math.pow((duration - t) / duration, 1.5);
+            // Mix noise with some tonal components for echo
+            const noise = Math.random() * 2 - 1;
+            const tone = Math.sin(2 * Math.PI * 120 * t) * 0.2; // Low tone component
+            channelData[i] = (noise * 0.7 + tone * 0.3) * decayEnvelope * 0.7;
+          }
         }
         
         audioBuffers.current.gun = buffer;
-        console.log("Generated gun sound");
+        console.log("Generated improved gun sound");
       } catch (error) {
         console.error("Error generating gun sound:", error);
       }
@@ -166,13 +194,15 @@ export default function StartGunPage() {
       try {
         // Try to load pre-recorded voice and gun sounds
         try {
-          // Voice commands should be proper voice recordings
-          await loadSound("/sounds/on-your-marks.mp3", "onYourMarks");
-          await loadSound("/sounds/set.mp3", "set");
-          await loadSound("/sounds/gun-shot.mp3", "gun");
+          // Try to load the sound files from the proper location
+          // Use the correct path to ensure the files are found
+          console.log("Attempting to load audio files from root");
+          await loadSound("on-your-marks.mp3", "onYourMarks");
+          await loadSound("set.mp3", "set");
+          await loadSound("gun-shot.mp3", "gun");
           console.log("Loaded audio files successfully");
         } catch (loadError) {
-          console.warn("Could not load audio files, creating synthetic sounds instead", loadError);
+          console.error("Could not load audio files:", loadError);
           
           // Fallback to synthetic sounds if files aren't available
           generateVoiceSound("On your marks", "onYourMarks");
