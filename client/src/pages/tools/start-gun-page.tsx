@@ -163,62 +163,68 @@ export default function StartGunPage() {
     };
   }, []);
   
-  // Function to play audio with fallback
+  // Function to play audio directly - focusing exclusively on MP3 playback
   const playAudio = (audioType: 'marks' | 'set' | 'bang') => {
     if (isMuted) return;
     
-    let audioElement: HTMLAudioElement | null = null;
-    let fallbackText = '';
-    
-    // Select the right audio element and fallback text
+    // Get the appropriate file path
+    let audioPath = '';
     switch (audioType) {
       case 'marks':
-        audioElement = marksAudioRef.current;
-        fallbackText = 'On your marks';
+        audioPath = '/on-your-marks.mp3';
+        console.log("Playing on-your-marks.mp3");
         break;
       case 'set':
-        audioElement = setAudioRef.current;
-        fallbackText = 'Set';
+        audioPath = '/set.mp3';
+        console.log("Playing set.mp3");
         break;
       case 'bang':
-        audioElement = bangAudioRef.current;
-        fallbackText = '';
+        audioPath = '/bang.mp3';
+        console.log("Playing bang.mp3");
         break;
     }
     
-    // Try to play the audio
-    if (audioElement) {
-      // Set volume
-      audioElement.volume = volume / 100;
-      
-      // Create a new audio element for this playback (more reliable)
-      const newAudio = new Audio(audioElement.src);
-      newAudio.volume = volume / 100;
-      
-      const playPromise = newAudio.play();
-      if (playPromise) {
-        playPromise.catch(err => {
-          console.error(`Failed to play ${audioType} sound:`, err);
-          
-          // Use speech synthesis as fallback for voice commands
-          if (audioType !== 'bang' && 'speechSynthesis' in window && fallbackText) {
-            const utterance = new SpeechSynthesisUtterance(fallbackText);
-            utterance.volume = volume / 100;
-            window.speechSynthesis.speak(utterance);
-          } else if (audioType === 'bang' && audioContext.current) {
-            // Use oscillator as fallback for gun sound
+    // Play the audio directly using a new Audio element each time
+    if (audioPath) {
+      try {
+        // Create a new audio element specifically for this playback
+        const audio = new Audio(audioPath);
+        
+        // Set properties
+        audio.volume = volume / 100;
+        audio.preload = 'auto';
+        
+        // Log when audio is ready to play
+        audio.addEventListener('canplaythrough', () => {
+          console.log(`${audioPath} is ready to play`);
+        });
+        
+        // Debug any errors
+        audio.addEventListener('error', (e) => {
+          console.error(`Error with ${audioPath}:`, e);
+          if (audioType === 'bang' && audioContext.current) {
             createGunOscillator();
           }
         });
+        
+        // Attempt playback
+        const playPromise = audio.play();
+        if (playPromise) {
+          playPromise.then(() => {
+            console.log(`${audioPath} playback started successfully`);
+          }).catch(err => {
+            console.error(`Error playing ${audioPath}:`, err);
+            if (audioType === 'bang' && audioContext.current) {
+              createGunOscillator();
+            }
+          });
+        }
+      } catch (error) {
+        console.error(`Exception trying to play ${audioPath}:`, error);
+        if (audioType === 'bang' && audioContext.current) {
+          createGunOscillator();
+        }
       }
-    } else if (audioType !== 'bang' && 'speechSynthesis' in window && fallbackText) {
-      // Direct fallback to speech synthesis
-      const utterance = new SpeechSynthesisUtterance(fallbackText);
-      utterance.volume = volume / 100;
-      window.speechSynthesis.speak(utterance);
-    } else if (audioType === 'bang' && audioContext.current) {
-      // Direct fallback to oscillator for gun sound
-      createGunOscillator();
     }
   };
   
