@@ -1408,136 +1408,70 @@ export default function PracticePage() {
     setIsSaving(true);
     console.log('Starting workout save process...');
     
-    // Create a direct save function that doesn't rely on any modals
-    
     try {
-      // Create a more meaningful workout content object based on actual session data
-      let workoutContent = {};
-      
-      // Use actual session data if available
-      if (activeSessionData) {
-        workoutContent = {
-          title: activeSessionData.title || "Training Session",
-          preActivation: activeSessionData.preActivation1,
-          postActivation: activeSessionData.preActivation2,
-          shortDistanceWorkout: activeSessionData.shortDistanceWorkout,
-          mediumDistanceWorkout: activeSessionData.mediumDistanceWorkout,
-          longDistanceWorkout: activeSessionData.longDistanceWorkout,
-          extraSession: activeSessionData.extraSession,
-          date: activeSessionData.date,
-          isRestDay: activeSessionData.isRestDay || false
-        };
-      } else {
-        // Fallback to basic data if no session is selected
-        workoutContent = {
-          performance: {
-            percentage: percentage[0],
-            distance: distance[0],
-            calculatedTime: ((distance[0] / 3) * (100 / percentage[0])).toFixed(1)
-          }
-        };
-      }
-      
-      // First mark session as completed in database if needed
+      // Mark session as completed if needed
       if (selectedProgram && activeSessionData) {
-        try {
-          await fetch(`/api/programs/${selectedProgram.programId}/sessions/${activeSessionData.dayNumber}/complete`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          });
-        } catch (err) {
-          console.error('Error marking session as complete:', err);
-          // Continue anyway to save journal entry
-        }
-      }
-
-      // Create journal entry with minimal structure to ensure compatibility
-      const journalData = {
-        userId: user.id, // Explicitly include the user ID
-        title: selectedProgram?.program?.title || activeSessionData?.title || "Today's Training Session",
-        notes: diaryNotes || "",
-        type: "training",
-        content: {
-          moodRating: moodValue,
-          shortDistanceWorkout: activeSessionData?.shortDistanceWorkout || null,
-          mediumDistanceWorkout: activeSessionData?.mediumDistanceWorkout || null,
-          longDistanceWorkout: activeSessionData?.longDistanceWorkout || null,
-          date: new Date().toISOString()
-        },
-        isPublic: isEntryPublic
-      };
-      
-      console.log('Saving journal entry:', journalData);
-      
-      try {
-        // Use a simplified and very direct approach for database entry
-        console.log('About to send journal data using basic fetch');
-        
-        // Use a basic POST request
-        const response = await fetch('/api/journal/basic-save', {
+        await fetch(`/api/programs/${selectedProgram.programId}/sessions/${activeSessionData.dayNumber}/complete`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            userId: user.id,
-            title: journalData.title,
-            notes: journalData.notes || "Completed workout session",
-            moodRating: moodValue,
-            shortWorkout: activeSessionData?.shortDistanceWorkout || "",
-            mediumWorkout: activeSessionData?.mediumDistanceWorkout || "",
-            longWorkout: activeSessionData?.longDistanceWorkout || ""
-          })
+          headers: { 'Content-Type': 'application/json' }
         });
-        
-        if (!response.ok) {
-          console.error('Server error response:', response.status);
-          const errorText = await response.text();
-          console.error('Error details:', errorText);
-          throw new Error('Server returned error: ' + response.status);
-        }
-
-        // Get response data and show it
-        const responseData = await response.json();
-        console.log('Journal entry saved successfully:', responseData);
-        
-        // Force refresh journal entries cache
-        fetch('/api/journal').then(res => res.json())
-          .then(data => console.log('Journal refreshed with entries count:', data.length))
-          .catch(err => console.error('Failed to refresh journal:', err));
-      } catch (error) {
-        console.error('Error saving journal entry:', error);
-        // Continue to show success dialog even if there was an error
       }
+
+      // Get today's date for title
+      const today = new Date();
+      const formattedDate = today.toLocaleDateString('en-CA'); // YYYY-MM-DD
       
-      // Handle successful save with toast notifications instead of dialog
-      toast({
-        title: "Workout Saved",
-        description: "Your workout has been saved to your journal.",
-        duration: 3000
+      // Simple direct save to journal
+      const response = await fetch('/api/journal/basic-save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          title: `${activeSessionData?.title || 'Training'} - ${formattedDate}`,
+          notes: diaryNotes || `Completed workout with ${percentage[0]}% intensity.`,
+          moodRating: moodValue,
+          shortWorkout: activeSessionData?.shortDistanceWorkout || null,
+          mediumWorkout: activeSessionData?.mediumDistanceWorkout || null,
+          longWorkout: activeSessionData?.longDistanceWorkout || null
+        })
       });
       
-      // Show a button to navigate to journal after a short delay
-      setTimeout(() => {
+      // Handle response
+      if (response.ok) {
         toast({
-          title: "View Journal",
-          description: "Check out all your workout entries",
+          title: "Workout Saved",
+          description: "Your workout has been saved to your journal.",
           action: (
             <Button 
               variant="secondary"
               onClick={() => navigate('/tools/journal')}
               size="sm"
             >
-              Open Journal
+              View Journal
             </Button>
           ),
           duration: 5000
         });
-      }, 500);
+      } else {
+        const errorText = await response.text();
+        console.error('Error saving journal entry:', errorText);
+        toast({
+          title: "Error Saving",
+          description: "There was a problem saving your workout.",
+          variant: "destructive",
+          duration: 3000
+        });
+      }
     } catch (error) {
-      console.error('Error saving workout:', error);
+      console.error('Error in workout save process:', error);
+      toast({
+        title: "Error",
+        description: "There was a problem saving your workout.",
+        variant: "destructive",
+        duration: 3000
+      });
+    } finally {
+      // Always reset the saving state
       setIsSaving(false);
     }
   }
