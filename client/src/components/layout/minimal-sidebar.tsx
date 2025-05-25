@@ -126,7 +126,11 @@ export function MobileSidebarButton({ onClick, isOpen }: { onClick: () => void, 
       <div style={{ backgroundColor: 'hsl(220 40% 15%)' }} className="flex items-center justify-between p-1 shadow-md">
         <div className="flex items-center">
           <button 
-            onClick={onClick} 
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onClick();
+            }} 
             className="text-foreground p-2"
           >
             <span className="sr-only">{isOpen ? 'Close' : 'Open'} menu</span>
