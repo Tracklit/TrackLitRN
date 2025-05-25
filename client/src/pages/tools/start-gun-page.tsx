@@ -395,11 +395,43 @@ export default function StartGunPage() {
     setStatus('on-your-marks');
     
     // Create audio elements with direct paths to sound files - use absolute URLs
+    // Using a real gun sound for the final shot
     const baseUrl = window.location.origin;
     const audioFiles = {
       onYourMarks: new Audio(`${baseUrl}/sounds/on-your-marks.mp3`),
       set: new Audio(`${baseUrl}/sounds/set.mp3`),
-      gun: new Audio(`${baseUrl}/sounds/gun-shot.mp3`)
+      gun: new Audio(`${baseUrl}/sounds/gun-shot-new.mp3`) // Using better gun sound
+    };
+    
+    // Use speech synthesis for more natural voice commands if available
+    const speakCommand = (text: string) => {
+      if ('speechSynthesis' in window) {
+        // Create utterance
+        const utterance = new SpeechSynthesisUtterance(text);
+        
+        // Configure voice (deeper male voice works best for race commands)
+        utterance.volume = volume / 100;
+        utterance.rate = 0.9; // Slightly slower for clarity
+        utterance.pitch = 0.8; // Deeper voice
+        
+        // Get male voice if available
+        const voices = window.speechSynthesis.getVoices();
+        const maleVoice = voices.find(voice => 
+          voice.name.includes('Male') || 
+          voice.name.includes('Eric') || 
+          voice.name.includes('Guy')
+        );
+        
+        if (maleVoice) {
+          utterance.voice = maleVoice;
+        }
+        
+        // Speak the command
+        window.speechSynthesis.speak(utterance);
+        
+        return true;
+      }
+      return false;
     };
     
     // Configure all audio elements
@@ -436,51 +468,68 @@ export default function StartGunPage() {
           }
         }
         
-        // Play audio with both methods for best compatibility
-        const audio = audioFiles[type];
-        
-        // Method 1: Standard HTML5 Audio
-        try {
-          // Ensure audio is loaded
-          audio.load();
-          audio.currentTime = 0;
+        // For voice commands, try speech synthesis first
+        if (type !== 'gun') {
+          const text = type === 'onYourMarks' ? "On your marks" : "Set";
+          const spokeSucessfully = speakCommand(text);
           
-          // Force unmute and set volume
-          audio.muted = false;
-          audio.volume = volume / 100;
-          
-          // Play with error handling
-          const playPromise = audio.play();
-          if (playPromise !== undefined) {
-            playPromise.catch(e => {
-              console.error(`HTML5 Audio playback failed for ${type}:`, e);
-              
-              // Method 2: Create a backup oscillator tone as last resort
-              try {
-                if (audioContext.current) {
-                  const oscillator = audioContext.current.createOscillator();
-                  const gainNode = audioContext.current.createGain();
-                  
-                  // Different frequencies for different commands
-                  oscillator.frequency.value = type === 'onYourMarks' ? 200 : 
-                                              type === 'set' ? 400 : 800;
-                  
-                  gainNode.gain.value = volume / 100;
-                  oscillator.connect(gainNode);
-                  gainNode.connect(audioContext.current.destination);
-                  
-                  // Short beep
-                  oscillator.start();
-                  setTimeout(() => oscillator.stop(), 300);
-                }
-              } catch (oscError) {
-                console.error("Even oscillator fallback failed:", oscError);
-              }
-            });
+          // If speech synthesis didn't work, fall back to audio files
+          if (!spokeSucessfully) {
+            playAudioFile(type);
           }
-        } catch (error) {
-          console.error(`Error playing ${type} sound:`, error);
+        } else {
+          // For gun sound, always use the audio file
+          playAudioFile(type);
         }
+      }
+    };
+    
+    // Function to play audio file with fallbacks
+    const playAudioFile = (type: 'onYourMarks' | 'set' | 'gun') => {
+      // Play audio with both methods for best compatibility
+      const audio = audioFiles[type];
+      
+      // Method 1: Standard HTML5 Audio
+      try {
+        // Ensure audio is loaded
+        audio.load();
+        audio.currentTime = 0;
+        
+        // Force unmute and set volume
+        audio.muted = false;
+        audio.volume = volume / 100;
+        
+        // Play with error handling
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(e => {
+            console.error(`HTML5 Audio playback failed for ${type}:`, e);
+            
+            // Method 2: Create a backup oscillator tone as last resort
+            try {
+              if (audioContext.current) {
+                const oscillator = audioContext.current.createOscillator();
+                const gainNode = audioContext.current.createGain();
+                
+                // Different frequencies for different commands
+                oscillator.frequency.value = type === 'onYourMarks' ? 200 : 
+                                          type === 'set' ? 400 : 800;
+                
+                gainNode.gain.value = volume / 100;
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.current.destination);
+                
+                // Short beep
+                oscillator.start();
+                setTimeout(() => oscillator.stop(), 300);
+              }
+            } catch (oscError) {
+              console.error("Even oscillator fallback failed:", oscError);
+            }
+          });
+        }
+      } catch (error) {
+        console.error(`Error playing ${type} sound:`, error);
       }
     };
     
