@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Play, Pause, RotateCcw, Flag, Volume2, VolumeX } from "lucide-react";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { PageHeader } from "@/components/page-header";
+import { StopwatchBackground } from "@/components/stopwatch-background";
 
 export default function StopwatchPage() {
   const [time, setTime] = useState(0);
@@ -147,28 +148,36 @@ export default function StopwatchPage() {
       <Card className="w-full max-w-xl mx-auto">
         <CardContent className="p-6">
           <div className="text-center">
-            {/* Large timer display */}
-            <div className="text-6xl font-mono font-bold my-6 tracking-wider">
-              {formatTime(time)}
+            {/* Classic stopwatch display with timer */}
+            <div className="relative mx-auto my-8 w-64 h-64 flex items-center justify-center">
+              {/* Stopwatch background */}
+              <StopwatchBackground />
+              
+              {/* Timer display */}
+              <div className="relative z-10 bg-white/90 rounded-xl px-6 py-3 border border-gray-200 shadow-inner">
+                <div className="text-6xl font-mono font-bold tracking-wider">
+                  {formatTime(time)}
+                </div>
+              </div>
             </div>
             
-            {/* Large circular start/stop button */}
-            <div className="flex justify-center mb-6">
+            {/* Extra large circular start/stop button with enhanced shadow */}
+            <div className="flex justify-center mb-8">
               <button
                 onClick={handleStartStop}
-                className={`w-32 h-32 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 focus:outline-none focus:ring-4 ${
+                className={`w-48 h-48 rounded-full flex items-center justify-center shadow-[0_10px_25px_-5px_rgba(0,0,0,0.2)] hover:shadow-[0_20px_25px_-5px_rgba(0,0,0,0.3)] transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 ${
                   isRunning 
-                    ? "bg-destructive hover:bg-destructive/90 text-white focus:ring-destructive/20" 
-                    : "bg-primary hover:bg-primary/90 text-white focus:ring-primary/20"
+                    ? "bg-destructive hover:bg-destructive/90 text-white focus:ring-destructive/20 danger-pulse-effect" 
+                    : "bg-primary hover:bg-primary/90 text-white focus:ring-primary/20 pulse-effect"
                 }`}
               >
                 <div className="flex flex-col items-center">
                   {isRunning ? (
-                    <Pause className="h-10 w-10 mb-1" />
+                    <Pause className="h-16 w-16 mb-2" />
                   ) : (
-                    <Play className="h-10 w-10 mb-1" />
+                    <Play className="h-16 w-16 mb-2" />
                   )}
-                  <span className="text-lg font-medium">{isRunning ? "STOP" : "START"}</span>
+                  <span className="text-2xl font-bold">{isRunning ? "STOP" : "START"}</span>
                 </div>
               </button>
             </div>
@@ -218,15 +227,41 @@ export default function StopwatchPage() {
 
             {/* Laps */}
             {laps.length > 0 && (
-              <div className="border rounded-md p-4 mt-2">
-                <h3 className="font-medium mb-2">Laps</h3>
-                <div className="max-h-40 overflow-y-auto">
-                  {laps.map((lapTime, index) => (
-                    <div key={index} className="flex justify-between py-1.5 border-b last:border-0">
-                      <span className="font-medium">Lap {laps.length - index}</span>
-                      <span className="font-mono">{formatTime(lapTime)}</span>
-                    </div>
-                  ))}
+              <div className="border border-gray-200 rounded-xl p-5 mt-4 bg-gradient-to-b from-white to-gray-50 shadow-sm">
+                <h3 className="font-bold text-lg mb-3 text-primary/80 flex items-center">
+                  <Flag className="h-5 w-5 mr-2" />
+                  Lap Times
+                </h3>
+                <div className="max-h-60 overflow-y-auto pr-1 custom-scrollbar">
+                  {laps.map((lapTime, index) => {
+                    // Calculate relative lap times
+                    const prevLapTime = index > 0 ? laps[index - 1] : 0;
+                    const relativeLapTime = lapTime - prevLapTime;
+                    
+                    return (
+                      <div 
+                        key={index} 
+                        className="flex justify-between py-2.5 border-b border-gray-100 last:border-0 hover:bg-gray-50/50 px-2 rounded-md"
+                      >
+                        <div className="flex items-center">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3 font-bold text-primary">
+                            {laps.length - index}
+                          </div>
+                          <div className="text-left">
+                            <div className="font-medium">{formatTime(lapTime)}</div>
+                            <div className="text-xs text-muted-foreground">
+                              +{formatTime(relativeLapTime)}
+                            </div>
+                          </div>
+                        </div>
+                        {index === 0 && (
+                          <div className="bg-primary/10 text-primary text-xs font-medium py-1 px-2 rounded-full self-center">
+                            Latest
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
