@@ -3524,7 +3524,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/journal/:id', updateJournalEntry);
   app.delete('/api/journal/:id', deleteJournalEntry);
   
-  // Ultra-simple journal entry creation endpoint specifically for workout completions
+  // Direct SQL function call for journal entry creation
   app.post('/api/journal/basic-save', async (req: Request, res: Response) => {
     try {
       if (!req.user?.id) {
@@ -3538,27 +3538,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Missing required fields" });
       }
 
-      // Create a content object that will be stored as JSON
-      const contentObject = {
-        moodRating: moodRating || 5,
-        shortDistanceWorkout: shortWorkout || null,
-        mediumDistanceWorkout: mediumWorkout || null,
-        longDistanceWorkout: longWorkout || null,
-        date: new Date().toISOString()
-      };
-      
-      // Convert to JSON string for storage
-      const contentJson = JSON.stringify(contentObject);
-      
-      // Use raw SQL query for direct insertion
-      const result = await db.execute(
-        'INSERT INTO journal_entries (user_id, title, notes, type, content, is_public) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-        [userId, title, notes || 'Completed workout session', 'training', contentJson, true]
+      // Call our stored procedure directly
+      const result = await db.query(
+        'SELECT save_journal_entry($1, $2, $3, $4, $5, $6, $7) as entry',
+        [
+          userId,
+          title,
+          notes || 'Completed workout session',
+          moodRating || 5,
+          shortWorkout || '',
+          mediumWorkout || '',
+          longWorkout || ''
+        ]
       );
       
-      console.log('Successfully saved journal entry:', result[0]);
+      console.log('Successfully saved journal entry using function:', result);
       
-      return res.status(201).json(result[0]);
+      return res.status(201).json(result[0]?.entry || { message: "Entry saved" });
     } catch (error) {
       console.error("Error creating journal entry:", error);
       return res.status(500).json({ message: "Failed to create journal entry", error: String(error) });
