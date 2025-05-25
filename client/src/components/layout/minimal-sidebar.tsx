@@ -121,22 +121,38 @@ export function MobileSidebarButton({ onClick, isOpen }: { onClick: () => void, 
   
   if (!user) return null;
   
+  // Create a wrapper function for the click event
+  const handleButtonClick = (e: React.MouseEvent) => {
+    // Prevent default action
+    e.preventDefault();
+    // Stop event bubbling
+    e.stopPropagation();
+    // Call the onClick function passed as prop
+    onClick();
+    // Log to verify the click is registered
+    console.log("Menu button clicked", { isOpen });
+  };
+  
   return (
     <div className="fixed top-0 left-0 right-0 z-[60]">
       <div style={{ backgroundColor: 'hsl(220 40% 15%)' }} className="flex items-center justify-between p-1 shadow-md">
         <div className="flex items-center">
           <button 
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onClick();
-            }} 
-            className="text-foreground p-2"
+            onClick={handleButtonClick}
+            className="text-foreground p-2 cursor-pointer"
+            aria-label={isOpen ? 'Close menu' : 'Open menu'}
+            type="button"
           >
             <span className="sr-only">{isOpen ? 'Close' : 'Open'} menu</span>
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+            {isOpen ? (
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
           </button>
         </div>
         

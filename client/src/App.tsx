@@ -86,6 +86,7 @@ function MainApp() {
   }, [loginMutation.isSuccess]);
   
   const toggleMenu = () => {
+    console.log("Menu toggle clicked - current state:", isMenuOpen);
     const newMenuState = !isMenuOpen;
     setIsMenuOpen(newMenuState);
     
@@ -95,6 +96,11 @@ function MainApp() {
     } else {
       document.body.style.overflow = '';
     }
+
+    // Prevent any other event handling conflicts
+    setTimeout(() => {
+      console.log("Menu state updated to:", newMenuState);
+    }, 0);
   };
   
   // Cleanup effect to reset body overflow when component unmounts
