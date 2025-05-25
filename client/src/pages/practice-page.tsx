@@ -1323,6 +1323,25 @@ export default function PracticePage() {
           
           <div className="bg-muted/30 p-4 rounded-md mb-4">
             <h3 className="font-medium mb-2">{selectedProgram?.program?.title || "Training Session"}</h3>
+            
+            {/* Display the mood rating */}
+            <div className="flex items-center gap-2 mb-3">
+              <p className="text-sm font-medium">How you felt today:</p>
+              <div className="flex items-center">
+                <div 
+                  className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-white"
+                  style={{ 
+                    background: moodValue <= 3 ? '#ef4444' : 
+                              moodValue <= 6 ? '#f59e0b' : 
+                              '#22c55e'
+                  }}
+                >
+                  {moodValue}
+                </div>
+                <span className="text-xs ml-1">/10</span>
+              </div>
+            </div>
+            
             <p className="text-sm font-medium mb-1">Journal Notes:</p>
             <p className="text-sm text-muted-foreground">
               {diaryNotes || "No notes added for this session."}
@@ -1392,7 +1411,10 @@ export default function PracticePage() {
           title: selectedProgram?.program?.title || activeSessionData?.title || "Training Session",
           description: diaryNotes,
           category: "completed",
-          content: workoutContent || "",
+          content: {
+            ...workoutContent,
+            moodRating: moodValue // Add the mood rating to the workout content
+          },
           isPublic: isEntryPublic, // Use the user's privacy preference from the toggle
           completedAt: new Date().toISOString()
         })
