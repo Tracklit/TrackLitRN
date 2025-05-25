@@ -229,43 +229,30 @@ export function Component() {
               No journal entries found. Complete a workout to add entries to your journal.
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-6 max-w-3xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {sortedEntries.map((entry) => (
-                <Card 
-                  key={entry.id} 
-                  className="overflow-hidden border-amber-500/30 shadow-md hover:shadow-lg transition-all"
-                  style={{
-                    boxShadow: "0 4px 12px rgba(234, 179, 8, 0.15)",
-                    borderWidth: "1px",
-                    borderStyle: "solid"
-                  }}
-                >
-                  <CardHeader className="pb-2 border-b border-amber-500/20">
+                <Card key={entry.id} className="overflow-hidden">
+                  <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
                       <div>
-                        <CardTitle className="text-xl">{entry.title}</CardTitle>
-                        <CardDescription className="flex items-center gap-1 mt-1">
+                        <CardTitle>{entry.title}</CardTitle>
+                        <CardDescription className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
                           {formatDate(entry.createdAt)}
                         </CardDescription>
                       </div>
-                      <Badge 
-                        variant="outline" 
-                        className="bg-amber-50 text-amber-800 border-amber-200"
-                      >
-                        {entry.type}
-                      </Badge>
+                      <Badge variant="outline">{entry.type}</Badge>
                     </div>
                   </CardHeader>
                   
-                  <CardContent className="pt-4">
+                  <CardContent className="pt-2">
                     {/* Display mood rating if it exists */}
                     {entry.content?.moodRating !== undefined && (
-                      <div className="flex items-center gap-3 mb-4 bg-amber-50/40 p-3 rounded-md border border-amber-200/50">
-                        <span className="text-sm font-medium">Today's Mood:</span>
+                      <div className="flex items-center gap-2 mb-3 bg-muted/20 p-2 rounded-md">
+                        <span className="text-sm font-medium">Mood:</span>
                         <div className="flex items-center">
                           <div 
-                            className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-sm"
+                            className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
                             style={{ 
                               background: entry.content.moodRating <= 3 ? '#ef4444' : 
                                         entry.content.moodRating <= 5 ? '#f59e0b' : 
@@ -276,52 +263,45 @@ export function Component() {
                           </div>
                           <span className="text-xs ml-1">/10</span>
                         </div>
-                        <Activity className="h-4 w-4 text-amber-600 ml-auto" />
+                        <Activity className="h-4 w-4 text-muted-foreground ml-auto" />
                       </div>
                     )}
                     
                     {/* Notes content */}
-                    <div className="mb-4">
-                      <h4 className="text-sm font-semibold mb-2 text-amber-800">Notes:</h4>
-                      <p className="text-sm whitespace-pre-wrap bg-slate-50 p-3 rounded-md border border-slate-100">
-                        {entry.notes || "No notes for this entry."}
-                      </p>
-                    </div>
+                    <p className="text-sm whitespace-pre-wrap">{entry.notes || "No notes for this entry."}</p>
                     
                     {/* Workout details if available */}
                     {entry.content?.shortDistanceWorkout && (
-                      <div className="mt-4 pt-3 border-t border-amber-200/30">
-                        <h4 className="text-sm font-semibold mb-2 text-amber-800">Workout Details:</h4>
-                        <div className="bg-slate-50 p-3 rounded-md border border-slate-100">
-                          <ul className="text-sm space-y-2">
-                            {entry.content.shortDistanceWorkout && (
-                              <li className="flex items-start gap-2">
-                                <span className="font-medium text-amber-800">Short Distance:</span> 
-                                <span>{entry.content.shortDistanceWorkout}</span>
-                              </li>
-                            )}
-                            {entry.content.mediumDistanceWorkout && (
-                              <li className="flex items-start gap-2">
-                                <span className="font-medium text-amber-800">Medium Distance:</span> 
-                                <span>{entry.content.mediumDistanceWorkout}</span>
-                              </li>
-                            )}
-                            {entry.content.longDistanceWorkout && (
-                              <li className="flex items-start gap-2">
-                                <span className="font-medium text-amber-800">Long Distance:</span> 
-                                <span>{entry.content.longDistanceWorkout}</span>
-                              </li>
-                            )}
-                          </ul>
-                        </div>
+                      <div className="mt-2 pt-2 border-t">
+                        <p className="text-xs font-medium text-muted-foreground">Workout Details:</p>
+                        <ul className="text-xs mt-1 space-y-1">
+                          {entry.content.shortDistanceWorkout && (
+                            <li className="flex items-start gap-1">
+                              <span className="font-medium">Short:</span> 
+                              <span>{entry.content.shortDistanceWorkout}</span>
+                            </li>
+                          )}
+                          {entry.content.mediumDistanceWorkout && (
+                            <li className="flex items-start gap-1">
+                              <span className="font-medium">Medium:</span> 
+                              <span>{entry.content.mediumDistanceWorkout}</span>
+                            </li>
+                          )}
+                          {entry.content.longDistanceWorkout && (
+                            <li className="flex items-start gap-1">
+                              <span className="font-medium">Long:</span> 
+                              <span>{entry.content.longDistanceWorkout}</span>
+                            </li>
+                          )}
+                        </ul>
                       </div>
                     )}
                   </CardContent>
                   
-                  <CardFooter className="flex justify-end pt-0 pb-3 bg-amber-50/30">
+                  <CardFooter className="flex justify-end pt-0 pb-3">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-amber-700 hover:text-amber-900 hover:bg-amber-100">
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
