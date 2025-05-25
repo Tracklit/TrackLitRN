@@ -109,18 +109,76 @@ export async function updateJournalEntry(req: Request, res: Response) {
       return res.status(404).json({ message: "Journal entry not found or you don't have permission to edit it" });
     }
 
-    const updateData = {
-      ...req.body,
-      updatedAt: new Date(),
-    };
-
-    const [updatedEntry] = await db
-      .update(journalEntries)
-      .set(updateData)
-      .where(eq(journalEntries.id, entryId))
-      .returning();
-
-    return res.status(200).json(updatedEntry);
+    // Clean and prepare update data
+    let updateData = { ...req.body };
+    
+    // Remove problematic timestamp fields that will be handled by the database
+    delete updateData.createdAt;
+    
+    // Explicitly set updatedAt to a new Date
+    updateData.updatedAt = new Date();
+    
+    // Handle the content field specially - ensure it's properly stringified if it's an object
+    if (updateData.content && typeof updateData.content === 'object') {
+      // If content has a date field, ensure it's a string
+      if (updateData.content.date) {
+        try {
+          // Attempt to convert any date-like object to ISO string
+          if (typeof updateData.content.date === 'object') {
+            if (updateData.content.date instanceof Date) {
+              updateData.content.date = updateData.content.date.toISOString();
+            } else {
+              updateData.content.date = new Date().toISOString();
+            }
+          }
+          // If it's already a string, leave it alone
+        } catch (err) {
+          console.error("Error processing date in content:", err);
+          updateData.content.date = new Date().toISOString();
+        }
+      }
+      
+      // Convert the entire content object to a string for storage
+      updateData.content = JSON.stringify(updateData.content);
+    }
+    
+    console.log("Updating journal entry with data:", updateData);
+    
+    try {
+      const [updatedEntry] = await db
+        .update(journalEntries)
+        .set(updateData)
+        .where(eq(journalEntries.id, entryId))
+        .returning();
+        
+      return res.status(200).json(updatedEntry);
+    } catch (dbError) {
+      console.error("Error updating journal entry:", dbError);
+      
+      // Fallback to raw SQL as a last resort for critical fields
+      try {
+        const { title, notes, type, isPublic, content } = updateData;
+        
+        // Only update the most critical fields with proper escaping
+        const contentStr = typeof content === 'string' ? content : JSON.stringify(content);
+        const result = await db.execute(
+          `UPDATE journal_entries 
+           SET title = '${title?.replace(/'/g, "''")}', 
+               notes = '${notes?.replace(/'/g, "''")}', 
+               type = '${type?.replace(/'/g, "''")}',
+               is_public = ${isPublic === true ? 'true' : 'false'},
+               content = '${contentStr?.replace(/'/g, "''")}',
+               updated_at = NOW()
+           WHERE id = ${entryId} AND user_id = ${req.user!.id}
+           RETURNING *`
+        );
+        
+        return res.status(200).json(result[0]);
+      } catch (rawError) {
+        console.error("Raw SQL error updating journal entry:", rawError);
+        return res.status(500).json({ message: "Failed to update journal entry" });
+      }
+    }
   } catch (error) {
     console.error("Error updating journal entry:", error);
     return res.status(500).json({ message: "Failed to update journal entry" });
