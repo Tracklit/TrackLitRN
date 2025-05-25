@@ -81,145 +81,53 @@ export default function StartGunPage() {
   
   // Initialize Audio Context and load sounds
   useEffect(() => {
-    // Create audio context
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    audioContext.current = ctx;
-    
-    // Function to load and decode audio files
-    const loadSound = async (url: string, key: keyof AudioBuffers) => {
+    // Initialize audio API early on page load to minimize autoplay restrictions
+    if (typeof window !== 'undefined') {
       try {
-        const response = await fetch(url);
-        const arrayBuffer = await response.arrayBuffer();
-        const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
-        audioBuffers.current[key] = audioBuffer;
-      } catch (error) {
-        console.error(`Error loading ${key} sound:`, error);
-      }
-    };
-    
-    // Create improved synthetic sounds for better quality
-    const generateVoiceSound = (text: string, key: keyof AudioBuffers) => {
-      try {
-        // Improved voice synthesis
-        const duration = key === 'onYourMarks' ? 1.2 : 0.6; // Longer for "on your marks"
-        const buffer = ctx.createBuffer(1, ctx.sampleRate * duration, ctx.sampleRate);
-        const channelData = buffer.getChannelData(0);
+        // Set up audio context for potential use - needed for oscillator fallback
+        audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
         
-        // Base frequency - deeper for "on your marks", higher for "set"
-        const baseFreq = key === 'onYourMarks' ? 180 : 220;
-        
-        // Fill with a richer synthesized "voice" sound
-        for (let i = 0; i < buffer.length; i++) {
-          const t = i / ctx.sampleRate;
+        // Create and preload audio elements for better playback
+        const preloadAudio = (src: string) => {
+          const audio = new Audio(src);
+          audio.preload = 'auto';
           
-          // Create a more complex envelope for natural speech
-          let envelope = 1;
-          if (i < 0.05 * ctx.sampleRate) {
-            envelope = i / (0.05 * ctx.sampleRate); // Attack
-          } else if (i > buffer.length - 0.1 * ctx.sampleRate) {
-            envelope = (buffer.length - i) / (0.1 * ctx.sampleRate); // Release
+          // Add event listeners for better debugging
+          audio.addEventListener('canplaythrough', () => {
+            console.log(`Audio loaded successfully: ${src}`);
+          });
+          
+          audio.addEventListener('error', (e) => {
+            console.error(`Audio loading error for ${src}:`, e);
+          });
+          
+          // Force load
+          audio.load();
+          return audio;
+        };
+        
+        // Preload all audio files with absolute URLs
+        const baseUrl = window.location.origin;
+        preloadAudio(`${baseUrl}/sounds/on-your-marks.mp3`);
+        preloadAudio(`${baseUrl}/sounds/set.mp3`);
+        preloadAudio(`${baseUrl}/sounds/gun-shot.mp3`);
+        
+        // Force a user interaction with audio context to unlock audio
+        document.addEventListener('click', () => {
+          if (audioContext.current && audioContext.current.state === 'suspended') {
+            audioContext.current.resume().then(() => {
+              console.log("AudioContext resumed on user interaction");
+            }).catch(e => {
+              console.error("Failed to resume AudioContext:", e);
+            });
           }
-          
-          // For "On your marks" create three distinct syllables
-          if (key === 'onYourMarks') {
-            // "On" (0-0.3)
-            if (t < 0.3) {
-              const syllableEnv = t < 0.15 ? t / 0.15 : (0.3 - t) / 0.15;
-              const freq = baseFreq * 0.9;
-              channelData[i] = Math.sin(2 * Math.PI * freq * t) * syllableEnv * envelope * 0.8;
-            } 
-            // "Your" (0.3-0.6)
-            else if (t < 0.7) {
-              const syllableEnv = (t - 0.3) < 0.2 ? (t - 0.3) / 0.2 : (0.7 - t) / 0.2;
-              const freq = baseFreq * 1.1;
-              channelData[i] = Math.sin(2 * Math.PI * freq * t) * syllableEnv * envelope * 0.8;
-            }
-            // "Marks" (0.6-1.0)
-            else {
-              const syllableEnv = (t - 0.7) < 0.15 ? (t - 0.7) / 0.15 : (1.2 - t) / 0.35;
-              const freq = baseFreq * 0.95;
-              channelData[i] = Math.sin(2 * Math.PI * freq * t) * syllableEnv * envelope * 0.8;
-            }
-          } 
-          // For "Set" - one sharp syllable
-          else {
-            const freq = baseFreq + (Math.sin(t * 25) * 10); // Add some variation
-            channelData[i] = Math.sin(2 * Math.PI * freq * t) * envelope * 0.8;
-          }
-        }
+        }, { once: true });
         
-        audioBuffers.current[key] = buffer;
-        console.log(`Generated improved ${key} sound`);
+        console.log("Audio system initialized");
       } catch (error) {
-        console.error(`Error generating ${key} sound:`, error);
+        console.error("Error setting up audio:", error);
       }
-    };
-    
-    const generateGunSound = () => {
-      try {
-        // Create a more realistic gun sound with initial crack and decay
-        const duration = 0.5;
-        const buffer = ctx.createBuffer(1, ctx.sampleRate * duration, ctx.sampleRate);
-        const channelData = buffer.getChannelData(0);
-        
-        // Fill with a more realistic gun sound
-        for (let i = 0; i < buffer.length; i++) {
-          const t = i / ctx.sampleRate;
-          
-          // Initial crack (fast attack, very loud)
-          if (t < 0.02) {
-            // Sharp attack for the initial bang
-            const crackEnvelope = t < 0.005 ? t / 0.005 : (0.02 - t) / 0.015;
-            channelData[i] = (Math.random() * 2 - 1) * crackEnvelope * 0.95;
-          } 
-          // Echo and decay (longer decay phase)
-          else {
-            const decayEnvelope = Math.pow((duration - t) / duration, 1.5);
-            // Mix noise with some tonal components for echo
-            const noise = Math.random() * 2 - 1;
-            const tone = Math.sin(2 * Math.PI * 120 * t) * 0.2; // Low tone component
-            channelData[i] = (noise * 0.7 + tone * 0.3) * decayEnvelope * 0.7;
-          }
-        }
-        
-        audioBuffers.current.gun = buffer;
-        console.log("Generated improved gun sound");
-      } catch (error) {
-        console.error("Error generating gun sound:", error);
-      }
-    };
-    
-    // Try to load audio files or create synthetic sounds as fallback
-    const initSounds = async () => {
-      try {
-        // Try to load pre-recorded voice and gun sounds
-        try {
-          // Try to load the sound files from the proper location
-          // Use the correct path to ensure the files are found
-          console.log("Attempting to load audio files from root");
-          await loadSound("on-your-marks.mp3", "onYourMarks");
-          await loadSound("set.mp3", "set");
-          await loadSound("gun-shot.mp3", "gun");
-          console.log("Loaded audio files successfully");
-        } catch (loadError) {
-          console.error("Could not load audio files:", loadError);
-          
-          // Fallback to synthetic sounds if files aren't available
-          generateVoiceSound("On your marks", "onYourMarks");
-          generateVoiceSound("Set", "set");
-          generateGunSound();
-        }
-      } catch (error) {
-        console.error("Error initializing sounds:", error);
-        toast({
-          title: "Sound initialization failed",
-          description: "Please try refreshing the page",
-          variant: "destructive"
-        });
-      }
-    };
-    
-    initSounds();
+    }
     
     // Check for camera and flash capabilities
     const checkDeviceCapabilities = async () => {
@@ -486,11 +394,12 @@ export default function StartGunPage() {
     setIsPlaying(true);
     setStatus('on-your-marks');
     
-    // Create audio elements with direct paths to sound files
+    // Create audio elements with direct paths to sound files - use absolute URLs
+    const baseUrl = window.location.origin;
     const audioFiles = {
-      onYourMarks: new Audio('/sounds/on-your-marks.mp3'),
-      set: new Audio('/sounds/set.mp3'),
-      gun: new Audio('/sounds/gun-shot.mp3')
+      onYourMarks: new Audio(`${baseUrl}/sounds/on-your-marks.mp3`),
+      set: new Audio(`${baseUrl}/sounds/set.mp3`),
+      gun: new Audio(`${baseUrl}/sounds/gun-shot.mp3`)
     };
     
     // Configure all audio elements
@@ -511,16 +420,62 @@ export default function StartGunPage() {
         duration: 1500
       });
       
-      // Try to play audio if not muted
+      // Try to play audio if not muted - with user interaction handling
       if (!isMuted) {
-        // Play the sound with user interaction already established
+        // Use audio context for more reliable playback across browsers
+        if (!audioContext.current || audioContext.current.state === 'suspended') {
+          try {
+            // Create or resume audio context with user interaction
+            if (!audioContext.current) {
+              audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+            } else {
+              audioContext.current.resume();
+            }
+          } catch (err) {
+            console.error("Failed to initialize audio context:", err);
+          }
+        }
+        
+        // Play audio with both methods for best compatibility
         const audio = audioFiles[type];
         
+        // Method 1: Standard HTML5 Audio
         try {
+          // Ensure audio is loaded
+          audio.load();
+          audio.currentTime = 0;
+          
+          // Force unmute and set volume
+          audio.muted = false;
+          audio.volume = volume / 100;
+          
+          // Play with error handling
           const playPromise = audio.play();
           if (playPromise !== undefined) {
             playPromise.catch(e => {
-              console.error(`Audio playback failed for ${type}:`, e);
+              console.error(`HTML5 Audio playback failed for ${type}:`, e);
+              
+              // Method 2: Create a backup oscillator tone as last resort
+              try {
+                if (audioContext.current) {
+                  const oscillator = audioContext.current.createOscillator();
+                  const gainNode = audioContext.current.createGain();
+                  
+                  // Different frequencies for different commands
+                  oscillator.frequency.value = type === 'onYourMarks' ? 200 : 
+                                              type === 'set' ? 400 : 800;
+                  
+                  gainNode.gain.value = volume / 100;
+                  oscillator.connect(gainNode);
+                  gainNode.connect(audioContext.current.destination);
+                  
+                  // Short beep
+                  oscillator.start();
+                  setTimeout(() => oscillator.stop(), 300);
+                }
+              } catch (oscError) {
+                console.error("Even oscillator fallback failed:", oscError);
+              }
             });
           }
         } catch (error) {
