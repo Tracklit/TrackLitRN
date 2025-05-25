@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { ProtectedRoute } from "@/lib/protected-route";
+import OpenAI from "openai";
 import { useAuth } from "@/hooks/use-auth";
 import { useAssignedPrograms } from "@/hooks/use-assigned-programs";
 import { useProgramSessions } from "@/hooks/use-program-sessions";
@@ -17,6 +18,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { Mic, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Dialog,
@@ -48,7 +50,6 @@ import {
   CheckCircle,
   Save,
   ClipboardList,
-  Loader2,
   CalendarRange
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -287,6 +288,131 @@ export default function PracticePage() {
   
   // Check if user is premium
   const isPremiumUser = user?.isPremium || false;
+  
+  // Initialize OpenAI client
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+    dangerouslyAllowBrowser: true, // For client-side usage
+  });
+  
+  // Function to handle voice recording
+  const toggleRecording = async () => {
+    if (isRecording) {
+      // Stop recording
+      if (mediaRecorderRef.current) {
+        mediaRecorderRef.current.stop();
+      }
+      setIsRecording(false);
+    } else {
+      try {
+        // Start recording
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
+        audioChunksRef.current = [];
+        
+        mediaRecorder.onstart = () => {
+          audioChunksRef.current = [];
+        };
+        
+        mediaRecorder.ondataavailable = (event) => {
+          audioChunksRef.current.push(event.data);
+        };
+        
+        mediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          setAudioBlob(audioBlob);
+          
+          // Transcribe the recording
+          transcribeAudio(audioBlob);
+          
+          // Stop all audio tracks
+          stream.getTracks().forEach(track => track.stop());
+        };
+        
+        mediaRecorder.start();
+        setIsRecording(true);
+        
+        toast({
+          title: "Recording started",
+          description: "Speak clearly into your microphone. Click the button again to stop recording.",
+          duration: 3000
+        });
+      } catch (error) {
+        console.error("Error accessing microphone:", error);
+        toast({
+          title: "Microphone error",
+          description: "Could not access your microphone. Please check your permissions.",
+          variant: "destructive",
+          duration: 3000
+        });
+      }
+    }
+  };
+  
+  // Function to transcribe audio using OpenAI
+  const transcribeAudio = async (blob: Blob) => {
+    if (!isPremiumUser) {
+      toast({
+        title: "Premium feature",
+        description: "Voice transcription is only available for premium users.",
+        variant: "destructive",
+        duration: 3000
+      });
+      return;
+    }
+    
+    try {
+      setIsTranscribing(true);
+      
+      // Convert blob to File
+      const file = new File([blob], "recording.webm", { type: "audio/webm" });
+      
+      // Create form data
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("model", "whisper-1");
+      
+      // Call OpenAI API
+      const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
+        },
+        body: formData
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Append transcription to diary notes
+      setDiaryNotes(prev => {
+        if (prev && prev.trim() !== "") {
+          return `${prev}\n\n${data.text}`;
+        }
+        return data.text;
+      });
+      
+      toast({
+        title: "Transcription complete",
+        description: "Your voice recording has been transcribed and added to your journal.",
+        duration: 3000
+      });
+    } catch (error) {
+      console.error("Transcription error:", error);
+      toast({
+        title: "Transcription failed",
+        description: "There was an error transcribing your audio. Please try again.",
+        variant: "destructive",
+        duration: 3000
+      });
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
   const [isSaving, setIsSaving] = useState<boolean>(false);
   
   // State for fade animation
@@ -1006,6 +1132,7 @@ export default function PracticePage() {
           
           <div className="bg-muted/30 p-4 rounded-md mb-4">
             <h3 className="font-medium mb-2">{selectedProgram?.program?.title || "Training Session"}</h3>
+            <p className="text-sm font-medium mb-1">Journal Notes:</p>
             <p className="text-sm text-muted-foreground">
               {diaryNotes || "No notes added for this session."}
             </p>
