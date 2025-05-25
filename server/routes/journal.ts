@@ -11,34 +11,48 @@ export async function getUserJournalEntries(req: Request, res: Response) {
       return res.status(401).json({ message: "You must be logged in to access journal entries" });
     }
 
-    // Use direct SQL query for better control over JSON parsing
-    const entries = await db.execute(
-      `SELECT 
-        id, user_id as "userId", title, notes, type, content, 
-        is_public as "isPublic", created_at as "createdAt", updated_at as "updatedAt"
-      FROM journal_entries 
-      WHERE user_id = $1 
-      ORDER BY created_at DESC`,
-      [req.user.id]
-    );
-
-    console.log("Retrieved journal entries:", entries.length);
-    
-    // Format response and ensure content is properly parsed
-    const formattedEntries = entries.map(entry => {
-      // Parse content if it's a string
-      if (entry.content && typeof entry.content === 'string') {
-        try {
-          entry.content = JSON.parse(entry.content);
-        } catch (e) {
-          console.error(`Failed to parse content for entry ${entry.id}:`, e);
-          // Keep content as is if parsing fails
+    try {
+      // Use a simpler approach with direct SQL query
+      const result = await db.query.journalEntries.findMany({
+        where: eq(journalEntries.userId, req.user.id),
+        orderBy: (entries, { desc }) => [desc(entries.createdAt)],
+      });
+      
+      console.log("Retrieved journal entries:", result.length);
+      
+      // Format response and ensure content is properly parsed
+      const formattedEntries = result.map(entry => {
+        // Parse content if it's a string
+        if (entry.content && typeof entry.content === 'string') {
+          try {
+            entry.content = JSON.parse(entry.content);
+          } catch (e) {
+            console.error(`Failed to parse content for entry ${entry.id}:`, e);
+            // Keep content as is if parsing fails
+          }
         }
+        return entry;
+      });
+      
+      return res.status(200).json(formattedEntries);
+    } catch (dbError) {
+      console.error("Database error fetching journal entries:", dbError);
+      
+      // Fallback to raw SQL as a last resort
+      try {
+        const rawEntries = await db.execute(
+          `SELECT * FROM journal_entries WHERE user_id = ${req.user.id} ORDER BY created_at DESC`
+        );
+        
+        console.log("Retrieved journal entries using raw SQL:", rawEntries.length || 'unknown');
+        
+        return res.status(200).json(rawEntries);
+      } catch (rawError) {
+        console.error("Raw SQL error fetching journal entries:", rawError);
+        return res.status(500).json({ message: "Failed to fetch journal entries after multiple attempts" });
       }
-      return entry;
-    });
+    }
 
-    return res.status(200).json(formattedEntries);
   } catch (error) {
     console.error("Error fetching journal entries:", error);
     return res.status(500).json({ message: "Failed to fetch journal entries" });
