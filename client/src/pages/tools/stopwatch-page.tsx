@@ -13,25 +13,44 @@ export default function StopwatchPage() {
   const [isMuted, setIsMuted] = useState(false);
   const [showTip, setShowTip] = useState(true);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const startSoundRef = useRef<HTMLAudioElement | null>(null);
-  const stopSoundRef = useRef<HTMLAudioElement | null>(null);
+  const startSoundRef = useRef<any>(null);
+  const stopSoundRef = useRef<any>(null);
   
-  // Initialize audio on component mount
+  // Create audio context and sounds using the Web Audio API
   useEffect(() => {
-    startSoundRef.current = new Audio('/start-blip.mp3');
-    stopSoundRef.current = new Audio('/stop-blip.mp3');
-    
-    // Create dummy audio files if they don't exist
-    const startBlip = startSoundRef.current;
-    const stopBlip = stopSoundRef.current;
-    
-    startBlip.volume = 0.7;
-    stopBlip.volume = 0.7;
-    
-    return () => {
-      if (startBlip) startBlip.pause();
-      if (stopBlip) stopBlip.pause();
+    // Function to create a beep sound
+    const createBeep = (frequency: number, duration: number) => {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.type = 'sine';
+      oscillator.frequency.value = frequency;
+      gainNode.gain.value = 0.7;
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      // Store the audio components for later use
+      return {
+        play: () => {
+          oscillator.start();
+          // Stop the oscillator after the specified duration
+          setTimeout(() => {
+            oscillator.stop();
+            // Clean up
+            oscillator.disconnect();
+            gainNode.disconnect();
+          }, duration);
+        }
+      };
     };
+    
+    // Create start and stop sounds with different frequencies
+    startSoundRef.current = createBeep(1200, 100); // Higher pitch for start
+    stopSoundRef.current = createBeep(800, 100);   // Lower pitch for stop
+    
+    // No cleanup needed for this approach as the oscillators clean themselves up
   }, []);
 
   // Setup interval for timer
@@ -71,12 +90,14 @@ export default function StopwatchPage() {
     
     // Play appropriate sound if not muted
     if (!isMuted) {
-      if (newRunningState && startSoundRef.current) {
-        startSoundRef.current.currentTime = 0;
-        startSoundRef.current.play().catch(e => console.error("Error playing start sound:", e));
-      } else if (!newRunningState && stopSoundRef.current) {
-        stopSoundRef.current.currentTime = 0;
-        stopSoundRef.current.play().catch(e => console.error("Error playing stop sound:", e));
+      try {
+        if (newRunningState && startSoundRef.current) {
+          startSoundRef.current.play();
+        } else if (!newRunningState && stopSoundRef.current) {
+          stopSoundRef.current.play();
+        }
+      } catch (e) {
+        console.error("Error playing sound:", e);
       }
     }
     
