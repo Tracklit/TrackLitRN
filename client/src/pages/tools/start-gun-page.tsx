@@ -511,7 +511,7 @@ export default function StartGunPage() {
     // Show feedback
     toast({
       title: "Cancelled",
-      description: "Race start sequence cancelled",
+      description: "Start sequence cancelled",
       duration: 2000
     });
   };
@@ -524,7 +524,7 @@ export default function StartGunPage() {
   // Content for the help dialog
   const helpContent = (
     <div className="space-y-4 text-sm">
-      <h3 className="font-bold text-lg">How to use the Race Start Gun</h3>
+      <h3 className="font-bold text-lg">How to use the Start Gun</h3>
       
       <div>
         <h4 className="font-semibold">Timing Settings</h4>
@@ -591,14 +591,14 @@ export default function StartGunPage() {
       <Breadcrumb items={[
         { label: 'Home', href: '/' },
         { label: 'Training Tools', href: '/training-tools' },
-        { label: 'Race Start Gun', href: '/tools/start-gun' }
+        { label: 'Start Gun', href: '/tools/start-gun' }
       ]} />
       
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
             <Zap className="h-6 w-6" />
-            Race Start Gun
+            Start Gun
           </h1>
           <p className="text-muted-foreground mt-1">
             Practice your starts with a realistic race start sequence.
@@ -609,20 +609,17 @@ export default function StartGunPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
         {/* Main card */}
         <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+          {/* Simplified card header with just the title */}
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 justify-center">
               <Zap className="h-6 w-6" />
               Start Gun
             </CardTitle>
-            <CardDescription>
-              Train your reaction time with a realistic race start experience
-            </CardDescription>
           </CardHeader>
           
           <CardContent className="flex flex-col items-center justify-center">
-            {/* Status display */}
-            <div className="mb-8 text-center">
-              <h3 className="text-xl font-bold">{getStatusText()}</h3>
+            {/* Status display - removed text, keeping only hidden status info */}
+            <div className="mb-8 text-center hidden">
               {status === 'set' && currentSetToGunDelay > 0 && (
                 <p className="text-sm text-muted-foreground mt-1">
                   (Randomized delay: {currentSetToGunDelay.toFixed(2)}s)
@@ -692,8 +689,8 @@ export default function StartGunPage() {
                 <Slider
                   id="marks-to-set"
                   min={1}
-                  max={5}
-                  step={0.1}
+                  max={20}
+                  step={0.5}
                   value={[marksToSetDelay]}
                   onValueChange={([val]) => setMarksToSetDelay(val)}
                 />
@@ -707,8 +704,8 @@ export default function StartGunPage() {
                 <Slider
                   id="set-to-gun"
                   min={0.5}
-                  max={3}
-                  step={0.1}
+                  max={10}
+                  step={0.5}
                   value={[setToGunDelay]}
                   onValueChange={([val]) => setSetToGunDelay(val)}
                 />
