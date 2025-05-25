@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Audio Test</title>
+</head>
+<body>
+    <h1>Audio Test Page</h1>
+    <button id="playOnYourMarks">Play "On Your Marks"</button>
+    <button id="playSet">Play "Set"</button>
+    <button id="playBang">Play "Bang"</button>
+    
+    <script>
+        document.getElementById('playOnYourMarks').addEventListener('click', function() {
+            const audio = new Audio('/on-your-marks.mp3');
+            audio.play().then(() => {
+                console.log('On Your Marks played successfully');
+            }).catch(error => {
+                console.error('Error playing On Your Marks:', error);
+            });
+        });
+        
+        document.getElementById('playSet').addEventListener('click', function() {
+            const audio = new Audio('/set.mp3');
+            audio.play().then(() => {
+                console.log('Set played successfully');
+            }).catch(error => {
+                console.error('Error playing Set:', error);
+            });
+        });
+        
+        document.getElementById('playBang').addEventListener('click', function() {
+            const audio = new Audio('/bang.mp3');
+            audio.play().then(() => {
+                console.log('Bang played successfully');
+            }).catch(error => {
+                console.error('Error playing Bang:', error);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -394,14 +394,121 @@ export default function StartGunPage() {
     setIsPlaying(true);
     setStatus('on-your-marks');
     
-    // Create audio elements with direct paths to custom audio files from root
-    // Using the exact audio files provided by the user
-    const baseUrl = window.location.origin;
-    const audioFiles = {
-      onYourMarks: new Audio(`${baseUrl}/On Your Marks.mp3`),
-      set: new Audio(`${baseUrl}/Set.mp3`),
-      gun: new Audio(`${baseUrl}/Bang.mp3`) // Using the provided Bang sound
+    // Direct implementation for maximum compatibility and debugging
+    // Use HTMLAudioElement directly with event listeners
+    const playSounds = () => {
+      const playMarksSound = () => {
+        console.log("Playing On Your Marks sound");
+        const audio = new Audio();
+        audio.src = "/on-your-marks.mp3";
+        audio.volume = volume / 100;
+        
+        // Add proper event listeners for better handling
+        audio.addEventListener('canplaythrough', () => {
+          const playPromise = audio.play();
+          if (playPromise) {
+            playPromise.catch(err => {
+              console.error("Failed to play On Your Marks sound:", err);
+            });
+          }
+        });
+        
+        audio.addEventListener('error', (e) => {
+          console.error("Error loading On Your Marks sound:", e);
+        });
+        
+        // Force load
+        audio.load();
+      };
+      
+      // Play the first command
+      playMarksSound();
+      
+      // Set timer for "Set" command
+      timerRefs.current.setTimer = setTimeout(() => {
+        setStatus('set');
+        console.log("Playing Set sound");
+        
+        const audio = new Audio();
+        audio.src = "/set.mp3";
+        audio.volume = volume / 100;
+        
+        // Add proper event listeners
+        audio.addEventListener('canplaythrough', () => {
+          const playPromise = audio.play();
+          if (playPromise) {
+            playPromise.catch(err => {
+              console.error("Failed to play Set sound:", err);
+            });
+          }
+        });
+        
+        audio.addEventListener('error', (e) => {
+          console.error("Error loading Set sound:", e);
+        });
+        
+        // Force load
+        audio.load();
+        
+        // Calculate final delay
+        let finalDelay = setToGunDelay;
+        if (useRandomizer) {
+          const randomOffset = (Math.random() * 2 - 1) * 1.0;
+          finalDelay = Math.max(0.1, setToGunDelay + randomOffset);
+        }
+        setCurrentSetToGunDelay(finalDelay);
+        
+        // Set timer for gun sound
+        timerRefs.current.gunTimer = setTimeout(() => {
+          setStatus('gun');
+          console.log("Playing Bang sound");
+          
+          const audio = new Audio();
+          audio.src = "/bang.mp3";
+          audio.volume = volume / 100;
+          
+          // Add proper event listeners
+          audio.addEventListener('canplaythrough', () => {
+            const playPromise = audio.play();
+            if (playPromise) {
+              playPromise.catch(err => {
+                console.error("Failed to play Bang sound:", err);
+                // Try oscillator as fallback
+                if (audioContext.current) {
+                  createGunOscillator();
+                }
+              });
+            }
+          });
+          
+          audio.addEventListener('error', (e) => {
+            console.error("Error loading Bang sound:", e);
+            // Try oscillator as fallback
+            if (audioContext.current) {
+              createGunOscillator();
+            }
+          });
+          
+          // Force load
+          audio.load();
+          
+          // Flash and record if enabled
+          triggerFlash();
+          if (useCamera) {
+            startRecording();
+          }
+          
+          // Reset state after a short delay
+          setTimeout(() => {
+            setIsPlaying(false);
+            setStatus('idle');
+          }, 2000);
+        }, finalDelay * 1000);
+      }, marksToSetDelay * 1000);
     };
+    
+    // Start the sequence
+    playSounds();
     
     // Use speech synthesis for more natural voice commands if available
     const speakCommand = (text: string) => {
@@ -481,7 +588,7 @@ export default function StartGunPage() {
           // For gun sound, use a direct approach for maximum compatibility
           try {
             // Create a brand new audio element for each playback - more reliable
-            const gunSound = new Audio(`${window.location.origin}/Bang.mp3`);
+            const gunSound = new Audio(`${window.location.origin}/bang.mp3`);
             gunSound.volume = volume / 100;
             
             // Add event handlers for better debugging
