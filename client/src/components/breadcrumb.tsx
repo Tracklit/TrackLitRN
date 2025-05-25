@@ -17,7 +17,7 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
       {items.map((item, index) => (
         <React.Fragment key={item.href}>
           {index > 0 && (
-            <ChevronRight className="h-4 w-4 text-muted-foreground mx-1 flex-shrink-0" />
+            <ChevronRight className="h-4 w-4 text-muted-foreground mx-1 flex-shrink-0" key={`chevron-${index}`} />
           )}
           {index === items.length - 1 ? (
             <span className="text-muted-foreground" aria-current="page">
