@@ -14,8 +14,7 @@ import {
   Timer, 
   Dices, 
   Play, 
-  StopCircle,
-  Loader2
+  StopCircle
 } from "lucide-react";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { PageHeader } from "@/components/page-header";
@@ -44,8 +43,8 @@ export default function StartGunPage() {
   
   // State for timing settings
   const [marksToSetDelay, setMarksToSetDelay] = useState(2);
-  const [setToGunDelayMin, setSetToGunDelayMin] = useState(1);
-  const [setToGunDelayMax, setSetToGunDelayMax] = useState(3);
+  const [setToGunDelay, setSetToGunDelay] = useState(1.5); 
+  const [useRandomizer, setUseRandomizer] = useState(true);
   const [currentSetToGunDelay, setCurrentSetToGunDelay] = useState(0);
   
   // State for device capabilities
@@ -162,19 +161,29 @@ export default function StartGunPage() {
       }
     };
     
-    // Try to load sounds or generate them
+    // Try to load audio files or create synthetic sounds as fallback
     const initSounds = async () => {
       try {
-        // For a real app, we would load audio files here
-        // For now, we'll generate synthetic sounds
-        generateVoiceSound("On your marks", "onYourMarks");
-        generateVoiceSound("Set", "set");
-        generateGunSound();
+        // Try to load pre-recorded voice and gun sounds
+        try {
+          // Voice commands should be proper voice recordings
+          await loadSound("/sounds/on-your-marks.mp3", "onYourMarks");
+          await loadSound("/sounds/set.mp3", "set");
+          await loadSound("/sounds/gun-shot.mp3", "gun");
+          console.log("Loaded audio files successfully");
+        } catch (loadError) {
+          console.warn("Could not load audio files, creating synthetic sounds instead", loadError);
+          
+          // Fallback to synthetic sounds if files aren't available
+          generateVoiceSound("On your marks", "onYourMarks");
+          generateVoiceSound("Set", "set");
+          generateGunSound();
+        }
       } catch (error) {
         console.error("Error initializing sounds:", error);
         toast({
           title: "Sound initialization failed",
-          description: "Please refresh the page and try again",
+          description: "Please try refreshing the page",
           variant: "destructive"
         });
       }
@@ -421,9 +430,16 @@ export default function StartGunPage() {
       setStatus('set');
       playSound(audioBuffers.current.set);
       
-      // Generate random delay between min and max for the gun
-      const randomDelay = Math.random() * (setToGunDelayMax - setToGunDelayMin) + setToGunDelayMin;
-      setCurrentSetToGunDelay(randomDelay);
+      // Calculate final delay - either exact or randomized
+      let finalDelay = setToGunDelay;
+      
+      if (useRandomizer) {
+        // Add randomization of +/- 1 second
+        const randomOffset = (Math.random() * 2 - 1) * 1.0; // Random value between -1 and +1
+        finalDelay = Math.max(0.1, setToGunDelay + randomOffset); // Ensure minimum 0.1s delay
+      }
+      
+      setCurrentSetToGunDelay(finalDelay);
       
       // Set timer for gun sound
       timerRefs.current.gunTimer = setTimeout(() => {
@@ -441,7 +457,7 @@ export default function StartGunPage() {
           setIsPlaying(false);
           setStatus('idle');
         }, 2000);
-      }, randomDelay * 1000);
+      }, finalDelay * 1000);
     }, marksToSetDelay * 1000);
   };
   
@@ -592,7 +608,9 @@ export default function StartGunPage() {
                   {status === 'on-your-marks' ? (
                     `Waiting ${marksToSetDelay}s for "Set" command...`
                   ) : status === 'set' ? (
-                    `Random delay: ${currentSetToGunDelay.toFixed(1)}s...`
+                    useRandomizer ? 
+                      `Random delay: ~${currentSetToGunDelay.toFixed(1)}s...` :
+                      `Fixed delay: ${setToGunDelay}s...`
                   ) : (
                     useCamera ? 
                       `Recording for ${recordDuration}s...` : 
@@ -604,7 +622,9 @@ export default function StartGunPage() {
           </CardContent>
           <CardFooter>
             <p className="text-sm text-muted-foreground w-full text-center">
-              The gun will fire after a random delay between {setToGunDelayMin}-{setToGunDelayMax} seconds from the "Set" command
+              {useRandomizer ? 
+                `The gun will fire after a random delay around ${setToGunDelay}s (±1s) from the "Set" command` : 
+                `The gun will fire exactly ${setToGunDelay}s after the "Set" command`}
             </p>
           </CardFooter>
         </Card>
@@ -624,14 +644,14 @@ export default function StartGunPage() {
             {/* Marks to Set delay slider */}
             <div className="space-y-2">
               <div className="flex justify-between">
-                <Label>On Your Marks → Set</Label>
+                <Label>Set Timer</Label>
                 <span className="text-sm font-medium">{marksToSetDelay}s</span>
               </div>
               <Slider 
                 value={[marksToSetDelay]} 
                 min={1}
-                max={5}
-                step={0.5}
+                max={20}
+                step={1}
                 onValueChange={(value) => setMarksToSetDelay(value[0])}
                 disabled={isPlaying}
               />
@@ -640,34 +660,51 @@ export default function StartGunPage() {
               </p>
             </div>
             
-            {/* Random Set to Gun delay sliders */}
+            {/* Bangomizer - Set to Gun delay with randomizer */}
             <div className="space-y-2">
               <div className="flex justify-between">
-                <Label>Set → Gun (Random)</Label>
-                <span className="text-sm font-medium">{setToGunDelayMin}s - {setToGunDelayMax}s</span>
+                <Label className="flex items-center">
+                  Bangomizer 
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="ml-1 text-muted-foreground cursor-help text-xs">(?)</span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Time from "Set" to gun sound
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </Label>
+                <div className="flex items-center">
+                  <span className="text-sm font-medium mr-2">{setToGunDelay}s</span>
+                  {useRandomizer && <Dices className="h-4 w-4 text-primary" />}
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Slider 
-                  value={[setToGunDelayMin]} 
-                  min={0.5}
-                  max={setToGunDelayMax - 0.2}
-                  step={0.1}
-                  onValueChange={(value) => setSetToGunDelayMin(value[0])}
-                  disabled={isPlaying}
-                />
-                <Dices className="h-4 w-4 text-muted-foreground" />
-                <Slider 
-                  value={[setToGunDelayMax]} 
-                  min={setToGunDelayMin + 0.2}
-                  max={5}
-                  step={0.1}
-                  onValueChange={(value) => setSetToGunDelayMax(value[0])}
-                  disabled={isPlaying}
-                />
+              <Slider 
+                value={[setToGunDelay]} 
+                min={0.5}
+                max={3}
+                step={0.1}
+                onValueChange={(value) => setSetToGunDelay(value[0])}
+                disabled={isPlaying}
+              />
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">
+                  {useRandomizer 
+                    ? "Randomizes ±1s from set value" 
+                    : "Fixed delay from Set to gun"}
+                </p>
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="randomizer" className="text-xs cursor-pointer">Randomize</Label>
+                  <Switch 
+                    id="randomizer"
+                    checked={useRandomizer}
+                    onCheckedChange={setUseRandomizer}
+                    disabled={isPlaying}
+                  />
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Random delay range between "Set" command and gun sound
-              </p>
             </div>
             
             {/* Volume control */}
