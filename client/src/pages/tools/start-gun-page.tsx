@@ -493,16 +493,16 @@ export default function StartGunPage() {
         const audio = new Audio();
         audio.volume = volume / 100;
         
-        // Set specific tones for each command
+        // Set specific tones for each command - using simple tones that work on most devices
         if (type === 'on-your-marks') {
-          // Lower tone for "On your marks"
-          audio.src = "data:audio/wav;base64,UklGRisAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQcAAAAAAAAAAAAA";
+          // Lower tone for "On your marks" - simple beep that works on all devices
+          audio.src = "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAADmADY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAA5gNwudgAAAAAAAAAAAAAAAAAAAA//sQZAAP8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=";
         } else if (type === 'set') {
-          // Medium tone for "Set"
-          audio.src = "data:audio/wav;base64,UklGRisAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQcAAAAAAAAAAAAA";
+          // Medium tone for "Set" - simple beep that works on all devices
+          audio.src = "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAADmADY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAA5gNwudgAAAAAAAAAAAAAAAAAAAA//sQZAAP8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=";
         } else {
-          // Sharp tone for gun
-          audio.src = "data:audio/wav;base64,UklGRisAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQcAAAAAAAAAAAAA";
+          // Sharp tone for gun - simple beep that works on all devices
+          audio.src = "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAADmADY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAA5gNwudgAAAAAAAAAAAAAAAAAAAA//sQZAAP8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=";
         }
         
         // Play the audio
@@ -510,14 +510,17 @@ export default function StartGunPage() {
         if (playPromise !== undefined) {
           playPromise.catch(e => {
             console.error("Direct audio playback failed:", e);
-            // Still show visual feedback
-            toast({
-              title: type === 'on-your-marks' ? "On your marks" : 
-                    type === 'set' ? "Set" : "Gun!",
-              duration: 1000
-            });
           });
         }
+        
+        // Always show visual feedback regardless of audio success
+        toast({
+          title: type === 'on-your-marks' ? "On your marks" : 
+                type === 'set' ? "Set" : "Gun!",
+          description: type === 'gun' ? "Race started!" : undefined,
+          variant: type === 'gun' ? "destructive" : "default",
+          duration: 1500
+        });
       } catch (e) {
         console.error("Error with direct audio:", e);
         // Fall back to buffer-based audio
