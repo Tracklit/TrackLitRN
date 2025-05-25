@@ -121,38 +121,22 @@ export function MobileSidebarButton({ onClick, isOpen }: { onClick: () => void, 
   
   if (!user) return null;
   
-  // Create a wrapper function for the click event
-  const handleButtonClick = (e: React.MouseEvent) => {
-    // Prevent default action
-    e.preventDefault();
-    // Stop event bubbling
-    e.stopPropagation();
-    // Call the onClick function passed as prop
-    onClick();
-    // Log to verify the click is registered
-    console.log("Menu button clicked", { isOpen });
-  };
-  
   return (
     <div className="fixed top-0 left-0 right-0 z-[60]">
       <div style={{ backgroundColor: 'hsl(220 40% 15%)' }} className="flex items-center justify-between p-1 shadow-md">
         <div className="flex items-center">
           <button 
-            onClick={handleButtonClick}
-            className="text-foreground p-2 cursor-pointer"
-            aria-label={isOpen ? 'Close menu' : 'Open menu'}
-            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onClick();
+            }} 
+            className="text-foreground p-2"
           >
             <span className="sr-only">{isOpen ? 'Close' : 'Open'} menu</span>
-            {isOpen ? (
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            )}
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
           </button>
         </div>
         
@@ -181,41 +165,31 @@ export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
     onClose();
   };
   
-  // Debug output to verify the component is receiving the correct props
-  console.log("MobileSidebar rendered with isOpen:", isOpen);
-  
-  // Use a simpler approach with conditional rendering for maximum compatibility
-  if (!isOpen) {
-    return null; // Don't render anything when closed
-  }
-  
   return (
     <>
       {/* Backdrop */}
       <div 
-        className="md:hidden fixed inset-0 bg-black/50 z-[100]"
-        onClick={onClose}
+        className="md:hidden fixed inset-0 bg-black/20 z-40 transition-opacity duration-300"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onClose();
+        }}
         style={{ 
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0
+          opacity: isOpen ? 1 : 0,
+          pointerEvents: isOpen ? 'auto' : 'none'
         }}
       />
       
       {/* Sidebar */}
       <div 
-        className="md:hidden fixed top-0 left-0 h-full w-[250px] z-[101] shadow-xl bg-background"
+        className="md:hidden fixed top-0 left-0 h-full w-64 z-50 shadow-lg transform transition-transform duration-300 ease-in-out" 
         style={{ 
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          height: '100%',
-          width: '250px',
-          overscrollBehavior: 'contain',
-          backgroundColor: 'hsl(220 40% 15%)'
+          backgroundColor: 'hsl(220 40% 15%)',
+          transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
+          overscrollBehavior: 'contain'
         }}
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-center items-center p-4 border-b border-sidebar-border">
           <h2 className="text-lg font-bold text-foreground">TrackLit</h2>
