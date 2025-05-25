@@ -1441,23 +1441,25 @@ export default function PracticePage() {
         }
       }
 
-      // Create journal entry with clear structure
+      // Create journal entry with minimal structure to ensure compatibility
       const journalData = {
-        userId: user.id,
         title: selectedProgram?.program?.title || activeSessionData?.title || "Today's Training Session",
         notes: diaryNotes || "",
         type: "training",
         content: {
-          moodRating: moodValue, // Add the mood rating to the journal entry
-          workoutDetails: workoutContent
+          moodRating: moodValue,
+          shortDistanceWorkout: activeSessionData?.shortDistanceWorkout || null,
+          mediumDistanceWorkout: activeSessionData?.mediumDistanceWorkout || null,
+          longDistanceWorkout: activeSessionData?.longDistanceWorkout || null,
+          date: new Date().toISOString()
         },
-        isPublic: isEntryPublic // Use the user's privacy preference from the toggle
+        isPublic: isEntryPublic
       };
       
       console.log('Saving journal entry:', journalData);
       
       try {
-        // Create a direct POST request to store journal entry
+        // Create a simple direct POST request to store journal entry
         const response = await fetch('/api/journal', {
           method: 'POST',
           headers: {
@@ -1466,15 +1468,14 @@ export default function PracticePage() {
           body: JSON.stringify(journalData)
         });
         
-        const responseData = await response.json();
-        console.log('Journal entry response:', responseData);
-        
         if (!response.ok) {
+          console.error('Server error response:', response.status);
           throw new Error('Server returned error: ' + response.status);
         }
-        
-        // Manually add the entry to the journal cache to ensure it shows up immediately
-        localStorage.setItem('lastJournalEntryId', responseData.id);
+
+        // Get response data and show it
+        const responseData = await response.json();
+        console.log('Journal entry saved successfully:', responseData);
       } catch (error) {
         console.error('Error saving journal entry:', error);
         // Continue to show success dialog even if there was an error
