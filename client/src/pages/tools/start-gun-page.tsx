@@ -478,9 +478,100 @@ export default function StartGunPage() {
             playAudioFile(type);
           }
         } else {
-          // For gun sound, always use the audio file
-          playAudioFile(type);
+          // For gun sound, use a direct approach for maximum compatibility
+          try {
+            // Create a brand new audio element for each playback - more reliable
+            const gunSound = new Audio(`${window.location.origin}/gun-shot-reverb.mp3`);
+            gunSound.volume = volume / 100;
+            
+            // Add event handlers for better debugging
+            gunSound.addEventListener('canplaythrough', () => {
+              console.log("Gun sound loaded successfully and ready to play");
+              // Play immediately when ready
+              const playPromise = gunSound.play();
+              playPromise.catch(e => {
+                console.error("Gun sound play failed:", e);
+                // Try alternative approach if this fails
+                playAudioFile(type);
+              });
+            });
+            
+            gunSound.addEventListener('error', (e) => {
+              console.error("Gun sound loading error:", e);
+              // Fall back to oscillator sound as last resort
+              if (audioContext.current) {
+                createGunOscillator();
+              }
+            });
+            
+            // Force load
+            gunSound.load();
+          } catch (error) {
+            console.error("Error with direct gun sound:", error);
+            // Fall back to regular audio method
+            playAudioFile(type);
+          }
         }
+      }
+    };
+    
+    // Create a realistic gun sound using oscillators when audio files fail
+    const createGunOscillator = () => {
+      if (!audioContext.current) return;
+      
+      try {
+        console.log("Creating gun oscillator fallback sound");
+        // Create multiple oscillators for a more complex gun sound
+        const mainOscillator = audioContext.current.createOscillator();
+        const subOscillator = audioContext.current.createOscillator();
+        const noiseNode = audioContext.current.createBufferSource();
+        
+        // Create a gain node for volume control
+        const gainNode = audioContext.current.createGain();
+        gainNode.gain.value = volume / 100;
+        
+        // Main oscillator - short burst
+        mainOscillator.type = 'square';
+        mainOscillator.frequency.value = 120;
+        
+        // Sub oscillator - lower tone
+        subOscillator.type = 'sawtooth';
+        subOscillator.frequency.value = 60;
+        
+        // Create white noise for realistic gun sound
+        const noiseBuffer = audioContext.current.createBuffer(
+          1, audioContext.current.sampleRate * 0.1, audioContext.current.sampleRate
+        );
+        const data = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < data.length; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+        noiseNode.buffer = noiseBuffer;
+        
+        // Connect all sources to gain node
+        mainOscillator.connect(gainNode);
+        subOscillator.connect(gainNode);
+        noiseNode.connect(gainNode);
+        
+        // Connect gain to output
+        gainNode.connect(audioContext.current.destination);
+        
+        // Schedule the sound
+        const now = audioContext.current.currentTime;
+        
+        // Start oscillators
+        mainOscillator.start(now);
+        subOscillator.start(now);
+        noiseNode.start(now);
+        
+        // Stop oscillators after short duration
+        mainOscillator.stop(now + 0.1);
+        subOscillator.stop(now + 0.2);
+        noiseNode.stop(now + 0.3);
+        
+        console.log("Gun oscillator sound created successfully");
+      } catch (error) {
+        console.error("Error creating gun oscillator sound:", error);
       }
     };
     
