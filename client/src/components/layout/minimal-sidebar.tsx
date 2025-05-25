@@ -131,7 +131,7 @@ export function MobileSidebarButton({ onClick, isOpen }: { onClick: () => void, 
               e.stopPropagation();
               onClick();
             }} 
-            className="text-foreground p-2"
+            className="text-foreground p-2 block"
           >
             <span className="sr-only">{isOpen ? 'Close' : 'Open'} menu</span>
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -169,7 +169,7 @@ export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
     <>
       {/* Backdrop */}
       <div 
-        className="md:hidden fixed inset-0 bg-black/20 z-40 transition-opacity duration-300"
+        className="fixed inset-0 bg-black/20 z-40 transition-opacity duration-300"
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -183,7 +183,7 @@ export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
       
       {/* Sidebar */}
       <div 
-        className="md:hidden fixed top-0 left-0 h-full w-64 z-50 shadow-lg transform transition-transform duration-300 ease-in-out" 
+        className="fixed top-0 left-0 h-full w-64 z-50 shadow-lg transform transition-transform duration-300 ease-in-out" 
         style={{ 
           backgroundColor: 'hsl(220 40% 15%)',
           transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
