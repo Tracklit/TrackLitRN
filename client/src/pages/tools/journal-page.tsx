@@ -8,6 +8,7 @@ import { Search, Calendar, ChevronDown, ChevronUp, BookOpen, Edit, Trash2, Badge
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Slider } from "@/components/ui/slider";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   DropdownMenu,
