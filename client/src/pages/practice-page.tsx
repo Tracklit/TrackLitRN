@@ -289,6 +289,9 @@ export default function PracticePage() {
   // Check if user is premium
   const isPremiumUser = user?.isPremium || false;
   
+  // State for premium feature modal
+  const [showPremiumModal, setShowPremiumModal] = useState<boolean>(false);
+  
   // Initialize OpenAI client - We're using the server for API calls instead of direct browser access
   // This is handled in the transcribeAudio function to ensure secure API key usage
   
@@ -977,27 +980,26 @@ export default function PracticePage() {
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-sm font-medium">Journal</h4>
                   <div className="flex items-center gap-1">
-                    {isPremiumUser && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="h-7 px-2 text-xs flex items-center gap-1"
-                        onClick={toggleRecording}
-                        disabled={isTranscribing}
-                      >
-                        {isRecording ? (
-                          <>
-                            <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse mr-1"></span>
-                            Stop Recording
-                          </>
-                        ) : (
-                          <>
-                            <Mic className="h-3 w-3" />
-                            Record Voice
-                          </>
-                        )}
-                      </Button>
-                    )}
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-7 px-2 text-xs flex items-center gap-1"
+                      onClick={isPremiumUser ? toggleRecording : () => setShowPremiumModal(true)}
+                      disabled={isTranscribing}
+                    >
+                      {isRecording ? (
+                        <>
+                          <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse mr-1"></span>
+                          Stop Recording
+                        </>
+                      ) : (
+                        <>
+                          <Mic className="h-3 w-3" />
+                          Record Voice
+                          {!isPremiumUser && <span className="ml-1 text-[8px] bg-amber-500 text-white px-1 rounded">PRO</span>}
+                        </>
+                      )}
+                    </Button>
                   </div>
                 </div>
                 <textarea 
@@ -1119,6 +1121,63 @@ export default function PracticePage() {
         )}
       </div>
 
+      {/* Premium Feature Modal */}
+      <Dialog open={showPremiumModal} onOpenChange={setShowPremiumModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-primary">
+              <span className="h-5 w-5 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold">PRO</span>
+              Premium Feature
+            </DialogTitle>
+            <DialogDescription>
+              Voice recording and transcription is available exclusively for premium users.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="bg-muted/30 p-3 rounded-md space-y-2">
+              <h3 className="font-medium text-sm">With Premium You Get:</h3>
+              <ul className="text-sm space-y-1.5">
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="text-green-500 h-4 w-4" />
+                  Voice recording and automatic transcription
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="text-green-500 h-4 w-4" />
+                  Media uploads for your workouts
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="text-green-500 h-4 w-4" />
+                  Advanced tracking and analytics
+                </li>
+              </ul>
+            </div>
+          </div>
+          
+          <DialogFooter className="flex sm:justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowPremiumModal(false)}
+            >
+              Maybe Later
+            </Button>
+            <Button
+              type="button"
+              className="bg-primary hover:bg-primary/90 text-white"
+              onClick={() => {
+                // Navigate to premium upgrade page
+                setShowPremiumModal(false);
+                // Placeholder for premium upgrade navigation
+                window.location.href = '/premium';
+              }}
+            >
+              Upgrade Now
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
       {/* Session Complete Modal */}
       <Dialog open={sessionCompleteOpen} onOpenChange={setSessionCompleteOpen}>
         <DialogContent className="sm:max-w-md">
