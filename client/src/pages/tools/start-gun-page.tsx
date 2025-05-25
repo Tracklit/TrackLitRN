@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-import { ProtectedRoute } from "@/lib/protected-route";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -17,7 +16,6 @@ import {
   StopCircle
 } from "lucide-react";
 import { Breadcrumb } from "@/components/breadcrumb";
-import { PageHeader } from "@/components/page-header";
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -54,6 +52,10 @@ export default function StartGunPage() {
   
   // Refs for audio and timers
   const audioContext = useRef<AudioContext | null>(null);
+  const marksAudioRef = useRef<HTMLAudioElement | null>(null);
+  const setAudioRef = useRef<HTMLAudioElement | null>(null);
+  const bangAudioRef = useRef<HTMLAudioElement | null>(null);
+  
   const timerRefs = useRef<{
     setTimer: NodeJS.Timeout | null;
     gunTimer: NodeJS.Timeout | null;
@@ -61,6 +63,7 @@ export default function StartGunPage() {
     setTimer: null,
     gunTimer: null
   });
+  
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
@@ -68,13 +71,23 @@ export default function StartGunPage() {
   
   const { toast } = useToast();
   
-  // Initialize Audio Context and load sounds
+  // Initialize Audio Context and preload audio
   useEffect(() => {
     // Initialize audio API early on page load to minimize autoplay restrictions
     if (typeof window !== 'undefined') {
       try {
         // Set up audio context for potential use - needed for oscillator fallback
         audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        
+        // Preload audio files
+        marksAudioRef.current = new Audio('/on-your-marks.mp3');
+        setAudioRef.current = new Audio('/set.mp3');
+        bangAudioRef.current = new Audio('/bang.mp3');
+        
+        // Preload audio
+        marksAudioRef.current.load();
+        setAudioRef.current.load();
+        bangAudioRef.current.load();
         
         // Force a user interaction with audio context to unlock audio
         document.addEventListener('click', () => {
@@ -148,7 +161,126 @@ export default function StartGunPage() {
         mediaStreamRef.current.getTracks().forEach(track => track.stop());
       }
     };
-  }, [toast]);
+  }, []);
+  
+  // Function to play audio with fallback
+  const playAudio = (audioType: 'marks' | 'set' | 'bang') => {
+    if (isMuted) return;
+    
+    let audioElement: HTMLAudioElement | null = null;
+    let fallbackText = '';
+    
+    // Select the right audio element and fallback text
+    switch (audioType) {
+      case 'marks':
+        audioElement = marksAudioRef.current;
+        fallbackText = 'On your marks';
+        break;
+      case 'set':
+        audioElement = setAudioRef.current;
+        fallbackText = 'Set';
+        break;
+      case 'bang':
+        audioElement = bangAudioRef.current;
+        fallbackText = '';
+        break;
+    }
+    
+    // Try to play the audio
+    if (audioElement) {
+      // Set volume
+      audioElement.volume = volume / 100;
+      
+      // Create a new audio element for this playback (more reliable)
+      const newAudio = new Audio(audioElement.src);
+      newAudio.volume = volume / 100;
+      
+      const playPromise = newAudio.play();
+      if (playPromise) {
+        playPromise.catch(err => {
+          console.error(`Failed to play ${audioType} sound:`, err);
+          
+          // Use speech synthesis as fallback for voice commands
+          if (audioType !== 'bang' && 'speechSynthesis' in window && fallbackText) {
+            const utterance = new SpeechSynthesisUtterance(fallbackText);
+            utterance.volume = volume / 100;
+            window.speechSynthesis.speak(utterance);
+          } else if (audioType === 'bang' && audioContext.current) {
+            // Use oscillator as fallback for gun sound
+            createGunOscillator();
+          }
+        });
+      }
+    } else if (audioType !== 'bang' && 'speechSynthesis' in window && fallbackText) {
+      // Direct fallback to speech synthesis
+      const utterance = new SpeechSynthesisUtterance(fallbackText);
+      utterance.volume = volume / 100;
+      window.speechSynthesis.speak(utterance);
+    } else if (audioType === 'bang' && audioContext.current) {
+      // Direct fallback to oscillator for gun sound
+      createGunOscillator();
+    }
+  };
+  
+  // Create a realistic gun sound using oscillators when audio files fail
+  const createGunOscillator = () => {
+    if (!audioContext.current) return;
+    
+    try {
+      console.log("Creating gun oscillator fallback sound");
+      // Create multiple oscillators for a more complex gun sound
+      const mainOscillator = audioContext.current.createOscillator();
+      const subOscillator = audioContext.current.createOscillator();
+      const noiseNode = audioContext.current.createBufferSource();
+      
+      // Create a gain node for volume control
+      const gainNode = audioContext.current.createGain();
+      gainNode.gain.value = volume / 100;
+      
+      // Main oscillator - short burst
+      mainOscillator.type = 'square';
+      mainOscillator.frequency.value = 120;
+      
+      // Sub oscillator - lower tone
+      subOscillator.type = 'sawtooth';
+      subOscillator.frequency.value = 60;
+      
+      // Create white noise for realistic gun sound
+      const noiseBuffer = audioContext.current.createBuffer(
+        1, audioContext.current.sampleRate * 0.1, audioContext.current.sampleRate
+      );
+      const data = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < data.length; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      noiseNode.buffer = noiseBuffer;
+      
+      // Connect all sources to gain node
+      mainOscillator.connect(gainNode);
+      subOscillator.connect(gainNode);
+      noiseNode.connect(gainNode);
+      
+      // Connect gain to output
+      gainNode.connect(audioContext.current.destination);
+      
+      // Schedule the sound
+      const now = audioContext.current.currentTime;
+      
+      // Start oscillators
+      mainOscillator.start(now);
+      subOscillator.start(now);
+      noiseNode.start(now);
+      
+      // Stop oscillators after short duration
+      mainOscillator.stop(now + 0.1);
+      subOscillator.stop(now + 0.2);
+      noiseNode.stop(now + 0.3);
+      
+      console.log("Gun oscillator sound created successfully");
+    } catch (error) {
+      console.error("Error creating gun oscillator sound:", error);
+    }
+  };
   
   // Function to flash the camera light
   const triggerFlash = async () => {
@@ -289,106 +421,6 @@ export default function StartGunPage() {
     }
   };
   
-  // Create a realistic gun sound using oscillators when audio files fail
-  const createGunOscillator = () => {
-    if (!audioContext.current) return;
-    
-    try {
-      console.log("Creating gun oscillator fallback sound");
-      // Create multiple oscillators for a more complex gun sound
-      const mainOscillator = audioContext.current.createOscillator();
-      const subOscillator = audioContext.current.createOscillator();
-      const noiseNode = audioContext.current.createBufferSource();
-      
-      // Create a gain node for volume control
-      const gainNode = audioContext.current.createGain();
-      gainNode.gain.value = volume / 100;
-      
-      // Main oscillator - short burst
-      mainOscillator.type = 'square';
-      mainOscillator.frequency.value = 120;
-      
-      // Sub oscillator - lower tone
-      subOscillator.type = 'sawtooth';
-      subOscillator.frequency.value = 60;
-      
-      // Create white noise for realistic gun sound
-      const noiseBuffer = audioContext.current.createBuffer(
-        1, audioContext.current.sampleRate * 0.1, audioContext.current.sampleRate
-      );
-      const data = noiseBuffer.getChannelData(0);
-      for (let i = 0; i < data.length; i++) {
-        data[i] = Math.random() * 2 - 1;
-      }
-      noiseNode.buffer = noiseBuffer;
-      
-      // Connect all sources to gain node
-      mainOscillator.connect(gainNode);
-      subOscillator.connect(gainNode);
-      noiseNode.connect(gainNode);
-      
-      // Connect gain to output
-      gainNode.connect(audioContext.current.destination);
-      
-      // Schedule the sound
-      const now = audioContext.current.currentTime;
-      
-      // Start oscillators
-      mainOscillator.start(now);
-      subOscillator.start(now);
-      noiseNode.start(now);
-      
-      // Stop oscillators after short duration
-      mainOscillator.stop(now + 0.1);
-      subOscillator.stop(now + 0.2);
-      noiseNode.stop(now + 0.3);
-      
-      console.log("Gun oscillator sound created successfully");
-    } catch (error) {
-      console.error("Error creating gun oscillator sound:", error);
-    }
-  };
-
-  // Simple function to play an audio file with proper error handling
-  const playAudioFile = (filepath: string) => {
-    return new Promise<void>((resolve, reject) => {
-      try {
-        console.log(`Attempting to play audio file: ${filepath}`);
-        const audio = new Audio(filepath);
-        audio.volume = isMuted ? 0 : volume / 100;
-        
-        // Set up event listeners
-        audio.addEventListener('canplaythrough', () => {
-          const playPromise = audio.play();
-          if (playPromise) {
-            playPromise
-              .then(() => {
-                console.log(`Successfully playing: ${filepath}`);
-                resolve();
-              })
-              .catch(err => {
-                console.error(`Error playing audio file ${filepath}:`, err);
-                reject(err);
-              });
-          } else {
-            resolve(); // No promise returned (older browsers)
-          }
-        }, { once: true });
-        
-        audio.addEventListener('error', (e: Event) => {
-          console.error(`Error loading audio file ${filepath}:`, e);
-          reject(e);
-        }, { once: true });
-        
-        // Force load attempt
-        audio.load();
-      } catch (error) {
-        console.error(`Exception trying to play ${filepath}:`, error);
-        reject(error);
-      }
-    });
-  };
-  
   // Function to start the sequence
   const startSequence = () => {
     if (isPlaying) return;
@@ -396,72 +428,26 @@ export default function StartGunPage() {
     setIsPlaying(true);
     setStatus('on-your-marks');
     
-    const executeSequence = async () => {
-      try {
-        // On your marks
-        console.log("Playing: On your marks");
-        try {
-          // Using direct path to the file in the public folder
-          await playAudioFile('/on-your-marks.mp3');
-        } catch (err) {
-          console.error("Failed to play On Your Marks, using speech synthesis fallback");
-          // Use speech synthesis as fallback
-          if ('speechSynthesis' in window) {
-            const utterance = new SpeechSynthesisUtterance("On your marks");
-            utterance.volume = volume / 100;
-            window.speechSynthesis.speak(utterance);
-          }
-        }
-        
-        // Set command after delay
-        await new Promise(resolve => {
-          timerRefs.current.setTimer = setTimeout(() => {
-            setStatus('set');
-            resolve(null);
-          }, marksToSetDelay * 1000);
-        });
-        
-        // Play Set
-        console.log("Playing: Set");
-        try {
-          // Using direct path to the file in the public folder
-          await playAudioFile('/set.mp3');
-        } catch (err) {
-          console.error("Failed to play Set, using speech synthesis fallback");
-          // Use speech synthesis as fallback
-          if ('speechSynthesis' in window) {
-            const utterance = new SpeechSynthesisUtterance("Set");
-            utterance.volume = volume / 100;
-            window.speechSynthesis.speak(utterance);
-          }
-        }
-        
-        // Calculate gun delay with randomization if enabled
-        let finalDelay = setToGunDelay;
-        if (useRandomizer) {
-          const randomOffset = (Math.random() * 2 - 1) * 1.0;
-          finalDelay = Math.max(0.1, setToGunDelay + randomOffset);
-        }
-        setCurrentSetToGunDelay(finalDelay);
-        
-        // Gun sound after delay
-        await new Promise(resolve => {
-          timerRefs.current.gunTimer = setTimeout(() => {
-            setStatus('gun');
-            resolve(null);
-          }, finalDelay * 1000);
-        });
-        
-        // Play gun sound
-        console.log("Playing: Bang");
-        try {
-          // Using direct path to the file in the public folder
-          await playAudioFile('/bang.mp3');
-        } catch (err) {
-          console.error("Failed to play Bang, using oscillator fallback", err);
-          // Use oscillator as fallback
-          createGunOscillator();
-        }
+    // Play on your marks sound
+    playAudio('marks');
+    
+    // Schedule the set command
+    timerRefs.current.setTimer = setTimeout(() => {
+      setStatus('set');
+      playAudio('set');
+      
+      // Calculate gun delay with randomization if enabled
+      let finalDelay = setToGunDelay;
+      if (useRandomizer) {
+        const randomOffset = (Math.random() * 2 - 1) * 1.0;
+        finalDelay = Math.max(0.1, setToGunDelay + randomOffset);
+      }
+      setCurrentSetToGunDelay(finalDelay);
+      
+      // Schedule the gun sound
+      timerRefs.current.gunTimer = setTimeout(() => {
+        setStatus('gun');
+        playAudio('bang');
         
         // Flash and record if enabled
         triggerFlash();
@@ -469,24 +455,13 @@ export default function StartGunPage() {
           startRecording();
         }
         
-        // Reset state after sequence completes
+        // Reset the state after a delay
         setTimeout(() => {
           setIsPlaying(false);
           setStatus('idle');
         }, 2000);
-        
-      } catch (error) {
-        console.error("Error in race start sequence:", error);
-        // Always reset to idle state in case of errors
-        setTimeout(() => {
-          setIsPlaying(false);
-          setStatus('idle');
-        }, 1000);
-      }
-    };
-    
-    // Start the sequence
-    executeSequence();
+      }, finalDelay * 1000);
+    }, marksToSetDelay * 1000);
   };
   
   // Function to cancel the sequence
