@@ -394,13 +394,13 @@ export default function StartGunPage() {
     setIsPlaying(true);
     setStatus('on-your-marks');
     
-    // Create audio elements with direct paths to custom audio files
-    // Using the provided custom audio files for a more authentic experience
+    // Create audio elements with direct paths to custom audio files from root
+    // Using the exact audio files provided by the user
     const baseUrl = window.location.origin;
     const audioFiles = {
-      onYourMarks: new Audio(`${baseUrl}/sounds/custom-on-your-marks.mp3`),
-      set: new Audio(`${baseUrl}/sounds/custom-set.mp3`),
-      gun: new Audio(`${baseUrl}/sounds/custom-bang.mp3`) // Using the provided Bang sound
+      onYourMarks: new Audio(`${baseUrl}/On Your Marks.mp3`),
+      set: new Audio(`${baseUrl}/Set.mp3`),
+      gun: new Audio(`${baseUrl}/Bang.mp3`) // Using the provided Bang sound
     };
     
     // Use speech synthesis for more natural voice commands if available
@@ -481,7 +481,7 @@ export default function StartGunPage() {
           // For gun sound, use a direct approach for maximum compatibility
           try {
             // Create a brand new audio element for each playback - more reliable
-            const gunSound = new Audio(`${window.location.origin}/sounds/custom-bang.mp3`);
+            const gunSound = new Audio(`${window.location.origin}/Bang.mp3`);
             gunSound.volume = volume / 100;
             
             // Add event handlers for better debugging
