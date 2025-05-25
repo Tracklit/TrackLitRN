@@ -31,9 +31,10 @@ interface WorkoutNote {
   title: string;
   content: string;
   workoutType: string;
+  isSystemGenerated?: boolean;
 }
 
-// Sample workout notes data (this would normally come from API)
+// Sample workout notes data
 const mockNotes: WorkoutNote[] = [
   {
     id: "1",
@@ -69,6 +70,34 @@ const mockNotes: WorkoutNote[] = [
     title: "Recovery Day",
     content: "Easy 3km jog followed by stretching routine. Feeling recovered after yesterday's hard session.",
     workoutType: "Recovery"
+  }
+];
+
+// Workout logs from training sessions
+const trainingSessionNotes: WorkoutNote[] = [
+  {
+    id: "workout-101",
+    date: "2025-05-24",
+    title: "Completed Training Session",
+    content: "6x400m repeats at race pace. Felt strong throughout, especially on the last two. Need to focus more on maintaining form during the final 100m of each rep.\n\nAverage times: 68.2s, 67.9s, 68.5s, 67.7s, 67.4s, 66.8s\n\nRecovery: 2 min jogging between reps",
+    workoutType: "Track",
+    isSystemGenerated: true
+  },
+  {
+    id: "workout-102",
+    date: "2025-05-21",
+    title: "Hill Sprint Session",
+    content: "10x60m hill sprints with walk back recovery. Focused on driving knees and arm action. Felt some tightness in right hamstring after 7th rep - need to monitor this.",
+    workoutType: "Sprints",
+    isSystemGenerated: true
+  },
+  {
+    id: "workout-103",
+    date: "2025-05-16",
+    title: "Block Start Practice",
+    content: "Worked on block starts for 45 minutes. Focused on first 3 steps and drive phase. Coach suggested adjusting block spacing slightly - moved front block forward 2cm.\n\nCompleted 12 starts with full recovery. Reaction times improved throughout session.",
+    workoutType: "Technical",
+    isSystemGenerated: true
   }
 ];
 
