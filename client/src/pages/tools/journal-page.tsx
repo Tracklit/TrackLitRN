@@ -402,19 +402,44 @@ export function Component() {
                   <label htmlFor="mood" className="text-right font-medium">
                     Mood Rating
                   </label>
-                  <div className="col-span-3 flex items-center gap-2">
-                    <div 
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white"
-                      style={{ 
-                        background: editingEntry.content.moodRating <= 3 ? '#ef4444' : 
-                                  editingEntry.content.moodRating <= 5 ? '#f59e0b' : 
-                                  '#22c55e'
-                      }}
-                    >
-                      {editingEntry.content.moodRating}
+                  <div className="col-span-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div 
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white"
+                        style={{ 
+                          background: editingEntry.content.moodRating <= 3 ? '#ef4444' : 
+                                    editingEntry.content.moodRating <= 5 ? '#f59e0b' : 
+                                    '#22c55e'
+                        }}
+                      >
+                        {editingEntry.content.moodRating}
+                      </div>
+                      <span className="text-sm">/10</span>
                     </div>
-                    <span className="text-sm">/10</span>
-                    <span className="text-sm text-muted-foreground ml-2">(Set during workout)</span>
+                    
+                    <Slider 
+                      value={[editingEntry.content.moodRating]}
+                      min={1}
+                      max={10}
+                      step={1}
+                      className="w-full"
+                      onValueChange={(value) => {
+                        const newContent = {
+                          ...editingEntry.content,
+                          moodRating: value[0]
+                        };
+                        setEditingEntry({
+                          ...editingEntry,
+                          content: newContent
+                        });
+                      }}
+                    />
+                    
+                    <div className="flex justify-between mt-1 text-xs text-muted-foreground">
+                      <span>Poor</span>
+                      <span>Average</span>
+                      <span>Excellent</span>
+                    </div>
                   </div>
                 </div>
               )}

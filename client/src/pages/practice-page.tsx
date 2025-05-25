@@ -1429,15 +1429,106 @@ export default function PracticePage() {
         const duplicateEntry = existingEntries.find(entry => entry.title === entryTitle);
         
         if (duplicateEntry) {
-          // Ask for confirmation to create another entry for the same session
-          const confirmCreate = window.confirm(
-            `You already have a journal entry for "${entryTitle}". Do you want to create another entry?`
-          );
+          // Use a custom dialog instead of browser confirm
+          setIsSaving(false);
+          
+          // Create and show a custom dialog with our UI
+          const confirmCreate = await new Promise<boolean>((resolve) => {
+            // Create custom dialog
+            const dialog = document.createElement('div');
+            dialog.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50';
+            dialog.style.backdropFilter = 'blur(2px)';
+            
+            // Dialog content
+            dialog.innerHTML = `
+              <div class="bg-white dark:bg-gray-900 rounded-lg shadow-lg max-w-md w-full p-6 mx-4">
+                <h3 class="text-lg font-medium mb-2">Duplicate Entry</h3>
+                <p class="text-gray-700 dark:text-gray-300 mb-6">
+                  You already have a journal entry for "${entryTitle}". What would you like to do?
+                </p>
+                <div class="flex justify-end gap-3">
+                  <button id="cancel-btn" class="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800">
+                    Cancel
+                  </button>
+                  <button id="update-btn" class="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700">
+                    Update Existing
+                  </button>
+                  <button id="create-btn" class="px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700">
+                    Create New
+                  </button>
+                </div>
+              </div>
+            `;
+            
+            // Add to DOM
+            document.body.appendChild(dialog);
+            
+            // Add event listeners
+            document.getElementById('cancel-btn')?.addEventListener('click', () => {
+              document.body.removeChild(dialog);
+              resolve(false);
+            });
+            
+            document.getElementById('update-btn')?.addEventListener('click', async () => {
+              document.body.removeChild(dialog);
+              
+              // Update the existing entry
+              try {
+                const updateResponse = await fetch(`/api/journal/${duplicateEntry.id}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    ...duplicateEntry,
+                    notes: diaryNotes || duplicateEntry.notes,
+                    content: {
+                      ...duplicateEntry.content,
+                      moodRating: moodValue,
+                      shortDistanceWorkout: activeSessionData?.shortDistanceWorkout || duplicateEntry.content.shortDistanceWorkout,
+                      mediumDistanceWorkout: activeSessionData?.mediumDistanceWorkout || duplicateEntry.content.mediumDistanceWorkout,
+                      longDistanceWorkout: activeSessionData?.longDistanceWorkout || duplicateEntry.content.longDistanceWorkout,
+                    }
+                  })
+                });
+                
+                if (updateResponse.ok) {
+                  toast({
+                    title: "Entry Updated",
+                    description: "Your journal entry has been updated successfully.",
+                    duration: 3000
+                  });
+                } else {
+                  toast({
+                    title: "Update Failed",
+                    description: "There was a problem updating your entry.",
+                    variant: "destructive",
+                    duration: 3000
+                  });
+                }
+              } catch (error) {
+                console.error('Error updating entry:', error);
+                toast({
+                  title: "Update Failed",
+                  description: "There was a problem updating your entry.",
+                  variant: "destructive",
+                  duration: 3000
+                });
+              }
+              
+              resolve(false); // Don't create a new entry
+            });
+            
+            document.getElementById('create-btn')?.addEventListener('click', () => {
+              document.body.removeChild(dialog);
+              resolve(true);
+            });
+          });
           
           if (!confirmCreate) {
-            setIsSaving(false);
             return;
           }
+          
+          // If we get here, user wants to create a new entry
+          setIsSaving(true);
         }
       }
       
