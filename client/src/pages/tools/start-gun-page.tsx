@@ -401,7 +401,8 @@ export default function StartGunPage() {
         // On your marks
         console.log("Playing: On your marks");
         try {
-          await playAudioFile('/sounds/on-your-marks.mp3');
+          // Using direct path to the file in the public folder
+          await playAudioFile('/on-your-marks.mp3');
         } catch (err) {
           console.error("Failed to play On Your Marks, using speech synthesis fallback");
           // Use speech synthesis as fallback
@@ -423,7 +424,8 @@ export default function StartGunPage() {
         // Play Set
         console.log("Playing: Set");
         try {
-          await playAudioFile('/sounds/set.mp3');
+          // Using direct path to the file in the public folder
+          await playAudioFile('/set.mp3');
         } catch (err) {
           console.error("Failed to play Set, using speech synthesis fallback");
           // Use speech synthesis as fallback
@@ -453,7 +455,8 @@ export default function StartGunPage() {
         // Play gun sound
         console.log("Playing: Bang");
         try {
-          await playAudioFile('/sounds/bang.mp3');
+          // Using direct path to the file in the public folder
+          await playAudioFile('/bang.mp3');
         } catch (err) {
           console.error("Failed to play Bang, using oscillator fallback", err);
           // Use oscillator as fallback
