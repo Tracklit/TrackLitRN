@@ -288,27 +288,6 @@ export function Component() {
                   </CardHeader>
                   
                   <CardContent className="pt-2 text-gray-100">
-                    {/* Display mood rating if it exists */}
-                    {entry.content?.moodRating !== undefined && (
-                      <div className="flex items-center gap-2 mb-3 bg-blue-900/50 p-2 rounded-md">
-                        <span className="text-sm font-medium text-white">Mood:</span>
-                        <div className="flex items-center">
-                          <div 
-                            className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
-                            style={{ 
-                              background: entry.content.moodRating <= 3 ? '#ef4444' : 
-                                        entry.content.moodRating <= 5 ? '#f59e0b' : 
-                                        '#22c55e'
-                            }}
-                          >
-                            {entry.content.moodRating}
-                          </div>
-                          <span className="text-xs ml-1 text-white">/10</span>
-                        </div>
-                        <Activity className="h-4 w-4 text-blue-300 ml-auto" />
-                      </div>
-                    )}
-                    
                     {/* Notes content */}
                     <p className="text-sm whitespace-pre-wrap text-gray-100">{entry.notes || "No notes for this entry."}</p>
                     
@@ -336,6 +315,27 @@ export function Component() {
                             </li>
                           )}
                         </ul>
+                      </div>
+                    )}
+                    
+                    {/* Display mood rating if it exists */}
+                    {entry.content?.moodRating !== undefined && (
+                      <div className="flex items-center gap-2 mt-3 bg-blue-900/50 p-2 rounded-md">
+                        <span className="text-sm font-medium text-white">Mood:</span>
+                        <div className="flex items-center">
+                          <div 
+                            className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                            style={{ 
+                              background: entry.content.moodRating <= 3 ? '#ef4444' : 
+                                        entry.content.moodRating <= 5 ? '#f59e0b' : 
+                                        '#22c55e'
+                            }}
+                          >
+                            {entry.content.moodRating}
+                          </div>
+                          <span className="text-xs ml-1 text-white">/10</span>
+                        </div>
+                        <Activity className="h-4 w-4 text-blue-300 ml-auto" />
                       </div>
                     )}
                   </CardContent>
