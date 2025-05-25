@@ -24,7 +24,7 @@ import CalendarPage from "@/pages/calendar-page";
 import ProfilePage from "@/pages/profile-page";
 import CoachesPage from "@/pages/coaches-page";
 import PracticePage from "@/pages/practice-page";
-import TrainingToolsPage from "@/pages/training-tools-page";
+import { Component as WorkoutToolsPage } from "@/pages/training-tools-page";
 import ClubsPage from "@/pages/clubs-page";
 import { Component as ClubDetailPage } from "@/pages/club-detail-page";
 import { Component as ClubManagementPage } from "@/pages/club-management-page";
@@ -48,7 +48,7 @@ function Router() {
       
       {/* Training */}
       <ProtectedRoute path="/practice" component={PracticePage} />
-      <ProtectedRoute path="/training-tools" component={TrainingToolsPage} />
+      <ProtectedRoute path="/training-tools" component={WorkoutToolsPage} />
       <ProtectedRoute path="/tools/stopwatch" component={StopwatchPage} />
       <ProtectedRoute path="/tools/start-gun" component={StartGunPage} />
       <ProtectedRoute path="/tools/journal" component={JournalPage} />
