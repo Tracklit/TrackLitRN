@@ -6,6 +6,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { DesktopSidebar, MobileSidebar, MobileSidebarButton } from "@/components/layout/minimal-sidebar";
 
+// Import tool components
+import { 
+  StopwatchPage,
+  StartGunPage,
+  IntervalTimerPage,
+  PaceCalculatorPage
+} from "@/pages/routes";
+
 import { OnboardingFlow } from "@/components/onboarding-flow";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
@@ -41,6 +49,10 @@ function Router() {
       {/* Training */}
       <ProtectedRoute path="/practice" component={PracticePage} />
       <ProtectedRoute path="/training-tools" component={TrainingToolsPage} />
+      <ProtectedRoute path="/tools/stopwatch" component={StopwatchPage} />
+      <ProtectedRoute path="/tools/start-gun" component={StartGunPage} />
+      <ProtectedRoute path="/tools/interval-timer" component={IntervalTimerPage} />
+      <ProtectedRoute path="/tools/pace-calculator" component={PaceCalculatorPage} />
       <ProtectedRoute path="/programs" component={ProgramsPage} />
       <ProtectedRoute path="/programs/create" component={ProgramCreatePage} />
       <ProtectedRoute path="/programs/:id" component={ProgramDetailPage} />
