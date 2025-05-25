@@ -1461,11 +1461,11 @@ export default function PracticePage() {
       console.log('Saving journal entry:', journalData);
       
       try {
-        // Use a simplified approach for direct database entry
-        console.log('About to send journal data directly');
+        // Use a simplified and very direct approach for database entry
+        console.log('About to send journal data using basic fetch');
         
-        // Use direct SQL query to insert journal entry
-        const response = await fetch('/api/journal/direct-insert', {
+        // Use a basic POST request
+        const response = await fetch('/api/journal/basic-save', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -1473,10 +1473,11 @@ export default function PracticePage() {
           body: JSON.stringify({
             userId: user.id,
             title: journalData.title,
-            notes: journalData.notes,
-            type: journalData.type,
-            content: JSON.stringify(journalData.content),
-            isPublic: journalData.isPublic
+            notes: journalData.notes || "Completed workout session",
+            moodRating: moodValue,
+            shortWorkout: activeSessionData?.shortDistanceWorkout || "",
+            mediumWorkout: activeSessionData?.mediumDistanceWorkout || "",
+            longWorkout: activeSessionData?.longDistanceWorkout || ""
           })
         });
         
