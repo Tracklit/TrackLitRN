@@ -3524,6 +3524,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/journal/:id', updateJournalEntry);
   app.delete('/api/journal/:id', deleteJournalEntry);
   
+  // Direct journal entry insertion (for workout completions)
+  app.post('/api/journal/direct-insert', async (req: Request, res: Response) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "You must be logged in to create journal entries" });
+      }
+      
+      const { userId, title, notes, type, content, isPublic } = req.body;
+      
+      // Validate required fields
+      if (!userId || !title) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+      
+      // Insert directly into the database
+      const result = await pool.query(
+        'INSERT INTO journal_entries (user_id, title, notes, type, content, is_public) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+        [userId, title, notes || '', type || 'training', content, isPublic === false ? false : true]
+      );
+      
+      return res.status(201).json(result.rows[0]);
+    } catch (error) {
+      console.error("Error creating direct journal entry:", error);
+      return res.status(500).json({ message: "Failed to create journal entry" });
+    }
+  });
+  
   const httpServer = createServer(app);
   return httpServer;
 }

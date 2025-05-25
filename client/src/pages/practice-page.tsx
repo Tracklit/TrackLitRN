@@ -1461,15 +1461,23 @@ export default function PracticePage() {
       console.log('Saving journal entry:', journalData);
       
       try {
-        // Create a direct POST request with full details
-        console.log('About to send journal data:', JSON.stringify(journalData));
+        // Use a simplified approach for direct database entry
+        console.log('About to send journal data directly');
         
-        const response = await fetch('/api/journal', {
+        // Use direct SQL query to insert journal entry
+        const response = await fetch('/api/journal/direct-insert', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(journalData)
+          body: JSON.stringify({
+            userId: user.id,
+            title: journalData.title,
+            notes: journalData.notes,
+            type: journalData.type,
+            content: JSON.stringify(journalData.content),
+            isPublic: journalData.isPublic
+          })
         });
         
         if (!response.ok) {
