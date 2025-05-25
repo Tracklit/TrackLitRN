@@ -486,61 +486,56 @@ export default function StartGunPage() {
     setIsPlaying(true);
     setStatus('on-your-marks');
     
-    // Play audio directly using HTML Audio element - more reliable on mobile
-    const playDirectAudio = (type: string) => {
-      try {
-        // Create a direct audio element - this works better on most devices
-        const audio = new Audio();
-        audio.volume = volume / 100;
+    // Create audio elements with direct paths to sound files
+    const audioFiles = {
+      onYourMarks: new Audio('/sounds/on-your-marks.mp3'),
+      set: new Audio('/sounds/set.mp3'),
+      gun: new Audio('/sounds/gun-shot.mp3')
+    };
+    
+    // Configure all audio elements
+    Object.values(audioFiles).forEach(audio => {
+      audio.volume = isMuted ? 0 : volume / 100;
+      // Preload audio
+      audio.load();
+    });
+    
+    // Function to play a specific audio and show visual feedback
+    const playAudioWithFeedback = (type: 'onYourMarks' | 'set' | 'gun') => {
+      // Show visual feedback immediately
+      toast({
+        title: type === 'onYourMarks' ? "On your marks" : 
+              type === 'set' ? "Set" : "Gun!",
+        description: type === 'gun' ? "Race started!" : undefined,
+        variant: type === 'gun' ? "destructive" : "default",
+        duration: 1500
+      });
+      
+      // Try to play audio if not muted
+      if (!isMuted) {
+        // Play the sound with user interaction already established
+        const audio = audioFiles[type];
         
-        // Set specific tones for each command - using simple tones that work on most devices
-        if (type === 'on-your-marks') {
-          // Lower tone for "On your marks" - simple beep that works on all devices
-          audio.src = "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAADmADY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAA5gNwudgAAAAAAAAAAAAAAAAAAAA//sQZAAP8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=";
-        } else if (type === 'set') {
-          // Medium tone for "Set" - simple beep that works on all devices
-          audio.src = "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAADmADY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAA5gNwudgAAAAAAAAAAAAAAAAAAAA//sQZAAP8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=";
-        } else {
-          // Sharp tone for gun - simple beep that works on all devices
-          audio.src = "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAADmADY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAA5gNwudgAAAAAAAAAAAAAAAAAAAA//sQZAAP8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=";
-        }
-        
-        // Play the audio
-        const playPromise = audio.play();
-        if (playPromise !== undefined) {
-          playPromise.catch(e => {
-            console.error("Direct audio playback failed:", e);
-          });
-        }
-        
-        // Always show visual feedback regardless of audio success
-        toast({
-          title: type === 'on-your-marks' ? "On your marks" : 
-                type === 'set' ? "Set" : "Gun!",
-          description: type === 'gun' ? "Race started!" : undefined,
-          variant: type === 'gun' ? "destructive" : "default",
-          duration: 1500
-        });
-      } catch (e) {
-        console.error("Error with direct audio:", e);
-        // Fall back to buffer-based audio
-        if (type === 'on-your-marks') {
-          playSound(audioBuffers.current.onYourMarks);
-        } else if (type === 'set') {
-          playSound(audioBuffers.current.set);
-        } else {
-          playSound(audioBuffers.current.gun);
+        try {
+          const playPromise = audio.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(e => {
+              console.error(`Audio playback failed for ${type}:`, e);
+            });
+          }
+        } catch (error) {
+          console.error(`Error playing ${type} sound:`, error);
         }
       }
     };
     
-    // Play the first command
-    playDirectAudio('on-your-marks');
+    // Start the sequence - play "On your marks"
+    playAudioWithFeedback('onYourMarks');
     
     // Set timer for "Set" command after the specified delay
     timerRefs.current.setTimer = setTimeout(() => {
       setStatus('set');
-      playDirectAudio('set');
+      playAudioWithFeedback('set');
       
       // Calculate final delay - either exact or randomized
       let finalDelay = setToGunDelay;
@@ -556,7 +551,7 @@ export default function StartGunPage() {
       // Set timer for gun sound
       timerRefs.current.gunTimer = setTimeout(() => {
         setStatus('gun');
-        playDirectAudio('gun');
+        playAudioWithFeedback('gun');
         triggerFlash();
         
         // Start recording if enabled
