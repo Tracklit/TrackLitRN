@@ -104,21 +104,59 @@ const trainingSessionNotes: WorkoutNote[] = [
 export function Component() {
   const [searchTerm, setSearchTerm] = useState("");
   const [notes, setNotes] = useState<WorkoutNote[]>(mockNotes);
+  const [sessionNotes, setSessionNotes] = useState<WorkoutNote[]>(trainingSessionNotes);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [editingNote, setEditingNote] = useState<WorkoutNote | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
   const { toast } = useToast();
   
+  // In a real application, we would fetch both manual notes and workout logs from the API
+  // useEffect(() => {
+  //   const fetchAllNotes = async () => {
+  //     try {
+  //       // Fetch manual journal notes
+  //       const manualNotesResponse = await fetch('/api/journal/notes');
+  //       const manualNotes = await manualNotesResponse.json();
+  //       
+  //       // Fetch workout logs
+  //       const workoutLogsResponse = await fetch('/api/journal/workout-notes');
+  //       const workoutLogs = await workoutLogsResponse.json();
+  //       
+  //       // Set both types of notes
+  //       setNotes(manualNotes);
+  //       setSessionNotes(workoutLogs);
+  //     } catch (error) {
+  //       console.error('Failed to fetch journal data:', error);
+  //       toast({
+  //         title: "Error",
+  //         description: "Failed to load journal entries. Please try again.",
+  //         variant: "destructive"
+  //       });
+  //     }
+  //   };
+  //   
+  //   fetchAllNotes();
+  // }, []);
+  
   // Filter notes based on search term
-  const filteredNotes = notes.filter(note => 
+  const filteredManualNotes = notes.filter(note => 
     note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     note.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
     note.workoutType.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
+  const filteredSessionNotes = sessionNotes.filter(note => 
+    note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    note.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    note.workoutType.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+  // Combine both types of notes
+  const allFilteredNotes = [...filteredManualNotes, ...filteredSessionNotes];
+  
   // Sort notes by date
-  const sortedNotes = [...filteredNotes].sort((a, b) => {
+  const sortedNotes = [...allFilteredNotes].sort((a, b) => {
     const dateA = new Date(a.date).getTime();
     const dateB = new Date(b.date).getTime();
     return sortDirection === "desc" ? dateB - dateA : dateA - dateB;
@@ -265,20 +303,36 @@ export function Component() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem 
-                          className="flex items-center gap-2 cursor-pointer"
-                          onClick={() => openEditDialog(note)}
-                        >
-                          <Edit className="h-4 w-4" />
-                          <span>Edit</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          className="flex items-center gap-2 text-red-600 cursor-pointer"
-                          onClick={() => handleDeleteNote(note.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          <span>Delete</span>
-                        </DropdownMenuItem>
+                        {note.isSystemGenerated ? (
+                          <DropdownMenuItem 
+                            className="flex items-center gap-2 cursor-pointer"
+                            onClick={() => toast({
+                              title: "Training Log",
+                              description: "This is an automatically generated note from your training session.",
+                              duration: 3000
+                            })}
+                          >
+                            <BadgeInfo className="h-4 w-4" />
+                            <span>Generated from Training</span>
+                          </DropdownMenuItem>
+                        ) : (
+                          <>
+                            <DropdownMenuItem 
+                              className="flex items-center gap-2 cursor-pointer"
+                              onClick={() => openEditDialog(note)}
+                            >
+                              <Edit className="h-4 w-4" />
+                              <span>Edit</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="flex items-center gap-2 text-red-600 cursor-pointer"
+                              onClick={() => handleDeleteNote(note.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              <span>Delete</span>
+                            </DropdownMenuItem>
+                          </>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </CardFooter>
