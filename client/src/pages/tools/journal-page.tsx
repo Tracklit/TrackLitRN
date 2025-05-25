@@ -169,7 +169,33 @@ export function Component() {
   // Handler for saving edited entry
   const handleSaveEdit = () => {
     if (!editingEntry) return;
-    updateMutation.mutate(editingEntry);
+    
+    // Make sure we have properly formatted dates for the database
+    // Deep clone the entry to avoid modifying the state directly
+    const entryToSave = JSON.parse(JSON.stringify(editingEntry));
+    
+    // Convert string dates to proper Date objects before saving
+    if (typeof entryToSave.createdAt === 'string') {
+      // Keep as string - the API will handle it
+    }
+    
+    if (typeof entryToSave.updatedAt === 'string') {
+      // Keep as string - the API will handle it
+    }
+    
+    // Make sure content has proper date format if it exists
+    if (entryToSave.content && entryToSave.content.date) {
+      // Ensure date is a string in ISO format
+      if (typeof entryToSave.content.date === 'object' && entryToSave.content.date instanceof Date) {
+        entryToSave.content.date = entryToSave.content.date.toISOString();
+      } else if (typeof entryToSave.content.date !== 'string') {
+        // If it's not a string or Date, make it a string
+        entryToSave.content.date = new Date().toISOString();
+      }
+    }
+    
+    console.log("Saving journal entry:", entryToSave);
+    updateMutation.mutate(entryToSave);
     setIsEditDialogOpen(false);
     setEditingEntry(null);
   };

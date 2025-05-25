@@ -1474,20 +1474,29 @@ export default function PracticePage() {
               
               // Update the existing entry
               try {
+                // Create a properly formatted entry with valid date formats
+                const entryToUpdate = {
+                  ...duplicateEntry,
+                  notes: diaryNotes || duplicateEntry.notes,
+                  content: {
+                    ...duplicateEntry.content,
+                    moodRating: moodValue,
+                    shortDistanceWorkout: activeSessionData?.shortDistanceWorkout || duplicateEntry.content.shortDistanceWorkout,
+                    mediumDistanceWorkout: activeSessionData?.mediumDistanceWorkout || duplicateEntry.content.mediumDistanceWorkout,
+                    longDistanceWorkout: activeSessionData?.longDistanceWorkout || duplicateEntry.content.longDistanceWorkout,
+                    // Always ensure date is a valid ISO string
+                    date: new Date().toISOString()
+                  }
+                };
+                
+                // Don't send fields that could cause database problems
+                delete entryToUpdate.createdAt;
+                delete entryToUpdate.updatedAt;
+                
                 const updateResponse = await fetch(`/api/journal/${duplicateEntry.id}`, {
                   method: 'PUT',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    ...duplicateEntry,
-                    notes: diaryNotes || duplicateEntry.notes,
-                    content: {
-                      ...duplicateEntry.content,
-                      moodRating: moodValue,
-                      shortDistanceWorkout: activeSessionData?.shortDistanceWorkout || duplicateEntry.content.shortDistanceWorkout,
-                      mediumDistanceWorkout: activeSessionData?.mediumDistanceWorkout || duplicateEntry.content.mediumDistanceWorkout,
-                      longDistanceWorkout: activeSessionData?.longDistanceWorkout || duplicateEntry.content.longDistanceWorkout,
-                    }
-                  })
+                  body: JSON.stringify(entryToUpdate)
                 });
                 
                 if (updateResponse.ok) {
