@@ -3550,8 +3550,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Convert to JSON string for storage
       const contentJson = JSON.stringify(contentObject);
       
-      // Use database connection from imported pool
-      const result = await dbStorage.db.query(
+      // Use the database storage directly
+      const result = await dbStorage.query(
         'INSERT INTO journal_entries (user_id, title, notes, type, content, is_public, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW()) RETURNING *',
         [userId, title, notes || 'Completed workout session', 'training', contentJson, true]
       );

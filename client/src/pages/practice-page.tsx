@@ -1512,11 +1512,30 @@ export default function PracticePage() {
         // Continue to show success dialog even if there was an error
       }
       
-      // Handle successful save
-      setIsSaving(false);
+      // Handle successful save with toast notifications instead of dialog
+      toast({
+        title: "Workout Saved",
+        description: "Your workout has been saved to your journal.",
+        duration: 3000
+      });
       
-      // Show completion dialog
-      setSessionCompleteOpen(true);
+      // Show a button to navigate to journal after a short delay
+      setTimeout(() => {
+        toast({
+          title: "View Journal",
+          description: "Check out all your workout entries",
+          action: (
+            <Button 
+              variant="secondary"
+              onClick={() => navigate('/tools/journal')}
+              size="sm"
+            >
+              Open Journal
+            </Button>
+          ),
+          duration: 5000
+        });
+      }, 500);
     } catch (error) {
       console.error('Error saving workout:', error);
       setIsSaving(false);
