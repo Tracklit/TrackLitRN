@@ -47,10 +47,23 @@ export function Component() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // Fetch journal entries
+  // Fetch journal entries with proper JSON parsing for content
   const { data: journalEntries = [], isLoading, error } = useQuery({
     queryKey: ["/api/journal"],
     staleTime: 5 * 60 * 1000, // 5 minutes
+    select: (data: any[]) => {
+      return data.map(entry => {
+        // Parse the content field if it's a string
+        if (entry.content && typeof entry.content === 'string') {
+          try {
+            entry.content = JSON.parse(entry.content);
+          } catch (e) {
+            console.error("Failed to parse journal entry content:", e);
+          }
+        }
+        return entry;
+      });
+    }
   });
   
   // Filter journal entries based on search term
