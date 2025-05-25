@@ -4,19 +4,41 @@ import { users } from "@shared/schema";
 import { journalEntries, insertJournalEntrySchema, InsertJournalEntry } from "@shared/journal-schema";
 import { eq } from "drizzle-orm";
 
-// Get all journal entries for the current user
+// Get all journal entries for the current user with direct SQL for reliable content parsing
 export async function getUserJournalEntries(req: Request, res: Response) {
   try {
     if (!req.user?.id) {
       return res.status(401).json({ message: "You must be logged in to access journal entries" });
     }
 
-    const entries = await db.query.journalEntries.findMany({
-      where: eq(journalEntries.userId, req.user.id),
-      orderBy: (entries, { desc }) => [desc(entries.createdAt)],
+    // Use direct SQL query for better control over JSON parsing
+    const entries = await db.execute(
+      `SELECT 
+        id, user_id as "userId", title, notes, type, content, 
+        is_public as "isPublic", created_at as "createdAt", updated_at as "updatedAt"
+      FROM journal_entries 
+      WHERE user_id = $1 
+      ORDER BY created_at DESC`,
+      [req.user.id]
+    );
+
+    console.log("Retrieved journal entries:", entries.length);
+    
+    // Format response and ensure content is properly parsed
+    const formattedEntries = entries.map(entry => {
+      // Parse content if it's a string
+      if (entry.content && typeof entry.content === 'string') {
+        try {
+          entry.content = JSON.parse(entry.content);
+        } catch (e) {
+          console.error(`Failed to parse content for entry ${entry.id}:`, e);
+          // Keep content as is if parsing fails
+        }
+      }
+      return entry;
     });
 
-    return res.status(200).json(entries);
+    return res.status(200).json(formattedEntries);
   } catch (error) {
     console.error("Error fetching journal entries:", error);
     return res.status(500).json({ message: "Failed to fetch journal entries" });
