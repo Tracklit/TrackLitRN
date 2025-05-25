@@ -7,13 +7,13 @@ export function StopwatchBackground() {
       height="100%"
       viewBox="0 0 300 300"
       xmlns="http://www.w3.org/2000/svg"
-      className="absolute top-0 left-0 w-full h-full -z-10 opacity-20"
+      className="absolute top-0 left-0 w-full h-full opacity-30"
     >
       {/* Outer Ring */}
-      <circle cx="150" cy="150" r="145" fill="none" stroke="#000" strokeWidth="2" />
+      <circle cx="150" cy="150" r="145" fill="none" stroke="#fff" strokeWidth="2" />
       
       {/* Stopwatch Body */}
-      <circle cx="150" cy="150" r="135" fill="none" stroke="#000" strokeWidth="4" />
+      <circle cx="150" cy="150" r="135" fill="none" stroke="#fff" strokeWidth="4" />
       
       {/* Ticks for minutes/seconds */}
       {Array.from({ length: 60 }).map((_, i) => {
@@ -33,7 +33,7 @@ export function StopwatchBackground() {
             y1={y1}
             x2={x2}
             y2={y2}
-            stroke="#333"
+            stroke="#fff"
             strokeWidth={strokeWidth}
           />
         );
@@ -52,7 +52,7 @@ export function StopwatchBackground() {
             y={y + 6} // Adjust for vertical centering
             fontSize="18"
             fontWeight="bold"
-            fill="#222"
+            fill="#fff"
             textAnchor="middle"
             dominantBaseline="middle"
           >

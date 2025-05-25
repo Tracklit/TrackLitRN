@@ -154,8 +154,8 @@ export default function StopwatchPage() {
               <StopwatchBackground />
               
               {/* Timer display */}
-              <div className="relative z-10 bg-white/90 rounded-xl px-6 py-3 border border-gray-200 shadow-inner">
-                <div className="text-6xl font-mono font-bold tracking-wider">
+              <div className="relative z-10 bg-gradient-to-b from-[hsl(215,70%,13%)] to-[hsl(220,80%,4%)] rounded-xl px-6 py-3 border border-gray-700 shadow-inner">
+                <div className="text-6xl font-mono font-bold tracking-wider text-white">
                   {formatTime(time)}
                 </div>
               </div>
