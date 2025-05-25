@@ -181,6 +181,9 @@ export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
     onClose();
   };
   
+  // Debug output to verify the component is receiving the correct props
+  console.log("MobileSidebar rendered with isOpen:", isOpen);
+  
   return (
     <>
       {/* Backdrop */}
@@ -193,7 +196,8 @@ export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
         }}
         style={{ 
           opacity: isOpen ? 1 : 0,
-          pointerEvents: isOpen ? 'auto' : 'none'
+          pointerEvents: isOpen ? 'auto' : 'none',
+          visibility: isOpen ? 'visible' : 'hidden'
         }}
       />
       
@@ -203,7 +207,8 @@ export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
         style={{ 
           backgroundColor: 'hsl(220 40% 15%)',
           transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
-          overscrollBehavior: 'contain'
+          overscrollBehavior: 'contain',
+          visibility: isOpen ? 'visible' : 'hidden' // Ensure it's visible when open
         }}
         onClick={(e) => e.stopPropagation()}
       >
