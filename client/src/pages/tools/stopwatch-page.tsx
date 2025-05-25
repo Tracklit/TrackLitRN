@@ -17,41 +17,52 @@ export default function StopwatchPage() {
   const startSoundRef = useRef<any>(null);
   const stopSoundRef = useRef<any>(null);
   
-  // Create audio context and sounds using the Web Audio API
+  // Setup audio context and sounds - using a simpler approach for mobile compatibility
   useEffect(() => {
-    // Function to create a beep sound
-    const createBeep = (frequency: number, duration: number) => {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      
-      oscillator.type = 'sine';
-      oscillator.frequency.value = frequency;
-      gainNode.gain.value = 0.7;
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      // Store the audio components for later use
-      return {
-        play: () => {
-          oscillator.start();
-          // Stop the oscillator after the specified duration
-          setTimeout(() => {
-            oscillator.stop();
-            // Clean up
-            oscillator.disconnect();
-            gainNode.disconnect();
-          }, duration);
-        }
-      };
+    // Function to play a beep with the given frequency using a new audio context each time
+    const playBeep = (frequency: number, duration: number) => {
+      try {
+        // Create a fresh audio context each time to avoid issues on mobile
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.value = frequency;
+        gainNode.gain.value = 0.7;
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        // Start the sound
+        oscillator.start();
+        
+        // Stop the sound after duration
+        setTimeout(() => {
+          oscillator.stop();
+          // Clean up
+          oscillator.disconnect();
+          gainNode.disconnect();
+          audioContext.close().catch(e => console.error("Error closing audio context:", e));
+        }, duration);
+        
+        return true; // Successfully played
+      } catch (e) {
+        console.error("Error creating audio:", e);
+        return false; // Failed to play
+      }
     };
     
-    // Create start and stop sounds with different frequencies
-    startSoundRef.current = createBeep(1200, 100); // Higher pitch for start
-    stopSoundRef.current = createBeep(800, 100);   // Lower pitch for stop
+    // Store the play functions
+    startSoundRef.current = {
+      play: () => playBeep(1200, 150) // Higher pitch for start
+    };
     
-    // No cleanup needed for this approach as the oscillators clean themselves up
+    stopSoundRef.current = {
+      play: () => playBeep(800, 150)  // Lower pitch for stop
+    };
+    
+    // We don't need cleanup since we create a new context each time
   }, []);
 
   // Setup interval for timer
@@ -68,20 +79,51 @@ export default function StopwatchPage() {
     };
   }, [isRunning]);
   
-  // Setup volume button handler
+  // Setup volume button handler for mobile devices
   useEffect(() => {
+    // Attempt to initialize audio context on first user interaction
+    const initAudio = () => {
+      try {
+        // Create a silent audio context to initialize audio on mobile
+        const tempContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        tempContext.resume().then(() => {
+          console.log("Audio context initialized on user interaction");
+        });
+      } catch (e) {
+        console.error("Failed to initialize audio:", e);
+      }
+    };
+
+    // Handle various volume button mappings across different devices
     const handleVolumeButton = (e: KeyboardEvent) => {
-      // Volume up button often maps to key code 38 (arrow up) on mobile
-      if (e.key === 'ArrowUp' || e.keyCode === 38) {
-        handleStartStop();
+      console.log(`Key pressed: ${e.key}, Code: ${e.code}, KeyCode: ${e.keyCode}`);
+      
+      // Check for various volume key representations
+      if (
+        e.key === 'AudioVolumeUp' || 
+        e.key === 'VolumeUp' || 
+        e.code === 'AudioVolumeUp' ||
+        e.keyCode === 175 ||  // Common code for volume up
+        e.keyCode === 38 ||   // Arrow up (sometimes mapped to volume)
+        e.key === 'ArrowUp'   // Arrow up key
+      ) {
+        console.log('Volume up detected!');
         e.preventDefault();
+        handleStartStop();
       }
     };
     
+    // Add touch event to initialize audio on first touch
+    document.addEventListener('touchstart', initAudio, { once: true });
+    
+    // Add both keydown and keyup listeners to increase chances of capturing the event
     window.addEventListener('keydown', handleVolumeButton);
+    window.addEventListener('keyup', handleVolumeButton);
     
     return () => {
+      document.removeEventListener('touchstart', initAudio);
       window.removeEventListener('keydown', handleVolumeButton);
+      window.removeEventListener('keyup', handleVolumeButton);
     };
   }, [isRunning]);
 
@@ -168,7 +210,7 @@ export default function StopwatchPage() {
                 className={`w-48 h-48 rounded-full flex items-center justify-center shadow-[0_10px_25px_-5px_rgba(0,0,0,0.2)] hover:shadow-[0_20px_25px_-5px_rgba(0,0,0,0.3)] transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 ${
                   isRunning 
                     ? "bg-destructive hover:bg-destructive/90 text-white focus:ring-destructive/20 danger-pulse-effect" 
-                    : "bg-primary hover:bg-primary/90 text-white focus:ring-primary/20 pulse-effect"
+                    : "bg-[hsl(215,70%,13%)] hover:bg-[hsl(215,70%,20%)] text-white focus:ring-primary/20 pulse-effect"
                 }`}
               >
                 <div className="flex flex-col items-center">
