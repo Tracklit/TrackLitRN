@@ -252,17 +252,17 @@ export default function HomePage() {
           <div className="grid grid-cols-2 gap-2 mx-auto" style={{ maxWidth: "540px", margin: "0 auto 8px" }}>
             {categoryCards.map((card, index) => (
               card.disabled ? (
-                <Card key={index} className="h-[140px] mx-auto mb-2 overflow-hidden opacity-50 cursor-not-allowed">
-                  <CardContent className="p-2.5 relative h-full flex flex-col justify-center">
+                <Card key={index} className="h-[140px] mx-auto mb-2 overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 border-muted/50">
+                  <CardContent className="p-2.5 relative h-full flex flex-col justify-center opacity-50">
                     <div className="flex flex-col items-center text-center gap-2">
-                      <div className="p-1.5 rounded-full bg-muted border border-muted">
-                        <div className="h-4 w-4 flex items-center justify-center">
+                      <div className="p-1.5 rounded-full bg-muted/50 border border-muted/50">
+                        <div className="h-4 w-4 flex items-center justify-center text-muted-foreground/70">
                           {card.icon}
                         </div>
                       </div>
                       <div>
-                        <h2 className="text-base font-bold mb-0.5 text-muted-foreground">{card.title}</h2>
-                        <p className="text-muted-foreground text-xs px-1 line-clamp-2 overflow-hidden">{card.description}</p>
+                        <h2 className="text-base font-bold mb-0.5 text-muted-foreground/70">{card.title}</h2>
+                        <p className="text-muted-foreground/70 text-xs px-1 line-clamp-2 overflow-hidden">{card.description}</p>
                       </div>
                     </div>
                   </CardContent>
