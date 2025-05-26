@@ -3548,6 +3548,171 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/journal/:id', deleteJournalEntry);
   
   // Use the standard journal entry endpoint for the basic save operation
+  // Meet Invitations API
+  app.get("/api/meet-invitations", async (req: Request, res: Response) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const invitations = await db
+        .select({
+          id: meetInvitations.id,
+          meetId: meetInvitations.meetId,
+          inviterId: meetInvitations.inviterId,
+          inviteeId: meetInvitations.inviteeId,
+          status: meetInvitations.status,
+          message: meetInvitations.message,
+          createdAt: meetInvitations.createdAt,
+          respondedAt: meetInvitations.respondedAt,
+          meet: {
+            id: meets.id,
+            name: meets.name,
+            date: meets.date,
+            location: meets.location,
+            events: meets.events,
+            status: meets.status,
+          },
+          inviter: {
+            id: users.id,
+            name: users.name,
+            username: users.username,
+          },
+        })
+        .from(meetInvitations)
+        .leftJoin(meets, eq(meetInvitations.meetId, meets.id))
+        .leftJoin(users, eq(meetInvitations.inviterId, users.id))
+        .where(eq(meetInvitations.inviteeId, req.user.id))
+        .orderBy(desc(meetInvitations.createdAt));
+
+      res.json(invitations);
+    } catch (error) {
+      console.error("Error fetching meet invitations:", error);
+      res.status(500).json({ error: "Failed to fetch meet invitations" });
+    }
+  });
+
+  app.post("/api/meet-invitations", async (req: Request, res: Response) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const invitationData = insertMeetInvitationSchema.parse(req.body);
+      
+      // Verify the user owns the meet
+      const meet = await db
+        .select()
+        .from(meets)
+        .where(and(eq(meets.id, invitationData.meetId), eq(meets.userId, req.user.id)))
+        .limit(1);
+
+      if (meet.length === 0) {
+        return res.status(403).json({ error: "You can only invite to your own meets" });
+      }
+
+      // Check if invitation already exists
+      const existingInvitation = await db
+        .select()
+        .from(meetInvitations)
+        .where(
+          and(
+            eq(meetInvitations.meetId, invitationData.meetId),
+            eq(meetInvitations.inviteeId, invitationData.inviteeId)
+          )
+        )
+        .limit(1);
+
+      if (existingInvitation.length > 0) {
+        return res.status(400).json({ error: "Invitation already sent to this user" });
+      }
+
+      const [invitation] = await db
+        .insert(meetInvitations)
+        .values({
+          ...invitationData,
+          inviterId: req.user.id,
+        })
+        .returning();
+
+      res.status(201).json(invitation);
+    } catch (error) {
+      console.error("Error creating meet invitation:", error);
+      res.status(500).json({ error: "Failed to create meet invitation" });
+    }
+  });
+
+  app.patch("/api/meet-invitations/:id", async (req: Request, res: Response) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!["accepted", "declined"].includes(status)) {
+      return res.status(400).json({ error: "Invalid status" });
+    }
+
+    try {
+      // Verify the user is the invitee
+      const invitation = await db
+        .select()
+        .from(meetInvitations)
+        .where(
+          and(
+            eq(meetInvitations.id, parseInt(id)),
+            eq(meetInvitations.inviteeId, req.user.id),
+            eq(meetInvitations.status, "pending")
+          )
+        )
+        .limit(1);
+
+      if (invitation.length === 0) {
+        return res.status(404).json({ error: "Invitation not found or already responded" });
+      }
+
+      // Update invitation status
+      const [updatedInvitation] = await db
+        .update(meetInvitations)
+        .set({
+          status,
+          respondedAt: new Date(),
+        })
+        .where(eq(meetInvitations.id, parseInt(id)))
+        .returning();
+
+      // If accepted, duplicate the meet for the invitee
+      if (status === "accepted") {
+        const originalMeet = await db
+          .select()
+          .from(meets)
+          .where(eq(meets.id, invitation[0].meetId))
+          .limit(1);
+
+        if (originalMeet.length > 0) {
+          await db.insert(meets).values({
+            userId: req.user.id,
+            name: originalMeet[0].name,
+            date: originalMeet[0].date,
+            location: originalMeet[0].location,
+            coordinates: originalMeet[0].coordinates,
+            events: originalMeet[0].events,
+            warmupTime: originalMeet[0].warmupTime,
+            arrivalTime: originalMeet[0].arrivalTime,
+            status: originalMeet[0].status,
+            isCoachAssigned: false,
+          });
+        }
+      }
+
+      res.json(updatedInvitation);
+    } catch (error) {
+      console.error("Error updating meet invitation:", error);
+      res.status(500).json({ error: "Failed to update meet invitation" });
+    }
+  });
+
   app.post('/api/journal/basic-save', async (req: Request, res: Response) => {
     try {
       if (!req.user?.id) {
