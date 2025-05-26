@@ -347,6 +347,16 @@ export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
             >
               Settings
             </NavItem>
+            {user?.role === 'admin' && (
+              <NavItem 
+                href="/admin" 
+                icon={<Shield className="h-5 w-5" />} 
+                isActive={location === '/admin'}
+                onClick={onClose}
+              >
+                Admin Panel
+              </NavItem>
+            )}
           </div>
         </div>
         
