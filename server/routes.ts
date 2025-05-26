@@ -8,6 +8,7 @@ import path from "path";
 import fs from "fs";
 import { transcribeAudioHandler, upload as audioUpload } from "./routes/transcribe";
 import { getUserJournalEntries, createJournalEntry, updateJournalEntry, deleteJournalEntry } from "./routes/journal";
+import { getWeatherForecast } from "./weather";
 import { GoogleSpreadsheet } from "google-spreadsheet";
 import { insertAthleteProfileSchema } from "@shared/athlete-profile-schema";
 import { 
@@ -1441,6 +1442,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     await dbStorage.deleteCoachNote(noteId);
     res.sendStatus(204);
+  });
+
+  // Weather endpoint
+  app.get("/api/weather", async (req: Request, res: Response) => {
+    try {
+      const { location, date } = req.query;
+      
+      if (!location || !date) {
+        return res.status(400).json({ error: "Location and date are required" });
+      }
+      
+      const weather = await getWeatherForecast(location as string, date as string);
+      
+      if (!weather) {
+        return res.status(404).json({ error: "Weather data not available" });
+      }
+      
+      res.json(weather);
+    } catch (error) {
+      console.error("Weather API error:", error);
+      res.status(500).json({ error: "Failed to fetch weather data" });
+    }
   });
 
   // User routes (excluding auth routes which are in auth.ts)

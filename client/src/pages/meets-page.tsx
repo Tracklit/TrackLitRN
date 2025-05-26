@@ -16,6 +16,15 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 
+interface WeatherData {
+  temperature: number;
+  condition: string;
+  windSpeed: number;
+  windDirection: string;
+  humidity: number;
+  icon: string;
+}
+
 export default function MeetsPage() {
   const [isCreateMeetOpen, setIsCreateMeetOpen] = useState(false);
   const [selectedMeet, setSelectedMeet] = useState<Meet | null>(null);
