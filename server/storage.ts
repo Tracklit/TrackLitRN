@@ -2267,6 +2267,22 @@ export class DatabaseStorage implements IStorage {
       .set({ lastMessageAt: new Date() })
       .where(eq(conversationsTable.id, messageData.conversationId));
 
+    // Get sender info for notification
+    const [sender] = await db
+      .select({ username: users.username })
+      .from(users)
+      .where(eq(users.id, messageData.senderId));
+
+    // Send message notification to receiver
+    if (sender) {
+      const { notificationSystem } = await import("./notification-system");
+      await notificationSystem.sendMessageNotification(
+        receiverId, 
+        messageData.senderId, 
+        sender.username
+      );
+    }
+
     return message;
   }
 

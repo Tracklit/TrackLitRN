@@ -10,6 +10,7 @@ import { transcribeAudioHandler, upload as audioUpload } from "./routes/transcri
 import { getUserJournalEntries, createJournalEntry, updateJournalEntry, deleteJournalEntry } from "./routes/journal";
 import { getWeatherForecast } from "./weather";
 import { GoogleSpreadsheet } from "google-spreadsheet";
+import { notificationSystem } from "./notification-system";
 import { insertAthleteProfileSchema } from "@shared/athlete-profile-schema";
 import { 
   insertMeetSchema, 
@@ -4280,15 +4281,12 @@ Keep the response professional, evidence-based, and specific to track and field 
         return res.status(400).send("Already following this user");
       }
 
-      // Create friend request notification
-      await dbStorage.createNotification({
-        userId: receiverId,
-        type: "friend_request",
-        title: "New Friend Request",
-        message: `${req.user.username} wants to connect with you`,
-        data: JSON.stringify({ fromUserId: req.user.id, fromUsername: req.user.username }),
-        isRead: false
-      });
+      // Send friend request notification
+      await notificationSystem.sendFriendRequestNotification(
+        receiverId, 
+        req.user.id, 
+        req.user.username
+      );
 
       res.status(201).json({ message: "Friend request sent" });
     } catch (error) {
@@ -4398,6 +4396,77 @@ Keep the response professional, evidence-based, and specific to track and field 
     }
   });
 
+  // ========== NOTIFICATION SYSTEM ENDPOINTS ==========
+
+  // Admin broadcast notification endpoint
+  app.post("/api/admin/broadcast-notification", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    // Check if user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    try {
+      const { title, message, targetUserIds } = req.body;
+      
+      if (!title || !message) {
+        return res.status(400).json({ error: "Title and message are required" });
+      }
+
+      await notificationSystem.sendAdminBroadcast(title, message, targetUserIds);
+      
+      res.json({ 
+        success: true, 
+        message: `Broadcast sent to ${targetUserIds?.length || 'all'} users` 
+      });
+    } catch (error) {
+      console.error("Error sending admin broadcast:", error);
+      res.status(500).json({ error: "Failed to send broadcast notification" });
+    }
+  });
+
+  // Manual trigger for automated notifications (admin only)
+  app.post("/api/admin/trigger-notifications", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    try {
+      await notificationSystem.processAutomatedNotifications();
+      res.json({ success: true, message: "Automated notifications processed" });
+    } catch (error) {
+      console.error("Error processing automated notifications:", error);
+      res.status(500).json({ error: "Failed to process automated notifications" });
+    }
+  });
+
+  // Generate weekly report for current user
+  app.post("/api/notifications/weekly-report", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      await notificationSystem.generateWeeklyReport(req.user.id);
+      res.json({ success: true, message: "Weekly report generated" });
+    } catch (error) {
+      console.error("Error generating weekly report:", error);
+      res.status(500).json({ error: "Failed to generate weekly report" });
+    }
+  });
+
   const httpServer = createServer(app);
+
+  // Start automated notification processing (runs every 6 hours)
+  setInterval(async () => {
+    try {
+      console.log('🔄 Running scheduled notification processing...');
+      await notificationSystem.processAutomatedNotifications();
+    } catch (error) {
+      console.error('Error in scheduled notification processing:', error);
+    }
+  }, 6 * 60 * 60 * 1000); // 6 hours
+
   return httpServer;
 }
