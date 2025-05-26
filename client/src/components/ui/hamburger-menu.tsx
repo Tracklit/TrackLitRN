@@ -87,16 +87,8 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
         )}
       >
         <div className="flex flex-col h-full overflow-hidden">
-          <div className="flex items-center justify-between p-4 border-b border-gray-700">
-            <h2 className="text-xl font-bold text-white">Menu</h2>
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={() => setIsOpen(false)}
-              className="text-white hover:bg-gray-800"
-            >
-              <X className="h-5 w-5" />
-            </Button>
+          <div className="p-4 border-b border-gray-700">
+            <h2 className="text-xl font-bold text-white"></h2>
           </div>
           
           <nav className="flex-1 overflow-y-auto p-4 space-y-1">
