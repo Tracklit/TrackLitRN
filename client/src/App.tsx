@@ -4,7 +4,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { DesktopSidebar, MobileSidebar, MobileSidebarButton } from "@/components/layout/minimal-sidebar";
+import { SidebarNavigation } from "@/components/layout/sidebar-navigation";
 
 
 // Import tool components
@@ -149,11 +149,7 @@ function MainApp() {
         background: "linear-gradient(135deg, hsl(220, 80%, 4%), hsl(215, 70%, 13%))",
         minHeight: "100vh" 
       }}>
-      {/* Mobile Menu Button */}
-      <MobileSidebarButton onClick={toggleMenu} isOpen={isMenuOpen} />
-      
-      {/* Mobile Sidebar - Always rendered but with slide animation */}
-      <MobileSidebar isOpen={isMenuOpen} onClose={toggleMenu} />
+      {/* Keep existing layout simple */}
       
       {/* Main Content */}
       <main className="pt-12">

@@ -22,6 +22,7 @@ interface NavItemProps {
   icon: React.ReactNode;
   children: React.ReactNode;
   isActive: boolean;
+  badge?: React.ReactNode;
 }
 
 function NavItem({ href, icon, children, isActive }: NavItemProps) {
@@ -105,6 +106,11 @@ export function SidebarNavigation({ isMobile = false }: { isMobile?: boolean }) 
             href="/meets" 
             icon={<Calendar className="h-5 w-5" />} 
             isActive={location === '/meets'}
+            badge={
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
+                PRO
+              </span>
+            }
           >
             Calendar
           </NavItem>

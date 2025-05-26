@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { HamburgerMenu } from '@/components/layout/hamburger-menu';
+import { HamburgerMenu } from '@/components/ui/hamburger-menu';
 import { Meet, Result, WorkoutSessionPreview } from '@shared/schema';
 import { Link } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
