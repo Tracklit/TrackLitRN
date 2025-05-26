@@ -143,7 +143,7 @@ function MainApp() {
       </div>
       
       {/* Main Content */}
-      <main className="pt-24 lg:ml-64">
+      <main className="pt-12 lg:ml-64">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Router />
         </div>
