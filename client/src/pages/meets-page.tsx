@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Header } from '@/components/layout/header';
 import { SidebarNavigation } from '@/components/layout/sidebar-navigation';
 import { Meet } from '@shared/schema';
@@ -47,6 +47,7 @@ export default function MeetsPage() {
   const [meetResults, setMeetResults] = useState<{[meetId: number]: any[]}>({});
   const [meetNotes, setMeetNotes] = useState<{[meetId: number]: string}>({});
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Custom hook to fetch weather data for a meet
   const useWeatherData = (location: string, date: string) => {
@@ -249,12 +250,13 @@ export default function MeetsPage() {
       });
 
       if (response.ok) {
+        // Invalidate meets cache to refresh the data
+        queryClient.invalidateQueries({ queryKey: ['/api/meets'] });
+        
         toast({
           title: 'Meet Deleted',
           description: 'The meet has been successfully deleted.',
         });
-        // Refresh the meets data
-        window.location.reload();
       } else {
         throw new Error('Failed to delete meet');
       }

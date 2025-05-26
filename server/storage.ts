@@ -387,6 +387,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteMeet(id: number): Promise<boolean> {
+    // First delete all related reminders
+    await db.delete(reminders).where(eq(reminders.meetId, id));
+    
+    // Then delete all related results
+    await db.delete(results).where(eq(results.meetId, id));
+    
+    // Finally delete the meet
     const result = await db.delete(meets).where(eq(meets.id, id));
     return !!result;
   }
