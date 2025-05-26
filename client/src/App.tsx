@@ -149,7 +149,8 @@ function MainApp() {
         background: "linear-gradient(135deg, hsl(220, 80%, 4%), hsl(215, 70%, 13%))",
         minHeight: "100vh" 
       }}>
-      {/* Keep existing layout simple */}
+      {/* Navigation */}
+      <SidebarNavigation />
       
       {/* Main Content */}
       <main className="pt-12">
