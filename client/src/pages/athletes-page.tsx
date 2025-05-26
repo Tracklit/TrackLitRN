@@ -146,16 +146,18 @@ export default function AthletesPage() {
                     )}
                     
                     <div className="flex items-center justify-between space-x-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleStartConversation(athlete.id)}
-                        disabled={startConversationMutation.isPending}
-                        className="bg-transparent border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
-                      >
-                        <MessageCircle className="w-3 h-3 mr-1" />
-                        Message
-                      </Button>
+                      {athlete.isFollowing && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleStartConversation(athlete.id)}
+                          disabled={startConversationMutation.isPending}
+                          className="bg-transparent border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                        >
+                          <MessageCircle className="w-3 h-3 mr-1" />
+                          Message
+                        </Button>
+                      )}
                       
                       <Button
                         size="sm"
@@ -170,12 +172,12 @@ export default function AthletesPage() {
                         {athlete.isFollowing ? (
                           <>
                             <UserMinus className="w-3 h-3 mr-1" />
-                            Unfollow
+                            Friends
                           </>
                         ) : (
                           <>
                             <UserPlus className="w-3 h-3 mr-1" />
-                            Follow
+                            Friend Request
                           </>
                         )}
                       </Button>
