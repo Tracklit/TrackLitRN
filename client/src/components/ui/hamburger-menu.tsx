@@ -147,13 +147,18 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
             <a
               href="/meets"
               className={cn(
-                "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
+                "flex items-center justify-between px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
                 location === "/meets" ? "bg-primary/10 text-primary" : "text-foreground"
               )}
               onClick={() => setIsOpen(false)}
             >
-              <Calendar className="h-5 w-5 mr-3" />
-              Calendar
+              <div className="flex items-center">
+                <Calendar className="h-5 w-5 mr-3" />
+                Calendar
+              </div>
+              <span className="bg-gradient-to-r from-amber-400 to-amber-600 text-black text-xs px-1.5 py-0.5 rounded font-bold">
+                PRO
+              </span>
             </a>
             <a
               href="/meets"
