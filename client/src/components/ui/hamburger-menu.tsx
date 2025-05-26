@@ -82,24 +82,24 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
       
       <div
         className={cn(
-          "fixed top-0 left-0 bottom-0 z-40 w-3/4 max-w-xs bg-background shadow-xl transition-transform duration-300 ease-in-out",
+          "fixed top-0 left-0 bottom-0 z-40 w-3/4 max-w-xs bg-gray-900 shadow-xl transition-transform duration-300 ease-in-out",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
-        style={{ visibility: isOpen ? 'visible' : 'hidden' }}
       >
-        <div className="p-6 space-y-4 bg-gray-900 h-full">
-          <div className="flex items-center justify-between">
+        <div className="flex flex-col h-full overflow-hidden">
+          <div className="flex items-center justify-between p-4 border-b border-gray-700">
             <h2 className="text-xl font-bold text-white">Menu</h2>
             <Button 
               variant="ghost" 
               size="icon"
               onClick={() => setIsOpen(false)}
+              className="text-white hover:bg-gray-800"
             >
-              <X className="h-4 w-4" />
+              <X className="h-5 w-5" />
             </Button>
           </div>
           
-          <nav className="space-y-1 mt-6">
+          <nav className="flex-1 overflow-y-auto p-4 space-y-1">
             {/* Dashboard */}
             <a
               href="/"
