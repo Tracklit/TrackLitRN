@@ -4220,11 +4220,13 @@ Keep the response professional, evidence-based, and specific to track and field 
 
     try {
       const { search } = req.query;
+      console.log("Fetching recent users for user:", req.user.id, "search:", search);
       const users = await storage.getRecentUsers(req.user.id, search as string);
+      console.log("Found users:", users.length);
       res.json(users);
     } catch (error) {
       console.error("Error fetching recent users:", error);
-      res.status(500).send("Error fetching recent users");
+      res.status(400).json({ error: error.message });
     }
   });
 
