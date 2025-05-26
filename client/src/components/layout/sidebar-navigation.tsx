@@ -8,6 +8,7 @@ import {
   Trophy, 
   LineChart, 
   Users, 
+  User,
   Settings, 
   Crown, 
   Award, 
@@ -147,6 +148,13 @@ export function SidebarNavigation({ isMobile = false }: { isMobile?: boolean }) 
             isActive={location === '/messages'}
           >
             Messages
+          </NavItem>
+          <NavItem 
+            href="/athlete-profile" 
+            icon={<User className="h-5 w-5" />} 
+            isActive={location === '/athlete-profile'}
+          >
+            Athlete Profile
           </NavItem>
           <NavItem 
             href="/athletes" 
