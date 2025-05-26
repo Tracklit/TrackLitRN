@@ -2283,7 +2283,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRecentUsers(currentUserId: number, search?: string): Promise<any[]> {
-    let query = db
+    const baseQuery = db
       .select({
         id: users.id,
         username: users.username,
@@ -2293,33 +2293,21 @@ export class DatabaseStorage implements IStorage {
         createdAt: users.createdAt
       })
       .from(users)
-      .where(ne(users.id, currentUserId))
-      .orderBy(desc(users.createdAt))
-      .limit(50);
-
-    if (search) {
-      query = db
-        .select({
-          id: users.id,
-          username: users.username,
-          name: users.name,
-          email: users.email,
-          bio: users.bio,
-          createdAt: users.createdAt
-        })
-        .from(users)
-        .where(and(
+      .where(
+        search ? 
+        and(
           ne(users.id, currentUserId),
           or(
             sql`${users.username} ILIKE ${`%${search}%`}`,
             sql`${users.name} ILIKE ${`%${search}%`}`
           )
-        ))
-        .orderBy(desc(users.createdAt))
-        .limit(50);
-    }
+        ) :
+        ne(users.id, currentUserId)
+      )
+      .orderBy(desc(users.createdAt))
+      .limit(50);
 
-    const recentUsers = await query;
+    const recentUsers = await baseQuery;
 
     // Get follow status for each user
     const usersWithFollowStatus = await Promise.all(
