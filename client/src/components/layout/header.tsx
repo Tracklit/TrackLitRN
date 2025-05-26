@@ -29,6 +29,9 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
         
         {user && (
           <div className="flex items-center space-x-4">
+            {/* Install App Button */}
+            <InstallAppButton />
+            
             <div className="ml-3">
               <NotificationBell />
             </div>
@@ -43,9 +46,6 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
                 <MessageSquare className="h-5 w-5" />
               </Button>
             </Link>
-            
-            {/* Install App Button */}
-            <InstallAppButton />
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
