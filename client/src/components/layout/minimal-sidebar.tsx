@@ -126,6 +126,7 @@ export function DesktopSidebar() {
 }
 
 import { InstallAppButton } from "@/components/install-app-button";
+import { NotificationBell } from "@/components/notification-bell";
 
 export function MobileSidebarButton({ onClick, isOpen }: { onClick: () => void, isOpen?: boolean }) {
   const { user } = useAuth();
@@ -154,6 +155,9 @@ export function MobileSidebarButton({ onClick, isOpen }: { onClick: () => void, 
         <div className="flex items-center space-x-2">
           {/* Install App Button */}
           <InstallAppButton />
+          
+          {/* Notification Bell */}
+          <NotificationBell />
           
           {/* User Profile */}
           <Link href="/profile">
