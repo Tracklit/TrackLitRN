@@ -116,7 +116,7 @@ export default function SubscriptionPage() {
             </div>
 
             {/* Pricing Cards */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
               {plans.map((plan) => {
                 const IconComponent = plan.icon;
                 const isCurrentPlan = currentPlan === plan.id;
@@ -136,30 +136,35 @@ export default function SubscriptionPage() {
                       </div>
                     )}
                     
-                    <CardHeader className={`text-center ${plan.popular ? 'pt-12' : 'pt-6'}`}>
-                      <div className={`w-16 h-16 mx-auto mb-4 rounded-full ${plan.bgColor} flex items-center justify-center`}>
-                        <IconComponent className={`h-8 w-8 ${plan.color}`} />
+                    <CardHeader className={`text-center ${plan.popular ? 'pt-10' : 'pt-4'} pb-4`}>
+                      <div className={`w-12 h-12 mx-auto mb-3 rounded-full ${plan.bgColor} flex items-center justify-center`}>
+                        <IconComponent className={`h-6 w-6 ${plan.color}`} />
                       </div>
-                      <CardTitle className="text-2xl font-bold text-white mb-2">
+                      <CardTitle className="text-xl font-bold text-white mb-2">
                         {plan.name}
                       </CardTitle>
-                      <div className="mb-4">
-                        <span className="text-4xl font-bold text-white">{plan.price}</span>
+                      <div className="mb-2">
+                        <span className="text-3xl font-bold text-white">{plan.price}</span>
                         {plan.period !== 'forever' && (
-                          <span className="text-blue-300 ml-2">/{plan.period}</span>
+                          <span className="text-blue-300 ml-1 text-sm">/{plan.period}</span>
                         )}
                       </div>
                     </CardHeader>
 
-                    <CardContent className="px-6 pb-6">
+                    <CardContent className="px-4 pb-4">
                       {/* Features */}
-                      <div className="space-y-3 mb-6">
-                        {plan.features.map((feature, index) => (
-                          <div key={index} className="flex items-start gap-3">
-                            <Check className="h-5 w-5 text-green-400 mt-0.5 flex-shrink-0" />
-                            <span className="text-blue-100 text-sm">{feature}</span>
+                      <div className="space-y-2 mb-4">
+                        {plan.features.slice(0, 6).map((feature, index) => (
+                          <div key={index} className="flex items-start gap-2">
+                            <Check className="h-4 w-4 text-green-400 mt-0.5 flex-shrink-0" />
+                            <span className="text-blue-100 text-xs leading-relaxed">{feature}</span>
                           </div>
                         ))}
+                        {plan.features.length > 6 && (
+                          <div className="text-blue-300 text-xs text-center pt-1">
+                            +{plan.features.length - 6} more features
+                          </div>
+                        )}
                       </div>
 
 
@@ -168,6 +173,7 @@ export default function SubscriptionPage() {
                       <Button
                         onClick={() => handleUpgrade(plan.name)}
                         disabled={isCurrentPlan}
+                        size="sm"
                         className={`w-full ${
                           isCurrentPlan 
                             ? 'bg-green-600 hover:bg-green-600 cursor-not-allowed' 
