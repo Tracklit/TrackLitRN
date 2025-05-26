@@ -21,126 +21,184 @@ import { useMutation } from "@tanstack/react-query";
 
 const rehabProgram = {
   title: "Acute Hamstring Strain Recovery",
-  duration: "3-6 weeks",
+  duration: "4-8 weeks",
   phases: [
     {
-      name: "Phase 1: Pain Reduction & Protection",
-      days: "Days 1-5",
-      goals: ["Reduce pain and inflammation", "Protect healing tissue", "Maintain mobility"],
+      name: "Phase 1: Immediate Care & Early Mobilization",
+      days: "Week 1",
+      goals: ["Control pain and swelling", "Prevent muscle shortening", "Begin gentle movement", "Protect healing tissue"],
       exercises: [
         {
-          name: "Gentle Hamstring Stretch",
-          sets: "2-3",
-          duration: "15-30 seconds",
-          description: "Lie on back, lift straight leg to comfortable stretch"
+          name: "RICE Protocol",
+          sets: "First 24-48 hours",
+          duration: "Continuous",
+          description: "Rest, Ice (15-20 min every 2-3 hrs), Compression bandaging, Elevation when possible"
         },
         {
-          name: "Ice Application",
+          name: "NSAIDs (if cleared by physician)",
+          sets: "As prescribed",
+          duration: "3-5 days max",
+          description: "Ibuprofen 400mg 3x daily with food OR Naproxen as directed to reduce inflammation"
+        },
+        {
+          name: "Compression Bandaging",
+          sets: "Daily application",
+          duration: "First week",
+          description: "Elastic wrap from knee to mid-thigh, snug but not cutting circulation"
+        },
+        {
+          name: "Very Gentle Range of Motion",
+          sets: "Every 2 hours",
+          duration: "5-10 slow reps",
+          description: "Sitting knee flexion/extension within pain-free range, stop at first sign of discomfort"
+        },
+        {
+          name: "Isometric Glute Activation",
           sets: "3-4 times daily",
-          duration: "15-20 minutes",
-          description: "Apply ice pack to reduce inflammation"
+          duration: "10 x 5-second holds",
+          description: "Lying prone, gently squeeze glutes without moving legs. Unloaded muscle activation"
         },
         {
-          name: "Walking",
-          sets: "As tolerated",
+          name: "Gentle Massage Therapy",
+          sets: "2-3 times daily",
           duration: "5-10 minutes",
-          description: "Pain-free walking to maintain mobility"
+          description: "Light effleurage strokes above and below injury site, avoid direct pressure on strain"
         }
       ]
     },
     {
-      name: "Phase 2: Early Strengthening",
-      days: "Days 6-14",
-      goals: ["Begin gentle strengthening", "Improve flexibility", "Progressive loading"],
+      name: "Phase 2: Progressive Loading & Mobility",
+      days: "Week 2",
+      goals: ["Increase range of motion", "Begin strengthening", "Reduce bandaging dependence", "Progress massage intensity"],
       exercises: [
         {
-          name: "Prone Hamstring Curls",
-          sets: "2-3 sets",
-          duration: "8-12 reps",
-          description: "Lie face down, bend knee against gravity or light resistance"
+          name: "Transition Bandaging",
+          sets: "As needed",
+          duration: "Reduce to activity only",
+          description: "Switch to elastic therapeutic tape or reduce compression wrap usage to activity periods only"
         },
         {
-          name: "Glute Bridges",
-          sets: "2-3 sets",
-          duration: "10-15 reps",
-          description: "Strengthen glutes and posterior chain"
+          name: "NSAIDs Reduction",
+          sets: "Taper dosage",
+          duration: "Days 5-7",
+          description: "Gradually reduce anti-inflammatory medication as acute inflammation subsides"
         },
         {
-          name: "Seated Hamstring Stretch",
-          sets: "3 sets",
-          duration: "30-45 seconds",
-          description: "Progressive stretching to improve flexibility"
+          name: "Active Range of Motion",
+          sets: "4-5 times daily",
+          duration: "2-3 sets of 15 reps",
+          description: "Seated and standing knee flexion/extension, progress range as tolerated"
         },
         {
-          name: "Stationary Bike",
-          sets: "1 session",
+          name: "Isometric Hamstring Holds",
+          sets: "3 times daily",
+          duration: "3 sets x 10 holds, 8-10 seconds each",
+          description: "Prone position, gentle hamstring contraction at multiple knee angles"
+        },
+        {
+          name: "Gentle Stationary Bike",
+          sets: "1-2 times daily",
           duration: "10-15 minutes",
-          description: "Low resistance, comfortable pace"
+          description: "No resistance, focus on smooth pedaling motion within comfortable range"
+        },
+        {
+          name: "Progressive Massage Therapy",
+          sets: "Daily",
+          duration: "10-15 minutes",
+          description: "Light cross-fiber friction massage around injury site, deeper pressure to surrounding muscles"
         }
       ]
     },
     {
-      name: "Phase 3: Progressive Strengthening",
-      days: "Days 15-21",
-      goals: ["Increase strength", "Introduce eccentric exercises", "Prepare for running"],
+      name: "Phase 3: Dynamic Strengthening",
+      days: "Week 3-4",
+      goals: ["Restore muscle strength", "Improve eccentric control", "Begin dynamic movement patterns"],
       exercises: [
         {
-          name: "Nordic Hamstring Curls",
-          sets: "2-3 sets",
-          duration: "3-6 reps",
-          description: "Eccentric strengthening with partner or TRX assistance"
+          name: "Discontinue Bandaging",
+          sets: "Assessment day 14-18",
+          duration: "Permanent",
+          description: "Remove compression support once swelling subsided and strength improving"
         },
         {
-          name: "Single Leg Romanian Deadlifts",
-          sets: "2-3 sets",
-          duration: "8-10 reps each leg",
-          description: "Progress from bodyweight to light weights"
+          name: "Eccentric Hamstring Strengthening",
+          sets: "Every other day",
+          duration: "3 sets x 6-10 reps",
+          description: "Assisted Nordic curls, single-leg Romanian deadlifts with body weight"
         },
         {
-          name: "Walking Lunges",
-          sets: "2-3 sets",
-          duration: "10-12 each leg",
-          description: "Dynamic strengthening and stability"
+          name: "Dynamic Stretching",
+          sets: "2-3 times daily",
+          duration: "10-15 repetitions",
+          description: "Leg swings, walking high knees, butt kicks (controlled amplitude)"
         },
         {
-          name: "Light Jogging",
-          sets: "1 session",
-          duration: "5-10 minutes",
-          description: "50% pace, stop if pain occurs"
+          name: "Progressive Walking/Jogging",
+          sets: "Daily",
+          duration: "15-25 minutes",
+          description: "Week 3: brisk walking. Week 4: walk-jog intervals (2 min walk, 30 sec jog)"
+        },
+        {
+          name: "Deep Tissue Massage",
+          sets: "3-4 times weekly",
+          duration: "15-20 minutes",
+          description: "Deeper pressure, trigger point release, myofascial work on entire posterior chain"
         }
       ]
     },
     {
-      name: "Phase 4: Return to Sport",
-      days: "Days 22+",
-      goals: ["Sport-specific training", "High-intensity exercises", "Injury prevention"],
+      name: "Phase 4: Return to Sport Preparation",
+      days: "Week 5-8",
+      goals: ["Sport-specific movement patterns", "High-intensity eccentric strength", "Injury prevention protocols"],
       exercises: [
         {
-          name: "Sprint Progressions",
-          sets: "Build gradually",
-          duration: "50-70-85-95%",
-          description: "Progressive speed increases over multiple sessions"
+          name: "Advanced Eccentric Training",
+          sets: "3 times weekly",
+          duration: "4 sets x 8-12 reps",
+          description: "Full Nordic curls, single-leg RDLs with weight, eccentric leg curls"
         },
         {
-          name: "Plyometric Exercises",
-          sets: "2-3 sets",
-          duration: "6-8 reps",
-          description: "Jump squats, bounding, reactive movements"
+          name: "Sprint Progression",
+          sets: "Every other day",
+          duration: "Progressive intensity",
+          description: "Week 5-6: 70% sprints x 4-6 reps. Week 7-8: 85-95% sprints x 6-8 reps"
         },
         {
-          name: "Agility Drills",
-          sets: "Multiple sets",
-          duration: "Sport-specific",
-          description: "Cutting, direction changes, sport movements"
+          name: "Plyometric Progression",
+          sets: "2-3 times weekly",
+          duration: "3-4 sets x 6-10 reps",
+          description: "Bounds, hops, reactive jumps. Progress from bilateral to unilateral"
         },
         {
-          name: "Strength Maintenance",
-          sets: "2-3 times/week",
-          duration: "Ongoing",
-          description: "Continue eccentric and strength exercises"
+          name: "Maintenance Massage",
+          sets: "1-2 times weekly",
+          duration: "20-30 minutes",
+          description: "Focus on maintaining tissue quality and preventing re-injury"
         }
       ]
     }
+  ]
+};
+
+// Daily Programs for Pro/Star Users
+const dailyPrograms = {
+  week1: [
+    { day: 1, focus: "Initial Assessment & RICE", exercises: ["RICE Protocol", "Very Gentle ROM", "Compression Bandaging"], intensity: "Very Light" },
+    { day: 2, focus: "Pain Management", exercises: ["Continue RICE", "Isometric Glute Activation", "Gentle Massage"], intensity: "Very Light" },
+    { day: 3, focus: "Early Mobilization", exercises: ["Gentle ROM", "Light Massage", "NSAIDs as needed"], intensity: "Light" },
+    { day: 4, focus: "Progressive Movement", exercises: ["Increased ROM", "Glute Activation", "Massage Therapy"], intensity: "Light" },
+    { day: 5, focus: "Preparation for Phase 2", exercises: ["Active ROM", "Pain Assessment", "Bandaging Evaluation"], intensity: "Light" },
+    { day: 6, focus: "Assessment Day", exercises: ["Range Testing", "Strength Assessment", "Plan Phase 2"], intensity: "Assessment" },
+    { day: 7, focus: "Recovery", exercises: ["Light Massage", "Gentle Movement", "Rest"], intensity: "Recovery" }
+  ],
+  week2: [
+    { day: 8, focus: "Phase 2 Initiation", exercises: ["Active ROM", "Isometric Holds", "Reduced Bandaging"], intensity: "Light-Moderate" },
+    { day: 9, focus: "Strength Building", exercises: ["Isometric Training", "Bike Work", "Progressive Massage"], intensity: "Moderate" },
+    { day: 10, focus: "Mobility Focus", exercises: ["Dynamic ROM", "Bike Training", "Cross-fiber Massage"], intensity: "Moderate" },
+    { day: 11, focus: "Progressive Loading", exercises: ["Isometric Progression", "Extended Bike", "Deep Massage"], intensity: "Moderate" },
+    { day: 12, focus: "Strength Assessment", exercises: ["Strength Testing", "ROM Evaluation", "Massage"], intensity: "Moderate" },
+    { day: 13, focus: "Phase 3 Preparation", exercises: ["Advanced ROM", "Strength Prep", "Assessment"], intensity: "Moderate" },
+    { day: 14, focus: "Recovery & Evaluation", exercises: ["Light Activity", "Massage", "Phase 3 Planning"], intensity: "Recovery" }
   ]
 };
 
@@ -149,6 +207,17 @@ export default function HamstringRehabPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [currentPhase, setCurrentPhase] = useState(0);
+  const [showDailyPrograms, setShowDailyPrograms] = useState(false);
+
+  const isProOrStar = user?.isPremium || user?.role === 'star';
+
+  const handleSkipAhead = (phaseIndex: number) => {
+    setCurrentPhase(phaseIndex);
+    toast({
+      title: "Phase Updated",
+      description: `Moved to ${rehabProgram.phases[phaseIndex].name}. Please consult your physician or coach before advancing phases.`,
+    });
+  };
 
   const assignProgramMutation = useMutation({
     mutationFn: async () => {
@@ -247,6 +316,72 @@ export default function HamstringRehabPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Pro/Star Daily Programs */}
+        {isProOrStar && (
+          <Card className="mb-6 bg-gradient-to-r from-purple-900/20 to-blue-900/20 border-purple-500/30">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <Star className="h-5 w-5 text-purple-400" />
+                  <h3 className="font-semibold text-purple-300">Pro/Star Daily Programs</h3>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowDailyPrograms(!showDailyPrograms)}
+                  className="border-purple-500/30 hover:bg-purple-900/20"
+                >
+                  {showDailyPrograms ? 'Hide' : 'Show'} Daily Programs
+                </Button>
+              </div>
+              
+              {showDailyPrograms && (
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-medium text-purple-200 mb-3">Week 1 - Initial Recovery</h4>
+                    <div className="space-y-2">
+                      {dailyPrograms.week1.map((day) => (
+                        <div key={day.day} className="bg-gray-800/30 p-3 rounded-lg border border-gray-700">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-medium text-gray-200">Day {day.day}</span>
+                            <span className="text-xs text-purple-300 bg-purple-900/30 px-2 py-1 rounded">
+                              {day.intensity}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-300 mb-2">{day.focus}</p>
+                          <div className="text-xs text-gray-400">
+                            {day.exercises.join(' • ')}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-medium text-purple-200 mb-3">Week 2 - Progressive Loading</h4>
+                    <div className="space-y-2">
+                      {dailyPrograms.week2.map((day) => (
+                        <div key={day.day} className="bg-gray-800/30 p-3 rounded-lg border border-gray-700">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-medium text-gray-200">Day {day.day}</span>
+                            <span className="text-xs text-blue-300 bg-blue-900/30 px-2 py-1 rounded">
+                              {day.intensity}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-300 mb-2">{day.focus}</p>
+                          <div className="text-xs text-gray-400">
+                            {day.exercises.join(' • ')}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Warning */}
         <Card className="mb-8 bg-yellow-900/20 border-yellow-500/30">
