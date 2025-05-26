@@ -2635,7 +2635,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Award spikes for workout completion
+  // Award spikes for workout completion (with rate limiting)
   app.post("/api/practice/completion/:completionId/reward", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
@@ -2645,6 +2645,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (isNaN(completionId)) {
         return res.status(400).send("Invalid completion ID");
+      }
+      
+      // Check daily workout completion reward limit (max 3 per day)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      const todaysWorkoutRewards = await dbStorage.getSpikeTransactionsBySourceAndDate(
+        userId, 
+        'workout_completion', 
+        today, 
+        tomorrow
+      );
+      
+      if (todaysWorkoutRewards.length >= 3) {
+        return res.status(429).json({ 
+          error: "Daily workout completion reward limit reached",
+          message: "You can only earn Spikes for 3 workout completions per day"
+        });
       }
       
       // Award spikes for workout completion (50 spikes)
@@ -2667,7 +2687,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Award spikes for creating a meet
+  // Award spikes for creating a meet (with rate limiting)
   app.post("/api/meets/:meetId/reward", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
@@ -2677,6 +2697,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (isNaN(meetId)) {
         return res.status(400).send("Invalid meet ID");
+      }
+      
+      // Check daily meet creation reward limit (max 2 per day)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      const todaysMeetRewards = await dbStorage.getSpikeTransactionsBySourceAndDate(
+        userId, 
+        'meet_creation', 
+        today, 
+        tomorrow
+      );
+      
+      if (todaysMeetRewards.length >= 2) {
+        return res.status(429).json({ 
+          error: "Daily meet creation reward limit reached",
+          message: "You can only earn Spikes for 2 meet creations per day"
+        });
       }
       
       // Award spikes for creating a meet (30 spikes)

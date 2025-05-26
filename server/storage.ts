@@ -1260,7 +1260,7 @@ export class DatabaseStorage implements IStorage {
             spikesToAward = 5;
             description = 'Login bonus: 5 spikes';
           } else {
-            // Already logged in today
+            // Already logged in today - prevent multiple login rewards
             if (lastLogin.toDateString() === today.toDateString()) {
               return existingStreak;
             }
@@ -1323,27 +1323,47 @@ export class DatabaseStorage implements IStorage {
             .returning();
         }
 
-        // Award spikes
+        // Award spikes with rate limiting protection
         if (spikesToAward > 0) {
-          const newBalance = user.spikes + spikesToAward;
+          // Check if user already received login bonus today (prevent abuse)
+          const todayStart = new Date(today);
+          const todayEnd = new Date(today);
+          todayEnd.setDate(todayEnd.getDate() + 1);
           
-          // Update user spikes
-          await tx
-            .update(users)
-            .set({ spikes: newBalance })
-            .where(eq(users.id, userId));
+          const existingLoginBonus = await tx
+            .select()
+            .from(spikeTransactions)
+            .where(
+              and(
+                eq(spikeTransactions.userId, userId),
+                eq(spikeTransactions.source, 'login_streak'),
+                gte(spikeTransactions.createdAt, todayStart),
+                lt(spikeTransactions.createdAt, todayEnd)
+              )
+            );
 
-          // Record transaction
-          await tx
-            .insert(spikeTransactions)
-            .values({
-              userId,
-              amount: spikesToAward,
-              balance: newBalance,
-              source: 'login_streak',
-              sourceId: streak.id,
-              description
-            });
+          // Only award if no login bonus given today (prevents rapid login/logout abuse)
+          if (existingLoginBonus.length === 0) {
+            const newBalance = (user.spikes || 0) + spikesToAward;
+            
+            // Update user spikes
+            await tx
+              .update(users)
+              .set({ spikes: newBalance })
+              .where(eq(users.id, userId));
+
+            // Record transaction
+            await tx
+              .insert(spikeTransactions)
+              .values({
+                userId,
+                amount: spikesToAward,
+                balance: newBalance,
+                source: 'login_streak',
+                sourceId: streak.id,
+                description
+              });
+          }
         }
 
         return streak;
@@ -1361,6 +1381,26 @@ export class DatabaseStorage implements IStorage {
       .from(spikeTransactions)
       .where(eq(spikeTransactions.userId, userId))
       .orderBy(desc(spikeTransactions.createdAt));
+  }
+
+  // Get spike transactions by source and date range (for rate limiting)
+  async getSpikeTransactionsBySourceAndDate(
+    userId: number, 
+    source: string, 
+    startDate: Date, 
+    endDate: Date
+  ): Promise<SpikeTransaction[]> {
+    return db
+      .select()
+      .from(spikeTransactions)
+      .where(
+        and(
+          eq(spikeTransactions.userId, userId),
+          eq(spikeTransactions.source, source),
+          gte(spikeTransactions.createdAt, startDate),
+          lt(spikeTransactions.createdAt, endDate)
+        )
+      );
   }
 
   async createSpikeTransaction(insertTransaction: InsertSpikeTransaction): Promise<SpikeTransaction> {
