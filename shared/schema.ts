@@ -656,6 +656,34 @@ export const insertClubMessageSchema = createInsertSchema(clubMessages).omit({
 
 export type InsertClubMessage = z.infer<typeof insertClubMessageSchema>;
 
+// Workout Reactions (Likes/Dislikes)
+export const workoutReactions = pgTable("workout_reactions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  sessionId: integer("session_id").notNull().references(() => programSessions.id),
+  reactionType: text("reaction_type").notNull(), // "like" or "dislike"
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const workoutReactionsRelations = relations(workoutReactions, ({ one }) => ({
+  user: one(users, {
+    fields: [workoutReactions.userId],
+    references: [users.id],
+  }),
+  session: one(programSessions, {
+    fields: [workoutReactions.sessionId],
+    references: [programSessions.id],
+  }),
+}));
+
+export const insertWorkoutReactionSchema = createInsertSchema(workoutReactions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertWorkoutReaction = z.infer<typeof insertWorkoutReactionSchema>;
+export type WorkoutReaction = typeof workoutReactions.$inferSelect;
+
 // Select types
 export type ClubMember = typeof clubMembers.$inferSelect;
 export type ChatGroupMember = typeof chatGroupMembers.$inferSelect;

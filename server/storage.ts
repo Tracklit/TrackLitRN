@@ -48,6 +48,8 @@ import {
   InsertProgramSession,
   ProgramPurchase,
   InsertProgramPurchase,
+  WorkoutReaction,
+  InsertWorkoutReaction,
   ProgramProgress,
   InsertProgramProgress,
   WorkoutLibrary,
@@ -81,7 +83,8 @@ import {
   programSessions,
   programPurchases,
   programProgress,
-  programAssignments
+  programAssignments,
+  workoutReactions
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, lt, gte, desc, asc, inArray, or, isNotNull, isNull } from "drizzle-orm";
@@ -236,6 +239,12 @@ export interface IStorage {
   getProgramProgress(userId: number, programId: number): Promise<ProgramProgress[]>;
   getSessionProgress(userId: number, sessionId: number): Promise<ProgramProgress | undefined>;
   recordProgramProgress(progress: InsertProgramProgress): Promise<ProgramProgress>;
+  
+  // Workout Reactions
+  getWorkoutReaction(userId: number, sessionId: number): Promise<WorkoutReaction | undefined>;
+  getSessionReactions(sessionId: number): Promise<{ likes: number; dislikes: number; userReaction?: 'like' | 'dislike' }>;
+  createOrUpdateWorkoutReaction(reaction: InsertWorkoutReaction): Promise<WorkoutReaction>;
+  deleteWorkoutReaction(userId: number, sessionId: number): Promise<boolean>;
   
   // Session store
   sessionStore: session.Store;
@@ -1933,6 +1942,65 @@ export class DatabaseStorage implements IStorage {
       .update(users)
       .set({ isPremium })
       .where(eq(users.id, userId));
+  }
+
+  // Workout Reactions
+  async getWorkoutReaction(userId: number, sessionId: number): Promise<WorkoutReaction | undefined> {
+    const [reaction] = await db
+      .select()
+      .from(workoutReactions)
+      .where(and(
+        eq(workoutReactions.userId, userId),
+        eq(workoutReactions.sessionId, sessionId)
+      ));
+    return reaction || undefined;
+  }
+
+  async getSessionReactions(sessionId: number): Promise<{ likes: number; dislikes: number; userReaction?: 'like' | 'dislike' }> {
+    const reactions = await db
+      .select()
+      .from(workoutReactions)
+      .where(eq(workoutReactions.sessionId, sessionId));
+    
+    const likes = reactions.filter(r => r.reactionType === 'like').length;
+    const dislikes = reactions.filter(r => r.reactionType === 'dislike').length;
+    
+    return { likes, dislikes };
+  }
+
+  async createOrUpdateWorkoutReaction(reaction: InsertWorkoutReaction): Promise<WorkoutReaction> {
+    // Check if reaction already exists
+    const existing = await this.getWorkoutReaction(reaction.userId, reaction.sessionId);
+    
+    if (existing) {
+      // Update existing reaction
+      const [updated] = await db
+        .update(workoutReactions)
+        .set({ reactionType: reaction.reactionType })
+        .where(and(
+          eq(workoutReactions.userId, reaction.userId),
+          eq(workoutReactions.sessionId, reaction.sessionId)
+        ))
+        .returning();
+      return updated;
+    } else {
+      // Create new reaction
+      const [created] = await db
+        .insert(workoutReactions)
+        .values(reaction)
+        .returning();
+      return created;
+    }
+  }
+
+  async deleteWorkoutReaction(userId: number, sessionId: number): Promise<boolean> {
+    const result = await db
+      .delete(workoutReactions)
+      .where(and(
+        eq(workoutReactions.userId, userId),
+        eq(workoutReactions.sessionId, sessionId)
+      ));
+    return result.rowCount > 0;
   }
 }
 
