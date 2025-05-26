@@ -3928,6 +3928,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).send("Error deleting reaction");
     }
   });
+
+  // Notifications API
+  app.get("/api/notifications", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const notifications = await storage.getNotifications(req.user!.id);
+      res.json(notifications);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      res.status(500).send("Error fetching notifications");
+    }
+  });
+
+  app.post("/api/notifications", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const notification = await storage.createNotification(req.body);
+      res.json(notification);
+    } catch (error) {
+      console.error("Error creating notification:", error);
+      res.status(500).send("Error creating notification");
+    }
+  });
+
+  app.patch("/api/notifications/:id/read", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const notificationId = parseInt(req.params.id);
+      if (isNaN(notificationId)) {
+        return res.status(400).send("Invalid notification ID");
+      }
+      
+      const success = await storage.markNotificationAsRead(notificationId);
+      
+      if (success) {
+        res.json({ success: true });
+      } else {
+        res.status(404).send("Notification not found");
+      }
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      res.status(500).send("Error marking notification as read");
+    }
+  });
+
+  app.patch("/api/notifications/mark-all-read", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const success = await storage.markAllNotificationsAsRead(req.user!.id);
+      res.json({ success });
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+      res.status(500).send("Error marking all notifications as read");
+    }
+  });
+
+  app.delete("/api/notifications/:id", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const notificationId = parseInt(req.params.id);
+      if (isNaN(notificationId)) {
+        return res.status(400).send("Invalid notification ID");
+      }
+      
+      const success = await storage.deleteNotification(notificationId);
+      
+      if (success) {
+        res.json({ success: true });
+      } else {
+        res.status(404).send("Notification not found");
+      }
+    } catch (error) {
+      console.error("Error deleting notification:", error);
+      res.status(500).send("Error deleting notification");
+    }
+  });
   
   const httpServer = createServer(app);
   return httpServer;

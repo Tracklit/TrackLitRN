@@ -2012,6 +2012,49 @@ export class DatabaseStorage implements IStorage {
       ));
     return result.rowCount > 0;
   }
+
+  // Notification operations
+  async getNotifications(userId: number): Promise<Notification[]> {
+    return await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt));
+  }
+
+  async createNotification(notification: InsertNotification): Promise<Notification> {
+    const [created] = await db
+      .insert(notifications)
+      .values(notification)
+      .returning();
+    return created;
+  }
+
+  async markNotificationAsRead(notificationId: number): Promise<boolean> {
+    const result = await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(eq(notifications.id, notificationId));
+    return result.rowCount > 0;
+  }
+
+  async markAllNotificationsAsRead(userId: number): Promise<boolean> {
+    const result = await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(and(
+        eq(notifications.userId, userId),
+        eq(notifications.isRead, false)
+      ));
+    return result.rowCount > 0;
+  }
+
+  async deleteNotification(notificationId: number): Promise<boolean> {
+    const result = await db
+      .delete(notifications)
+      .where(eq(notifications.id, notificationId));
+    return result.rowCount > 0;
+  }
 }
 
 export const storage = new DatabaseStorage();
