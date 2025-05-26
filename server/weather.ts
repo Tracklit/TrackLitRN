@@ -46,20 +46,39 @@ export async function getWeatherForecast(location: string, date: string): Promis
     }
     
     const data = await response.json() as any;
-    console.log('Weather API response:', JSON.stringify(data, null, 2));
+    console.log('Weather API response received successfully for', location);
+    console.log('Response keys:', Object.keys(data));
+    if (data.error) {
+      console.error('Weather API error:', data.error);
+      return null;
+    }
     
+    // Check if we have the expected data structure
     if (!data.forecast || !data.forecast.forecastday || !data.forecast.forecastday[0]) {
-      console.error('Invalid weather data structure');
+      console.error('Invalid weather data structure for', location);
+      // Return a fallback with basic weather info if API structure is different
+      if (data.current) {
+        console.log('Using current weather data instead');
+        return {
+          temperature: Math.round(data.current.temp_c),
+          condition: data.current.condition.text,
+          windSpeed: Math.round(data.current.wind_kph),
+          windDirection: data.current.wind_dir || 'Variable',
+          humidity: data.current.humidity,
+          icon: data.current.condition.icon
+        };
+      }
       return null;
     }
     
     const forecast = data.forecast.forecastday[0].day;
+    console.log('Forecast data:', forecast);
     
     return {
       temperature: Math.round(forecast.avgtemp_c),
       condition: forecast.condition.text,
       windSpeed: Math.round(forecast.maxwind_kph),
-      windDirection: getWindDirection(forecast.maxwind_kph), // WeatherAPI doesn't provide direction in day forecast
+      windDirection: getWindDirection(forecast.maxwind_kph),
       humidity: forecast.avghumidity,
       icon: forecast.condition.icon
     };
