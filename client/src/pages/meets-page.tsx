@@ -36,6 +36,7 @@ export default function MeetsPage() {
   const [isProUser, setIsProUser] = useState(false); // TODO: Get from user context
   const [isTickerVisible, setIsTickerVisible] = useState(true);
   const [isProModalOpen, setIsProModalOpen] = useState(false);
+  const [invitations, setInvitations] = useState<any[]>([]);
   const { toast } = useToast();
 
   // Custom hook to fetch weather data for a meet
