@@ -1,65 +1,54 @@
 import { useState } from "react";
-import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Search, UserPlus, UserMinus, MessageCircle, Users } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { cn } from "@/lib/utils";
-import type { User, Follow } from "@shared/schema";
-import { Link } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Search, MessageCircle, UserPlus, UserMinus } from "lucide-react";
 
-interface UserWithFollowStatus extends User {
+interface User {
+  id: number;
+  username: string;
+  name: string;
+  email: string;
+  bio?: string;
   isFollowing?: boolean;
   isFollower?: boolean;
-  followersCount?: number;
-  followingCount?: number;
 }
 
 export default function AthletesPage() {
-  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<"discover" | "following" | "followers">("discover");
 
-  // Fetch all users (recent users for discovery)
-  const { data: allUsers = [] } = useQuery<UserWithFollowStatus[]>({
-    queryKey: ["/api/users/recent", searchQuery],
+  // Get current user
+  const { data: currentUser } = useQuery({
+    queryKey: ["/api/user"],
+  });
+
+  // Fetch users based on search
+  const { data: users = [], isLoading } = useQuery<User[]>({
+    queryKey: ["/api/athletes", searchQuery],
     queryFn: async () => {
-      const response = await apiRequest("GET", `/api/users/recent${searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : ""}`);
+      const url = searchQuery.trim() 
+        ? `/api/athletes?search=${encodeURIComponent(searchQuery.trim())}`
+        : "/api/athletes";
+      const response = await apiRequest("GET", url);
       return response.json();
     },
-    enabled: !!user,
-  });
-
-  // Fetch following list
-  const { data: following = [] } = useQuery<UserWithFollowStatus[]>({
-    queryKey: ["/api/following"],
-    enabled: !!user && activeTab === "following",
-  });
-
-  // Fetch followers list
-  const { data: followers = [] } = useQuery<UserWithFollowStatus[]>({
-    queryKey: ["/api/followers"],
-    enabled: !!user && activeTab === "followers",
+    enabled: !!currentUser,
   });
 
   // Follow/Unfollow mutation
   const followMutation = useMutation({
     mutationFn: async ({ userId, action }: { userId: number; action: "follow" | "unfollow" }) => {
       if (action === "follow") {
-        return await apiRequest("POST", "/api/follow", { followingId: userId });
+        return await apiRequest("POST", `/api/follow/${userId}`);
       } else {
         return await apiRequest("DELETE", `/api/follow/${userId}`);
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/following"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/followers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/athletes"] });
     },
   });
 
@@ -69,7 +58,6 @@ export default function AthletesPage() {
       return await apiRequest("POST", "/api/conversations", { receiverId });
     },
     onSuccess: () => {
-      // Navigate to messages page
       window.location.href = "/messages";
     },
   });
@@ -85,172 +73,119 @@ export default function AthletesPage() {
     startConversationMutation.mutate(receiverId);
   };
 
-  const getCurrentUsers = () => {
-    switch (activeTab) {
-      case "following":
-        return following;
-      case "followers":
-        return followers;
-      case "discover":
-      default:
-        return allUsers.filter(u => u.id !== user?.id); // Exclude current user
-    }
-  };
-
-  const filteredUsers = getCurrentUsers().filter(u =>
-    u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    u.username.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  if (!user) return null;
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-[#010a18] flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   return (
-    <div className="container max-w-screen-xl mx-auto p-4 pt-20 md:pt-24 md:pl-72 pb-20">
+    <div className="min-h-screen bg-[#010a18] p-4">
       <div className="max-w-4xl mx-auto">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-6 w-6" />
-              Athletes
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Discover and connect with other athletes in the TrackLit community
-            </p>
-          </CardHeader>
-          <CardContent>
-            {/* Search Bar */}
-            <div className="relative mb-6">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search athletes..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-white mb-2">Athletes</h1>
+          <p className="text-gray-400">Discover and connect with fellow athletes</p>
+        </div>
 
-            {/* Tabs */}
-            <div className="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-lg">
-              <button
-                onClick={() => setActiveTab("discover")}
-                className={cn(
-                  "flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors",
-                  activeTab === "discover"
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-600 hover:text-gray-900"
-                )}
-              >
-                Discover
-              </button>
-              <button
-                onClick={() => setActiveTab("following")}
-                className={cn(
-                  "flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors",
-                  activeTab === "following"
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-600 hover:text-gray-900"
-                )}
-              >
-                Following ({following.length})
-              </button>
-              <button
-                onClick={() => setActiveTab("followers")}
-                className={cn(
-                  "flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors",
-                  activeTab === "followers"
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-600 hover:text-gray-900"
-                )}
-              >
-                Followers ({followers.length})
-              </button>
-            </div>
+        {/* Search Bar */}
+        <div className="relative mb-6">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input
+            type="text"
+            placeholder="Search athletes by name or username..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 bg-gray-800/50 border-gray-700 text-white placeholder-gray-400 focus:border-blue-500"
+          />
+        </div>
 
-            {/* Users Grid */}
-            {filteredUsers.length === 0 ? (
-              <div className="text-center py-12">
-                <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  {searchQuery ? "No athletes found" : 
-                   activeTab === "following" ? "Not following anyone yet" :
-                   activeTab === "followers" ? "No followers yet" :
-                   "No athletes to discover"}
-                </h3>
-                <p className="text-gray-500">
-                  {searchQuery ? "Try adjusting your search terms" :
-                   activeTab === "discover" ? "Check back later for new athletes to follow" :
-                   "Start following athletes to build your network"}
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full" />
+          </div>
+        )}
+
+        {/* Users Grid */}
+        {!isLoading && (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {users.length === 0 ? (
+              <div className="col-span-full text-center py-8">
+                <p className="text-gray-400">
+                  {searchQuery ? "No athletes found matching your search." : "No athletes to display."}
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredUsers.map((athlete) => (
-                  <Card key={athlete.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex items-start space-x-3">
-                        <Avatar className="h-12 w-12">
-                          <AvatarFallback name={athlete.name} />
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-sm truncate">{athlete.name}</h3>
-                          <p className="text-xs text-gray-500 truncate">@{athlete.username}</p>
-                          {athlete.bio && (
-                            <p className="text-xs text-gray-600 mt-1 line-clamp-2">{athlete.bio}</p>
-                          )}
-                          <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
-                            <span>{athlete.followersCount || 0} followers</span>
-                            <span>{athlete.followingCount || 0} following</span>
-                          </div>
-                          <div className="flex items-center gap-1 mt-2 text-xs text-gray-500">
-                            <span>Joined {formatDistanceToNow(new Date(athlete.createdAt || Date.now()), { addSuffix: true })}</span>
-                          </div>
-                        </div>
+              users.map((athlete) => (
+                <Card key={athlete.id} className="bg-gray-800/50 border-gray-700 hover:bg-gray-800/70 transition-colors">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center space-x-3">
+                      <Avatar className="w-12 h-12">
+                        <AvatarImage src="" />
+                        <AvatarFallback className="bg-blue-600 text-white">
+                          {athlete.name?.charAt(0).toUpperCase() || athlete.username?.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-white text-base truncate">
+                          {athlete.name || athlete.username}
+                        </CardTitle>
+                        <p className="text-gray-400 text-sm truncate">@{athlete.username}</p>
                       </div>
-
-                      <div className="flex items-center justify-between mt-4 space-x-2">
-                        <Button
-                          variant={athlete.isFollowing ? "outline" : "default"}
-                          size="sm"
-                          onClick={() => handleFollow(athlete.id, athlete.isFollowing || false)}
-                          disabled={followMutation.isPending}
-                          className="flex-1"
-                        >
-                          {athlete.isFollowing ? (
-                            <>
-                              <UserMinus className="h-3 w-3 mr-1" />
-                              Unfollow
-                            </>
-                          ) : (
-                            <>
-                              <UserPlus className="h-3 w-3 mr-1" />
-                              Follow
-                            </>
-                          )}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleStartConversation(athlete.id)}
-                          disabled={startConversationMutation.isPending}
-                        >
-                          <MessageCircle className="h-3 w-3" />
-                        </Button>
-                      </div>
-
-                      {athlete.role && athlete.role !== "athlete" && (
-                        <div className="mt-2">
-                          <Badge variant="secondary" className="text-xs">
-                            {athlete.role === "coach" ? "Coach" : athlete.role}
-                          </Badge>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                    </div>
+                  </CardHeader>
+                  
+                  <CardContent className="pt-0">
+                    {athlete.bio && (
+                      <CardDescription className="text-gray-300 text-sm mb-4 line-clamp-2">
+                        {athlete.bio}
+                      </CardDescription>
+                    )}
+                    
+                    <div className="flex items-center justify-between space-x-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleStartConversation(athlete.id)}
+                        disabled={startConversationMutation.isPending}
+                        className="bg-transparent border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                      >
+                        <MessageCircle className="w-3 h-3 mr-1" />
+                        Message
+                      </Button>
+                      
+                      <Button
+                        size="sm"
+                        onClick={() => handleFollow(athlete.id, athlete.isFollowing || false)}
+                        disabled={followMutation.isPending}
+                        className={
+                          athlete.isFollowing
+                            ? "bg-gray-600 hover:bg-gray-700 text-white"
+                            : "bg-blue-600 hover:bg-blue-700 text-white"
+                        }
+                      >
+                        {athlete.isFollowing ? (
+                          <>
+                            <UserMinus className="w-3 h-3 mr-1" />
+                            Unfollow
+                          </>
+                        ) : (
+                          <>
+                            <UserPlus className="w-3 h-3 mr-1" />
+                            Follow
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
             )}
-          </CardContent>
-        </Card>
+          </div>
+        )}
       </div>
     </div>
   );

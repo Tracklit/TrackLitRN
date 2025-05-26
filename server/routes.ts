@@ -1021,10 +1021,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/athletes", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    
-    const coachId = req.user!.id;
-    const athletes = await dbStorage.getAthletesByCoachId(coachId);
-    res.json(athletes);
+
+    try {
+      const { search } = req.query;
+      console.log("Fetching athletes with search:", search);
+      
+      // Get all users except the current user
+      const allUsers = await dbStorage.getAllUsers();
+      let users = allUsers.filter(user => user.id !== req.user.id);
+      
+      // Apply search filter if provided
+      if (search && typeof search === 'string') {
+        const searchTerm = search.toLowerCase();
+        users = users.filter(user => 
+          user.username.toLowerCase().includes(searchTerm) ||
+          (user.name && user.name.toLowerCase().includes(searchTerm))
+        );
+      }
+      
+      // Add follow status for each user
+      const usersWithStatus = await Promise.all(
+        users.map(async (user) => {
+          try {
+            const followStatus = await dbStorage.getFollowStatus(req.user.id, user.id);
+            return {
+              ...user,
+              isFollowing: followStatus.isFollowing || false,
+              isFollower: followStatus.isFollower || false
+            };
+          } catch (error) {
+            return {
+              ...user,
+              isFollowing: false,
+              isFollower: false
+            };
+          }
+        })
+      );
+      
+      console.log("Found athletes:", usersWithStatus.length);
+      res.json(usersWithStatus);
+    } catch (error) {
+      console.error("Error fetching athletes:", error);
+      res.status(500).send("Error fetching athletes");
+    }
   });
 
   app.post("/api/coaches", async (req: Request, res: Response) => {
