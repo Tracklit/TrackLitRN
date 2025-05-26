@@ -215,7 +215,7 @@ export default function RehabPage() {
           {rehabCategories.map((category) => (
             <Card 
               key={category.id} 
-              className={`bg-gray-800/30 border-2 transition-all duration-200 hover:bg-gray-800/40 ${category.color}`}
+              className={`bg-gray-800/30 border transition-all duration-200 hover:bg-gray-800/40 ${category.color}`}
             >
               <CardHeader>
                 <div className="flex items-center gap-4">
