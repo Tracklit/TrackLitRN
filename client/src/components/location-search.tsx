@@ -299,23 +299,23 @@ export function LocationSearch({ onLocationSelect, defaultValue = '' }: Location
         
         {/* Results dropdown */}
         {resultsVisible && (
-          <div className="absolute z-10 mt-1 w-full bg-white rounded-md border shadow-lg max-h-60 overflow-auto">
+          <div className="absolute z-10 mt-1 w-full bg-[#0c1525] border border-blue-800/50 rounded-md shadow-lg max-h-60 overflow-auto">
             {isSearching ? (
-              <div className="px-3 py-4 text-sm text-center text-muted-foreground">
+              <div className="px-3 py-4 text-sm text-center text-blue-300">
                 <div className="flex items-center justify-center">
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   <span>Searching locations...</span>
                 </div>
               </div>
             ) : searchResults.length === 0 ? (
-              <div className="px-3 py-3 text-sm text-center text-muted-foreground">
+              <div className="px-3 py-3 text-sm text-center text-blue-300">
                 No locations found
               </div>
             ) : (
               <>
                 {/* Popular Venues section */}
                 {!inputValue && (
-                  <div className="px-3 py-2 text-xs font-medium text-muted-foreground">
+                  <div className="px-3 py-2 text-xs font-medium text-blue-400">
                     Popular Track Venues
                   </div>
                 )}
@@ -331,14 +331,14 @@ export function LocationSearch({ onLocationSelect, defaultValue = '' }: Location
                   return (
                     <div
                       key={`${location.name}-${location.latitude}-${location.longitude}-${index}`}
-                      className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                      className="px-3 py-2 hover:bg-blue-800/30 cursor-pointer"
                       onClick={() => handleLocationSelect(location)}
                     >
                       <div className="flex items-start">
-                        <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground mr-2 flex-shrink-0" />
+                        <MapPin className="h-4 w-4 mt-0.5 text-blue-400 mr-2 flex-shrink-0" />
                         <div>
-                          <div className="font-medium">{location.name}</div>
-                          <div className="text-xs text-muted-foreground">
+                          <div className="font-medium text-white">{location.name}</div>
+                          <div className="text-xs text-blue-300">
                             {locationString}
                           </div>
                         </div>
@@ -349,7 +349,7 @@ export function LocationSearch({ onLocationSelect, defaultValue = '' }: Location
                 
                 {/* Search anywhere tip */}
                 {inputValue && inputValue.length < 3 && (
-                  <div className="px-3 py-2 text-xs text-center text-muted-foreground border-t">
+                  <div className="px-3 py-2 text-xs text-center text-blue-400 border-t border-blue-800/50">
                     Type at least 3 characters to search anywhere in the world
                   </div>
                 )}

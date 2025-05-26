@@ -5,16 +5,19 @@ import { SidebarNavigation } from '@/components/layout/sidebar-navigation';
 import { Meet } from '@shared/schema';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, MapPin, Loader2, Plus } from 'lucide-react';
+import { Calendar, MapPin, Loader2, Plus, Share2 } from 'lucide-react';
 import { CreateMeetModal } from '@/components/create-meet-modal';
 import { PreparationTimeline } from '@/components/preparation-timeline';
+import { MeetCalendar } from '@/components/meet-calendar';
 import { formatDate, formatTime } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
 
 export default function MeetsPage() {
   const [isCreateMeetOpen, setIsCreateMeetOpen] = useState(false);
   const [selectedMeet, setSelectedMeet] = useState<Meet | null>(null);
+  const { toast } = useToast();
   
   // Fetch meets
   const { data: meets, isLoading } = useQuery<Meet[]>({
@@ -28,6 +31,23 @@ export default function MeetsPage() {
   const pastMeets = meets?.filter(meet => 
     new Date(meet.date) < new Date() || meet.status === 'completed'
   ) || [];
+
+  const handleShareMeet = async (meet: Meet) => {
+    try {
+      const shareUrl = `${window.location.origin}/meets/shared/${meet.id}`;
+      await navigator.clipboard.writeText(shareUrl);
+      toast({
+        title: 'Meet Shared!',
+        description: 'Share link copied to clipboard. Other athletes can save this meet to their calendar.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Share Failed',
+        description: 'Could not copy share link. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  };
 
   return (
     <div className="flex h-screen bg-[#010a18] text-white">
@@ -60,6 +80,12 @@ export default function MeetsPage() {
                   className="data-[state=active]:bg-blue-700 data-[state=active]:text-white"
                 >
                   Past
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="calendar"
+                  className="data-[state=active]:bg-blue-700 data-[state=active]:text-white"
+                >
+                  Calendar
                 </TabsTrigger>
               </TabsList>
               

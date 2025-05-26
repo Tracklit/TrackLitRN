@@ -19,6 +19,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { CreateReminderDialog } from './create-reminder-dialog';
+import { CustomizePreparationModal } from './customize-preparation-modal';
 
 // Define timeline item types for the preparation steps
 interface TimelineItem {
@@ -147,6 +148,7 @@ export function PreparationTimeline({ meet, reminders: initialReminders, onCusto
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isAddReminderOpen, setIsAddReminderOpen] = useState(false);
+  const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
 
   // Fetch reminders from API
   const { data: remindersData, isLoading } = useQuery({
@@ -356,7 +358,7 @@ export function PreparationTimeline({ meet, reminders: initialReminders, onCusto
         <Button 
           className="flex-1 border-blue-700 text-blue-300 hover:bg-blue-900/30 hover:text-blue-100" 
           variant="outline"
-          onClick={onCustomize}
+          onClick={() => setIsCustomizeOpen(true)}
         >
           Customize Plan
         </Button>
@@ -377,6 +379,15 @@ export function PreparationTimeline({ meet, reminders: initialReminders, onCusto
           onClose={() => setIsAddReminderOpen(false)}
           meet={meet}
           useSuggestion={true}
+        />
+      )}
+      
+      {/* Customize Preparation Modal */}
+      {isCustomizeOpen && (
+        <CustomizePreparationModal
+          isOpen={isCustomizeOpen}
+          onClose={() => setIsCustomizeOpen(false)}
+          meet={meet}
         />
       )}
     </div>
