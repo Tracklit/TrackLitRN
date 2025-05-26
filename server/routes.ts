@@ -4213,6 +4213,21 @@ Keep the response professional, evidence-based, and specific to track and field 
     }
   });
 
+  app.get("/api/users/:userId/follow-status", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const targetUserId = parseInt(req.params.userId);
+      const status = await storage.getFollowStatus(req.user.id, targetUserId);
+      res.json(status);
+    } catch (error) {
+      console.error("Error fetching follow status:", error);
+      res.status(500).send("Error fetching follow status");
+    }
+  });
+
   app.get("/api/users/recent", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) {
       return res.sendStatus(401);
@@ -4227,21 +4242,6 @@ Keep the response professional, evidence-based, and specific to track and field 
     } catch (error) {
       console.error("Error fetching recent users:", error);
       res.status(400).json({ error: error.message });
-    }
-  });
-
-  app.get("/api/users/:userId/follow-status", async (req: Request, res: Response) => {
-    if (!req.isAuthenticated()) {
-      return res.sendStatus(401);
-    }
-
-    try {
-      const targetUserId = parseInt(req.params.userId);
-      const status = await storage.getFollowStatus(req.user.id, targetUserId);
-      res.json(status);
-    } catch (error) {
-      console.error("Error fetching follow status:", error);
-      res.status(500).send("Error fetching follow status");
     }
   });
 
