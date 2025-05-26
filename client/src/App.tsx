@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarNavigation } from "@/components/layout/sidebar-navigation";
 import { HamburgerMenu } from "@/components/ui/hamburger-menu";
+import { Header } from "@/components/layout/header";
 
 
 // Import tool components
@@ -130,6 +131,9 @@ function MainApp() {
         background: "linear-gradient(135deg, hsl(220, 80%, 4%), hsl(215, 70%, 13%))",
         minHeight: "100vh" 
       }}>
+      {/* Top Header Bar */}
+      <Header />
+      
       {/* Hamburger Menu for smaller screens */}
       <div className="lg:hidden">
         <div className="fixed top-4 left-4 z-50">
@@ -143,7 +147,7 @@ function MainApp() {
       </div>
       
       {/* Main Content */}
-      <main className="pt-12 lg:ml-64">
+      <main className="pt-20 lg:ml-64">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Router />
         </div>
