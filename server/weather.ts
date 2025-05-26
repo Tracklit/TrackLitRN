@@ -12,6 +12,7 @@ interface WeatherData {
 export async function getWeatherForecast(location: string, date: string): Promise<WeatherData | null> {
   try {
     const apiKey = process.env.WEATHER_API_KEY;
+    console.log('Weather API request for:', location, date);
     if (!apiKey) {
       console.error('WEATHER_API_KEY not found');
       return null;
@@ -39,10 +40,13 @@ export async function getWeatherForecast(location: string, date: string): Promis
     
     if (!response.ok) {
       console.error('Weather API error:', response.status, response.statusText);
+      const errorText = await response.text();
+      console.error('Weather API error response:', errorText);
       return null;
     }
     
     const data = await response.json() as any;
+    console.log('Weather API response:', JSON.stringify(data, null, 2));
     
     if (!data.forecast || !data.forecast.forecastday || !data.forecast.forecastday[0]) {
       console.error('Invalid weather data structure');
