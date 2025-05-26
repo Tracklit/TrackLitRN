@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Header } from '@/components/layout/header';
-import { SidebarNavigation } from '@/components/layout/sidebar-navigation';
+
 import { Meet } from '@shared/schema';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -271,8 +271,6 @@ export default function MeetsPage() {
 
   return (
     <div className="flex h-screen bg-[#010a18] text-white">
-      <SidebarNavigation />
-      
       <div className="flex-1 overflow-auto">
         <Header title="Meets" />
         
