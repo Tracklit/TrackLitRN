@@ -61,7 +61,7 @@ import { Link, useLocation } from "wouter";
 export default function PracticePage() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [, navigate] = useLocation(); // Add navigation hook
+  const [, navigate] = useLocation();
   const { assignedPrograms, isLoading: isLoadingPrograms } = useAssignedPrograms();
   
   // Fetch athlete profile for event preferences
@@ -647,7 +647,11 @@ export default function PracticePage() {
             {todaysMeets.length > 0 && (
               <div className="mb-6">
                 {todaysMeets.map(meet => (
-                  <div key={meet.id} className="bg-gradient-to-r from-amber-600/20 to-orange-600/20 border border-amber-500/30 rounded-lg p-4 mb-3">
+                  <div 
+                    key={meet.id} 
+                    className="bg-gradient-to-r from-amber-600/20 to-orange-600/20 border border-amber-500/30 rounded-lg p-4 mb-3 cursor-pointer hover:from-amber-600/30 hover:to-orange-600/30 transition-all duration-200"
+                    onClick={() => navigate('/meets')}
+                  >
                     <div className="flex items-center justify-between">
                       <div>
                         <h4 className="font-semibold text-amber-200 mb-1">{meet.name}</h4>
