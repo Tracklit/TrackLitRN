@@ -4231,12 +4231,83 @@ Keep the response professional, evidence-based, and specific to track and field 
     }
 
     try {
-      const targetUserId = parseInt(req.params.userId);
-      await storage.followUser(req.user.id, targetUserId);
-      res.json({ success: true });
+      const receiverId = parseInt(req.params.userId);
+      if (isNaN(receiverId)) return res.status(400).send("Invalid user ID");
+
+      // Check if already following or request exists
+      const followStatus = await dbStorage.getFollowStatus(req.user.id, receiverId);
+      if (followStatus.isFollowing) {
+        return res.status(400).send("Already following this user");
+      }
+
+      // Create friend request notification
+      await dbStorage.createNotification({
+        userId: receiverId,
+        type: "friend_request",
+        title: "New Friend Request",
+        message: `${req.user.username} wants to connect with you`,
+        data: JSON.stringify({ fromUserId: req.user.id, fromUsername: req.user.username }),
+        isRead: false
+      });
+
+      res.status(201).json({ message: "Friend request sent" });
     } catch (error) {
-      console.error("Error following user:", error);
-      res.status(500).send("Error following user");
+      console.error("Error sending friend request:", error);
+      res.status(500).send("Error sending friend request");
+    }
+  });
+
+  // Accept friend request
+  app.post("/api/friend-request/accept/:fromUserId", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const fromUserId = parseInt(req.params.fromUserId);
+      if (isNaN(fromUserId)) return res.status(400).send("Invalid user ID");
+
+      // Create the mutual follow relationship
+      await dbStorage.followUser(fromUserId, req.user.id);
+      await dbStorage.followUser(req.user.id, fromUserId);
+
+      // Remove the friend request notification
+      await dbStorage.markNotificationAsRead(req.user.id, "friend_request", fromUserId);
+
+      // Send acceptance notification to requester
+      await dbStorage.createNotification({
+        userId: fromUserId,
+        type: "friend_accepted",
+        title: "Friend Request Accepted",
+        message: `${req.user.username} accepted your friend request`,
+        data: JSON.stringify({ userId: req.user.id, username: req.user.username }),
+        isRead: false
+      });
+
+      res.json({ message: "Friend request accepted" });
+    } catch (error) {
+      console.error("Error accepting friend request:", error);
+      res.status(500).send("Error accepting friend request");
+    }
+  });
+
+  // Decline friend request
+  app.post("/api/friend-request/decline/:fromUserId", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const fromUserId = parseInt(req.params.fromUserId);
+      if (isNaN(fromUserId)) return res.status(400).send("Invalid user ID");
+
+      // Remove the friend request notification
+      await dbStorage.markNotificationAsRead(req.user.id, "friend_request", fromUserId);
+
+      res.json({ message: "Friend request declined" });
+    } catch (error) {
+      console.error("Error declining friend request:", error);
+      res.status(500).send("Error declining friend request");
     }
   });
 
@@ -4247,7 +4318,7 @@ Keep the response professional, evidence-based, and specific to track and field 
 
     try {
       const targetUserId = parseInt(req.params.userId);
-      await storage.unfollowUser(req.user.id, targetUserId);
+      await dbStorage.unfollowUser(req.user.id, targetUserId);
       res.json({ success: true });
     } catch (error) {
       console.error("Error unfollowing user:", error);
