@@ -159,6 +159,13 @@ export function SidebarNavigation({ isMobile = false }: { isMobile?: boolean }) 
             Spikes
           </NavItem>
           <NavItem 
+            href="/subscription" 
+            icon={<Crown className="h-5 w-5" />} 
+            isActive={location === '/subscription'}
+          >
+            Subscription
+          </NavItem>
+          <NavItem 
             href="/profile" 
             icon={<Settings className="h-5 w-5" />} 
             isActive={location === '/profile'}
