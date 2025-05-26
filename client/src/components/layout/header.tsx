@@ -24,7 +24,7 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
     <header className={cn("bg-[#010a18] shadow-sm fixed top-0 left-0 right-0 z-30", className)}>
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center">
-          <h1 className="text-xl font-bold text-white ml-12">{title}</h1>
+          <h1 className="text-xl font-bold text-white ml-11">{title}</h1>
         </div>
         
         {user && (
@@ -34,7 +34,7 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
               <InstallAppButton />
             </div>
             
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1">
               <NotificationBell />
               
               {/* Direct Messages Icon */}
