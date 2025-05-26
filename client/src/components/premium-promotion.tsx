@@ -12,7 +12,7 @@ export function PremiumPromotion({ variant = 'card', onUpgrade }: PremiumPromoti
       <div className="bg-darkNavy rounded-lg p-4 text-white">
         <div className="flex items-center space-x-2 mb-2">
           <Crown className="h-5 w-5 text-accent" />
-          <h3 className="font-medium">Go Premium</h3>
+          <h3 className="font-medium">Go Pro</h3>
         </div>
         <p className="text-xs opacity-80 mb-3">Unlock AI coaching, calendar sharing and more.</p>
         <Button 
@@ -31,7 +31,7 @@ export function PremiumPromotion({ variant = 'card', onUpgrade }: PremiumPromoti
         <div>
           <div className="flex items-center space-x-2 mb-3">
             <Crown className="h-5 w-5 text-accent" />
-            <h3 className="font-bold text-lg">Upgrade to Premium</h3>
+            <h3 className="font-bold text-lg">Upgrade to Pro</h3>
           </div>
           <p className="text-sm opacity-80 mb-4">
             Get AI-powered performance analysis, coach assignment, and calendar sharing.
@@ -40,7 +40,7 @@ export function PremiumPromotion({ variant = 'card', onUpgrade }: PremiumPromoti
             className="bg-accent hover:bg-accent/90 text-darkNavy"
             onClick={onUpgrade}
           >
-            Unlock Premium Features
+            Unlock Pro Features
           </Button>
         </div>
         <img 
