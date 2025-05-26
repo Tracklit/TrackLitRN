@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { LogOut, MessageSquare } from "lucide-react";
+import { LogOut, MessageSquare, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Link } from "wouter";
@@ -17,6 +17,13 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
 
   const handleLogout = () => {
     logoutMutation.mutate();
+  };
+
+  const handleInstallApp = () => {
+    // PWA install prompt functionality
+    if ('serviceWorker' in navigator) {
+      window.alert('To install the app, use your browser\'s install option or "Add to Home Screen" feature.');
+    }
   };
 
   return (
@@ -45,6 +52,17 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
                 <MessageSquare className="h-5 w-5" />
               </Button>
             </Link>
+            
+            {/* Install App Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 text-gray-300 hover:text-white hover:bg-white/10"
+              onClick={handleInstallApp}
+              title="Install App"
+            >
+              <Download className="h-5 w-5" />
+            </Button>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
