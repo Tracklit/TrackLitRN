@@ -29,7 +29,9 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
         
         {user && (
           <div className="flex items-center space-x-4">
-            <NotificationBell />
+            <div className="ml-3">
+              <NotificationBell />
+            </div>
             
             {/* Direct Messages Icon */}
             <Link href="/messages">

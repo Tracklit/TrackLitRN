@@ -61,7 +61,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
       <Button 
         variant="ghost" 
         size="icon" 
-        className="relative z-50"
+        className="relative z-50 -mt-1"
         onClick={() => setIsOpen(!isOpen)}
       >
         {isOpen ? (
