@@ -292,9 +292,9 @@ export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
               Meets
             </NavItem>
             <NavItem 
-              href="/calendar" 
+              href="/meets" 
               icon={<Calendar className="h-5 w-5" />} 
-              isActive={location === '/calendar'}
+              isActive={location === '/meets'}
               onClick={onClose}
             >
               Calendar
