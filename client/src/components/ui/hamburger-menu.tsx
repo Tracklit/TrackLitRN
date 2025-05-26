@@ -86,12 +86,8 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="flex flex-col h-full overflow-hidden">
-          <div className="p-4 border-b border-gray-700">
-            <h2 className="text-xl font-bold text-white"></h2>
-          </div>
-          
-          <nav className="flex-1 overflow-y-auto p-4 pt-16 space-y-1">
+        <div className="flex flex-col h-full overflow-hidden">          
+          <nav className="flex-1 overflow-y-auto p-4 pt-10 space-y-1">
             {/* Dashboard */}
             <a
               href="/"
