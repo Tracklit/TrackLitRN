@@ -81,12 +81,29 @@ export default function AuthPage() {
         const userData = {
           name: googleUser.displayName || '',
           email: googleUser.email || '',
-          username: googleUser.email?.split('@')[0] || '',
-          password: 'google_auth', // We'll need to handle this differently
+          googleId: googleUser.uid
         };
         
-        // Try to register/login with Google data
-        registerMutation.mutate(userData);
+        // Send to our backend Google auth endpoint
+        const response = await fetch('/api/auth/google', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(userData),
+        });
+        
+        if (response.ok) {
+          // Refresh the page to get the authenticated state
+          window.location.reload();
+        } else {
+          const errorData = await response.json();
+          toast({
+            title: "Sign-in failed",
+            description: errorData.error || "Could not sign in with Google.",
+            variant: "destructive",
+          });
+        }
       }
     } catch (error) {
       toast({

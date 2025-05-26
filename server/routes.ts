@@ -403,6 +403,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // API Routes - prefix all routes with /api
   
+  // Google authentication endpoint
+  app.post("/api/auth/google", async (req: Request, res: Response) => {
+    try {
+      const { email, name, googleId } = req.body;
+      
+      if (!email || !name) {
+        return res.status(400).json({ error: "Email and name are required" });
+      }
+      
+      // Check if user already exists
+      let user = await dbStorage.getUserByEmail(email);
+      
+      if (!user) {
+        // Create new user with Google data
+        const username = email.split('@')[0];
+        const userData = {
+          username,
+          name,
+          email,
+          password: 'google_auth', // Special marker for Google auth users
+          spikes: 100, // Welcome bonus
+        };
+        
+        user = await dbStorage.createUser(userData);
+      }
+      
+      // Log the user in
+      req.login(user, (err) => {
+        if (err) {
+          console.error('Login error:', err);
+          return res.status(500).json({ error: "Login failed" });
+        }
+        res.json({ user: { id: user.id, username: user.username, name: user.name, email: user.email } });
+      });
+      
+    } catch (error) {
+      console.error('Google auth error:', error);
+      res.status(500).json({ error: "Authentication failed" });
+    }
+  });
+  
   // Spikes and achievements endpoints
   app.get("/api/achievements", async (req: Request, res: Response) => {
     try {
