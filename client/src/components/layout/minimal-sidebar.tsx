@@ -269,6 +269,14 @@ export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
             >
               Programs
             </NavItem>
+            <NavItem 
+              href="/rehab" 
+              icon={<Heart className="h-5 w-5" />} 
+              isActive={location.includes('/rehab')}
+              onClick={onClose}
+            >
+              Rehabilitation
+            </NavItem>
           </div>
 
           <div className="pt-4 pb-2">
