@@ -40,6 +40,7 @@ import { CreateMeetModal } from '@/components/create-meet-modal';
 import { cn } from '@/lib/utils';
 import { useAssignedPrograms } from '@/hooks/use-assigned-programs';
 import { useProgramSessions } from '@/hooks/use-program-sessions';
+import { SimpleWorkoutLike } from '@/components/workout-reactions';
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -453,14 +454,25 @@ export default function HomePage() {
           </div>
           
           <DialogFooter className="flex sm:justify-between">
-            <DialogClose asChild>
-              <Button
-                type="button"
-                variant="outline"
-              >
-                Close
-              </Button>
-            </DialogClose>
+            <div className="flex items-center gap-2">
+              <DialogClose asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                >
+                  Close
+                </Button>
+              </DialogClose>
+              
+              {/* Like functionality for other users' workouts */}
+              {currentSession?.workoutId && (
+                <SimpleWorkoutLike 
+                  sessionId={currentSession.workoutId} 
+                  className="ml-2"
+                />
+              )}
+            </div>
+            
             <Button 
               type="button"
               onClick={saveSessionToLibrary}
