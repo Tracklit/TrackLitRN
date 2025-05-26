@@ -33,8 +33,8 @@ function NavItem({ href, icon, children, isActive, badge }: NavItemProps) {
         className={cn(
           "flex items-center space-x-3 px-3 py-2.5 rounded-lg font-medium transition-colors",
           isActive 
-            ? "bg-primary/10 text-primary" 
-            : "text-darkGray hover:bg-lightGray"
+            ? "bg-orange-500 text-white" 
+            : "text-gray-300 hover:bg-gray-800 hover:text-white"
         )}
       >
         {icon}
@@ -55,18 +55,18 @@ export function SidebarNavigation({ isMobile = false }: { isMobile?: boolean }) 
   
   return (
     <aside className={cn(
-      "flex flex-col bg-white dark:bg-background border-r border-lightGray dark:border-zinc-800 w-64 h-screen fixed top-0 left-0 z-20 pt-8 md:pt-16",
+      "flex flex-col bg-gray-900 border-r border-gray-700 w-full h-screen overflow-y-auto",
       isMobile ? "block md:hidden" : "hidden md:flex"
     )}>
       <div className="p-4">
-        <div className="bg-primary/5 rounded-lg p-3 mb-6">
+        <div className="bg-gray-800/50 rounded-lg p-3 mb-6">
           <div className="flex items-center space-x-3">
-            <div className="h-10 w-10 rounded-full bg-secondary text-white flex items-center justify-center font-medium">
+            <div className="h-10 w-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-medium">
               {getInitials(user.name)}
             </div>
             <div>
-              <p className="font-medium text-sm">{user.name}</p>
-              <p className="text-xs text-muted-foreground">{user.role || 'Athlete'}</p>
+              <p className="font-medium text-sm text-white">{user.name}</p>
+              <p className="text-xs text-gray-400">{user.role || 'admin'}</p>
             </div>
           </div>
         </div>
@@ -82,7 +82,7 @@ export function SidebarNavigation({ isMobile = false }: { isMobile?: boolean }) 
           
           {/* Training Section */}
           <div className="pt-4 pb-2">
-            <p className="text-xs text-darkGray px-3 font-medium">TRAINING</p>
+            <p className="text-xs text-gray-400 px-3 font-medium">TRAINING</p>
           </div>
           <NavItem 
             href="/practice" 
@@ -101,7 +101,7 @@ export function SidebarNavigation({ isMobile = false }: { isMobile?: boolean }) 
           
           {/* Competition Section */}
           <div className="pt-4 pb-2">
-            <p className="text-xs text-darkGray px-3 font-medium">COMPETITION</p>
+            <p className="text-xs text-gray-400 px-3 font-medium">COMPETITION</p>
           </div>
           <NavItem 
             href="/meets" 
