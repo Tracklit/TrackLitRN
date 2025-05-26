@@ -87,9 +87,9 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
         )}
         style={{ visibility: isOpen ? 'visible' : 'hidden' }}
       >
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-4 bg-gray-900 h-full">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold">Menu</h2>
+            <h2 className="text-xl font-bold text-white">Menu</h2>
             <Button 
               variant="ghost" 
               size="icon"
@@ -104,56 +104,56 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
             <a
               href="/"
               className={cn(
-                "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
-                location === "/" ? "bg-primary/10 text-primary" : "text-foreground"
+                "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",
+                location === "/" ? "bg-orange-500 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
               )}
               onClick={() => setIsOpen(false)}
             >
-              <Home className="h-5 w-5 mr-3" />
+              <Home className="h-4 w-4 mr-3" />
               Dashboard
             </a>
             
             {/* Training Section */}
             <div className="pt-4 pb-2">
-              <p className="text-xs text-muted-foreground px-4 font-medium">TRAINING</p>
+              <p className="text-xs text-gray-400 px-4 font-medium">TRAINING</p>
             </div>
             <a
               href="/practice"
               className={cn(
-                "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
-                location.startsWith("/practice") ? "bg-primary/10 text-primary" : "text-foreground"
+                "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",
+                location.startsWith("/practice") ? "bg-orange-500 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
               )}
               onClick={() => setIsOpen(false)}
             >
-              <Dumbbell className="h-5 w-5 mr-3" />
+              <Dumbbell className="h-4 w-4 mr-3" />
               Practice
             </a>
             <a
               href="/training-tools"
               className={cn(
-                "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
-                location === "/training-tools" ? "bg-primary/10 text-primary" : "text-foreground"
+                "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",
+                location === "/training-tools" ? "bg-orange-500 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
               )}
               onClick={() => setIsOpen(false)}
             >
-              <Clock className="h-5 w-5 mr-3" />
+              <Clock className="h-4 w-4 mr-3" />
               Training Tools
             </a>
             
             {/* Competition Section */}
             <div className="pt-4 pb-2">
-              <p className="text-xs text-muted-foreground px-4 font-medium">COMPETITION</p>
+              <p className="text-xs text-gray-400 px-4 font-medium">COMPETITION</p>
             </div>
             <a
               href="/meets"
               className={cn(
-                "flex items-center justify-between px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
-                location === "/meets" ? "bg-primary/10 text-primary" : "text-foreground"
+                "flex items-center justify-between px-4 py-2 rounded-md text-xs font-medium transition-colors",
+                location === "/meets" ? "bg-orange-500 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
               )}
               onClick={() => setIsOpen(false)}
             >
               <div className="flex items-center">
-                <Calendar className="h-5 w-5 mr-3" />
+                <Calendar className="h-4 w-4 mr-3" />
                 Calendar
               </div>
               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
@@ -163,88 +163,88 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
             <a
               href="/meets"
               className={cn(
-                "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
-                location === "/meets" ? "bg-primary/10 text-primary" : "text-foreground"
+                "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",
+                location === "/meets" ? "bg-orange-500 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
               )}
               onClick={() => setIsOpen(false)}
             >
-              <Trophy className="h-5 w-5 mr-3" />
+              <Trophy className="h-4 w-4 mr-3" />
               Meets
             </a>
             <a
               href="/results"
               className={cn(
-                "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
-                location === "/results" ? "bg-primary/10 text-primary" : "text-foreground"
+                "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",
+                location === "/results" ? "bg-orange-500 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
               )}
               onClick={() => setIsOpen(false)}
             >
-              <LineChart className="h-5 w-5 mr-3" />
+              <LineChart className="h-4 w-4 mr-3" />
               Results
             </a>
             
             {/* Social Section */}
             <div className="pt-4 pb-2">
-              <p className="text-xs text-muted-foreground px-4 font-medium">SOCIAL</p>
+              <p className="text-xs text-gray-400 px-4 font-medium">SOCIAL</p>
             </div>
             <a
               href="/clubs"
               className={cn(
-                "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
-                location.startsWith("/clubs") || location.startsWith("/club") ? "bg-primary/10 text-primary" : "text-foreground"
+                "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",
+                location.startsWith("/clubs") || location.startsWith("/club") ? "bg-orange-500 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
               )}
               onClick={() => setIsOpen(false)}
             >
-              <Users className="h-5 w-5 mr-3" />
+              <Users className="h-4 w-4 mr-3" />
               Clubs
             </a>
             <a
               href="/messages"
               className={cn(
-                "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
-                location === "/messages" ? "bg-primary/10 text-primary" : "text-foreground"
+                "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",
+                location === "/messages" ? "bg-orange-500 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
               )}
               onClick={() => setIsOpen(false)}
             >
-              <MessagesSquare className="h-5 w-5 mr-3" />
+              <MessagesSquare className="h-4 w-4 mr-3" />
               Messages
             </a>
             <a
               href="/coaches"
               className={cn(
-                "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
-                location === "/coaches" ? "bg-primary/10 text-primary" : "text-foreground"
+                "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",
+                location === "/coaches" ? "bg-orange-500 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
               )}
               onClick={() => setIsOpen(false)}
             >
-              <Award className="h-5 w-5 mr-3" />
+              <Award className="h-4 w-4 mr-3" />
               Coaches
             </a>
             
             {/* Account Section */}
             <div className="pt-4 pb-2">
-              <p className="text-xs text-muted-foreground px-4 font-medium">ACCOUNT</p>
+              <p className="text-xs text-gray-400 px-4 font-medium">ACCOUNT</p>
             </div>
             <a
               href="/spikes"
               className={cn(
-                "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
-                location === "/spikes" ? "bg-primary/10 text-primary" : "text-foreground"
+                "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",
+                location === "/spikes" ? "bg-orange-500 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
               )}
               onClick={() => setIsOpen(false)}
             >
-              <Coins className="h-5 w-5 mr-3" />
+              <Coins className="h-4 w-4 mr-3" />
               Spikes
             </a>
             <a
               href="/profile"
               className={cn(
-                "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
-                location === "/profile" ? "bg-primary/10 text-primary" : "text-foreground"
+                "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",
+                location === "/profile" ? "bg-orange-500 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
               )}
               onClick={() => setIsOpen(false)}
             >
-              <Settings className="h-5 w-5 mr-3" />
+              <Settings className="h-4 w-4 mr-3" />
               Settings
             </a>
           </nav>
