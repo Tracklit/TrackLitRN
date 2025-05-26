@@ -5,7 +5,7 @@ import { SidebarNavigation } from '@/components/layout/sidebar-navigation';
 import { Meet } from '@shared/schema';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, MapPin, Loader2, Plus, Share2, Users, Crown, UserPlus } from 'lucide-react';
+import { Calendar, MapPin, Loader2, Plus, Share2, Users, Crown, UserPlus, X, Cloud, Wind } from 'lucide-react';
 import { CreateMeetModal } from '@/components/create-meet-modal';
 import { PreparationTimeline } from '@/components/preparation-timeline';
 import { MeetCalendar } from '@/components/meet-calendar';
@@ -24,6 +24,8 @@ export default function MeetsPage() {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [meetToShare, setMeetToShare] = useState<Meet | null>(null);
   const [isProUser, setIsProUser] = useState(false); // TODO: Get from user context
+  const [isTickerVisible, setIsTickerVisible] = useState(true);
+  const [isProModalOpen, setIsProModalOpen] = useState(false);
   const { toast } = useToast();
   
   // Fetch meets
@@ -55,8 +57,10 @@ export default function MeetsPage() {
       }).filter(Boolean) as string[];
       
       setTickerMessages(messages);
+    } else {
+      setTickerMessages([]);
     }
-  }, [upcomingMeets]);
+  }, [upcomingMeets.length]);
 
   // Rotate ticker messages
   useEffect(() => {
@@ -101,30 +105,32 @@ export default function MeetsPage() {
         <main className="pt-16 pb-6">
           <div className="max-w-3xl mx-auto px-4">
             {/* Ticker Messages - Dashboard Style */}
-            {tickerMessages.length > 0 && (
-              <div className="mb-6 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-pink-600/10 border border-blue-500/20 rounded-lg p-2 overflow-hidden relative">
-                <div className="flex items-center">
-                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 via-purple-500 to-pink-500 rounded-l-lg"></div>
-                  <div className="ml-4 flex-1 overflow-hidden">
-                    <div 
-                      className="whitespace-nowrap text-white text-sm font-medium transition-transform duration-1000 ease-in-out"
-                      style={{ 
-                        transform: `translateX(-${currentTickerIndex * 100}%)`,
-                        width: `${tickerMessages.length * 100}%`,
-                        display: 'flex'
-                      }}
-                    >
-                      {tickerMessages.map((message, index) => (
-                        <span key={index} className="w-full flex-shrink-0">
-                          {message}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="ml-2 flex-shrink-0">
-                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+            {tickerMessages.length > 0 && isTickerVisible && (
+              <div className="mb-6 flex items-center justify-between">
+                <div className="flex-1 overflow-hidden">
+                  <div 
+                    className="whitespace-nowrap text-white text-sm transition-transform duration-1000 ease-in-out"
+                    style={{ 
+                      transform: `translateX(-${currentTickerIndex * 100}%)`,
+                      width: `${tickerMessages.length * 100}%`,
+                      display: 'flex'
+                    }}
+                  >
+                    {tickerMessages.map((message, index) => (
+                      <span key={index} className="w-full flex-shrink-0">
+                        {message}
+                      </span>
+                    ))}
                   </div>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="ml-4 h-6 w-6 p-0 text-gray-400 hover:text-white"
+                  onClick={() => setIsTickerVisible(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
             )}
 
@@ -154,7 +160,10 @@ export default function MeetsPage() {
                 <TabsTrigger 
                   value="calendar"
                   className="data-[state=active]:bg-blue-700 data-[state=active]:text-white"
-                  disabled={!isProUser}
+                  onClick={!isProUser ? (e) => {
+                    e.preventDefault();
+                    setIsProModalOpen(true);
+                  } : undefined}
                 >
                   <div className="flex items-center gap-2">
                     Calendar
@@ -429,6 +438,63 @@ export default function MeetsPage() {
             <div className="text-center text-blue-400 text-sm">
               Only athletes you're connected with appear here
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Pro Upgrade Modal */}
+      <Dialog open={isProModalOpen} onOpenChange={setIsProModalOpen}>
+        <DialogContent className="sm:max-w-md bg-[#010a18] border border-amber-600/60">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center justify-center">
+              <Crown className="mr-2 h-6 w-6 text-amber-400" />
+              Upgrade to Pro
+            </DialogTitle>
+            <DialogDescription className="text-blue-300 text-center">
+              Unlock the Calendar view and other premium features
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="mt-4 space-y-4 text-center">
+            <div className="p-4 bg-amber-600/10 border border-amber-600/30 rounded-lg">
+              <Calendar className="h-12 w-12 text-amber-400 mx-auto mb-3" />
+              <h3 className="font-semibold text-white mb-2">Calendar View</h3>
+              <p className="text-blue-300 text-sm">
+                See all your meets in a monthly calendar layout with easy navigation and editing capabilities.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3 text-xs text-blue-300">
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-amber-400 rounded-full mr-2"></div>
+                Advanced analytics
+              </div>
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-amber-400 rounded-full mr-2"></div>
+                Weather predictions
+              </div>
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-amber-400 rounded-full mr-2"></div>
+                Priority support
+              </div>
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-amber-400 rounded-full mr-2"></div>
+                Team management
+              </div>
+            </div>
+
+            <Button className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold">
+              <Crown className="h-4 w-4 mr-2" />
+              Upgrade to Pro - $9.99/month
+            </Button>
+            
+            <Button 
+              variant="ghost" 
+              className="w-full text-blue-400 hover:text-white"
+              onClick={() => setIsProModalOpen(false)}
+            >
+              Maybe later
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
