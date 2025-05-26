@@ -38,14 +38,6 @@ export default function SubscriptionPage() {
         'Standard start gun tool',
         'Basic stopwatch',
         'Limited spike rewards'
-      ],
-      limitations: [
-        'No voice recordings',
-        'No media uploads',
-        'No AI features',
-        'No advanced analytics',
-        'No meet calendar view',
-        'No coach collaboration tools'
       ]
     },
     {
@@ -71,10 +63,6 @@ export default function SubscriptionPage() {
         'Custom training programs',
         'Advanced results tracking',
         'Meet sharing with athletes'
-      ],
-      limitations: [
-        'AI features require spikes',
-        'Limited AI usage per month'
       ]
     },
     {
@@ -123,7 +111,7 @@ export default function SubscriptionPage() {
               </p>
               <div className="flex justify-center items-center gap-2 text-sm text-blue-400">
                 <Zap className="h-4 w-4" />
-                <span>All plans include core training features • Cancel anytime • 30-day money-back guarantee</span>
+                <span>All plans include core training features • Cancel anytime</span>
               </div>
             </div>
 
@@ -174,18 +162,7 @@ export default function SubscriptionPage() {
                         ))}
                       </div>
 
-                      {/* Limitations (if any) */}
-                      {plan.limitations && plan.limitations.length > 0 && (
-                        <div className="space-y-2 mb-6 pt-4 border-t border-blue-800/60">
-                          <p className="text-xs text-blue-400 font-medium">Limitations:</p>
-                          {plan.limitations.map((limitation, index) => (
-                            <div key={index} className="flex items-start gap-2">
-                              <span className="text-blue-400 text-xs">•</span>
-                              <span className="text-blue-400 text-xs">{limitation}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+
 
                       {/* Action Button */}
                       <Button
@@ -338,10 +315,10 @@ export default function SubscriptionPage() {
                   </p>
                 </div>
                 <div className="bg-blue-900/20 rounded-lg p-6 border border-blue-800/60">
-                  <h3 className="font-semibold text-blue-300 mb-3">Is there a money-back guarantee?</h3>
+                  <h3 className="font-semibold text-blue-300 mb-3">How do I cancel my subscription?</h3>
                   <p className="text-blue-200 text-sm">
-                    Absolutely! We offer a 30-day money-back guarantee on all paid plans. 
-                    No questions asked.
+                    You can cancel your subscription at any time from your account settings. 
+                    Your plan will remain active until the end of your current billing period.
                   </p>
                 </div>
                 <div className="bg-blue-900/20 rounded-lg p-6 border border-blue-800/60">
