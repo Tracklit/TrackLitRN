@@ -36,6 +36,62 @@ export default function MeetsPage() {
   const [isTickerVisible, setIsTickerVisible] = useState(true);
   const [isProModalOpen, setIsProModalOpen] = useState(false);
   const { toast } = useToast();
+
+  // Custom hook to fetch weather data for a meet
+  const useWeatherData = (location: string, date: string) => {
+    return useQuery<WeatherData>({
+      queryKey: ['/api/weather', location, date],
+      queryFn: async () => {
+        const response = await fetch(`/api/weather?location=${encodeURIComponent(location)}&date=${date}`);
+        if (!response.ok) {
+          throw new Error('Weather data not available');
+        }
+        return response.json();
+      },
+      enabled: !!location && !!date,
+      staleTime: 1000 * 60 * 30, // 30 minutes
+      retry: false
+    });
+  };
+
+  // Weather display component
+  const WeatherCard = ({ meet }: { meet: Meet }) => {
+    const meetDateString = new Date(meet.date).toISOString().split('T')[0]; // YYYY-MM-DD format
+    const { data: weather, isLoading: isWeatherLoading, error } = useWeatherData(meet.location, meetDateString);
+
+    if (isWeatherLoading) {
+      return (
+        <div className="flex items-center gap-2 text-blue-400 text-sm">
+          <Cloud className="h-4 w-4 animate-pulse" />
+          <span>Loading weather...</span>
+        </div>
+      );
+    }
+
+    if (error || !weather) {
+      return (
+        <div className="flex items-center gap-2 text-blue-400/60 text-sm">
+          <Cloud className="h-4 w-4" />
+          <span>Weather unavailable</span>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex items-center gap-4 bg-blue-900/30 rounded-lg p-3 mt-3">
+        <div className="flex items-center gap-2">
+          <Cloud className="h-4 w-4 text-blue-400" />
+          <span className="text-blue-200 text-sm">{weather.temperature}°C</span>
+          <span className="text-blue-300/80 text-xs">{weather.condition}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Wind className="h-4 w-4 text-blue-400" />
+          <span className="text-blue-200 text-sm">{weather.windSpeed} km/h</span>
+          <span className="text-blue-300/80 text-xs">{weather.windDirection}</span>
+        </div>
+      </div>
+    );
+  };
   
   // Fetch meets
   const { data: meets, isLoading } = useQuery<Meet[]>({
@@ -209,6 +265,9 @@ export default function MeetsPage() {
                                 <Badge key={event} className="bg-blue-900/60 text-blue-200 hover:bg-blue-800">{event}</Badge>
                               ))}
                             </div>
+                            
+                            {/* Weather and Wind Predictions */}
+                            <WeatherCard meet={meet} />
                             
                             <div className="flex justify-between items-center mt-2">
                               <div className="flex gap-2">
