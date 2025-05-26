@@ -120,7 +120,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               href="/training-tools"
               className={cn(
                 "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",
-                location === "/training-tools" ? "bg-orange-500 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                location === "/training-tools" ? "bg-yellow-400 text-black" : "text-gray-300 hover:bg-gray-800 hover:text-white"
               )}
               onClick={() => setIsOpen(false)}
             >
@@ -152,7 +152,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               href="/meets"
               className={cn(
                 "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",
-                location === "/meets" ? "bg-orange-500 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                location === "/meets" ? "bg-yellow-400 text-black" : "text-gray-300 hover:bg-gray-800 hover:text-white"
               )}
               onClick={() => setIsOpen(false)}
             >
