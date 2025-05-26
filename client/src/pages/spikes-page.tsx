@@ -48,6 +48,27 @@ function SpikesPage() {
             <CardDescription>Spikes are automatically earned by completing activities</CardDescription>
           </CardHeader>
           <CardContent>
+            {/* Logo Design Preview */}
+            <div className="mb-6 p-4 border rounded-lg bg-gray-50">
+              <h3 className="text-sm font-medium mb-3">Choose Your Spike Logo Design:</h3>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center p-3 border rounded hover:bg-gray-100 cursor-pointer">
+                  <img src="/spike-logo-v1.svg" alt="Version 1" className="h-8 w-8 mx-auto mb-2" />
+                  <p className="text-xs font-medium">Version 1</p>
+                  <p className="text-xs text-muted-foreground">Clean Geometric</p>
+                </div>
+                <div className="text-center p-3 border rounded hover:bg-gray-100 cursor-pointer">
+                  <img src="/spike-logo-v2.svg" alt="Version 2" className="h-8 w-8 mx-auto mb-2" />
+                  <p className="text-xs font-medium">Version 2</p>
+                  <p className="text-xs text-muted-foreground">Detailed Threads</p>
+                </div>
+                <div className="text-center p-3 border rounded hover:bg-gray-100 cursor-pointer">
+                  <img src="/spike-logo-v3.svg" alt="Version 3" className="h-8 w-8 mx-auto mb-2" />
+                  <p className="text-xs font-medium">Version 3</p>
+                  <p className="text-xs text-muted-foreground">Modern Dynamic</p>
+                </div>
+              </div>
+            </div>
             <div className="space-y-6">
               <div>
                 <div className="flex justify-between items-center mb-2">
