@@ -11,7 +11,7 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Coins, Trophy, CalendarCheck, MessageSquare, Medal, Gift, Crown, Award, Clock, RefreshCw, Loader2 } from "lucide-react";
+import { Coins, Trophy, CalendarCheck, MessageSquare, Medal, Gift, Crown, Award, Clock, RefreshCw, Loader2, CheckCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { formatDistanceToNow } from 'date-fns';
 
@@ -55,12 +55,12 @@ export default function SpikesPage() {
                 <div className="flex justify-between items-center mb-2">
                   <div className="flex items-center">
                     <Crown className="h-4 w-4 mr-2 text-amber-500" />
-                    <span className="text-sm font-medium">Premium Status</span>
+                    <span className="text-sm font-medium">Pro Tier Status</span>
                   </div>
                   <span className="text-sm text-muted-foreground">1,000 Spikes needed</span>
                 </div>
                 <Progress value={(spikeBalance / 1000) * 100} className="h-2" />
-                <p className="text-xs text-muted-foreground mt-2">Upgrade to Premium to unlock advanced features</p>
+                <p className="text-xs text-muted-foreground mt-2">Upgrade to Pro tier to unlock advanced features</p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -466,21 +466,21 @@ export default function SpikesPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Premium Membership</CardTitle>
-                <CardDescription>1 month of Premium features</CardDescription>
+                <CardTitle className="text-lg">Pro Tier Access</CardTitle>
+                <CardDescription>1 month of Pro features</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-center py-4">
                   <Crown className="h-16 w-16 text-primary" />
                 </div>
-                <p className="text-sm text-muted-foreground">Unlock all premium features including advanced analytics and AI coaching</p>
+                <p className="text-sm text-muted-foreground">Unlock Pro features including advanced analytics and daily rehab programs</p>
               </CardContent>
               <CardFooter className="flex justify-between">
                 <div className="flex items-center">
                   <Coins className="h-4 w-4 mr-1 text-amber-500" />
                   <span className="font-medium">1000 Spikes</span>
                 </div>
-                <Button disabled={spikeBalance < 1000}>Redeem</Button>
+                <Button disabled={spikeBalance < 1000}>Auto-Upgrade</Button>
               </CardFooter>
             </Card>
           </div>
