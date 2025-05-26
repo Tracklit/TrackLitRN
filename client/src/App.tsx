@@ -30,6 +30,7 @@ import ClubsPage from "@/pages/clubs-page";
 import { Component as ClubDetailPage } from "@/pages/club-detail-page";
 import { Component as ClubManagementPage } from "@/pages/club-management-page";
 import MessagesPage from "@/pages/messages-page";
+import AthletesPage from "@/pages/athletes-page";
 import SpikesPage from "@/pages/spikes-page";
 import SubscriptionPage from "@/pages/subscription-page";
 import { Component as ProgramsPage } from "@/pages/programs-page";
@@ -71,11 +72,12 @@ function Router() {
       <ProtectedRoute path="/calendar" component={CalendarPage} />
       
       {/* Social */}
+      <ProtectedRoute path="/athletes" component={AthletesPage} />
+      <ProtectedRoute path="/coaches" component={CoachesPage} />
       <ProtectedRoute path="/clubs" component={ClubsPage} />
       <ProtectedRoute path="/club/:id" component={ClubDetailPage} />
       <ProtectedRoute path="/club-management/:id" component={ClubManagementPage} />
       <ProtectedRoute path="/messages" component={MessagesPage} />
-      <ProtectedRoute path="/coaches" component={CoachesPage} />
       
       {/* Rehab */}
       <ProtectedRoute path="/rehab" component={RehabPage} />

@@ -2055,6 +2055,272 @@ export class DatabaseStorage implements IStorage {
       .where(eq(notifications.id, notificationId));
     return result.rowCount > 0;
   }
+
+  // Direct Messages operations
+  async getUserConversations(userId: number): Promise<any[]> {
+    const conversations = await db
+      .select({
+        id: conversationsTable.id,
+        participant1Id: conversationsTable.participant1Id,
+        participant2Id: conversationsTable.participant2Id,
+        lastMessageAt: conversationsTable.lastMessageAt,
+        createdAt: conversationsTable.createdAt
+      })
+      .from(conversationsTable)
+      .where(or(
+        eq(conversationsTable.participant1Id, userId),
+        eq(conversationsTable.participant2Id, userId)
+      ))
+      .orderBy(desc(conversationsTable.lastMessageAt));
+
+    // Get user details for each conversation
+    const conversationsWithUsers = await Promise.all(
+      conversations.map(async (conv) => {
+        const otherUserId = conv.participant1Id === userId ? conv.participant2Id : conv.participant1Id;
+        const otherUser = await this.getUser(otherUserId);
+        
+        // Get last message
+        const lastMessage = await db
+          .select()
+          .from(directMessages)
+          .where(eq(directMessages.conversationId, conv.id))
+          .orderBy(desc(directMessages.createdAt))
+          .limit(1);
+
+        return {
+          ...conv,
+          otherUser,
+          lastMessage: lastMessage[0] || null
+        };
+      })
+    );
+
+    return conversationsWithUsers;
+  }
+
+  async getConversationMessages(conversationId: number, userId: number): Promise<any[]> {
+    // Verify user is participant in conversation
+    const conversation = await db
+      .select()
+      .from(conversationsTable)
+      .where(and(
+        eq(conversationsTable.id, conversationId),
+        or(
+          eq(conversationsTable.participant1Id, userId),
+          eq(conversationsTable.participant2Id, userId)
+        )
+      ));
+
+    if (!conversation.length) {
+      throw new Error("Conversation not found or access denied");
+    }
+
+    // Get messages with sender details
+    const messages = await db
+      .select({
+        id: directMessages.id,
+        content: directMessages.content,
+        senderId: directMessages.senderId,
+        receiverId: directMessages.receiverId,
+        conversationId: directMessages.conversationId,
+        createdAt: directMessages.createdAt,
+        isRead: directMessages.isRead
+      })
+      .from(directMessages)
+      .where(eq(directMessages.conversationId, conversationId))
+      .orderBy(asc(directMessages.createdAt));
+
+    // Get user details for each message
+    const messagesWithUsers = await Promise.all(
+      messages.map(async (msg) => {
+        const sender = await this.getUser(msg.senderId);
+        const receiver = await this.getUser(msg.receiverId);
+        return {
+          ...msg,
+          sender,
+          receiver
+        };
+      })
+    );
+
+    return messagesWithUsers;
+  }
+
+  async createOrGetConversation(user1Id: number, user2Id: number): Promise<any> {
+    // Check if conversation already exists
+    const existing = await db
+      .select()
+      .from(conversationsTable)
+      .where(or(
+        and(
+          eq(conversationsTable.participant1Id, user1Id),
+          eq(conversationsTable.participant2Id, user2Id)
+        ),
+        and(
+          eq(conversationsTable.participant1Id, user2Id),
+          eq(conversationsTable.participant2Id, user1Id)
+        )
+      ));
+
+    if (existing.length > 0) {
+      return existing[0];
+    }
+
+    // Create new conversation
+    const [conversation] = await db
+      .insert(conversationsTable)
+      .values({
+        participant1Id: user1Id,
+        participant2Id: user2Id
+      })
+      .returning();
+
+    return conversation;
+  }
+
+  async sendMessage(messageData: { conversationId: number; senderId: number; content: string }): Promise<any> {
+    // Get conversation to determine receiver
+    const conversation = await db
+      .select()
+      .from(conversationsTable)
+      .where(eq(conversationsTable.id, messageData.conversationId));
+
+    if (!conversation.length) {
+      throw new Error("Conversation not found");
+    }
+
+    const receiverId = conversation[0].participant1Id === messageData.senderId 
+      ? conversation[0].participant2Id 
+      : conversation[0].participant1Id;
+
+    // Insert message
+    const [message] = await db
+      .insert(directMessages)
+      .values({
+        conversationId: messageData.conversationId,
+        senderId: messageData.senderId,
+        receiverId,
+        content: messageData.content
+      })
+      .returning();
+
+    // Update conversation last message time
+    await db
+      .update(conversationsTable)
+      .set({ lastMessageAt: new Date() })
+      .where(eq(conversationsTable.id, messageData.conversationId));
+
+    return message;
+  }
+
+  // Following/Followers operations
+  async followUser(followerId: number, followingId: number): Promise<void> {
+    if (followerId === followingId) {
+      throw new Error("Cannot follow yourself");
+    }
+
+    // Check if already following
+    const existing = await db
+      .select()
+      .from(follows)
+      .where(and(
+        eq(follows.followerId, followerId),
+        eq(follows.followingId, followingId)
+      ));
+
+    if (existing.length === 0) {
+      await db
+        .insert(follows)
+        .values({
+          followerId,
+          followingId
+        });
+    }
+  }
+
+  async unfollowUser(followerId: number, followingId: number): Promise<void> {
+    await db
+      .delete(follows)
+      .where(and(
+        eq(follows.followerId, followerId),
+        eq(follows.followingId, followingId)
+      ));
+  }
+
+  async getFollowStatus(userId: number, targetUserId: number): Promise<any> {
+    const isFollowing = await db
+      .select()
+      .from(follows)
+      .where(and(
+        eq(follows.followerId, userId),
+        eq(follows.followingId, targetUserId)
+      ));
+
+    const isFollower = await db
+      .select()
+      .from(follows)
+      .where(and(
+        eq(follows.followerId, targetUserId),
+        eq(follows.followingId, userId)
+      ));
+
+    const followersCount = await db
+      .select({ count: sql`count(*)` })
+      .from(follows)
+      .where(eq(follows.followingId, targetUserId));
+
+    const followingCount = await db
+      .select({ count: sql`count(*)` })
+      .from(follows)
+      .where(eq(follows.followerId, targetUserId));
+
+    return {
+      isFollowing: isFollowing.length > 0,
+      isFollower: isFollower.length > 0,
+      followersCount: parseInt(followersCount[0].count as string) || 0,
+      followingCount: parseInt(followingCount[0].count as string) || 0
+    };
+  }
+
+  async getRecentUsers(currentUserId: number, search?: string): Promise<any[]> {
+    let query = db
+      .select({
+        id: users.id,
+        username: users.username,
+        name: users.name,
+        email: users.email,
+        bio: users.bio,
+        createdAt: users.createdAt
+      })
+      .from(users)
+      .where(ne(users.id, currentUserId))
+      .orderBy(desc(users.createdAt))
+      .limit(50);
+
+    if (search) {
+      query = query.where(
+        or(
+          ilike(users.username, `%${search}%`),
+          ilike(users.name, `%${search}%`)
+        )
+      );
+    }
+
+    const recentUsers = await query;
+
+    // Get follow status for each user
+    const usersWithFollowStatus = await Promise.all(
+      recentUsers.map(async (user) => {
+        const followStatus = await this.getFollowStatus(currentUserId, user.id);
+        return {
+          ...user,
+          ...followStatus
+        };
+      })
+    );
+
+    return usersWithFollowStatus;
+  }
 }
 
 export const storage = new DatabaseStorage();

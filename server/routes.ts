@@ -4118,6 +4118,131 @@ Keep the response professional, evidence-based, and specific to track and field 
     }
   });
   
+  // Direct Messages API
+  app.get("/api/conversations", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const conversations = await storage.getUserConversations(req.user.id);
+      res.json(conversations);
+    } catch (error) {
+      console.error("Error fetching conversations:", error);
+      res.status(500).send("Error fetching conversations");
+    }
+  });
+
+  app.get("/api/conversations/:conversationId/messages", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const conversationId = parseInt(req.params.conversationId);
+      const messages = await storage.getConversationMessages(conversationId, req.user.id);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      res.status(500).send("Error fetching messages");
+    }
+  });
+
+  app.post("/api/conversations", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const { participantId } = req.body;
+      const conversation = await storage.createOrGetConversation(req.user.id, participantId);
+      res.json(conversation);
+    } catch (error) {
+      console.error("Error creating conversation:", error);
+      res.status(500).send("Error creating conversation");
+    }
+  });
+
+  app.post("/api/messages", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const { conversationId, content } = req.body;
+      const message = await storage.sendMessage({
+        conversationId,
+        senderId: req.user.id,
+        content
+      });
+      res.json(message);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      res.status(500).send("Error sending message");
+    }
+  });
+
+  // Following/Followers API
+  app.post("/api/follow/:userId", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const targetUserId = parseInt(req.params.userId);
+      await storage.followUser(req.user.id, targetUserId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error following user:", error);
+      res.status(500).send("Error following user");
+    }
+  });
+
+  app.delete("/api/follow/:userId", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const targetUserId = parseInt(req.params.userId);
+      await storage.unfollowUser(req.user.id, targetUserId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error unfollowing user:", error);
+      res.status(500).send("Error unfollowing user");
+    }
+  });
+
+  app.get("/api/users/recent", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const { search } = req.query;
+      const users = await storage.getRecentUsers(req.user.id, search as string);
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching recent users:", error);
+      res.status(500).send("Error fetching recent users");
+    }
+  });
+
+  app.get("/api/users/:userId/follow-status", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const targetUserId = parseInt(req.params.userId);
+      const status = await storage.getFollowStatus(req.user.id, targetUserId);
+      res.json(status);
+    } catch (error) {
+      console.error("Error fetching follow status:", error);
+      res.status(500).send("Error fetching follow status");
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
