@@ -186,9 +186,9 @@ export default function ProfilePage() {
                             Set your default club to automatically open it when visiting the clubs page
                           </FormDescription>
                           <Select 
-                            value={field.value?.toString() || ""}
+                            value={field.value?.toString() || "none"}
                             onValueChange={(value) => {
-                              field.onChange(value ? parseInt(value) : null);
+                              field.onChange(value && value !== "none" ? parseInt(value) : null);
                             }}
                           >
                             <FormControl>
@@ -197,11 +197,11 @@ export default function ProfilePage() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="">No default club</SelectItem>
+                              <SelectItem value="none">No default club</SelectItem>
                               {isLoadingClubs ? (
-                                <SelectItem value="" disabled>Loading clubs...</SelectItem>
+                                <SelectItem value="loading" disabled>Loading clubs...</SelectItem>
                               ) : clubs.length === 0 ? (
-                                <SelectItem value="" disabled>You haven't joined any clubs yet</SelectItem>
+                                <SelectItem value="empty" disabled>You haven't joined any clubs yet</SelectItem>
                               ) : (
                                 clubs.map((club) => (
                                   <SelectItem key={club.id} value={club.id.toString()}>
