@@ -1867,6 +1867,64 @@ export class DatabaseStorage implements IStorage {
     
     return clubMemberUsers;
   }
+
+  // Admin methods
+  async searchUsers(searchTerm: string) {
+    const userResults = await db
+      .select({
+        id: users.id,
+        username: users.username,
+        email: users.email,
+        isBlocked: users.isBlocked,
+        subscription: users.subscription,
+        spikes: users.spikes,
+        createdAt: users.createdAt,
+      })
+      .from(users)
+      .where(
+        or(
+          ilike(users.username, `%${searchTerm}%`),
+          ilike(users.email, `%${searchTerm}%`)
+        )
+      )
+      .limit(50);
+    
+    return userResults;
+  }
+
+  async blockUser(userId: number) {
+    await db
+      .update(users)
+      .set({ isBlocked: true })
+      .where(eq(users.id, userId));
+  }
+
+  async deleteUser(userId: number) {
+    // Note: This is a hard delete. In production, you might want to soft delete
+    // and handle cascading deletes for related data
+    await db.delete(users).where(eq(users.id, userId));
+  }
+
+  async resetUserPassword(userId: number): Promise<string> {
+    // Generate a simple random password
+    const newPassword = Math.random().toString(36).slice(-8);
+    const bcrypt = await import('bcrypt');
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    
+    await db
+      .update(users)
+      .set({ password: hashedPassword })
+      .where(eq(users.id, userId));
+    
+    return newPassword;
+  }
+
+  async updateUserSubscription(userId: number, tier: 'free' | 'pro' | 'star') {
+    await db
+      .update(users)
+      .set({ subscription: tier })
+      .where(eq(users.id, userId));
+  }
 }
 
 export const storage = new DatabaseStorage();

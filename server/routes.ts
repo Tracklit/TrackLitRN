@@ -3755,6 +3755,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({ message: "Failed to create journal entry", error: String(error) });
     }
   });
+
+  // Admin routes
+  app.get("/api/admin/users", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    // Check if user is admin (you can implement your own admin check logic)
+    // For now, we'll assume any authenticated user can access admin features
+    // You can add an isAdmin field to users table later
+    
+    try {
+      const { search } = req.query;
+      if (!search || typeof search !== 'string' || search.length < 2) {
+        return res.status(400).json({ message: "Search term must be at least 2 characters" });
+      }
+      
+      const users = await dbStorage.searchUsers(search);
+      res.json(users);
+    } catch (error) {
+      console.error("Error searching users:", error);
+      res.status(500).json({ message: "Error searching users" });
+    }
+  });
+
+  app.post("/api/admin/users/:id/block", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const userId = parseInt(req.params.id);
+      await dbStorage.blockUser(userId);
+      res.json({ message: "User blocked successfully" });
+    } catch (error) {
+      console.error("Error blocking user:", error);
+      res.status(500).json({ message: "Error blocking user" });
+    }
+  });
+
+  app.post("/api/admin/users/:id/delete", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const userId = parseInt(req.params.id);
+      await dbStorage.deleteUser(userId);
+      res.json({ message: "User deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Error deleting user" });
+    }
+  });
+
+  app.post("/api/admin/users/:id/reset", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const userId = parseInt(req.params.id);
+      const newPassword = await dbStorage.resetUserPassword(userId);
+      res.json({ message: "Password reset successfully", newPassword });
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      res.status(500).json({ message: "Error resetting password" });
+    }
+  });
+
+  app.post("/api/admin/users/:id/spikes", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const userId = parseInt(req.params.id);
+      const { amount } = req.body;
+      
+      if (!amount || isNaN(amount)) {
+        return res.status(400).json({ message: "Valid amount is required" });
+      }
+      
+      await dbStorage.addSpikes(userId, amount, 'Admin grant');
+      res.json({ message: `${amount} spikes added successfully` });
+    } catch (error) {
+      console.error("Error adding spikes:", error);
+      res.status(500).json({ message: "Error adding spikes" });
+    }
+  });
+
+  app.post("/api/admin/users/:id/subscription", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const userId = parseInt(req.params.id);
+      const { tier } = req.body;
+      
+      if (!tier || !['free', 'pro', 'star'].includes(tier)) {
+        return res.status(400).json({ message: "Valid subscription tier is required" });
+      }
+      
+      await dbStorage.updateUserSubscription(userId, tier);
+      res.json({ message: `Subscription updated to ${tier} successfully` });
+    } catch (error) {
+      console.error("Error updating subscription:", error);
+      res.status(500).json({ message: "Error updating subscription" });
+    }
+  });
   
   const httpServer = createServer(app);
   return httpServer;

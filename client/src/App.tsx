@@ -39,6 +39,7 @@ import { Component as ProgramEditorPage } from "@/pages/program-editor-page";
 import { Component as DocumentProgramViewer } from "@/pages/document-program-viewer";
 import { Component as AssignedProgramsPage } from "@/pages/assigned-programs-page";
 import AthleteProfilePage from "@/pages/athlete-profile-page";
+import AdminPage from "@/pages/admin-page";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 
@@ -78,6 +79,7 @@ function Router() {
       <ProtectedRoute path="/subscription" component={SubscriptionPage} />
       <ProtectedRoute path="/profile" component={ProfilePage} />
       <ProtectedRoute path="/athlete-profile" component={AthleteProfilePage} />
+      <ProtectedRoute path="/admin" component={AdminPage} />
       
       {/* Auth */}
       <Route path="/auth" component={AuthPage} />
