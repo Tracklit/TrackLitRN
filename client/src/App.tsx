@@ -130,20 +130,20 @@ function MainApp() {
         background: "linear-gradient(135deg, hsl(220, 80%, 4%), hsl(215, 70%, 13%))",
         minHeight: "100vh" 
       }}>
-      {/* Mobile Hamburger Menu */}
-      <div className="md:hidden">
+      {/* Hamburger Menu for smaller screens */}
+      <div className="lg:hidden">
         <div className="fixed top-4 left-4 z-50">
           <HamburgerMenu />
         </div>
       </div>
 
-      {/* Desktop Sidebar Navigation */}
-      <div className="hidden md:block fixed left-0 top-0 h-full w-64 bg-gray-900 border-r border-gray-700 z-10">
+      {/* Desktop Sidebar Navigation for larger screens */}
+      <div className="hidden lg:block fixed left-0 top-0 h-full w-64 bg-gray-900 border-r border-gray-700 z-10">
         <SidebarNavigation />
       </div>
       
       {/* Main Content */}
-      <main className="pt-12 md:ml-64">
+      <main className="pt-12 lg:ml-64">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Router />
         </div>
