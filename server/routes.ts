@@ -4009,6 +4009,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).send("Error deleting notification");
     }
   });
+
+  // Rehab API endpoints
+  app.post("/api/rehab/assign-program", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const { programType, programData } = req.body;
+      const userId = req.user.id;
+
+      // Create a notification for program assignment
+      await storage.createNotification({
+        userId,
+        type: "program_assigned",
+        title: "Rehabilitation Program Assigned",
+        message: `Your ${programData.title} has been assigned and will guide your recovery.`,
+        actionUrl: "/assigned-programs",
+        isRead: false
+      });
+
+      res.json({ 
+        success: true, 
+        message: "Rehab program assigned successfully",
+        programType,
+        title: programData.title
+      });
+    } catch (error) {
+      console.error("Error assigning rehab program:", error);
+      res.status(500).send("Error assigning rehab program");
+    }
+  });
+
+  app.post("/api/rehab/ai-consultation", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const { query } = req.body;
+      const userId = req.user.id;
+      const user = req.user;
+
+      // Check if user has access (Star subscription or enough spikes)
+      const isStarUser = user.isPremium; // Using existing premium field as proxy for Star
+      const hasEnoughSpikes = (user.spikes || 0) >= 50;
+
+      if (!isStarUser && !hasEnoughSpikes) {
+        return res.status(403).json({ 
+          error: "Insufficient access. Requires Star subscription or 50 Spikes." 
+        });
+      }
+
+      // Deduct spikes if not Star user
+      if (!isStarUser) {
+        await storage.updateUserSpikes(userId, (user.spikes || 0) - 50);
+      }
+
+      // Use OpenAI to generate personalized rehab guidance
+      const { getChatCompletion } = await import("./openai");
+      
+      const aiPrompt = `You are a sports medicine expert and rehabilitation specialist. A track and field athlete has described their injury and symptoms as follows:
+
+"${query}"
+
+Please provide:
+1. A brief assessment of the likely issue
+2. Recommended immediate actions
+3. A 4-week progressive rehabilitation plan with specific exercises
+4. Warning signs to watch for
+5. Return-to-sport criteria
+
+Keep the response professional, evidence-based, and specific to track and field athletes. Always recommend consulting healthcare professionals for serious injuries.`;
+
+      const aiResponse = await getChatCompletion(aiPrompt);
+
+      // Create a notification about the AI consultation
+      await storage.createNotification({
+        userId,
+        type: "ai_consultation",
+        title: "AI Rehabilitation Consultation Complete",
+        message: "Your personalized rehab program has been generated and assigned.",
+        actionUrl: "/rehab",
+        isRead: false
+      });
+
+      // Schedule follow-up notifications for progress tracking
+      setTimeout(async () => {
+        await storage.createNotification({
+          userId,
+          type: "rehab_checkin",
+          title: "Rehabilitation Progress Check",
+          message: "How is your recovery progressing? Tap to update your status.",
+          actionUrl: "/rehab",
+          isRead: false
+        });
+      }, 24 * 60 * 60 * 1000); // 24 hours later
+
+      res.json({ 
+        success: true, 
+        consultation: aiResponse,
+        spikesUsed: !isStarUser ? 50 : 0
+      });
+    } catch (error) {
+      console.error("Error processing AI consultation:", error);
+      res.status(500).send("Error processing consultation");
+    }
+  });
   
   const httpServer = createServer(app);
   return httpServer;

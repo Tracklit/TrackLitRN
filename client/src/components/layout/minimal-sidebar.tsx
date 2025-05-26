@@ -98,6 +98,13 @@ export function DesktopSidebar() {
             Assigned Programs
           </NavItem>
           <NavItem 
+            href="/rehab" 
+            icon={<Heart className="h-5 w-5" />} 
+            isActive={location.includes('/rehab')}
+          >
+            Rehabilitation
+          </NavItem>
+          <NavItem 
             href="/athlete-profile" 
             icon={<UserCircle className="h-5 w-5" />} 
             isActive={location === '/athlete-profile'}
