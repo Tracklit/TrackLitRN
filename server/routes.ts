@@ -1028,7 +1028,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get all users except the current user
       const allUsers = await dbStorage.getAllUsers();
+      console.log("Total users found:", allUsers.length);
       let users = allUsers.filter(user => user.id !== req.user.id);
+      console.log("Users after filtering current user:", users.length);
       
       // Apply search filter if provided
       if (search && typeof search === 'string') {
