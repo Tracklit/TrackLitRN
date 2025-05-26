@@ -3,9 +3,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/hooks/use-auth';
-import { Header } from '@/components/layout/header';
-import { SidebarNavigation } from '@/components/layout/sidebar-navigation';
-import { BottomNavigation } from '@/components/layout/bottom-navigation';
+
+
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   Form,
@@ -115,10 +114,8 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="flex flex-col h-screen">
-      <Header title="Profile" />
-      
-      <main className="flex-1 overflow-auto pt-16 pb-16 md:pb-0 md:pt-16 md:pl-64">
+    <div className="flex flex-col h-screen bg-[#010a18] text-white">
+      <main className="flex-1 overflow-auto pt-16 pb-6">
         <div className="container mx-auto px-4 py-6">
           <div className="mb-8">
             <h2 className="text-2xl font-bold mb-1">Your Profile</h2>
@@ -127,7 +124,7 @@ export default function ProfilePage() {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="md:col-span-2">
-              <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="bg-[#010a18] border border-blue-800/60 rounded-xl shadow-sm p-6">
                 <div className="flex items-center mb-6">
                   <Avatar className="h-16 w-16 mr-4">
                     <AvatarFallback name={user?.name || ''} className="text-lg" />
@@ -234,8 +231,8 @@ export default function ProfilePage() {
                 />
               )}
               
-              <div className="bg-white rounded-xl shadow-sm p-6">
-                <h3 className="font-semibold mb-4">Account Settings</h3>
+              <div className="bg-[#010a18] border border-blue-800/60 rounded-xl shadow-sm p-6">
+                <h3 className="font-semibold mb-4 text-white">Account Settings</h3>
                 <div className="space-y-4">
                   <Button variant="outline" className="w-full justify-start">
                     Change Password
@@ -256,8 +253,7 @@ export default function ProfilePage() {
         </div>
       </main>
       
-      <SidebarNavigation />
-      <BottomNavigation />
+
     </div>
   );
 }
