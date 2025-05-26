@@ -1,9 +1,10 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Bell, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Link } from "wouter";
+import { NotificationBell } from "@/components/notification-bell";
 
 interface HeaderProps {
   title?: string;
@@ -31,9 +32,7 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
         
         {user && (
           <div className="flex items-center space-x-4">
-            <button className="text-white" aria-label="Notifications">
-              <Bell className="h-5 w-5" />
-            </button>
+            <NotificationBell />
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

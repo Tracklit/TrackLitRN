@@ -84,7 +84,10 @@ import {
   programPurchases,
   programProgress,
   programAssignments,
-  workoutReactions
+  workoutReactions,
+  notifications,
+  Notification,
+  InsertNotification
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, lt, gte, desc, asc, inArray, or, isNotNull, isNull } from "drizzle-orm";
@@ -281,6 +284,13 @@ export interface IStorage {
   getUserReferrals(userId: number): Promise<Referral[]>;
   createReferral(referral: InsertReferral): Promise<Referral>;
   completeReferral(id: number): Promise<Referral | undefined>;
+  
+  // Notification operations
+  getNotifications(userId: number): Promise<Notification[]>;
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  markNotificationAsRead(notificationId: number): Promise<boolean>;
+  markAllNotificationsAsRead(userId: number): Promise<boolean>;
+  deleteNotification(notificationId: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
