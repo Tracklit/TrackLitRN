@@ -10,8 +10,6 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   email: text("email").notNull(),
   isPremium: boolean("is_premium").default(false),
-  subscription: text("subscription").default("free"), // free, pro, star
-  isBlocked: boolean("is_blocked").default(false),
   role: text("role").default("athlete"), // athlete, coach, or both
   bio: text("bio"),
   spikes: integer("spikes").default(0), // In-app currency/tokens
