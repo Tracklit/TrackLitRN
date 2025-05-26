@@ -119,14 +119,25 @@ export default function MeetsPage() {
                             </div>
                             
                             <div className="flex justify-between items-center mt-2">
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                className="border-blue-600 text-blue-400 hover:bg-blue-800/30"
-                                onClick={() => setSelectedMeet(selectedMeet?.id === meet.id ? null : meet)}
-                              >
-                                {selectedMeet?.id === meet.id ? 'Hide Preparation' : 'View Preparation'}
-                              </Button>
+                              <div className="flex gap-2">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  className="border-blue-600 text-blue-400 hover:bg-blue-800/30"
+                                  onClick={() => setSelectedMeet(selectedMeet?.id === meet.id ? null : meet)}
+                                >
+                                  {selectedMeet?.id === meet.id ? 'Hide Preparation' : 'View Preparation'}
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  className="border-blue-600 text-blue-400 hover:bg-blue-800/30"
+                                  onClick={() => handleShareMeet(meet)}
+                                >
+                                  <Share2 className="h-4 w-4 mr-1" />
+                                  Share
+                                </Button>
+                              </div>
                               
                               <Badge className="bg-amber-600 hover:bg-amber-700">{meet.status}</Badge>
                             </div>
@@ -189,13 +200,24 @@ export default function MeetsPage() {
                             </div>
                             
                             <div className="flex justify-between items-center mt-2">
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                className="border-blue-600 text-blue-400 hover:bg-blue-800/30"
-                              >
-                                View Results
-                              </Button>
+                              <div className="flex gap-2">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  className="border-blue-600 text-blue-400 hover:bg-blue-800/30"
+                                >
+                                  View Results
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  className="border-blue-600 text-blue-400 hover:bg-blue-800/30"
+                                  onClick={() => handleShareMeet(meet)}
+                                >
+                                  <Share2 className="h-4 w-4 mr-1" />
+                                  Share
+                                </Button>
+                              </div>
                               
                               <Badge className="bg-green-700 hover:bg-green-800">Completed</Badge>
                             </div>
@@ -208,6 +230,50 @@ export default function MeetsPage() {
                   <Card className="overflow-hidden bg-[#010a18] border border-blue-800/60 text-center p-8">
                     <p className="text-blue-300">No past meets</p>
                   </Card>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="calendar">
+                <MeetCalendar onMeetSelect={setSelectedMeet} />
+                
+                {selectedMeet && (
+                  <div className="mt-6">
+                    <Card className="overflow-hidden bg-[#010a18] border border-blue-800/60 shadow-md">
+                      <CardContent className="p-4">
+                        <div className="flex flex-col">
+                          <h3 className="font-medium text-xl text-white mb-2">{selectedMeet.name}</h3>
+                          <div className="flex flex-col space-y-2 mb-3">
+                            <div className="flex items-center">
+                              <Calendar className="h-4 w-4 mr-2 text-blue-400" />
+                              <span className="text-blue-300">{formatDate(selectedMeet.date)} • {formatTime(selectedMeet.date)}</span>
+                            </div>
+                            <div className="flex items-center">
+                              <MapPin className="h-4 w-4 mr-2 text-blue-400" />
+                              <span className="text-blue-300">{selectedMeet.location}</span>
+                            </div>
+                          </div>
+                          
+                          <div className="flex flex-wrap gap-2 my-3">
+                            {selectedMeet.events?.map(event => (
+                              <Badge key={event} className="bg-blue-900/60 text-blue-200 hover:bg-blue-800">{event}</Badge>
+                            ))}
+                          </div>
+                          
+                          <div className="flex gap-2 mt-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="border-blue-600 text-blue-400 hover:bg-blue-800/30"
+                              onClick={() => handleShareMeet(selectedMeet)}
+                            >
+                              <Share2 className="h-4 w-4 mr-1" />
+                              Share Meet
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
                 )}
               </TabsContent>
             </Tabs>
