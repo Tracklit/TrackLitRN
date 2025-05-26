@@ -37,6 +37,8 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   createdPrograms: many(trainingPrograms, { relationName: "program_creator" }),
   purchasedPrograms: many(programPurchases, { relationName: "program_purchaser" }),
   programProgress: many(programProgress, { relationName: "program_progress" }),
+  sentMeetInvitations: many(meetInvitations, { relationName: "sent_invitations" }),
+  receivedMeetInvitations: many(meetInvitations, { relationName: "received_invitations" }),
 }));
 
 export const meets = pgTable("meets", {
@@ -72,6 +74,36 @@ export const meetsRelations = relations(meets, ({ one, many }) => ({
   }),
   results: many(results),
   reminders: many(reminders),
+  invitations: many(meetInvitations),
+}));
+
+// Meet Invitations Table
+export const meetInvitations = pgTable("meet_invitations", {
+  id: serial("id").primaryKey(),
+  meetId: integer("meet_id").notNull().references(() => meets.id),
+  inviterId: integer("inviter_id").notNull().references(() => users.id), // User who sent the invitation
+  inviteeId: integer("invitee_id").notNull().references(() => users.id), // User who received the invitation
+  status: text("status").default("pending"), // pending, accepted, declined
+  message: text("message"), // Optional message from inviter
+  createdAt: timestamp("created_at").defaultNow(),
+  respondedAt: timestamp("responded_at"),
+});
+
+export const meetInvitationsRelations = relations(meetInvitations, ({ one }) => ({
+  meet: one(meets, {
+    fields: [meetInvitations.meetId],
+    references: [meets.id],
+  }),
+  inviter: one(users, {
+    fields: [meetInvitations.inviterId],
+    references: [users.id],
+    relationName: "sent_invitations",
+  }),
+  invitee: one(users, {
+    fields: [meetInvitations.inviteeId],
+    references: [users.id],
+    relationName: "received_invitations",
+  }),
 }));
 
 export const results = pgTable("results", {
@@ -515,6 +547,7 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertMeet = z.infer<typeof insertMeetSchema>;
 export type InsertResult = z.infer<typeof insertResultSchema>;
 export type InsertReminder = z.infer<typeof insertReminderSchema>;
+export type InsertMeetInvitation = z.infer<typeof insertMeetInvitationSchema>;
 export type InsertCoach = z.infer<typeof insertCoachSchema>;
 export type InsertAthleteGroup = z.infer<typeof insertAthleteGroupSchema>;
 export type InsertGroupMember = z.infer<typeof insertGroupMemberSchema>;
