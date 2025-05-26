@@ -150,13 +150,6 @@ export function SidebarNavigation({ isMobile = false }: { isMobile?: boolean }) 
             Messages
           </NavItem>
           <NavItem 
-            href="/athlete-profile" 
-            icon={<User className="h-5 w-5" />} 
-            isActive={location === '/athlete-profile'}
-          >
-            Athlete Profile
-          </NavItem>
-          <NavItem 
             href="/athletes" 
             icon={<Users className="h-5 w-5" />} 
             isActive={location === '/athletes'}
@@ -175,6 +168,13 @@ export function SidebarNavigation({ isMobile = false }: { isMobile?: boolean }) 
           <div className="pt-4 pb-2">
             <p className="text-xs text-darkGray px-3 font-medium">ACCOUNT</p>
           </div>
+          <NavItem 
+            href="/athlete-profile" 
+            icon={<User className="h-5 w-5" />} 
+            isActive={location === '/athlete-profile'}
+          >
+            Athlete Profile
+          </NavItem>
           <NavItem 
             href="/spikes" 
             icon={<Coins className="h-5 w-5" />} 
