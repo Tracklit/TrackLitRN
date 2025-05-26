@@ -129,8 +129,17 @@ export function setupAuth(app: Express) {
     });
   });
 
-  app.get("/api/user", (req, res) => {
+  app.get("/api/user", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    res.json(req.user);
+    
+    // Get fresh user data from database to ensure role is current
+    try {
+      const freshUser = await storage.getUser(req.user!.id);
+      if (!freshUser) return res.sendStatus(401);
+      res.json(freshUser);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.sendStatus(500);
+    }
   });
 }
