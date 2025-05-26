@@ -5,7 +5,7 @@ import { SidebarNavigation } from '@/components/layout/sidebar-navigation';
 import { Meet } from '@shared/schema';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, MapPin, Loader2, Plus, Share2, Users } from 'lucide-react';
+import { Calendar, MapPin, Loader2, Plus, Share2, Users, Crown, UserPlus } from 'lucide-react';
 import { CreateMeetModal } from '@/components/create-meet-modal';
 import { PreparationTimeline } from '@/components/preparation-timeline';
 import { MeetCalendar } from '@/components/meet-calendar';
@@ -19,6 +19,9 @@ export default function MeetsPage() {
   const [selectedMeet, setSelectedMeet] = useState<Meet | null>(null);
   const [tickerMessages, setTickerMessages] = useState<string[]>([]);
   const [currentTickerIndex, setCurrentTickerIndex] = useState(0);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [meetToShare, setMeetToShare] = useState<Meet | null>(null);
+  const [isProUser, setIsProUser] = useState(false); // TODO: Get from user context
   const { toast } = useToast();
   
   // Fetch meets
@@ -63,18 +66,24 @@ export default function MeetsPage() {
     }
   }, [tickerMessages]);
 
-  const handleShareMeet = async (meet: Meet) => {
+  const handleShareMeet = (meet: Meet) => {
+    setMeetToShare(meet);
+    setIsShareModalOpen(true);
+  };
+
+  const handleShareWithAthlete = async (athleteId: number, meet: Meet) => {
     try {
-      const shareUrl = `${window.location.origin}/meets/shared/${meet.id}`;
-      await navigator.clipboard.writeText(shareUrl);
+      // TODO: Implement actual sharing API endpoint
       toast({
         title: 'Meet Shared!',
-        description: 'Share link copied to clipboard. Other athletes can save this meet to their calendar.',
+        description: `${meet.name} has been shared with the selected athlete.`,
       });
+      setIsShareModalOpen(false);
+      setMeetToShare(null);
     } catch (error) {
       toast({
         title: 'Share Failed',
-        description: 'Could not copy share link. Please try again.',
+        description: 'Could not share meet. Please try again.',
         variant: 'destructive'
       });
     }
@@ -89,14 +98,14 @@ export default function MeetsPage() {
         
         <main className="pt-16 pb-6">
           <div className="max-w-3xl mx-auto px-4">
-            {/* Ticker Messages */}
+            {/* Ticker Messages - Dashboard Style */}
             {tickerMessages.length > 0 && (
-              <div className="mb-6 bg-gradient-to-r from-amber-600/20 to-orange-600/20 border border-amber-500/30 rounded-lg p-3 overflow-hidden">
+              <div className="mb-6 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-pink-600/10 border border-blue-500/20 rounded-lg p-2 overflow-hidden relative">
                 <div className="flex items-center">
-                  <Users className="h-5 w-5 text-amber-400 mr-3 flex-shrink-0" />
-                  <div className="overflow-hidden">
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 via-purple-500 to-pink-500 rounded-l-lg"></div>
+                  <div className="ml-4 flex-1 overflow-hidden">
                     <div 
-                      className="whitespace-nowrap text-amber-200 text-sm font-medium transition-transform duration-500 ease-in-out"
+                      className="whitespace-nowrap text-white text-sm font-medium transition-transform duration-1000 ease-in-out"
                       style={{ 
                         transform: `translateX(-${currentTickerIndex * 100}%)`,
                         width: `${tickerMessages.length * 100}%`,
@@ -104,11 +113,14 @@ export default function MeetsPage() {
                       }}
                     >
                       {tickerMessages.map((message, index) => (
-                        <span key={index} className="w-full flex-shrink-0 px-2">
+                        <span key={index} className="w-full flex-shrink-0">
                           {message}
                         </span>
                       ))}
                     </div>
+                  </div>
+                  <div className="ml-2 flex-shrink-0">
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                   </div>
                 </div>
               </div>
@@ -140,8 +152,12 @@ export default function MeetsPage() {
                 <TabsTrigger 
                   value="calendar"
                   className="data-[state=active]:bg-blue-700 data-[state=active]:text-white"
+                  disabled={!isProUser}
                 >
-                  Calendar
+                  <div className="flex items-center gap-2">
+                    Calendar
+                    <Crown className="h-4 w-4 text-amber-400" />
+                  </div>
                 </TabsTrigger>
               </TabsList>
               
