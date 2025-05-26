@@ -3598,13 +3598,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      const invitationData = insertMeetInvitationSchema.parse(req.body);
+      const { meetId, inviteeId, message } = req.body;
       
       // Verify the user owns the meet
       const meet = await db
         .select()
         .from(meets)
-        .where(and(eq(meets.id, invitationData.meetId), eq(meets.userId, req.user.id)))
+        .where(and(eq(meets.id, meetId), eq(meets.userId, req.user.id)))
         .limit(1);
 
       if (meet.length === 0) {
@@ -3617,8 +3617,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(meetInvitations)
         .where(
           and(
-            eq(meetInvitations.meetId, invitationData.meetId),
-            eq(meetInvitations.inviteeId, invitationData.inviteeId)
+            eq(meetInvitations.meetId, meetId),
+            eq(meetInvitations.inviteeId, inviteeId)
           )
         )
         .limit(1);
@@ -3630,7 +3630,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const [invitation] = await db
         .insert(meetInvitations)
         .values({
-          ...invitationData,
+          meetId,
+          inviteeId,
+          message,
           inviterId: req.user.id,
         })
         .returning();
