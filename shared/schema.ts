@@ -665,6 +665,20 @@ export const workoutReactions = pgTable("workout_reactions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Notifications
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  type: text("type").notNull(), // 'program_assigned', 'meet_invitation', 'workout_liked', 'achievement', etc.
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  relatedId: integer("related_id"), // ID of related entity (program, meet, etc.)
+  relatedType: text("related_type"), // 'program', 'meet', 'workout', etc.
+  actionUrl: text("action_url"), // URL to navigate to when clicked
+  isRead: boolean("is_read").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const workoutReactionsRelations = relations(workoutReactions, ({ one }) => ({
   user: one(users, {
     fields: [workoutReactions.userId],
@@ -683,6 +697,21 @@ export const insertWorkoutReactionSchema = createInsertSchema(workoutReactions).
 
 export type InsertWorkoutReaction = z.infer<typeof insertWorkoutReactionSchema>;
 export type WorkoutReaction = typeof workoutReactions.$inferSelect;
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
+  }),
+}));
+
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type Notification = typeof notifications.$inferSelect;
 
 // Select types
 export type ClubMember = typeof clubMembers.$inferSelect;

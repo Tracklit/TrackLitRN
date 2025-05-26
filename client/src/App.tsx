@@ -91,18 +91,18 @@ function Router() {
 function MainApp() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const { user, loginMutation } = useAuth();
+  const { user, loginMutation, registerMutation } = useAuth();
   
-  // Only show onboarding for new user registrations
+  // Only show onboarding for new user registrations (not logins)
   useEffect(() => {
     // For simplicity, check if the user has completed onboarding before
     const hasCompletedOnboarding = localStorage.getItem('onboardingCompleted');
     
-    // Only show onboarding if user hasn't completed it before
-    if (loginMutation.isSuccess && !hasCompletedOnboarding) {
+    // Only show onboarding if user just registered (not logged in) and hasn't completed it before
+    if (registerMutation.isSuccess && !hasCompletedOnboarding) {
       setShowOnboarding(true);
     }
-  }, [loginMutation.isSuccess, loginMutation.data]);
+  }, [registerMutation.isSuccess, registerMutation.data]);
   
   const toggleMenu = () => {
     const newMenuState = !isMenuOpen;
