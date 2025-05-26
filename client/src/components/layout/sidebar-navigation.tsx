@@ -25,7 +25,7 @@ interface NavItemProps {
   badge?: React.ReactNode;
 }
 
-function NavItem({ href, icon, children, isActive }: NavItemProps) {
+function NavItem({ href, icon, children, isActive, badge }: NavItemProps) {
   return (
     <li>
       <Link 
@@ -39,7 +39,8 @@ function NavItem({ href, icon, children, isActive }: NavItemProps) {
       >
         {icon}
         <div className="flex items-center justify-between w-full">
-          {children}
+          <span>{children}</span>
+          {badge && badge}
         </div>
       </Link>
     </li>
