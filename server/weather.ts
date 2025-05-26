@@ -47,7 +47,7 @@ export async function getWeatherForecast(location: string, date: string): Promis
     
     const data = await response.json() as any;
     console.log('Weather API response received successfully for', location);
-    console.log('Response keys:', Object.keys(data));
+    console.log('Full weather response:', JSON.stringify(data, null, 2));
     if (data.error) {
       console.error('Weather API error:', data.error);
       return null;
