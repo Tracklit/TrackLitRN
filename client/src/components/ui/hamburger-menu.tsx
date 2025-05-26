@@ -145,10 +145,10 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               <p className="text-xs text-muted-foreground px-4 font-medium">COMPETITION</p>
             </div>
             <a
-              href="/calendar"
+              href="/meets"
               className={cn(
                 "flex items-center px-4 py-2.5 rounded-md hover:bg-muted transition-colors",
-                location === "/calendar" ? "bg-primary/10 text-primary" : "text-foreground"
+                location === "/meets" ? "bg-primary/10 text-primary" : "text-foreground"
               )}
               onClick={() => setIsOpen(false)}
             >
