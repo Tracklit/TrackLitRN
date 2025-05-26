@@ -365,7 +365,6 @@ export default function MeetsPage() {
                                   className="border-blue-600 text-blue-400 hover:bg-blue-800/30"
                                   onClick={() => handleShareMeet(meet)}
                                 >
-                                  <Share2 className="h-4 w-4 mr-1" />
                                   Share
                                 </Button>
                               </div>
