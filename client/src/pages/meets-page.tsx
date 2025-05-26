@@ -5,7 +5,7 @@ import { SidebarNavigation } from '@/components/layout/sidebar-navigation';
 import { Meet } from '@shared/schema';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, MapPin, Loader2, Plus, Share2, Users, Crown, UserPlus, X, Cloud, Wind } from 'lucide-react';
+import { Calendar, MapPin, Loader2, Plus, Users, Crown, UserPlus, X, Cloud, Wind } from 'lucide-react';
 import { CreateMeetModal } from '@/components/create-meet-modal';
 import { PreparationTimeline } from '@/components/preparation-timeline';
 import { MeetCalendar } from '@/components/meet-calendar';
@@ -70,9 +70,11 @@ export default function MeetsPage() {
 
     if (error || !weather) {
       return (
-        <div className="flex items-center gap-2 text-blue-400/60 text-sm">
-          <Cloud className="h-4 w-4" />
-          <span>Weather unavailable</span>
+        <div className="flex items-center gap-4 bg-blue-900/30 rounded-lg p-3 mt-3">
+          <div className="flex items-center gap-2">
+            <Cloud className="h-4 w-4 text-blue-400" />
+            <span className="text-blue-400/60 text-sm">Weather data will appear here once API key is active</span>
+          </div>
         </div>
       );
     }
@@ -266,8 +268,7 @@ export default function MeetsPage() {
                               ))}
                             </div>
                             
-                            {/* Weather and Wind Predictions */}
-                            <WeatherCard meet={meet} />
+
                             
                             <div className="flex justify-between items-center mt-2">
                               <div className="flex gap-2">
