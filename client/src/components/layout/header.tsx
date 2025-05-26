@@ -24,7 +24,7 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
     <header className={cn("bg-[#010a18] shadow-sm fixed top-0 left-0 right-0 z-30", className)}>
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center">
-          <h1 className="text-xl font-bold text-white">{title}</h1>
+          <h1 className="text-xl font-bold text-white ml-6">{title}</h1>
         </div>
         
         {user && (
