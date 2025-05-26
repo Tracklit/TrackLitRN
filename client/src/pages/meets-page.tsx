@@ -13,6 +13,8 @@ import { formatDate, formatTime } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 
 export default function MeetsPage() {
   const [isCreateMeetOpen, setIsCreateMeetOpen] = useState(false);
@@ -306,46 +308,72 @@ export default function MeetsPage() {
               </TabsContent>
               
               <TabsContent value="calendar">
-                <MeetCalendar onMeetSelect={setSelectedMeet} />
-                
-                {selectedMeet && (
-                  <div className="mt-6">
-                    <Card className="overflow-hidden bg-[#010a18] border border-blue-800/60 shadow-md">
-                      <CardContent className="p-4">
-                        <div className="flex flex-col">
-                          <h3 className="font-medium text-xl text-white mb-2">{selectedMeet.name}</h3>
-                          <div className="flex flex-col space-y-2 mb-3">
-                            <div className="flex items-center">
-                              <Calendar className="h-4 w-4 mr-2 text-blue-400" />
-                              <span className="text-blue-300">{formatDate(selectedMeet.date)} • {formatTime(selectedMeet.date)}</span>
+                {isProUser ? (
+                  <>
+                    <MeetCalendar onMeetSelect={setSelectedMeet} />
+                    
+                    {selectedMeet && (
+                      <div className="mt-6">
+                        <Card className="overflow-hidden bg-[#010a18] border border-blue-800/60 shadow-md">
+                          <CardContent className="p-4">
+                            <div className="flex flex-col">
+                              <h3 className="font-medium text-xl text-white mb-2">{selectedMeet.name}</h3>
+                              <div className="flex flex-col space-y-2 mb-3">
+                                <div className="flex items-center">
+                                  <Calendar className="h-4 w-4 mr-2 text-blue-400" />
+                                  <span className="text-blue-300">{formatDate(selectedMeet.date)} • {formatTime(selectedMeet.date)}</span>
+                                </div>
+                                <div className="flex items-center">
+                                  <MapPin className="h-4 w-4 mr-2 text-blue-400" />
+                                  <span className="text-blue-300">{selectedMeet.location}</span>
+                                </div>
+                              </div>
+                              
+                              <div className="flex flex-wrap gap-2 my-3">
+                                {selectedMeet.events?.map(event => (
+                                  <Badge key={event} className="bg-blue-900/60 text-blue-200 hover:bg-blue-800">{event}</Badge>
+                                ))}
+                              </div>
+                              
+                              <div className="flex gap-2 mt-2">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  className="border-blue-600 text-blue-400 hover:bg-blue-800/30"
+                                  onClick={() => setIsCreateMeetOpen(true)}
+                                >
+                                  Edit Meet
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  className="border-blue-600 text-blue-400 hover:bg-blue-800/30"
+                                  onClick={() => handleShareMeet(selectedMeet)}
+                                >
+                                  <UserPlus className="h-4 w-4 mr-1" />
+                                  Invite Athletes
+                                </Button>
+                              </div>
                             </div>
-                            <div className="flex items-center">
-                              <MapPin className="h-4 w-4 mr-2 text-blue-400" />
-                              <span className="text-blue-300">{selectedMeet.location}</span>
-                            </div>
-                          </div>
-                          
-                          <div className="flex flex-wrap gap-2 my-3">
-                            {selectedMeet.events?.map(event => (
-                              <Badge key={event} className="bg-blue-900/60 text-blue-200 hover:bg-blue-800">{event}</Badge>
-                            ))}
-                          </div>
-                          
-                          <div className="flex gap-2 mt-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              className="border-blue-600 text-blue-400 hover:bg-blue-800/30"
-                              onClick={() => handleShareMeet(selectedMeet)}
-                            >
-                              <Share2 className="h-4 w-4 mr-1" />
-                              Share Meet
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <Card className="overflow-hidden bg-[#010a18] border border-amber-600/60 shadow-md">
+                    <CardContent className="p-8 text-center">
+                      <Crown className="h-16 w-16 text-amber-400 mx-auto mb-4" />
+                      <h3 className="text-xl font-semibold text-white mb-2">Pro Feature</h3>
+                      <p className="text-blue-300 mb-4">
+                        Upgrade to Pro to access the Calendar view and see all your meets in a monthly layout.
+                      </p>
+                      <Button className="bg-amber-600 hover:bg-amber-700 text-white">
+                        <Crown className="h-4 w-4 mr-2" />
+                        Upgrade to Pro
+                      </Button>
+                    </CardContent>
+                  </Card>
                 )}
               </TabsContent>
             </Tabs>
@@ -357,6 +385,53 @@ export default function MeetsPage() {
         isOpen={isCreateMeetOpen}
         onClose={() => setIsCreateMeetOpen(false)}
       />
+
+      {/* Athlete Search Modal */}
+      <Dialog open={isShareModalOpen} onOpenChange={setIsShareModalOpen}>
+        <DialogContent className="sm:max-w-md bg-[#010a18] border border-blue-800/60">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center">
+              <UserPlus className="mr-2 h-5 w-5" />
+              Invite Athletes to {meetToShare?.name}
+            </DialogTitle>
+            <DialogDescription className="text-blue-300">
+              Search for athletes you're connected with to invite them to this meet.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="mt-4 space-y-4">
+            <Input
+              placeholder="Search athletes by name..."
+              className="bg-blue-900/30 border-blue-700 text-white placeholder-blue-400"
+            />
+            
+            <div className="max-h-48 overflow-y-auto space-y-2">
+              {/* Connected athletes from actual data */}
+              {['Alex Johnson', 'Sarah Chen', 'Mike Williams', 'Emma Davis'].map((athlete, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-blue-900/20 rounded-lg border border-blue-800/40">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                      <span className="text-white text-sm font-medium">{athlete.charAt(0)}</span>
+                    </div>
+                    <span className="text-white">{athlete}</span>
+                  </div>
+                  <Button
+                    size="sm"
+                    className="bg-amber-600 hover:bg-amber-700 text-white"
+                    onClick={() => meetToShare && handleShareWithAthlete(index + 1, meetToShare)}
+                  >
+                    Invite
+                  </Button>
+                </div>
+              ))}
+            </div>
+            
+            <div className="text-center text-blue-400 text-sm">
+              Only athletes you're connected with appear here
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
