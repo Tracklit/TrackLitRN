@@ -93,7 +93,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               href="/"
               className={cn(
                 "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",
-                location === "/" ? "bg-orange-500 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                location === "/" ? "bg-[#ff8c00] text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
               )}
               onClick={() => setIsOpen(false)}
             >
@@ -109,7 +109,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               href="/practice"
               className={cn(
                 "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",
-                location.startsWith("/practice") ? "bg-orange-500 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                location.startsWith("/practice") ? "bg-[#ff8c00] text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
               )}
               onClick={() => setIsOpen(false)}
             >
@@ -120,7 +120,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               href="/training-tools"
               className={cn(
                 "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",
-                location === "/training-tools" ? "bg-orange-500 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                location === "/training-tools" ? "bg-[#ff8c00] text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
               )}
               onClick={() => setIsOpen(false)}
             >
@@ -136,7 +136,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               href="/meets"
               className={cn(
                 "flex items-center justify-between px-4 py-2 rounded-md text-xs font-medium transition-colors",
-                location === "/meets" ? "bg-orange-500 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                location === "/meets" ? "bg-[#ff8c00] text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
               )}
               onClick={() => setIsOpen(false)}
             >
@@ -144,7 +144,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                 <Calendar className="h-4 w-4 mr-3" />
                 Calendar
               </div>
-              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-500 text-white border border-orange-500">
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[#ff8c00] text-white border border-[#ff8c00]">
                 PRO
               </span>
             </a>
