@@ -12,6 +12,7 @@ import { Link } from "wouter";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
+import { WorkoutReactions } from "@/components/workout-reactions";
 
 function AssignedProgramsContent() {
   const { toast } = useToast();

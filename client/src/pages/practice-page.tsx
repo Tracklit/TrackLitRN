@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/collapsible";
 import { Mic, Loader2, MapPin } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { WorkoutReactions } from "@/components/workout-reactions";
 import {
   Dialog,
   DialogContent,
@@ -805,6 +806,17 @@ export default function PracticePage() {
                               </>
                             )}
                           </div>
+                          
+                          {/* Workout Reactions - Like/Dislike functionality */}
+                          {activeSessionData && activeSessionData.id && (
+                            <div className="mt-4 pt-3 border-t border-border/30">
+                              <WorkoutReactions 
+                                sessionId={activeSessionData.id} 
+                                isOwnWorkout={true}
+                                className="justify-end"
+                              />
+                            </div>
+                          )}
                         </div>
                         
                         {/* Removed day number and date information */}

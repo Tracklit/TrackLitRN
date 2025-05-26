@@ -3854,6 +3854,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Error updating subscription" });
     }
   });
+
+  // Workout Reactions API
+  app.get("/api/sessions/:sessionId/reactions", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const sessionId = parseInt(req.params.sessionId);
+      if (isNaN(sessionId)) {
+        return res.status(400).send("Invalid session ID");
+      }
+      
+      const reactions = await dbStorage.getSessionReactions(sessionId);
+      const userReaction = await dbStorage.getWorkoutReaction(req.user!.id, sessionId);
+      
+      res.json({
+        ...reactions,
+        userReaction: userReaction?.reactionType || null
+      });
+    } catch (error) {
+      console.error("Error fetching session reactions:", error);
+      res.status(500).send("Error fetching session reactions");
+    }
+  });
+
+  app.post("/api/sessions/:sessionId/react", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const sessionId = parseInt(req.params.sessionId);
+      const { reactionType } = req.body;
+      
+      if (isNaN(sessionId)) {
+        return res.status(400).send("Invalid session ID");
+      }
+      
+      if (!['like', 'dislike'].includes(reactionType)) {
+        return res.status(400).send("Invalid reaction type");
+      }
+      
+      const reaction = await dbStorage.createOrUpdateWorkoutReaction({
+        userId: req.user!.id,
+        sessionId,
+        reactionType
+      });
+      
+      res.json(reaction);
+    } catch (error) {
+      console.error("Error creating reaction:", error);
+      res.status(500).send("Error creating reaction");
+    }
+  });
+
+  app.delete("/api/sessions/:sessionId/react", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const sessionId = parseInt(req.params.sessionId);
+      
+      if (isNaN(sessionId)) {
+        return res.status(400).send("Invalid session ID");
+      }
+      
+      const success = await dbStorage.deleteWorkoutReaction(req.user!.id, sessionId);
+      
+      if (success) {
+        res.json({ success: true });
+      } else {
+        res.status(404).send("Reaction not found");
+      }
+    } catch (error) {
+      console.error("Error deleting reaction:", error);
+      res.status(500).send("Error deleting reaction");
+    }
+  });
   
   const httpServer = createServer(app);
   return httpServer;
