@@ -5,6 +5,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarNavigation } from "@/components/layout/sidebar-navigation";
+import { HamburgerMenu } from "@/components/ui/hamburger-menu";
 
 
 // Import tool components
@@ -98,7 +99,6 @@ function Router() {
 }
 
 function MainApp() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const { user, loginMutation, registerMutation } = useAuth();
   
@@ -112,25 +112,6 @@ function MainApp() {
       setShowOnboarding(true);
     }
   }, [registerMutation.isSuccess, registerMutation.data]);
-  
-  const toggleMenu = () => {
-    const newMenuState = !isMenuOpen;
-    setIsMenuOpen(newMenuState);
-    
-    // Prevent body scrolling when menu is open
-    if (newMenuState) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-  };
-  
-  // Cleanup effect to reset body overflow when component unmounts
-  useEffect(() => {
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, []);
   
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
@@ -149,34 +130,15 @@ function MainApp() {
         background: "linear-gradient(135deg, hsl(220, 80%, 4%), hsl(215, 70%, 13%))",
         minHeight: "100vh" 
       }}>
-      {/* Hamburger Menu (always visible) */}
-      <div className="fixed top-4 left-4 z-50">
-        <button
-          onClick={toggleMenu}
-          className="p-2 rounded-lg bg-gray-800/80 backdrop-blur-sm border border-gray-700 text-white hover:bg-gray-700/80 transition-all"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
+      {/* Mobile Hamburger Menu */}
+      <div className="fixed top-4 left-4 z-50 md:hidden">
+        <HamburgerMenu />
       </div>
 
-      {/* Sliding Navigation Menu */}
-      <div className={`fixed inset-y-0 left-0 z-40 w-80 transform transition-transform duration-300 ease-in-out ${
-        isMenuOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
-        <div className="h-full bg-gray-900/95 backdrop-blur-sm border-r border-gray-700">
-          <SidebarNavigation />
-        </div>
+      {/* Desktop Sidebar Navigation */}
+      <div className="hidden md:block">
+        <SidebarNavigation />
       </div>
-
-      {/* Overlay */}
-      {isMenuOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/50 transition-opacity duration-300"
-          onClick={toggleMenu}
-        />
-      )}
       
       {/* Main Content */}
       <main className="pt-12">
