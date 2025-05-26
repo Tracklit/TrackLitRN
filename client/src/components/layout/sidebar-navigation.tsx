@@ -37,7 +37,9 @@ function NavItem({ href, icon, children, isActive }: NavItemProps) {
         )}
       >
         {icon}
-        <span>{children}</span>
+        <div className="flex items-center justify-between w-full">
+          {children}
+        </div>
       </Link>
     </li>
   );
@@ -104,12 +106,10 @@ export function SidebarNavigation({ isMobile = false }: { isMobile?: boolean }) 
             icon={<Calendar className="h-5 w-5" />} 
             isActive={location === '/meets'}
           >
-            <div className="flex items-center justify-between w-full">
-              <span>Calendar</span>
-              <span className="bg-gradient-to-r from-amber-400 to-amber-600 text-black text-xs px-1.5 py-0.5 rounded font-bold">
-                PRO
-              </span>
-            </div>
+            <span>Calendar</span>
+            <span className="bg-gradient-to-r from-amber-400 to-amber-600 text-black text-xs px-1.5 py-0.5 rounded font-bold ml-auto">
+              PRO
+            </span>
           </NavItem>
           <NavItem 
             href="/meets" 
