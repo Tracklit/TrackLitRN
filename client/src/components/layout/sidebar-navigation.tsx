@@ -100,11 +100,16 @@ export function SidebarNavigation({ isMobile = false }: { isMobile?: boolean }) 
             <p className="text-xs text-darkGray px-3 font-medium">COMPETITION</p>
           </div>
           <NavItem 
-            href="/calendar" 
+            href="/meets" 
             icon={<Calendar className="h-5 w-5" />} 
-            isActive={location === '/calendar'}
+            isActive={location === '/meets'}
           >
-            Calendar
+            <div className="flex items-center justify-between w-full">
+              <span>Calendar</span>
+              <span className="bg-gradient-to-r from-amber-400 to-amber-600 text-black text-xs px-1.5 py-0.5 rounded font-bold">
+                PRO
+              </span>
+            </div>
           </NavItem>
           <NavItem 
             href="/meets" 

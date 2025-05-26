@@ -21,7 +21,7 @@ import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
 import MeetsPage from "@/pages/meets-page";
 import ResultsPage from "@/pages/results-page";
-import CalendarPage from "@/pages/calendar-page";
+
 import ProfilePage from "@/pages/profile-page";
 import CoachesPage from "@/pages/coaches-page";
 import PracticePage from "@/pages/practice-page";
@@ -69,7 +69,6 @@ function Router() {
       {/* Competition */}
       <ProtectedRoute path="/meets" component={MeetsPage} />
       <ProtectedRoute path="/results" component={ResultsPage} />
-      <ProtectedRoute path="/calendar" component={CalendarPage} />
       
       {/* Social */}
       <ProtectedRoute path="/athletes" component={AthletesPage} />
