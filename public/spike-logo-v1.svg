@@ -1,5 +1,5 @@
 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Version 1: Simple geometric spike -->
+  <!-- Version 1: Improved geometric spike with threaded base -->
   <defs>
     <linearGradient id="spikeGradient1" x1="0%" y1="100%" x2="0%" y2="0%">
       <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:1" />
@@ -7,12 +7,17 @@
     </linearGradient>
   </defs>
   
-  <!-- Main spike body -->
-  <path d="M12 2 L16 20 L8 20 Z" fill="url(#spikeGradient1)" stroke="#d97706" stroke-width="1"/>
+  <!-- Main spike body (shorter, wider base) -->
+  <path d="M12 4 L17 16 L7 16 Z" fill="url(#spikeGradient1)" stroke="#d97706" stroke-width="1"/>
   
   <!-- Spike tip highlight -->
-  <path d="M12 2 L14 8 L10 8 Z" fill="#fef3c7" opacity="0.6"/>
+  <path d="M12 4 L14.5 10 L9.5 10 Z" fill="#fef3c7" opacity="0.6"/>
   
-  <!-- Base accent -->
-  <rect x="7" y="20" width="10" height="2" rx="1" fill="#92400e"/>
+  <!-- Threaded base section -->
+  <rect x="6" y="16" width="12" height="6" rx="1" fill="#92400e"/>
+  
+  <!-- Thread lines for authentic look -->
+  <line x1="7" y1="17.5" x2="17" y2="17.5" stroke="#78350f" stroke-width="0.5"/>
+  <line x1="7" y1="19" x2="17" y2="19" stroke="#78350f" stroke-width="0.5"/>
+  <line x1="7" y1="20.5" x2="17" y2="20.5" stroke="#78350f" stroke-width="0.5"/>
 </svg>
