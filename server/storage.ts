@@ -90,7 +90,7 @@ import {
   InsertNotification
 } from "@shared/schema";
 import { db, pool } from "./db";
-import { eq, and, lt, gte, desc, asc, inArray, or, isNotNull, isNull } from "drizzle-orm";
+import { eq, and, lt, gte, desc, asc, inArray, or, isNotNull, isNull, ne, sql } from "drizzle-orm";
 import { AthleteProfile, InsertAthleteProfile, athleteProfiles } from "@shared/athlete-profile-schema";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
@@ -2298,12 +2298,25 @@ export class DatabaseStorage implements IStorage {
       .limit(50);
 
     if (search) {
-      query = query.where(
-        or(
-          ilike(users.username, `%${search}%`),
-          ilike(users.name, `%${search}%`)
-        )
-      );
+      query = db
+        .select({
+          id: users.id,
+          username: users.username,
+          name: users.name,
+          email: users.email,
+          bio: users.bio,
+          createdAt: users.createdAt
+        })
+        .from(users)
+        .where(and(
+          ne(users.id, currentUserId),
+          or(
+            sql`${users.username} ILIKE ${`%${search}%`}`,
+            sql`${users.name} ILIKE ${`%${search}%`}`
+          )
+        ))
+        .orderBy(desc(users.createdAt))
+        .limit(50);
     }
 
     const recentUsers = await query;
