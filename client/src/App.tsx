@@ -40,6 +40,9 @@ import { Component as DocumentProgramViewer } from "@/pages/document-program-vie
 import { Component as AssignedProgramsPage } from "@/pages/assigned-programs-page";
 import AthleteProfilePage from "@/pages/athlete-profile-page";
 import AdminPage from "@/pages/admin-page";
+import RehabPage from "@/pages/rehab-page";
+import HamstringRehabPage from "@/pages/rehab/acute-muscle/hamstring";
+import FootRehabPage from "@/pages/rehab/chronic-injuries/foot";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 
@@ -73,6 +76,11 @@ function Router() {
       <ProtectedRoute path="/club-management/:id" component={ClubManagementPage} />
       <ProtectedRoute path="/messages" component={MessagesPage} />
       <ProtectedRoute path="/coaches" component={CoachesPage} />
+      
+      {/* Rehab */}
+      <ProtectedRoute path="/rehab" component={RehabPage} />
+      <ProtectedRoute path="/rehab/acute-muscle/hamstring" component={HamstringRehabPage} />
+      <ProtectedRoute path="/rehab/chronic-injuries/foot" component={FootRehabPage} />
       
       {/* Account */}
       <ProtectedRoute path="/spikes" component={SpikesPage} />

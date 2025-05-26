@@ -15,7 +15,8 @@ import {
   BookOpen,
   Clipboard,
   UserCircle,
-  Shield
+  Shield,
+  Heart
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
