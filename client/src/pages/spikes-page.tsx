@@ -42,7 +42,7 @@ function SpikesPage() {
         <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle className="text-2xl flex items-center">
-              <Coins className="h-6 w-6 mr-2 text-amber-500" />
+              <img src="/spike-logo-v1.svg" alt="Spike" className="h-6 w-6 mr-2" />
               {spikeBalance} Spikes
             </CardTitle>
             <CardDescription>Spikes are automatically earned by completing activities</CardDescription>
