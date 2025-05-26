@@ -118,9 +118,9 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
               <p className="text-xs text-darkGray px-3 font-medium">COMPETITION</p>
             </div>
             <NavItem 
-              href="/calendar" 
+              href="/meets" 
               icon={<Calendar className="h-5 w-5" />} 
-              isActive={location === '/calendar'}
+              isActive={location === '/meets'}
               onClick={onClose}
             >
               Calendar
