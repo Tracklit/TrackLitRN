@@ -4167,7 +4167,7 @@ Keep the response professional, evidence-based, and specific to track and field 
     }
 
     try {
-      const conversations = await storage.getUserConversations(req.user.id);
+      const conversations = await dbStorage.getUserConversations(req.user.id);
       res.json(conversations);
     } catch (error) {
       console.error("Error fetching conversations:", error);

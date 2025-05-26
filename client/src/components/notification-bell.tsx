@@ -38,6 +38,10 @@ function getNotificationIcon(type: string) {
       return <MessageSquare className="h-4 w-4 text-purple-400" />;
     case 'achievement':
       return <Trophy className="h-4 w-4 text-amber-400" />;
+    case 'friend_request':
+      return <Users className="h-4 w-4 text-blue-400" />;
+    case 'friend_accepted':
+      return <Users className="h-4 w-4 text-green-400" />;
     default:
       return <Bell className="h-4 w-4 text-gray-400" />;
   }
