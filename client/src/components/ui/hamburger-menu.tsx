@@ -198,10 +198,21 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               Messages
             </a>
             <a
+              href="/athletes"
+              className={cn(
+                "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",
+                location === "/athletes" ? "bg-[#ff8c00] text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+              )}
+              onClick={() => setIsOpen(false)}
+            >
+              <Users className="h-4 w-4 mr-3" />
+              Athletes
+            </a>
+            <a
               href="/coaches"
               className={cn(
                 "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",
-                location === "/coaches" ? "bg-orange-500 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                location === "/coaches" ? "bg-[#ff8c00] text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
               )}
               onClick={() => setIsOpen(false)}
             >

@@ -149,6 +149,13 @@ export function SidebarNavigation({ isMobile = false }: { isMobile?: boolean }) 
             Messages
           </NavItem>
           <NavItem 
+            href="/athletes" 
+            icon={<Users className="h-5 w-5" />} 
+            isActive={location === '/athletes'}
+          >
+            Athletes
+          </NavItem>
+          <NavItem 
             href="/coaches" 
             icon={<Award className="h-5 w-5" />} 
             isActive={location === '/coaches'}
