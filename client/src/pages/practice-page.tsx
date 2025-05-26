@@ -7,6 +7,7 @@ import { useAssignedPrograms } from "@/hooks/use-assigned-programs";
 import { useProgramSessions } from "@/hooks/use-program-sessions";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { Meet } from "@shared/schema";
 import { PageContainer } from "@/components/page-container";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Mic, Loader2 } from "lucide-react";
+import { Mic, Loader2, MapPin } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Dialog,
@@ -86,6 +87,24 @@ export default function PracticePage() {
     programSessions, 
     isLoading: isLoadingProgramSessions 
   } = useProgramSessions(selectedProgram?.programId || null);
+
+  // Fetch meets to show on workout day
+  const { data: meets = [] } = useQuery<Meet[]>({
+    queryKey: ['/api/meets'],
+  });
+
+  // Function to get meets for the current workout day
+  const getMeetsForCurrentDay = () => {
+    const currentDate = new Date(new Date().setDate(new Date().getDate() + currentDayOffset));
+    return meets.filter(meet => {
+      const meetDate = new Date(meet.date);
+      return meetDate.getDate() === currentDate.getDate() &&
+             meetDate.getMonth() === currentDate.getMonth() &&
+             meetDate.getFullYear() === currentDate.getFullYear();
+    });
+  };
+
+  const todaysMeets = getMeetsForCurrentDay();
   
   // State for Training Performance inputs
   const [percentage, setPercentage] = useState<number[]>([85]);
@@ -624,6 +643,43 @@ export default function PracticePage() {
               </h3>
             </div>
             
+            {/* Show meets for today */}
+            {todaysMeets.length > 0 && (
+              <div className="mb-6">
+                {todaysMeets.map(meet => (
+                  <div key={meet.id} className="bg-gradient-to-r from-amber-600/20 to-orange-600/20 border border-amber-500/30 rounded-lg p-4 mb-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-semibold text-amber-200 mb-1">{meet.name}</h4>
+                        <div className="flex items-center text-sm text-amber-300/80">
+                          <MapPin className="h-4 w-4 mr-1" />
+                          <span>{meet.location}</span>
+                          <span className="mx-2">•</span>
+                          <span>{new Date(meet.date).toLocaleTimeString('en-US', { 
+                            hour: 'numeric', 
+                            minute: '2-digit', 
+                            hour12: true 
+                          })}</span>
+                        </div>
+                        {meet.events && meet.events.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {meet.events.map((event, idx) => (
+                              <Badge key={idx} className="bg-amber-700/50 text-amber-100 text-xs">{event}</Badge>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <div className="bg-amber-600/30 px-3 py-1 rounded-full">
+                          <span className="text-sm font-medium text-amber-200">MEET DAY</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div className={`space-y-4 mt-6 transition-opacity duration-200 ${fadeTransition ? 'opacity-100' : 'opacity-0'}`}>
               {/* Program content or default content */}
               <div className="bg-muted/40 p-3 rounded-md">
