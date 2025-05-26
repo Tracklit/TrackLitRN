@@ -18,7 +18,7 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
   };
 
   return (
-    <header className={cn("bg-white shadow-sm fixed top-0 left-0 right-0 z-30", className)}>
+    <header className={cn("bg-[#010a18] shadow-sm fixed top-0 left-0 right-0 z-30", className)}>
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <img 
@@ -26,12 +26,12 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
             alt="TrackLit Logo" 
             className="h-8 w-auto" 
           />
-          <h1 className="text-xl font-bold">{title}</h1>
+          <h1 className="text-xl font-bold text-white">{title}</h1>
         </div>
         
         {user && (
           <div className="flex items-center space-x-4">
-            <button className="text-darkGray" aria-label="Notifications">
+            <button className="text-white" aria-label="Notifications">
               <Bell className="h-5 w-5" />
             </button>
             
