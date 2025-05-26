@@ -87,7 +87,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
         )}
       >
         <div className="flex flex-col h-full overflow-hidden">          
-          <nav className="flex-1 overflow-y-auto p-4 pt-14 space-y-1">
+          <nav className="flex-1 overflow-y-auto p-4 pt-16 space-y-1">
             {/* Dashboard */}
             <a
               href="/"
