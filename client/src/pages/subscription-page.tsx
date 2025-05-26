@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Header } from '@/components/layout/header';
+
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -95,8 +95,6 @@ export default function SubscriptionPage() {
   return (
     <div className="flex h-screen bg-[#010a18] text-white">
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header />
-        
         <div className="flex-1 overflow-y-auto p-6">
           <div className="max-w-6xl mx-auto">
             {/* Header Section */}

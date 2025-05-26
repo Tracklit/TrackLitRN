@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Header } from '@/components/layout/header';
+
 
 import { Meet } from '@shared/schema';
 import { Button } from '@/components/ui/button';
@@ -272,8 +272,6 @@ export default function MeetsPage() {
   return (
     <div className="flex h-screen bg-[#010a18] text-white">
       <div className="flex-1 overflow-auto">
-        <Header title="Meets" />
-        
         <main className="pt-16 pb-6">
           <div className="max-w-3xl mx-auto px-4">
             {/* Ticker Messages - Dashboard Style */}
