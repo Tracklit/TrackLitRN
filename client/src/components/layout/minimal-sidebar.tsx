@@ -14,7 +14,8 @@ import {
   LogOut,
   BookOpen,
   Clipboard,
-  UserCircle
+  UserCircle,
+  Shield
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -45,6 +46,7 @@ function NavItem({ href, icon, children, isActive, onClick }: {
 
 export function DesktopSidebar() {
   const [location] = useLocation();
+  const { user } = useAuth();
   
   return (
     <aside className="hidden md:flex flex-col bg-white border-r border-gray-200 w-64 h-screen fixed top-0 left-0 z-20">
@@ -108,6 +110,15 @@ export function DesktopSidebar() {
           >
             Settings
           </NavItem>
+          {user?.role === 'admin' && (
+            <NavItem 
+              href="/admin" 
+              icon={<Shield className="h-5 w-5" />} 
+              isActive={location === '/admin'}
+            >
+              Admin Panel
+            </NavItem>
+          )}
         </ul>
       </div>
     </aside>
