@@ -931,6 +931,102 @@ export type InsertWorkoutLibrary = z.infer<typeof insertWorkoutLibrarySchema>;
 export type WorkoutSessionPreview = typeof workoutSessionPreview.$inferSelect;
 export type InsertWorkoutSessionPreview = z.infer<typeof insertWorkoutSessionPreviewSchema>;
 
+// Direct Messages
+export const directMessages = pgTable("direct_messages", {
+  id: serial("id").primaryKey(),
+  senderId: integer("sender_id").notNull().references(() => users.id),
+  receiverId: integer("receiver_id").notNull().references(() => users.id),
+  content: text("content").notNull(),
+  isRead: boolean("is_read").default(false),
+  readAt: timestamp("read_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const directMessagesRelations = relations(directMessages, ({ one }) => ({
+  sender: one(users, {
+    fields: [directMessages.senderId],
+    references: [users.id],
+    relationName: "sent_messages",
+  }),
+  receiver: one(users, {
+    fields: [directMessages.receiverId],
+    references: [users.id],
+    relationName: "received_messages",
+  }),
+}));
+
+// Following/Followers
+export const follows = pgTable("follows", {
+  id: serial("id").primaryKey(),
+  followerId: integer("follower_id").notNull().references(() => users.id),
+  followingId: integer("following_id").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const followsRelations = relations(follows, ({ one }) => ({
+  follower: one(users, {
+    fields: [follows.followerId],
+    references: [users.id],
+    relationName: "following",
+  }),
+  following: one(users, {
+    fields: [follows.followingId],
+    references: [users.id],
+    relationName: "followers",
+  }),
+}));
+
+// Message Conversations (for organizing DMs)
+export const conversations = pgTable("conversations", {
+  id: serial("id").primaryKey(),
+  user1Id: integer("user1_id").notNull().references(() => users.id),
+  user2Id: integer("user2_id").notNull().references(() => users.id),
+  lastMessageId: integer("last_message_id").references(() => directMessages.id),
+  lastMessageAt: timestamp("last_message_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const conversationsRelations = relations(conversations, ({ one }) => ({
+  user1: one(users, {
+    fields: [conversations.user1Id],
+    references: [users.id],
+    relationName: "conversations_as_user1",
+  }),
+  user2: one(users, {
+    fields: [conversations.user2Id],
+    references: [users.id],
+    relationName: "conversations_as_user2",
+  }),
+  lastMessage: one(directMessages, {
+    fields: [conversations.lastMessageId],
+    references: [directMessages.id],
+  }),
+}));
+
+// Insert schemas
+export const insertDirectMessageSchema = createInsertSchema(directMessages).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertFollowSchema = createInsertSchema(follows).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertConversationSchema = createInsertSchema(conversations).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Types
+export type DirectMessage = typeof directMessages.$inferSelect;
+export type Follow = typeof follows.$inferSelect;
+export type Conversation = typeof conversations.$inferSelect;
+export type InsertDirectMessage = z.infer<typeof insertDirectMessageSchema>;
+export type InsertFollow = z.infer<typeof insertFollowSchema>;
+export type InsertConversation = z.infer<typeof insertConversationSchema>;
+
 // Training Programs
 export const trainingPrograms = pgTable("training_programs", {
   id: serial("id").primaryKey(),

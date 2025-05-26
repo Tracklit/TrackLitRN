@@ -1,246 +1,265 @@
-import { ProtectedRoute } from "@/lib/protected-route";
+import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { PageHeader } from "@/components/page-header";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  MessageCircle, 
-  Search, 
-  Plus, 
-  User, 
-  Users, 
-  Send, 
-  Paperclip, 
-  MoreHorizontal, 
-  Image, 
-  Video, 
-  File
-} from "lucide-react";
-import { useState } from "react";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getInitials } from "@/lib/utils";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Search, Send, ArrowLeft, MoreVertical } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { cn } from "@/lib/utils";
+import type { DirectMessage, User, Conversation } from "@shared/schema";
+
+interface ConversationWithUser extends Conversation {
+  otherUser: User;
+  lastMessage?: DirectMessage;
+}
+
+interface MessageWithUser extends DirectMessage {
+  sender: User;
+  receiver: User;
+}
 
 export default function MessagesPage() {
   const { user } = useAuth();
+  const [selectedConversation, setSelectedConversation] = useState<number | null>(null);
+  const [newMessage, setNewMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [message, setMessage] = useState("");
-  const [isNewMessageOpen, setIsNewMessageOpen] = useState(false);
-  
-  // Placeholder data
-  const conversations = [
-    { id: 1, name: "Track Stars Group", isGroup: true, lastMessage: "Coach: Don't forget about tomorrow's practice!", time: "10:35 AM", unread: 2 },
-    { id: 2, name: "Sam Wilson", isGroup: false, lastMessage: "Looking forward to the meet this weekend!", time: "Yesterday", unread: 0 },
-    { id: 3, name: "Distance Runners", isGroup: true, lastMessage: "You: What time are we meeting?", time: "Wednesday", unread: 0 },
-  ];
-  
-  const activeConversation = conversations[0];
-  
-  const messages = [
-    { id: 1, senderId: 101, sender: "Coach Johnson", time: "10:30 AM", content: "Good morning everyone!" },
-    { id: 2, senderId: 101, sender: "Coach Johnson", time: "10:32 AM", content: "We have a schedule change for this week." },
-    { id: 3, senderId: 102, sender: "Lisa Chen", time: "10:33 AM", content: "What's the change?" },
-    { id: 4, senderId: 101, sender: "Coach Johnson", time: "10:35 AM", content: "Don't forget about tomorrow's practice! We'll be focusing on starts and block technique." },
-  ];
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const handleSendMessage = () => {
-    if (message.trim()) {
-      // In a real app, this would dispatch an action to send the message
-      console.log("Sending message:", message);
-      setMessage("");
+  // Fetch conversations
+  const { data: conversations = [] } = useQuery<ConversationWithUser[]>({
+    queryKey: ["/api/conversations"],
+    enabled: !!user,
+  });
+
+  // Fetch messages for selected conversation
+  const { data: messages = [] } = useQuery<MessageWithUser[]>({
+    queryKey: ["/api/messages", selectedConversation],
+    enabled: !!selectedConversation,
+  });
+
+  // Send message mutation
+  const sendMessageMutation = useMutation({
+    mutationFn: async ({ receiverId, content }: { receiverId: number; content: string }) => {
+      return await apiRequest("POST", "/api/messages", { receiverId, content });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/messages", selectedConversation] });
+      setNewMessage("");
+    },
+  });
+
+  // Mark messages as read
+  const markAsReadMutation = useMutation({
+    mutationFn: async (conversationId: number) => {
+      return await apiRequest("PATCH", `/api/conversations/${conversationId}/mark-read`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+    },
+  });
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // Mark conversation as read when selected
+  useEffect(() => {
+    if (selectedConversation) {
+      markAsReadMutation.mutate(selectedConversation);
+    }
+  }, [selectedConversation]);
+
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !selectedConversation) return;
+
+    const conversation = conversations.find(c => c.id === selectedConversation);
+    if (conversation) {
+      sendMessageMutation.mutate({
+        receiverId: conversation.otherUser.id,
+        content: newMessage.trim(),
+      });
     }
   };
 
+  const filteredConversations = conversations.filter(conv =>
+    conv.otherUser.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    conv.otherUser.username.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const selectedConversationData = conversations.find(c => c.id === selectedConversation);
+
+  if (!user) return null;
+
   return (
-    <div className="container max-w-screen-xl mx-auto px-0 md:px-4 pt-16 md:pt-24 md:pl-72 pb-16 h-screen flex flex-col">
-      <div className="px-4">
-        <PageHeader
-          title="Messages"
-          description="Chat with athletes, coaches, and groups"
-          action={
-            <Dialog open={isNewMessageOpen} onOpenChange={setIsNewMessageOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Message
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>New Message</DialogTitle>
-                </DialogHeader>
-                <div className="relative">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search contacts or groups"
-                    className="pl-8"
-                  />
-                </div>
-                <div className="mt-4">
-                  <h3 className="text-sm font-medium mb-2">Recent</h3>
-                  <div className="space-y-2">
-                    {[
-                      { id: 1, name: "Sam Wilson", type: "contact" },
-                      { id: 2, name: "Track Stars Group", type: "group" },
-                      { id: 3, name: "Coach Johnson", type: "contact" },
-                    ].map((item) => (
-                      <div key={item.id} className="flex items-center justify-between p-2 rounded-md hover:bg-accent/50 cursor-pointer">
-                        <div className="flex items-center">
-                          <Avatar className="h-8 w-8 mr-2">
-                            <AvatarFallback>{getInitials(item.name)}</AvatarFallback>
-                          </Avatar>
-                          <span>{item.name}</span>
-                        </div>
-                        {item.type === "group" ? (
-                          <Users className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <User className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </div>
-                    ))}
+    <div className="h-screen flex bg-[#010a18] pt-16">
+      {/* Conversations List */}
+      <div className={cn(
+        "w-full md:w-80 border-r border-gray-700 flex flex-col",
+        selectedConversation && "hidden md:flex"
+      )}>
+        <div className="p-4 border-b border-gray-700">
+          <h1 className="text-xl font-bold text-white mb-4">Messages</h1>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search conversations..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 bg-gray-800 border-gray-600 text-white placeholder-gray-400"
+            />
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          {filteredConversations.length === 0 ? (
+            <div className="p-4 text-center text-gray-400">
+              <p>No conversations yet</p>
+              <p className="text-sm mt-1">Start a conversation from the Athletes page</p>
+            </div>
+          ) : (
+            filteredConversations.map((conversation) => (
+              <div
+                key={conversation.id}
+                onClick={() => setSelectedConversation(conversation.id)}
+                className={cn(
+                  "p-4 border-b border-gray-700 cursor-pointer hover:bg-gray-800 transition-colors",
+                  selectedConversation === conversation.id && "bg-gray-800"
+                )}
+              >
+                <div className="flex items-center space-x-3">
+                  <Avatar className="h-12 w-12">
+                    <AvatarFallback name={conversation.otherUser.name} />
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-medium text-white truncate">
+                        {conversation.otherUser.name}
+                      </h3>
+                      {conversation.lastMessageAt && (
+                        <span className="text-xs text-gray-400">
+                          {formatDistanceToNow(new Date(conversation.lastMessageAt), { addSuffix: true })}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-400 truncate">
+                      @{conversation.otherUser.username}
+                    </p>
+                    {conversation.lastMessage && (
+                      <p className="text-sm text-gray-300 truncate mt-1">
+                        {conversation.lastMessage.content}
+                      </p>
+                    )}
                   </div>
                 </div>
-              </DialogContent>
-            </Dialog>
-          }
-        />
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden mt-4 border rounded-md mx-4">
-        {/* Conversation list */}
-        <div className="w-full md:w-80 border-r hidden md:block">
-          <div className="p-3 border-b">
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search messages"
-                className="pl-8"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
-          <ScrollArea className="h-[calc(100vh-220px)]">
-            {conversations.map((conversation) => (
-              <div 
-                key={conversation.id}
-                className={`p-3 hover:bg-accent/10 cursor-pointer border-b flex items-center ${
-                  activeConversation.id === conversation.id ? "bg-accent/20" : ""
-                }`}
-              >
-                <Avatar className="h-10 w-10 mr-3">
-                  <AvatarFallback>{getInitials(conversation.name)}</AvatarFallback>
+      {/* Chat Area */}
+      {selectedConversation ? (
+        <div className={cn(
+          "flex-1 flex flex-col",
+          !selectedConversation && "hidden md:flex"
+        )}>
+          {/* Chat Header */}
+          <div className="p-4 border-b border-gray-700 flex items-center space-x-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSelectedConversation(null)}
+              className="md:hidden text-gray-300 hover:text-white"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            {selectedConversationData && (
+              <>
+                <Avatar className="h-10 w-10">
+                  <AvatarFallback name={selectedConversationData.otherUser.name} />
                 </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-center">
-                    <h3 className="font-medium text-sm truncate">{conversation.name}</h3>
-                    <span className="text-xs text-muted-foreground">{conversation.time}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground truncate">{conversation.lastMessage}</p>
+                <div className="flex-1">
+                  <h2 className="font-semibold text-white">
+                    {selectedConversationData.otherUser.name}
+                  </h2>
+                  <p className="text-sm text-gray-400">
+                    @{selectedConversationData.otherUser.username}
+                  </p>
                 </div>
-                {conversation.unread > 0 && (
-                  <div className="ml-2 bg-primary text-primary-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs">
-                    {conversation.unread}
-                  </div>
+                <Button variant="ghost" size="icon" className="text-gray-300 hover:text-white">
+                  <MoreVertical className="h-5 w-5" />
+                </Button>
+              </>
+            )}
+          </div>
+
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={cn(
+                  "flex",
+                  message.senderId === user.id ? "justify-end" : "justify-start"
                 )}
+              >
+                <div
+                  className={cn(
+                    "max-w-xs lg:max-w-md px-4 py-2 rounded-2xl",
+                    message.senderId === user.id
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-700 text-white"
+                  )}
+                >
+                  <p className="text-sm">{message.content}</p>
+                  <p className={cn(
+                    "text-xs mt-1",
+                    message.senderId === user.id ? "text-blue-100" : "text-gray-400"
+                  )}>
+                    {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
+                  </p>
+                </div>
               </div>
             ))}
-          </ScrollArea>
-        </div>
+            <div ref={messagesEndRef} />
+          </div>
 
-        {/* Chat area */}
-        <div className="flex-1 flex flex-col">
-          {/* Header */}
-          <div className="p-3 border-b flex items-center justify-between">
-            <div className="flex items-center">
-              <Avatar className="h-8 w-8 mr-2">
-                <AvatarFallback>{getInitials(activeConversation.name)}</AvatarFallback>
-              </Avatar>
-              <div>
-                <h2 className="font-medium">{activeConversation.name}</h2>
-                <p className="text-xs text-muted-foreground">
-                  {activeConversation.isGroup ? "Group chat" : "Direct message"}
-                </p>
-              </div>
+          {/* Message Input */}
+          <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-700">
+            <div className="flex space-x-2">
+              <Input
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Type a message..."
+                className="flex-1 bg-gray-800 border-gray-600 text-white placeholder-gray-400"
+              />
+              <Button
+                type="submit"
+                disabled={!newMessage.trim() || sendMessageMutation.isPending}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
             </div>
-            <Button variant="ghost" size="icon">
-              <MoreHorizontal className="h-5 w-5" />
-            </Button>
-          </div>
-          
-          {/* Messages */}
-          <ScrollArea className="flex-1 p-4">
-            <div className="space-y-4">
-              {messages.map((msg) => (
-                <div key={msg.id} className="flex flex-col">
-                  <div className="flex items-baseline">
-                    <span className="font-medium text-sm">{msg.sender}</span>
-                    <span className="ml-2 text-xs text-muted-foreground">{msg.time}</span>
-                  </div>
-                  <div className="mt-1 bg-accent/10 rounded-lg p-3 inline-block max-w-[80%]">
-                    {msg.content}
-                  </div>
-                </div>
-              ))}
+          </form>
+        </div>
+      ) : (
+        <div className="hidden md:flex flex-1 items-center justify-center">
+          <div className="text-center text-gray-400">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-800 flex items-center justify-center">
+              <Send className="h-8 w-8" />
             </div>
-          </ScrollArea>
-          
-          {/* Message input */}
-          <div className="p-3 border-t flex items-center">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-muted-foreground">
-                  <Paperclip className="h-5 w-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem>
-                  <Image className="h-4 w-4 mr-2" />
-                  <span>Image</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Video className="h-4 w-4 mr-2" />
-                  <span>Video</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <File className="h-4 w-4 mr-2" />
-                  <span>File</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            
-            <Input 
-              className="mx-2" 
-              placeholder="Type a message" 
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleSendMessage();
-                }
-              }}
-            />
-            
-            <Button 
-              size="icon" 
-              disabled={!message.trim()} 
-              onClick={handleSendMessage}
-            >
-              <Send className="h-5 w-5" />
-            </Button>
+            <h3 className="text-lg font-medium text-white mb-2">Select a conversation</h3>
+            <p>Choose a conversation to start messaging</p>
           </div>
         </div>
-      </div>
+      )}
     </div>
-  );
-}
-
-// Protected route wrapper
-export function Component() {
-  return (
-    <ProtectedRoute path="/messages" component={MessagesPage} />
   );
 }

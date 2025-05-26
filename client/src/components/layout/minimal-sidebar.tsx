@@ -314,8 +314,24 @@ export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
           </div>
           <div className="space-y-1">
             <NavItem 
-              href="/clubs" 
+              href="/athletes" 
               icon={<Users className="h-5 w-5" />} 
+              isActive={location === '/athletes'}
+              onClick={onClose}
+            >
+              Athletes
+            </NavItem>
+            <NavItem 
+              href="/coaches" 
+              icon={<Award className="h-5 w-5" />} 
+              isActive={location === '/coaches'}
+              onClick={onClose}
+            >
+              Coaches
+            </NavItem>
+            <NavItem 
+              href="/clubs" 
+              icon={<MessagesSquare className="h-5 w-5" />} 
               isActive={location.startsWith('/club')}
               onClick={onClose}
             >
@@ -328,14 +344,6 @@ export function MobileSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: (
               onClick={onClose}
             >
               Messages
-            </NavItem>
-            <NavItem 
-              href="/coaches" 
-              icon={<Award className="h-5 w-5" />} 
-              isActive={location === '/coaches'}
-              onClick={onClose}
-            >
-              Coaches
             </NavItem>
           </div>
 

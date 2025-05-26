@@ -1,10 +1,11 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { LogOut } from "lucide-react";
+import { LogOut, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Link } from "wouter";
 import { NotificationBell } from "@/components/notification-bell";
+import { Button } from "@/components/ui/button";
 
 interface HeaderProps {
   title?: string;
@@ -33,6 +34,17 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
         {user && (
           <div className="flex items-center space-x-4">
             <NotificationBell />
+            
+            {/* Direct Messages Icon */}
+            <Link href="/messages">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 text-gray-300 hover:text-white hover:bg-white/10"
+              >
+                <MessageCircle className="h-5 w-5" />
+              </Button>
+            </Link>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
