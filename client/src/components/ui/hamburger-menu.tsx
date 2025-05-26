@@ -156,7 +156,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                 <Calendar className="h-5 w-5 mr-3" />
                 Calendar
               </div>
-              <span className="bg-gradient-to-r from-amber-400 to-amber-600 text-black text-xs px-1.5 py-0.5 rounded font-bold">
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
                 PRO
               </span>
             </a>
