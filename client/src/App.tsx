@@ -4,7 +4,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { DesktopSidebar, MobileSidebar, MobileSidebarButton } from "@/components/layout/minimal-sidebar";
+
 
 // Import tool components
 import { 
@@ -86,7 +86,6 @@ function Router() {
 }
 
 function MainApp() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const { user, loginMutation } = useAuth();
   
@@ -100,25 +99,6 @@ function MainApp() {
       setShowOnboarding(true);
     }
   }, [loginMutation.isSuccess, loginMutation.data]);
-  
-  const toggleMenu = () => {
-    const newMenuState = !isMenuOpen;
-    setIsMenuOpen(newMenuState);
-    
-    // Prevent body scrolling when menu is open
-    if (newMenuState) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-  };
-  
-  // Cleanup effect to reset body overflow when component unmounts
-  useEffect(() => {
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, []);
   
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
@@ -137,11 +117,7 @@ function MainApp() {
         background: "linear-gradient(135deg, hsl(220, 80%, 4%), hsl(215, 70%, 13%))",
         minHeight: "100vh" 
       }}>
-      {/* Mobile Menu Button */}
-      <MobileSidebarButton onClick={toggleMenu} isOpen={isMenuOpen} />
-      
-      {/* Mobile Sidebar - Always rendered but with slide animation */}
-      <MobileSidebar isOpen={isMenuOpen} onClose={toggleMenu} />
+
       
       {/* Main Content */}
       <main className="pt-12">
