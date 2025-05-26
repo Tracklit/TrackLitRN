@@ -5,7 +5,7 @@ import { SidebarNavigation } from '@/components/layout/sidebar-navigation';
 import { Meet } from '@shared/schema';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, MapPin, Loader2, Plus, Users, Crown, UserPlus, X, Cloud, Wind, Bell } from 'lucide-react';
+import { Calendar, MapPin, Loader2, Plus, Users, Crown, UserPlus, X, Cloud, Wind, Bell, Trophy, Clock, Target } from 'lucide-react';
 import { CreateMeetModal } from '@/components/create-meet-modal';
 import { PreparationTimeline } from '@/components/preparation-timeline';
 import { MeetCalendar } from '@/components/meet-calendar';
@@ -37,6 +37,9 @@ export default function MeetsPage() {
   const [isTickerVisible, setIsTickerVisible] = useState(true);
   const [isProModalOpen, setIsProModalOpen] = useState(false);
   const [invitations, setInvitations] = useState<any[]>([]);
+  const [selectedPastMeet, setSelectedPastMeet] = useState<Meet | null>(null);
+  const [meetResults, setMeetResults] = useState<{[meetId: number]: any[]}>({});
+  const [meetNotes, setMeetNotes] = useState<{[meetId: number]: string}>({});
   const { toast } = useToast();
 
   // Custom hook to fetch weather data for a meet
@@ -164,6 +167,75 @@ export default function MeetsPage() {
     }
   };
 
+  // Results handling functions
+  const addResultEntry = (meetId: number) => {
+    const newResult = {
+      id: Date.now(),
+      event: '',
+      time: '',
+      place: '',
+      wind: '',
+      notes: ''
+    };
+    
+    setMeetResults(prev => ({
+      ...prev,
+      [meetId]: [...(prev[meetId] || []), newResult]
+    }));
+  };
+
+  const updateResultEntry = (meetId: number, resultId: number, field: string, value: string) => {
+    setMeetResults(prev => ({
+      ...prev,
+      [meetId]: prev[meetId]?.map(result => 
+        result.id === resultId ? { ...result, [field]: value } : result
+      ) || []
+    }));
+  };
+
+  const removeResultEntry = (meetId: number, resultId: number) => {
+    setMeetResults(prev => ({
+      ...prev,
+      [meetId]: prev[meetId]?.filter(result => result.id !== resultId) || []
+    }));
+  };
+
+  const saveResults = async (meetId: number) => {
+    try {
+      const results = meetResults[meetId] || [];
+      const notes = meetNotes[meetId] || '';
+      
+      // Save each result entry
+      for (const result of results) {
+        if (result.event && result.time) {
+          await fetch('/api/results', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              meetId,
+              event: result.event,
+              performance: parseFloat(result.time),
+              place: result.place ? parseInt(result.place) : null,
+              wind: result.wind ? parseFloat(result.wind) : null,
+              notes: result.notes
+            })
+          });
+        }
+      }
+
+      toast({
+        title: 'Results Saved!',
+        description: 'Your meet results have been saved successfully.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Save Failed',
+        description: 'Could not save results. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  };
+
   return (
     <div className="flex h-screen bg-[#010a18] text-white">
       <SidebarNavigation />
@@ -248,7 +320,9 @@ export default function MeetsPage() {
                   </div>
                 ) : upcomingMeets.length > 0 ? (
                   <div className="space-y-4">
-                    {upcomingMeets.map(meet => (
+                    {upcomingMeets
+                      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                      .map(meet => (
                       <Card key={meet.id} className="overflow-hidden bg-[#010a18] border border-blue-800/60 shadow-md">
                         <CardContent className="p-4">
                           <div className="flex flex-col">
@@ -330,7 +404,9 @@ export default function MeetsPage() {
                   </div>
                 ) : pastMeets.length > 0 ? (
                   <div className="space-y-4">
-                    {pastMeets.map(meet => (
+                    {pastMeets
+                      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                      .map(meet => (
                       <Card key={meet.id} className="overflow-hidden bg-[#010a18] border border-blue-800/60 shadow-md">
                         <CardContent className="p-4">
                           <div className="flex flex-col">
@@ -358,8 +434,10 @@ export default function MeetsPage() {
                                   variant="outline" 
                                   size="sm"
                                   className="border-blue-600 text-blue-400 hover:bg-blue-800/30"
+                                  onClick={() => setSelectedPastMeet(selectedPastMeet?.id === meet.id ? null : meet)}
                                 >
-                                  View Results
+                                  <Trophy className="h-4 w-4 mr-1" />
+                                  {selectedPastMeet?.id === meet.id ? 'Hide Results' : 'Log Results'}
                                 </Button>
                                 <Button 
                                   variant="outline" 
@@ -373,6 +451,124 @@ export default function MeetsPage() {
                               
                               <Badge className="bg-green-700 hover:bg-green-800">Completed</Badge>
                             </div>
+
+                            {/* Results Logging Interface */}
+                            {selectedPastMeet?.id === meet.id && (
+                              <div className="mt-4 border-t border-blue-800/60 pt-4">
+                                <div className="bg-blue-900/20 rounded-lg p-4">
+                                  <h4 className="text-white font-semibold mb-4 flex items-center">
+                                    <Trophy className="h-5 w-5 mr-2 text-amber-400" />
+                                    Meet Results & Notes
+                                  </h4>
+
+                                  {/* Result Entries */}
+                                  <div className="space-y-3 mb-4">
+                                    {(meetResults[meet.id] || []).map((result, index) => (
+                                      <div key={result.id} className="bg-blue-900/30 rounded-lg p-3 border border-blue-800/40">
+                                        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                                          <div>
+                                            <label className="block text-xs text-blue-300 mb-1">Event</label>
+                                            <input
+                                              type="text"
+                                              placeholder="e.g., 100m, Long Jump"
+                                              value={result.event}
+                                              onChange={(e) => updateResultEntry(meet.id, result.id, 'event', e.target.value)}
+                                              className="w-full bg-blue-800/50 border border-blue-700 rounded px-2 py-1 text-white text-sm"
+                                            />
+                                          </div>
+                                          <div>
+                                            <label className="block text-xs text-blue-300 mb-1">Time/Distance</label>
+                                            <input
+                                              type="text"
+                                              placeholder="e.g., 10.45, 6.80m"
+                                              value={result.time}
+                                              onChange={(e) => updateResultEntry(meet.id, result.id, 'time', e.target.value)}
+                                              className="w-full bg-blue-800/50 border border-blue-700 rounded px-2 py-1 text-white text-sm"
+                                            />
+                                          </div>
+                                          <div>
+                                            <label className="block text-xs text-blue-300 mb-1">Place</label>
+                                            <input
+                                              type="text"
+                                              placeholder="e.g., 1, 2, 3"
+                                              value={result.place}
+                                              onChange={(e) => updateResultEntry(meet.id, result.id, 'place', e.target.value)}
+                                              className="w-full bg-blue-800/50 border border-blue-700 rounded px-2 py-1 text-white text-sm"
+                                            />
+                                          </div>
+                                          <div>
+                                            <label className="block text-xs text-blue-300 mb-1">Wind (m/s)</label>
+                                            <input
+                                              type="text"
+                                              placeholder="e.g., +1.2, -0.5"
+                                              value={result.wind}
+                                              onChange={(e) => updateResultEntry(meet.id, result.id, 'wind', e.target.value)}
+                                              className="w-full bg-blue-800/50 border border-blue-700 rounded px-2 py-1 text-white text-sm"
+                                            />
+                                          </div>
+                                          <div className="flex items-end">
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              onClick={() => removeResultEntry(meet.id, result.id)}
+                                              className="border-red-600 text-red-400 hover:bg-red-600/20 w-full"
+                                            >
+                                              <X className="h-4 w-4" />
+                                            </Button>
+                                          </div>
+                                        </div>
+                                        {result.notes !== undefined && (
+                                          <div className="mt-2">
+                                            <label className="block text-xs text-blue-300 mb-1">Event Notes</label>
+                                            <textarea
+                                              placeholder="Any specific notes about this event..."
+                                              value={result.notes}
+                                              onChange={(e) => updateResultEntry(meet.id, result.id, 'notes', e.target.value)}
+                                              className="w-full bg-blue-800/50 border border-blue-700 rounded px-2 py-1 text-white text-sm h-16 resize-none"
+                                            />
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+
+                                  {/* Add Result Button */}
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => addResultEntry(meet.id)}
+                                    className="border-amber-600 text-amber-400 hover:bg-amber-600/20 mb-4"
+                                  >
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Add Result Entry
+                                  </Button>
+
+                                  {/* Meet Notes */}
+                                  <div className="mb-4">
+                                    <label className="block text-sm text-blue-300 mb-2 flex items-center">
+                                      <Target className="h-4 w-4 mr-2" />
+                                      Overall Meet Notes & Reflections
+                                    </label>
+                                    <textarea
+                                      placeholder="How did the meet go overall? Any insights, lessons learned, or thoughts about your performance..."
+                                      value={meetNotes[meet.id] || ''}
+                                      onChange={(e) => setMeetNotes(prev => ({ ...prev, [meet.id]: e.target.value }))}
+                                      className="w-full bg-blue-800/50 border border-blue-700 rounded px-3 py-2 text-white h-24 resize-none"
+                                    />
+                                  </div>
+
+                                  {/* Save Button */}
+                                  <Button
+                                    onClick={() => saveResults(meet.id)}
+                                    className="bg-green-600 hover:bg-green-700 text-white"
+                                    size="sm"
+                                  >
+                                    <Trophy className="h-4 w-4 mr-2" />
+                                    Save Results & Notes
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </CardContent>
                       </Card>
