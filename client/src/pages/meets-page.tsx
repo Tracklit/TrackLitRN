@@ -17,6 +17,8 @@ import { useToast } from '@/hooks/use-toast';
 export default function MeetsPage() {
   const [isCreateMeetOpen, setIsCreateMeetOpen] = useState(false);
   const [selectedMeet, setSelectedMeet] = useState<Meet | null>(null);
+  const [tickerMessages, setTickerMessages] = useState<string[]>([]);
+  const [currentTickerIndex, setCurrentTickerIndex] = useState(0);
   const { toast } = useToast();
   
   // Fetch meets
@@ -31,6 +33,35 @@ export default function MeetsPage() {
   const pastMeets = meets?.filter(meet => 
     new Date(meet.date) < new Date() || meet.status === 'completed'
   ) || [];
+
+  // Generate ticker messages for meet attendance
+  useEffect(() => {
+    if (upcomingMeets.length > 0) {
+      const messages = upcomingMeets.map(meet => {
+        const daysUntil = Math.ceil((new Date(meet.date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+        if (daysUntil === 0) {
+          return `🏃 You're competing in ${meet.name} today at ${meet.location}!`;
+        } else if (daysUntil === 1) {
+          return `📅 You're competing in ${meet.name} tomorrow at ${meet.location}`;
+        } else if (daysUntil <= 7) {
+          return `🎯 You're registered for ${meet.name} in ${daysUntil} days at ${meet.location}`;
+        }
+        return null;
+      }).filter(Boolean) as string[];
+      
+      setTickerMessages(messages);
+    }
+  }, [upcomingMeets]);
+
+  // Rotate ticker messages
+  useEffect(() => {
+    if (tickerMessages.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentTickerIndex((prev) => (prev + 1) % tickerMessages.length);
+      }, 4000);
+      return () => clearInterval(interval);
+    }
+  }, [tickerMessages]);
 
   const handleShareMeet = async (meet: Meet) => {
     try {
@@ -58,6 +89,31 @@ export default function MeetsPage() {
         
         <main className="pt-16 pb-6">
           <div className="max-w-3xl mx-auto px-4">
+            {/* Ticker Messages */}
+            {tickerMessages.length > 0 && (
+              <div className="mb-6 bg-gradient-to-r from-amber-600/20 to-orange-600/20 border border-amber-500/30 rounded-lg p-3 overflow-hidden">
+                <div className="flex items-center">
+                  <Users className="h-5 w-5 text-amber-400 mr-3 flex-shrink-0" />
+                  <div className="overflow-hidden">
+                    <div 
+                      className="whitespace-nowrap text-amber-200 text-sm font-medium transition-transform duration-500 ease-in-out"
+                      style={{ 
+                        transform: `translateX(-${currentTickerIndex * 100}%)`,
+                        width: `${tickerMessages.length * 100}%`,
+                        display: 'flex'
+                      }}
+                    >
+                      {tickerMessages.map((message, index) => (
+                        <span key={index} className="w-full flex-shrink-0 px-2">
+                          {message}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="fixed bottom-8 right-8 z-10">
               <Button
                 onClick={() => setIsCreateMeetOpen(true)}
