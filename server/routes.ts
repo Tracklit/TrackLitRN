@@ -3934,7 +3934,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     try {
-      const notifications = await storage.getNotifications(req.user!.id);
+      const notifications = await dbStorage.getNotifications(req.user!.id);
       res.json(notifications);
     } catch (error) {
       console.error("Error fetching notifications:", error);
@@ -4220,7 +4220,7 @@ Keep the response professional, evidence-based, and specific to track and field 
 
     try {
       const targetUserId = parseInt(req.params.userId);
-      const status = await storage.getFollowStatus(req.user.id, targetUserId);
+      const status = await dbStorage.getFollowStatus(req.user.id, targetUserId);
       res.json(status);
     } catch (error) {
       console.error("Error fetching follow status:", error);
@@ -4236,7 +4236,7 @@ Keep the response professional, evidence-based, and specific to track and field 
     try {
       const { search } = req.query;
       console.log("Fetching recent users for user:", req.user.id, "search:", search);
-      const users = await storage.getRecentUsers(req.user.id, search as string);
+      const users = await dbStorage.getRecentUsers(req.user.id, search as string);
       console.log("Found users:", users.length);
       res.json(users);
     } catch (error) {
