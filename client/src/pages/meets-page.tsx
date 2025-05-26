@@ -5,7 +5,7 @@ import { SidebarNavigation } from '@/components/layout/sidebar-navigation';
 import { Meet } from '@shared/schema';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, MapPin, Loader2, Plus, Users, Crown, UserPlus, X, Cloud, Wind, Bell, Trophy, Clock, Target } from 'lucide-react';
+import { Calendar, MapPin, Loader2, Plus, Users, Crown, UserPlus, X, Cloud, Wind, Bell, Trophy, Clock, Target, MoreVertical, Trash2 } from 'lucide-react';
 import { CreateMeetModal } from '@/components/create-meet-modal';
 import { PreparationTimeline } from '@/components/preparation-timeline';
 import { MeetCalendar } from '@/components/meet-calendar';
@@ -16,6 +16,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface WeatherData {
   temperature: number;
@@ -236,6 +242,31 @@ export default function MeetsPage() {
     }
   };
 
+  const deleteMeet = async (meetId: number) => {
+    try {
+      const response = await fetch(`/api/meets/${meetId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        toast({
+          title: 'Meet Deleted',
+          description: 'The meet has been successfully deleted.',
+        });
+        // Refresh the meets data
+        window.location.reload();
+      } else {
+        throw new Error('Failed to delete meet');
+      }
+    } catch (error) {
+      toast({
+        title: 'Delete Failed',
+        description: 'Could not delete the meet. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  };
+
   return (
     <div className="flex h-screen bg-[#010a18] text-white">
       <SidebarNavigation />
@@ -347,24 +378,40 @@ export default function MeetsPage() {
 
                             
                             <div className="flex justify-between items-center mt-2">
-                              <div className="flex gap-2">
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  className="border-blue-600 text-blue-400 hover:bg-blue-800/30"
-                                  onClick={() => setSelectedMeet(selectedMeet?.id === meet.id ? null : meet)}
-                                >
-                                  {selectedMeet?.id === meet.id ? 'Hide Preparation' : 'View Preparation'}
-                                </Button>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  className="border-blue-600 text-blue-400 hover:bg-blue-800/30"
-                                  onClick={() => handleShareMeet(meet)}
-                                >
-                                  Share
-                                </Button>
-                              </div>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    className="border-blue-600 text-blue-400 hover:bg-blue-800/30"
+                                  >
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="bg-blue-900 border-blue-700">
+                                  <DropdownMenuItem 
+                                    onClick={() => setSelectedMeet(selectedMeet?.id === meet.id ? null : meet)}
+                                    className="text-blue-200 hover:bg-blue-800 cursor-pointer"
+                                  >
+                                    <Clock className="h-4 w-4 mr-2" />
+                                    {selectedMeet?.id === meet.id ? 'Hide Preparation' : 'View Preparation'}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={() => handleShareMeet(meet)}
+                                    className="text-blue-200 hover:bg-blue-800 cursor-pointer"
+                                  >
+                                    <Users className="h-4 w-4 mr-2" />
+                                    Share Meet
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={() => deleteMeet(meet.id)}
+                                    className="text-red-400 hover:bg-red-900/50 cursor-pointer"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete Meet
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                               
                               <Badge className="bg-amber-600 hover:bg-amber-700">{meet.status}</Badge>
                             </div>
@@ -429,25 +476,40 @@ export default function MeetsPage() {
                             </div>
                             
                             <div className="flex justify-between items-center mt-2">
-                              <div className="flex gap-2">
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  className="border-blue-600 text-blue-400 hover:bg-blue-800/30"
-                                  onClick={() => setSelectedPastMeet(selectedPastMeet?.id === meet.id ? null : meet)}
-                                >
-                                  <Trophy className="h-4 w-4 mr-1" />
-                                  {selectedPastMeet?.id === meet.id ? 'Hide Results' : 'Log Results'}
-                                </Button>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  className="border-blue-600 text-blue-400 hover:bg-blue-800/30"
-                                  onClick={() => handleShareMeet(meet)}
-                                >
-                                  Share
-                                </Button>
-                              </div>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    className="border-blue-600 text-blue-400 hover:bg-blue-800/30"
+                                  >
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="bg-blue-900 border-blue-700">
+                                  <DropdownMenuItem 
+                                    onClick={() => setSelectedPastMeet(selectedPastMeet?.id === meet.id ? null : meet)}
+                                    className="text-blue-200 hover:bg-blue-800 cursor-pointer"
+                                  >
+                                    <Trophy className="h-4 w-4 mr-2" />
+                                    {selectedPastMeet?.id === meet.id ? 'Hide Results' : 'Log Results'}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={() => handleShareMeet(meet)}
+                                    className="text-blue-200 hover:bg-blue-800 cursor-pointer"
+                                  >
+                                    <Users className="h-4 w-4 mr-2" />
+                                    Share Meet
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={() => deleteMeet(meet.id)}
+                                    className="text-red-400 hover:bg-red-900/50 cursor-pointer"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete Meet
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                               
                               <Badge className="bg-green-700 hover:bg-green-800">Completed</Badge>
                             </div>
