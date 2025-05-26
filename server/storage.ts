@@ -1870,14 +1870,16 @@ export class DatabaseStorage implements IStorage {
 
   // Admin methods
   async searchUsers(searchTerm: string) {
+    const { ilike, or } = await import('drizzle-orm');
+    
     const userResults = await db
       .select({
         id: users.id,
         username: users.username,
         email: users.email,
-        isBlocked: users.isBlocked,
-        subscription: users.subscription,
+        isPremium: users.isPremium,
         spikes: users.spikes,
+        role: users.role,
         createdAt: users.createdAt,
       })
       .from(users)
@@ -1889,13 +1891,18 @@ export class DatabaseStorage implements IStorage {
       )
       .limit(50);
     
-    return userResults;
+    return userResults.map(user => ({
+      ...user,
+      subscription: user.isPremium ? 'pro' : 'free',
+      isBlocked: false // For now, since we don't have this field yet
+    }));
   }
 
   async blockUser(userId: number) {
+    // For now, we'll just mark as not premium as a temporary block
     await db
       .update(users)
-      .set({ isBlocked: true })
+      .set({ isPremium: false })
       .where(eq(users.id, userId));
   }
 
@@ -1920,9 +1927,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserSubscription(userId: number, tier: 'free' | 'pro' | 'star') {
+    // For now, just update isPremium based on tier
+    const isPremium = tier !== 'free';
     await db
       .update(users)
-      .set({ subscription: tier })
+      .set({ isPremium })
       .where(eq(users.id, userId));
   }
 }
