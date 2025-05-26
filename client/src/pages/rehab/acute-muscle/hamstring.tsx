@@ -8,7 +8,9 @@ import {
   AlertTriangle,
   CheckCircle,
   Play,
-  Pause
+  Pause,
+  SkipForward,
+  Star
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -428,14 +430,27 @@ export default function HamstringRehabPage() {
                       {phase.days}
                     </CardDescription>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setCurrentPhase(index === currentPhase ? -1 : index)}
-                    className="text-gray-400 hover:text-white"
-                  >
-                    {index === currentPhase ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {index > currentPhase && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSkipAhead(index)}
+                        className="text-orange-400 border-orange-500/30 hover:bg-orange-900/20 text-xs"
+                      >
+                        <SkipForward className="h-3 w-3 mr-1" />
+                        Skip Ahead
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setCurrentPhase(index === currentPhase ? -1 : index)}
+                      className="text-gray-400 hover:text-white"
+                    >
+                      {index === currentPhase ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               
