@@ -806,17 +806,6 @@ export default function PracticePage() {
                               </>
                             )}
                           </div>
-                          
-                          {/* Workout Reactions - Like/Dislike functionality */}
-                          {activeSessionData && activeSessionData.id && (
-                            <div className="mt-4 pt-3 border-t border-border/30">
-                              <WorkoutReactions 
-                                sessionId={activeSessionData.id} 
-                                isOwnWorkout={true}
-                                className="justify-end"
-                              />
-                            </div>
-                          )}
                         </div>
                         
                         {/* Removed day number and date information */}
@@ -851,9 +840,20 @@ export default function PracticePage() {
                       </div>
                     )}
                     
-                    <Link href={`/programs/${selectedProgram.programId}`} className="text-sm text-primary hover:underline mt-2 inline-block">
-                      View Full Program Details
-                    </Link>
+                    <div className="flex items-center justify-between mt-2">
+                      <Link href={`/programs/${selectedProgram.programId}`} className="text-sm text-primary hover:underline">
+                        View Program
+                      </Link>
+                      
+                      {/* Workout Reactions - Like/Dislike functionality */}
+                      {activeSessionData && (
+                        <WorkoutReactions 
+                          sessionId={activeSessionData.programSessionId || activeSessionData.dayNumber || 1} 
+                          isOwnWorkout={true}
+                          className="ml-auto"
+                        />
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-2">
