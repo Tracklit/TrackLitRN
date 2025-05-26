@@ -106,10 +106,7 @@ export function SidebarNavigation({ isMobile = false }: { isMobile?: boolean }) 
             icon={<Calendar className="h-5 w-5" />} 
             isActive={location === '/meets'}
           >
-            <span>Calendar</span>
-            <span className="bg-gradient-to-r from-amber-400 to-amber-600 text-black text-xs px-1.5 py-0.5 rounded font-bold ml-auto">
-              PRO
-            </span>
+            Calendar
           </NavItem>
           <NavItem 
             href="/meets" 
