@@ -27,7 +27,8 @@ export default function AthletesPage() {
 
   // Fetch all users (recent users for discovery)
   const { data: allUsers = [] } = useQuery<UserWithFollowStatus[]>({
-    queryKey: ["/api/users"],
+    queryKey: ["/api/users/recent", searchQuery],
+    queryFn: () => apiRequest("GET", `/api/users/recent${searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : ""}`),
     enabled: !!user,
   });
 
