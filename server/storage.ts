@@ -2426,61 +2426,44 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(users, eq(follows.followerId, users.id))
       .where(eq(follows.followingId, userId));
 
-    // Filter out mutual friends (those who follow back)
-    const mutualFollows = await db
-      .select({ followerId: follows.followerId })
-      .from(follows)
-      .where(and(
-        eq(follows.followerId, userId),
-        inArray(follows.followingId, requests.map(r => r.followerId))
-      ));
-
-    const mutualFollowerIds = mutualFollows.map(m => m.followerId);
-    
-    return requests.filter(request => !mutualFollowerIds.includes(request.followerId));
+    return requests;
   }
 
   async getFriends(userId: number): Promise<any[]> {
-    // Get people the user follows
-    const following = await db
-      .select({ followingId: follows.followingId })
+    // Simple approach: get all users who follow each other mutually
+    const userFollowing = await db
+      .select()
       .from(follows)
       .where(eq(follows.followerId, userId));
 
-    const followingIds = following.map(f => f.followingId);
+    const mutualFriends = [];
     
-    if (followingIds.length === 0) {
-      return [];
+    for (const follow of userFollowing) {
+      // Check if they follow back
+      const followsBack = await db
+        .select()
+        .from(follows)
+        .where(and(
+          eq(follows.followerId, follow.followingId),
+          eq(follows.followingId, userId)
+        ))
+        .limit(1);
+
+      if (followsBack.length > 0) {
+        // Get user details
+        const friend = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, follow.followingId))
+          .limit(1);
+        
+        if (friend.length > 0) {
+          mutualFriends.push(friend[0]);
+        }
+      }
     }
 
-    // Get people who follow the user back (mutual friends)
-    const mutualFollows = await db
-      .select({ followerId: follows.followerId })
-      .from(follows)
-      .where(and(
-        eq(follows.followingId, userId),
-        inArray(follows.followerId, followingIds)
-      ));
-
-    const friendIds = mutualFollows.map(m => m.followerId);
-    
-    if (friendIds.length === 0) {
-      return [];
-    }
-
-    // Get user details for friends
-    const friends = await db
-      .select({
-        id: users.id,
-        username: users.username,
-        name: users.name,
-        email: users.email,
-        bio: users.bio
-      })
-      .from(users)
-      .where(inArray(users.id, friendIds));
-
-    return friends;
+    return mutualFriends;
   }
 
   async acceptFriendRequest(requestId: number, userId: number): Promise<void> {
