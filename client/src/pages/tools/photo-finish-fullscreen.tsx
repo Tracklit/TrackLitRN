@@ -154,23 +154,34 @@ export default function PhotoFinishFullscreen({
         const timerHeight = timerSize * 0.7;
         const fontSize = timerSize * 0.35;
         
-        // Draw timer background
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
-        ctx.roundRect(x - timerWidth/2, y - timerHeight/2, timerWidth, timerHeight, 8);
-        ctx.fill();
-
-        // Draw timer border
-        ctx.strokeStyle = activeTimer === timer.id ? '#ff0000' : '#ffffff';
-        ctx.lineWidth = 2;
-        ctx.roundRect(x - timerWidth/2, y - timerHeight/2, timerWidth, timerHeight, 8);
-        ctx.stroke();
-
-        // Draw timer text
-        ctx.fillStyle = '#ffffff';
+        // Draw timer text with shadow for visibility (no background)
         ctx.font = `bold ${fontSize}px monospace`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
+        
+        // Add text shadow
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 2;
+        
+        // Draw white text
+        ctx.fillStyle = '#ffffff';
         ctx.fillText(formatTime(timerTime), x, y);
+        
+        // Reset shadow for other elements
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        
+        // Draw selection border if active
+        if (activeTimer === timer.id) {
+          ctx.strokeStyle = '#ff0000';
+          ctx.lineWidth = 2;
+          ctx.roundRect(x - timerWidth/2, y - timerHeight/2, timerWidth, timerHeight, 8);
+          ctx.stroke();
+        }
       });
 
       // Draw finish lines
