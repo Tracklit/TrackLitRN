@@ -192,10 +192,136 @@ export default function PhotoFinishFullscreen({
     drawOverlays();
   }, [timers, finishLines, currentTime, activeTimer, activeFinishLine]);
 
+  // Touch handlers for two-finger panning and one-finger finish line dragging
+  const handleCanvasTouchStart = (event: React.TouchEvent<HTMLCanvasElement>) => {
+    if (event.touches.length === 2) {
+      // Two-finger pan start
+      event.preventDefault();
+      const touch1 = event.touches[0];
+      const touch2 = event.touches[1];
+      const centerX = (touch1.clientX + touch2.clientX) / 2;
+      const centerY = (touch1.clientY + touch2.clientY) / 2;
+      setIsPanning(true);
+      setLastPanPoint({ x: centerX, y: centerY });
+    } else if (event.touches.length === 1) {
+      // Single finger - check for finish line drag
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const touch = event.touches[0];
+      const x = ((touch.clientX - rect.left) / rect.width) * 100;
+      const y = ((touch.clientY - rect.top) / rect.height) * 100;
+
+      // Check if touching a finish line
+      const clickedLine = finishLines.find(line => {
+        return x >= line.x && x <= line.x + line.width &&
+               y >= line.y && y <= line.y + line.height;
+      });
+
+      if (clickedLine) {
+        event.preventDefault();
+        setIsDraggingFinishLine(true);
+        setDraggedLineId(clickedLine.id);
+        setActiveFinishLine(clickedLine.id);
+      }
+    }
+  };
+
+  const handleCanvasTouchMove = (event: React.TouchEvent<HTMLCanvasElement>) => {
+    if (event.touches.length === 2 && isPanning) {
+      // Two-finger panning
+      event.preventDefault();
+      const touch1 = event.touches[0];
+      const touch2 = event.touches[1];
+      const centerX = (touch1.clientX + touch2.clientX) / 2;
+      const centerY = (touch1.clientY + touch2.clientY) / 2;
+      
+      const deltaX = centerX - lastPanPoint.x;
+      const deltaY = centerY - lastPanPoint.y;
+      
+      setVideoTranslate(prev => ({
+        x: prev.x + deltaX / videoScale,
+        y: prev.y + deltaY / videoScale
+      }));
+      
+      setLastPanPoint({ x: centerX, y: centerY });
+    } else if (event.touches.length === 1 && isDraggingFinishLine && draggedLineId) {
+      // Single finger finish line dragging
+      event.preventDefault();
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const touch = event.touches[0];
+      const x = ((touch.clientX - rect.left) / rect.width) * 100;
+
+      // Move the finish line horizontally
+      setFinishLines(prev => prev.map(line => 
+        line.id === draggedLineId 
+          ? { ...line, x: Math.max(0, Math.min(98, x - 1)) }
+          : line
+      ));
+    }
+  };
+
+  const handleCanvasTouchEnd = () => {
+    setIsPanning(false);
+    setIsDraggingFinishLine(false);
+    setDraggedLineId(null);
+  };
+
+  // Mouse drag handlers for finish line movement
+  const [isDraggingFinishLine, setIsDraggingFinishLine] = useState(false);
+  const [draggedLineId, setDraggedLineId] = useState<string | null>(null);
+
+  const handleCanvasMouseDown = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width) * 100;
+    const y = ((event.clientY - rect.top) / rect.height) * 100;
+
+    // Check if clicking on a finish line
+    const clickedLine = finishLines.find(line => {
+      return x >= line.x && x <= line.x + line.width &&
+             y >= line.y && y <= line.y + line.height;
+    });
+
+    if (clickedLine) {
+      setIsDraggingFinishLine(true);
+      setDraggedLineId(clickedLine.id);
+      setActiveFinishLine(clickedLine.id);
+    }
+  };
+
+  const handleCanvasMouseMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isDraggingFinishLine || !draggedLineId) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width) * 100;
+
+    // Move the finish line horizontally
+    setFinishLines(prev => prev.map(line => 
+      line.id === draggedLineId 
+        ? { ...line, x: Math.max(0, Math.min(98, x - 1)) }
+        : line
+    ));
+  };
+
+  const handleCanvasMouseUp = () => {
+    setIsDraggingFinishLine(false);
+    setDraggedLineId(null);
+  };
+
   // Handle canvas interactions
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
-    if (!canvas || !mode) return;
+    if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
     const x = ((event.clientX - rect.left) / rect.width) * 100;
@@ -210,19 +336,20 @@ export default function PhotoFinishFullscreen({
       };
       setTimers(prev => [...prev, newTimer]);
       setActiveTimer(newTimer.id);
+      setMode(null);
     } else if (mode === 'finishline') {
+      // Only allow one finish line - replace existing one
       const newFinishLine: FinishLine = {
         id: Date.now().toString(),
-        x: x - 2,
-        y: y - 25,
-        width: 4,
-        height: 50
+        x: x - 1,
+        y: 10,
+        width: 2,
+        height: 80
       };
-      setFinishLines(prev => [...prev, newFinishLine]);
+      setFinishLines([newFinishLine]); // Replace all with single line
       setActiveFinishLine(newFinishLine.id);
+      setMode(null);
     }
-    
-    setMode(null);
   };
 
   // Scrubber handlers
@@ -401,6 +528,12 @@ export default function PhotoFinishFullscreen({
           width={1920}
           height={1080}
           onClick={handleCanvasClick}
+          onTouchStart={handleCanvasTouchStart}
+          onTouchMove={handleCanvasTouchMove}
+          onTouchEnd={handleCanvasTouchEnd}
+          onMouseDown={handleCanvasMouseDown}
+          onMouseMove={handleCanvasMouseMove}
+          onMouseUp={handleCanvasMouseUp}
         />
 
         {/* Play/Pause Button Overlay */}
