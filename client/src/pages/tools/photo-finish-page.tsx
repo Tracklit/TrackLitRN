@@ -191,21 +191,33 @@ export default function PhotoFinishPage() {
     }
   };
 
-  // Handle mobile touch events for scrubbing
-  const handleTouchScrub = (event: React.TouchEvent<HTMLInputElement>) => {
-    const input = event.currentTarget;
-    const rect = input.getBoundingClientRect();
+  // Handle mobile touch events for custom slider
+  const handleSliderTouch = (event: React.TouchEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const div = event.currentTarget;
+    const rect = div.getBoundingClientRect();
     const touch = event.touches[0];
-    const x = touch.clientX - rect.left;
+    const x = Math.max(0, Math.min(touch.clientX - rect.left, rect.width));
     const percentage = x / rect.width;
     const time = percentage * (duration || 0);
     
     if (videoRef.current && time >= 0 && time <= (duration || 0)) {
       videoRef.current.currentTime = time;
       setCurrentTime(time);
-      
-      // Update input value for visual feedback
-      input.value = time.toString();
+    }
+  };
+
+  // Handle mouse events for custom slider
+  const handleSliderMouse = (event: React.MouseEvent<HTMLDivElement>) => {
+    const div = event.currentTarget;
+    const rect = div.getBoundingClientRect();
+    const x = Math.max(0, Math.min(event.clientX - rect.left, rect.width));
+    const percentage = x / rect.width;
+    const time = percentage * (duration || 0);
+    
+    if (videoRef.current && time >= 0 && time <= (duration || 0)) {
+      videoRef.current.currentTime = time;
+      setCurrentTime(time);
     }
   };
 
@@ -590,52 +602,37 @@ export default function PhotoFinishPage() {
                       </div>
                     </div>
 
-                    {/* Enhanced Video Scrub Slider */}
+                    {/* Custom Mobile-Friendly Video Scrub Slider */}
                     <div className="px-2">
-                      <div className="relative">
-                        <input
-                          type="range"
-                          min="0"
-                          max={duration || 0}
-                          step="0.01"
-                          value={currentTime}
-                          onChange={handleScrub}
-                          onTouchMove={handleTouchScrub}
-                          onTouchStart={handleTouchScrub}
-                          className="w-full h-6 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer slider-enhanced"
-                          style={{
-                            background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${(currentTime / (duration || 1)) * 100}%, #e5e7eb ${(currentTime / (duration || 1)) * 100}%, #e5e7eb 100%)`
-                          }}
-                        />
-                        <style>{`
-                          .slider-enhanced::-webkit-slider-thumb {
-                            appearance: none;
-                            height: 24px;
-                            width: 24px;
-                            border-radius: 50%;
-                            background: #3b82f6;
-                            border: 3px solid #ffffff;
-                            cursor: pointer;
-                            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-                          }
-                          .slider-enhanced::-webkit-slider-thumb:hover {
-                            background: #2563eb;
-                            transform: scale(1.1);
-                          }
-                          .slider-enhanced::-moz-range-thumb {
-                            height: 24px;
-                            width: 24px;
-                            border-radius: 50%;
-                            background: #3b82f6;
-                            border: 3px solid #ffffff;
-                            cursor: pointer;
-                            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-                          }
-                          .slider-enhanced::-moz-range-thumb:hover {
-                            background: #2563eb;
-                            transform: scale(1.1);
-                          }
-                        `}</style>
+                      <div className="relative py-2">
+                        <div 
+                          className="w-full h-6 bg-gray-200 dark:bg-gray-700 rounded-lg cursor-pointer relative overflow-hidden"
+                          onClick={handleSliderMouse}
+                          onTouchStart={handleSliderTouch}
+                          onTouchMove={handleSliderTouch}
+                          style={{ touchAction: 'none' }}
+                        >
+                          {/* Progress bar */}
+                          <div 
+                            className="h-full bg-blue-500 rounded-lg transition-all duration-75"
+                            style={{ width: `${(currentTime / (duration || 1)) * 100}%` }}
+                          />
+                          
+                          {/* Slider thumb */}
+                          <div 
+                            className="absolute top-1/2 transform -translate-y-1/2 w-6 h-6 bg-blue-500 border-3 border-white rounded-full shadow-lg"
+                            style={{ 
+                              left: `calc(${(currentTime / (duration || 1)) * 100}% - 12px)`,
+                              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.2)'
+                            }}
+                          />
+                        </div>
+                        
+                        {/* Time markers */}
+                        <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                          <span>0:00.00</span>
+                          <span>{formatTime(duration)}</span>
+                        </div>
                       </div>
                     </div>
 
