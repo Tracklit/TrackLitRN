@@ -97,6 +97,14 @@ export function setupAuth(app: Express) {
         password: await hashPassword(userData.password),
       });
 
+      // Send automatic friend request from Lion Martinez to new user
+      try {
+        await storage.sendAutomaticFriendRequests();
+      } catch (error) {
+        console.error("Error sending automatic friend request to new user:", error);
+        // Don't fail registration if friend request fails
+      }
+
       // Log the user in
       req.login(user, (err) => {
         if (err) return next(err);
