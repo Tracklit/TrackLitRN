@@ -24,7 +24,7 @@ export async function apiRequest(
     
     console.log(`Response status: ${res.status}`);
     
-    if (res.status === 401) {
+    if (res.status === 401 && url !== '/api/login') {
       console.error('Authentication error - user not authenticated');
       throw new Error('You must be logged in to perform this action');
     }

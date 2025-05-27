@@ -34,6 +34,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
       const res = await apiRequest("POST", "/api/login", credentials);
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || "Invalid username or password");
+      }
       return await res.json();
     },
     onSuccess: (user: SelectUser) => {

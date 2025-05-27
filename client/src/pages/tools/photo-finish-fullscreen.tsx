@@ -370,19 +370,10 @@ export default function PhotoFinishFullscreen({
       setTimers(prev => [...prev, newTimer]);
       setActiveTimer(newTimer.id);
       setMode(null);
-    } else if (mode === 'finishline') {
-      // Only allow one finish line - replace existing one
-      const newFinishLine: FinishLine = {
-        id: Date.now().toString(),
-        x: Math.max(1, Math.min(99, x)),
-        y: 10,
-        width: 2,
-        height: 80
-      };
-      setFinishLines([newFinishLine]); // Replace all with single line
-      setActiveFinishLine(newFinishLine.id);
-      setMode(null);
-    }
+    // Finish line functionality disabled
+    // } else if (mode === 'finishline') {
+    //   // Functionality temporarily disabled
+    // }
   };
 
   // Scrubber handlers
@@ -602,10 +593,10 @@ export default function PhotoFinishFullscreen({
           </Button>
           
           <Button
-            variant={mode === 'finishline' ? 'default' : 'ghost'}
+            variant="ghost"
             size="sm"
-            onClick={() => setMode(mode === 'finishline' ? null : 'finishline')}
-            className="text-white hover:bg-white/20"
+            disabled={true}
+            className="text-gray-500 cursor-not-allowed opacity-50"
           >
             <MapPin className="w-4 h-4 mr-2" />
             Finish Line
