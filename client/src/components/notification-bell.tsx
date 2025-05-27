@@ -149,16 +149,20 @@ export function NotificationBell() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between">
                       <h5 className={cn(
-                        "text-sm font-medium truncate text-white",
-                        !notification.isRead && "font-semibold"
+                        "text-sm font-medium truncate",
+                        notification.isRead ? "text-gray-400" : "text-white font-semibold"
                       )}>
                         {notification.title}
+                        {!notification.isRead && <span className="ml-2 text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full">NEW</span>}
                       </h5>
                       {!notification.isRead && (
                         <div className="w-2 h-2 bg-blue-500 rounded-full ml-2 flex-shrink-0 mt-1"></div>
                       )}
                     </div>
-                    <p className="text-sm text-gray-300 mt-1 line-clamp-2">
+                    <p className={cn(
+                      "text-sm mt-1 line-clamp-2",
+                      notification.isRead ? "text-gray-500" : "text-gray-300"
+                    )}>
                       {notification.message}
                     </p>
                     <p className="text-xs text-gray-400 mt-2">
