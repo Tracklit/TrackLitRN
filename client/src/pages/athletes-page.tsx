@@ -55,15 +55,21 @@ export default function AthletesPage() {
       const response = await apiRequest("GET", url);
       const data = await response.json();
       
+      // Ensure we have valid data structure
+      const validData = {
+        athletes: data.athletes || [],
+        pagination: data.pagination || { page: 1, limit: 10, total: 0, hasMore: false }
+      };
+      
       // If it's page 1 or a new search, reset the list
       if (page === 1) {
-        setAllAthletes(data.athletes);
+        setAllAthletes(validData.athletes);
       } else {
         // Append new athletes to existing list
-        setAllAthletes(prev => [...prev, ...data.athletes]);
+        setAllAthletes(prev => [...prev, ...validData.athletes]);
       }
       
-      return data;
+      return validData;
     },
     enabled: !!currentUser,
   });
@@ -156,7 +162,7 @@ export default function AthletesPage() {
         )}
 
         {/* No Results */}
-        {!isLoading && allAthletes.length === 0 && (
+        {!isLoading && allAthletes.length === 0 && athletesResponse && (
           <div className="text-center py-12">
             <div className="text-gray-400 mb-2">
               {searchQuery ? "No athletes found matching your search" : "No athletes found"}
@@ -244,7 +250,7 @@ export default function AthletesPage() {
         )}
 
         {/* Show More Button */}
-        {athletesResponse?.pagination.hasMore && !isLoading && (
+        {athletesResponse?.pagination?.hasMore && !isLoading && (
           <div className="flex justify-center">
             <Button
               onClick={handleShowMore}
@@ -258,14 +264,14 @@ export default function AthletesPage() {
                   Loading...
                 </>
               ) : (
-                <>Show More ({athletesResponse.pagination.total - allAthletes.length} remaining)</>
+                <>Show More ({(athletesResponse?.pagination?.total || 0) - allAthletes.length} remaining)</>
               )}
             </Button>
           </div>
         )}
 
         {/* Footer info */}
-        {!athletesResponse?.pagination.hasMore && allAthletes.length > 0 && (
+        {!athletesResponse?.pagination?.hasMore && allAthletes.length > 0 && (
           <div className="text-center py-4">
             <p className="text-sm text-gray-400">
               Showing all {allAthletes.length} athletes
