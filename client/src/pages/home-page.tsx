@@ -41,10 +41,7 @@ import { cn } from '@/lib/utils';
 import { useAssignedPrograms } from '@/hooks/use-assigned-programs';
 import { useProgramSessions } from '@/hooks/use-program-sessions';
 import { SimpleWorkoutLike } from '@/components/workout-reactions';
-import trackImage1 from "@assets/IMG_4075.JPG?url";
-import trackImage2 from "@assets/IMG_4076.JPG?url";
-import trackImage3 from "@assets/IMG_4077.JPG?url";
-import trackImage4 from "@assets/IMG_4078.JPG?url";
+import { trackImages } from '@/lib/image-preloader';
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -219,7 +216,7 @@ export default function HomePage() {
                     {/* Header Image - Top Half */}
                     <div 
                       className="h-1/2 bg-cover bg-center bg-no-repeat relative"
-                      style={{ backgroundImage: `url(${[trackImage1, trackImage2, trackImage3, trackImage4][index % 4]})` }}
+                      style={{ backgroundImage: `url(${trackImages[index % 4]})` }}
                     >
                       <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-all duration-300" />
                       <div className="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
