@@ -4164,7 +4164,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
 
       // Create a notification for program assignment
-      await storage.createNotification({
+      await dbStorage.createNotification({
         userId,
         type: "program_assigned",
         title: "Rehabilitation Program Assigned",
@@ -4207,7 +4207,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Deduct spikes if not Star user
       if (!isStarUser) {
-        await storage.updateUserSpikes(userId, (user.spikes || 0) - 50);
+        await dbStorage.updateUserSpikes(userId, (user.spikes || 0) - 50);
       }
 
       // Use OpenAI to generate personalized rehab guidance
@@ -4229,7 +4229,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       const aiResponse = await getChatCompletion(aiPrompt);
 
       // Create a notification about the AI consultation
-      await storage.createNotification({
+      await dbStorage.createNotification({
         userId,
         type: "ai_consultation",
         title: "AI Rehabilitation Consultation Complete",
