@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserCheck, UserX, MessageCircle, Clock } from "lucide-react";
+import { UserCheck, UserX, MessageCircle, Clock, UserMinus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface FriendRequest {
@@ -112,6 +112,30 @@ export default function FriendsPage() {
     startConversationMutation.mutate(friendId);
   };
 
+  // Remove friend mutation
+  const removeFriendMutation = useMutation({
+    mutationFn: (friendId: number) => 
+      apiRequest("DELETE", `/api/friends/${friendId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
+      toast({
+        title: "Friend removed",
+        description: "Friend has been removed from your list.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to remove friend.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleRemoveFriend = (friendId: number) => {
+    removeFriendMutation.mutate(friendId);
+  };
+
   if (!currentUser) {
     return (
       <div className="h-screen flex items-center justify-center">
@@ -181,15 +205,27 @@ export default function FriendsPage() {
                       {friend.bio && (
                         <p className="text-sm text-muted-foreground mb-4">{friend.bio}</p>
                       )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleMessageFriend(friend.id)}
-                        className="w-full"
-                      >
-                        <MessageCircle className="h-4 w-4 mr-2" />
-                        Message
-                      </Button>
+                      <div className="flex flex-col gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleMessageFriend(friend.id)}
+                          className="w-full"
+                        >
+                          <MessageCircle className="h-4 w-4 mr-2" />
+                          Message
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRemoveFriend(friend.id)}
+                          disabled={removeFriendMutation.isPending}
+                          className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <UserMinus className="h-4 w-4 mr-2" />
+                          Remove Friend
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 ))}

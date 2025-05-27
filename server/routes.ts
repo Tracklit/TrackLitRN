@@ -4456,6 +4456,24 @@ Keep the response professional, evidence-based, and specific to track and field 
     }
   });
 
+  // Remove friend
+  app.delete("/api/friends/:friendId", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const friendId = parseInt(req.params.friendId);
+      if (isNaN(friendId)) return res.status(400).send("Invalid friend ID");
+
+      await dbStorage.removeFriend(req.user.id, friendId);
+      res.json({ message: "Friend removed successfully" });
+    } catch (error) {
+      console.error("Error removing friend:", error);
+      res.status(500).send("Error removing friend");
+    }
+  });
+
   app.delete("/api/follow/:userId", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) {
       return res.sendStatus(401);

@@ -2546,6 +2546,23 @@ export class DatabaseStorage implements IStorage {
       .delete(follows)
       .where(eq(follows.id, requestId));
   }
+
+  async removeFriend(userId: number, friendId: number): Promise<void> {
+    // Remove both follow relationships to completely unfriend
+    await db
+      .delete(follows)
+      .where(and(
+        eq(follows.followerId, userId),
+        eq(follows.followingId, friendId)
+      ));
+    
+    await db
+      .delete(follows)
+      .where(and(
+        eq(follows.followerId, friendId),
+        eq(follows.followingId, userId)
+      ));
+  }
 }
 
 export const storage = new DatabaseStorage();
