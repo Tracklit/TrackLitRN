@@ -200,7 +200,7 @@ export default function PhotoFinishPage() {
   const [isPanning, setIsPanning] = useState(false);
   const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 });
 
-  // Handle slider interaction - auto-start video
+  // Handle slider interaction - smart play/pause behavior
   const handleSliderInteraction = (clientX: number, element: HTMLDivElement) => {
     const rect = element.getBoundingClientRect();
     const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
@@ -211,27 +211,30 @@ export default function PhotoFinishPage() {
       // Set the video time
       videoRef.current.currentTime = time;
       setCurrentTime(time);
-      
-      // Auto-start video if it's not playing yet
-      if (videoRef.current.paused) {
-        videoRef.current.play().then(() => {
-          setIsPlaying(true);
-        }).catch(() => {
-          // If autoplay fails, just set the position
-          setIsPlaying(false);
-        });
-      }
     }
   };
+
+  // State for tracking if user has started video once
+  const [hasStartedVideo, setHasStartedVideo] = useState(false);
 
   // Mouse handlers
   const handleMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
     event.preventDefault();
     setIsDragging(true);
-    // Pause video while scrubbing
-    if (videoRef.current && !videoRef.current.paused) {
+    
+    // Auto-start video only on first interaction
+    if (videoRef.current && !hasStartedVideo) {
+      videoRef.current.play().then(() => {
+        setIsPlaying(true);
+        setHasStartedVideo(true);
+      }).catch(() => {
+        setIsPlaying(false);
+      });
+    } else if (videoRef.current && !videoRef.current.paused) {
+      // Pause during scrubbing
       videoRef.current.pause();
     }
+    
     handleSliderInteraction(event.clientX, event.currentTarget);
   };
 
@@ -243,20 +246,27 @@ export default function PhotoFinishPage() {
 
   const handleMouseUp = () => {
     setIsDragging(false);
-    // Resume video if it was playing
-    if (videoRef.current && isPlaying) {
-      videoRef.current.play();
-    }
+    // Keep video paused after scrubbing - user controls playback
   };
 
   // Touch handlers
   const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
     event.preventDefault();
     setIsDragging(true);
-    // Pause video while scrubbing
-    if (videoRef.current && !videoRef.current.paused) {
+    
+    // Auto-start video only on first interaction
+    if (videoRef.current && !hasStartedVideo) {
+      videoRef.current.play().then(() => {
+        setIsPlaying(true);
+        setHasStartedVideo(true);
+      }).catch(() => {
+        setIsPlaying(false);
+      });
+    } else if (videoRef.current && !videoRef.current.paused) {
+      // Pause during scrubbing
       videoRef.current.pause();
     }
+    
     const touch = event.touches[0];
     handleSliderInteraction(touch.clientX, event.currentTarget);
   };
@@ -271,10 +281,7 @@ export default function PhotoFinishPage() {
 
   const handleTouchEnd = () => {
     setIsDragging(false);
-    // Resume video if it was playing
-    if (videoRef.current && isPlaying) {
-      videoRef.current.play();
-    }
+    // Keep video paused after scrubbing - user controls playback
   };
 
   // Global mouse up handler
@@ -526,20 +533,26 @@ export default function PhotoFinishPage() {
       const x = (timer.x / 100) * canvas.width;
       const y = (timer.y / 100) * canvas.height;
 
-      // Draw much larger timer background
+      // Calculate timer size as 10% of video width
+      const timerSize = Math.max(canvas.width * 0.1, 80); // Minimum 80px
+      const timerWidth = timerSize * 2.5;
+      const timerHeight = timerSize * 0.6;
+      const fontSize = timerSize * 0.4;
+      
+      // Draw proportional timer background
       ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
-      ctx.roundRect(x - 140, y - 50, 280, 100, 16);
+      ctx.roundRect(x - timerWidth/2, y - timerHeight/2, timerWidth, timerHeight, 8);
       ctx.fill();
 
       // Draw timer border
       ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 3;
-      ctx.roundRect(x - 140, y - 50, 280, 100, 16);
+      ctx.lineWidth = 2;
+      ctx.roundRect(x - timerWidth/2, y - timerHeight/2, timerWidth, timerHeight, 8);
       ctx.stroke();
 
-      // Draw much larger timer text
+      // Draw proportional timer text
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 72px monospace';
+      ctx.font = `bold ${fontSize}px monospace`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(formatTime(timerTime), x, y);
@@ -709,7 +722,13 @@ export default function PhotoFinishPage() {
                   <div 
                     ref={containerRef} 
                     className="relative bg-black rounded-lg overflow-hidden cursor-grab active:cursor-grabbing"
-                    style={{ height: '70vh', touchAction: 'none' }}
+                    style={{ 
+                      height: '80vh', 
+                      aspectRatio: '16/9',
+                      touchAction: 'none',
+                      maxWidth: '100%',
+                      margin: '0 auto'
+                    }}
                     onWheel={handleVideoWheel}
                     onMouseDown={(e) => handleVideoPanStart(e.clientX, e.clientY)}
                     onMouseMove={(e) => handleVideoPanMove(e.clientX, e.clientY)}
