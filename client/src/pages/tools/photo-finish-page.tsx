@@ -723,6 +723,9 @@ export default function PhotoFinishPage() {
             onDurationChange={handleDurationChange}
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
+            controls={false}
+            disablePictureInPicture
+            controlsList="nodownload nofullscreen noremoteplayback"
           />
           
           <canvas
@@ -730,7 +733,46 @@ export default function PhotoFinishPage() {
             className="absolute inset-0 w-full h-full pointer-events-auto cursor-crosshair"
             width={1920}
             height={1080}
-            onClick={handleCanvasClick}
+            onClick={(e) => {
+              if (mode === 'timer') {
+                const rect = canvasRef.current?.getBoundingClientRect();
+                if (rect) {
+                  const x = ((e.clientX - rect.left) / rect.width) * 100;
+                  const y = ((e.clientY - rect.top) / rect.height) * 100;
+                  
+                  const newTimer: TimerOverlay = {
+                    id: Date.now().toString(),
+                    x,
+                    y,
+                    startTime: currentTime,
+                    visible: true
+                  };
+                  
+                  setTimers(prev => [...prev, newTimer]);
+                  setActiveTimer(newTimer.id);
+                  setMode(null);
+                }
+              } else if (mode === 'finishline') {
+                const rect = canvasRef.current?.getBoundingClientRect();
+                if (rect) {
+                  const x = ((e.clientX - rect.left) / rect.width) * 100;
+                  const y = ((e.clientY - rect.top) / rect.height) * 100;
+                  
+                  const newFinishLine: FinishLine = {
+                    id: Date.now().toString(),
+                    x1: x - 2,
+                    y1: y - 25,
+                    x2: x + 2,
+                    y2: y + 25,
+                    color: '#00ff00'
+                  };
+                  
+                  setFinishLines(prev => [...prev, newFinishLine]);
+                  setActiveFinishLine(newFinishLine.id);
+                  setMode(null);
+                }
+              }
+            }}
           />
         </div>
 
