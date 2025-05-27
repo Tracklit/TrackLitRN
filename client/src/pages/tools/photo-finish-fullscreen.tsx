@@ -515,7 +515,7 @@ export default function PhotoFinishFullscreen({
       <div className="w-full h-full relative" ref={containerRef}>
         <video
           ref={videoRef}
-          src={videoUrl}
+          src={videoUrl || ''}
           className="w-full h-full object-contain"
           style={{
             transform: `scale(${videoScale}) translate(${videoTranslate.x}px, ${videoTranslate.y}px)`,
