@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Search, UserPlus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, MessageCircle, UserPlus, UserMinus } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Card, CardContent } from "@/components/ui/card";
+import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "wouter";
 
 interface User {
   id: number;
@@ -18,75 +19,95 @@ interface User {
   isFollower?: boolean;
 }
 
+interface AthletesResponse {
+  athletes: User[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    hasMore: boolean;
+  };
+}
+
 export default function AthletesPage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [allAthletes, setAllAthletes] = useState<User[]>([]);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Get current user
   const { data: currentUser } = useQuery({
     queryKey: ["/api/user"],
   });
 
-  // Fetch users based on search
-  const { data: users = [], isLoading } = useQuery<User[]>({
-    queryKey: ["/api/athletes", searchQuery],
+  // Fetch users based on search and page
+  const { data: athletesResponse, isLoading, isFetching } = useQuery<AthletesResponse>({
+    queryKey: ["/api/athletes", searchQuery, page],
     queryFn: async () => {
-      const url = searchQuery.trim() 
-        ? `/api/athletes?search=${encodeURIComponent(searchQuery.trim())}`
-        : "/api/athletes";
+      const params = new URLSearchParams();
+      if (searchQuery.trim()) {
+        params.set("search", searchQuery.trim());
+      }
+      params.set("page", page.toString());
+      
+      const url = `/api/athletes?${params.toString()}`;
       const response = await apiRequest("GET", url);
-      return response.json();
+      const data = await response.json();
+      
+      // If it's page 1 or a new search, reset the list
+      if (page === 1) {
+        setAllAthletes(data.athletes);
+      } else {
+        // Append new athletes to existing list
+        setAllAthletes(prev => [...prev, ...data.athletes]);
+      }
+      
+      return data;
     },
     enabled: !!currentUser,
   });
 
-  // Follow/Unfollow mutation
-  const followMutation = useMutation({
-    mutationFn: async ({ userId, action }: { userId: number; action: "follow" | "unfollow" }) => {
-      if (action === "follow") {
-        return await apiRequest("POST", `/api/follow/${userId}`);
-      } else {
-        return await apiRequest("DELETE", `/api/follow/${userId}`);
-      }
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/athletes"] });
-      
-      // Show success toast
-      if (variables.action === "follow") {
-        toast({
-          title: "Friend request sent!",
-          description: "Your friend request has been sent successfully.",
-        });
-      } else {
-        toast({
-          title: "Unfollowed",
-          description: "You are no longer following this user.",
-        });
-      }
-    },
-  });
+  // Reset page when search changes
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setPage(1);
+    setAllAthletes([]);
+  };
 
-  // Start conversation mutation
-  const startConversationMutation = useMutation({
-    mutationFn: async (receiverId: number) => {
-      return await apiRequest("POST", "/api/conversations", { receiverId });
+  // Load more athletes
+  const handleShowMore = () => {
+    if (athletesResponse?.pagination.hasMore) {
+      setPage(prev => prev + 1);
+    }
+  };
+
+  // Send friend request mutation
+  const sendFriendRequestMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      const response = await apiRequest("POST", `/api/follow/${userId}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText);
+      }
+      return response.json();
     },
     onSuccess: () => {
-      window.location.href = "/messages";
+      toast({
+        title: "Success",
+        description: "Friend request sent successfully!",
+      });
+      // Refresh the athletes list
+      queryClient.invalidateQueries({ queryKey: ["/api/athletes"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send friend request",
+        variant: "destructive",
+      });
     },
   });
-
-  const handleFollow = (userId: number, isFollowing: boolean) => {
-    followMutation.mutate({
-      userId,
-      action: isFollowing ? "unfollow" : "follow",
-    });
-  };
-
-  const handleStartConversation = (receiverId: number) => {
-    startConversationMutation.mutate(receiverId);
-  };
 
   if (!currentUser) {
     return (
@@ -112,95 +133,144 @@ export default function AthletesPage() {
             type="text"
             placeholder="Search athletes by name or username..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="pl-10 bg-gray-800/50 border-gray-700 text-white placeholder-gray-400 focus:border-blue-500"
           />
         </div>
 
+        {/* Section Title */}
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold text-white">
+            {searchQuery ? `Search Results (${athletesResponse?.pagination.total || 0})` : "Recent Athletes"}
+          </h2>
+          {!searchQuery && (
+            <p className="text-sm text-gray-400 mt-1">Latest registered athletes on TrackLit</p>
+          )}
+        </div>
+
         {/* Loading State */}
-        {isLoading && (
+        {isLoading && allAthletes.length === 0 && (
           <div className="flex justify-center py-8">
             <div className="animate-spin w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full" />
           </div>
         )}
 
-        {/* Users Grid */}
-        {!isLoading && (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {users.length === 0 ? (
-              <div className="col-span-full text-center py-8">
-                <p className="text-gray-400">
-                  {searchQuery ? "No athletes found matching your search." : "No athletes to display."}
-                </p>
-              </div>
-            ) : (
-              users.map((athlete) => (
-                <Card key={athlete.id} className="bg-gray-800/50 border-gray-700 hover:bg-gray-800/70 transition-colors">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center space-x-3">
-                      <Avatar className="w-12 h-12">
-                        <AvatarImage src="" />
-                        <AvatarFallback className="bg-blue-600 text-white">
-                          {athlete.name?.charAt(0).toUpperCase() || athlete.username?.charAt(0).toUpperCase()}
+        {/* No Results */}
+        {!isLoading && allAthletes.length === 0 && (
+          <div className="text-center py-12">
+            <div className="text-gray-400 mb-2">
+              {searchQuery ? "No athletes found matching your search" : "No athletes found"}
+            </div>
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                onClick={() => handleSearchChange("")}
+                className="text-blue-400 hover:text-blue-300"
+              >
+                Clear search
+              </Button>
+            )}
+          </div>
+        )}
+
+        {/* Athletes Grid */}
+        {allAthletes.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            {allAthletes.map((user) => (
+              <Card key={user.id} className="bg-gray-800/50 border-gray-700 hover:bg-gray-800/70 transition-colors">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Link href={`/athlete/${user.username}`} className="flex items-center gap-3 flex-1 hover:opacity-80 transition-opacity">
+                      <Avatar className="h-12 w-12 border border-gray-600">
+                        <AvatarFallback className="bg-blue-600 text-white font-semibold">
+                          {user.name?.charAt(0).toUpperCase() || user.username.charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <CardTitle className="text-white text-base truncate">
-                          {athlete.name || athlete.username}
-                        </CardTitle>
-                        <p className="text-gray-400 text-sm truncate">@{athlete.username}</p>
+                        <h3 className="font-semibold text-white truncate">
+                          {user.name || user.username}
+                        </h3>
+                        <p className="text-sm text-gray-400 truncate">@{user.username}</p>
                       </div>
-                    </div>
-                  </CardHeader>
+                    </Link>
+                  </div>
                   
-                  <CardContent className="pt-0">
-                    {athlete.bio && (
-                      <CardDescription className="text-gray-300 text-sm mb-4 line-clamp-2">
-                        {athlete.bio}
-                      </CardDescription>
+                  {user.bio && (
+                    <p className="text-sm text-gray-300 mb-3 line-clamp-2">
+                      {user.bio}
+                    </p>
+                  )}
+                  
+                  <div className="flex gap-2">
+                    {!user.isFollowing && !user.isFollower && (
+                      <Button
+                        onClick={() => sendFriendRequestMutation.mutate(user.id)}
+                        disabled={sendFriendRequestMutation.isPending}
+                        size="sm"
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        <UserPlus className="w-4 h-4 mr-2" />
+                        Add Friend
+                      </Button>
                     )}
                     
-                    <div className="flex items-center justify-between space-x-2">
-                      {athlete.isFollowing && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleStartConversation(athlete.id)}
-                          disabled={startConversationMutation.isPending}
-                          className="bg-transparent border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
-                        >
-                          <MessageCircle className="w-3 h-3 mr-1" />
-                          Message
-                        </Button>
-                      )}
-                      
+                    {user.isFollowing && user.isFollower && (
+                      <div className="flex-1 text-center py-2 text-sm text-green-400">
+                        ✓ Friends
+                      </div>
+                    )}
+                    
+                    {user.isFollower && !user.isFollowing && (
                       <Button
+                        onClick={() => sendFriendRequestMutation.mutate(user.id)}
+                        disabled={sendFriendRequestMutation.isPending}
                         size="sm"
-                        onClick={() => handleFollow(athlete.id, athlete.isFollowing || false)}
-                        disabled={followMutation.isPending}
-                        className={
-                          athlete.isFollowing
-                            ? "bg-gray-600 hover:bg-gray-700 text-white"
-                            : "bg-blue-600 hover:bg-blue-700 text-white"
-                        }
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                       >
-                        {athlete.isFollowing ? (
-                          <>
-                            <UserMinus className="w-3 h-3 mr-1" />
-                            Friends
-                          </>
-                        ) : (
-                          <>
-                            <UserPlus className="w-3 h-3 mr-1" />
-                            Friend Request
-                          </>
-                        )}
+                        Accept Friend
                       </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
+                    )}
+                    
+                    {user.isFollowing && !user.isFollower && (
+                      <div className="flex-1 text-center py-2 text-sm text-yellow-400">
+                        Request Sent
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* Show More Button */}
+        {athletesResponse?.pagination.hasMore && !isLoading && (
+          <div className="flex justify-center">
+            <Button
+              onClick={handleShowMore}
+              disabled={isFetching}
+              variant="outline"
+              className="bg-gray-800/50 border-gray-600 text-white hover:bg-gray-700/70"
+            >
+              {isFetching ? (
+                <>
+                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                  Loading...
+                </>
+              ) : (
+                <>Show More ({athletesResponse.pagination.total - allAthletes.length} remaining)</>
+              )}
+            </Button>
+          </div>
+        )}
+
+        {/* Footer info */}
+        {!athletesResponse?.pagination.hasMore && allAthletes.length > 0 && (
+          <div className="text-center py-4">
+            <p className="text-sm text-gray-400">
+              Showing all {allAthletes.length} athletes
+              {searchQuery && ` matching "${searchQuery}"`}
+            </p>
           </div>
         )}
       </div>

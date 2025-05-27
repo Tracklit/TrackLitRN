@@ -1065,23 +1065,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
     try {
-      const { search } = req.query;
-      console.log("Fetching athletes with search:", search);
+      const { search, page = "1" } = req.query;
+      const pageNum = parseInt(page as string);
+      const limit = 10;
+      const offset = (pageNum - 1) * limit;
+      
+      console.log(`Fetching athletes - Page: ${pageNum}, Search: ${search}`);
       
       // Get all users except the current user
-      const allUsers = await dbStorage.getAllUsers();
-      console.log("Total users found:", allUsers.length);
-      let users = allUsers.filter(user => user.id !== req.user.id);
-      console.log("Users after filtering current user:", users.length);
+      let allUsers = await dbStorage.getAllUsers();
+      allUsers = allUsers.filter(user => user.id !== req.user.id);
+      
+      // Sort by newest first (highest ID)
+      allUsers.sort((a, b) => b.id - a.id);
       
       // Apply search filter if provided
       if (search && typeof search === 'string') {
         const searchTerm = search.toLowerCase();
-        users = users.filter(user => 
+        allUsers = allUsers.filter(user => 
           user.username.toLowerCase().includes(searchTerm) ||
           (user.name && user.name.toLowerCase().includes(searchTerm))
         );
       }
+      
+      // Apply pagination
+      const total = allUsers.length;
+      const users = allUsers.slice(offset, offset + limit);
+      const hasMore = (pageNum * limit) < total;
       
       // Add follow status for each user
       const usersWithStatus = await Promise.all(
@@ -1103,8 +1113,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
       );
       
-      console.log("Found athletes:", usersWithStatus.length);
-      res.json(usersWithStatus);
+      console.log(`Found ${users.length} athletes on page ${pageNum}, total: ${total}, hasMore: ${hasMore}`);
+      
+      res.json({
+        athletes: usersWithStatus,
+        pagination: {
+          page: pageNum,
+          limit,
+          total,
+          hasMore
+        }
+      });
     } catch (error) {
       console.error("Error fetching athletes:", error);
       res.status(500).send("Error fetching athletes");
