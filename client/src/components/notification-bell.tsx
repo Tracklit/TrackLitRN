@@ -49,22 +49,111 @@ function getNotificationIcon(type: string) {
 
 export function NotificationBell() {
   const { user } = useAuth();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
 
   const { data: notifications = [], refetch } = useQuery<Notification[]>({
     queryKey: ["/api/notifications"],
     enabled: !!user,
+    refetchInterval: 30000, // Refetch every 30 seconds
   });
+
+  // Count unread notifications
+  const unreadCount = notifications.filter(n => !n.isRead).length;
 
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: number) => {
-      await apiRequest("PATCH", `/api/notifications/${notificationId}/read`);
+      return await apiRequest("POST", `/api/notifications/${notificationId}/read`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
     },
   });
+
+  const handleNotificationClick = (notification: Notification) => {
+    if (!notification.isRead) {
+      markAsReadMutation.mutate(notification.id);
+    }
+    if (notification.actionUrl) {
+      setLocation(notification.actionUrl);
+      setIsOpen(false);
+    }
+  };
+
+  return (
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="relative">
+          <Bell className="h-5 w-5" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent 
+        align="end" 
+        className="w-80 max-h-96 overflow-y-auto"
+        sideOffset={5}
+      >
+        <div className="p-4 border-b">
+          <h4 className="font-semibold">Notifications</h4>
+          {unreadCount > 0 && (
+            <p className="text-sm text-muted-foreground">
+              {unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}
+            </p>
+          )}
+        </div>
+        
+        {notifications.length === 0 ? (
+          <div className="p-4 text-center text-muted-foreground">
+            <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            <p>No notifications yet</p>
+          </div>
+        ) : (
+          <div className="max-h-64 overflow-y-auto">
+            {notifications.map((notification) => (
+              <div
+                key={notification.id}
+                className={cn(
+                  "p-4 border-b cursor-pointer transition-colors hover:bg-muted/50",
+                  !notification.isRead && "bg-blue-50/50 dark:bg-blue-950/20"
+                )}
+                onClick={() => handleNotificationClick(notification)}
+              >
+                <div className="flex items-start space-x-3">
+                  <div className="flex-shrink-0 mt-1">
+                    {getNotificationIcon(notification.type)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between">
+                      <h5 className={cn(
+                        "text-sm font-medium truncate",
+                        !notification.isRead && "font-semibold"
+                      )}>
+                        {notification.title}
+                      </h5>
+                      {!notification.isRead && (
+                        <div className="w-2 h-2 bg-blue-500 rounded-full ml-2 flex-shrink-0 mt-1"></div>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                      {notification.message}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
   const markAllAsReadMutation = useMutation({
     mutationFn: async () => {

@@ -95,7 +95,7 @@ import {
   conversations
 } from "@shared/schema";
 import { db, pool } from "./db";
-import { eq, and, lt, gte, desc, asc, inArray, or, isNotNull, isNull, ne, sql } from "drizzle-orm";
+import { eq, and, lt, gte, desc, asc, inArray, or, isNotNull, isNull, ne, sql, exists } from "drizzle-orm";
 import { AthleteProfile, InsertAthleteProfile, athleteProfiles } from "@shared/athlete-profile-schema";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
@@ -2424,13 +2424,25 @@ export class DatabaseStorage implements IStorage {
       })
       .from(follows)
       .innerJoin(users, eq(follows.followerId, users.id))
-      .where(eq(follows.followingId, userId));
+      .where(and(
+        eq(follows.followingId, userId),
+        // Only show requests where there's no mutual follow back yet
+        isNull(
+          db.select()
+            .from(follows as any)
+            .where(and(
+              eq(follows.followerId, userId),
+              eq(follows.followingId, follows.followerId)
+            ))
+            .limit(1)
+        )
+      ));
 
     return requests;
   }
 
   async getFriends(userId: number): Promise<any[]> {
-    // Get mutual follows (friends)
+    // Get mutual follows (friends) - simplified approach
     const friends = await db
       .select({
         id: users.id,
@@ -2441,17 +2453,11 @@ export class DatabaseStorage implements IStorage {
       })
       .from(follows)
       .innerJoin(users, eq(follows.followingId, users.id))
-      .where(and(
-        eq(follows.followerId, userId),
-        exists(
-          db.select()
-            .from(follows as any)
-            .where(and(
-              eq(follows.followerId, follows.followingId),
-              eq(follows.followingId, userId)
-            ))
-        )
-      ));
+      .innerJoin(follows as any, and(
+        eq(follows.followerId, follows.followingId),
+        eq(follows.followingId, userId)
+      ))
+      .where(eq(follows.followerId, userId));
 
     return friends;
   }

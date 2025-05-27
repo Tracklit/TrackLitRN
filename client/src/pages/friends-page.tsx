@@ -216,40 +216,44 @@ export default function FriendsPage() {
               <div className="space-y-4">
                 {pendingRequests.map((request) => (
                   <Card key={request.id}>
-                    <CardContent className="flex items-center justify-between p-6">
-                      <div className="flex items-center space-x-4">
-                        <Avatar className="h-12 w-12">
-                          <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${request.follower.name}`} />
-                          <AvatarFallback>
-                            {request.follower.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <h3 className="font-semibold">{request.follower.name}</h3>
-                          <p className="text-sm text-muted-foreground">@{request.follower.username}</p>
-                          {request.follower.bio && (
-                            <p className="text-sm text-muted-foreground mt-1">{request.follower.bio}</p>
-                          )}
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <Avatar className="h-12 w-12">
+                            <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${request.follower.name}`} />
+                            <AvatarFallback>
+                              {request.follower.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <h3 className="font-semibold">{request.follower.name}</h3>
+                            <p className="text-sm text-muted-foreground">@{request.follower.username}</p>
+                            {request.follower.bio && (
+                              <p className="text-sm text-muted-foreground mt-1">{request.follower.bio}</p>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button
-                          size="sm"
-                          onClick={() => handleAcceptRequest(request.id)}
-                          disabled={acceptRequestMutation.isPending}
-                        >
-                          <UserCheck className="h-4 w-4 mr-2" />
-                          Accept
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeclineRequest(request.id)}
-                          disabled={declineRequestMutation.isPending}
-                        >
-                          <UserX className="h-4 w-4 mr-2" />
-                          Decline
-                        </Button>
+                        <div className="flex flex-col gap-2 ml-4">
+                          <Button
+                            size="sm"
+                            onClick={() => handleAcceptRequest(request.id)}
+                            disabled={acceptRequestMutation.isPending}
+                            className="w-24"
+                          >
+                            <UserCheck className="h-4 w-4 mr-2" />
+                            Accept
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeclineRequest(request.id)}
+                            disabled={declineRequestMutation.isPending}
+                            className="w-24"
+                          >
+                            <UserX className="h-4 w-4 mr-2" />
+                            Decline
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
