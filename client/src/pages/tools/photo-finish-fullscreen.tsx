@@ -217,8 +217,8 @@ export default function PhotoFinishFullscreen({
       setIsPanning(true);
       setLastPanPoint({ x: centerX, y: centerY });
       setLastDistance(distance);
-    } else if (event.touches.length === 1 && videoScale > 1) {
-      // Single finger - check for finish line drag when zoomed
+    } else if (event.touches.length === 1) {
+      // Single finger - check for finish line drag
       const canvas = canvasRef.current;
       if (!canvas) return;
 
@@ -230,7 +230,7 @@ export default function PhotoFinishFullscreen({
       // Check if touching a finish line (expanded hit area)
       const clickedLine = finishLines.find(line => {
         const lineX = line.x;
-        const hitAreaWidth = 5; // Percentage-based hit area
+        const hitAreaWidth = 8; // Larger hit area for easier touch
         return x >= lineX - hitAreaWidth && x <= lineX + hitAreaWidth &&
                y >= line.y && y <= line.y + line.height;
       });
@@ -261,14 +261,16 @@ export default function PhotoFinishFullscreen({
         setVideoScale(newScale);
       }
       
-      // Handle panning
-      const deltaX = centerX - lastPanPoint.x;
-      const deltaY = centerY - lastPanPoint.y;
-      
-      setVideoTranslate(prev => ({
-        x: prev.x + deltaX / videoScale,
-        y: prev.y + deltaY / videoScale
-      }));
+      // Handle panning when zoomed
+      if (videoScale > 1) {
+        const deltaX = centerX - lastPanPoint.x;
+        const deltaY = centerY - lastPanPoint.y;
+        
+        setVideoTranslate(prev => ({
+          x: prev.x + deltaX,
+          y: prev.y + deltaY
+        }));
+      }
       
       setLastPanPoint({ x: centerX, y: centerY });
       setLastDistance(distance);
@@ -285,7 +287,7 @@ export default function PhotoFinishFullscreen({
       // Move the finish line horizontally
       setFinishLines(prev => prev.map(line => 
         line.id === draggedLineId 
-          ? { ...line, x: Math.max(0, Math.min(98, x)) }
+          ? { ...line, x: Math.max(1, Math.min(99, x)) }
           : line
       ));
     }
@@ -348,8 +350,11 @@ export default function PhotoFinishFullscreen({
 
   // Handle canvas interactions
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    // Don't place new elements if we're dragging
+    if (isDraggingFinishLine) return;
+    
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || !mode) return;
 
     const rect = canvas.getBoundingClientRect();
     const x = ((event.clientX - rect.left) / rect.width) * 100;
@@ -369,7 +374,7 @@ export default function PhotoFinishFullscreen({
       // Only allow one finish line - replace existing one
       const newFinishLine: FinishLine = {
         id: Date.now().toString(),
-        x: x - 1,
+        x: Math.max(1, Math.min(99, x)),
         y: 10,
         width: 2,
         height: 80
