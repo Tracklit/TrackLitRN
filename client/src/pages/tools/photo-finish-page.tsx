@@ -66,6 +66,7 @@ export default function PhotoFinishPage() {
   const [savedVideos, setSavedVideos] = useState<SavedVideo[]>([]);
   const [showVideoLibrary, setShowVideoLibrary] = useState(false);
   const [fullscreenMode, setFullscreenMode] = useState(false);
+  const [uploading, setUploading] = useState(false);
   
   // Overlay state
   const [timers, setTimers] = useState<TimerOverlay[]>([]);
