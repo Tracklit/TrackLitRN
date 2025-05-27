@@ -140,33 +140,34 @@ export default function PhotoFinishFullscreen({
     if (!ctx) return;
 
     const drawOverlays = () => {
+      // Clear the entire canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Draw timers - transparent background, white text with drop shadow only
+      // Draw race timers as floating white text with drop shadow ONLY
       timers.forEach(timer => {
         const timerTime = currentTime - timer.startTime;
         const x = (timer.x / 100) * canvas.width;
         const y = (timer.y / 100) * canvas.height;
 
-        // Calculate font size based on video width
-        const fontSize = Math.max(canvas.width * 0.04, 32);
+        // Font size based on canvas width
+        const fontSize = Math.max(canvas.width * 0.05, 36);
         
-        // Set up text properties
-        ctx.font = `bold ${fontSize}px monospace`;
+        // Configure text rendering
+        ctx.font = `bold ${fontSize}px 'Courier New', monospace`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
-        // Apply drop shadow
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
-        ctx.shadowBlur = 4;
-        ctx.shadowOffsetX = 2;
-        ctx.shadowOffsetY = 2;
+        // Set drop shadow for text visibility
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+        ctx.shadowBlur = 3;
+        ctx.shadowOffsetX = 1;
+        ctx.shadowOffsetY = 1;
         
-        // Draw only the white text - no background, no border
+        // ONLY draw white text - NO BACKGROUND, NO BORDER, NO RECTANGLE
         ctx.fillStyle = '#ffffff';
         ctx.fillText(formatTime(timerTime), x, y);
         
-        // Clear shadow settings
+        // Reset shadow immediately
         ctx.shadowColor = 'transparent';
         ctx.shadowBlur = 0;
         ctx.shadowOffsetX = 0;
