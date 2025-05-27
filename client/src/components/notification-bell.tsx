@@ -96,31 +96,31 @@ export function NotificationBell() {
       </DropdownMenuTrigger>
       <DropdownMenuContent 
         align="end" 
-        className="w-80 max-h-96 overflow-y-auto"
+        className="w-80 max-h-96 overflow-y-auto bg-[#1a2332] border-gray-700"
         sideOffset={5}
       >
-        <div className="p-4 border-b">
-          <h4 className="font-semibold">Notifications</h4>
+        <div className="p-4 border-b border-gray-700 bg-[#1a2332]">
+          <h4 className="font-semibold text-white">Notifications</h4>
           {unreadCount > 0 && (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-gray-300">
               {unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}
             </p>
           )}
         </div>
         
         {notifications.length === 0 ? (
-          <div className="p-4 text-center text-muted-foreground">
+          <div className="p-4 text-center text-gray-300 bg-[#1a2332]">
             <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
             <p>No notifications yet</p>
           </div>
         ) : (
-          <div className="max-h-64 overflow-y-auto">
+          <div className="max-h-64 overflow-y-auto bg-[#1a2332]">
             {notifications.map((notification) => (
               <div
                 key={notification.id}
                 className={cn(
-                  "p-4 border-b cursor-pointer transition-colors hover:bg-muted/50",
-                  !notification.isRead && "bg-blue-50/50 dark:bg-blue-950/20"
+                  "p-4 border-b border-gray-700 cursor-pointer transition-colors hover:bg-gray-800/50 bg-[#1a2332]",
+                  !notification.isRead && "bg-blue-900/30"
                 )}
                 onClick={() => handleNotificationClick(notification)}
               >
@@ -131,7 +131,7 @@ export function NotificationBell() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between">
                       <h5 className={cn(
-                        "text-sm font-medium truncate",
+                        "text-sm font-medium truncate text-white",
                         !notification.isRead && "font-semibold"
                       )}>
                         {notification.title}
@@ -140,10 +140,10 @@ export function NotificationBell() {
                         <div className="w-2 h-2 bg-blue-500 rounded-full ml-2 flex-shrink-0 mt-1"></div>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                    <p className="text-sm text-gray-300 mt-1 line-clamp-2">
                       {notification.message}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-2">
+                    <p className="text-xs text-gray-400 mt-2">
                       {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                     </p>
                   </div>
