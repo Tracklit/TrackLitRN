@@ -2424,25 +2424,51 @@ export class DatabaseStorage implements IStorage {
       })
       .from(follows)
       .innerJoin(users, eq(follows.followerId, users.id))
+      .where(eq(follows.followingId, userId));
+
+    // Filter out mutual friends (those who follow back)
+    const mutualFollows = await db
+      .select({ followerId: follows.followerId })
+      .from(follows)
       .where(and(
-        eq(follows.followingId, userId),
-        // Only show requests where there's no mutual follow back yet
-        isNull(
-          db.select()
-            .from(follows as any)
-            .where(and(
-              eq(follows.followerId, userId),
-              eq(follows.followingId, follows.followerId)
-            ))
-            .limit(1)
-        )
+        eq(follows.followerId, userId),
+        inArray(follows.followingId, requests.map(r => r.followerId))
       ));
 
-    return requests;
+    const mutualFollowerIds = mutualFollows.map(m => m.followerId);
+    
+    return requests.filter(request => !mutualFollowerIds.includes(request.followerId));
   }
 
   async getFriends(userId: number): Promise<any[]> {
-    // Get mutual follows (friends) - simplified approach
+    // Get people the user follows
+    const following = await db
+      .select({ followingId: follows.followingId })
+      .from(follows)
+      .where(eq(follows.followerId, userId));
+
+    const followingIds = following.map(f => f.followingId);
+    
+    if (followingIds.length === 0) {
+      return [];
+    }
+
+    // Get people who follow the user back (mutual friends)
+    const mutualFollows = await db
+      .select({ followerId: follows.followerId })
+      .from(follows)
+      .where(and(
+        eq(follows.followingId, userId),
+        inArray(follows.followerId, followingIds)
+      ));
+
+    const friendIds = mutualFollows.map(m => m.followerId);
+    
+    if (friendIds.length === 0) {
+      return [];
+    }
+
+    // Get user details for friends
     const friends = await db
       .select({
         id: users.id,
@@ -2451,13 +2477,8 @@ export class DatabaseStorage implements IStorage {
         email: users.email,
         bio: users.bio
       })
-      .from(follows)
-      .innerJoin(users, eq(follows.followingId, users.id))
-      .innerJoin(follows as any, and(
-        eq(follows.followerId, follows.followingId),
-        eq(follows.followingId, userId)
-      ))
-      .where(eq(follows.followerId, userId));
+      .from(users)
+      .where(inArray(users.id, friendIds));
 
     return friends;
   }
