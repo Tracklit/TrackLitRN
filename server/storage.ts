@@ -2085,19 +2085,6 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async markNotificationAsRead(userId: number, type: string, fromUserId: number): Promise<void> {
-    await db
-      .update(notifications)
-      .set({ isRead: true })
-      .where(
-        and(
-          eq(notifications.userId, userId),
-          eq(notifications.type, type),
-          sql`${notifications.data}::json->>'fromUserId' = ${fromUserId.toString()}`
-        )
-      );
-  }
-
   async markNotificationAsRead(notificationId: number): Promise<boolean> {
     const result = await db
       .update(notifications)
