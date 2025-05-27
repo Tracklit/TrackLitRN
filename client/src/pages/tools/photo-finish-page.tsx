@@ -638,7 +638,13 @@ export default function PhotoFinishPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setFullscreenMode(false)}
+                onClick={() => {
+                  setFullscreenMode(false);
+                  setVideoUrl(null);
+                  setCurrentVideo(null);
+                  setTimers([]);
+                  setFinishLines([]);
+                }}
                 className="text-white hover:bg-white/20"
               >
                 <X className="w-5 h-5" />
@@ -726,6 +732,9 @@ export default function PhotoFinishPage() {
             controls={false}
             disablePictureInPicture
             controlsList="nodownload nofullscreen noremoteplayback"
+            playsInline
+            webkit-playsinline="true"
+            preload="metadata"
           />
           
           <canvas
