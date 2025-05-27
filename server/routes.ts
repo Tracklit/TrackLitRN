@@ -4123,7 +4123,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     try {
-      const success = await storage.markAllNotificationsAsRead(req.user!.id);
+      const success = await dbStorage.markAllNotificationsAsRead(req.user!.id);
       res.json({ success });
     } catch (error) {
       console.error("Error marking all notifications as read:", error);
