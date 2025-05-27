@@ -23,7 +23,7 @@ import { Breadcrumb } from "@/components/breadcrumb";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import PhotoFinishFullscreen from './photo-finish-fullscreen';
-import trackImagePath from "@assets/image_1748373969622.png";
+import trackImagePath from "@assets/IMG_4075.JPG?url";
 
 interface TimerOverlay {
   id: string;

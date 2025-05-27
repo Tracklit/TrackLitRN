@@ -41,10 +41,10 @@ import { cn } from '@/lib/utils';
 import { useAssignedPrograms } from '@/hooks/use-assigned-programs';
 import { useProgramSessions } from '@/hooks/use-program-sessions';
 import { SimpleWorkoutLike } from '@/components/workout-reactions';
-import trackImage1 from "@assets/image_1748373969622.png";
-import trackImage2 from "@assets/image_1748376718695.png";
-import trackImage3 from "@assets/image_1748377615949.png";
-import trackImage4 from "@assets/image_1748378002678.png";
+import trackImage1 from "@assets/IMG_4075.JPG?url";
+import trackImage2 from "@assets/IMG_4076.JPG?url";
+import trackImage3 from "@assets/IMG_4077.JPG?url";
+import trackImage4 from "@assets/IMG_4078.JPG?url";
 
 export default function HomePage() {
   const { user } = useAuth();
