@@ -62,6 +62,7 @@ export default function PhotoFinishPage() {
   const [duration, setDuration] = useState(0);
   const [savedVideos, setSavedVideos] = useState<SavedVideo[]>([]);
   const [showVideoLibrary, setShowVideoLibrary] = useState(false);
+  const [fullscreenMode, setFullscreenMode] = useState(false);
   
   // Overlay state
   const [timers, setTimers] = useState<TimerOverlay[]>([]);
@@ -601,6 +602,201 @@ export default function PhotoFinishPage() {
       });
     });
   }, [currentTime, timers, finishLines]);
+
+  // Full-screen video analysis mode (like inspiration image)
+  if (fullscreenMode && videoUrl) {
+    return (
+      <div className="fixed inset-0 bg-black text-white overflow-hidden z-50">
+        {/* Top Controls Bar */}
+        <div className="absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/80 to-transparent p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setFullscreenMode(false)}
+                className="text-white hover:bg-white/20"
+              >
+                <X className="w-5 h-5" />
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowVideoLibrary(!showVideoLibrary)}
+                className="text-white hover:bg-white/20"
+              >
+                <FolderOpen className="w-5 h-5" />
+              </Button>
+            </div>
+
+            <div className="text-white font-medium">
+              {currentVideo?.title || 'Race Analysis'}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={saveVideo}
+                className="text-white hover:bg-white/20"
+              >
+                <Save className="w-5 h-5" />
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Video Library Sidebar */}
+        {showVideoLibrary && (
+          <div className="absolute top-0 left-0 w-80 h-full bg-black/90 backdrop-blur-sm z-40 border-r border-gray-800">
+            <div className="p-4 pt-20">
+              <h3 className="text-lg font-medium mb-4">Video Library</h3>
+              <div className="space-y-3 max-h-[calc(100vh-120px)] overflow-y-auto">
+                {savedVideos.map((video) => (
+                  <div
+                    key={video.id}
+                    className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                      currentVideo?.id === video.id
+                        ? 'border-blue-500 bg-blue-500/20'
+                        : 'border-gray-600 hover:border-gray-500'
+                    }`}
+                    onClick={() => {
+                      loadSavedVideo(video);
+                      setShowVideoLibrary(false);
+                    }}
+                  >
+                    <div className="text-sm font-medium text-white truncate">
+                      {video.title}
+                    </div>
+                    <div className="text-xs text-gray-400 mt-1">
+                      {new Date(video.createdAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Main Video Container */}
+        <div 
+          ref={containerRef} 
+          className="w-full h-full relative cursor-grab active:cursor-grabbing"
+          style={{ touchAction: 'none' }}
+          onWheel={handleVideoWheel}
+          onMouseDown={(e) => handleVideoPanStart(e.clientX, e.clientY)}
+          onMouseMove={(e) => handleVideoPanMove(e.clientX, e.clientY)}
+          onMouseUp={handleVideoPanEnd}
+          onTouchStart={handleVideoTouchStart}
+          onTouchMove={handleVideoTouchMove}
+          onTouchEnd={handleVideoTouchEnd}
+        >
+          <video
+            ref={videoRef}
+            src={videoUrl}
+            className="w-full h-full object-contain"
+            style={{
+              transform: `scale(${videoScale}) translate(${videoTranslate.x}px, ${videoTranslate.y}px)`,
+            }}
+            onTimeUpdate={handleTimeUpdate}
+            onDurationChange={handleDurationChange}
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+          />
+          
+          <canvas
+            ref={canvasRef}
+            className="absolute inset-0 w-full h-full pointer-events-auto cursor-crosshair"
+            width={1920}
+            height={1080}
+            onClick={handleCanvasClick}
+          />
+        </div>
+
+        {/* Bottom Controls */}
+        <div className="absolute bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black/80 to-transparent p-4">
+          {/* Tools Bar */}
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <Button
+              variant={mode === 'timer' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setMode(mode === 'timer' ? null : 'timer')}
+              className="text-white hover:bg-white/20"
+            >
+              <Clock className="w-4 h-4 mr-2" />
+              Add Timer
+            </Button>
+            
+            <Button
+              variant={mode === 'finishline' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setMode(mode === 'finishline' ? null : 'finishline')}
+              className="text-white hover:bg-white/20"
+            >
+              <Target className="w-4 h-4 mr-2" />
+              Finish Line
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setTimers([]);
+                setFinishLines([]);
+                setActiveTimer(null);
+                setActiveFinishLine(null);
+              }}
+              className="text-white hover:bg-white/20"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Clear
+            </Button>
+          </div>
+
+          {/* Video Controls */}
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={togglePlayPause}
+              className="text-white hover:bg-white/20"
+            >
+              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+            </Button>
+            
+            <div className="text-sm text-white font-mono">
+              {formatTime(currentTime)}
+            </div>
+            
+            {/* Scrubber */}
+            <div className="flex-1 relative">
+              <div
+                className="h-2 bg-gray-600 rounded-full cursor-pointer"
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+              >
+                <div
+                  className="h-full bg-white rounded-full relative"
+                  style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+                >
+                  <div className="absolute right-0 top-1/2 transform translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full border-2 border-black" />
+                </div>
+              </div>
+            </div>
+            
+            <div className="text-sm text-white font-mono">
+              {formatTime(duration)}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 pb-16">
