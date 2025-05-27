@@ -14,7 +14,8 @@ import {
   Clock,
   Dumbbell, 
   MessagesSquare, 
-  Coins 
+  Coins,
+  BookOpen
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -119,6 +120,17 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               Practice
             </a>
             <a
+              href="/programs"
+              className={cn(
+                "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",
+                location === "/programs" ? "bg-[#ff8c00] text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+              )}
+              onClick={() => setIsOpen(false)}
+            >
+              <BookOpen className="h-4 w-4 mr-3" />
+              Programs
+            </a>
+            <a
               href="/training-tools"
               className={cn(
                 "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",
@@ -199,17 +211,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               <Users className="h-4 w-4 mr-3" />
               Athletes
             </a>
-            <a
-              href="/clubs"
-              className={cn(
-                "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",
-                location.startsWith("/clubs") || location.startsWith("/club") ? "bg-orange-500 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
-              )}
-              onClick={() => setIsOpen(false)}
-            >
-              <Users className="h-4 w-4 mr-3" />
-              Clubs
-            </a>
+
             <a
               href="/messages"
               className={cn(

@@ -15,7 +15,8 @@ import {
   Clock,
   Dumbbell, 
   MessagesSquare, 
-  Coins
+  Coins,
+  BookOpen
 } from "lucide-react";
 
 interface NavItemProps {
@@ -93,6 +94,13 @@ export function SidebarNavigation({ isMobile = false }: { isMobile?: boolean }) 
             Practice
           </NavItem>
           <NavItem 
+            href="/programs" 
+            icon={<BookOpen className="h-5 w-5" />} 
+            isActive={location === '/programs'}
+          >
+            Programs
+          </NavItem>
+          <NavItem 
             href="/training-tools" 
             icon={<Clock className="h-5 w-5" />} 
             isActive={location === '/training-tools'}
@@ -135,13 +143,7 @@ export function SidebarNavigation({ isMobile = false }: { isMobile?: boolean }) 
           <div className="pt-4 pb-2">
             <p className="text-xs text-darkGray px-3 font-medium">SOCIAL</p>
           </div>
-          <NavItem 
-            href="/clubs" 
-            icon={<Users className="h-5 w-5" />} 
-            isActive={location.startsWith('/clubs')}
-          >
-            Clubs
-          </NavItem>
+
           <NavItem 
             href="/messages" 
             icon={<MessagesSquare className="h-5 w-5" />} 
