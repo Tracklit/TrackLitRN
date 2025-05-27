@@ -66,7 +66,9 @@ export function NotificationBell() {
       return await apiRequest("POST", `/api/notifications/${notificationId}/read`);
     },
     onSuccess: () => {
+      // Force immediate cache invalidation and refetch
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      queryClient.refetchQueries({ queryKey: ["/api/notifications"] });
     },
   });
 
