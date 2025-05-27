@@ -68,6 +68,7 @@ export default function StartGunPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
   const flashlightRef = useRef<any>(null);
+  const activeAudioElements = useRef<HTMLAudioElement[]>([]);
   
   const { toast } = useToast();
   
@@ -190,36 +191,20 @@ export default function StartGunPage() {
         // Create a new audio element specifically for this playback
         const audio = new Audio(audioPath);
         
-        // Set properties for mobile volume control
-        // Set volume to maximum to let device volume buttons control actual output
-        audio.volume = 1.0;
+        // Track this audio element for proper cleanup
+        activeAudioElements.current.push(audio);
+        
+        // Set properties - use direct volume control that works with device volume
+        audio.volume = volume / 100;
         audio.preload = 'auto';
         
-        // Create Web Audio context for better mobile volume control
-        if (!audioContext.current) {
-          audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-        }
-        
-        // Create gain node for volume control that works with device volume
-        try {
-          const source = audioContext.current.createMediaElementSource(audio);
-          const gainNode = audioContext.current.createGain();
-          
-          // Set gain based on our volume slider (0.0 to 1.0)
-          gainNode.gain.value = volume / 100;
-          
-          // Connect: source -> gain -> destination
-          source.connect(gainNode);
-          gainNode.connect(audioContext.current.destination);
-        } catch (audioContextError) {
-          // Fallback: if Web Audio API fails, use regular volume control
-          console.log("Web Audio API not available, using fallback volume control");
-          audio.volume = volume / 100;
-        }
-        
-        // Set up ended callback
+        // Set up ended callback and cleanup
         if (onEnded) {
-          audio.addEventListener('ended', onEnded);
+          audio.addEventListener('ended', () => {
+            // Remove from active elements when ended
+            activeAudioElements.current = activeAudioElements.current.filter(el => el !== audio);
+            onEnded();
+          });
         }
         
         // Log when audio is ready to play
@@ -394,9 +379,16 @@ export default function StartGunPage() {
     }
   };
   
-  // Function to start the sequence - now waiting for audio to end before proceeding
+  // Function to start the sequence - prevent multiple sequences
   const startSequence = () => {
-    if (isPlaying) return;
+    // Prevent starting if already playing
+    if (isPlaying) {
+      console.log("Sequence already running, ignoring start request");
+      return;
+    }
+    
+    // Clear any existing timers first
+    cancelSequence();
     
     setIsPlaying(true);
     setStatus('on-your-marks');
@@ -447,7 +439,7 @@ export default function StartGunPage() {
     });
   };
   
-  // Function to cancel the sequence
+  // Function to cancel the sequence and stop all audio
   const cancelSequence = () => {
     // Clear all timers
     if (timerRefs.current.setTimer) {
@@ -460,16 +452,45 @@ export default function StartGunPage() {
       timerRefs.current.gunTimer = null;
     }
     
+    // Stop all active audio elements
+    activeAudioElements.current.forEach(audio => {
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+      } catch (error) {
+        console.log("Error stopping audio:", error);
+      }
+    });
+    
+    // Clear the active audio elements array
+    activeAudioElements.current = [];
+    
+    // Also stop the preloaded audio refs if they exist
+    if (marksAudioRef.current) {
+      marksAudioRef.current.pause();
+      marksAudioRef.current.currentTime = 0;
+    }
+    if (setAudioRef.current) {
+      setAudioRef.current.pause();
+      setAudioRef.current.currentTime = 0;
+    }
+    if (bangAudioRef.current) {
+      bangAudioRef.current.pause();
+      bangAudioRef.current.currentTime = 0;
+    }
+    
     // Reset state
     setIsPlaying(false);
     setStatus('idle');
     
-    // Show feedback
-    toast({
-      title: "Cancelled",
-      description: "Start sequence cancelled",
-      duration: 2000
-    });
+    // Show feedback only if we were actually playing
+    if (isPlaying) {
+      toast({
+        title: "Stopped",
+        description: "Start sequence stopped",
+        duration: 2000
+      });
+    }
   };
   
   // Toggle mute/unmute
