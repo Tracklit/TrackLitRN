@@ -4107,11 +4107,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).send("Invalid notification ID");
       }
       
-      // Direct SQL update to ensure it works
-      await pool.query(
-        'UPDATE notifications SET is_read = true WHERE id = $1 AND user_id = $2',
+      // Direct SQL update with detailed logging
+      const result = await pool.query(
+        'UPDATE notifications SET is_read = true WHERE id = $1 AND user_id = $2 RETURNING *',
         [notificationId, req.user.id]
       );
+      console.log(`Updated notification ${notificationId} for user ${req.user.id}:`, result.rows);
       
       res.json({ success: true });
     } catch (error) {

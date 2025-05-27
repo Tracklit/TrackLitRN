@@ -65,10 +65,18 @@ export function NotificationBell() {
     mutationFn: async (notificationId: number) => {
       return await apiRequest("POST", `/api/notifications/${notificationId}/read`);
     },
-    onSuccess: () => {
-      // Force immediate cache invalidation and refetch
+    onSuccess: (_, notificationId) => {
+      // Immediately update the cache optimistically
+      queryClient.setQueryData(["/api/notifications"], (oldData: Notification[] | undefined) => {
+        if (!oldData) return oldData;
+        return oldData.map(notification => 
+          notification.id === notificationId 
+            ? { ...notification, isRead: true }
+            : notification
+        );
+      });
+      // Also invalidate to ensure consistency
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
-      queryClient.refetchQueries({ queryKey: ["/api/notifications"] });
     },
   });
 
