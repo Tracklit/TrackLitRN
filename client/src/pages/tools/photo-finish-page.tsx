@@ -677,9 +677,9 @@ export default function PhotoFinishPage() {
             <div className="p-4 pt-20">
               <h3 className="text-lg font-medium mb-4">Video Library</h3>
               <div className="space-y-3 max-h-[calc(100vh-120px)] overflow-y-auto">
-                {savedVideos.map((video) => (
+                {savedVideos.map((video, index) => (
                   <div
-                    key={video.id}
+                    key={index}
                     className="p-3 rounded-lg border cursor-pointer transition-colors border-gray-600 hover:border-gray-500"
                     onClick={() => {
                       // Load saved video functionality would go here
@@ -687,7 +687,7 @@ export default function PhotoFinishPage() {
                     }}
                   >
                     <div className="text-sm font-medium text-white truncate">
-                      {video.name || 'Saved Video'}
+                      Saved Video {index + 1}
                     </div>
                     <div className="text-xs text-gray-400 mt-1">
                       {new Date().toLocaleDateString()}
