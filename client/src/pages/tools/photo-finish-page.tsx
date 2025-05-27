@@ -191,13 +191,13 @@ export default function PhotoFinishPage() {
     }
   };
 
-  // Handle mobile touch events for custom slider
-  const handleSliderTouch = (event: React.TouchEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    const div = event.currentTarget;
-    const rect = div.getBoundingClientRect();
-    const touch = event.touches[0];
-    const x = Math.max(0, Math.min(touch.clientX - rect.left, rect.width));
+  // State for tracking drag
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Handle slider interaction
+  const handleSliderInteraction = (clientX: number, element: HTMLDivElement) => {
+    const rect = element.getBoundingClientRect();
+    const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
     const percentage = x / rect.width;
     const time = percentage * (duration || 0);
     
@@ -207,19 +207,54 @@ export default function PhotoFinishPage() {
     }
   };
 
-  // Handle mouse events for custom slider
-  const handleSliderMouse = (event: React.MouseEvent<HTMLDivElement>) => {
-    const div = event.currentTarget;
-    const rect = div.getBoundingClientRect();
-    const x = Math.max(0, Math.min(event.clientX - rect.left, rect.width));
-    const percentage = x / rect.width;
-    const time = percentage * (duration || 0);
-    
-    if (videoRef.current && time >= 0 && time <= (duration || 0)) {
-      videoRef.current.currentTime = time;
-      setCurrentTime(time);
+  // Mouse handlers
+  const handleMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
+    setIsDragging(true);
+    handleSliderInteraction(event.clientX, event.currentTarget);
+  };
+
+  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (isDragging) {
+      handleSliderInteraction(event.clientX, event.currentTarget);
     }
   };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Touch handlers
+  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(true);
+    const touch = event.touches[0];
+    handleSliderInteraction(touch.clientX, event.currentTarget);
+  };
+
+  const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    if (isDragging && event.touches[0]) {
+      const touch = event.touches[0];
+      handleSliderInteraction(touch.clientX, event.currentTarget);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
+
+  // Global mouse up handler
+  useEffect(() => {
+    const handleGlobalMouseUp = () => setIsDragging(false);
+    if (isDragging) {
+      document.addEventListener('mouseup', handleGlobalMouseUp);
+      document.addEventListener('mouseleave', handleGlobalMouseUp);
+    }
+    return () => {
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+      document.removeEventListener('mouseleave', handleGlobalMouseUp);
+    };
+  }, [isDragging]);
 
   // Handle canvas click for adding overlays
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
@@ -606,10 +641,13 @@ export default function PhotoFinishPage() {
                     <div className="px-2">
                       <div className="relative py-2">
                         <div 
-                          className="w-full h-6 bg-gray-200 dark:bg-gray-700 rounded-lg cursor-pointer relative overflow-hidden"
-                          onClick={handleSliderMouse}
-                          onTouchStart={handleSliderTouch}
-                          onTouchMove={handleSliderTouch}
+                          className="w-full h-6 bg-gray-200 dark:bg-gray-700 rounded-lg cursor-pointer relative overflow-hidden select-none"
+                          onMouseDown={handleMouseDown}
+                          onMouseMove={handleMouseMove}
+                          onMouseUp={handleMouseUp}
+                          onTouchStart={handleTouchStart}
+                          onTouchMove={handleTouchMove}
+                          onTouchEnd={handleTouchEnd}
                           style={{ touchAction: 'none' }}
                         >
                           {/* Progress bar */}
