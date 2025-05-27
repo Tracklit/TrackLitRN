@@ -4240,7 +4240,7 @@ Keep the response professional, evidence-based, and specific to track and field 
 
       // Schedule follow-up notifications for progress tracking
       setTimeout(async () => {
-        await storage.createNotification({
+        await dbStorage.createNotification({
           userId,
           type: "rehab_checkin",
           title: "Rehabilitation Progress Check",
@@ -4283,7 +4283,7 @@ Keep the response professional, evidence-based, and specific to track and field 
 
     try {
       const conversationId = parseInt(req.params.conversationId);
-      const messages = await storage.getConversationMessages(conversationId, req.user.id);
+      const messages = await dbStorage.getConversationMessages(conversationId, req.user.id);
       res.json(messages);
     } catch (error) {
       console.error("Error fetching messages:", error);
@@ -4298,7 +4298,7 @@ Keep the response professional, evidence-based, and specific to track and field 
 
     try {
       const { participantId } = req.body;
-      const conversation = await storage.createOrGetConversation(req.user.id, participantId);
+      const conversation = await dbStorage.createOrGetConversation(req.user.id, participantId);
       res.json(conversation);
     } catch (error) {
       console.error("Error creating conversation:", error);
@@ -4313,7 +4313,7 @@ Keep the response professional, evidence-based, and specific to track and field 
 
     try {
       const { conversationId, content } = req.body;
-      const message = await storage.sendMessage({
+      const message = await dbStorage.sendMessage({
         conversationId,
         senderId: req.user.id,
         content
@@ -4497,7 +4497,7 @@ Keep the response professional, evidence-based, and specific to track and field 
   app.post("/api/admin/send-automatic-friend-requests", async (req: Request, res: Response) => {
     try {
       console.log("Calling sendAutomaticFriendRequests...");
-      await storage.sendAutomaticFriendRequests();
+      await dbStorage.sendAutomaticFriendRequests();
       res.json({ message: "Automatic friend requests sent successfully" });
     } catch (error) {
       console.error("Error sending automatic friend requests:", error);
