@@ -2427,6 +2427,7 @@ export class DatabaseStorage implements IStorage {
     const pendingRequests = [];
     
     for (const request of requests) {
+      // Check if the user follows this person back (making them mutual friends)
       const mutualFollow = await db
         .select()
         .from(follows)
