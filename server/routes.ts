@@ -1,6 +1,7 @@
 import express, { type Express, type Request, type Response } from "express";
 import { createServer, type Server } from "http";
 import { storage as dbStorage } from "./storage";
+import { pool } from "./db";
 import { setupAuth } from "./auth";
 import { z } from "zod";
 import multer from "multer";
@@ -4106,13 +4107,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).send("Invalid notification ID");
       }
       
-      const success = await dbStorage.markNotificationAsRead(notificationId);
+      // Direct SQL update to ensure it works
+      await pool.query(
+        'UPDATE notifications SET is_read = true WHERE id = $1 AND user_id = $2',
+        [notificationId, req.user.id]
+      );
       
-      if (success) {
-        res.json({ success: true });
-      } else {
-        res.status(404).send("Notification not found");
-      }
+      res.json({ success: true });
     } catch (error) {
       console.error("Error marking notification as read:", error);
       res.status(500).send("Error marking notification as read");
