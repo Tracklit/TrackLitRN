@@ -127,6 +127,9 @@ export default function PhotoFinishPage() {
     setTimers([]);
     setFinishLines([]);
     setSelectedTool('none');
+    
+    // Automatically switch to fullscreen mode
+    setFullscreenMode(true);
   };
 
   // Handle video metadata load
