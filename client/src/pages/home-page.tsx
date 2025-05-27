@@ -298,142 +298,24 @@ export default function HomePage() {
         </section>
         
         {/* Today's Session Preview */}
+        {/* Today's Session Link */}
         <section className="mb-4 mx-auto" style={{ maxWidth: "540px" }}>
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-xl font-bold">Today's Session</h2>
-            <Link href="/practice">
-              <Button variant="link" className="text-primary p-0 h-auto text-sm">
-                <span>View All</span>
-                <ArrowRight className="ml-1 h-3 w-3" />
-              </Button>
-            </Link>
-          </div>
-          
-          {isLoadingSessions ? (
-            <Card className="border-primary/20 w-full p-8 flex justify-center items-center">
-              <div className="text-center text-muted-foreground">
-                <div className="animate-pulse h-5 w-24 bg-muted rounded-md mx-auto mb-4"></div>
-                <p className="text-sm">Loading today's workout...</p>
-              </div>
-            </Card>
-          ) : !todaySession ? (
-            <Card className="border-primary/20 w-full p-8">
-              <div className="text-center text-muted-foreground">
-                <p className="mb-2">No session scheduled for today</p>
-                <Link href="/practice">
-                  <Button variant="outline" size="sm">
-                    View All Workouts
-                  </Button>
-                </Link>
-              </div>
-            </Card>
-          ) : (
-            <Card className="border-primary/20 w-full">
-              <CardHeader className="pb-2 pt-3 px-3">
-                <div className="flex justify-between items-start">
+          <Link href="/practice">
+            <Card className="border-primary/20 w-full hover:bg-primary/5 transition-colors cursor-pointer">
+              <CardContent className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Dumbbell className="h-5 w-5 text-primary" />
+                  </div>
                   <div>
-                    <CardTitle className="text-lg">{`${todayDate} Training Session`}</CardTitle>
-                    <CardDescription className="flex items-center gap-2 mt-0.5 text-xs">
-                      {todaySession.isRestDay && (
-                        <span className="text-amber-600 font-medium">Rest Day</span>
-                      )}
-                    </CardDescription>
+                    <h3 className="font-semibold text-lg">Today's Session</h3>
+                    <p className="text-sm text-muted-foreground">View your training program</p>
                   </div>
-                  <Link href="/practice">
-                    <Button variant="outline" size="sm" className="border-primary/20 text-primary hover:bg-primary/10 text-xs h-7 px-2">
-                      Start Session
-                    </Button>
-                  </Link>
                 </div>
-              </CardHeader>
-              
-              <CardContent className="px-3 py-2">
-                <div className="space-y-1">
-                  {todaySession.preActivation1 && (
-                    <div className="flex items-center gap-2 p-1 rounded-md hover:bg-muted/30">
-                      <div className="flex-shrink-0 h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center">
-                        <LineChart className="h-2.5 w-2.5 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-xs">Pre-Activation</p>
-                        <p className="text-xs text-muted-foreground">{todaySession.preActivation1}</p>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {todaySession.shortDistanceWorkout && (
-                    <div className="flex items-center gap-2 p-1 rounded-md hover:bg-muted/30">
-                      <div className="flex-shrink-0 h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Timer className="h-2.5 w-2.5 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-xs">Sprint Workout</p>
-                        <p className="text-xs text-muted-foreground">{todaySession.shortDistanceWorkout}</p>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {todaySession.mediumDistanceWorkout && (
-                    <div className="flex items-center gap-2 p-1 rounded-md hover:bg-muted/30">
-                      <div className="flex-shrink-0 h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Timer className="h-2.5 w-2.5 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-xs">Medium Distance</p>
-                        <p className="text-xs text-muted-foreground">{todaySession.mediumDistanceWorkout}</p>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {todaySession.longDistanceWorkout && (
-                    <div className="flex items-center gap-2 p-1 rounded-md hover:bg-muted/30">
-                      <div className="flex-shrink-0 h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Timer className="h-2.5 w-2.5 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-xs">Long Distance</p>
-                        <p className="text-xs text-muted-foreground">{todaySession.longDistanceWorkout}</p>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {todaySession.extraSession && (
-                    <div className="flex items-center gap-2 p-1 rounded-md hover:bg-muted/30">
-                      <div className="flex-shrink-0 h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Dumbbell className="h-2.5 w-2.5 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-xs">Extra Training</p>
-                        <p className="text-xs text-muted-foreground">{todaySession.extraSession}</p>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* If no workout data is available, show a message */}
-                  {!todaySession.preActivation1 && 
-                   !todaySession.shortDistanceWorkout && 
-                   !todaySession.mediumDistanceWorkout && 
-                   !todaySession.longDistanceWorkout && 
-                   !todaySession.extraSession && (
-                    <div className="py-4 text-center text-muted-foreground text-sm">
-                      <p>Rest day or no specific workout details available.</p>
-                      <p className="text-xs mt-1">Check the full program for more information.</p>
-                    </div>
-                  )}
-                </div>
+                <ArrowRight className="h-5 w-5 text-primary" />
               </CardContent>
-              
-              <CardFooter className="border-t py-2 px-3 flex justify-between text-xs text-muted-foreground">
-                <div>Program: {assignedPrograms?.[0]?.title || 'Beast Mode'}</div>
-                <Link href="/practice">
-                  <div className="flex items-center cursor-pointer">
-                    <span className="text-primary font-medium">View Details</span>
-                    <ArrowUpRight className="ml-1 h-2.5 w-2.5 text-primary" />
-                  </div>
-                </Link>
-              </CardFooter>
             </Card>
-          )}
+          </Link>
         </section>
       </main>
       
