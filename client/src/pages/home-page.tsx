@@ -41,6 +41,7 @@ import { cn } from '@/lib/utils';
 import { useAssignedPrograms } from '@/hooks/use-assigned-programs';
 import { useProgramSessions } from '@/hooks/use-program-sessions';
 import { SimpleWorkoutLike } from '@/components/workout-reactions';
+import trackImagePath from "@assets/IMG_4074.jpg";
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -270,17 +271,26 @@ export default function HomePage() {
               ) : (
                 <Link href={card.href} key={index}>
                   <Card className="cursor-pointer hover:shadow-md transition-all duration-300 border border-muted hover:border-primary h-[140px] mx-auto mb-2 overflow-hidden group relative">
-                    <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-                    <CardContent className="p-2.5 relative h-full flex flex-col justify-center">
-                      <div className="flex flex-col items-center text-center gap-2">
+                    {/* Header Image - Top Half */}
+                    <div 
+                      className="h-1/2 bg-cover bg-center bg-no-repeat relative"
+                      style={{ backgroundImage: `url(${trackImagePath})` }}
+                    >
+                      <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-all duration-300" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    </div>
+                    
+                    {/* Content - Bottom Half */}
+                    <CardContent className="h-1/2 p-2.5 relative flex flex-col justify-center bg-background">
+                      <div className="flex flex-col items-center text-center gap-1">
                         <div className="p-1.5 rounded-full bg-primary/15 border border-primary/20 group-hover:bg-primary/25 transition-colors duration-300">
                           <div className="h-4 w-4 flex items-center justify-center text-primary">
                             {card.icon}
                           </div>
                         </div>
                         <div>
-                          <h2 className="text-base font-bold mb-0.5">{card.title}</h2>
-                          <p className="text-muted-foreground text-xs px-1 line-clamp-2 overflow-hidden">{card.description}</p>
+                          <h2 className="text-sm font-bold mb-0.5">{card.title}</h2>
+                          <p className="text-muted-foreground text-xs px-1 line-clamp-1 overflow-hidden">{card.description}</p>
                         </div>
                       </div>
                     </CardContent>
