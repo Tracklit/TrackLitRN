@@ -154,18 +154,18 @@ export default function PhotoFinishFullscreen({
         const timerHeight = timerSize * 0.7;
         const fontSize = timerSize * 0.35;
         
-        // Draw timer text with shadow for visibility (no background)
+        // Draw timer text with shadow for visibility (no background, no frame)
         ctx.font = `bold ${fontSize}px monospace`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
-        // Add text shadow
+        // Add text shadow for each character
         ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-        ctx.shadowBlur = 4;
-        ctx.shadowOffsetX = 2;
-        ctx.shadowOffsetY = 2;
+        ctx.shadowBlur = 3;
+        ctx.shadowOffsetX = 1;
+        ctx.shadowOffsetY = 1;
         
-        // Draw white text
+        // Draw white text only
         ctx.fillStyle = '#ffffff';
         ctx.fillText(formatTime(timerTime), x, y);
         
@@ -174,14 +174,6 @@ export default function PhotoFinishFullscreen({
         ctx.shadowBlur = 0;
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 0;
-        
-        // Draw selection border if active
-        if (activeTimer === timer.id) {
-          ctx.strokeStyle = '#ff0000';
-          ctx.lineWidth = 2;
-          ctx.roundRect(x - timerWidth/2, y - timerHeight/2, timerWidth, timerHeight, 8);
-          ctx.stroke();
-        }
       });
 
       // Draw finish lines
