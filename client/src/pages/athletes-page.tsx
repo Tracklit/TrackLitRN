@@ -61,12 +61,22 @@ export default function AthletesPage() {
         pagination: data.pagination || { page: 1, limit: 10, total: 0, hasMore: false }
       };
       
+      // Debug logging
+      console.log("API Response:", data);
+      console.log("Valid Data:", validData);
+      console.log("Athletes array:", validData.athletes);
+      
       // If it's page 1 or a new search, reset the list
       if (page === 1) {
+        console.log("Setting athletes for page 1:", validData.athletes);
         setAllAthletes(validData.athletes);
       } else {
         // Append new athletes to existing list
-        setAllAthletes(prev => [...prev, ...validData.athletes]);
+        setAllAthletes(prev => {
+          const newList = [...prev, ...validData.athletes];
+          console.log("Appending athletes, new list:", newList);
+          return newList;
+        });
       }
       
       return validData;
@@ -83,7 +93,7 @@ export default function AthletesPage() {
 
   // Load more athletes
   const handleShowMore = () => {
-    if (athletesResponse?.pagination.hasMore) {
+    if (athletesResponse?.pagination?.hasMore) {
       setPage(prev => prev + 1);
     }
   };
