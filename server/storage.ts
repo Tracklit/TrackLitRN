@@ -2406,6 +2406,88 @@ export class DatabaseStorage implements IStorage {
 
     return usersWithFollowStatus;
   }
+
+  async getPendingFriendRequests(userId: number): Promise<any[]> {
+    const requests = await db
+      .select({
+        id: follows.id,
+        followerId: follows.followerId,
+        followingId: follows.followingId,
+        createdAt: follows.createdAt,
+        follower: {
+          id: users.id,
+          username: users.username,
+          name: users.name,
+          email: users.email,
+          bio: users.bio
+        }
+      })
+      .from(follows)
+      .innerJoin(users, eq(follows.followerId, users.id))
+      .where(eq(follows.followingId, userId));
+
+    return requests;
+  }
+
+  async getFriends(userId: number): Promise<any[]> {
+    // Get mutual follows (friends)
+    const friends = await db
+      .select({
+        id: users.id,
+        username: users.username,
+        name: users.name,
+        email: users.email,
+        bio: users.bio
+      })
+      .from(follows)
+      .innerJoin(users, eq(follows.followingId, users.id))
+      .where(and(
+        eq(follows.followerId, userId),
+        exists(
+          db.select()
+            .from(follows as any)
+            .where(and(
+              eq(follows.followerId, follows.followingId),
+              eq(follows.followingId, userId)
+            ))
+        )
+      ));
+
+    return friends;
+  }
+
+  async acceptFriendRequest(requestId: number, userId: number): Promise<void> {
+    // Get the request details
+    const request = await db
+      .select()
+      .from(follows)
+      .where(and(
+        eq(follows.id, requestId),
+        eq(follows.followingId, userId)
+      ))
+      .limit(1);
+
+    if (request.length === 0) {
+      throw new Error("Friend request not found");
+    }
+
+    const fromUserId = request[0].followerId;
+
+    // Create mutual follow relationship
+    await db.insert(follows).values({
+      followerId: userId,
+      followingId: fromUserId,
+      createdAt: new Date()
+    });
+
+    // The original request already exists, so we now have mutual follows
+  }
+
+  async declineFriendRequest(requestId: number): Promise<void> {
+    await db
+      .delete(follows)
+      .where(eq(follows.id, requestId));
+  }
 }
 
 export const storage = new DatabaseStorage();
