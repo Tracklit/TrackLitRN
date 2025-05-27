@@ -2551,16 +2551,15 @@ export class DatabaseStorage implements IStorage {
     // Remove both follow relationships to completely unfriend
     await db
       .delete(follows)
-      .where(and(
-        eq(follows.followerId, userId),
-        eq(follows.followingId, friendId)
-      ));
-    
-    await db
-      .delete(follows)
-      .where(and(
-        eq(follows.followerId, friendId),
-        eq(follows.followingId, userId)
+      .where(or(
+        and(
+          eq(follows.followerId, userId),
+          eq(follows.followingId, friendId)
+        ),
+        and(
+          eq(follows.followerId, friendId),
+          eq(follows.followingId, userId)
+        )
       ));
   }
 }
