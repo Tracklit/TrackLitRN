@@ -4106,7 +4106,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).send("Invalid notification ID");
       }
       
-      const success = await storage.markNotificationAsRead(notificationId);
+      const success = await dbStorage.markNotificationAsRead(notificationId);
       
       if (success) {
         res.json({ success: true });
