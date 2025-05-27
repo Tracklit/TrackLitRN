@@ -191,6 +191,24 @@ export default function PhotoFinishPage() {
     }
   };
 
+  // Handle mobile touch events for scrubbing
+  const handleTouchScrub = (event: React.TouchEvent<HTMLInputElement>) => {
+    const input = event.currentTarget;
+    const rect = input.getBoundingClientRect();
+    const touch = event.touches[0];
+    const x = touch.clientX - rect.left;
+    const percentage = x / rect.width;
+    const time = percentage * (duration || 0);
+    
+    if (videoRef.current && time >= 0 && time <= (duration || 0)) {
+      videoRef.current.currentTime = time;
+      setCurrentTime(time);
+      
+      // Update input value for visual feedback
+      input.value = time.toString();
+    }
+  };
+
   // Handle canvas click for adding overlays
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current) return;
@@ -582,6 +600,8 @@ export default function PhotoFinishPage() {
                           step="0.01"
                           value={currentTime}
                           onChange={handleScrub}
+                          onTouchMove={handleTouchScrub}
+                          onTouchStart={handleTouchScrub}
                           className="w-full h-6 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer slider-enhanced"
                           style={{
                             background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${(currentTime / (duration || 1)) * 100}%, #e5e7eb ${(currentTime / (duration || 1)) * 100}%, #e5e7eb 100%)`
