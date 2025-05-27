@@ -4089,7 +4089,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     try {
-      const notification = await storage.createNotification(req.body);
+      const notification = await dbStorage.createNotification(req.body);
       res.json(notification);
     } catch (error) {
       console.error("Error creating notification:", error);
@@ -4140,7 +4140,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).send("Invalid notification ID");
       }
       
-      const success = await storage.deleteNotification(notificationId);
+      const success = await dbStorage.deleteNotification(notificationId);
       
       if (success) {
         res.json({ success: true });
