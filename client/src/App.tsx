@@ -33,6 +33,7 @@ import { Component as ClubDetailPage } from "@/pages/club-detail-page";
 import { Component as ClubManagementPage } from "@/pages/club-management-page";
 import MessagesPage from "@/pages/messages-page";
 import AthletesPage from "@/pages/athletes-page";
+import FriendsPage from "@/pages/friends-page";
 import SpikesPage from "@/pages/spikes-page";
 import SubscriptionPage from "@/pages/subscription-page";
 import { Component as ProgramsPage } from "@/pages/programs-page";
@@ -73,6 +74,7 @@ function Router() {
       <ProtectedRoute path="/results" component={ResultsPage} />
       
       {/* Social */}
+      <ProtectedRoute path="/friends" component={FriendsPage} />
       <ProtectedRoute path="/athletes" component={AthletesPage} />
       <ProtectedRoute path="/coaches" component={CoachesPage} />
       <ProtectedRoute path="/clubs" component={ClubsPage} />

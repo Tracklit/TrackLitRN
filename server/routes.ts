@@ -4390,6 +4390,72 @@ Keep the response professional, evidence-based, and specific to track and field 
     }
   });
 
+  // Get pending friend requests
+  app.get("/api/friend-requests/pending", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const pendingRequests = await dbStorage.getPendingFriendRequests(req.user.id);
+      res.json(pendingRequests);
+    } catch (error) {
+      console.error("Error fetching pending friend requests:", error);
+      res.status(500).send("Error fetching pending friend requests");
+    }
+  });
+
+  // Get friends list
+  app.get("/api/friends", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const friends = await dbStorage.getFriends(req.user.id);
+      res.json(friends);
+    } catch (error) {
+      console.error("Error fetching friends:", error);
+      res.status(500).send("Error fetching friends");
+    }
+  });
+
+  // Accept friend request (new endpoint structure)
+  app.post("/api/friend-requests/:requestId/accept", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const requestId = parseInt(req.params.requestId);
+      if (isNaN(requestId)) return res.status(400).send("Invalid request ID");
+
+      await dbStorage.acceptFriendRequest(requestId, req.user.id);
+      res.json({ message: "Friend request accepted" });
+    } catch (error) {
+      console.error("Error accepting friend request:", error);
+      res.status(500).send("Error accepting friend request");
+    }
+  });
+
+  // Decline friend request (new endpoint structure)
+  app.post("/api/friend-requests/:requestId/decline", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const requestId = parseInt(req.params.requestId);
+      if (isNaN(requestId)) return res.status(400).send("Invalid request ID");
+
+      await dbStorage.declineFriendRequest(requestId);
+      res.json({ message: "Friend request declined" });
+    } catch (error) {
+      console.error("Error declining friend request:", error);
+      res.status(500).send("Error declining friend request");
+    }
+  });
+
   app.delete("/api/follow/:userId", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) {
       return res.sendStatus(401);
