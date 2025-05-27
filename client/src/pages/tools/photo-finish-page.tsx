@@ -608,23 +608,26 @@ export default function PhotoFinishPage() {
       const timerHeight = timerSize * 0.7;
       const fontSize = timerSize * 0.35;
       
-      // Draw proportional timer background
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
-      ctx.roundRect(x - timerWidth/2, y - timerHeight/2, timerWidth, timerHeight, 8);
-      ctx.fill();
-
-      // Draw timer border
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2;
-      ctx.roundRect(x - timerWidth/2, y - timerHeight/2, timerWidth, timerHeight, 8);
-      ctx.stroke();
-
-      // Draw proportional timer text
-      ctx.fillStyle = '#ffffff';
+      // Draw transparent timer text with shadow only
       ctx.font = `bold ${fontSize}px monospace`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
+      
+      // Add drop shadow for visibility
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+      ctx.shadowBlur = 3;
+      ctx.shadowOffsetX = 2;
+      ctx.shadowOffsetY = 2;
+      
+      // Draw only white text - no background or border
+      ctx.fillStyle = '#ffffff';
       ctx.fillText(formatTime(timerTime), x, y);
+      
+      // Reset shadow
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
     });
 
     // Draw finish lines

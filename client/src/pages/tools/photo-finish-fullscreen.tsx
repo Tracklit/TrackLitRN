@@ -163,9 +163,11 @@ export default function PhotoFinishFullscreen({
         ctx.shadowOffsetX = 1;
         ctx.shadowOffsetY = 1;
         
-        // Draw pure white timer text - NO SHAPES, NO BACKGROUNDS
+        // TRANSPARENT TIMER: Only white text with shadow
         ctx.fillStyle = '#ffffff';
         ctx.fillText(formatTime(elapsedTime), posX, posY);
+        
+        // DEBUG: Ensure no background drawing occurs
         
         // Reset shadow properties
         ctx.shadowColor = 'transparent';
