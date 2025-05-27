@@ -70,6 +70,23 @@ export function NotificationBell() {
     },
   });
 
+  const markAllAsReadMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("PATCH", "/api/notifications/mark-all-read");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+    },
+  });
+
+  // Mark all notifications as read when dropdown opens
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (open && unreadCount > 0) {
+      markAllAsReadMutation.mutate();
+    }
+  };
+
   const handleNotificationClick = (notification: Notification) => {
     if (!notification.isRead) {
       markAsReadMutation.mutate(notification.id);
@@ -83,7 +100,7 @@ export function NotificationBell() {
   if (!user) return null;
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+    <DropdownMenu open={isOpen} onOpenChange={handleOpenChange}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
