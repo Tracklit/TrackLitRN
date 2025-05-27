@@ -533,11 +533,11 @@ export default function PhotoFinishPage() {
       const x = (timer.x / 100) * canvas.width;
       const y = (timer.y / 100) * canvas.height;
 
-      // Calculate timer size as 10% of video width
+      // Calculate timer size as 10% of video width with proper proportions
       const timerSize = Math.max(canvas.width * 0.1, 80); // Minimum 80px
-      const timerWidth = timerSize * 2.5;
-      const timerHeight = timerSize * 0.6;
-      const fontSize = timerSize * 0.4;
+      const timerWidth = timerSize * 2.2;
+      const timerHeight = timerSize * 0.7;
+      const fontSize = timerSize * 0.35;
       
       // Draw proportional timer background
       ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
@@ -721,13 +721,12 @@ export default function PhotoFinishPage() {
                   {/* Video Player Container */}
                   <div 
                     ref={containerRef} 
-                    className="relative bg-black rounded-lg overflow-hidden cursor-grab active:cursor-grabbing"
+                    className="relative bg-black rounded-lg overflow-hidden cursor-grab active:cursor-grabbing w-full"
                     style={{ 
-                      height: '80vh', 
                       aspectRatio: '16/9',
                       touchAction: 'none',
-                      maxWidth: '100%',
-                      margin: '0 auto'
+                      height: 'auto',
+                      maxHeight: '80vh'
                     }}
                     onWheel={handleVideoWheel}
                     onMouseDown={(e) => handleVideoPanStart(e.clientX, e.clientY)}
