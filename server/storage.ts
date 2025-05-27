@@ -2423,20 +2423,38 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(users, eq(follows.followerId, users.id))
       .where(eq(follows.followingId, userId));
 
-    // Transform to match expected format
-    return requests.map(request => ({
-      id: request.id,
-      followerId: request.followerId,
-      followingId: request.followingId,
-      createdAt: request.createdAt,
-      follower: {
-        id: request.followerId,
-        name: request.followerName,
-        username: request.followerUsername,
-        email: request.followerEmail,
-        bio: request.followerBio
+    // Filter out requests where user already follows back (mutual friends)
+    const pendingRequests = [];
+    
+    for (const request of requests) {
+      const mutualFollow = await db
+        .select()
+        .from(follows)
+        .where(and(
+          eq(follows.followerId, userId),
+          eq(follows.followingId, request.followerId)
+        ))
+        .limit(1);
+
+      // Only include if no mutual follow exists (still pending)
+      if (mutualFollow.length === 0) {
+        pendingRequests.push({
+          id: request.id,
+          followerId: request.followerId,
+          followingId: request.followingId,
+          createdAt: request.createdAt,
+          follower: {
+            id: request.followerId,
+            name: request.followerName,
+            username: request.followerUsername,
+            email: request.followerEmail,
+            bio: request.followerBio
+          }
+        });
       }
-    }));
+    }
+
+    return pendingRequests;
   }
 
   async getFriends(userId: number): Promise<any[]> {
@@ -2493,14 +2511,33 @@ export class DatabaseStorage implements IStorage {
 
     const fromUserId = request[0].followerId;
 
-    // Create mutual follow relationship
-    await db.insert(follows).values({
-      followerId: userId,
-      followingId: fromUserId,
-      createdAt: new Date()
-    });
+    // Check if mutual follow already exists to prevent duplicates
+    const existingMutual = await db
+      .select()
+      .from(follows)
+      .where(and(
+        eq(follows.followerId, userId),
+        eq(follows.followingId, fromUserId)
+      ))
+      .limit(1);
 
-    // The original request already exists, so we now have mutual follows
+    // Only create the mutual follow if it doesn't exist
+    if (existingMutual.length === 0) {
+      await db.insert(follows).values({
+        followerId: userId,
+        followingId: fromUserId,
+        createdAt: new Date()
+      });
+    }
+
+    // Create notification for the person who sent the request
+    await this.createNotification({
+      userId: fromUserId,
+      type: 'friend_accepted',
+      title: 'Friend Request Accepted',
+      message: `Your friend request has been accepted!`,
+      actionUrl: '/friends'
+    });
   }
 
   async declineFriendRequest(requestId: number): Promise<void> {
