@@ -142,34 +142,31 @@ export default function PhotoFinishFullscreen({
     const drawOverlays = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Draw timers
+      // Draw timers - transparent background, white text with drop shadow only
       timers.forEach(timer => {
         const timerTime = currentTime - timer.startTime;
         const x = (timer.x / 100) * canvas.width;
         const y = (timer.y / 100) * canvas.height;
 
-        // Calculate timer size as 10% of video width
-        const timerSize = Math.max(canvas.width * 0.1, 80);
-        const timerWidth = timerSize * 2.2;
-        const timerHeight = timerSize * 0.7;
-        const fontSize = timerSize * 0.35;
+        // Calculate font size based on video width
+        const fontSize = Math.max(canvas.width * 0.04, 32);
         
-        // Draw timer text with shadow for visibility (no background, no frame)
+        // Set up text properties
         ctx.font = `bold ${fontSize}px monospace`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
-        // Add text shadow for each character
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-        ctx.shadowBlur = 3;
-        ctx.shadowOffsetX = 1;
-        ctx.shadowOffsetY = 1;
+        // Apply drop shadow
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 2;
         
-        // Draw white text only
+        // Draw only the white text - no background, no border
         ctx.fillStyle = '#ffffff';
         ctx.fillText(formatTime(timerTime), x, y);
         
-        // Reset shadow for other elements
+        // Clear shadow settings
         ctx.shadowColor = 'transparent';
         ctx.shadowBlur = 0;
         ctx.shadowOffsetX = 0;
