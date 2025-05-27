@@ -68,7 +68,7 @@ export default function WorkoutToolsPage() {
   ];
   
   return (
-    <div className="container max-w-screen-xl mx-auto p-4 pt-20 pb-20">
+    <div className="container max-w-screen-xl mx-auto p-4 pt-10 pb-20">
       <Breadcrumb items={breadcrumbItems} />
       
       <PageHeader
