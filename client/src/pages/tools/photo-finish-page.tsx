@@ -193,8 +193,14 @@ export default function PhotoFinishPage() {
 
   // State for tracking drag
   const [isDragging, setIsDragging] = useState(false);
+  
+  // Video zoom and pan state
+  const [videoScale, setVideoScale] = useState(1);
+  const [videoTranslate, setVideoTranslate] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 });
 
-  // Handle slider interaction - simplified
+  // Handle slider interaction - auto-start video
   const handleSliderInteraction = (clientX: number, element: HTMLDivElement) => {
     const rect = element.getBoundingClientRect();
     const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
@@ -202,9 +208,19 @@ export default function PhotoFinishPage() {
     const time = percentage * (duration || 0);
     
     if (videoRef.current && time >= 0 && time <= (duration || 0)) {
-      // Directly set the video time
+      // Set the video time
       videoRef.current.currentTime = time;
       setCurrentTime(time);
+      
+      // Auto-start video if it's not playing yet
+      if (videoRef.current.paused) {
+        videoRef.current.play().then(() => {
+          setIsPlaying(true);
+        }).catch(() => {
+          // If autoplay fails, just set the position
+          setIsPlaying(false);
+        });
+      }
     }
   };
 
@@ -285,6 +301,75 @@ export default function PhotoFinishPage() {
       document.removeEventListener('touchend', handleGlobalMouseUp);
     };
   }, [isDragging, isPlaying]);
+
+  // Video zoom and pan handlers
+  const handleVideoWheel = (event: React.WheelEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const delta = event.deltaY > 0 ? -0.1 : 0.1;
+    const newScale = Math.max(0.5, Math.min(3, videoScale + delta));
+    setVideoScale(newScale);
+  };
+
+  const handleVideoPanStart = (clientX: number, clientY: number) => {
+    setIsPanning(true);
+    setLastPanPoint({ x: clientX, y: clientY });
+  };
+
+  const handleVideoPanMove = (clientX: number, clientY: number) => {
+    if (!isPanning) return;
+    
+    const deltaX = clientX - lastPanPoint.x;
+    const deltaY = clientY - lastPanPoint.y;
+    
+    setVideoTranslate(prev => ({
+      x: prev.x + deltaX,
+      y: prev.y + deltaY
+    }));
+    
+    setLastPanPoint({ x: clientX, y: clientY });
+  };
+
+  const handleVideoPanEnd = () => {
+    setIsPanning(false);
+  };
+
+  // Touch gesture handlers for video
+  const handleVideoTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (event.touches.length === 1) {
+      const touch = event.touches[0];
+      handleVideoPanStart(touch.clientX, touch.clientY);
+    }
+  };
+
+  const handleVideoTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    
+    if (event.touches.length === 1 && isPanning) {
+      const touch = event.touches[0];
+      handleVideoPanMove(touch.clientX, touch.clientY);
+    } else if (event.touches.length === 2) {
+      // Pinch to zoom
+      const touch1 = event.touches[0];
+      const touch2 = event.touches[1];
+      const distance = Math.sqrt(
+        Math.pow(touch2.clientX - touch1.clientX, 2) +
+        Math.pow(touch2.clientY - touch1.clientY, 2)
+      );
+      
+      if (lastPanPoint.x !== 0) {
+        const lastDistance = lastPanPoint.x;
+        const scale = distance / lastDistance;
+        const newScale = Math.max(0.5, Math.min(3, videoScale * scale));
+        setVideoScale(newScale);
+      }
+      setLastPanPoint({ x: distance, y: 0 });
+    }
+  };
+
+  const handleVideoTouchEnd = () => {
+    handleVideoPanEnd();
+    setLastPanPoint({ x: 0, y: 0 });
+  };
 
   // Handle canvas click for adding overlays
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
@@ -441,20 +526,20 @@ export default function PhotoFinishPage() {
       const x = (timer.x / 100) * canvas.width;
       const y = (timer.y / 100) * canvas.height;
 
-      // Draw larger timer background
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-      ctx.roundRect(x - 100, y - 35, 200, 70, 12);
+      // Draw much larger timer background
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+      ctx.roundRect(x - 140, y - 50, 280, 100, 16);
       ctx.fill();
 
       // Draw timer border
       ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2;
-      ctx.roundRect(x - 100, y - 35, 200, 70, 12);
+      ctx.lineWidth = 3;
+      ctx.roundRect(x - 140, y - 50, 280, 100, 16);
       ctx.stroke();
 
-      // Draw larger timer text
+      // Draw much larger timer text
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 36px monospace';
+      ctx.font = 'bold 72px monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(formatTime(timerTime), x, y);
@@ -621,11 +706,22 @@ export default function PhotoFinishPage() {
               ) : (
                 <div className="space-y-6">
                   {/* Video Player Container */}
-                  <div ref={containerRef} className="relative bg-black rounded-lg overflow-hidden">
+                  <div 
+                    ref={containerRef} 
+                    className="relative bg-black rounded-lg overflow-hidden cursor-grab active:cursor-grabbing"
+                    style={{ height: '70vh', touchAction: 'none' }}
+                    onWheel={handleVideoWheel}
+                    onMouseDown={(e) => handleVideoPanStart(e.clientX, e.clientY)}
+                    onMouseMove={(e) => handleVideoPanMove(e.clientX, e.clientY)}
+                    onMouseUp={handleVideoPanEnd}
+                    onTouchStart={handleVideoTouchStart}
+                    onTouchMove={handleVideoTouchMove}
+                    onTouchEnd={handleVideoTouchEnd}
+                  >
                     <video
                       ref={videoRef}
                       src={videoUrl}
-                      className="w-full h-auto"
+                      className="w-full h-full object-cover"
                       onLoadedMetadata={handleVideoLoad}
                       onTimeUpdate={handleTimeUpdate}
                       onPlay={() => setIsPlaying(true)}
@@ -634,7 +730,12 @@ export default function PhotoFinishPage() {
                       disablePictureInPicture
                       controlsList="nodownload nofullscreen noremoteplayback"
                       webkit-playsinline="true"
-                      style={{ maxHeight: '60vh' }}
+                      style={{
+                        transform: `scale(${videoScale}) translate(${videoTranslate.x}px, ${videoTranslate.y}px)`,
+                        transformOrigin: 'center center',
+                        transition: isPanning ? 'none' : 'transform 0.2s ease-out',
+                        pointerEvents: 'none'
+                      }}
                     />
                     
                     {/* Overlay Canvas */}
