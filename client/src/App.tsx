@@ -14,7 +14,8 @@ import {
   StopwatchPage,
   StartGunPage,
   JournalPage,
-  PaceCalculatorPage
+  PaceCalculatorPage,
+  PhotoFinishPage
 } from "@/pages/routes";
 
 import { OnboardingFlow } from "@/components/onboarding-flow";
@@ -62,6 +63,7 @@ function Router() {
       <ProtectedRoute path="/tools/stopwatch" component={StopwatchPage} />
       <ProtectedRoute path="/tools/start-gun" component={StartGunPage} />
       <ProtectedRoute path="/tools/journal" component={JournalPage} />
+      <ProtectedRoute path="/tools/photo-finish" component={PhotoFinishPage} />
       <ProtectedRoute path="/programs" component={ProgramsPage} />
       <ProtectedRoute path="/programs/create" component={ProgramCreatePage} />
       <ProtectedRoute path="/programs/:id" component={ProgramDetailPage} />
