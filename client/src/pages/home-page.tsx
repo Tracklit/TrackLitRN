@@ -166,18 +166,18 @@ export default function HomePage() {
       disabled: false,
     },
     {
-      title: "Competitions",
+      title: "Race",
       description: "Meets, results and analytics",
       icon: <Trophy className="h-6 w-6 text-primary" />,
       href: "/meets",
       disabled: false,
     },
     {
-      title: "Clubs & Groups",
-      description: "Coming soon",
-      icon: <Users className="h-6 w-6 text-muted-foreground" />,
-      href: user?.role === 'admin' ? "/clubs" : "#",
-      disabled: user?.role !== 'admin',
+      title: "Tools",
+      description: "Training and performance tools",
+      icon: <Clock className="h-6 w-6 text-primary" />,
+      href: "/training-tools",
+      disabled: false,
     }
   ];
 
@@ -263,28 +263,27 @@ export default function HomePage() {
         {/* Session Preview Ticker - Moved below Today's Session */}
         {isTickerVisible && (
           <section className="mb-4 mx-auto" style={{ maxWidth: "540px" }}>
-            <div className="px-4">
+            <div className="px-4 relative">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0 absolute right-4 top-1/2 -translate-y-1/2 z-10"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsTickerVisible(false);
+                }}
+              >
+                <X className="h-4 w-4" />
+              </Button>
               {sessionPreviews && (
                 <div 
-                  className="cursor-pointer animate-fadeIn"
+                  className="cursor-pointer animate-fadeIn pr-8"
                   onClick={() => openSessionDetails(sessionPreviews[activeSessionIndex])}
                   key={activeSessionIndex} // Key helps with animation
                 >
                   <div 
-                    className="flex items-center gap-2 px-3 py-1 hover:bg-primary/10 transition-all duration-300 relative"
+                    className="flex items-center gap-2 px-3 py-1 hover:bg-primary/10 transition-all duration-300"
                   >
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0 -ml-3 absolute left-0 top-1/2 -translate-y-1/2"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsTickerVisible(false);
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                    <div className="w-6"></div> {/* Spacer to offset the X button */}
                     <div className="rounded-full bg-primary/15 h-8 w-8 flex items-center justify-center flex-shrink-0">
                       <UserCircle className="h-4 w-4 text-primary" />
                     </div>
