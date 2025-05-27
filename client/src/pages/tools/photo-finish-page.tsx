@@ -23,6 +23,7 @@ import { Breadcrumb } from "@/components/breadcrumb";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import PhotoFinishFullscreen from './photo-finish-fullscreen';
+import trackImagePath from "@assets/IMG_4074.jpg";
 
 interface TimerOverlay {
   id: string;
@@ -1000,41 +1001,51 @@ export default function PhotoFinishPage() {
           <Card>
             <CardContent className="p-6">
               {!currentVideo ? (
-                <div className="text-center py-16">
-                  <Video className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-medium mb-2">Upload a race video</h3>
-                  <p className="text-muted-foreground mb-6">
-                    Add timing overlays and finish line analysis to your race footage
-                  </p>
+                <div className="h-96 flex flex-col overflow-hidden">
+                  {/* Header Image - Top Half */}
+                  <div 
+                    className="h-1/2 bg-cover bg-center bg-no-repeat relative"
+                    style={{ backgroundImage: `url(${trackImagePath})` }}
+                  >
+                    <div className="absolute inset-0 bg-black/40" />
+                  </div>
                   
-                  <div className="flex flex-col items-center gap-4">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="video/*"
-                      onChange={handleVideoUpload}
-                      className="hidden"
-                    />
-                    <Button
-                      onClick={() => fileInputRef.current?.click()}
-                      size="lg"
-                      className="flex items-center gap-2"
-                      disabled={uploading}
-                    >
-                      {uploading ? (
-                        <>
-                          <div className="animate-spin w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full" />
-                          Uploading...
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="h-5 w-5" />
-                          Upload Video
-                        </>
-                      )}
-                    </Button>
+                  {/* Content - Bottom Half */}
+                  <div className="h-1/2 flex flex-col justify-center items-center text-center p-6 bg-background">
+                    <h3 className="text-lg font-medium mb-2">Upload a race video</h3>
+                    <p className="text-muted-foreground mb-4 text-sm">
+                      Add timing overlays and finish line analysis to your race footage
+                    </p>
                     
-                    <VideoLimitsInfo />
+                    <div className="flex flex-col items-center gap-3">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="video/*"
+                        onChange={handleVideoUpload}
+                        className="hidden"
+                      />
+                      <Button
+                        onClick={() => fileInputRef.current?.click()}
+                        size="lg"
+                        className="flex items-center gap-2"
+                        disabled={uploading}
+                      >
+                        {uploading ? (
+                          <>
+                            <div className="animate-spin w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full" />
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-5 w-5" />
+                            Upload Video
+                          </>
+                        )}
+                      </Button>
+                      
+                      <VideoLimitsInfo />
+                    </div>
                   </div>
                 </div>
               ) : (
