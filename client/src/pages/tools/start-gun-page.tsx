@@ -190,9 +190,32 @@ export default function StartGunPage() {
         // Create a new audio element specifically for this playback
         const audio = new Audio(audioPath);
         
-        // Set properties
-        audio.volume = volume / 100;
+        // Set properties for mobile volume control
+        // Set volume to maximum to let device volume buttons control actual output
+        audio.volume = 1.0;
         audio.preload = 'auto';
+        
+        // Create Web Audio context for better mobile volume control
+        if (!audioContext.current) {
+          audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        }
+        
+        // Create gain node for volume control that works with device volume
+        try {
+          const source = audioContext.current.createMediaElementSource(audio);
+          const gainNode = audioContext.current.createGain();
+          
+          // Set gain based on our volume slider (0.0 to 1.0)
+          gainNode.gain.value = volume / 100;
+          
+          // Connect: source -> gain -> destination
+          source.connect(gainNode);
+          gainNode.connect(audioContext.current.destination);
+        } catch (audioContextError) {
+          // Fallback: if Web Audio API fails, use regular volume control
+          console.log("Web Audio API not available, using fallback volume control");
+          audio.volume = volume / 100;
+        }
         
         // Set up ended callback
         if (onEnded) {
@@ -215,21 +238,15 @@ export default function StartGunPage() {
         const playPromise = audio.play();
         if (playPromise) {
           playPromise.then(() => {
-            console.log(`${audioPath} playback started successfully`);
+            console.log(`${audioPath} playbook started successfully`);
           }).catch(err => {
             console.error(`Error playing ${audioPath}:`, err);
-            if (audioType === 'bang' && audioContext.current) {
-              createGunOscillator();
-            }
             // Call the callback even if there's an error to prevent hangs
             if (onEnded) onEnded();
           });
         }
       } catch (error) {
         console.error(`Exception trying to play ${audioPath}:`, error);
-        if (audioType === 'bang' && audioContext.current) {
-          createGunOscillator();
-        }
         // Call the callback even if there's an error to prevent hangs
         if (onEnded) onEnded();
       }
