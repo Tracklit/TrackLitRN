@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { Breadcrumb } from "@/components/breadcrumb";
-import startGunImagePath from "@assets/IMG_4071.png";
+import startGunImagePath from "@assets/startgun.png";
 
 export default function WorkoutToolsPage() {
   // Tool cards with links to individual pages
