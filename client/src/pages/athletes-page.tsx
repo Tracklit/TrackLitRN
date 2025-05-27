@@ -55,11 +55,21 @@ export default function AthletesPage() {
       const response = await apiRequest("GET", url);
       const data = await response.json();
       
-      // Ensure we have valid data structure
-      const validData = {
-        athletes: data.athletes || [],
-        pagination: data.pagination || { page: 1, limit: 10, total: 0, hasMore: false }
-      };
+      // Handle both old format (array) and new format (object with pagination)
+      const validData = Array.isArray(data) 
+        ? {
+            athletes: data,
+            pagination: { 
+              page: pageNum, 
+              limit: 10, 
+              total: data.length, 
+              hasMore: false 
+            }
+          }
+        : {
+            athletes: data.athletes || [],
+            pagination: data.pagination || { page: 1, limit: 10, total: 0, hasMore: false }
+          };
       
       // Debug logging
       console.log("API Response:", data);
