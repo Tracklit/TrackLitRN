@@ -2562,6 +2562,56 @@ export class DatabaseStorage implements IStorage {
         )
       ));
   }
+
+  async sendAutomaticFriendRequests(): Promise<void> {
+    const LION_MARTINEZ_ID = 17; // Lion Martinez user ID
+    
+    // Get all users except Lion Martinez
+    const allUsers = await db
+      .select()
+      .from(users)
+      .where(ne(users.id, LION_MARTINEZ_ID));
+
+    // Get existing follows where Lion Martinez is involved
+    const existingFollows = await db
+      .select()
+      .from(follows)
+      .where(or(
+        eq(follows.followerId, LION_MARTINEZ_ID),
+        eq(follows.followingId, LION_MARTINEZ_ID)
+      ));
+
+    // Create a set of user IDs that Lion Martinez already has relationships with
+    const connectedUserIds = new Set();
+    existingFollows.forEach(follow => {
+      if (follow.followerId === LION_MARTINEZ_ID) {
+        connectedUserIds.add(follow.followingId);
+      }
+      if (follow.followingId === LION_MARTINEZ_ID) {
+        connectedUserIds.add(follow.followerId);
+      }
+    });
+
+    // Filter users who don't have any relationship with Lion Martinez
+    const usersToSendRequests = allUsers.filter(user => 
+      !connectedUserIds.has(user.id)
+    );
+
+    // Send friend requests to all unconnected users
+    const friendRequests = usersToSendRequests.map(user => ({
+      followerId: LION_MARTINEZ_ID,
+      followingId: user.id,
+      createdAt: new Date()
+    }));
+
+    if (friendRequests.length > 0) {
+      await db
+        .insert(follows)
+        .values(friendRequests);
+      
+      console.log(`Sent ${friendRequests.length} automatic friend requests from Lion Martinez`);
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();
