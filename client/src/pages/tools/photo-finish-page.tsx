@@ -15,8 +15,10 @@ import {
   Save,
   FolderOpen,
   Maximize,
-  X
+  X,
+  Info
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
@@ -87,6 +89,45 @@ export default function PhotoFinishPage() {
     if (user.isPremium) return 20; // Pro users
     return 1; // Free users
   };
+
+  // Video Limits Info Component
+  const VideoLimitsInfo = () => (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+          <Info className="h-4 w-4 mr-2" />
+          Video Library Info
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Video Library Limits</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Your subscription tier determines how many race videos you can save in your personal library:
+          </p>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center p-3 rounded-lg bg-muted">
+              <span className="font-medium">Free Plan</span>
+              <span className="text-sm text-muted-foreground">1 saved video</span>
+            </div>
+            <div className="flex justify-between items-center p-3 rounded-lg bg-muted">
+              <span className="font-medium">Pro Plan</span>
+              <span className="text-sm text-muted-foreground">20 saved videos</span>
+            </div>
+            <div className="flex justify-between items-center p-3 rounded-lg bg-muted">
+              <span className="font-medium">Star Plan</span>
+              <span className="text-sm text-muted-foreground">Unlimited videos</span>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            You can always upload and analyze videos temporarily. Library storage lets you save your analysis for future reference.
+          </p>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 
   // Format time for display with hundredths precision
   const formatTime = (seconds: number) => {
@@ -962,27 +1003,34 @@ export default function PhotoFinishPage() {
                     Add timing overlays and finish line analysis to your race footage
                   </p>
                   
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="video/*"
-                    onChange={handleVideoUpload}
-                    className="hidden"
-                  />
-                  <Button
-                    onClick={() => fileInputRef.current?.click()}
-                    size="lg"
-                    className="flex items-center gap-2"
-                  >
-                    <Upload className="h-5 w-5" />
-                    Choose Video File
-                  </Button>
-                  
-                  <div className="mt-6 p-4 bg-muted rounded-lg">
-                    <p className="text-sm text-muted-foreground">
-                      <strong>Video Limits:</strong><br />
-                      Free: 1 video • Pro: 20 videos • Star: Unlimited
-                    </p>
+                  <div className="flex flex-col items-center gap-4">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="video/*"
+                      onChange={handleVideoUpload}
+                      className="hidden"
+                    />
+                    <Button
+                      onClick={() => fileInputRef.current?.click()}
+                      size="lg"
+                      className="flex items-center gap-2"
+                      disabled={uploading}
+                    >
+                      {uploading ? (
+                        <>
+                          <div className="animate-spin w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full" />
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-5 w-5" />
+                          Upload Video
+                        </>
+                      )}
+                    </Button>
+                    
+                    <VideoLimitsInfo />
                   </div>
                 </div>
               ) : (
