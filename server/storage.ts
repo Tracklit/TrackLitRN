@@ -87,7 +87,12 @@ import {
   workoutReactions,
   notifications,
   Notification,
-  InsertNotification
+  InsertNotification,
+  follows,
+  Follow,
+  InsertFollow,
+  directMessages,
+  conversations
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, lt, gte, desc, asc, inArray, or, isNotNull, isNull, ne, sql } from "drizzle-orm";

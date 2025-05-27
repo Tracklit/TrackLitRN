@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, MessageCircle, UserPlus, UserMinus } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface User {
   id: number;
@@ -19,6 +20,7 @@ interface User {
 
 export default function AthletesPage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const { toast } = useToast();
 
   // Get current user
   const { data: currentUser } = useQuery({
@@ -47,8 +49,21 @@ export default function AthletesPage() {
         return await apiRequest("DELETE", `/api/follow/${userId}`);
       }
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/athletes"] });
+      
+      // Show success toast
+      if (variables.action === "follow") {
+        toast({
+          title: "Friend request sent!",
+          description: "Your friend request has been sent successfully.",
+        });
+      } else {
+        toast({
+          title: "Unfollowed",
+          description: "You are no longer following this user.",
+        });
+      }
     },
   });
 
