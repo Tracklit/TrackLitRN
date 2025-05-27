@@ -81,14 +81,14 @@ export default function PhotoFinishPage() {
     return 1; // Free users
   };
 
-  // Format time for display
+  // Format time for display with hundredths precision
   const formatTime = (seconds: number) => {
     const sign = seconds < 0 ? '-' : '';
     const absSeconds = Math.abs(seconds);
     const mins = Math.floor(absSeconds / 60);
     const secs = Math.floor(absSeconds % 60);
-    const ms = Math.floor((absSeconds % 1) * 100);
-    return `${sign}${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
+    const hundredths = Math.floor((absSeconds % 1) * 100);
+    return `${sign}${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${hundredths.toString().padStart(2, '0')}`;
   };
 
   // Handle video file upload
@@ -134,12 +134,34 @@ export default function PhotoFinishPage() {
     }
   };
 
-  // Handle video time update
-  const handleTimeUpdate = () => {
+  // Handle video time update with smooth frame-rate syncing
+  const handleTimeUpdate = useCallback(() => {
     if (videoRef.current) {
       setCurrentTime(videoRef.current.currentTime);
     }
-  };
+  }, []);
+
+  // Smooth animation loop for precise timer updates
+  useEffect(() => {
+    let animationFrame: number;
+    
+    const updateTime = () => {
+      if (videoRef.current && isPlaying) {
+        setCurrentTime(videoRef.current.currentTime);
+      }
+      animationFrame = requestAnimationFrame(updateTime);
+    };
+    
+    if (isPlaying) {
+      animationFrame = requestAnimationFrame(updateTime);
+    }
+    
+    return () => {
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+      }
+    };
+  }, [isPlaying]);
 
   // Toggle play/pause
   const togglePlayback = () => {
@@ -153,12 +175,19 @@ export default function PhotoFinishPage() {
     }
   };
 
-  // Handle video scrubbing
+  // Handle video scrubbing with frame-rate precision
   const handleScrub = (event: React.ChangeEvent<HTMLInputElement>) => {
     const time = parseFloat(event.target.value);
     if (videoRef.current) {
       videoRef.current.currentTime = time;
       setCurrentTime(time);
+      
+      // Force immediate time update for smooth scrubbing
+      requestAnimationFrame(() => {
+        if (videoRef.current) {
+          setCurrentTime(videoRef.current.currentTime);
+        }
+      });
     }
   };
 
@@ -317,14 +346,20 @@ export default function PhotoFinishPage() {
       const x = (timer.x / 100) * canvas.width;
       const y = (timer.y / 100) * canvas.height;
 
-      // Draw timer background
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-      ctx.roundRect(x - 60, y - 20, 120, 40, 8);
+      // Draw larger timer background
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+      ctx.roundRect(x - 100, y - 35, 200, 70, 12);
       ctx.fill();
 
-      // Draw timer text
+      // Draw timer border
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.roundRect(x - 100, y - 35, 200, 70, 12);
+      ctx.stroke();
+
+      // Draw larger timer text
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 24px monospace';
+      ctx.font = 'bold 36px monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(formatTime(timerTime), x, y);
@@ -520,7 +555,7 @@ export default function PhotoFinishPage() {
                   </div>
 
                   {/* Video Controls */}
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     <div className="flex items-center gap-4">
                       <Button
                         variant="outline"
@@ -532,20 +567,55 @@ export default function PhotoFinishPage() {
                         {isPlaying ? 'Pause' : 'Play'}
                       </Button>
                       
-                      <div className="flex-1">
-                        <Input
+                      <div className="text-sm font-mono min-w-[140px] text-center">
+                        {formatTime(currentTime)} / {formatTime(duration)}
+                      </div>
+                    </div>
+
+                    {/* Enhanced Video Scrub Slider */}
+                    <div className="px-2">
+                      <div className="relative">
+                        <input
                           type="range"
                           min="0"
                           max={duration || 0}
                           step="0.01"
                           value={currentTime}
                           onChange={handleScrub}
-                          className="w-full"
+                          className="w-full h-6 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer slider-enhanced"
+                          style={{
+                            background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${(currentTime / (duration || 1)) * 100}%, #e5e7eb ${(currentTime / (duration || 1)) * 100}%, #e5e7eb 100%)`
+                          }}
                         />
-                      </div>
-                      
-                      <div className="text-sm font-mono min-w-[100px] text-right">
-                        {formatTime(currentTime)} / {formatTime(duration)}
+                        <style>{`
+                          .slider-enhanced::-webkit-slider-thumb {
+                            appearance: none;
+                            height: 24px;
+                            width: 24px;
+                            border-radius: 50%;
+                            background: #3b82f6;
+                            border: 3px solid #ffffff;
+                            cursor: pointer;
+                            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+                          }
+                          .slider-enhanced::-webkit-slider-thumb:hover {
+                            background: #2563eb;
+                            transform: scale(1.1);
+                          }
+                          .slider-enhanced::-moz-range-thumb {
+                            height: 24px;
+                            width: 24px;
+                            border-radius: 50%;
+                            background: #3b82f6;
+                            border: 3px solid #ffffff;
+                            cursor: pointer;
+                            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+                          }
+                          .slider-enhanced::-moz-range-thumb:hover {
+                            background: #2563eb;
+                            transform: scale(1.1);
+                          }
+                        `}</style>
                       </div>
                     </div>
 
