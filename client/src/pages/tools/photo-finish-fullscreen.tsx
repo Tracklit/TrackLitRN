@@ -143,33 +143,31 @@ export default function PhotoFinishFullscreen({
       // Clear the entire canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Draw race timers as floating white text with drop shadow ONLY
+      // NEW TIMER IMPLEMENTATION: Pure white text with drop shadow only
       timers.forEach(timer => {
-        const timerTime = currentTime - timer.startTime;
-        const x = (timer.x / 100) * canvas.width;
-        const y = (timer.y / 100) * canvas.height;
+        const elapsedTime = currentTime - timer.startTime;
+        const posX = (timer.x / 100) * canvas.width;
+        const posY = (timer.y / 100) * canvas.height;
 
-        // Font size based on canvas width
-        const fontSize = Math.max(canvas.width * 0.05, 36);
+        // Calculate responsive font size
+        const textSize = Math.max(canvas.width * 0.04, 28);
         
-        // Configure text rendering
-        ctx.font = `bold ${fontSize}px 'Courier New', monospace`;
+        // Setup clean monospace font
+        ctx.font = `bold ${textSize}px monospace`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
-        // Set drop shadow for text visibility
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-        ctx.shadowBlur = 3;
+        // Apply subtle drop shadow for readability
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+        ctx.shadowBlur = 2;
         ctx.shadowOffsetX = 1;
         ctx.shadowOffsetY = 1;
         
-        // Draw ONLY white text with shadow - absolutely NO background or border
+        // Draw pure white timer text - NO SHAPES, NO BACKGROUNDS
         ctx.fillStyle = '#ffffff';
-        ctx.fillText(formatTime(timerTime), x, y);
+        ctx.fillText(formatTime(elapsedTime), posX, posY);
         
-        // Ensure no background shapes are drawn after text
-        
-        // Reset shadow immediately
+        // Reset shadow properties
         ctx.shadowColor = 'transparent';
         ctx.shadowBlur = 0;
         ctx.shadowOffsetX = 0;
