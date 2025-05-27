@@ -14,6 +14,7 @@ import {
 import { Link } from "wouter";
 import { Breadcrumb } from "@/components/breadcrumb";
 import startGunImagePath from "@assets/startgun.png";
+import stopwatchImagePath from "@assets/IMG_4081.jpeg";
 
 export default function WorkoutToolsPage() {
   // Tool cards with links to individual pages
@@ -114,11 +115,13 @@ export default function WorkoutToolsPage() {
                 <Card 
                   className="cursor-pointer hover:shadow-md transition-all duration-300 border border-muted hover:border-primary h-[140px] mx-auto mb-2 overflow-hidden group relative"
                 >
-                  {/* Header Image - Only for Start Gun */}
-                  {card.title === "Start Gun" && (
+                  {/* Header Image - For Start Gun and Stopwatch */}
+                  {(card.title === "Start Gun" || card.title === "Stopwatch") && (
                     <div 
                       className="h-1/2 bg-cover bg-center bg-no-repeat relative"
-                      style={{ backgroundImage: `url(${startGunImagePath})` }}
+                      style={{ 
+                        backgroundImage: `url(${card.title === "Start Gun" ? startGunImagePath : stopwatchImagePath})` 
+                      }}
                     >
                       <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-all duration-300" />
                       <div className="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -126,9 +129,9 @@ export default function WorkoutToolsPage() {
                   )}
                   
                   {/* Content Area */}
-                  <CardContent className={`p-2.5 relative flex flex-col justify-center ${card.title === "Start Gun" ? "h-1/2" : "h-full"}`}>
+                  <CardContent className={`p-2.5 relative flex flex-col justify-center ${(card.title === "Start Gun" || card.title === "Stopwatch") ? "h-1/2" : "h-full"}`}>
                     <div className="flex flex-col items-center text-center gap-2">
-                      {card.title !== "Start Gun" && (
+                      {(card.title !== "Start Gun" && card.title !== "Stopwatch") && (
                         <div className="p-1.5 rounded-full bg-primary/15 border border-primary/20 group-hover:bg-primary/25 transition-colors duration-300">
                           <div className="h-4 w-4 flex items-center justify-center text-primary">
                             {card.icon}
