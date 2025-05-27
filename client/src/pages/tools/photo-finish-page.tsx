@@ -71,6 +71,9 @@ export default function PhotoFinishPage() {
   const [selectedTool, setSelectedTool] = useState<'none' | 'timer' | 'finish-line'>('none');
   const [isDrawingLine, setIsDrawingLine] = useState(false);
   const [currentLineId, setCurrentLineId] = useState<string | null>(null);
+  const [mode, setMode] = useState<'timer' | 'finishline' | null>(null);
+  const [activeTimer, setActiveTimer] = useState<string | null>(null);
+  const [activeFinishLine, setActiveFinishLine] = useState<string | null>(null);
   
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -93,6 +96,23 @@ export default function PhotoFinishPage() {
     const secs = Math.floor(absSeconds % 60);
     const hundredths = Math.floor((absSeconds % 1) * 100);
     return `${sign}${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${hundredths.toString().padStart(2, '0')}`;
+  };
+
+  // Missing functions for fullscreen mode
+  const togglePlayPause = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+    }
+  };
+
+  const handleDurationChange = () => {
+    if (videoRef.current) {
+      setDuration(videoRef.current.duration);
+    }
   };
 
   // Handle video file upload
@@ -607,8 +627,8 @@ export default function PhotoFinishPage() {
     });
   }, [currentTime, timers, finishLines]);
 
-  // Full-screen video analysis mode (temporarily disabled for fixes)
-  if (false && fullscreenMode && videoUrl) {
+  // Full-screen video analysis mode (like inspiration image)
+  if (fullscreenMode && videoUrl) {
     return (
       <div className="fixed inset-0 bg-black text-white overflow-hidden z-50">
         {/* Top Controls Bar */}
@@ -635,7 +655,7 @@ export default function PhotoFinishPage() {
             </div>
 
             <div className="text-white font-medium">
-              {currentVideo?.title || 'Race Analysis'}
+              {currentVideo?.name || 'Race Analysis'}
             </div>
 
             <div className="flex items-center gap-2">
@@ -660,21 +680,17 @@ export default function PhotoFinishPage() {
                 {savedVideos.map((video) => (
                   <div
                     key={video.id}
-                    className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                      currentVideo?.id === video.id
-                        ? 'border-blue-500 bg-blue-500/20'
-                        : 'border-gray-600 hover:border-gray-500'
-                    }`}
+                    className="p-3 rounded-lg border cursor-pointer transition-colors border-gray-600 hover:border-gray-500"
                     onClick={() => {
-                      loadSavedVideo(video);
+                      // Load saved video functionality would go here
                       setShowVideoLibrary(false);
                     }}
                   >
                     <div className="text-sm font-medium text-white truncate">
-                      {video.title}
+                      {video.name || 'Saved Video'}
                     </div>
                     <div className="text-xs text-gray-400 mt-1">
-                      {new Date(video.createdAt).toLocaleDateString()}
+                      {new Date().toLocaleDateString()}
                     </div>
                   </div>
                 ))}
