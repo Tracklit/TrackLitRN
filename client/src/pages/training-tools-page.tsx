@@ -8,7 +8,8 @@ import {
   Gauge,
   ArrowRight,
   BookOpen,
-  Lock
+  Lock,
+  Video
 } from "lucide-react";
 import { Link } from "wouter";
 import { Breadcrumb } from "@/components/breadcrumb";
@@ -35,6 +36,13 @@ export default function WorkoutToolsPage() {
       description: "View and search your workout notes",
       icon: <BookOpen className="h-6 w-6 text-primary" />,
       href: "/tools/journal",
+      disabled: false
+    },
+    {
+      title: "Photo Finish",
+      description: "Analyze race videos with timing overlays",
+      icon: <Video className="h-6 w-6 text-primary" />,
+      href: "/tools/photo-finish",
       disabled: false
     },
     {
