@@ -82,9 +82,10 @@ export function NotificationBell() {
   // Mark all notifications as read when dropdown opens
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
-    if (open && unreadCount > 0) {
-      markAllAsReadMutation.mutate();
-    }
+    // Temporarily disabled automatic mark all as read
+    // if (open && unreadCount > 0) {
+    //   markAllAsReadMutation.mutate();
+    // }
   };
 
   const handleNotificationClick = (notification: Notification) => {
