@@ -263,16 +263,28 @@ export default function PhotoFinishPage() {
 
   // Global mouse up handler
   useEffect(() => {
-    const handleGlobalMouseUp = () => setIsDragging(false);
+    const handleGlobalMouseUp = () => {
+      if (isDragging) {
+        setIsDragging(false);
+        // Resume video if it was playing
+        if (videoRef.current && isPlaying) {
+          videoRef.current.play();
+        }
+      }
+    };
+    
     if (isDragging) {
       document.addEventListener('mouseup', handleGlobalMouseUp);
       document.addEventListener('mouseleave', handleGlobalMouseUp);
+      document.addEventListener('touchend', handleGlobalMouseUp);
     }
+    
     return () => {
       document.removeEventListener('mouseup', handleGlobalMouseUp);
-      document.removeEventListener('mouseleave', handleGlobalMouseUp);
+      document.removeEventListener('mouseleave', handleGlobalMouseUp);  
+      document.removeEventListener('touchend', handleGlobalMouseUp);
     };
-  }, [isDragging]);
+  }, [isDragging, isPlaying]);
 
   // Handle canvas click for adding overlays
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
@@ -618,6 +630,10 @@ export default function PhotoFinishPage() {
                       onTimeUpdate={handleTimeUpdate}
                       onPlay={() => setIsPlaying(true)}
                       onPause={() => setIsPlaying(false)}
+                      playsInline
+                      disablePictureInPicture
+                      controlsList="nodownload nofullscreen noremoteplayback"
+                      webkit-playsinline="true"
                       style={{ maxHeight: '60vh' }}
                     />
                     
