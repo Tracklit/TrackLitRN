@@ -14,7 +14,8 @@ import {
   RotateCcw,
   Save,
   FolderOpen,
-  Maximize
+  Maximize,
+  X
 } from "lucide-react";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { useToast } from "@/hooks/use-toast";
@@ -606,8 +607,8 @@ export default function PhotoFinishPage() {
     });
   }, [currentTime, timers, finishLines]);
 
-  // Full-screen video analysis mode (like inspiration image)
-  if (fullscreenMode && videoUrl) {
+  // Full-screen video analysis mode (temporarily disabled for fixes)
+  if (false && fullscreenMode && videoUrl) {
     return (
       <div className="fixed inset-0 bg-black text-white overflow-hidden z-50">
         {/* Top Controls Bar */}
