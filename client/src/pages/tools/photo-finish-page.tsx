@@ -609,7 +609,7 @@ export default function PhotoFinishPage() {
       const fontSize = timerSize * 0.35;
       
       // Draw transparent timer text with shadow only
-      ctx.font = `bold ${fontSize}px monospace`;
+      ctx.font = `bold ${fontSize}px Inter, system-ui, -apple-system, sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       

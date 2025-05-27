@@ -152,8 +152,8 @@ export default function PhotoFinishFullscreen({
         // Calculate responsive font size
         const textSize = Math.max(canvas.width * 0.04, 28);
         
-        // Setup clean monospace font
-        ctx.font = `bold ${textSize}px monospace`;
+        // Setup font to match app design
+        ctx.font = `bold ${textSize}px Inter, system-ui, -apple-system, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
