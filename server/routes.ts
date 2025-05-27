@@ -4477,7 +4477,8 @@ Keep the response professional, evidence-based, and specific to track and field 
   // Trigger automatic friend requests from Lion Martinez
   app.post("/api/admin/send-automatic-friend-requests", async (req: Request, res: Response) => {
     try {
-      await dbStorage.sendAutomaticFriendRequests();
+      console.log("Calling sendAutomaticFriendRequests...");
+      await storage.sendAutomaticFriendRequests();
       res.json({ message: "Automatic friend requests sent successfully" });
     } catch (error) {
       console.error("Error sending automatic friend requests:", error);

@@ -2566,11 +2566,15 @@ export class DatabaseStorage implements IStorage {
   async sendAutomaticFriendRequests(): Promise<void> {
     const LION_MARTINEZ_ID = 17; // Lion Martinez user ID
     
+    console.log('Starting automatic friend request process...');
+    
     // Get all users except Lion Martinez
     const allUsers = await db
       .select()
       .from(users)
       .where(ne(users.id, LION_MARTINEZ_ID));
+
+    console.log(`Found ${allUsers.length} total users (excluding Lion Martinez)`);
 
     // Get existing follows where Lion Martinez is involved
     const existingFollows = await db
@@ -2580,6 +2584,8 @@ export class DatabaseStorage implements IStorage {
         eq(follows.followerId, LION_MARTINEZ_ID),
         eq(follows.followingId, LION_MARTINEZ_ID)
       ));
+
+    console.log(`Found ${existingFollows.length} existing relationships for Lion Martinez`);
 
     // Create a set of user IDs that Lion Martinez already has relationships with
     const connectedUserIds = new Set();
@@ -2592,10 +2598,15 @@ export class DatabaseStorage implements IStorage {
       }
     });
 
+    console.log(`Connected user IDs:`, Array.from(connectedUserIds));
+
     // Filter users who don't have any relationship with Lion Martinez
     const usersToSendRequests = allUsers.filter(user => 
       !connectedUserIds.has(user.id)
     );
+
+    console.log(`Users to send requests to: ${usersToSendRequests.length}`);
+    console.log(`User IDs to send requests to:`, usersToSendRequests.map(u => u.id));
 
     // Send friend requests to all unconnected users
     const friendRequests = usersToSendRequests.map(user => ({
@@ -2605,11 +2616,14 @@ export class DatabaseStorage implements IStorage {
     }));
 
     if (friendRequests.length > 0) {
+      console.log(`Inserting ${friendRequests.length} friend requests...`);
       await db
         .insert(follows)
         .values(friendRequests);
       
-      console.log(`Sent ${friendRequests.length} automatic friend requests from Lion Martinez`);
+      console.log(`✅ Successfully sent ${friendRequests.length} automatic friend requests from Lion Martinez`);
+    } else {
+      console.log('No new friend requests to send - all users already connected');
     }
   }
 }
