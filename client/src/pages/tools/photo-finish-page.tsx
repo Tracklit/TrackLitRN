@@ -194,7 +194,7 @@ export default function PhotoFinishPage() {
   // State for tracking drag
   const [isDragging, setIsDragging] = useState(false);
 
-  // Handle slider interaction
+  // Handle slider interaction - simplified
   const handleSliderInteraction = (clientX: number, element: HTMLDivElement) => {
     const rect = element.getBoundingClientRect();
     const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
@@ -202,6 +202,7 @@ export default function PhotoFinishPage() {
     const time = percentage * (duration || 0);
     
     if (videoRef.current && time >= 0 && time <= (duration || 0)) {
+      // Directly set the video time
       videoRef.current.currentTime = time;
       setCurrentTime(time);
     }
@@ -209,7 +210,12 @@ export default function PhotoFinishPage() {
 
   // Mouse handlers
   const handleMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.preventDefault();
     setIsDragging(true);
+    // Pause video while scrubbing
+    if (videoRef.current && !videoRef.current.paused) {
+      videoRef.current.pause();
+    }
     handleSliderInteraction(event.clientX, event.currentTarget);
   };
 
@@ -221,12 +227,20 @@ export default function PhotoFinishPage() {
 
   const handleMouseUp = () => {
     setIsDragging(false);
+    // Resume video if it was playing
+    if (videoRef.current && isPlaying) {
+      videoRef.current.play();
+    }
   };
 
   // Touch handlers
   const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
     event.preventDefault();
     setIsDragging(true);
+    // Pause video while scrubbing
+    if (videoRef.current && !videoRef.current.paused) {
+      videoRef.current.pause();
+    }
     const touch = event.touches[0];
     handleSliderInteraction(touch.clientX, event.currentTarget);
   };
@@ -241,6 +255,10 @@ export default function PhotoFinishPage() {
 
   const handleTouchEnd = () => {
     setIsDragging(false);
+    // Resume video if it was playing
+    if (videoRef.current && isPlaying) {
+      videoRef.current.play();
+    }
   };
 
   // Global mouse up handler
