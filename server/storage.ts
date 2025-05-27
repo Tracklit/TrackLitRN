@@ -2086,11 +2086,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async markNotificationAsRead(notificationId: number): Promise<boolean> {
-    const result = await db
-      .update(notifications)
-      .set({ isRead: true })
-      .where(eq(notifications.id, notificationId));
-    return (result.rowCount || 0) > 0;
+    try {
+      await db
+        .update(notifications)
+        .set({ isRead: true })
+        .where(eq(notifications.id, notificationId));
+      return true;
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      return false;
+    }
   }
 
   async markAllNotificationsAsRead(userId: number): Promise<boolean> {
