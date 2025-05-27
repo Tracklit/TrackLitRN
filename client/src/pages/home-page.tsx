@@ -282,16 +282,9 @@ export default function HomePage() {
                     
                     {/* Content - Bottom Half */}
                     <CardContent className="h-1/2 p-2.5 relative flex flex-col justify-center bg-background">
-                      <div className="flex flex-col items-center text-center gap-1">
-                        <div className="p-1.5 rounded-full bg-primary/15 border border-primary/20 group-hover:bg-primary/25 transition-colors duration-300">
-                          <div className="h-4 w-4 flex items-center justify-center text-primary">
-                            {card.icon}
-                          </div>
-                        </div>
-                        <div>
-                          <h2 className="text-sm font-bold mb-0.5">{card.title}</h2>
-                          <p className="text-muted-foreground text-xs px-1 line-clamp-1 overflow-hidden">{card.description}</p>
-                        </div>
+                      <div className="flex flex-col items-center text-center">
+                        <h2 className="text-sm font-bold mb-1">{card.title}</h2>
+                        <p className="text-muted-foreground text-xs px-1 line-clamp-2 overflow-hidden">{card.description}</p>
                       </div>
                     </CardContent>
                   </Card>
