@@ -31,8 +31,6 @@ interface AthletesResponse {
 
 export default function AthletesPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [page, setPage] = useState(1);
-  const [allAthletes, setAllAthletes] = useState<User[]>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -41,71 +39,28 @@ export default function AthletesPage() {
     queryKey: ["/api/user"],
   });
 
-  // Fetch users based on search and page
-  const { data: athletesResponse, isLoading, isFetching } = useQuery<AthletesResponse>({
-    queryKey: ["/api/athletes", searchQuery, page],
+  // Fetch athletes with search
+  const { data: athletes = [], isLoading } = useQuery<User[]>({
+    queryKey: ["/api/athletes", searchQuery],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (searchQuery.trim()) {
         params.set("search", searchQuery.trim());
       }
-      params.set("page", page.toString());
       
       const url = `/api/athletes?${params.toString()}`;
       const response = await apiRequest("GET", url);
       const data = await response.json();
       
-      // Handle both old format (array) and new format (object with pagination)
-      const validData = Array.isArray(data) 
-        ? {
-            athletes: data,
-            pagination: { 
-              page: pageNum, 
-              limit: 10, 
-              total: data.length, 
-              hasMore: false 
-            }
-          }
-        : {
-            athletes: data.athletes || [],
-            pagination: data.pagination || { page: 1, limit: 10, total: 0, hasMore: false }
-          };
-      
-      // Debug logging
-      console.log("API Response:", data);
-      console.log("Valid Data:", validData);
-      console.log("Athletes array:", validData.athletes);
-      
-      // If it's page 1 or a new search, reset the list
-      if (page === 1) {
-        console.log("Setting athletes for page 1:", validData.athletes);
-        setAllAthletes(validData.athletes);
-      } else {
-        // Append new athletes to existing list
-        setAllAthletes(prev => {
-          const newList = [...prev, ...validData.athletes];
-          console.log("Appending athletes, new list:", newList);
-          return newList;
-        });
-      }
-      
-      return validData;
+      // The API returns an array directly
+      return Array.isArray(data) ? data : data.athletes || [];
     },
     enabled: !!currentUser,
   });
 
-  // Reset page when search changes
+  // Reset search
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
-    setPage(1);
-    setAllAthletes([]);
-  };
-
-  // Load more athletes
-  const handleShowMore = () => {
-    if (athletesResponse?.pagination?.hasMore) {
-      setPage(prev => prev + 1);
-    }
   };
 
   // Send friend request mutation
@@ -167,7 +122,7 @@ export default function AthletesPage() {
         {/* Section Title */}
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-white">
-            {searchQuery ? `Search Results (${athletesResponse?.pagination.total || 0})` : "Recent Athletes"}
+            {searchQuery ? `Search Results (${athletes.length})` : "Recent Athletes"}
           </h2>
           {!searchQuery && (
             <p className="text-sm text-gray-400 mt-1">Latest registered athletes on TrackLit</p>
@@ -175,14 +130,14 @@ export default function AthletesPage() {
         </div>
 
         {/* Loading State */}
-        {isLoading && allAthletes.length === 0 && (
+        {isLoading && (
           <div className="flex justify-center py-8">
             <div className="animate-spin w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full" />
           </div>
         )}
 
         {/* No Results */}
-        {!isLoading && allAthletes.length === 0 && athletesResponse && (
+        {!isLoading && athletes.length === 0 && (
           <div className="text-center py-12">
             <div className="text-gray-400 mb-2">
               {searchQuery ? "No athletes found matching your search" : "No athletes found"}
@@ -200,9 +155,9 @@ export default function AthletesPage() {
         )}
 
         {/* Athletes Grid */}
-        {allAthletes.length > 0 && (
+        {athletes.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            {allAthletes.map((user) => (
+            {athletes.map((user) => (
               <Card key={user.id} className="bg-gray-800/50 border-gray-700 hover:bg-gray-800/70 transition-colors">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3 mb-3">
@@ -269,32 +224,11 @@ export default function AthletesPage() {
           </div>
         )}
 
-        {/* Show More Button */}
-        {athletesResponse?.pagination?.hasMore && !isLoading && (
-          <div className="flex justify-center">
-            <Button
-              onClick={handleShowMore}
-              disabled={isFetching}
-              variant="outline"
-              className="bg-gray-800/50 border-gray-600 text-white hover:bg-gray-700/70"
-            >
-              {isFetching ? (
-                <>
-                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
-                  Loading...
-                </>
-              ) : (
-                <>Show More ({(athletesResponse?.pagination?.total || 0) - allAthletes.length} remaining)</>
-              )}
-            </Button>
-          </div>
-        )}
-
         {/* Footer info */}
-        {!athletesResponse?.pagination?.hasMore && allAthletes.length > 0 && (
+        {athletes.length > 0 && (
           <div className="text-center py-4">
             <p className="text-sm text-gray-400">
-              Showing all {allAthletes.length} athletes
+              Showing all {athletes.length} athletes
               {searchQuery && ` matching "${searchQuery}"`}
             </p>
           </div>
