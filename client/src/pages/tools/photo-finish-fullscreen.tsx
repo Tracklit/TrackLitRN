@@ -163,9 +163,11 @@ export default function PhotoFinishFullscreen({
         ctx.shadowOffsetX = 1;
         ctx.shadowOffsetY = 1;
         
-        // ONLY draw white text - NO BACKGROUND, NO BORDER, NO RECTANGLE
+        // Draw ONLY white text with shadow - absolutely NO background or border
         ctx.fillStyle = '#ffffff';
         ctx.fillText(formatTime(timerTime), x, y);
+        
+        // Ensure no background shapes are drawn after text
         
         // Reset shadow immediately
         ctx.shadowColor = 'transparent';
