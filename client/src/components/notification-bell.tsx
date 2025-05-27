@@ -92,7 +92,12 @@ export function NotificationBell() {
     if (!notification.isRead) {
       markAsReadMutation.mutate(notification.id);
     }
-    if (notification.actionUrl) {
+    
+    // Handle different notification types
+    if (notification.type === 'friend_request') {
+      setLocation('/friends');
+      setIsOpen(false);
+    } else if (notification.actionUrl) {
       setLocation(notification.actionUrl);
       setIsOpen(false);
     }

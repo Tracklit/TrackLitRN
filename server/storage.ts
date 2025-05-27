@@ -2090,7 +2090,7 @@ export class DatabaseStorage implements IStorage {
       .update(notifications)
       .set({ isRead: true })
       .where(eq(notifications.id, notificationId));
-    return result.rowCount > 0;
+    return (result.rowCount || 0) > 0;
   }
 
   async markAllNotificationsAsRead(userId: number): Promise<boolean> {
