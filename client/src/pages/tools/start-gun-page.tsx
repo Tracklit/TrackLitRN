@@ -80,10 +80,11 @@ export default function StartGunPage() {
         // Set up audio context for potential use - needed for oscillator fallback
         audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
         
-        // Preload audio files
-        marksAudioRef.current = new Audio('/on-your-marks.mp3');
-        setAudioRef.current = new Audio('/set.mp3');
-        bangAudioRef.current = new Audio('/bang.mp3');
+        // Preload audio files with proper deployment paths
+        const basePath = import.meta.env.BASE_URL || '/';
+        marksAudioRef.current = new Audio(`${basePath}on-your-marks.mp3`);
+        setAudioRef.current = new Audio(`${basePath}set.mp3`);
+        bangAudioRef.current = new Audio(`${basePath}bang.mp3`);
         
         // Preload audio
         marksAudioRef.current.load();
