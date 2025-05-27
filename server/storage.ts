@@ -2414,19 +2414,29 @@ export class DatabaseStorage implements IStorage {
         followerId: follows.followerId,
         followingId: follows.followingId,
         createdAt: follows.createdAt,
-        follower: {
-          id: users.id,
-          username: users.username,
-          name: users.name,
-          email: users.email,
-          bio: users.bio
-        }
+        followerName: users.name,
+        followerUsername: users.username,
+        followerEmail: users.email,
+        followerBio: users.bio
       })
       .from(follows)
       .innerJoin(users, eq(follows.followerId, users.id))
       .where(eq(follows.followingId, userId));
 
-    return requests;
+    // Transform to match expected format
+    return requests.map(request => ({
+      id: request.id,
+      followerId: request.followerId,
+      followingId: request.followingId,
+      createdAt: request.createdAt,
+      follower: {
+        id: request.followerId,
+        name: request.followerName,
+        username: request.followerUsername,
+        email: request.followerEmail,
+        bio: request.followerBio
+      }
+    }));
   }
 
   async getFriends(userId: number): Promise<any[]> {
