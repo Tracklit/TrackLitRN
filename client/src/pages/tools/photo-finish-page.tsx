@@ -13,11 +13,13 @@ import {
   Pause,
   RotateCcw,
   Save,
-  FolderOpen
+  FolderOpen,
+  Maximize
 } from "lucide-react";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import PhotoFinishFullscreen from './photo-finish-fullscreen';
 
 interface TimerOverlay {
   id: string;
