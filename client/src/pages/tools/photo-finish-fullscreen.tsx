@@ -176,35 +176,49 @@ export default function PhotoFinishFullscreen({
         ctx.shadowOffsetY = 0;
       });
 
-      // Draw finish lines
+      // Draw finish lines as vertical lines
       finishLines.forEach(line => {
         const x = (line.x / 100) * canvas.width;
-        const y = (line.y / 100) * canvas.height;
-        const width = (line.width / 100) * canvas.width;
-        const height = (line.height / 100) * canvas.height;
+        const y1 = (line.y / 100) * canvas.height;
+        const y2 = ((line.y + line.height) / 100) * canvas.height;
 
         ctx.strokeStyle = activeFinishLine === line.id ? '#ff0000' : '#00ff00';
-        ctx.lineWidth = 3;
-        ctx.strokeRect(x, y, width, height);
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(x, y1);
+        ctx.lineTo(x, y2);
+        ctx.stroke();
       });
     };
 
     drawOverlays();
   }, [timers, finishLines, currentTime, activeTimer, activeFinishLine]);
 
-  // Touch handlers for two-finger panning and one-finger finish line dragging
+  // Touch handlers for pinch-to-zoom, two-finger panning and one-finger finish line dragging
+  const [lastDistance, setLastDistance] = useState(0);
+
+  const getDistance = (touch1: React.Touch, touch2: React.Touch) => {
+    return Math.sqrt(
+      Math.pow(touch2.clientX - touch1.clientX, 2) +
+      Math.pow(touch2.clientY - touch1.clientY, 2)
+    );
+  };
+
   const handleCanvasTouchStart = (event: React.TouchEvent<HTMLCanvasElement>) => {
     if (event.touches.length === 2) {
-      // Two-finger pan start
+      // Two-finger gestures (pinch-to-zoom and pan)
       event.preventDefault();
       const touch1 = event.touches[0];
       const touch2 = event.touches[1];
       const centerX = (touch1.clientX + touch2.clientX) / 2;
       const centerY = (touch1.clientY + touch2.clientY) / 2;
+      const distance = getDistance(touch1, touch2);
+      
       setIsPanning(true);
       setLastPanPoint({ x: centerX, y: centerY });
-    } else if (event.touches.length === 1) {
-      // Single finger - check for finish line drag
+      setLastDistance(distance);
+    } else if (event.touches.length === 1 && videoScale > 1) {
+      // Single finger - check for finish line drag when zoomed
       const canvas = canvasRef.current;
       if (!canvas) return;
 
@@ -213,9 +227,11 @@ export default function PhotoFinishFullscreen({
       const x = ((touch.clientX - rect.left) / rect.width) * 100;
       const y = ((touch.clientY - rect.top) / rect.height) * 100;
 
-      // Check if touching a finish line
+      // Check if touching a finish line (expanded hit area)
       const clickedLine = finishLines.find(line => {
-        return x >= line.x && x <= line.x + line.width &&
+        const lineX = line.x;
+        const hitAreaWidth = 5; // Percentage-based hit area
+        return x >= lineX - hitAreaWidth && x <= lineX + hitAreaWidth &&
                y >= line.y && y <= line.y + line.height;
       });
 
@@ -230,13 +246,22 @@ export default function PhotoFinishFullscreen({
 
   const handleCanvasTouchMove = (event: React.TouchEvent<HTMLCanvasElement>) => {
     if (event.touches.length === 2 && isPanning) {
-      // Two-finger panning
+      // Two-finger gestures (pinch-to-zoom and pan)
       event.preventDefault();
       const touch1 = event.touches[0];
       const touch2 = event.touches[1];
       const centerX = (touch1.clientX + touch2.clientX) / 2;
       const centerY = (touch1.clientY + touch2.clientY) / 2;
+      const distance = getDistance(touch1, touch2);
       
+      // Handle pinch-to-zoom
+      if (lastDistance > 0) {
+        const scale = distance / lastDistance;
+        const newScale = Math.max(0.5, Math.min(3, videoScale * scale));
+        setVideoScale(newScale);
+      }
+      
+      // Handle panning
       const deltaX = centerX - lastPanPoint.x;
       const deltaY = centerY - lastPanPoint.y;
       
@@ -246,6 +271,7 @@ export default function PhotoFinishFullscreen({
       }));
       
       setLastPanPoint({ x: centerX, y: centerY });
+      setLastDistance(distance);
     } else if (event.touches.length === 1 && isDraggingFinishLine && draggedLineId) {
       // Single finger finish line dragging
       event.preventDefault();
@@ -259,7 +285,7 @@ export default function PhotoFinishFullscreen({
       // Move the finish line horizontally
       setFinishLines(prev => prev.map(line => 
         line.id === draggedLineId 
-          ? { ...line, x: Math.max(0, Math.min(98, x - 1)) }
+          ? { ...line, x: Math.max(0, Math.min(98, x)) }
           : line
       ));
     }
@@ -283,9 +309,11 @@ export default function PhotoFinishFullscreen({
     const x = ((event.clientX - rect.left) / rect.width) * 100;
     const y = ((event.clientY - rect.top) / rect.height) * 100;
 
-    // Check if clicking on a finish line
+    // Check if clicking on a finish line (expanded hit area)
     const clickedLine = finishLines.find(line => {
-      return x >= line.x && x <= line.x + line.width &&
+      const lineX = line.x;
+      const hitAreaWidth = 5; // Percentage-based hit area
+      return x >= lineX - hitAreaWidth && x <= lineX + hitAreaWidth &&
              y >= line.y && y <= line.y + line.height;
     });
 
