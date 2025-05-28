@@ -726,7 +726,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Create meetData with proper field mapping
-      const meetData: any = {
+      const meetData = {
         name: rawData.name,
         date: rawData.date,
         location: rawData.location,
@@ -737,6 +737,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         websiteUrl: rawData.websiteUrl || null,
         userId: req.user!.id
       };
+      
+      console.log("Raw websiteUrl:", rawData.websiteUrl);
+      console.log("Meet data to save:", meetData);
       
       // Create the meet
       const meet = await dbStorage.createMeet(meetData);
