@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { useAuth } from '@/hooks/use-auth';
 
 
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Form,
   FormControl,
@@ -201,6 +201,7 @@ export default function ProfilePage() {
               <div className="bg-[#010a18] border border-blue-800/60 rounded-xl shadow-sm p-6">
                 <div className="flex items-center mb-6">
                   <Avatar className="h-16 w-16 mr-4">
+                    <AvatarImage src="/default-avatar.png" />
                     <AvatarFallback name={user?.name || ''} className="text-lg" />
                   </Avatar>
                   <div>
