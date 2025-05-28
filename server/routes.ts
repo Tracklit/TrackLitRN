@@ -731,6 +731,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Parse and validate the data
       const meetData = insertMeetSchema.parse(rawData);
       
+      // Debug: Log the parsed data to see what the schema produces
+      console.log('Parsed meet data:', meetData);
+      
       // Override userId with authenticated user
       meetData.userId = req.user!.id;
       
