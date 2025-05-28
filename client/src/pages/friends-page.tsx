@@ -184,7 +184,15 @@ export default function FriendsPage() {
   };
 
   const hasPendingCoachingRequest = (userId: number) => {
-    return coachingRequests.some((request: any) => 
+    if (!coachingRequests) return false;
+    
+    // Check both sent and received coaching requests
+    const allRequests = [
+      ...(coachingRequests.sent || []),
+      ...(coachingRequests.received || [])
+    ];
+    
+    return allRequests.some((request: any) => 
       request.toUserId === userId && request.status === 'pending'
     );
   };
