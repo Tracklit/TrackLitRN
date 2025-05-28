@@ -95,7 +95,9 @@ import {
   InsertFollow,
   directMessages,
   conversations,
-  coachAthletes
+  coachAthletes,
+  coachingRequests,
+  InsertCoachingRequest
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, lt, gte, desc, asc, inArray, or, isNotNull, isNull, ne, sql, exists } from "drizzle-orm";
@@ -1994,6 +1996,154 @@ export class DatabaseStorage implements IStorage {
     // Note: This is a hard delete. In production, you might want to soft delete
     // and handle cascading deletes for related data
     await db.delete(users).where(eq(users.id, userId));
+  }
+
+  // Coaching Request Methods
+  async createCoachingRequest(request: InsertCoachingRequest): Promise<any> {
+    const [newRequest] = await db
+      .insert(coachingRequests)
+      .values(request)
+      .returning();
+    
+    return newRequest;
+  }
+
+  async getCoachingRequests(userId: number): Promise<any[]> {
+    // Get requests sent to this user (they are being asked to coach)
+    const receivedRequests = await db
+      .select({
+        id: coachingRequests.id,
+        fromUserId: coachingRequests.fromUserId,
+        toUserId: coachingRequests.toUserId,
+        type: coachingRequests.type,
+        status: coachingRequests.status,
+        message: coachingRequests.message,
+        createdAt: coachingRequests.createdAt,
+        respondedAt: coachingRequests.respondedAt,
+        fromUser: {
+          id: users.id,
+          username: users.username,
+          name: users.name,
+          coachFlag: users.coachFlag,
+          role: users.role
+        }
+      })
+      .from(coachingRequests)
+      .innerJoin(users, eq(coachingRequests.fromUserId, users.id))
+      .where(and(
+        eq(coachingRequests.toUserId, userId),
+        eq(coachingRequests.status, 'pending')
+      ))
+      .orderBy(desc(coachingRequests.createdAt));
+
+    return receivedRequests;
+  }
+
+  async getSentCoachingRequests(userId: number): Promise<any[]> {
+    // Get requests sent by this user
+    const sentRequests = await db
+      .select({
+        id: coachingRequests.id,
+        fromUserId: coachingRequests.fromUserId,
+        toUserId: coachingRequests.toUserId,
+        type: coachingRequests.type,
+        status: coachingRequests.status,
+        message: coachingRequests.message,
+        createdAt: coachingRequests.createdAt,
+        respondedAt: coachingRequests.respondedAt,
+        toUser: {
+          id: users.id,
+          username: users.username,
+          name: users.name,
+          coachFlag: users.coachFlag,
+          role: users.role
+        }
+      })
+      .from(coachingRequests)
+      .innerJoin(users, eq(coachingRequests.toUserId, users.id))
+      .where(eq(coachingRequests.fromUserId, userId))
+      .orderBy(desc(coachingRequests.createdAt));
+
+    return sentRequests;
+  }
+
+  async respondToCoachingRequest(requestId: number, status: 'accepted' | 'declined'): Promise<any> {
+    try {
+      return await db.transaction(async (tx) => {
+        // Update the request status
+        const [updatedRequest] = await tx
+          .update(coachingRequests)
+          .set({
+            status,
+            respondedAt: new Date()
+          })
+          .where(eq(coachingRequests.id, requestId))
+          .returning();
+
+        if (!updatedRequest) {
+          throw new Error('Coaching request not found');
+        }
+
+        // If accepted, create coach-athlete relationship
+        if (status === 'accepted') {
+          const { fromUserId, toUserId, type } = updatedRequest;
+          
+          let coachId, athleteId;
+          if (type === 'coach_invite') {
+            // Coach invited athlete - coach is fromUser, athlete is toUser
+            coachId = fromUserId;
+            athleteId = toUserId;
+          } else {
+            // Athlete requested coach - athlete is fromUser, coach is toUser
+            coachId = toUserId;
+            athleteId = fromUserId;
+          }
+
+          // Check if relationship already exists
+          const existingRelationship = await tx
+            .select()
+            .from(coachAthletes)
+            .where(and(
+              eq(coachAthletes.coachId, coachId),
+              eq(coachAthletes.athleteId, athleteId)
+            ));
+
+          if (existingRelationship.length === 0) {
+            await tx
+              .insert(coachAthletes)
+              .values({
+                coachId,
+                athleteId,
+                status: 'active'
+              });
+          }
+        }
+
+        return updatedRequest;
+      });
+    } catch (error) {
+      console.error("Error responding to coaching request:", error);
+      throw error;
+    }
+  }
+
+  async deleteCoachingRequest(requestId: number): Promise<void> {
+    await db.delete(coachingRequests).where(eq(coachingRequests.id, requestId));
+  }
+
+  async hasExistingCoachingRequest(fromUserId: number, toUserId: number): Promise<boolean> {
+    const existingRequest = await db
+      .select()
+      .from(coachingRequests)
+      .where(and(
+        or(
+          and(eq(coachingRequests.fromUserId, fromUserId), eq(coachingRequests.toUserId, toUserId)),
+          and(eq(coachingRequests.fromUserId, toUserId), eq(coachingRequests.toUserId, fromUserId))
+        ),
+        eq(coachingRequests.status, 'pending')
+      ));
+    
+    return existingRequest.length > 0;
   }
 
   async resetUserPassword(userId: number): Promise<string> {

@@ -32,6 +32,7 @@ import {
   insertProgramProgressSchema,
   insertWorkoutLibrarySchema,
   insertCoachAthleteSchema,
+  insertCoachingRequestSchema,
   InsertMeet,
   InsertResult,
   InsertReminder,
