@@ -10,6 +10,8 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   email: text("email").notNull(),
   isPremium: boolean("is_premium").default(false),
+  subscriptionTier: text("subscription_tier").default("free"), // free, pro, star
+  isCoach: boolean("is_coach").default(false),
   role: text("role").default("athlete"), // athlete, coach, or both
   bio: text("bio"),
   spikes: integer("spikes").default(0), // In-app currency/tokens
@@ -25,6 +27,8 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   chatGroupMemberships: many(chatGroupMembers, { relationName: "user_groups" }),
   coachRelations: many(coaches, { relationName: "coach_side" }),
   athleteRelations: many(coaches, { relationName: "athlete_side" }),
+  coachAthleteRelations: many(coachAthletes, { relationName: "coach_relationships" }),
+  athleteCoachRelations: many(coachAthletes, { relationName: "athlete_relationships" }),
   coachNotesAuthored: many(coachNotes, { relationName: "notes_authored" }),
   coachNotesReceived: many(coachNotes, { relationName: "notes_received" }),
   defaultClub: one(clubs, { 
@@ -1035,6 +1039,9 @@ export const trainingPrograms = pgTable("training_programs", {
   description: text("description"),
   visibility: text("visibility", { enum: ['private', 'public', 'premium'] }).default('private'),
   price: integer("price").default(0), // In spikes currency (for premium programs)
+  priceType: text("price_type", { enum: ['spikes', 'money'] }).default('spikes'), // spikes or money (Stripe)
+  stripeProductId: text("stripe_product_id"), // Stripe product ID for monetized programs
+  stripePriceId: text("stripe_price_id"), // Stripe price ID for monetized programs
   coverImageUrl: text("cover_image_url"),
   category: text("category").notNull(), // sprint, distance, jumps, throws, etc.
   level: text("level"), // beginner, intermediate, advanced
@@ -1048,6 +1055,27 @@ export const trainingPrograms = pgTable("training_programs", {
   googleSheetId: text("google_sheet_id"), // Google Sheet ID
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+// Coach-Athlete relationships
+export const coachAthletes = pgTable("coach_athletes", {
+  id: serial("id").primaryKey(),
+  coachId: integer("coach_id").notNull().references(() => users.id),
+  athleteId: integer("athlete_id").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const coachAthletesRelations = relations(coachAthletes, ({ one }) => ({
+  coach: one(users, {
+    fields: [coachAthletes.coachId],
+    references: [users.id],
+    relationName: "coach_relationships"
+  }),
+  athlete: one(users, {
+    fields: [coachAthletes.athleteId],
+    references: [users.id],
+    relationName: "athlete_relationships"
+  }),
+}));
 
 // Program assignments (for coach to athlete)
 export const programAssignments = pgTable("program_assignments", {
@@ -1195,6 +1223,11 @@ export const insertProgramProgressSchema = createInsertSchema(programProgress).o
   createdAt: true,
 });
 
+export const insertCoachAthleteSchema = createInsertSchema(coachAthletes).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Create Type Definitions
 export type TrainingProgram = typeof trainingPrograms.$inferSelect;
 export type InsertTrainingProgram = z.infer<typeof insertTrainingProgramSchema>;
@@ -1210,6 +1243,9 @@ export type InsertProgramPurchase = z.infer<typeof insertProgramPurchaseSchema>;
 
 export type ProgramProgress = typeof programProgress.$inferSelect;
 export type InsertProgramProgress = z.infer<typeof insertProgramProgressSchema>;
+
+export type CoachAthlete = typeof coachAthletes.$inferSelect;
+export type InsertCoachAthlete = z.infer<typeof insertCoachAthleteSchema>;
 
 // Additional relations for users with spikes system
 export const usersSpikesRelations = relations(users, ({ many, one }) => ({
