@@ -292,7 +292,7 @@ export default function AthleteProfilePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Your Events</CardTitle>
+          <CardTitle>Events</CardTitle>
           <CardDescription>
             Select the events you participate in and set your goal times.
             Goal times help us calculate your 100% pace for workouts.
@@ -323,7 +323,7 @@ export default function AthleteProfilePage() {
                             />
                           </FormControl>
                           <FormLabel className="font-normal">
-                            60m / 100m
+                            100m
                           </FormLabel>
                         </FormItem>
                       )}

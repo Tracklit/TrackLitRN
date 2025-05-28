@@ -59,6 +59,7 @@ export const meets = pgTable("meets", {
   arrivalTime: integer("arrival_time").default(90), // Minutes before event
   status: text("status").default("upcoming"), // upcoming, completed, cancelled
   isCoachAssigned: boolean("is_coach_assigned").default(false), // Whether assigned by coach
+  websiteUrl: text("website_url"), // Official webpage URL for the meet
   createdAt: timestamp("created_at").defaultNow(),
 });
 
