@@ -27,7 +27,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, Save, Edit } from "lucide-react";
+import { Loader2, Save, Edit, Settings, Calculator } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { 
   Table, 
   TableBody, 
@@ -64,6 +65,110 @@ export default function AthleteProfilePage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // State for manual editing mode
+  const [isManualMode, setIsManualMode] = useState(false);
+  const [manualTimes, setManualTimes] = useState({
+    "60m": "",
+    "100m": "",
+    "200m": "",
+    "300m": "",
+    "400m": ""
+  });
+
+  // Function to calculate times automatically based on key distances
+  const calculateAutomaticTimes = () => {
+    const times = {};
+    const watchValues = form.watch();
+    
+    // Get base times from form
+    const sprint100Goal = watchValues.sprint60m100mGoal;
+    const sprint200Goal = watchValues.sprint200mGoal;
+    const sprint400Goal = watchValues.sprint400mGoal;
+    
+    if (sprint100Goal) {
+      const time100 = parseFloat(sprint100Goal);
+      times["100m"] = time100.toFixed(2);
+      times["60m"] = (time100 * 0.6).toFixed(2);
+      times["50m"] = (time100 * 0.5).toFixed(2);
+      times["80m"] = (time100 * 0.8).toFixed(2);
+      times["120m"] = (time100 * 1.2).toFixed(2);
+      times["150m"] = (time100 * 1.5).toFixed(2);
+    }
+    
+    if (sprint200Goal) {
+      times["200m"] = parseFloat(sprint200Goal).toFixed(2);
+      if (!times["250m"]) {
+        times["250m"] = (parseFloat(sprint200Goal) * 1.25).toFixed(2);
+      }
+    }
+    
+    if (sprint400Goal) {
+      times["400m"] = parseFloat(sprint400Goal).toFixed(2);
+      times["300m"] = (parseFloat(sprint400Goal) * 0.75).toFixed(2);
+    }
+    
+    // Calculate 300m from 200m if not available from 400m
+    if (!times["300m"] && times["200m"]) {
+      times["300m"] = (parseFloat(times["200m"]) * 1.5).toFixed(2);
+    }
+    
+    return times;
+  };
+
+  // Function to calculate times from manual input
+  const calculateFromManualTimes = () => {
+    const times = { ...manualTimes };
+    
+    // Auto-calculate other distances based on manual inputs
+    if (manualTimes["60m"]) {
+      const time60 = parseFloat(manualTimes["60m"]);
+      if (!times["100m"]) times["100m"] = (time60 * 1.67).toFixed(2);
+      times["50m"] = (time60 * 0.83).toFixed(2);
+      times["80m"] = (time60 * 1.33).toFixed(2);
+    }
+    
+    if (manualTimes["100m"]) {
+      const time100 = parseFloat(manualTimes["100m"]);
+      if (!times["60m"]) times["60m"] = (time100 * 0.6).toFixed(2);
+      times["50m"] = (time100 * 0.5).toFixed(2);
+      times["80m"] = (time100 * 0.8).toFixed(2);
+      times["120m"] = (time100 * 1.2).toFixed(2);
+      times["150m"] = (time100 * 1.5).toFixed(2);
+    }
+    
+    if (manualTimes["200m"]) {
+      const time200 = parseFloat(manualTimes["200m"]);
+      times["250m"] = (time200 * 1.25).toFixed(2);
+      if (!times["300m"]) times["300m"] = (time200 * 1.5).toFixed(2);
+    }
+    
+    if (manualTimes["300m"]) {
+      const time300 = parseFloat(manualTimes["300m"]);
+      if (!times["200m"]) times["200m"] = (time300 * 0.67).toFixed(2);
+      if (!times["400m"]) times["400m"] = (time300 * 1.33).toFixed(2);
+    }
+    
+    if (manualTimes["400m"]) {
+      const time400 = parseFloat(manualTimes["400m"]);
+      if (!times["300m"]) times["300m"] = (time400 * 0.75).toFixed(2);
+    }
+    
+    return times;
+  };
+
+  // Function to get all calculated times
+  const getAllTimes = () => {
+    return isManualMode ? calculateFromManualTimes() : calculateAutomaticTimes();
+  };
+
+  // Function to calculate pace percentages
+  const calculatePace = (baseTime, percentage) => {
+    if (!baseTime) return "-";
+    const time = parseFloat(baseTime);
+    const adjustedTime = time / (percentage / 100);
+    return adjustedTime.toFixed(2);
+  };
 
   // Fetch the user's profile data
   const { data: profile, isLoading: isProfileLoading } = useQuery({
@@ -533,33 +638,123 @@ export default function AthleteProfilePage() {
         </CardContent>
       </Card>
       
-      {/* Pace Table */}
-      <div className="mt-6 overflow-hidden rounded-md border border-amber-500/70">
-        <div className="bg-[#111827] text-white px-4 py-3">
-          <h3 className="text-lg font-bold">Target Times</h3>
-          <p className="text-sm text-blue-200">
-            Based on your goal times, the 100% column shows first foot contact timing (-0.55s)
-          </p>
-        </div>
+      {/* Enhanced Target Times Table */}
+      <Card className="mt-6">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Calculator className="h-5 w-5 text-amber-500" />
+                Target Times
+              </CardTitle>
+              <CardDescription>
+                {isManualMode 
+                  ? "Manual mode: Edit specific distances directly" 
+                  : "Automatic mode: Times calculated from your goal events"}
+              </CardDescription>
+            </div>
+            
+            {/* Toggle Switch */}
+            <div className="flex items-center space-x-2">
+              <Settings className="h-4 w-4 text-muted-foreground" />
+              <label htmlFor="manual-mode" className="text-sm font-medium">
+                {isManualMode ? "Manual" : "Auto"}
+              </label>
+              <Switch
+                id="manual-mode"
+                checked={isManualMode}
+                onCheckedChange={setIsManualMode}
+              />
+            </div>
+          </div>
+        </CardHeader>
         
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-[#111827] text-white border-b border-transparent">
-                <th className="sticky left-0 z-10 bg-inherit whitespace-nowrap px-3 py-3 text-left font-bold">
-                  Distance
-                </th>
-                <th className="px-3 py-3 text-right font-bold">80%</th>
-                <th className="px-3 py-3 text-right font-bold">90%</th>
-                <th className="px-3 py-3 text-right font-bold">92%</th>
-                <th className="px-3 py-3 text-right font-bold">95%</th>
-                <th className="px-3 py-3 text-right font-bold">98%</th>
-                <th className="px-3 py-3 text-right font-bold">100%</th>
-                <th className="px-3 py-3 text-right font-bold">Goal</th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* Pace calculations */}
+        <CardContent>
+          <div className="overflow-hidden rounded-md border border-amber-500/70">
+            <div className="bg-[#111827] text-white px-4 py-3">
+              <p className="text-sm text-blue-200">
+                {form.watch("timingPreference") === "first_foot" 
+                  ? "Times shown with first foot contact timing (-0.55s)"
+                  : "Times shown with movement timing (-0.15s)"}
+              </p>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <Table>
+                <thead>
+                  <tr className="bg-[#111827] text-white border-b border-transparent">
+                    <th className="sticky left-0 z-10 bg-inherit whitespace-nowrap px-3 py-3 text-left font-bold">
+                      Distance
+                    </th>
+                    <th className="px-3 py-3 text-right font-bold">80%</th>
+                    <th className="px-3 py-3 text-right font-bold">90%</th>
+                    <th className="px-3 py-3 text-right font-bold">95%</th>
+                    <th className="px-3 py-3 text-right font-bold">98%</th>
+                    <th className="px-3 py-3 text-right font-bold">100%</th>
+                    <th className="px-3 py-3 text-right font-bold">Goal</th>
+                  </tr>
+                </thead>
+                <TableBody>
+                  {(() => {
+                    const calculatedTimes = getAllTimes();
+                    const distances = ["50m", "60m", "80m", "100m", "120m", "150m", "200m", "250m", "300m", "400m"];
+                    const editableDistances = ["60m", "100m", "200m", "300m", "400m"];
+                    const timingAdjustment = form.watch("timingPreference") === "first_foot" ? 0.55 : 0.15;
+                    
+                    return distances.map((distance) => {
+                      const baseTime = calculatedTimes[distance];
+                      const isEditable = isManualMode && editableDistances.includes(distance);
+                      
+                      return (
+                        <TableRow key={distance} className="border-gray-200">
+                          <TableCell className="sticky left-0 z-10 bg-white font-medium px-3 py-2">
+                            {distance}
+                          </TableCell>
+                          <TableCell className="px-3 py-2 text-right">
+                            {baseTime ? calculatePace(baseTime, 80) : "-"}
+                          </TableCell>
+                          <TableCell className="px-3 py-2 text-right">
+                            {baseTime ? calculatePace(baseTime, 90) : "-"}
+                          </TableCell>
+                          <TableCell className="px-3 py-2 text-right">
+                            {baseTime ? calculatePace(baseTime, 95) : "-"}
+                          </TableCell>
+                          <TableCell className="px-3 py-2 text-right">
+                            {baseTime ? calculatePace(baseTime, 98) : "-"}
+                          </TableCell>
+                          <TableCell className="px-3 py-2 text-right">
+                            {baseTime ? (parseFloat(baseTime) - timingAdjustment).toFixed(2) : "-"}
+                          </TableCell>
+                          <TableCell className="px-3 py-2 text-right">
+                            {isEditable ? (
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={manualTimes[distance] || ""}
+                                onChange={(e) => setManualTimes(prev => ({
+                                  ...prev,
+                                  [distance]: e.target.value
+                                }))}
+                                className="w-20 h-8 text-right"
+                                placeholder="0.00"
+                              />
+                            ) : (
+                              baseTime || "-"
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    });
+                  })()}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
               {(() => {
                 // Create pace calculation
                 const distances = [
