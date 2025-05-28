@@ -2,7 +2,8 @@ import express, { type Express, type Request, type Response } from "express";
 import { createServer, type Server } from "http";
 import { storage as dbStorage } from "./storage";
 import { pool, db } from "./db";
-import { meets } from "@shared/schema";
+import { meets, notifications } from "@shared/schema";
+import { and, eq, or, sql } from "drizzle-orm";
 import { setupAuth } from "./auth";
 import { z } from "zod";
 import multer from "multer";
@@ -4576,18 +4577,16 @@ Keep the response professional, evidence-based, and specific to track and field 
         return res.status(400).send("Already following this user");
       }
 
-      // Check for existing friend request notifications directly
-      const existingNotifications = await db
-        .select()
-        .from(notifications)
-        .where(and(
-          eq(notifications.type, 'friend_request'),
-          eq(notifications.userId, receiverId),
-          sql`JSON_EXTRACT(${notifications.data}, '$.fromUserId') = ${req.user.id}`
-        ));
+      // Use raw SQL to check for existing friend requests
+      const existingRequests = await pool.query(`
+        SELECT id FROM notifications 
+        WHERE type = 'friend_request' 
+        AND ((user_id = $1 AND JSON_EXTRACT(data, '$.fromUserId') = $2) 
+             OR (user_id = $2 AND JSON_EXTRACT(data, '$.fromUserId') = $1))
+      `, [receiverId, req.user.id]);
 
-      if (existingNotifications.length > 0) {
-        return res.status(400).send("Friend request already sent");
+      if (existingRequests.rows.length > 0) {
+        return res.status(400).json({ error: "Friend request already sent" });
       }
 
       // Send friend request notification
