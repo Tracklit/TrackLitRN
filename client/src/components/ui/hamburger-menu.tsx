@@ -15,7 +15,8 @@ import {
   Dumbbell, 
   MessagesSquare, 
   Coins,
-  BookOpen
+  BookOpen,
+  Target
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -199,6 +200,17 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
             >
               <UserCheck className="h-4 w-4 mr-3" />
               Friends
+            </a>
+            <a
+              href="/my-athletes"
+              className={cn(
+                "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",
+                location === "/my-athletes" ? "bg-[#ff8c00] text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+              )}
+              onClick={() => setIsOpen(false)}
+            >
+              <Target className="h-4 w-4 mr-3" />
+              My Athletes
             </a>
             <a
               href="/athletes"

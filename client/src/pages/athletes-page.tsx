@@ -53,6 +53,18 @@ export default function AthletesPage() {
     enabled: !!currentUser,
   });
 
+  // Fetch friends to check friendship status
+  const { data: friends = [] } = useQuery({
+    queryKey: ["/api/friends"],
+    enabled: !!currentUser,
+  });
+
+  // Fetch pending friend requests
+  const { data: pendingRequests = [] } = useQuery({
+    queryKey: ["/api/friend-requests/pending"],
+    enabled: !!currentUser,
+  });
+
   // Fetch athletes with search and pagination
   const { data: athletesResponse, isLoading, isFetching } = useQuery<AthletesResponse>({
     queryKey: ["/api/athletes", searchQuery, page],
