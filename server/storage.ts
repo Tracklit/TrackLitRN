@@ -94,7 +94,8 @@ import {
   Follow,
   InsertFollow,
   directMessages,
-  conversations
+  conversations,
+  coachAthletes
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, lt, gte, desc, asc, inArray, or, isNotNull, isNull, ne, sql, exists } from "drizzle-orm";
@@ -2627,6 +2628,122 @@ export class DatabaseStorage implements IStorage {
       console.log(`✅ Successfully sent ${friendRequests.length} automatic friend requests from Lion Martinez`);
     } else {
       console.log('No new friend requests to send - all users already connected');
+    }
+  }
+
+  // Coach-Athlete operations
+  async getCoachAthletes(coachId: number): Promise<User[]> {
+    try {
+      const athletes = await db
+        .select({
+          id: users.id,
+          username: users.username,
+          name: users.name,
+          email: users.email,
+          bio: users.bio,
+          isPremium: users.isPremium,
+          subscriptionTier: users.subscriptionTier,
+          isCoach: users.isCoach,
+          role: users.role,
+          spikes: users.spikes,
+          defaultClubId: users.defaultClubId,
+          createdAt: users.createdAt,
+          password: users.password
+        })
+        .from(coachAthletes)
+        .innerJoin(users, eq(coachAthletes.athleteId, users.id))
+        .where(eq(coachAthletes.coachId, coachId));
+      
+      return athletes;
+    } catch (error) {
+      console.error("Error in getCoachAthletes:", error);
+      return [];
+    }
+  }
+
+  async getAthleteCoaches(athleteId: number): Promise<User[]> {
+    try {
+      const coaches = await db
+        .select({
+          id: users.id,
+          username: users.username,
+          name: users.name,
+          email: users.email,
+          bio: users.bio,
+          isPremium: users.isPremium,
+          subscriptionTier: users.subscriptionTier,
+          isCoach: users.isCoach,
+          role: users.role,
+          spikes: users.spikes,
+          defaultClubId: users.defaultClubId,
+          createdAt: users.createdAt,
+          password: users.password
+        })
+        .from(coachAthletes)
+        .innerJoin(users, eq(coachAthletes.coachId, users.id))
+        .where(eq(coachAthletes.athleteId, athleteId));
+      
+      return coaches;
+    } catch (error) {
+      console.error("Error in getAthleteCoaches:", error);
+      return [];
+    }
+  }
+
+  async addCoachAthlete(coachAthlete: InsertCoachAthlete): Promise<CoachAthlete> {
+    try {
+      // Check if relationship already exists
+      const existing = await db
+        .select()
+        .from(coachAthletes)
+        .where(and(
+          eq(coachAthletes.coachId, coachAthlete.coachId),
+          eq(coachAthletes.athleteId, coachAthlete.athleteId)
+        ));
+
+      if (existing.length > 0) {
+        return existing[0];
+      }
+
+      const [newRelationship] = await db
+        .insert(coachAthletes)
+        .values(coachAthlete)
+        .returning();
+      
+      return newRelationship;
+    } catch (error) {
+      console.error("Error in addCoachAthlete:", error);
+      throw error;
+    }
+  }
+
+  async removeCoachAthlete(coachId: number, athleteId: number): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(coachAthletes)
+        .where(and(
+          eq(coachAthletes.coachId, coachId),
+          eq(coachAthletes.athleteId, athleteId)
+        ));
+      
+      return (result.rowCount || 0) > 0;
+    } catch (error) {
+      console.error("Error in removeCoachAthlete:", error);
+      return false;
+    }
+  }
+
+  async getCoachAthleteCount(coachId: number): Promise<number> {
+    try {
+      const result = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(coachAthletes)
+        .where(eq(coachAthletes.coachId, coachId));
+      
+      return result[0]?.count || 0;
+    } catch (error) {
+      console.error("Error in getCoachAthleteCount:", error);
+      return 0;
     }
   }
 }

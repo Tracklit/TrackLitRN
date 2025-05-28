@@ -5,7 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserCheck, UserX, MessageCircle, Clock, UserMinus } from "lucide-react";
+import { UserCheck, UserX, MessageCircle, Clock, UserMinus, Crown, Users, Target } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 
 interface FriendRequest {
@@ -37,6 +40,18 @@ export default function FriendsPage() {
   // Get current user
   const { data: currentUser } = useQuery({
     queryKey: ["/api/user"],
+  });
+
+  // Get coach's athletes if user is a coach
+  const { data: coachAthletes = [] } = useQuery({
+    queryKey: ["/api/coach/athletes"],
+    enabled: !!currentUser?.isCoach,
+  });
+
+  // Get coach limits
+  const { data: coachLimits } = useQuery({
+    queryKey: ["/api/coach/limits"],
+    enabled: !!currentUser?.isCoach,
   });
 
   // Fetch pending friend requests

@@ -31,6 +31,7 @@ import {
   insertProgramPurchaseSchema,
   insertProgramProgressSchema,
   insertWorkoutLibrarySchema,
+  insertCoachAthleteSchema,
   InsertMeet,
   InsertResult,
   InsertReminder,
@@ -44,7 +45,8 @@ import {
   InsertProgramSession,
   InsertProgramPurchase,
   InsertProgramProgress,
-  InsertWorkoutLibrary
+  InsertWorkoutLibrary,
+  InsertCoachAthlete
 } from "@shared/schema";
 
 // Initialize default achievements
@@ -4611,6 +4613,131 @@ Keep the response professional, evidence-based, and specific to track and field 
     } catch (error) {
       console.error("Error generating weekly report:", error);
       res.status(500).json({ error: "Failed to generate weekly report" });
+    }
+  });
+
+  // Coach-Athlete System Routes
+  
+  // Update user coach status
+  app.patch("/api/user/coach-status", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const { isCoach } = req.body;
+      const updatedUser = await dbStorage.updateUser(req.user.id, { isCoach });
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating coach status:", error);
+      res.status(500).json({ error: "Failed to update coach status" });
+    }
+  });
+
+  // Get coach's athletes
+  app.get("/api/coach/athletes", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const athletes = await dbStorage.getCoachAthletes(req.user.id);
+      res.json(athletes);
+    } catch (error) {
+      console.error("Error getting coach athletes:", error);
+      res.status(500).json({ error: "Failed to get athletes" });
+    }
+  });
+
+  // Get athlete's coaches
+  app.get("/api/athlete/coaches", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const coaches = await dbStorage.getAthleteCoaches(req.user.id);
+      res.json(coaches);
+    } catch (error) {
+      console.error("Error getting athlete coaches:", error);
+      res.status(500).json({ error: "Failed to get coaches" });
+    }
+  });
+
+  // Add friend as athlete (for coaches)
+  app.post("/api/coach/athletes", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const { athleteId } = req.body;
+      
+      // Check if user is a coach
+      if (!req.user.isCoach) {
+        return res.status(403).json({ error: "Only coaches can add athletes" });
+      }
+
+      // Check coach's athlete limit based on subscription
+      const currentAthleteCount = await dbStorage.getCoachAthleteCount(req.user.id);
+      const limits = { free: 5, pro: 20, star: Infinity };
+      const userTier = req.user.subscriptionTier || 'free';
+      const limit = limits[userTier as keyof typeof limits] || limits.free;
+
+      if (currentAthleteCount >= limit) {
+        return res.status(400).json({ 
+          error: `Coach limit reached. ${userTier} tier allows ${limit === Infinity ? 'unlimited' : limit} athletes.` 
+        });
+      }
+
+      // Verify they are friends first
+      const followStatus = await dbStorage.getFollowStatus(req.user.id, athleteId);
+      if (!followStatus.areFriends) {
+        return res.status(400).json({ error: "Can only add friends as athletes" });
+      }
+
+      const relationship = await dbStorage.addCoachAthlete({
+        coachId: req.user.id,
+        athleteId
+      });
+
+      res.json(relationship);
+    } catch (error) {
+      console.error("Error adding athlete:", error);
+      res.status(500).json({ error: "Failed to add athlete" });
+    }
+  });
+
+  // Remove athlete from coach
+  app.delete("/api/coach/athletes/:athleteId", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const athleteId = parseInt(req.params.athleteId);
+      const success = await dbStorage.removeCoachAthlete(req.user.id, athleteId);
+      
+      if (success) {
+        res.json({ success: true, message: "Athlete removed successfully" });
+      } else {
+        res.status(404).json({ error: "Coach-athlete relationship not found" });
+      }
+    } catch (error) {
+      console.error("Error removing athlete:", error);
+      res.status(500).json({ error: "Failed to remove athlete" });
+    }
+  });
+
+  // Get coach athlete count and limits
+  app.get("/api/coach/limits", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const currentCount = await dbStorage.getCoachAthleteCount(req.user.id);
+      const limits = { free: 5, pro: 20, star: Infinity };
+      const userTier = req.user.subscriptionTier || 'free';
+      const maxAthletes = limits[userTier as keyof typeof limits] || limits.free;
+
+      res.json({
+        currentAthletes: currentCount,
+        maxAthletes: maxAthletes === Infinity ? 'unlimited' : maxAthletes,
+        tier: userTier,
+        canAddMore: currentCount < maxAthletes
+      });
+    } catch (error) {
+      console.error("Error getting coach limits:", error);
+      res.status(500).json({ error: "Failed to get coach limits" });
     }
   });
 
