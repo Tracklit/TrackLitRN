@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { UserCheck, Clock, MessageCircle, UserMinus, Target } from "lucide-react";
 import { Link } from "wouter";
-import defaultProfileImage from "@assets/IMG_4089.jpeg";
+const defaultProfileImage = "/inverted-profile.svg";
 
 interface Friend {
   id: number;
