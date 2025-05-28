@@ -31,6 +31,7 @@ export function CreateMeetModal({ isOpen, onClose }: CreateMeetModalProps) {
   const [newEvent, setNewEvent] = useState('');
   const [warmupTime, setWarmupTime] = useState(60);
   const [arrivalTime, setArrivalTime] = useState(90);
+  const [websiteUrl, setWebsiteUrl] = useState('');
 
   // Reset form when modal is opened
   useEffect(() => {
@@ -44,6 +45,7 @@ export function CreateMeetModal({ isOpen, onClose }: CreateMeetModalProps) {
       setNewEvent('');
       setWarmupTime(60);
       setArrivalTime(90);
+      setWebsiteUrl('');
     }
   }, [isOpen]);
 
@@ -192,6 +194,7 @@ export function CreateMeetModal({ isOpen, onClose }: CreateMeetModalProps) {
         events,
         warmupTime,
         arrivalTime,
+        websiteUrl: websiteUrl.trim() || undefined,
         coordinates: coordinates ? {
           latitude: coordinates.latitude,
           longitude: coordinates.longitude
@@ -268,6 +271,18 @@ export function CreateMeetModal({ isOpen, onClose }: CreateMeetModalProps) {
                   Coordinates: {coordinates.latitude.toFixed(4)}, {coordinates.longitude.toFixed(4)}
                 </p>
               )}
+            </div>
+            
+            <div>
+              <Label htmlFor="meet-url" className="text-white">Official Website (Optional)</Label>
+              <Input 
+                id="meet-url" 
+                type="url"
+                placeholder="https://example.com/meet-info"
+                value={websiteUrl}
+                onChange={(e) => setWebsiteUrl(e.target.value)}
+                className="bg-[#081020] border-blue-800/50 text-white placeholder:text-gray-400"
+              />
             </div>
             
             <div>
