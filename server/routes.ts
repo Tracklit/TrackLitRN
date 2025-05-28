@@ -725,12 +725,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Parse and validate the data
-      const meetData = insertMeetSchema.parse(rawData);
+      // Parse and validate the data - bypass schema parsing for websiteUrl
+      const { websiteUrl, ...otherData } = rawData;
+      const meetData = insertMeetSchema.parse(otherData);
       
-      // Manually ensure websiteUrl is included if provided
-      if (rawData.websiteUrl) {
-        meetData.websiteUrl = rawData.websiteUrl;
+      // Manually add websiteUrl if provided
+      if (websiteUrl) {
+        meetData.websiteUrl = websiteUrl;
       }
       
       // Override userId with authenticated user
