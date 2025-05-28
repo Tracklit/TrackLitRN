@@ -20,6 +20,15 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  used: boolean("used").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const usersRelations = relations(users, ({ many, one }) => ({
   meetsAsAthlete: many(meets),
   meetsAsCoach: many(meets, { relationName: "coach_meets" }),
@@ -548,6 +557,11 @@ export const insertPracticeMediaSchema = createInsertSchema(practiceMedia).omit(
   createdAt: true,
 });
 
+export const insertPasswordResetTokenSchema = createInsertSchema(passwordResetTokens).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertMeet = z.infer<typeof insertMeetSchema>;
@@ -559,8 +573,10 @@ export type InsertAthleteGroup = z.infer<typeof insertAthleteGroupSchema>;
 export type InsertGroupMember = z.infer<typeof insertGroupMemberSchema>;
 export type InsertCoachNote = z.infer<typeof insertCoachNoteSchema>;
 export type InsertPracticeMedia = z.infer<typeof insertPracticeMediaSchema>;
+export type InsertPasswordResetToken = z.infer<typeof insertPasswordResetTokenSchema>;
 export type InsertCoachingRequest = z.infer<typeof insertCoachingRequestSchema>;
 export type SelectCoachingRequest = typeof coachingRequests.$inferSelect;
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
 
 export type User = typeof users.$inferSelect;
 export type Meet = typeof meets.$inferSelect;
