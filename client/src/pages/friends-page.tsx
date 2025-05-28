@@ -48,6 +48,12 @@ export default function FriendsPage() {
     enabled: !!currentUser?.isCoach,
   });
 
+  // Get coaching requests
+  const { data: coachingRequests } = useQuery({
+    queryKey: ["/api/coaching-requests"],
+    enabled: !!currentUser,
+  });
+
   // Get coach limits
   const { data: coachLimits } = useQuery({
     queryKey: ["/api/coach/limits"],
@@ -151,6 +157,57 @@ export default function FriendsPage() {
     removeFriendMutation.mutate(friendId);
   };
 
+  // Coaching request mutation
+  const sendCoachingRequestMutation = useMutation({
+    mutationFn: async ({ friendId, type }: { friendId: number, type: 'coach_invite' | 'athlete_request' }) => {
+      const response = await apiRequest("POST", "/api/coaching-requests", {
+        fromUserId: currentUser.id,
+        toUserId: friendId,
+        requestType: type,
+        message: type === 'coach_invite' 
+          ? "I'd like to invite you to join as my athlete"
+          : "I'd like to request your coaching"
+      });
+      if (!response.ok) {
+        throw new Error("Failed to send coaching request");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/coaching-requests"] });
+      toast({
+        title: "Coaching request sent",
+        description: "Your coaching request has been sent successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to send coaching request. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleSendCoachingRequest = (friendId: number, type: 'coach_invite' | 'athlete_request') => {
+    sendCoachingRequestMutation.mutate({ friendId, type });
+  };
+
+  // Helper function to check if friend is already an athlete
+  const isAlreadyAthlete = (friendId: number) => {
+    return coachAthletes.some((athlete: any) => athlete.id === friendId);
+  };
+
+  // Helper function to check if there's a pending coaching request
+  const hasPendingCoachingRequest = (friendId: number) => {
+    if (!coachingRequests) return false;
+    const { sent = [], received = [] } = coachingRequests;
+    return [...sent, ...received].some((req: any) => 
+      (req.fromUserId === currentUser.id && req.toUserId === friendId) ||
+      (req.fromUserId === friendId && req.toUserId === currentUser.id)
+    );
+  };
+
   if (!currentUser) {
     return (
       <div className="h-screen flex items-center justify-center">
@@ -230,6 +287,46 @@ export default function FriendsPage() {
                           <MessageCircle className="h-4 w-4 mr-2" />
                           Message
                         </Button>
+                        
+                        {/* Show Add As Athlete button only for coaches */}
+                        {currentUser?.coachFlag && !isAlreadyAthlete(friend.id) && !hasPendingCoachingRequest(friend.id) && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleSendCoachingRequest(friend.id, 'coach_invite')}
+                            disabled={sendCoachingRequestMutation.isPending}
+                            className="w-full text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          >
+                            <Target className="h-4 w-4 mr-2" />
+                            Add As Athlete
+                          </Button>
+                        )}
+                        
+                        {/* Show status if already athlete or request pending */}
+                        {currentUser?.coachFlag && isAlreadyAthlete(friend.id) && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled
+                            className="w-full text-green-600"
+                          >
+                            <Target className="h-4 w-4 mr-2" />
+                            Already Your Athlete
+                          </Button>
+                        )}
+                        
+                        {currentUser?.coachFlag && hasPendingCoachingRequest(friend.id) && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled
+                            className="w-full text-yellow-600"
+                          >
+                            <Clock className="h-4 w-4 mr-2" />
+                            Request Pending
+                          </Button>
+                        )}
+                        
                         <Button
                           variant="outline"
                           size="sm"
