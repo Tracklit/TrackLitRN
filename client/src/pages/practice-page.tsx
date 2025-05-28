@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/collapsible";
 import { Mic, Loader2, MapPin } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-const defaultProfileImage = "/inverted-profile.svg";
+const defaultProfileImage = "/profile-runner.svg";
 import { WorkoutReactions } from "@/components/workout-reactions";
 import {
   Dialog,

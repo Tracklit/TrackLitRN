@@ -21,7 +21,7 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-const defaultProfileImage = "/inverted-profile.svg";
+const defaultProfileImage = "/profile-runner.svg";
 import { Separator } from "@/components/ui/separator";
 
 export function Component() {

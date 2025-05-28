@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
-const defaultProfileImage = "/inverted-profile.svg";
+const defaultProfileImage = "/profile-runner.svg";
 
 interface User {
   id: number;
