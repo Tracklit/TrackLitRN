@@ -4266,6 +4266,98 @@ Keep the response professional, evidence-based, and specific to track and field 
     }
   });
   
+  // Coaching Request API
+  app.post("/api/coaching-requests", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const validatedData = insertCoachingRequestSchema.parse(req.body);
+      
+      // Check if there's already a pending request between these users
+      const hasExisting = await dbStorage.hasExistingCoachingRequest(
+        validatedData.fromUserId,
+        validatedData.toUserId
+      );
+      
+      if (hasExisting) {
+        return res.status(400).json({ error: "A coaching request already exists between these users" });
+      }
+      
+      const coachingRequest = await dbStorage.createCoachingRequest(validatedData);
+      
+      // Create notification for the recipient
+      await dbStorage.createNotification({
+        userId: validatedData.toUserId,
+        type: "coaching_request",
+        title: validatedData.type === 'coach_invite' ? "Coach Invitation" : "Coaching Request",
+        message: validatedData.type === 'coach_invite' 
+          ? "You've been invited to join as an athlete"
+          : "Someone has requested your coaching",
+        actionUrl: "/profile",
+        isRead: false
+      });
+      
+      res.json(coachingRequest);
+    } catch (error) {
+      console.error("Error creating coaching request:", error);
+      res.status(500).send("Error creating coaching request");
+    }
+  });
+
+  app.get("/api/coaching-requests", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const received = await dbStorage.getCoachingRequests(req.user.id);
+      const sent = await dbStorage.getSentCoachingRequests(req.user.id);
+      
+      res.json({ received, sent });
+    } catch (error) {
+      console.error("Error fetching coaching requests:", error);
+      res.status(500).send("Error fetching coaching requests");
+    }
+  });
+
+  app.post("/api/coaching-requests/:id/respond", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const requestId = parseInt(req.params.id);
+      const { status } = req.body;
+      
+      if (!['accepted', 'declined'].includes(status)) {
+        return res.status(400).json({ error: "Invalid status" });
+      }
+      
+      const updatedRequest = await dbStorage.respondToCoachingRequest(requestId, status);
+      res.json(updatedRequest);
+    } catch (error) {
+      console.error("Error responding to coaching request:", error);
+      res.status(500).send("Error responding to coaching request");
+    }
+  });
+
+  app.delete("/api/coaching-requests/:id", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const requestId = parseInt(req.params.id);
+      await dbStorage.deleteCoachingRequest(requestId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting coaching request:", error);
+      res.status(500).send("Error deleting coaching request");
+    }
+  });
+
   // Direct Messages API
   app.get("/api/conversations", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) {
