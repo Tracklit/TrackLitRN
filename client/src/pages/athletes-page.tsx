@@ -149,11 +149,14 @@ export default function AthletesPage() {
       return response.json();
     },
     onSuccess: () => {
+      // Invalidate all relevant queries to update button states
+      queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/friend-requests/pending"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/athletes"] });
       toast({
         title: "Success",
         description: "Friend request sent successfully!",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/athletes"] });
     },
     onError: (error: Error) => {
       toast({
@@ -362,7 +365,7 @@ export default function AthletesPage() {
                     ) : (
                       <Button
                         onClick={() => handleSendFriendRequest(athlete.id)}
-                        disabled={sendFriendRequestMutation.isPending}
+                        disabled={sendFriendRequestMutation.isPending || isAlreadyFriend(athlete.id) || hasPendingFriendRequest(athlete.id)}
                         variant="outline"
                         size="sm"
                         className="border-gray-600 text-gray-400 hover:bg-gray-600/20"
