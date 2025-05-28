@@ -95,31 +95,31 @@ export default function PublicProfilePage() {
 
   // Get profile user data
   const { data: profileUser, isLoading: userLoading } = useQuery({
-    queryKey: ['/api/users', userId],
+    queryKey: [`/api/users/${userId}`],
     enabled: !!userId
   });
 
   // Get user's meets
   const { data: userMeets = [] } = useQuery({
-    queryKey: ['/api/users', userId, 'meets'],
+    queryKey: [`/api/users/${userId}/meets`],
     enabled: !!userId
   });
 
   // Get user's latest workout (if public or own profile)
   const { data: latestWorkout } = useQuery({
-    queryKey: ['/api/users', userId, 'latest-workout'],
+    queryKey: [`/api/users/${userId}/latest-workout`],
     enabled: !!userId
   });
 
   // Get user's programs (if coach)
   const { data: userPrograms = [] } = useQuery({
-    queryKey: ['/api/users', userId, 'programs'],
+    queryKey: [`/api/users/${userId}/programs`],
     enabled: !!userId && profileUser?.isCoach
   });
 
   // Get user's friends/athletes/coaches
   const { data: connections = [] } = useQuery({
-    queryKey: ['/api/users', userId, 'connections'],
+    queryKey: [`/api/users/${userId}/connections`],
     enabled: !!userId
   });
 
