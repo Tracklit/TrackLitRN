@@ -21,7 +21,8 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-const defaultProfileImage = "/profile-runner.svg";
+import defaultProfileImageUrl from "@assets/image_1748451000674.png";
+const defaultProfileImage = defaultProfileImageUrl;
 import { Separator } from "@/components/ui/separator";
 
 export function Component() {
