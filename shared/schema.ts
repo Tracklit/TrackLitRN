@@ -14,6 +14,7 @@ export const users = pgTable("users", {
   isCoach: boolean("is_coach").default(false),
   role: text("role").default("athlete"), // athlete, coach, or both
   bio: text("bio"),
+  profileImageUrl: text("profile_image_url"),
   spikes: integer("spikes").default(0), // In-app currency/tokens
   defaultClubId: integer("default_club_id"), // Will be connected through relations
   createdAt: timestamp("created_at").defaultNow(),

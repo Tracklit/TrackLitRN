@@ -1805,6 +1805,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({ error: "Failed to update athlete profile" });
     }
   });
+
+  // Public profile update route with image upload
+  const profileUpload = multer({
+    dest: 'uploads/profiles/',
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: (req, file, cb) => {
+      const allowedTypes = /jpeg|jpg|png|gif/;
+      const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+      const mimetype = allowedTypes.test(file.mimetype);
+      
+      if (mimetype && extname) {
+        return cb(null, true);
+      } else {
+        cb(new Error('Only image files are allowed'));
+      }
+    }
+  });
+
+  app.post("/api/user/public-profile", profileUpload.single('profileImage'), async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const { name, bio } = req.body;
+      let profileImageUrl = '';
+
+      // Handle profile image upload
+      if (req.file) {
+        const fileName = `profile-${req.user!.id}-${Date.now()}${path.extname(req.file.originalname)}`;
+        const finalPath = path.join('uploads/profiles', fileName);
+        
+        // Move file to final location
+        fs.renameSync(req.file.path, finalPath);
+        profileImageUrl = `/uploads/profiles/${fileName}`;
+      }
+
+      // Update user profile
+      const updateData: any = { name };
+      if (bio !== undefined) updateData.bio = bio;
+      if (profileImageUrl) updateData.profileImageUrl = profileImageUrl;
+
+      const updatedUser = await dbStorage.updateUser(req.user!.id, updateData);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating public profile:", error);
+      res.status(500).json({ error: "Failed to update public profile" });
+    }
+  });
   
 
 
