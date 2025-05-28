@@ -2046,7 +2046,7 @@ export class DatabaseStorage implements IStorage {
         id: coachingRequests.id,
         fromUserId: coachingRequests.fromUserId,
         toUserId: coachingRequests.toUserId,
-        type: coachingRequests.type,
+        requestType: coachingRequests.requestType,
         status: coachingRequests.status,
         message: coachingRequests.message,
         createdAt: coachingRequests.createdAt,
@@ -2055,7 +2055,7 @@ export class DatabaseStorage implements IStorage {
           id: users.id,
           username: users.username,
           name: users.name,
-          coachFlag: users.coachFlag,
+          isCoach: users.isCoach,
           role: users.role
         }
       })
