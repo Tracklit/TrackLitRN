@@ -304,12 +304,14 @@ export default function MeetsPage() {
               </div>
             )}
 
-            <div className="fixed bottom-8 right-8 z-10">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-white">My Meets</h2>
               <Button
                 onClick={() => setIsCreateMeetOpen(true)}
-                className="bg-amber-500 hover:bg-amber-600 text-white rounded-full w-14 h-14 shadow-lg"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 border border-blue-500"
               >
-                <Plus className="h-6 w-6" />
+                <Plus className="h-4 w-4 mr-2" />
+                Create Meet
               </Button>
             </div>
             
@@ -433,7 +435,7 @@ export default function MeetsPage() {
                                 </DropdownMenuContent>
                               </DropdownMenu>
                               
-                              <Badge className="bg-amber-600 hover:bg-amber-700">{meet.status}</Badge>
+
                             </div>
                             
                             {selectedMeet?.id === meet.id && (
@@ -553,7 +555,7 @@ export default function MeetsPage() {
                                 </DropdownMenuContent>
                               </DropdownMenu>
                               
-                              <Badge className="bg-green-700 hover:bg-green-800">Completed</Badge>
+
                             </div>
 
                             {/* Results Logging Interface */}
