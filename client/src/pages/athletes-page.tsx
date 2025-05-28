@@ -274,7 +274,7 @@ export default function AthletesPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <Link
-                        href={`/profile/${athlete.id}`}
+                        href={`/user/${athlete.id}`}
                         className="font-semibold text-white hover:text-blue-400 transition-colors"
                       >
                         {athlete.name || athlete.username}

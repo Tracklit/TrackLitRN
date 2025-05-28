@@ -76,7 +76,7 @@ interface Friend {
 }
 
 export default function PublicProfilePage() {
-  const [, params] = useRoute('/profile/:userId');
+  const [, params] = useRoute('/user/:userId');
   const userId = params?.userId ? parseInt(params.userId) : null;
 
   console.log('PublicProfilePage - userId from params:', userId, 'params:', params);

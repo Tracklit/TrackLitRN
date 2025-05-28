@@ -247,7 +247,7 @@ export default function FriendsPage() {
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <Link
-                            href={`/profile/${friend.id}`}
+                            href={`/user/${friend.id}`}
                             className="font-semibold text-white hover:text-blue-400 transition-colors"
                           >
                             {friend.name}
