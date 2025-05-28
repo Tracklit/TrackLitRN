@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Meet } from '@shared/schema';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, MapPin, Loader2, Plus, Users, Crown, UserPlus, X, Cloud, Wind, Bell, Trophy, Clock, Target, MoreVertical, Trash2 } from 'lucide-react';
+import { Calendar, MapPin, Loader2, Plus, Users, Crown, UserPlus, X, Cloud, Wind, Bell, Trophy, Clock, Target, MoreVertical, Trash2, ExternalLink } from 'lucide-react';
 import { CreateMeetModal } from '@/components/create-meet-modal';
 import { PreparationTimeline } from '@/components/preparation-timeline';
 import { MeetCalendar } from '@/components/meet-calendar';
@@ -414,6 +414,15 @@ export default function MeetsPage() {
                                     <Users className="h-4 w-4 mr-2" />
                                     Share Meet
                                   </DropdownMenuItem>
+                                  {meet.websiteUrl && (
+                                    <DropdownMenuItem 
+                                      onClick={() => window.open(meet.websiteUrl, '_blank')}
+                                      className="text-blue-200 hover:bg-blue-800 cursor-pointer"
+                                    >
+                                      <ExternalLink className="h-4 w-4 mr-2" />
+                                      Official Website
+                                    </DropdownMenuItem>
+                                  )}
                                   <DropdownMenuItem 
                                     onClick={() => deleteMeet(meet.id)}
                                     className="text-red-400 hover:bg-red-900/50 cursor-pointer"
@@ -525,6 +534,15 @@ export default function MeetsPage() {
                                     <Users className="h-4 w-4 mr-2" />
                                     Share Meet
                                   </DropdownMenuItem>
+                                  {meet.websiteUrl && (
+                                    <DropdownMenuItem 
+                                      onClick={() => window.open(meet.websiteUrl, '_blank')}
+                                      className="text-blue-200 hover:bg-blue-800 cursor-pointer"
+                                    >
+                                      <ExternalLink className="h-4 w-4 mr-2" />
+                                      Official Website
+                                    </DropdownMenuItem>
+                                  )}
                                   <DropdownMenuItem 
                                     onClick={() => deleteMeet(meet.id)}
                                     className="text-red-400 hover:bg-red-900/50 cursor-pointer"
