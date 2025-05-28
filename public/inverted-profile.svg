@@ -1,54 +1,56 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
   <defs>
-    <linearGradient id="runnerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#00a8ff;stop-opacity:1" />
-      <stop offset="50%" style="stop-color:#9c88ff;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#ff006e;stop-opacity:1" />
+    <linearGradient id="figureGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00bfff;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#8a2be2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ff1493;stop-opacity:1" />
     </linearGradient>
-    <linearGradient id="speedGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#00a8ff;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#00a8ff;stop-opacity:0.3" />
+    <linearGradient id="speedLinesGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00bfff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00bfff;stop-opacity:0.2" />
     </linearGradient>
   </defs>
   
-  <!-- Background -->
-  <rect width="100" height="100" fill="#1a1a2e"/>
+  <!-- Dark navy background -->
+  <rect width="100" height="100" fill="#0f1419"/>
   
-  <!-- Speed lines -->
-  <g stroke="url(#speedGradient)" stroke-width="1.5" stroke-linecap="round" fill="none">
-    <line x1="5" y1="20" x2="25" y2="20"/>
-    <line x1="8" y1="25" x2="28" y2="25"/>
-    <line x1="3" y1="30" x2="23" y2="30"/>
-    <line x1="6" y1="35" x2="26" y2="35"/>
-    <line x1="10" y1="40" x2="30" y2="40"/>
-    <line x1="4" y1="45" x2="24" y2="45"/>
-    <line x1="7" y1="50" x2="27" y2="50"/>
+  <!-- Speed lines (horizontal lines on left) -->
+  <g stroke="url(#speedLinesGradient)" stroke-width="1.2" stroke-linecap="round" fill="none">
+    <line x1="8" y1="25" x2="22" y2="25"/>
+    <line x1="8" y1="28" x2="20" y2="28"/>
+    <line x1="8" y1="31" x2="24" y2="31"/>
+    <line x1="8" y1="34" x2="18" y2="34"/>
+    <line x1="8" y1="37" x2="26" y2="37"/>
+    <line x1="8" y1="40" x2="20" y2="40"/>
+    <line x1="8" y1="43" x2="22" y2="43"/>
+    <line x1="8" y1="46" x2="18" y2="46"/>
+    <line x1="8" y1="49" x2="24" y2="49"/>
   </g>
   
-  <!-- Running figure -->
-  <g stroke="url(#runnerGradient)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+  <!-- Running figure outline -->
+  <g stroke="url(#figureGradient)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none">
     <!-- Head -->
-    <circle cx="65" cy="20" r="6"/>
+    <circle cx="65" cy="22" r="5"/>
     
-    <!-- Body -->
-    <path d="M65 26 L65 45"/>
+    <!-- Torso -->
+    <path d="M65 27 L65 48"/>
     
-    <!-- Left arm (swinging back) -->
-    <path d="M65 32 L55 28 L50 35"/>
+    <!-- Left arm (back swing) -->
+    <path d="M65 32 L58 30 L54 36"/>
     
-    <!-- Right arm (swinging forward) -->
-    <path d="M65 32 L75 38 L80 45"/>
+    <!-- Right arm (forward swing) -->
+    <path d="M65 34 L72 38 L76 44"/>
     
-    <!-- Left leg (back leg) -->
-    <path d="M65 45 L60 55 L55 65 L50 70"/>
+    <!-- Left leg (back leg, straight) -->
+    <path d="M65 48 L61 58 L58 68 L55 75"/>
     
-    <!-- Right leg (front leg, lifted) -->
-    <path d="M65 45 L70 50 L75 55 L80 62"/>
+    <!-- Right leg (front leg, bent/lifting) -->
+    <path d="M65 48 L68 54 L72 58 L76 64"/>
     
     <!-- Left foot -->
-    <ellipse cx="48" cy="72" rx="3" ry="1.5"/>
+    <ellipse cx="54" cy="76" rx="2.5" ry="1.2"/>
     
     <!-- Right foot -->
-    <ellipse cx="82" cy="64" rx="3" ry="1.5"/>
+    <ellipse cx="77" cy="65" rx="2.5" ry="1.2"/>
   </g>
 </svg>
