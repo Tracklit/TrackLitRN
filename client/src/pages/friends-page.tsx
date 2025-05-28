@@ -289,7 +289,7 @@ export default function FriendsPage() {
                         </Button>
                         
                         {/* Show Add As Athlete button only for coaches */}
-                        {currentUser?.coachFlag && !isAlreadyAthlete(friend.id) && !hasPendingCoachingRequest(friend.id) && (
+                        {currentUser?.isCoach && !isAlreadyAthlete(friend.id) && !hasPendingCoachingRequest(friend.id) && (
                           <Button
                             variant="outline"
                             size="sm"
@@ -303,7 +303,7 @@ export default function FriendsPage() {
                         )}
                         
                         {/* Show status if already athlete or request pending */}
-                        {currentUser?.coachFlag && isAlreadyAthlete(friend.id) && (
+                        {currentUser?.isCoach && isAlreadyAthlete(friend.id) && (
                           <Button
                             variant="outline"
                             size="sm"
@@ -315,7 +315,7 @@ export default function FriendsPage() {
                           </Button>
                         )}
                         
-                        {currentUser?.coachFlag && hasPendingCoachingRequest(friend.id) && (
+                        {currentUser?.isCoach && hasPendingCoachingRequest(friend.id) && (
                           <Button
                             variant="outline"
                             size="sm"
