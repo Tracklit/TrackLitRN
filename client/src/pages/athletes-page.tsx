@@ -261,89 +261,75 @@ export default function AthletesPage() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            <div className="space-y-0">
               {displayAthletes.map((athlete) => (
-                <Card key={athlete.id} className="bg-gray-800 border-gray-700 hover:bg-gray-750 transition-colors">
-                  <CardContent className="p-3">
-                    <div className="flex flex-col items-center text-center space-y-2">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="bg-blue-600 text-white text-sm">
-                          {athlete.name?.charAt(0) || athlete.username?.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      
-                      <div className="min-h-[3rem] flex flex-col justify-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <Link
-                            href={`/profile/${athlete.id}`}
-                            className="font-medium text-white hover:text-blue-400 transition-colors text-sm truncate max-w-20"
-                            title={athlete.name || athlete.username}
-                          >
-                            {athlete.name || athlete.username}
-                          </Link>
-                          {isCoach(athlete) && (
-                            <span className="px-1 py-0.5 text-xs bg-orange-600 text-white rounded">
-                              C
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-gray-400 truncate max-w-20">@{athlete.username}</p>
-                      </div>
+                <div key={athlete.id} className="flex items-center py-4 px-4 hover:bg-gray-800/50 transition-colors border-b border-gray-800 last:border-b-0">
+                  <Avatar className="h-7 w-7 mr-4">
+                    <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${athlete.name || athlete.username}`} />
+                    <AvatarFallback className="bg-blue-600 text-white text-xs">
+                      {(athlete.name || athlete.username)?.charAt(0)?.toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/profile/${athlete.id}`}
+                        className="font-semibold text-white hover:text-blue-400 transition-colors"
+                      >
+                        {athlete.name || athlete.username}
+                      </Link>
+                      {isCoach(athlete) && (
+                        <span className="px-2 py-1 text-xs font-bold bg-[#ff8c00] text-black rounded-full">
+                          COACH
+                        </span>
+                      )}
                     </div>
-                    
-                    <div className="flex flex-col gap-1 mt-3">
+                    <p className="text-sm text-gray-400">@{athlete.username}</p>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    {isCoach(athlete) && isAlreadyCoached(athlete.id) ? (
                       <Button
                         variant="outline"
                         size="sm"
+                        className="border-green-600 text-green-400 hover:bg-green-600/20"
+                        disabled
+                      >
+                        Your Coach
+                      </Button>
+                    ) : isCoach(athlete) && hasPendingCoachingRequest(athlete.id) ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-yellow-600 text-yellow-400 hover:bg-yellow-600/20"
+                        disabled
+                      >
+                        Request Sent
+                      </Button>
+                    ) : isCoach(athlete) ? (
+                      <Button
+                        onClick={() => handleSendCoachingRequest(athlete.id)}
+                        disabled={sendCoachingRequestMutation.isPending}
+                        variant="outline"
+                        size="sm"
+                        className="border-blue-600 text-blue-400 hover:bg-blue-600/20"
+                      >
+                        {sendCoachingRequestMutation.isPending ? "Sending..." : "Request Coaching"}
+                      </Button>
+                    ) : (
+                      <Button
                         onClick={() => handleSendFriendRequest(athlete.id)}
                         disabled={sendFriendRequestMutation.isPending}
-                        className="w-full text-xs py-1 h-7"
+                        variant="outline"
+                        size="sm"
+                        className="border-gray-600 text-gray-400 hover:bg-gray-600/20"
                       >
-                        <UserPlus className="h-3 w-3 mr-1" />
-                        Add
+                        {sendFriendRequestMutation.isPending ? "Sending..." : "Add Friend"}
                       </Button>
-                      
-                      {/* Show Request Coaching button for coaches */}
-                      {isCoach(athlete) && !isAlreadyCoached(athlete.id) && !hasPendingCoachingRequest(athlete.id) && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleSendCoachingRequest(athlete.id)}
-                          disabled={sendCoachingRequestMutation.isPending}
-                          className="w-full text-xs py-1 h-7 text-green-600 hover:text-green-700 hover:bg-green-50"
-                        >
-                          <Users className="h-3 w-3 mr-1" />
-                          Coach
-                        </Button>
-                      )}
-                      
-                      {/* Show status if already coached or request pending */}
-                      {isCoach(athlete) && isAlreadyCoached(athlete.id) && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled
-                          className="w-full text-xs py-1 h-7 text-green-600"
-                        >
-                          <Users className="h-3 w-3 mr-1" />
-                          Coach
-                        </Button>
-                      )}
-                      
-                      {isCoach(athlete) && hasPendingCoachingRequest(athlete.id) && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled
-                          className="w-full text-xs py-1 h-7 text-yellow-600"
-                        >
-                          <Clock className="h-3 w-3 mr-1" />
-                          Pending
-                        </Button>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+                    )}
+                  </div>
+                </div>
               ))}
             </div>
           )}
