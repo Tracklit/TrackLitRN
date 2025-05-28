@@ -725,6 +725,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // Debug: Log the raw data to see what we're receiving
+      console.log('Raw meet data received:', rawData);
+      
       // Parse and validate the data
       const meetData = insertMeetSchema.parse(rawData);
       
