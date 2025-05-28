@@ -8,8 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
-import defaultProfileImageUrl from "@assets/image_1748451000674.png";
-const defaultProfileImage = defaultProfileImageUrl;
+const defaultProfileImage = "/default-profile.png";
 
 interface User {
   id: number;

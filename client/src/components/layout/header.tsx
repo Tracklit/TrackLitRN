@@ -7,8 +7,7 @@ import { Link } from "wouter";
 import { NotificationBell } from "@/components/notification-bell";
 import { Button } from "@/components/ui/button";
 import { InstallAppButton } from "@/components/install-app-button";
-import defaultProfileImageUrl from "@assets/image_1748451000674.png";
-const defaultProfileImage = defaultProfileImageUrl;
+const defaultProfileImage = "/default-profile.png";
 
 interface HeaderProps {
   title?: string;
