@@ -200,9 +200,8 @@ export default function ProfilePage() {
             <div className="md:col-span-2">
               <div className="bg-[#010a18] border border-blue-800/60 rounded-xl shadow-sm p-6">
                 <div className="flex items-center mb-6">
-                  <Avatar className="h-16 w-16 mr-4 rounded-[5px]">
-                    <img src="/inverted-profile.svg" alt="Profile" className="object-cover rounded-[5px]" />
-                    <AvatarFallback name={user?.name || ''} className="text-lg rounded-[5px]" />
+                  <Avatar className="h-16 w-16 mr-4">
+                    <AvatarFallback name={user?.name || ''} className="text-lg" />
                   </Avatar>
                   <div>
                     <h3 className="text-xl font-medium">{user?.name}</h3>

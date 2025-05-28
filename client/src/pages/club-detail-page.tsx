@@ -21,7 +21,6 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-const defaultProfileImage = "/default-profile.png";
 import { Separator } from "@/components/ui/separator";
 
 export function Component() {
@@ -620,9 +619,8 @@ export function Component() {
                             className={`flex ${message.userId === user?.id ? 'justify-end' : 'justify-start'}`}
                           >
                             <div className={`flex ${message.userId === user?.id ? 'flex-row-reverse' : 'flex-row'} max-w-[80%] gap-2`}>
-                              <Avatar className="h-8 w-8 rounded-[5px]">
-                                <AvatarImage src={defaultProfileImage} className="object-cover" />
-                                <AvatarFallback className="rounded-[5px]">{message.username?.[0] || 'U'}</AvatarFallback>
+                              <Avatar className="h-8 w-8">
+                                <AvatarFallback>{message.username?.[0] || 'U'}</AvatarFallback>
                               </Avatar>
                               <div className={`
                                 rounded-lg p-3 

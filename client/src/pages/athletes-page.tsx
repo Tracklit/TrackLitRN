@@ -8,7 +8,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
-const defaultProfileImage = "/default-profile.png";
 
 interface User {
   id: number;
@@ -265,9 +264,9 @@ export default function AthletesPage() {
             <div className="space-y-0">
               {displayAthletes.map((athlete) => (
                 <div key={athlete.id} className="flex items-center py-4 px-4 hover:bg-gray-800/50 transition-colors border-b border-gray-800 last:border-b-0">
-                  <Avatar className="h-7 w-7 mr-4 rounded-[5px]">
-                    <AvatarImage src={defaultProfileImage} className="object-cover" />
-                    <AvatarFallback className="bg-blue-600 text-white text-xs rounded-[5px]">
+                  <Avatar className="h-7 w-7 mr-4">
+                    <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${athlete.name || athlete.username}`} />
+                    <AvatarFallback className="bg-blue-600 text-white text-xs">
                       {(athlete.name || athlete.username)?.charAt(0)?.toUpperCase()}
                     </AvatarFallback>
                   </Avatar>

@@ -1,5 +1,5 @@
 import { useAuth } from "@/hooks/use-auth";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LogOut, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -7,7 +7,6 @@ import { Link } from "wouter";
 import { NotificationBell } from "@/components/notification-bell";
 import { Button } from "@/components/ui/button";
 import { InstallAppButton } from "@/components/install-app-button";
-const defaultProfileImage = "/default-profile.png";
 
 interface HeaderProps {
   title?: string;
@@ -53,9 +52,8 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="focus:outline-none" aria-label="User menu">
-                  <Avatar className="h-9 w-9 rounded-[5px]">
-                    <AvatarImage src={defaultProfileImage} className="object-cover" />
-                    <AvatarFallback name={user.name} className="rounded-[5px]" />
+                  <Avatar className="h-9 w-9">
+                    <AvatarFallback name={user.name} />
                   </Avatar>
                 </button>
               </DropdownMenuTrigger>
