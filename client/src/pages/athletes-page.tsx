@@ -191,6 +191,18 @@ export default function AthletesPage() {
     return (userCoaches as any[]).some((coach: any) => coach.id === coachId);
   };
 
+  // Helper function to check if user is already friends with athlete
+  const isAlreadyFriend = (athleteId: number) => {
+    return (friends as any[]).some((friend: any) => friend.id === athleteId);
+  };
+
+  // Helper function to check if there's a pending friend request
+  const hasPendingFriendRequest = (athleteId: number) => {
+    return (pendingRequests as any[]).some((request: any) => 
+      request.toUserId === athleteId || request.fromUserId === athleteId
+    );
+  };
+
   // Helper function to check if there's a pending coaching request
   const hasPendingCoachingRequest = (coachId: number) => {
     if (!coachingRequests) return false;
@@ -289,7 +301,25 @@ export default function AthletesPage() {
                   </div>
                   
                   <div className="flex gap-2">
-                    {isCoach(athlete) && isAlreadyCoached(athlete.id) ? (
+                    {isAlreadyFriend(athlete.id) ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-green-600 text-green-400 hover:bg-green-600/20"
+                        disabled
+                      >
+                        Friend
+                      </Button>
+                    ) : hasPendingFriendRequest(athlete.id) ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-yellow-600 text-yellow-400 hover:bg-yellow-600/20"
+                        disabled
+                      >
+                        Pending
+                      </Button>
+                    ) : isCoach(athlete) && isAlreadyCoached(athlete.id) ? (
                       <Button
                         variant="outline"
                         size="sm"
