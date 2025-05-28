@@ -1,5 +1,5 @@
 import { useAuth } from "@/hooks/use-auth";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -53,6 +53,7 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
               <DropdownMenuTrigger asChild>
                 <button className="focus:outline-none" aria-label="User menu">
                   <Avatar className="h-9 w-9">
+                    <AvatarImage src="/default-avatar.png" />
                     <AvatarFallback name={user.name} />
                   </Avatar>
                 </button>
