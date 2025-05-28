@@ -89,8 +89,8 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="flex flex-col h-full overflow-hidden">          
-          <nav className="flex-1 overflow-y-auto p-4 pt-16 space-y-1">
+        <div className="flex flex-col h-full">          
+          <nav className="flex-1 overflow-y-auto p-4 pt-16 space-y-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             {/* Dashboard */}
             <a
               href="/"
