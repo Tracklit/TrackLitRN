@@ -48,6 +48,8 @@ import {
   InsertProgramSession,
   ProgramPurchase,
   InsertProgramPurchase,
+  CoachAthlete,
+  InsertCoachAthlete,
   WorkoutReaction,
   InsertWorkoutReaction,
   ProgramProgress,
@@ -109,6 +111,13 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, userData: Partial<User>): Promise<User | undefined>;
+  
+  // Coach-Athlete operations
+  getCoachAthletes(coachId: number): Promise<User[]>;
+  getAthleteCoaches(athleteId: number): Promise<User[]>;
+  addCoachAthlete(coachAthlete: InsertCoachAthlete): Promise<CoachAthlete>;
+  removeCoachAthlete(coachId: number, athleteId: number): Promise<boolean>;
+  getCoachAthleteCount(coachId: number): Promise<number>;
   
   // Athlete Profile operations
   getAthleteProfile(userId: number): Promise<AthleteProfile | undefined>;
