@@ -379,7 +379,6 @@ export default function PublicProfilePage() {
               </CardContent>
             </Card>
 
-            <main>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               
               {/* Left Column */}
@@ -553,8 +552,7 @@ export default function PublicProfilePage() {
             </div>
           </div>
         </main>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
