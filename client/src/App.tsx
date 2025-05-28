@@ -94,8 +94,8 @@ function Router() {
       {/* Account */}
       <ProtectedRoute path="/spikes" component={SpikesPage} />
       <ProtectedRoute path="/subscription" component={SubscriptionPage} />
-      <ProtectedRoute path="/profile" component={ProfilePage} />
       <Route path="/profile/:userId" component={PublicProfilePage} />
+      <ProtectedRoute path="/profile" component={ProfilePage} />
       <ProtectedRoute path="/athlete-profile" component={AthleteProfilePage} />
       <ProtectedRoute path="/admin" component={AdminPage} />
       
