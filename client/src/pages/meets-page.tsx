@@ -365,6 +365,19 @@ export default function MeetsPage() {
                                 <MapPin className="h-4 w-4 mr-2 text-blue-400" />
                                 <span className="text-blue-300">{meet.location}</span>
                               </div>
+                              {meet.websiteUrl && (
+                                <div className="flex items-center">
+                                  <Trophy className="h-4 w-4 mr-2 text-blue-400" />
+                                  <a 
+                                    href={meet.websiteUrl} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-blue-300 hover:text-blue-100 underline text-sm"
+                                  >
+                                    Official Meet Info
+                                  </a>
+                                </div>
+                              )}
                             </div>
                             
                             <div className="flex flex-wrap gap-2 my-3">
@@ -465,6 +478,19 @@ export default function MeetsPage() {
                                 <MapPin className="h-4 w-4 mr-2 text-blue-400" />
                                 <span className="text-blue-300">{meet.location}</span>
                               </div>
+                              {meet.websiteUrl && (
+                                <div className="flex items-center">
+                                  <Trophy className="h-4 w-4 mr-2 text-blue-400" />
+                                  <a 
+                                    href={meet.websiteUrl} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-blue-300 hover:text-blue-100 underline text-sm"
+                                  >
+                                    Official Meet Info
+                                  </a>
+                                </div>
+                              )}
                             </div>
                             
                             <div className="flex flex-wrap gap-2 my-3">
