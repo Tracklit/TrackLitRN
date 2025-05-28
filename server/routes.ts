@@ -725,14 +725,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Debug: Log the raw data to see what we're receiving
-      console.log('Raw meet data received:', rawData);
-      
       // Parse and validate the data
       const meetData = insertMeetSchema.parse(rawData);
       
-      // Debug: Log the parsed data to see what the schema produces
-      console.log('Parsed meet data:', meetData);
+      // Manually ensure websiteUrl is included if provided
+      if (rawData.websiteUrl) {
+        meetData.websiteUrl = rawData.websiteUrl;
+      }
       
       // Override userId with authenticated user
       meetData.userId = req.user!.id;
