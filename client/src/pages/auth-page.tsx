@@ -33,9 +33,22 @@ const registerFormSchema = insertUserSchema.extend({
   path: ["confirmPassword"],
 });
 
+const forgotPasswordSchema = z.object({
+  email: z.string().email({ message: "Valid email is required" }),
+});
+
+const resetPasswordSchema = z.object({
+  newPassword: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  confirmPassword: z.string().min(1, { message: "Confirm your password" }),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
-  const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
+  const [activeTab, setActiveTab] = useState<'login' | 'register' | 'forgot-password' | 'reset-password'>('login');
+  const [resetToken, setResetToken] = useState<string>('');
   const { toast } = useToast();
 
   // Login form
@@ -60,6 +73,23 @@ export default function AuthPage() {
     },
   });
 
+  // Forgot password form
+  const forgotPasswordForm = useForm<z.infer<typeof forgotPasswordSchema>>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: {
+      email: "",
+    },
+  });
+
+  // Reset password form
+  const resetPasswordForm = useForm<z.infer<typeof resetPasswordSchema>>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
+
   // Handle login submission
   const onLoginSubmit = (data: LoginData) => {
     loginMutation.mutate(data);
@@ -69,6 +99,82 @@ export default function AuthPage() {
   const onRegisterSubmit = (data: z.infer<typeof registerFormSchema>) => {
     const { confirmPassword, ...userData } = data;
     registerMutation.mutate(userData);
+  };
+
+  // Handle forgot password submission
+  const onForgotPasswordSubmit = async (data: z.infer<typeof forgotPasswordSchema>) => {
+    try {
+      const response = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: "Reset Email Sent",
+          description: result.message,
+        });
+        
+        // In development, show the token for testing
+        if (result.token) {
+          console.log('Reset token for testing:', result.token);
+          setResetToken(result.token);
+          setActiveTab('reset-password');
+        }
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || "Failed to send reset email",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send reset email",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle reset password submission
+  const onResetPasswordSubmit = async (data: z.infer<typeof resetPasswordSchema>) => {
+    try {
+      const response = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: resetToken,
+          newPassword: data.newPassword,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: "Password Reset Successful",
+          description: result.message,
+        });
+        setActiveTab('login');
+        setResetToken('');
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || "Failed to reset password",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to reset password",
+        variant: "destructive",
+      });
+    }
   };
 
   // Handle Google sign-in

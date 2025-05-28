@@ -5044,12 +5044,11 @@ Keep the response professional, evidence-based, and specific to track and field 
         .where(
           and(
             eq(passwordResetTokens.token, token),
-            eq(passwordResetTokens.used, false),
-            ne(passwordResetTokens.expiresAt, new Date())
+            eq(passwordResetTokens.used, false)
           )
         );
 
-      if (!resetToken) {
+      if (!resetToken || new Date() > resetToken.expiresAt) {
         return res.status(400).json({ error: "Invalid or expired reset token" });
       }
 
@@ -5081,12 +5080,11 @@ Keep the response professional, evidence-based, and specific to track and field 
         .where(
           and(
             eq(passwordResetTokens.token, token),
-            eq(passwordResetTokens.used, false),
-            ne(passwordResetTokens.expiresAt, new Date())
+            eq(passwordResetTokens.used, false)
           )
         );
 
-      if (!resetToken) {
+      if (!resetToken || new Date() > resetToken.expiresAt) {
         return res.status(400).json({ error: "Invalid or expired reset token" });
       }
 
