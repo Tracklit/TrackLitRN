@@ -304,45 +304,39 @@ export default function MeetsPage() {
               </div>
             )}
 
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-white">My Meets</h2>
-              <Button
-                onClick={() => setIsCreateMeetOpen(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 border border-blue-500"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Create Meet
-              </Button>
-            </div>
+            <h2 className="text-xl font-semibold text-white mb-4">My Meets</h2>
             
             <Tabs defaultValue="upcoming" className="mt-4">
-              <TabsList className="mb-6 bg-blue-800/30 border border-blue-700/30">
-                <TabsTrigger 
-                  value="upcoming" 
-                  className="data-[state=active]:bg-blue-700 data-[state=active]:text-white"
-                >
-                  Upcoming
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="past"
-                  className="data-[state=active]:bg-blue-700 data-[state=active]:text-white"
-                >
-                  Past
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="calendar"
-                  className="data-[state=active]:bg-blue-700 data-[state=active]:text-white"
-                  onClick={!isProUser ? (e) => {
-                    e.preventDefault();
-                    setIsProModalOpen(true);
-                  } : undefined}
-                >
-                  <div className="flex items-center gap-2">
+              <div className="flex justify-between items-center mb-6">
+                <TabsList className="bg-blue-800/30 border border-blue-700/30">
+                  <TabsTrigger 
+                    value="upcoming" 
+                    className="data-[state=active]:bg-blue-700 data-[state=active]:text-white"
+                  >
+                    Upcoming
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="past"
+                    className="data-[state=active]:bg-blue-700 data-[state=active]:text-white"
+                  >
+                    Past
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="calendar"
+                    className="data-[state=active]:bg-blue-700 data-[state=active]:text-white"
+                  >
                     Calendar
-                    <Crown className="h-4 w-4 text-amber-400" />
-                  </div>
-                </TabsTrigger>
-              </TabsList>
+                  </TabsTrigger>
+                </TabsList>
+                
+                <Button
+                  onClick={() => setIsCreateMeetOpen(true)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 border border-blue-500"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Meet
+                </Button>
+              </div>
               
               <TabsContent value="upcoming">
                 {isLoading ? (
