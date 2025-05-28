@@ -725,7 +725,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Create meetData with explicit websiteUrl handling
+      // Create meetData with proper field mapping
       const meetData: any = {
         name: rawData.name,
         date: rawData.date,
@@ -734,13 +734,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         events: rawData.events || [],
         warmupTime: rawData.warmupTime || 60,
         arrivalTime: rawData.arrivalTime || 90,
+        websiteUrl: rawData.websiteUrl || null,
         userId: req.user!.id
       };
-      
-      // Explicitly add websiteUrl if provided
-      if (rawData.websiteUrl && rawData.websiteUrl.trim() !== '') {
-        meetData.websiteUrl = rawData.websiteUrl.trim();
-      }
       
       // Create the meet
       const meet = await dbStorage.createMeet(meetData);
