@@ -629,6 +629,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Public Profile Routes
+  app.get("/api/users/:userId", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const user = await dbStorage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Remove sensitive information for public profiles
+      const { password, ...publicProfile } = user;
+      res.json(publicProfile);
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      res.status(500).json({ message: "Failed to fetch user profile" });
+    }
+  });
+
+  app.get("/api/users/:userId/meets", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const meets = await dbStorage.getMeets();
+      const userMeets = meets.filter(meet => meet.userId === userId);
+      res.json(userMeets);
+    } catch (error) {
+      console.error("Error fetching user meets:", error);
+      res.status(500).json({ message: "Failed to fetch user meets" });
+    }
+  });
+
+  app.get("/api/users/:userId/latest-workout", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const currentUserId = req.user?.id;
+      
+      // For now, return null since we don't have workout data structure
+      res.json(null);
+    } catch (error) {
+      console.error("Error fetching latest workout:", error);
+      res.status(500).json({ message: "Failed to fetch latest workout" });
+    }
+  });
+
+  app.get("/api/users/:userId/programs", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const programs = await dbStorage.getPrograms();
+      const userPrograms = programs.filter(program => program.userId === userId && program.visibility === 'public');
+      res.json(userPrograms);
+    } catch (error) {
+      console.error("Error fetching user programs:", error);
+      res.status(500).json({ message: "Failed to fetch user programs" });
+    }
+  });
+
+  app.get("/api/users/:userId/connections", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const friends = await dbStorage.getFriends(userId);
+      res.json(friends);
+    } catch (error) {
+      console.error("Error fetching user connections:", error);
+      res.status(500).json({ message: "Failed to fetch user connections" });
+    }
+  });
+
+  app.patch("/api/users/:userId", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const currentUserId = req.user?.id;
+      
+      // Only allow users to update their own profile
+      if (!req.isAuthenticated() || currentUserId !== userId) {
+        return res.status(403).json({ message: "Not authorized to update this profile" });
+      }
+
+      const updates = req.body;
+      const updatedUser = await dbStorage.updateUser(userId, updates);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Remove sensitive information
+      const { password, ...publicProfile } = updatedUser;
+      res.json(publicProfile);
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      res.status(500).json({ message: "Failed to update user profile" });
+    }
+  });
+
   // Proxy route for external API calls - no auth required
   app.get("/api/proxy", async (req: Request, res: Response) => {
     try {

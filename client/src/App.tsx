@@ -45,6 +45,7 @@ import { Component as DocumentProgramViewer } from "@/pages/document-program-vie
 import { Component as AssignedProgramsPage } from "@/pages/assigned-programs-page";
 import AthleteProfilePage from "@/pages/athlete-profile-page";
 import AthleteProfile from "@/pages/athlete-profile";
+import PublicProfilePage from "@/pages/public-profile-page";
 import AdminPage from "@/pages/admin-page";
 import RehabPage from "@/pages/rehab-page";
 import HamstringRehabPage from "@/pages/rehab/acute-muscle/hamstring";
@@ -94,6 +95,7 @@ function Router() {
       <ProtectedRoute path="/spikes" component={SpikesPage} />
       <ProtectedRoute path="/subscription" component={SubscriptionPage} />
       <ProtectedRoute path="/profile" component={ProfilePage} />
+      <ProtectedRoute path="/profile/:userId" component={PublicProfilePage} />
       <ProtectedRoute path="/athlete-profile" component={AthleteProfilePage} />
       <ProtectedRoute path="/admin" component={AdminPage} />
       
