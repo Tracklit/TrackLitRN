@@ -725,17 +725,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Parse and validate the data - bypass schema parsing for websiteUrl
-      const { websiteUrl, ...otherData } = rawData;
-      const meetData = insertMeetSchema.parse(otherData);
+      // Create meetData with explicit websiteUrl handling
+      const meetData: any = {
+        name: rawData.name,
+        date: rawData.date,
+        location: rawData.location,
+        coordinates: rawData.coordinates,
+        events: rawData.events || [],
+        warmupTime: rawData.warmupTime || 60,
+        arrivalTime: rawData.arrivalTime || 90,
+        userId: req.user!.id
+      };
       
-      // Manually add websiteUrl if provided
-      if (websiteUrl) {
-        meetData.websiteUrl = websiteUrl;
+      // Explicitly add websiteUrl if provided
+      if (rawData.websiteUrl && rawData.websiteUrl.trim() !== '') {
+        meetData.websiteUrl = rawData.websiteUrl.trim();
       }
-      
-      // Override userId with authenticated user
-      meetData.userId = req.user!.id;
       
       // Create the meet
       const meet = await dbStorage.createMeet(meetData);
