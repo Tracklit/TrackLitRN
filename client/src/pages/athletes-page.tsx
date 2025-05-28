@@ -138,6 +138,9 @@ export default function AthletesPage() {
     }
   };
 
+  // Track pending friend requests per user
+  const [pendingFriendRequests, setPendingFriendRequests] = useState<Set<number>>(new Set());
+
   // Send friend request mutation
   const sendFriendRequestMutation = useMutation({
     mutationFn: async (userId: number) => {
@@ -148,7 +151,11 @@ export default function AthletesPage() {
       }
       return response.json();
     },
-    onSuccess: () => {
+    onMutate: (userId: number) => {
+      // Add to pending set immediately
+      setPendingFriendRequests(prev => new Set(prev).add(userId));
+    },
+    onSuccess: (data, userId: number) => {
       // Invalidate all relevant queries to update button states
       queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
       queryClient.invalidateQueries({ queryKey: ["/api/friend-requests/pending"] });
@@ -158,13 +165,27 @@ export default function AthletesPage() {
         description: "Friend request sent successfully!",
       });
     },
-    onError: (error: Error) => {
+    onError: (error: Error, userId: number) => {
+      // Remove from pending set on error
+      setPendingFriendRequests(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(userId);
+        return newSet;
+      });
       toast({
         title: "Error",
         description: error.message || "Failed to send friend request.",
         variant: "destructive",
       });
     },
+    onSettled: (data, error, userId: number) => {
+      // Remove from pending set when settled
+      setPendingFriendRequests(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(userId);
+        return newSet;
+      });
+    }
   });
 
   // Coaching request mutation
@@ -365,12 +386,12 @@ export default function AthletesPage() {
                     ) : (
                       <Button
                         onClick={() => handleSendFriendRequest(athlete.id)}
-                        disabled={sendFriendRequestMutation.isPending || isAlreadyFriend(athlete.id) || hasPendingFriendRequest(athlete.id)}
+                        disabled={pendingFriendRequests.has(athlete.id) || isAlreadyFriend(athlete.id) || hasPendingFriendRequest(athlete.id)}
                         variant="outline"
                         size="sm"
                         className="border-gray-600 text-gray-400 hover:bg-gray-600/20"
                       >
-                        {sendFriendRequestMutation.isPending ? "Sending..." : "Add Friend"}
+                        {pendingFriendRequests.has(athlete.id) ? "Sending..." : "Add Friend"}
                       </Button>
                     )}
                   </div>

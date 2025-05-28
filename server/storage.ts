@@ -2502,6 +2502,18 @@ export class DatabaseStorage implements IStorage {
         eq(follows.followingId, userId)
       ));
 
+    // Check for pending friend requests in both directions
+    const pendingRequest = await db
+      .select()
+      .from(notifications)
+      .where(and(
+        eq(notifications.type, 'friend_request'),
+        or(
+          and(eq(notifications.userId, targetUserId), sql`JSON_EXTRACT(${notifications.data}, '$.fromUserId') = ${userId}`),
+          and(eq(notifications.userId, userId), sql`JSON_EXTRACT(${notifications.data}, '$.fromUserId') = ${targetUserId}`)
+        )
+      ));
+
     const followersCount = await db
       .select({ count: sql`count(*)` })
       .from(follows)
@@ -2515,6 +2527,7 @@ export class DatabaseStorage implements IStorage {
     return {
       isFollowing: isFollowing.length > 0,
       isFollower: isFollower.length > 0,
+      hasPendingRequest: pendingRequest.length > 0,
       followersCount: parseInt(followersCount[0].count as string) || 0,
       followingCount: parseInt(followingCount[0].count as string) || 0
     };
