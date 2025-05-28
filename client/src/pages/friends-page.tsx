@@ -205,7 +205,7 @@ export default function FriendsPage() {
 
           <Tabs defaultValue="friends" className="w-full">
             <TabsList className="grid w-full grid-cols-2 bg-gray-800 border-gray-700">
-              <TabsTrigger value="friends" className="data-[state=active]:bg-orange-600">
+              <TabsTrigger value="friends" className="data-[state=active]:bg-[#ff8c00]">
                 Your Friends
                 {friends.length > 0 && (
                   <span className="ml-2 px-2 py-1 text-xs bg-gray-600 rounded-full">
@@ -213,7 +213,7 @@ export default function FriendsPage() {
                   </span>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="pending" className="data-[state=active]:bg-orange-600">
+              <TabsTrigger value="pending" className="data-[state=active]:bg-[#ff8c00]">
                 Pending Requests
                 {pendingRequests.length > 0 && (
                   <span className="ml-2 px-2 py-1 text-xs bg-red-600 rounded-full">
