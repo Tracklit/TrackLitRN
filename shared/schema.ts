@@ -557,6 +557,7 @@ export type InsertAthleteGroup = z.infer<typeof insertAthleteGroupSchema>;
 export type InsertGroupMember = z.infer<typeof insertGroupMemberSchema>;
 export type InsertCoachNote = z.infer<typeof insertCoachNoteSchema>;
 export type InsertPracticeMedia = z.infer<typeof insertPracticeMediaSchema>;
+export type InsertCoachingRequest = z.infer<typeof insertCoachingRequestSchema>;
 
 export type User = typeof users.$inferSelect;
 export type Meet = typeof meets.$inferSelect;
@@ -1076,6 +1077,39 @@ export const coachAthletesRelations = relations(coachAthletes, ({ one }) => ({
     relationName: "athlete_relationships"
   }),
 }));
+
+// Coaching requests (bidirectional)
+export const coachingRequests = pgTable("coaching_requests", {
+  id: serial("id").primaryKey(),
+  fromUserId: integer("from_user_id").notNull().references(() => users.id),
+  toUserId: integer("to_user_id").notNull().references(() => users.id),
+  requestType: text("request_type", { enum: ['coach_invite', 'athlete_request'] }).notNull(), 
+  // coach_invite: Coach inviting athlete to join their roster
+  // athlete_request: Athlete requesting to be coached by coach
+  status: text("status", { enum: ['pending', 'accepted', 'declined'] }).default('pending'),
+  message: text("message"), // Optional message with the request
+  createdAt: timestamp("created_at").defaultNow(),
+  respondedAt: timestamp("responded_at"),
+});
+
+export const coachingRequestsRelations = relations(coachingRequests, ({ one }) => ({
+  fromUser: one(users, {
+    fields: [coachingRequests.fromUserId],
+    references: [users.id],
+    relationName: "sent_coaching_requests"
+  }),
+  toUser: one(users, {
+    fields: [coachingRequests.toUserId],
+    references: [users.id],
+    relationName: "received_coaching_requests"
+  }),
+}));
+
+export const insertCoachingRequestSchema = createInsertSchema(coachingRequests).omit({
+  id: true,
+  createdAt: true,
+  respondedAt: true,
+});
 
 // Program assignments (for coach to athlete)
 export const programAssignments = pgTable("program_assignments", {
