@@ -78,6 +78,8 @@ interface Friend {
 export default function PublicProfilePage() {
   const [, params] = useRoute('/profile/:userId');
   const userId = params?.userId ? parseInt(params.userId) : null;
+
+  console.log('PublicProfilePage - userId from params:', userId, 'params:', params);
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [bioText, setBioText] = useState('');
   const [isEditingProfile, setIsEditingProfile] = useState(false);

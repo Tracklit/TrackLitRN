@@ -629,10 +629,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Public Profile Routes
+  // Public Profile Routes - No auth required for viewing profiles
   app.get("/api/users/:userId", async (req: Request, res: Response) => {
     try {
       const userId = parseInt(req.params.userId);
+      
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
       const user = await dbStorage.getUser(userId);
       
       if (!user) {
@@ -651,8 +656,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/users/:userId/meets", async (req: Request, res: Response) => {
     try {
       const userId = parseInt(req.params.userId);
-      const meets = await dbStorage.getMeets();
-      const userMeets = meets.filter(meet => meet.userId === userId);
+      
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      const userMeets = await dbStorage.getMeetsByUserId(userId);
       res.json(userMeets);
     } catch (error) {
       console.error("Error fetching user meets:", error);
@@ -676,7 +685,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/users/:userId/programs", async (req: Request, res: Response) => {
     try {
       const userId = parseInt(req.params.userId);
-      const programs = await dbStorage.getPrograms();
+      
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      const programs = await dbStorage.getAllPrograms();
       const userPrograms = programs.filter(program => program.userId === userId && program.visibility === 'public');
       res.json(userPrograms);
     } catch (error) {
