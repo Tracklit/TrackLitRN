@@ -264,9 +264,9 @@ export default function AthletesPage() {
             <div className="space-y-0">
               {displayAthletes.map((athlete) => (
                 <div key={athlete.id} className="flex items-center py-4 px-4 hover:bg-gray-800/50 transition-colors border-b border-gray-800 last:border-b-0">
-                  <Avatar className="h-7 w-7 mr-4">
-                    <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${athlete.name || athlete.username}`} />
-                    <AvatarFallback className="bg-blue-600 text-white text-xs">
+                  <Avatar className="h-7 w-7 mr-4 rounded-[5px]">
+                    <AvatarImage src="/attached_assets/IMG_4089.jpeg" className="object-cover" />
+                    <AvatarFallback className="bg-blue-600 text-white text-xs rounded-[5px]">
                       {(athlete.name || athlete.username)?.charAt(0)?.toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
