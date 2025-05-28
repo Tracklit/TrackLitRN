@@ -4570,12 +4570,23 @@ Keep the response professional, evidence-based, and specific to track and field 
       const receiverId = parseInt(req.params.userId);
       if (isNaN(receiverId)) return res.status(400).send("Invalid user ID");
 
-      // Check if already following or request exists
+      // Check if already following
       const followStatus = await dbStorage.getFollowStatus(req.user.id, receiverId);
       if (followStatus.isFollowing) {
         return res.status(400).send("Already following this user");
       }
-      if (followStatus.hasPendingRequest) {
+
+      // Check for existing friend request notifications directly
+      const existingNotifications = await db
+        .select()
+        .from(notifications)
+        .where(and(
+          eq(notifications.type, 'friend_request'),
+          eq(notifications.userId, receiverId),
+          sql`JSON_EXTRACT(${notifications.data}, '$.fromUserId') = ${req.user.id}`
+        ));
+
+      if (existingNotifications.length > 0) {
         return res.status(400).send("Friend request already sent");
       }
 
