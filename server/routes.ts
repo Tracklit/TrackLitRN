@@ -1,7 +1,8 @@
 import express, { type Express, type Request, type Response } from "express";
 import { createServer, type Server } from "http";
 import { storage as dbStorage } from "./storage";
-import { pool } from "./db";
+import { pool, db } from "./db";
+import { meets } from "@shared/schema";
 import { setupAuth } from "./auth";
 import { z } from "zod";
 import multer from "multer";
@@ -741,8 +742,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Raw websiteUrl:", rawData.websiteUrl);
       console.log("Meet data to save:", meetData);
       
-      // Create the meet
-      const meet = await dbStorage.createMeet(meetData);
+      // Create the meet using direct database insertion to ensure websiteUrl is saved
+      const [meet] = await db.insert(meets).values(meetData).returning();
       
       // Create automatic reminders
       try {
