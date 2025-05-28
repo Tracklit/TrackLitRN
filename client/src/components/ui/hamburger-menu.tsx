@@ -251,17 +251,6 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               Athlete Profile
             </a>
             <a
-              href="/coach-settings"
-              className={cn(
-                "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",
-                location === "/coach-settings" ? "bg-[#ff8c00] text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
-              )}
-              onClick={() => setIsOpen(false)}
-            >
-              <Award className="h-4 w-4 mr-3" />
-              Coach Settings
-            </a>
-            <a
               href="/spikes"
               className={cn(
                 "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",

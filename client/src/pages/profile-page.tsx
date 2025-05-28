@@ -18,12 +18,15 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Crown, Plus, X } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Crown, Plus, X, Users, Target } from 'lucide-react';
 import { PremiumPromotion } from '@/components/premium-promotion';
 import { Separator } from '@/components/ui/separator';
 import { insertUserSchema } from '@shared/schema';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup, SelectLabel } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
 // Profile form schema (for updating user info)
 const profileFormSchema = z.object({
@@ -37,8 +40,79 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>;
 export default function ProfilePage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [clubs, setClubs] = useState<any[]>([]);
   const [isLoadingClubs, setIsLoadingClubs] = useState(false);
+
+  // Coach functionality queries
+  const { data: coachLimits } = useQuery({
+    queryKey: ['/api/coach/limits'],
+    enabled: !!user?.isCoach,
+  });
+
+  const { data: athletes = [] } = useQuery({
+    queryKey: ['/api/coach/athletes'],
+    enabled: !!user?.isCoach,
+  });
+
+  const { data: coaches = [] } = useQuery({
+    queryKey: ['/api/athlete/coaches'],
+  });
+
+  // Coach status toggle mutation
+  const updateCoachStatusMutation = useMutation({
+    mutationFn: async (isCoach: boolean) => {
+      const response = await apiRequest('PATCH', '/api/user/coach-status', { isCoach });
+      return response.json();
+    },
+    onSuccess: (updatedUser) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/coach/limits'] });
+      toast({
+        title: updatedUser.isCoach ? "Coach Status Activated" : "Coach Status Deactivated",
+        description: updatedUser.isCoach 
+          ? "You can now assign programs to athletes!" 
+          : "Coach features have been disabled.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Update Failed",
+        description: error.message || "Failed to update coach status",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleCoachToggle = (checked: boolean) => {
+    updateCoachStatusMutation.mutate(checked);
+  };
+
+  const getSubscriptionBadgeColor = (tier: string) => {
+    switch (tier) {
+      case 'star': return 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30';
+      case 'pro': return 'bg-purple-500/20 text-purple-300 border-purple-500/30';
+      default: return 'bg-gray-500/20 text-gray-300 border-gray-500/30';
+    }
+  };
+
+  const getCoachLimitInfo = () => {
+    if (!user?.isCoach || !coachLimits) return null;
+    
+    const { currentAthletes, maxAthletes, tier } = coachLimits;
+    const isUnlimited = maxAthletes === 'unlimited';
+    
+    return (
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-gray-400">
+          Athletes: {currentAthletes} / {isUnlimited ? '∞' : maxAthletes}
+        </span>
+        <Badge className={getSubscriptionBadgeColor(tier)}>
+          {tier.toUpperCase()}
+        </Badge>
+      </div>
+    );
+  };
   
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -218,6 +292,123 @@ export default function ProfilePage() {
                     </Button>
                   </form>
                 </Form>
+
+                {/* Coach Section */}
+                <Separator className="my-6" />
+                
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <h3 className="text-lg font-medium text-white flex items-center gap-2">
+                        <Crown className="w-5 h-5" />
+                        Coach Status
+                      </h3>
+                      <p className="text-sm text-gray-400">
+                        Enable coach features to assign programs to athletes
+                      </p>
+                    </div>
+                    <Switch
+                      checked={user?.isCoach || false}
+                      onCheckedChange={handleCoachToggle}
+                      disabled={updateCoachStatusMutation.isPending}
+                    />
+                  </div>
+                  
+                  {user?.isCoach && coachLimits && (
+                    <div className="bg-[#0f1419] p-4 rounded-lg border border-gray-700">
+                      {getCoachLimitInfo()}
+                    </div>
+                  )}
+                </div>
+
+                {/* Coach Dashboard */}
+                {user?.isCoach && (
+                  <div className="space-y-4 mt-6">
+                    <h4 className="text-md font-medium text-white flex items-center gap-2">
+                      <Users className="w-4 h-4" />
+                      Coach Dashboard
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-[#0f1419] p-4 rounded-lg border border-gray-700">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Target className="w-4 h-4 text-orange-400" />
+                          <span className="text-sm font-medium text-gray-300">Your Athletes</span>
+                        </div>
+                        <div className="text-2xl font-bold text-white">{athletes.length}</div>
+                        {coachLimits && (
+                          <p className="text-xs text-gray-400 mt-1">
+                            {coachLimits.maxAthletes === 'unlimited' 
+                              ? 'Unlimited capacity' 
+                              : `${coachLimits.maxAthletes - coachLimits.currentAthletes} slots remaining`
+                            }
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="bg-[#0f1419] p-4 rounded-lg border border-gray-700">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Crown className="w-4 h-4 text-yellow-400" />
+                          <span className="text-sm font-medium text-gray-300">Subscription Tier</span>
+                        </div>
+                        <div className="text-2xl font-bold text-white capitalize">
+                          {user?.subscriptionTier || 'free'}
+                        </div>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {user?.subscriptionTier === 'free' && 'Upgrade for more athletes'}
+                          {user?.subscriptionTier === 'pro' && 'Up to 20 athletes'}
+                          {user?.subscriptionTier === 'star' && 'Unlimited athletes'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {athletes.length > 0 && (
+                      <div className="space-y-2">
+                        <h5 className="text-sm font-medium text-gray-300">Current Athletes</h5>
+                        <div className="space-y-2 max-h-48 overflow-y-auto">
+                          {athletes.map((athlete: any) => (
+                            <div key={athlete.id} className="flex items-center justify-between bg-[#0f1419] p-3 rounded border border-gray-700">
+                              <div>
+                                <div className="font-medium text-white">{athlete.name}</div>
+                                <div className="text-sm text-gray-400">@{athlete.username}</div>
+                              </div>
+                              <Badge className="bg-green-500/20 text-green-300 border-green-500/30">
+                                Active
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Athlete Dashboard */}
+                {coaches.length > 0 && (
+                  <div className="space-y-4 mt-6">
+                    <h4 className="text-md font-medium text-white flex items-center gap-2">
+                      <Crown className="w-4 h-4" />
+                      Your Coaches
+                    </h4>
+                    <div className="space-y-2">
+                      {coaches.map((coach: any) => (
+                        <div key={coach.id} className="flex items-center justify-between bg-[#0f1419] p-3 rounded border border-gray-700">
+                          <div>
+                            <div className="font-medium text-white flex items-center gap-2">
+                              {coach.name}
+                              <Badge className="bg-yellow-500/20 text-yellow-300 border-yellow-500/30 text-xs">
+                                COACH
+                              </Badge>
+                            </div>
+                            <div className="text-sm text-gray-400">@{coach.username}</div>
+                          </div>
+                          <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30">
+                            Training
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             

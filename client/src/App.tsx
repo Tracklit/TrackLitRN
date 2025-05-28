@@ -95,7 +95,6 @@ function Router() {
       <ProtectedRoute path="/subscription" component={SubscriptionPage} />
       <ProtectedRoute path="/profile" component={ProfilePage} />
       <ProtectedRoute path="/athlete-profile" component={AthleteProfilePage} />
-      <ProtectedRoute path="/coach-settings" component={AthleteProfile} />
       <ProtectedRoute path="/admin" component={AdminPage} />
       
       {/* Auth */}
