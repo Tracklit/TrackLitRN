@@ -1,15 +1,23 @@
-import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserCheck, UserX, MessageCircle, Clock, UserMinus, Crown, Users, Target } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { UserCheck, Clock, MessageCircle, UserMinus, Target } from "lucide-react";
+import { Link } from "wouter";
+
+interface Friend {
+  id: number;
+  username: string;
+  name: string;
+  email: string;
+  bio?: string;
+  isOnline?: boolean;
+  isCoach?: boolean;
+}
 
 interface FriendRequest {
   id: number;
@@ -25,101 +33,125 @@ interface FriendRequest {
   };
 }
 
-interface Friend {
+interface CoachingRequest {
   id: number;
-  username: string;
-  name: string;
-  email: string;
-  bio?: string;
-  isOnline?: boolean;
+  fromUserId: number;
+  toUserId: number;
+  requestType: 'coach_invite' | 'athlete_request';
+  status: 'pending' | 'accepted' | 'declined';
+  message?: string;
+  createdAt: string;
+  respondedAt?: string;
 }
 
 export default function FriendsPage() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  // Get current user
+  // Fetch current user
   const { data: currentUser } = useQuery({
     queryKey: ["/api/user"],
   });
 
-  // Get coach's athletes if user is a coach
+  // Fetch friends
+  const { data: friends = [], isLoading: loadingFriends } = useQuery({
+    queryKey: ["/api/friends"],
+  });
+
+  // Fetch friend requests
+  const { data: pendingRequests = [], isLoading: loadingRequests } = useQuery({
+    queryKey: ["/api/friend-requests/pending"],
+  });
+
+  // Fetch coaching requests
+  const { data: coachingRequests = [] } = useQuery({
+    queryKey: ["/api/coaching-requests"],
+  });
+
+  // Fetch coach athletes
   const { data: coachAthletes = [] } = useQuery({
     queryKey: ["/api/coach/athletes"],
-    enabled: !!currentUser?.isCoach,
   });
 
-  // Get coaching requests
-  const { data: coachingRequests } = useQuery({
-    queryKey: ["/api/coaching-requests"],
-    enabled: !!currentUser,
-  });
-
-  // Get coach limits
-  const { data: coachLimits } = useQuery({
-    queryKey: ["/api/coach/limits"],
-    enabled: !!currentUser?.isCoach,
-  });
-
-  // Fetch pending friend requests
-  const { data: pendingRequests = [], isLoading: loadingRequests } = useQuery<FriendRequest[]>({
-    queryKey: ["/api/friend-requests/pending"],
-    queryFn: async () => {
-      const response = await apiRequest("GET", "/api/friend-requests/pending");
-      return response.json();
+  // Remove friend mutation
+  const removeFriendMutation = useMutation({
+    mutationFn: (friendId: number) => 
+      apiRequest("DELETE", `/api/friends/${friendId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
+      toast({
+        title: "Friend removed",
+        description: "The friend has been removed from your list.",
+      });
     },
-    enabled: !!currentUser,
-  });
-
-  // Fetch current friends
-  const { data: friends = [], isLoading: loadingFriends } = useQuery<Friend[]>({
-    queryKey: ["/api/friends"],
-    queryFn: async () => {
-      const response = await apiRequest("GET", "/api/friends");
-      return response.json();
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to remove friend",
+        variant: "destructive",
+      });
     },
-    enabled: !!currentUser,
   });
 
   // Accept friend request mutation
   const acceptRequestMutation = useMutation({
-    mutationFn: async (requestId: number) => {
-      return await apiRequest("POST", `/api/friend-requests/${requestId}/accept`);
-    },
+    mutationFn: (requestId: number) => 
+      apiRequest("POST", `/api/friend-requests/${requestId}/accept`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/friend-requests/pending"] });
       queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       toast({
-        title: "Friend request accepted!",
-        description: "You are now friends with this user.",
+        title: "Friend request accepted",
+        description: "You are now friends!",
       });
     },
   });
 
   // Decline friend request mutation
   const declineRequestMutation = useMutation({
-    mutationFn: async (requestId: number) => {
-      return await apiRequest("POST", `/api/friend-requests/${requestId}/decline`);
-    },
+    mutationFn: (requestId: number) => 
+      apiRequest("POST", `/api/friend-requests/${requestId}/decline`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/friend-requests/pending"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       toast({
         title: "Friend request declined",
-        description: "The friend request has been declined.",
+        description: "The request has been declined.",
       });
     },
   });
 
-  // Start conversation mutation
-  const startConversationMutation = useMutation({
-    mutationFn: async (receiverId: number) => {
-      return await apiRequest("POST", "/api/conversations", { receiverId });
-    },
+  // Send coaching request mutation
+  const sendCoachingRequestMutation = useMutation({
+    mutationFn: ({ toUserId, requestType, message }: { 
+      toUserId: number; 
+      requestType: 'coach_invite' | 'athlete_request'; 
+      message: string;
+    }) => 
+      apiRequest("POST", "/api/coaching-requests", {
+        fromUserId: currentUser?.id,
+        toUserId,
+        requestType,
+        message,
+      }),
     onSuccess: () => {
-      window.location.href = "/messages";
+      queryClient.invalidateQueries({ queryKey: ["/api/coaching-requests"] });
+      toast({
+        title: "Coaching request sent",
+        description: "Your coaching request has been sent!",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send coaching request",
+        variant: "destructive",
+      });
     },
   });
+
+  const handleRemoveFriend = (friendId: number) => {
+    removeFriendMutation.mutate(friendId);
+  };
 
   const handleAcceptRequest = (requestId: number) => {
     acceptRequestMutation.mutate(requestId);
@@ -130,164 +162,106 @@ export default function FriendsPage() {
   };
 
   const handleMessageFriend = (friendId: number) => {
-    startConversationMutation.mutate(friendId);
+    // Navigate to messages page with the friend
+    window.location.href = `/messages/${friendId}`;
   };
 
-  // Remove friend mutation
-  const removeFriendMutation = useMutation({
-    mutationFn: (friendId: number) => 
-      apiRequest("DELETE", `/api/friends/${friendId}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
-      toast({
-        title: "Friend removed",
-        description: "Friend has been removed from your list.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to remove friend.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleRemoveFriend = (friendId: number) => {
-    removeFriendMutation.mutate(friendId);
+  const handleSendCoachingRequest = (toUserId: number, requestType: 'coach_invite' | 'athlete_request') => {
+    const message = requestType === 'coach_invite' 
+      ? "I'd like to invite you to join as my athlete"
+      : "I'd like to request you as my coach";
+    
+    sendCoachingRequestMutation.mutate({
+      toUserId,
+      requestType,
+      message,
+    });
   };
 
-  // Coaching request mutation
-  const sendCoachingRequestMutation = useMutation({
-    mutationFn: async ({ friendId, type }: { friendId: number, type: 'coach_invite' | 'athlete_request' }) => {
-      const response = await apiRequest("POST", "/api/coaching-requests", {
-        fromUserId: currentUser.id,
-        toUserId: friendId,
-        requestType: type,
-        message: type === 'coach_invite' 
-          ? "I'd like to invite you to join as my athlete"
-          : "I'd like to request your coaching"
-      });
-      if (!response.ok) {
-        throw new Error("Failed to send coaching request");
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/coaching-requests"] });
-      toast({
-        title: "Coaching request sent",
-        description: "Your coaching request has been sent successfully.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to send coaching request. Please try again.",
-        variant: "destructive",
-      });
-    }
-  });
-
-  const handleSendCoachingRequest = (friendId: number, type: 'coach_invite' | 'athlete_request') => {
-    sendCoachingRequestMutation.mutate({ friendId, type });
+  // Helper functions
+  const isAlreadyAthlete = (userId: number) => {
+    return coachAthletes.some((athlete: any) => athlete.id === userId);
   };
 
-  // Helper function to check if friend is already an athlete
-  const isAlreadyAthlete = (friendId: number) => {
-    return coachAthletes.some((athlete: any) => athlete.id === friendId);
-  };
-
-  // Helper function to check if there's a pending coaching request
-  const hasPendingCoachingRequest = (friendId: number) => {
-    if (!coachingRequests) return false;
-    const { sent = [], received = [] } = coachingRequests;
-    return [...sent, ...received].some((req: any) => 
-      (req.fromUserId === currentUser.id && req.toUserId === friendId) ||
-      (req.fromUserId === friendId && req.toUserId === currentUser.id)
+  const hasPendingCoachingRequest = (userId: number) => {
+    return coachingRequests.some((request: any) => 
+      request.toUserId === userId && request.status === 'pending'
     );
   };
-
-  if (!currentUser) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">Please log in</h2>
-          <p className="text-muted-foreground">You need to be logged in to view your friends.</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">Friends</h1>
-          <p className="text-muted-foreground">Manage your friend requests and connections</p>
-        </div>
+    <div className="min-h-screen bg-[#010a18] text-white">
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-3xl font-bold text-white mb-8">Friends</h1>
 
-        <Tabs defaultValue="friends" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="friends">
-              Friends ({friends.length})
-            </TabsTrigger>
-            <TabsTrigger value="pending" className="relative">
-              Pending Requests
-              {pendingRequests.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {pendingRequests.length}
-                </span>
-              )}
-            </TabsTrigger>
-          </TabsList>
+          <Tabs defaultValue="friends" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 bg-gray-800 border-gray-700">
+              <TabsTrigger value="friends" className="data-[state=active]:bg-orange-600">
+                Your Friends
+                {friends.length > 0 && (
+                  <span className="ml-2 px-2 py-1 text-xs bg-gray-600 rounded-full">
+                    {friends.length}
+                  </span>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="pending" className="data-[state=active]:bg-orange-600">
+                Pending Requests
+                {pendingRequests.length > 0 && (
+                  <span className="ml-2 px-2 py-1 text-xs bg-red-600 rounded-full">
+                    {pendingRequests.length}
+                  </span>
+                )}
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="friends" className="mt-6">
-            {loadingFriends ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-              </div>
-            ) : friends.length === 0 ? (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-8">
-                  <UserCheck className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No friends yet</h3>
-                  <p className="text-muted-foreground text-center">
-                    Start connecting with other athletes by visiting the Athletes page.
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {friends.map((friend) => (
-                  <Card key={friend.id}>
-                    <CardHeader className="flex flex-row items-center space-y-0 pb-4">
-                      <Avatar className="h-12 w-12">
+            <TabsContent value="friends" className="mt-6">
+              {loadingFriends ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+                </div>
+              ) : friends.length === 0 ? (
+                <Card className="bg-gray-800 border-gray-700">
+                  <CardContent className="flex flex-col items-center justify-center py-8">
+                    <UserCheck className="h-12 w-12 text-gray-400 mb-4" />
+                    <h3 className="text-lg font-semibold mb-2 text-white">No friends yet</h3>
+                    <p className="text-gray-400 text-center">
+                      Start connecting with other athletes by visiting the Athletes page.
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-0">
+                  {friends.map((friend) => (
+                    <div key={friend.id} className="flex items-center py-4 px-4 hover:bg-gray-800/50 transition-colors border-b border-gray-800 last:border-b-0">
+                      <Avatar className="h-12 w-12 mr-4">
                         <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${friend.name}`} />
-                        <AvatarFallback>
-                          {friend.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                        <AvatarFallback className="bg-blue-600 text-white">
+                          {friend.name?.split(' ').map(n => n[0]).join('').toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="ml-4 flex-1">
-                        <CardTitle className="text-lg">{friend.name}</CardTitle>
-                        <CardDescription>@{friend.username}</CardDescription>
+                      
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <Link
+                            href={`/profile/${friend.id}`}
+                            className="font-semibold text-white hover:text-blue-400 transition-colors"
+                          >
+                            {friend.name}
+                          </Link>
+                          {friend.isCoach && (
+                            <span className="px-2 py-0.5 text-xs bg-orange-600 text-white rounded-full">
+                              COACH
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-400">@{friend.username}</p>
+                        {friend.bio && (
+                          <p className="text-sm text-gray-300 mt-1 line-clamp-1">{friend.bio}</p>
+                        )}
                       </div>
-                    </CardHeader>
-                    <CardContent>
-                      {friend.bio && (
-                        <p className="text-sm text-muted-foreground mb-4">{friend.bio}</p>
-                      )}
-                      <div className="flex flex-col gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleMessageFriend(friend.id)}
-                          className="w-full"
-                        >
-                          <MessageCircle className="h-4 w-4 mr-2" />
-                          Message
-                        </Button>
-                        
+                      
+                      <div className="flex items-center gap-2">
                         {/* Show Add As Athlete button only for coaches */}
                         {currentUser?.isCoach && !isAlreadyAthlete(friend.id) && !hasPendingCoachingRequest(friend.id) && (
                           <Button
@@ -295,9 +269,9 @@ export default function FriendsPage() {
                             size="sm"
                             onClick={() => handleSendCoachingRequest(friend.id, 'coach_invite')}
                             disabled={sendCoachingRequestMutation.isPending}
-                            className="w-full text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            className="text-blue-600 hover:text-blue-700 border-blue-600 hover:border-blue-700"
                           >
-                            <Target className="h-4 w-4 mr-2" />
+                            <Target className="h-4 w-4 mr-1" />
                             Add As Athlete
                           </Button>
                         )}
@@ -308,10 +282,10 @@ export default function FriendsPage() {
                             variant="outline"
                             size="sm"
                             disabled
-                            className="w-full text-green-600"
+                            className="text-green-600 border-green-600"
                           >
-                            <Target className="h-4 w-4 mr-2" />
-                            Already Your Athlete
+                            <Target className="h-4 w-4 mr-1" />
+                            Your Athlete
                           </Button>
                         )}
                         
@@ -320,96 +294,99 @@ export default function FriendsPage() {
                             variant="outline"
                             size="sm"
                             disabled
-                            className="w-full text-yellow-600"
+                            className="text-yellow-600 border-yellow-600"
                           >
-                            <Clock className="h-4 w-4 mr-2" />
-                            Request Pending
+                            <Clock className="h-4 w-4 mr-1" />
+                            Pending
                           </Button>
                         )}
                         
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={() => handleMessageFriend(friend.id)}
+                          className="border-gray-600 hover:border-gray-500"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                        </Button>
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => handleRemoveFriend(friend.id)}
                           disabled={removeFriendMutation.isPending}
-                          className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
+                          className="text-red-600 hover:text-red-700 border-red-600 hover:border-red-700"
                         >
-                          <UserMinus className="h-4 w-4 mr-2" />
-                          Remove Friend
+                          <UserMinus className="h-4 w-4" />
                         </Button>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
 
-          <TabsContent value="pending" className="mt-6">
-            {loadingRequests ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-              </div>
-            ) : pendingRequests.length === 0 ? (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-8">
-                  <Clock className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No pending requests</h3>
-                  <p className="text-muted-foreground text-center">
-                    You don't have any pending friend requests at the moment.
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {pendingRequests.map((request) => (
-                  <Card key={request.id}>
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          <Avatar className="h-12 w-12">
-                            <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${request.follower.name}`} />
-                            <AvatarFallback>
-                              {request.follower.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1">
-                            <h3 className="font-semibold">{request.follower.name}</h3>
-                            <p className="text-sm text-muted-foreground">@{request.follower.username}</p>
-                            {request.follower.bio && (
-                              <p className="text-sm text-muted-foreground mt-1">{request.follower.bio}</p>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex flex-col gap-2 ml-4">
-                          <Button
-                            size="sm"
-                            onClick={() => handleAcceptRequest(request.id)}
-                            disabled={acceptRequestMutation.isPending}
-                            className="w-24"
-                          >
-                            <UserCheck className="h-4 w-4 mr-2" />
-                            Accept
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDeclineRequest(request.id)}
-                            disabled={declineRequestMutation.isPending}
-                            className="w-24"
-                          >
-                            <UserX className="h-4 w-4 mr-2" />
-                            Decline
-                          </Button>
-                        </div>
+            <TabsContent value="pending" className="mt-6">
+              {loadingRequests ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+                </div>
+              ) : pendingRequests.length === 0 ? (
+                <Card className="bg-gray-800 border-gray-700">
+                  <CardContent className="flex flex-col items-center justify-center py-8">
+                    <Clock className="h-12 w-12 text-gray-400 mb-4" />
+                    <h3 className="text-lg font-semibold mb-2 text-white">No pending requests</h3>
+                    <p className="text-gray-400 text-center">
+                      You don't have any pending friend requests at the moment.
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-0">
+                  {pendingRequests.map((request) => (
+                    <div key={request.id} className="flex items-center py-4 px-4 hover:bg-gray-800/50 transition-colors border-b border-gray-800 last:border-b-0">
+                      <Avatar className="h-12 w-12 mr-4">
+                        <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${request.follower.name}`} />
+                        <AvatarFallback className="bg-blue-600 text-white">
+                          {request.follower.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      
+                      <div className="flex-1">
+                        <div className="font-semibold text-white">{request.follower.name}</div>
+                        <p className="text-sm text-gray-400">@{request.follower.username}</p>
+                        {request.follower.bio && (
+                          <p className="text-sm text-gray-300 mt-1 line-clamp-1">{request.follower.bio}</p>
+                        )}
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+                      
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => handleAcceptRequest(request.id)}
+                          disabled={acceptRequestMutation.isPending}
+                          className="bg-blue-600 hover:bg-blue-700"
+                        >
+                          Accept
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeclineRequest(request.id)}
+                          disabled={declineRequestMutation.isPending}
+                          className="text-red-600 hover:text-red-700 border-red-600 hover:border-red-700"
+                        >
+                          Decline
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     </div>
   );
