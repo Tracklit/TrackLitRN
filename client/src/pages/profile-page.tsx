@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Crown, Plus, X, Users, Target } from 'lucide-react';
+import { Crown, Plus, X, Users, Target, Edit, Camera } from 'lucide-react';
 import { PremiumPromotion } from '@/components/premium-promotion';
 import { Separator } from '@/components/ui/separator';
 import { insertUserSchema } from '@shared/schema';
@@ -27,6 +27,8 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGr
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 
 // Profile form schema (for updating user info)
 const profileFormSchema = z.object({
@@ -35,7 +37,15 @@ const profileFormSchema = z.object({
   defaultClubId: z.number().nullable().optional(),
 });
 
+// Public profile form schema
+const publicProfileFormSchema = z.object({
+  name: z.string().min(1, { message: "Name is required" }),
+  bio: z.string().max(500, { message: "Bio must be 500 characters or less" }).optional(),
+  profileImageUrl: z.string().url().optional().or(z.literal('')),
+});
+
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
+type PublicProfileFormValues = z.infer<typeof publicProfileFormSchema>;
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -43,6 +53,9 @@ export default function ProfilePage() {
   const queryClient = useQueryClient();
   const [clubs, setClubs] = useState<any[]>([]);
   const [isLoadingClubs, setIsLoadingClubs] = useState(false);
+  const [isPublicProfileDialogOpen, setIsPublicProfileDialogOpen] = useState(false);
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
+  const [profileImagePreview, setProfileImagePreview] = useState<string>('');
 
   // Coach functionality queries
   const { data: coachLimits } = useQuery({
@@ -123,6 +136,16 @@ export default function ProfilePage() {
     },
   });
 
+  // Public profile form
+  const publicProfileForm = useForm<PublicProfileFormValues>({
+    resolver: zodResolver(publicProfileFormSchema),
+    defaultValues: {
+      name: user?.name || '',
+      bio: user?.bio || '',
+      profileImageUrl: user?.profileImageUrl || '',
+    },
+  });
+
   // Fetch user's clubs
   useEffect(() => {
     if (!user) return;
@@ -187,6 +210,62 @@ export default function ProfilePage() {
     }
   }
 
+  // Handle public profile image selection
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setProfileImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Public profile form submission
+  async function onPublicProfileSubmit(data: PublicProfileFormValues) {
+    try {
+      const formData = new FormData();
+      formData.append('name', data.name);
+      formData.append('bio', data.bio || '');
+      
+      if (profileImageFile) {
+        formData.append('profileImage', profileImageFile);
+      }
+
+      const response = await fetch('/api/user/public-profile', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update public profile');
+      }
+
+      setIsPublicProfileDialogOpen(false);
+      setProfileImageFile(null);
+      setProfileImagePreview('');
+      toast({
+        title: "Profile Updated",
+        description: "Your public profile has been updated successfully!",
+      });
+      
+      // Reload to reflect changes
+      window.location.reload();
+    } catch (err: any) {
+      console.error('Error updating public profile:', err);
+      toast({
+        title: "Update Failed",
+        description: err?.message || "Failed to update public profile",
+        variant: "destructive",
+      });
+    }
+  }
+
+
+
   return (
     <div className="flex flex-col h-screen bg-[#010a18] text-white">
       <main className="flex-1 overflow-auto pt-16 pb-6">
@@ -201,19 +280,112 @@ export default function ProfilePage() {
               <div className="bg-[#010a18] border border-blue-800/60 rounded-xl shadow-sm p-6">
                 <div className="flex items-center mb-6">
                   <Avatar className="h-16 w-16 mr-4">
-                    <AvatarImage src="/default-avatar.png" />
+                    <AvatarImage src={user?.profileImageUrl || "/default-avatar.png"} />
                     <AvatarFallback name={user?.name || ''} className="text-lg" />
                   </Avatar>
-                  <div>
+                  <div className="flex-1">
                     <h3 className="text-xl font-medium">{user?.name}</h3>
                     <p className="text-darkGray">{user?.username}</p>
                   </div>
-                  {user?.isPremium && (
-                    <Badge variant="accent" className="ml-auto">
-                      <Crown className="h-3 w-3 mr-1" />
-                      Premium
-                    </Badge>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <Dialog open={isPublicProfileDialogOpen} onOpenChange={setIsPublicProfileDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit Public Profile
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="bg-[#010a18] border border-blue-800/60 text-white max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>Edit Public Profile</DialogTitle>
+                        </DialogHeader>
+                        
+                        <Form {...publicProfileForm}>
+                          <form onSubmit={publicProfileForm.handleSubmit(onPublicProfileSubmit)} className="space-y-4">
+                            {/* Profile Image Upload */}
+                            <div className="flex flex-col items-center space-y-4">
+                              <div className="relative">
+                                <Avatar className="h-20 w-20">
+                                  <AvatarImage 
+                                    src={profileImagePreview || user?.profileImageUrl || "/default-avatar.png"} 
+                                  />
+                                  <AvatarFallback name={user?.name || ''} className="text-lg" />
+                                </Avatar>
+                                <label 
+                                  htmlFor="profile-image-upload" 
+                                  className="absolute -bottom-1 -right-1 bg-blue-600 rounded-full p-2 cursor-pointer hover:bg-blue-700 transition-colors"
+                                >
+                                  <Camera className="h-3 w-3" />
+                                </label>
+                                <input
+                                  id="profile-image-upload"
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={handleImageChange}
+                                  className="hidden"
+                                />
+                              </div>
+                              <p className="text-xs text-gray-400 text-center">
+                                Click the camera icon to upload a new profile image
+                              </p>
+                            </div>
+
+                            <FormField
+                              control={publicProfileForm.control}
+                              name="name"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Display Name</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} placeholder="Your display name" />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={publicProfileForm.control}
+                              name="bio"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Bio</FormLabel>
+                                  <FormControl>
+                                    <Textarea 
+                                      {...field} 
+                                      placeholder="Tell others about yourself..." 
+                                      rows={3}
+                                      maxLength={500}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <div className="flex justify-end space-x-2 pt-4">
+                              <Button 
+                                type="button" 
+                                variant="outline" 
+                                onClick={() => setIsPublicProfileDialogOpen(false)}
+                              >
+                                Cancel
+                              </Button>
+                              <Button type="submit">
+                                Save Changes
+                              </Button>
+                            </div>
+                          </form>
+                        </Form>
+                      </DialogContent>
+                    </Dialog>
+                    {user?.isPremium && (
+                      <Badge variant="accent">
+                        <Crown className="h-3 w-3 mr-1" />
+                        Premium
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 
                 <Separator className="my-6" />
