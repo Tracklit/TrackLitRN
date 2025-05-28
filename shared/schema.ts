@@ -558,6 +558,7 @@ export type InsertGroupMember = z.infer<typeof insertGroupMemberSchema>;
 export type InsertCoachNote = z.infer<typeof insertCoachNoteSchema>;
 export type InsertPracticeMedia = z.infer<typeof insertPracticeMediaSchema>;
 export type InsertCoachingRequest = z.infer<typeof insertCoachingRequestSchema>;
+export type SelectCoachingRequest = typeof coachingRequests.$inferSelect;
 
 export type User = typeof users.$inferSelect;
 export type Meet = typeof meets.$inferSelect;

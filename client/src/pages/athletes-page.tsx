@@ -261,48 +261,46 @@ export default function AthletesPage() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
               {displayAthletes.map((athlete) => (
                 <Card key={athlete.id} className="bg-gray-800 border-gray-700 hover:bg-gray-750 transition-colors">
-                  <CardContent className="p-4">
-                    <div className="flex items-center space-x-3 mb-3">
-                      <Avatar className="h-12 w-12">
-                        <AvatarFallback className="bg-blue-600 text-white">
+                  <CardContent className="p-3">
+                    <div className="flex flex-col items-center text-center space-y-2">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="bg-blue-600 text-white text-sm">
                           {athlete.name?.charAt(0) || athlete.username?.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
+                      
+                      <div className="min-h-[3rem] flex flex-col justify-center">
+                        <div className="flex items-center justify-center gap-1">
                           <Link
                             href={`/profile/${athlete.id}`}
-                            className="font-semibold text-white hover:text-blue-400 transition-colors"
+                            className="font-medium text-white hover:text-blue-400 transition-colors text-sm truncate max-w-20"
+                            title={athlete.name || athlete.username}
                           >
                             {athlete.name || athlete.username}
                           </Link>
                           {isCoach(athlete) && (
-                            <span className="px-2 py-1 text-xs bg-orange-600 text-white rounded-full">
-                              COACH
+                            <span className="px-1 py-0.5 text-xs bg-orange-600 text-white rounded">
+                              C
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-400">@{athlete.username}</p>
+                        <p className="text-xs text-gray-400 truncate max-w-20">@{athlete.username}</p>
                       </div>
                     </div>
                     
-                    {athlete.bio && (
-                      <p className="text-sm text-gray-300 mb-4 line-clamp-2">{athlete.bio}</p>
-                    )}
-                    
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-1 mt-3">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleSendFriendRequest(athlete.id)}
                         disabled={sendFriendRequestMutation.isPending}
-                        className="w-full"
+                        className="w-full text-xs py-1 h-7"
                       >
-                        <UserPlus className="h-4 w-4 mr-2" />
-                        Add Friend
+                        <UserPlus className="h-3 w-3 mr-1" />
+                        Add
                       </Button>
                       
                       {/* Show Request Coaching button for coaches */}
@@ -312,10 +310,10 @@ export default function AthletesPage() {
                           size="sm"
                           onClick={() => handleSendCoachingRequest(athlete.id)}
                           disabled={sendCoachingRequestMutation.isPending}
-                          className="w-full text-green-600 hover:text-green-700 hover:bg-green-50"
+                          className="w-full text-xs py-1 h-7 text-green-600 hover:text-green-700 hover:bg-green-50"
                         >
-                          <Users className="h-4 w-4 mr-2" />
-                          Request Coaching
+                          <Users className="h-3 w-3 mr-1" />
+                          Coach
                         </Button>
                       )}
                       
@@ -325,10 +323,10 @@ export default function AthletesPage() {
                           variant="outline"
                           size="sm"
                           disabled
-                          className="w-full text-green-600"
+                          className="w-full text-xs py-1 h-7 text-green-600"
                         >
-                          <Users className="h-4 w-4 mr-2" />
-                          Your Coach
+                          <Users className="h-3 w-3 mr-1" />
+                          Coach
                         </Button>
                       )}
                       
@@ -337,10 +335,10 @@ export default function AthletesPage() {
                           variant="outline"
                           size="sm"
                           disabled
-                          className="w-full text-yellow-600"
+                          className="w-full text-xs py-1 h-7 text-yellow-600"
                         >
-                          <Clock className="h-4 w-4 mr-2" />
-                          Request Pending
+                          <Clock className="h-3 w-3 mr-1" />
+                          Pending
                         </Button>
                       )}
                     </div>
