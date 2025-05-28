@@ -4575,6 +4575,9 @@ Keep the response professional, evidence-based, and specific to track and field 
       if (followStatus.isFollowing) {
         return res.status(400).send("Already following this user");
       }
+      if (followStatus.hasPendingRequest) {
+        return res.status(400).send("Friend request already sent");
+      }
 
       // Send friend request notification
       await notificationSystem.sendFriendRequestNotification(
