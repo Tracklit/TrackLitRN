@@ -706,38 +706,40 @@ export default function AthleteProfilePage() {
                       const isEditable = isManualMode && editableDistances.includes(distance);
                       
                       return (
-                        <TableRow key={distance} className="border-gray-200">
-                          <TableCell className="sticky left-0 z-10 bg-white font-medium px-3 py-2">
+                        <TableRow key={distance} className="border-gray-700">
+                          <TableCell className="sticky left-0 z-10 bg-[#1f2937] text-white font-medium px-3 py-2 border-r border-gray-600">
                             {distance}
                           </TableCell>
-                          <TableCell className="px-3 py-2 text-right">
+                          <TableCell className="px-3 py-2 text-right bg-[#1f2937] text-white">
                             {baseTime ? calculatePace(baseTime, 80) : "-"}
                           </TableCell>
-                          <TableCell className="px-3 py-2 text-right">
+                          <TableCell className="px-3 py-2 text-right bg-[#1f2937] text-white">
                             {baseTime ? calculatePace(baseTime, 90) : "-"}
                           </TableCell>
-                          <TableCell className="px-3 py-2 text-right">
+                          <TableCell className="px-3 py-2 text-right bg-[#1f2937] text-white">
                             {baseTime ? calculatePace(baseTime, 95) : "-"}
                           </TableCell>
-                          <TableCell className="px-3 py-2 text-right">
+                          <TableCell className="px-3 py-2 text-right bg-[#1f2937] text-white">
                             {baseTime ? calculatePace(baseTime, 98) : "-"}
                           </TableCell>
-                          <TableCell className="px-3 py-2 text-right">
+                          <TableCell className="px-3 py-2 text-right bg-[#1f2937] text-white">
                             {baseTime ? (parseFloat(baseTime) - timingAdjustment).toFixed(2) : "-"}
                           </TableCell>
-                          <TableCell className="px-3 py-2 text-right">
+                          <TableCell className="px-3 py-2 text-right bg-[#1f2937] text-white">
                             {isEditable ? (
-                              <Input
-                                type="number"
-                                step="0.01"
-                                value={manualTimes[distance] || ""}
-                                onChange={(e) => setManualTimes(prev => ({
-                                  ...prev,
-                                  [distance]: e.target.value
-                                }))}
-                                className="w-20 h-8 text-right"
-                                placeholder="0.00"
-                              />
+                              <div className="flex justify-end">
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  value={manualTimes[distance] || ""}
+                                  onChange={(e) => setManualTimes(prev => ({
+                                    ...prev,
+                                    [distance]: e.target.value
+                                  }))}
+                                  className="w-20 h-8 text-right bg-gray-800 text-white border-gray-600 focus:border-amber-500"
+                                  placeholder="0.00"
+                                />
+                              </div>
                             ) : (
                               baseTime || "-"
                             )}
