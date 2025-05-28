@@ -207,11 +207,6 @@ export default function FriendsPage() {
             <TabsList className="grid w-full grid-cols-2 bg-gray-800 border-gray-700">
               <TabsTrigger value="friends" className="data-[state=active]:bg-[#ff8c00]">
                 Your Friends
-                {friends.length > 0 && (
-                  <span className="ml-2 px-2 py-1 text-xs bg-gray-600 rounded-full">
-                    {friends.length}
-                  </span>
-                )}
               </TabsTrigger>
               <TabsTrigger value="pending" className="data-[state=active]:bg-[#ff8c00]">
                 Pending Requests
@@ -242,9 +237,9 @@ export default function FriendsPage() {
                 <div className="space-y-0">
                   {friends.map((friend) => (
                     <div key={friend.id} className="flex items-center py-4 px-4 hover:bg-gray-800/50 transition-colors border-b border-gray-800 last:border-b-0">
-                      <Avatar className="h-12 w-12 mr-4">
+                      <Avatar className="h-6 w-6 mr-4">
                         <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${friend.name}`} />
-                        <AvatarFallback className="bg-blue-600 text-white">
+                        <AvatarFallback className="bg-blue-600 text-white text-xs">
                           {friend.name?.split(' ').map(n => n[0]).join('').toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
@@ -353,9 +348,9 @@ export default function FriendsPage() {
                 <div className="space-y-0">
                   {pendingRequests.map((request) => (
                     <div key={request.id} className="flex items-center py-4 px-4 hover:bg-gray-800/50 transition-colors border-b border-gray-800 last:border-b-0">
-                      <Avatar className="h-12 w-12 mr-4">
+                      <Avatar className="h-6 w-6 mr-4">
                         <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${request.follower.name}`} />
-                        <AvatarFallback className="bg-blue-600 text-white">
+                        <AvatarFallback className="bg-blue-600 text-white text-xs">
                           {request.follower.name.split(' ').map(n => n[0]).join('').toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
