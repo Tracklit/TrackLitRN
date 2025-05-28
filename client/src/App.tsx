@@ -25,7 +25,7 @@ import AuthPage from "@/pages/auth-page";
 import MeetsPage from "@/pages/meets-page";
 import ResultsPage from "@/pages/results-page";
 
-import ProfilePage from "@/pages/profile-page";
+import ProfilePage from "@/pages/profile-page-new";
 import CoachesPage from "@/pages/coaches-page";
 import PracticePage from "@/pages/practice-page";
 import { Component as WorkoutToolsPage } from "@/pages/training-tools-page";

@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Crown, Plus, X, Users, Target, Edit, Camera } from 'lucide-react';
+import { Crown, Plus, X, Users, Target, Edit, Camera, Check } from 'lucide-react';
 import { PremiumPromotion } from '@/components/premium-promotion';
 import { Separator } from '@/components/ui/separator';
 import { insertUserSchema } from '@shared/schema';
@@ -29,6 +29,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 // Profile form schema (for updating user info)
 const profileFormSchema = z.object({
