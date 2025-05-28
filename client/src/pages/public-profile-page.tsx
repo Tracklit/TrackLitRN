@@ -375,21 +375,22 @@ export default function PublicProfilePage() {
               </CardContent>
             </Card>
 
+            <main>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               
               {/* Left Column */}
               <div className="lg:col-span-2 space-y-6">
                 
                 {/* Latest Workout */}
-                {latestWorkout && (
-                  <Card className="bg-blue-900/20 border-blue-800/60">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <Dumbbell className="h-5 w-5" />
-                        Latest Workout
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
+                <Card className="bg-blue-900/20 border-blue-800/60">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Dumbbell className="h-5 w-5" />
+                      Latest Workout
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {latestWorkout ? (
                       <div className="space-y-2">
                         <h3 className="font-semibold">{latestWorkout.title}</h3>
                         <p className="text-gray-400 text-sm">{latestWorkout.description}</p>
@@ -397,156 +398,158 @@ export default function PublicProfilePage() {
                           {format(new Date(latestWorkout.createdAt), 'MMM dd, yyyy')}
                         </p>
                       </div>
-                    </CardContent>
-                  </Card>
-                )}
+                    ) : (
+                      <p className="text-gray-400 text-sm">No recent workouts available.</p>
+                    )}
+                  </CardContent>
+                </Card>
 
                 {/* Upcoming Meets */}
-                {upcomingMeets.length > 0 && (
-                  <Card className="bg-blue-900/20 border-blue-800/60">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <Calendar className="h-5 w-5" />
-                        Upcoming Meets
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
+                <Card className="bg-blue-900/20 border-blue-800/60">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Calendar className="h-5 w-5" />
+                      Upcoming Meets
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {upcomingMeets && upcomingMeets.length > 0 ? (
                       <div className="space-y-3">
                         {upcomingMeets.slice(0, 3).map((meet: Meet) => (
-                          <div key={meet.id} className="flex items-center justify-between p-3 bg-blue-800/30 rounded-lg">
-                            <div>
-                              <h4 className="font-medium">{meet.name}</h4>
-                              <div className="flex items-center gap-2 text-sm text-gray-400">
+                          <div key={meet.id} className="p-3 bg-blue-800/30 rounded-lg border border-blue-700/30">
+                            <h4 className="font-medium text-white">{meet.name}</h4>
+                            <div className="flex items-center gap-4 mt-1 text-sm text-gray-300">
+                              <span className="flex items-center gap-1">
                                 <Calendar className="h-3 w-3" />
                                 {format(new Date(meet.date), 'MMM dd, yyyy')}
-                                <MapPin className="h-3 w-3 ml-2" />
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <MapPin className="h-3 w-3" />
                                 {meet.location}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Recent Meets */}
-                {pastMeets.length > 0 && (
-                  <Card className="bg-blue-900/20 border-blue-800/60">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <Trophy className="h-5 w-5" />
-                        Recent Meets
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        {pastMeets.map((meet: Meet) => (
-                          <div key={meet.id} className="flex items-center justify-between p-3 bg-blue-800/30 rounded-lg">
-                            <div>
-                              <h4 className="font-medium">{meet.name}</h4>
-                              <div className="flex items-center gap-2 text-sm text-gray-400">
-                                <Calendar className="h-3 w-3" />
-                                {format(new Date(meet.date), 'MMM dd, yyyy')}
-                                <MapPin className="h-3 w-3 ml-2" />
-                                {meet.location}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Coach Programs Preview */}
-                {profileUser.isCoach && userPrograms.length > 0 && (
-                  <Card className="bg-blue-900/20 border-blue-800/60">
-                    <CardHeader>
-                      <CardTitle className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Crown className="h-5 w-5 text-amber-400" />
-                          Training Programs
-                        </div>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className="border-amber-500 text-amber-400 hover:bg-amber-500 hover:text-black"
-                        >
-                          View All Programs
-                        </Button>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {userPrograms.slice(0, 4).map((program: Program) => (
-                          <div key={program.id} className="p-4 bg-blue-800/30 rounded-lg hover:bg-blue-800/50 transition-colors cursor-pointer">
-                            <h4 className="font-semibold mb-1">{program.title}</h4>
-                            <p className="text-sm text-gray-400 mb-2 line-clamp-2">{program.description}</p>
-                            <div className="flex items-center justify-between">
-                              <Badge variant="outline" className="border-blue-500 text-blue-300">
-                                {program.category} • {program.level}
-                              </Badge>
-                              <span className="text-sm font-medium text-amber-400">
-                                {program.priceType === 'spikes' ? `${program.price} Spikes` : `$${program.price}`}
                               </span>
                             </div>
                           </div>
                         ))}
                       </div>
-                    </CardContent>
-                  </Card>
-                )}
+                    ) : (
+                      <p className="text-gray-400 text-sm">No upcoming meets.</p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Past Meets */}
+                <Card className="bg-blue-900/20 border-blue-800/60">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Trophy className="h-5 w-5" />
+                      Recent Meets
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {pastMeets && pastMeets.length > 0 ? (
+                      <div className="space-y-3">
+                        {pastMeets.map((meet: Meet) => (
+                          <div key={meet.id} className="p-3 bg-blue-800/30 rounded-lg border border-blue-700/30">
+                            <h4 className="font-medium text-white">{meet.name}</h4>
+                            <div className="flex items-center gap-4 mt-1 text-sm text-gray-300">
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                {format(new Date(meet.date), 'MMM dd, yyyy')}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <MapPin className="h-3 w-3" />
+                                {meet.location}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-400 text-sm">No recent meets available.</p>
+                    )}
+                  </CardContent>
+                </Card>
+
               </div>
 
               {/* Right Column */}
               <div className="space-y-6">
                 
+                {/* Programs (for coaches) */}
+                {profileUser?.isCoach && (
+                  <Card className="bg-blue-900/20 border-blue-800/60">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <BookOpen className="h-5 w-5" />
+                        Programs
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {userPrograms && userPrograms.length > 0 ? (
+                        <div className="space-y-3">
+                          {userPrograms.slice(0, 4).map((program: Program) => (
+                            <div key={program.id} className="p-3 bg-blue-800/30 rounded-lg border border-blue-700/30">
+                              <h4 className="font-medium text-white text-sm">{program.title}</h4>
+                              <p className="text-gray-400 text-xs mt-1 line-clamp-2">{program.description}</p>
+                              <div className="flex items-center justify-between mt-2">
+                                <span className="text-xs text-gray-500">{program.level}</span>
+                                <span className="text-xs font-medium text-green-400">
+                                  {program.priceType === 'free' ? 'Free' : `$${program.price}`}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-gray-400 text-sm">No programs available.</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+
                 {/* Connections */}
                 <Card className="bg-blue-900/20 border-blue-800/60">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <Users className="h-5 w-5" />
-                      {profileUser.isCoach ? 'Athletes & Friends' : 'Friends & Coaches'}
+                      {profileUser?.isCoach ? 'Athletes & Friends' : 'Connections'}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {connections.length > 0 ? (
+                    {connections && connections.length > 0 ? (
                       <div className="space-y-3">
                         {connections.slice(0, 6).map((connection: Friend) => (
-                          <div key={connection.id} className="flex items-center gap-3 p-2 hover:bg-blue-800/30 rounded-lg transition-colors cursor-pointer">
-                            <Avatar className="w-8 h-8">
-                              <AvatarImage src={connection.profileImageUrl || undefined} />
-                              <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs">
-                                {connection.name?.charAt(0) || connection.username.charAt(0)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">{connection.name || connection.username}</p>
-                              <p className="text-xs text-gray-400 truncate">@{connection.username}</p>
+                          <div key={connection.id} className="flex items-center gap-3">
+                            <img
+                              src={connection.profileImageUrl || "/api/placeholder/32/32"}
+                              alt={connection.name}
+                              className="w-8 h-8 rounded-full object-cover"
+                            />
+                            <div className="flex-1">
+                              <Link
+                                href={`/user/${connection.id}`}
+                                className="text-sm font-medium text-white hover:text-blue-400 transition-colors"
+                              >
+                                {connection.name}
+                              </Link>
+                              {connection.isCoach && (
+                                <span className="text-xs text-gold-500 ml-2">Coach</span>
+                              )}
                             </div>
-                            {connection.isCoach && (
-                              <Badge className="bg-amber-600 text-xs">Coach</Badge>
-                            )}
                           </div>
                         ))}
-                        
-                        {connections.length > 6 && (
-                          <Button variant="ghost" size="sm" className="w-full text-blue-400 hover:text-white">
-                            View All ({connections.length})
-                          </Button>
-                        )}
                       </div>
                     ) : (
                       <p className="text-gray-400 text-sm">No connections yet.</p>
                     )}
                   </CardContent>
                 </Card>
+
               </div>
             </div>
           </div>
-        </main>
-      </div>
+        </div>
+      )}
     </div>
   );
 }
