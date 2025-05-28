@@ -1,64 +1,30 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <defs>
-    <style>
-      .figure-gradient {
-        fill: url(#inverted-gradient);
-        stroke: url(#inverted-gradient);
-        stroke-width: 8;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-      }
-      .lines {
-        fill: none;
-        stroke: #ff8c00;
-        stroke-width: 12;
-        stroke-linecap: round;
-      }
-    </style>
-    <linearGradient id="inverted-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#ff8c00;stop-opacity:1" />
-      <stop offset="50%" style="stop-color:#ffffff;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#ff8c00;stop-opacity:1" />
-    </linearGradient>
-  </defs>
-  
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
   <!-- Background -->
-  <rect width="512" height="512" fill="#010a18"/>
+  <rect width="100" height="100" fill="#010a18"/>
   
-  <!-- Speed lines -->
-  <g class="lines">
-    <line x1="20" y1="120" x2="150" y2="120"/>
-    <line x1="20" y1="150" x2="130" y2="150"/>
-    <line x1="20" y1="180" x2="140" y2="180"/>
-    <line x1="20" y1="210" x2="120" y2="210"/>
-    <line x1="20" y1="240" x2="150" y2="240"/>
-    <line x1="20" y1="270" x2="130" y2="270"/>
-    <line x1="20" y1="300" x2="140" y2="300"/>
-    <line x1="20" y1="330" x2="120" y2="330"/>
-  </g>
-  
-  <!-- Running figure -->
-  <g class="figure-gradient">
+  <!-- Simple athletic figure silhouette -->
+  <g fill="#ff8c00">
     <!-- Head -->
-    <circle cx="430" cy="70" r="35" fill="none"/>
+    <circle cx="50" cy="20" r="8"/>
     
-    <!-- Torso and arms -->
-    <path d="M395 105 Q395 120 410 140 L395 160 Q395 180 420 200 L450 190 Q470 180 480 160 L465 140 Q465 120 430 105" fill="none"/>
+    <!-- Body -->
+    <rect x="46" y="28" width="8" height="25" rx="2"/>
     
-    <!-- Leading arm -->
-    <path d="M410 140 Q390 130 370 120 Q350 115 330 125 Q320 130 325 140 Q330 150 350 155 Q370 160 385 150" fill="none"/>
+    <!-- Arms in running position -->
+    <rect x="35" y="32" width="12" height="4" rx="2" transform="rotate(-20 41 34)"/>
+    <rect x="53" y="38" width="12" height="4" rx="2" transform="rotate(25 59 40)"/>
     
-    <!-- Trailing arm -->
-    <path d="M465 140 Q485 135 500 145 Q510 150 505 165 Q500 175 485 170 Q470 165 465 155" fill="none"/>
+    <!-- Legs in running stride -->
+    <rect x="44" y="53" width="5" height="18" rx="2" transform="rotate(-15 46.5 62)"/>
+    <rect x="51" y="53" width="5" height="18" rx="2" transform="rotate(20 53.5 62)"/>
     
-    <!-- Leading leg (front) -->
-    <path d="M420 200 Q415 220 425 240 Q435 260 445 280 Q450 300 440 320 Q430 340 420 360 Q415 375 425 385 Q435 390 445 385 Q455 380 450 365 Q445 350 450 335 Q455 320 465 305 Q475 290 485 275 Q495 260 490 245 Q485 230 475 220" fill="none"/>
+    <!-- Feet -->
+    <ellipse cx="40" cy="75" rx="4" ry="2" transform="rotate(-15 40 75)"/>
+    <ellipse cx="60" cy="78" rx="4" ry="2" transform="rotate(20 60 78)"/>
     
-    <!-- Trailing leg (back) -->
-    <path d="M430 200 Q440 215 435 230 Q430 245 420 260 Q410 275 400 290 Q390 305 385 320 Q380 335 385 350 Q390 365 400 375 Q410 380 420 375 Q425 370 420 360 Q415 350 420 340 Q425 330 435 320 Q445 310 450 295 Q455 280 450 265" fill="none"/>
-    
-    <!-- Foot details -->
-    <ellipse cx="445" cy="385" rx="15" ry="8" fill="none"/>
-    <ellipse cx="420" cy="375" rx="12" ry="6" fill="none"/>
+    <!-- Speed lines for motion -->
+    <rect x="15" y="25" width="12" height="2" rx="1"/>
+    <rect x="12" y="35" width="15" height="2" rx="1"/>
+    <rect x="18" y="45" width="10" height="2" rx="1"/>
   </g>
 </svg>
