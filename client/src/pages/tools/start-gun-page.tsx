@@ -81,18 +81,30 @@ export default function StartGunPage() {
         audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
         
         // Preload audio files with proper deployment paths
-        const basePath = import.meta.env.BASE_URL || '/';
-        marksAudioRef.current = new Audio(`${basePath}on-your-marks.mp3`);
-        setAudioRef.current = new Audio(`${basePath}set.mp3`);
-        bangAudioRef.current = new Audio(`${basePath}bang.mp3`);
+        marksAudioRef.current = new Audio('/On Your Marks.mp3');
+        setAudioRef.current = new Audio('/Set.mp3');
+        bangAudioRef.current = new Audio('/Bang.mp3');
         
-        // Preload audio
-        marksAudioRef.current.load();
-        setAudioRef.current.load();
-        bangAudioRef.current.load();
+        // Configure audio elements for Samsung device compatibility
+        [marksAudioRef.current, setAudioRef.current, bangAudioRef.current].forEach(audio => {
+          if (audio) {
+            audio.preload = 'auto';
+            audio.playsInline = true;
+            // Samsung devices benefit from explicit muted preload then unmute
+            audio.muted = true;
+            audio.load();
+            // Unmute after loading
+            setTimeout(() => {
+              if (audio) audio.muted = false;
+            }, 100);
+          }
+        });
         
-        // Force a user interaction with audio context to unlock audio
-        document.addEventListener('click', () => {
+        // Enhanced user interaction handler for Samsung devices
+        const handleUserInteraction = () => {
+          console.log("User interaction detected, preparing audio for Samsung device");
+          
+          // Resume audio context
           if (audioContext.current && audioContext.current.state === 'suspended') {
             audioContext.current.resume().then(() => {
               console.log("AudioContext resumed on user interaction");
@@ -100,7 +112,28 @@ export default function StartGunPage() {
               console.error("Failed to resume AudioContext:", e);
             });
           }
-        }, { once: true });
+          
+          // Test play and pause each audio element to unlock them on Samsung devices
+          [marksAudioRef.current, setAudioRef.current, bangAudioRef.current].forEach((audio, index) => {
+            if (audio) {
+              const audioNames = ['marks', 'set', 'bang'];
+              audio.volume = 0.01; // Very quiet test
+              audio.play().then(() => {
+                console.log(`${audioNames[index]} audio unlocked for Samsung device`);
+                audio.pause();
+                audio.currentTime = 0;
+                audio.volume = volume / 100;
+              }).catch(e => {
+                console.log(`Could not unlock ${audioNames[index]} audio:`, e);
+              });
+            }
+          });
+        };
+        
+        // Listen for various user interaction events
+        ['click', 'touchstart', 'keydown'].forEach(eventType => {
+          document.addEventListener(eventType, handleUserInteraction, { once: true });
+        });
         
         console.log("Audio system initialized");
       } catch (error) {
@@ -165,77 +198,103 @@ export default function StartGunPage() {
     };
   }, []);
   
-  // Function to play audio directly - focusing exclusively on MP3 playback
+  // Function to play audio - optimized for Samsung/Android devices
   const playAudio = (audioType: 'marks' | 'set' | 'bang', onEnded?: () => void) => {
     if (isMuted) return;
     
-    // Get the appropriate file path
-    let audioPath = '';
+    // Ensure audio context is resumed (critical for Samsung devices)
+    if (audioContext.current && audioContext.current.state === 'suspended') {
+      audioContext.current.resume().then(() => {
+        console.log("AudioContext resumed for", audioType);
+        playAudioInternal(audioType, onEnded);
+      }).catch(err => {
+        console.error("Failed to resume AudioContext:", err);
+        if (onEnded) onEnded();
+      });
+    } else {
+      playAudioInternal(audioType, onEnded);
+    }
+  };
+
+  // Internal audio playback function using preloaded elements
+  const playAudioInternal = (audioType: 'marks' | 'set' | 'bang', onEnded?: () => void) => {
+    let audioElement: HTMLAudioElement | null = null;
+    let audioName = '';
+    
+    // Use the preloaded audio elements instead of creating new ones
     switch (audioType) {
       case 'marks':
-        audioPath = '/on-your-marks.mp3';
-        console.log("Playing on-your-marks.mp3");
+        audioElement = marksAudioRef.current;
+        audioName = 'on-your-marks.mp3';
         break;
       case 'set':
-        audioPath = '/set.mp3';
-        console.log("Playing set.mp3");
+        audioElement = setAudioRef.current;
+        audioName = 'set.mp3';
         break;
       case 'bang':
-        audioPath = '/bang.mp3';
-        console.log("Playing bang.mp3");
+        audioElement = bangAudioRef.current;
+        audioName = 'bang.mp3';
         break;
     }
     
-    // Play the audio directly using a new Audio element each time
-    if (audioPath) {
-      try {
-        // Create a new audio element specifically for this playback
-        const audio = new Audio(audioPath);
-        
-        // Track this audio element for proper cleanup
-        activeAudioElements.current.push(audio);
-        
-        // Set properties - use direct volume control that works with device volume
-        audio.volume = volume / 100;
-        audio.preload = 'auto';
-        
-        // Set up ended callback and cleanup
-        if (onEnded) {
-          audio.addEventListener('ended', () => {
-            // Remove from active elements when ended
-            activeAudioElements.current = activeAudioElements.current.filter(el => el !== audio);
-            onEnded();
-          });
-        }
-        
-        // Log when audio is ready to play
-        audio.addEventListener('canplaythrough', () => {
-          console.log(`${audioPath} is ready to play`);
-        });
-        
-        // Debug any errors
-        audio.addEventListener('error', (e) => {
-          console.error(`Error with ${audioPath}:`, e);
-          // Call the callback even if there's an error to prevent hangs
-          if (onEnded) onEnded();
-        });
-        
-        // Attempt playback
-        const playPromise = audio.play();
-        if (playPromise) {
-          playPromise.then(() => {
-            console.log(`${audioPath} playbook started successfully`);
-          }).catch(err => {
-            console.error(`Error playing ${audioPath}:`, err);
-            // Call the callback even if there's an error to prevent hangs
-            if (onEnded) onEnded();
-          });
-        }
-      } catch (error) {
-        console.error(`Exception trying to play ${audioPath}:`, error);
-        // Call the callback even if there's an error to prevent hangs
+    if (!audioElement) {
+      console.error(`Audio element not found for ${audioType}`);
+      if (onEnded) onEnded();
+      return;
+    }
+    
+    try {
+      console.log(`Playing ${audioName}`);
+      
+      // Reset the audio to the beginning
+      audioElement.currentTime = 0;
+      audioElement.volume = volume / 100;
+      
+      // Remove any existing event listeners to prevent duplicates
+      audioElement.removeEventListener('ended', audioElement.onended as any);
+      audioElement.removeEventListener('error', audioElement.onerror as any);
+      
+      // Set up the ended callback
+      const endedHandler = () => {
+        console.log(`${audioName} finished playing`);
+        audioElement!.removeEventListener('ended', endedHandler);
+        audioElement!.removeEventListener('error', errorHandler);
         if (onEnded) onEnded();
+      };
+      
+      // Set up error handler
+      const errorHandler = (e: any) => {
+        console.error(`Error playing ${audioName}:`, e);
+        audioElement!.removeEventListener('ended', endedHandler);
+        audioElement!.removeEventListener('error', errorHandler);
+        if (onEnded) onEnded();
+      };
+      
+      audioElement.addEventListener('ended', endedHandler);
+      audioElement.addEventListener('error', errorHandler);
+      
+      // Start playback with proper promise handling for Samsung devices
+      const playPromise = audioElement.play();
+      if (playPromise) {
+        playPromise.then(() => {
+          console.log(`${audioName} started successfully`);
+        }).catch(err => {
+          console.error(`Error starting ${audioName}:`, err);
+          // Samsung devices may need a slight delay and retry
+          setTimeout(() => {
+            if (audioElement && audioElement.paused) {
+              console.log(`Retrying ${audioName} for Samsung device`);
+              audioElement.play().catch(retryErr => {
+                console.error(`Retry failed for ${audioName}:`, retryErr);
+                if (onEnded) onEnded();
+              });
+            }
+          }, 50);
+        });
       }
+    } catch (error) {
+      console.error(`Exception playing ${audioName}:`, error);
+      if (onEnded) onEnded();
     }
   };
   
