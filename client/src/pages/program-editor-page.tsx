@@ -1442,8 +1442,8 @@ function ProgramEditorPage() {
           Click on any cell to add or edit workout details. You can mark days as rest days.
         </p>
         
-        <ScrollArea className="w-full border rounded-lg">
-          <div className="p-4 min-w-[1400px] overflow-x-auto">
+        <div className="w-full border rounded-lg overflow-x-auto">
+          <div className="p-4 min-w-[1400px]">
             {isLoading ? (
               <div className="flex items-center justify-center p-8">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -1558,7 +1558,7 @@ function ProgramEditorPage() {
               </div>
             )}
           </div>
-        </ScrollArea>
+        </div>
       </div>
     </div>
   );
