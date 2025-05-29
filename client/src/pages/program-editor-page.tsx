@@ -192,6 +192,12 @@ function ProgramEditorPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
+  // Zoom and pan state for pinch-to-zoom functionality
+  const [scale, setScale] = useState(1);
+  const [translateX, setTranslateX] = useState(0);
+  const [translateY, setTranslateY] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
   // Program details form
   const form = useForm<z.infer<typeof programEditorSchema>>({
     resolver: zodResolver(programEditorSchema),
@@ -478,6 +484,105 @@ function ProgramEditorPage() {
       });
     }
   }, [program, form]);
+
+  // Pinch-to-zoom functionality
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    let initialDistance = 0;
+    let initialScale = 1;
+    let lastTouchX = 0;
+    let lastTouchY = 0;
+    let isDragging = false;
+
+    const getDistance = (touches: TouchList) => {
+      if (touches.length < 2) return 0;
+      const [touch1, touch2] = [touches[0], touches[1]];
+      return Math.sqrt(
+        Math.pow(touch2.clientX - touch1.clientX, 2) + 
+        Math.pow(touch2.clientY - touch1.clientY, 2)
+      );
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        // Pinch gesture
+        e.preventDefault();
+        initialDistance = getDistance(e.touches);
+        initialScale = scale;
+        isDragging = false;
+      } else if (e.touches.length === 1 && scale > 1) {
+        // Pan gesture when zoomed
+        const touch = e.touches[0];
+        lastTouchX = touch.clientX;
+        lastTouchY = touch.clientY;
+        isDragging = true;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        // Pinch zoom
+        e.preventDefault();
+        const currentDistance = getDistance(e.touches);
+        if (initialDistance > 0) {
+          const newScale = Math.max(0.5, Math.min(3, initialScale * (currentDistance / initialDistance)));
+          setScale(newScale);
+        }
+      } else if (e.touches.length === 1 && isDragging && scale > 1) {
+        // Pan when zoomed
+        e.preventDefault();
+        const touch = e.touches[0];
+        const deltaX = touch.clientX - lastTouchX;
+        const deltaY = touch.clientY - lastTouchY;
+        
+        setTranslateX(prev => prev + deltaX);
+        setTranslateY(prev => prev + deltaY);
+        
+        lastTouchX = touch.clientX;
+        lastTouchY = touch.clientY;
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length === 0) {
+        isDragging = false;
+        // Reset position if scale is back to 1
+        if (scale <= 1) {
+          setTranslateX(0);
+          setTranslateY(0);
+        }
+      }
+    };
+
+    // Mouse wheel zoom for desktop
+    const handleWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        const delta = e.deltaY * -0.01;
+        const newScale = Math.max(0.5, Math.min(3, scale + delta));
+        setScale(newScale);
+        
+        if (newScale <= 1) {
+          setTranslateX(0);
+          setTranslateY(0);
+        }
+      }
+    };
+
+    container.addEventListener('touchstart', handleTouchStart, { passive: false });
+    container.addEventListener('touchmove', handleTouchMove, { passive: false });
+    container.addEventListener('touchend', handleTouchEnd);
+    container.addEventListener('wheel', handleWheel, { passive: false });
+
+    return () => {
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('touchend', handleTouchEnd);
+      container.removeEventListener('wheel', handleWheel);
+    };
+  }, [scale]);
 
   // Check if the program has an uploaded document
   const hasUploadedDocument = program && 
@@ -1442,8 +1547,14 @@ function ProgramEditorPage() {
           Click on any cell to add or edit workout details. You can mark days as rest days.
         </p>
         
-        <div className="w-full border rounded-lg overflow-x-auto">
-          <div className="p-4 min-w-[1400px]">
+        <div className="w-full border rounded-lg overflow-x-auto" ref={containerRef}>
+          <div 
+            className="p-4 min-w-[1400px] transition-transform duration-150 ease-out"
+            style={{
+              transform: `scale(${scale}) translate(${translateX}px, ${translateY}px)`,
+              transformOrigin: 'top left'
+            }}
+          >
             {isLoading ? (
               <div className="flex items-center justify-center p-8">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
