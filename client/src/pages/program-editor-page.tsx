@@ -528,23 +528,23 @@ function ProgramEditorPage() {
         const currentDistance = getDistance(e.touches);
         
         if (initialDistance > 0) {
-          // Calculate scale based on distance ratio with high sensitivity
+          // Mobile-first pinch scaling - extremely aggressive for touch devices
           const ratio = currentDistance / initialDistance;
           
-          // Apply much more aggressive scaling - focus on distance, not speed
-          let scaleMultiplier;
+          // Ultra-sensitive mobile pinch scaling
+          let newScale;
           if (ratio > 1) {
-            // Pinching out (zoom in) - very sensitive
-            scaleMultiplier = 1 + (ratio - 1) * 4; // 4x sensitivity for zoom in
+            // Pinch out (zoom in) - massive sensitivity for mobile
+            const zoomFactor = 1 + (ratio - 1) * 8; // 8x sensitivity
+            newScale = initialScale * zoomFactor;
           } else {
-            // Pinching in (zoom out) - very sensitive  
-            scaleMultiplier = ratio * ratio * ratio; // Cubic scaling for zoom out
+            // Pinch in (zoom out) - exponential sensitivity
+            const zoomFactor = Math.pow(ratio, 0.3); // Very sensitive zoom out
+            newScale = initialScale * zoomFactor;
           }
           
-          let newScale = initialScale * scaleMultiplier;
-          
           // Apply zoom limits
-          newScale = Math.max(0.3, Math.min(5, newScale));
+          newScale = Math.max(0.2, Math.min(8, newScale));
           setScale(newScale);
           
           // Reset position when zooming out to 1x or less
