@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { FileUp, Upload } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -37,6 +37,7 @@ export default function ProgramCreatePage() {
   const { toast } = useToast();
   const { user } = useAuth();
   const [, navigate] = useLocation();
+  const queryClient = useQueryClient();
   
   // Form setup
   const form = useForm<z.infer<typeof programFormSchema>>({

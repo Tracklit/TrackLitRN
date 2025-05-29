@@ -128,7 +128,7 @@ function EditableCell({
 
   return (
     <TableCell 
-      className={`border p-0 relative min-h-[100px] ${(value || content) ? 'bg-gray-950' : 'bg-gray-700'}`}
+      className={`border p-0 relative min-h-[80px] ${(value || content) ? 'bg-gray-950' : 'bg-gray-700'}`}
       onClick={() => !isEditing && setIsEditing(true)}
     >
       {isEditing ? (
@@ -139,7 +139,7 @@ function EditableCell({
             value={value}
             onChange={(e) => setValue(e.target.value)}
             placeholder="Enter workout details..."
-            className="min-h-[80px] font-sans text-sm p-2 border-0 focus:ring-0"
+            className="min-h-[64px] font-sans text-sm p-2 border-0 focus:ring-0"
           />
           <div className="flex justify-end gap-2 mt-2">
             <Button variant="outline" size="sm" className="h-7 px-3" onClick={() => setIsEditing(false)}>
@@ -151,7 +151,7 @@ function EditableCell({
           </div>
         </div>
       ) : (
-        <div className="p-2 min-h-[100px] h-full flex flex-col">
+        <div className="p-2 min-h-[80px] h-full flex flex-col">
           {/* Removed Rest Day badge as requested */}
           <div className="mt-1 flex-1 font-sans text-sm whitespace-pre-wrap">
             {value || content ? (
@@ -1443,7 +1443,7 @@ function ProgramEditorPage() {
         </p>
         
         <ScrollArea className="w-full border rounded-lg">
-          <div className="p-4 min-w-[1000px]">
+          <div className="p-4 min-w-[1400px] overflow-x-auto">
             {isLoading ? (
               <div className="flex items-center justify-center p-8">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
