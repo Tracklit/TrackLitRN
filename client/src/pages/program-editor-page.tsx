@@ -523,33 +523,25 @@ function ProgramEditorPage() {
 
     const handleTouchMove = (e: TouchEvent) => {
       if (e.touches.length === 2 && isPinching) {
-        // Native-style continuous pinch zoom
+        // Velocity-based pinch zoom for continuous gesture support
         e.preventDefault();
         const currentDistance = getDistance(e.touches);
         
         if (lastDistance > 0 && currentDistance > 0) {
-          // Direct ratio-based scaling with extreme sensitivity
-          const ratio = currentDistance / lastDistance;
+          // Calculate the velocity of finger movement
+          const distanceChange = currentDistance - lastDistance;
           
-          // Ultra-high sensitivity for immediate response
-          const baseSensitivity = 8; // Base multiplier
-          let newScale;
+          // Apply velocity-based scaling with high sensitivity
+          const sensitivity = 0.02; // Very sensitive to small movements
+          const scaleChange = distanceChange * sensitivity;
           
-          if (ratio > 1) {
-            // Zoom in: exponential scaling for fast response
-            const zoomFactor = Math.pow(ratio, baseSensitivity);
-            newScale = scale * zoomFactor;
-          } else {
-            // Zoom out: exponential scaling in reverse
-            const zoomFactor = Math.pow(ratio, baseSensitivity);
-            newScale = scale * zoomFactor;
-          }
+          let newScale = scale + scaleChange;
           
           // Apply zoom limits
           newScale = Math.max(0.1, Math.min(10, newScale));
           setScale(newScale);
           
-          // Always update last distance for continuous tracking
+          // Update last distance for next frame
           lastDistance = currentDistance;
           
           // Reset position when zooming out to 1x or less
