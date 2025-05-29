@@ -89,7 +89,8 @@ export default function StartGunPage() {
         [marksAudioRef.current, setAudioRef.current, bangAudioRef.current].forEach(audio => {
           if (audio) {
             audio.preload = 'auto';
-            audio.playsInline = true;
+            // Set playsInline attribute for mobile compatibility
+            (audio as any).playsInline = true;
             // Samsung devices benefit from explicit muted preload then unmute
             audio.muted = true;
             audio.load();

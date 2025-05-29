@@ -102,11 +102,16 @@ export default function ProgramCreatePage() {
         return res.json();
       }
     },
-    onSuccess: () => {
+    onSuccess: (newProgram) => {
+      // Invalidate and refetch the programs list to show the new program immediately
+      queryClient.invalidateQueries({ queryKey: ['/api/programs'] });
+      
       toast({
         title: "Program created",
         description: "Your training program has been created successfully",
       });
+      
+      // Navigate to the programs page - the list will be automatically refreshed
       navigate("/programs");
     },
     onError: (error: Error) => {
