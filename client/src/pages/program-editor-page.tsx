@@ -485,125 +485,12 @@ function ProgramEditorPage() {
     }
   }, [program, form]);
 
-  // Pinch-to-zoom functionality
+  // Reset zoom states since zoom functionality is removed
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    let initialDistance = 0;
-    let lastTouchX = 0;
-    let lastTouchY = 0;
-    let isDragging = false;
-
-    const getDistance = (touches: TouchList) => {
-      if (touches.length < 2) return 0;
-      const [touch1, touch2] = [touches[0], touches[1]];
-      return Math.sqrt(
-        Math.pow(touch2.clientX - touch1.clientX, 2) + 
-        Math.pow(touch2.clientY - touch1.clientY, 2)
-      );
-    };
-
-    const handleTouchStart = (e: TouchEvent) => {
-      if (e.touches.length === 2) {
-        // Start pinch gesture
-        e.preventDefault();
-        initialDistance = getDistance(e.touches);
-        isDragging = false;
-      } else if (e.touches.length === 1 && scale > 1) {
-        // Start pan gesture when zoomed
-        const touch = e.touches[0];
-        lastTouchX = touch.clientX;
-        lastTouchY = touch.clientY;
-        isDragging = true;
-      }
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (e.touches.length === 2) {
-        // Simple, aggressive pinch zoom
-        e.preventDefault();
-        const currentDistance = getDistance(e.touches);
-        
-        if (initialDistance > 0) {
-          // Calculate direct scale from distance ratio with massive sensitivity
-          const ratio = currentDistance / initialDistance;
-          
-          // Extremely aggressive scaling for mobile
-          let newScale;
-          if (ratio > 1) {
-            // Zoom in - linear scaling with high multiplier
-            newScale = 1 + (ratio - 1) * 15; // 15x sensitivity
-          } else {
-            // Zoom out - inverse linear scaling
-            newScale = ratio * ratio; // Quadratic for smooth zoom out
-          }
-          
-          // Apply zoom limits
-          newScale = Math.max(0.1, Math.min(8, newScale));
-          setScale(newScale);
-          
-          // Reset position when zooming out to 1x or less
-          if (newScale <= 1) {
-            setTranslateX(0);
-            setTranslateY(0);
-          }
-        }
-      } else if (e.touches.length === 1 && isDragging && scale > 1) {
-        // Pan when zoomed
-        e.preventDefault();
-        const touch = e.touches[0];
-        const deltaX = touch.clientX - lastTouchX;
-        const deltaY = touch.clientY - lastTouchY;
-        
-        setTranslateX(prev => prev + deltaX);
-        setTranslateY(prev => prev + deltaY);
-        
-        lastTouchX = touch.clientX;
-        lastTouchY = touch.clientY;
-      }
-    };
-
-    const handleTouchEnd = (e: TouchEvent) => {
-      if (e.touches.length === 0) {
-        isDragging = false;
-        initialDistance = 0;
-        
-        // Reset position if scale is back to 1 or less
-        if (scale <= 1) {
-          setTranslateX(0);
-          setTranslateY(0);
-        }
-      }
-    };
-
-    // Mouse wheel zoom for desktop
-    const handleWheel = (e: WheelEvent) => {
-      if (e.ctrlKey || e.metaKey) {
-        e.preventDefault();
-        const delta = e.deltaY * -0.05; // Increased sensitivity for desktop too
-        const newScale = Math.max(0.3, Math.min(5, scale + delta));
-        setScale(newScale);
-        
-        if (newScale <= 1) {
-          setTranslateX(0);
-          setTranslateY(0);
-        }
-      }
-    };
-
-    container.addEventListener('touchstart', handleTouchStart, { passive: false });
-    container.addEventListener('touchmove', handleTouchMove, { passive: false });
-    container.addEventListener('touchend', handleTouchEnd);
-    container.addEventListener('wheel', handleWheel, { passive: false });
-
-    return () => {
-      container.removeEventListener('touchstart', handleTouchStart);
-      container.removeEventListener('touchmove', handleTouchMove);
-      container.removeEventListener('touchend', handleTouchEnd);
-      container.removeEventListener('wheel', handleWheel);
-    };
-  }, [scale]);
+    setScale(1);
+    setTranslateX(0);
+    setTranslateY(0);
+  }, []);
 
   // Check if the program has an uploaded document
   const hasUploadedDocument = program && 
@@ -1568,14 +1455,8 @@ function ProgramEditorPage() {
           Click on any cell to add or edit workout details. You can mark days as rest days.
         </p>
         
-        <div className="w-full border rounded-lg overflow-x-auto" ref={containerRef}>
-          <div 
-            className="p-4 min-w-[1400px] transition-transform duration-150 ease-out"
-            style={{
-              transform: `scale(${scale}) translate(${translateX}px, ${translateY}px)`,
-              transformOrigin: 'top left'
-            }}
-          >
+        <div className="w-full border rounded-lg overflow-x-auto">
+          <div className="p-4 min-w-[1400px]">
             {isLoading ? (
               <div className="flex items-center justify-center p-8">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
