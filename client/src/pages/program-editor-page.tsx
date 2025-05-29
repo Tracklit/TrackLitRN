@@ -1462,10 +1462,10 @@ function ProgramEditorPage() {
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : (
-              <>
+              <div>
                 <div className="space-y-8">
                   {weeks.map((week) => (
-                  <div key={week.weekNumber} className="space-y-2">
+                    <div key={week.weekNumber} className="space-y-2">
                     <div className="flex justify-between items-center">
                       <h3 className="text-lg font-medium">
                         Week {week.weekNumber + 1}: {format(week.startDate, "MMM d")} - {format(addDays(week.startDate, 6), "MMM d, yyyy")}
@@ -1570,7 +1570,7 @@ function ProgramEditorPage() {
                     Add 5 Weeks
                   </Button>
                 </div>
-              </>
+              </div>
             )}
           </div>
         </div>
