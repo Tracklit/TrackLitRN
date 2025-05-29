@@ -247,7 +247,8 @@ export default function StartGunPage() {
     try {
       console.log(`Playing ${audioName}`);
       
-      // Reset the audio to the beginning
+      // Stop the audio completely before restarting to prevent overlaps
+      audioElement.pause();
       audioElement.currentTime = 0;
       audioElement.volume = volume / 100;
       
@@ -255,43 +256,100 @@ export default function StartGunPage() {
       audioElement.removeEventListener('ended', audioElement.onended as any);
       audioElement.removeEventListener('error', audioElement.onerror as any);
       
-      // Set up the ended callback
-      const endedHandler = () => {
-        console.log(`${audioName} finished playing`);
+      // Set up completion detection with multiple fallbacks for Samsung devices
+      let hasCompleted = false;
+      let completionTimer: NodeJS.Timeout | null = null;
+      
+      const triggerCompletion = () => {
+        if (hasCompleted) return;
+        hasCompleted = true;
+        
+        console.log(`${audioName} completed (via ${hasCompleted ? 'event' : 'timer'})`);
+        
+        // Clean up
+        if (completionTimer) {
+          clearTimeout(completionTimer);
+          completionTimer = null;
+        }
         audioElement!.removeEventListener('ended', endedHandler);
         audioElement!.removeEventListener('error', errorHandler);
+        audioElement!.removeEventListener('pause', pauseHandler);
+        
         if (onEnded) onEnded();
+      };
+      
+      // Set up the ended callback
+      const endedHandler = () => {
+        console.log(`${audioName} ended event fired`);
+        triggerCompletion();
       };
       
       // Set up error handler
       const errorHandler = (e: any) => {
         console.error(`Error playing ${audioName}:`, e);
-        audioElement!.removeEventListener('ended', endedHandler);
-        audioElement!.removeEventListener('error', errorHandler);
-        if (onEnded) onEnded();
+        triggerCompletion();
+      };
+      
+      // Set up pause handler (sometimes paused instead of ended on Samsung)
+      const pauseHandler = () => {
+        // Only treat as completion if we're at the end of the audio
+        if (audioElement && audioElement.currentTime >= audioElement.duration - 0.1) {
+          console.log(`${audioName} paused at end, treating as completion`);
+          triggerCompletion();
+        }
       };
       
       audioElement.addEventListener('ended', endedHandler);
       audioElement.addEventListener('error', errorHandler);
+      audioElement.addEventListener('pause', pauseHandler);
       
       // Start playback with proper promise handling for Samsung devices
       const playPromise = audioElement.play();
       if (playPromise) {
         playPromise.then(() => {
           console.log(`${audioName} started successfully`);
+          
+          // Set up a backup timer in case the ended event doesn't fire
+          // Use the audio duration + small buffer as fallback
+          if (audioElement && audioElement.duration && !isNaN(audioElement.duration)) {
+            completionTimer = setTimeout(() => {
+              if (!hasCompleted) {
+                console.log(`${audioName} completion timer fired as fallback`);
+                triggerCompletion();
+              }
+            }, (audioElement.duration + 0.2) * 1000); // Add 200ms buffer
+          } else {
+            // If duration is not available, use estimated durations
+            const estimatedDurations = { marks: 2000, set: 1000, bang: 500 };
+            completionTimer = setTimeout(() => {
+              if (!hasCompleted) {
+                console.log(`${audioName} estimated completion timer fired as fallback`);
+                triggerCompletion();
+              }
+            }, estimatedDurations[audioType] || 1000);
+          }
         }).catch(err => {
           console.error(`Error starting ${audioName}:`, err);
           // Samsung devices may need a slight delay and retry
           setTimeout(() => {
-            if (audioElement && audioElement.paused) {
+            if (audioElement && audioElement.paused && !hasCompleted) {
               console.log(`Retrying ${audioName} for Samsung device`);
               audioElement.play().catch(retryErr => {
                 console.error(`Retry failed for ${audioName}:`, retryErr);
-                if (onEnded) onEnded();
+                triggerCompletion();
               });
             }
           }, 50);
         });
+      } else {
+        // If no promise returned, set up fallback timer immediately
+        const estimatedDurations = { marks: 2000, set: 1000, bang: 500 };
+        completionTimer = setTimeout(() => {
+          if (!hasCompleted) {
+            console.log(`${audioName} fallback timer fired (no play promise)`);
+            triggerCompletion();
+          }
+        }, estimatedDurations[audioType] || 1000);
       }
     } catch (error) {
       console.error(`Exception playing ${audioName}:`, error);
