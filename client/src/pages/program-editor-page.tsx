@@ -490,11 +490,11 @@ function ProgramEditorPage() {
     const container = containerRef.current;
     if (!container) return;
 
-    let initialDistance = 0;
-    let initialScale = 1;
+    let lastDistance = 0;
     let lastTouchX = 0;
     let lastTouchY = 0;
     let isDragging = false;
+    let isPinching = false;
 
     const getDistance = (touches: TouchList) => {
       if (touches.length < 2) return 0;
@@ -509,10 +509,10 @@ function ProgramEditorPage() {
       if (e.touches.length === 2) {
         // Start pinch gesture
         e.preventDefault();
-        initialDistance = getDistance(e.touches);
-        initialScale = scale;
+        lastDistance = getDistance(e.touches);
+        isPinching = true;
         isDragging = false;
-      } else if (e.touches.length === 1 && scale > 1) {
+      } else if (e.touches.length === 1 && scale > 1 && !isPinching) {
         // Start pan gesture when zoomed
         const touch = e.touches[0];
         lastTouchX = touch.clientX;
@@ -522,31 +522,35 @@ function ProgramEditorPage() {
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (e.touches.length === 2) {
-        // Pinch zoom
+      if (e.touches.length === 2 && isPinching) {
+        // Continuous pinch zoom - allows seamless direction changes
         e.preventDefault();
         const currentDistance = getDistance(e.touches);
         
-        if (initialDistance > 0) {
-          // Ultra-aggressive mobile pinch scaling - same sensitivity for both directions
-          const ratio = currentDistance / initialDistance;
+        if (lastDistance > 0 && currentDistance > 0) {
+          // Calculate incremental change from last frame
+          const ratio = currentDistance / lastDistance;
           
-          // Extremely high sensitivity for mobile touch
-          const sensitivityMultiplier = 10; // 10x base sensitivity
-          let newScale;
+          // High sensitivity incremental scaling
+          const sensitivityMultiplier = 5; // 5x sensitivity per frame
+          let scaleMultiplier;
           
           if (ratio > 1) {
-            // Pinch out (zoom in)
-            newScale = initialScale * (1 + (ratio - 1) * sensitivityMultiplier);
+            // Spreading fingers (zoom in)
+            scaleMultiplier = 1 + (ratio - 1) * sensitivityMultiplier;
           } else {
-            // Pinch in (zoom out) - use inverse scaling with same high sensitivity
-            const inverseRatio = 1 / ratio;
-            newScale = initialScale / (1 + (inverseRatio - 1) * sensitivityMultiplier);
+            // Pinching fingers (zoom out)
+            scaleMultiplier = 1 - (1 - ratio) * sensitivityMultiplier;
           }
+          
+          let newScale = scale * scaleMultiplier;
           
           // Apply zoom limits
           newScale = Math.max(0.1, Math.min(10, newScale));
           setScale(newScale);
+          
+          // Update last distance for next frame
+          lastDistance = currentDistance;
           
           // Reset position when zooming out to 1x or less
           if (newScale <= 1) {
@@ -554,7 +558,7 @@ function ProgramEditorPage() {
             setTranslateY(0);
           }
         }
-      } else if (e.touches.length === 1 && isDragging && scale > 1) {
+      } else if (e.touches.length === 1 && isDragging && scale > 1 && !isPinching) {
         // Pan when zoomed
         e.preventDefault();
         const touch = e.touches[0];
@@ -570,9 +574,13 @@ function ProgramEditorPage() {
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length < 2) {
+        isPinching = false;
+        lastDistance = 0;
+      }
+      
       if (e.touches.length === 0) {
         isDragging = false;
-        initialDistance = 0;
         
         // Reset position if scale is back to 1 or less
         if (scale <= 1) {
