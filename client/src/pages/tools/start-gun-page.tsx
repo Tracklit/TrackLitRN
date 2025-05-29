@@ -70,6 +70,7 @@ export default function StartGunPage() {
   const recordedChunksRef = useRef<Blob[]>([]);
   const flashlightRef = useRef<any>(null);
   const activeAudioElements = useRef<HTMLAudioElement[]>([]);
+  const sequenceCancelledRef = useRef(false);
   
   const { toast } = useToast();
   
@@ -276,7 +277,10 @@ export default function StartGunPage() {
         audioElement!.removeEventListener('error', errorHandler);
         audioElement!.removeEventListener('pause', pauseHandler);
         
-        if (onEnded) onEnded();
+        // Only trigger callback if sequence hasn't been cancelled
+        if (onEnded && !sequenceCancelledRef.current) {
+          onEnded();
+        }
       };
       
       // Set up the ended callback
@@ -513,20 +517,21 @@ export default function StartGunPage() {
     setIsPlaying(true);
     setStatus('on-your-marks');
     setSequenceCancelled(false);
+    sequenceCancelledRef.current = false;
     
     // Play on your marks sound and wait for it to end before continuing
     playAudio('marks', () => {
-      if (sequenceCancelled) return;
+      if (sequenceCancelledRef.current) return;
       console.log("'On your marks' audio ended, waiting for delay");
       
       // After the marks audio completes, wait for the set delay
       setTimeout(() => {
-        if (sequenceCancelled) return;
+        if (sequenceCancelledRef.current) return;
         setStatus('set');
         
         // Play the set command and wait for it to end
         playAudio('set', () => {
-          if (sequenceCancelled) return;
+          if (sequenceCancelledRef.current) return;
           console.log("'Set' audio ended, waiting for gun delay");
           
           // Calculate gun delay with randomization if enabled
@@ -539,17 +544,17 @@ export default function StartGunPage() {
           
           // After the set audio completes, wait for the gun delay
           timerRefs.current.gunTimer = setTimeout(() => {
-            if (sequenceCancelled) return;
+            if (sequenceCancelledRef.current) return;
             setStatus('gun');
             
             // Play the bang sound
             playAudio('bang', () => {
-              if (sequenceCancelled) return;
+              if (sequenceCancelledRef.current) return;
               console.log("'Bang' audio ended");
               
               // Reset state after bang audio completes
               setTimeout(() => {
-                if (sequenceCancelled) return;
+                if (sequenceCancelledRef.current) return;
                 setIsPlaying(false);
                 setStatus('idle');
               }, 1000);
@@ -572,6 +577,7 @@ export default function StartGunPage() {
     
     // Set cancellation flag to prevent callbacks from executing
     setSequenceCancelled(true);
+    sequenceCancelledRef.current = true;
     
     // Clear all timers
     if (timerRefs.current.setTimer) {
