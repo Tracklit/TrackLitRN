@@ -528,10 +528,20 @@ function ProgramEditorPage() {
         const currentDistance = getDistance(e.touches);
         
         if (initialDistance > 0) {
-          // Calculate scale change - increased sensitivity
+          // Calculate scale based on distance ratio with high sensitivity
           const ratio = currentDistance / initialDistance;
-          const scaleChange = Math.pow(ratio, 2.5); // Exponential scaling for high sensitivity
-          let newScale = initialScale * scaleChange;
+          
+          // Apply much more aggressive scaling - focus on distance, not speed
+          let scaleMultiplier;
+          if (ratio > 1) {
+            // Pinching out (zoom in) - very sensitive
+            scaleMultiplier = 1 + (ratio - 1) * 4; // 4x sensitivity for zoom in
+          } else {
+            // Pinching in (zoom out) - very sensitive  
+            scaleMultiplier = ratio * ratio * ratio; // Cubic scaling for zoom out
+          }
+          
+          let newScale = initialScale * scaleMultiplier;
           
           // Apply zoom limits
           newScale = Math.max(0.3, Math.min(5, newScale));
