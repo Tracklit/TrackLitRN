@@ -492,9 +492,11 @@ function ProgramEditorPage() {
 
     let initialDistance = 0;
     let initialScale = 1;
+    let lastDistance = 0;
     let lastTouchX = 0;
     let lastTouchY = 0;
     let isDragging = false;
+    let isPinching = false;
 
     const getDistance = (touches: TouchList) => {
       if (touches.length < 2) return 0;
@@ -507,13 +509,16 @@ function ProgramEditorPage() {
 
     const handleTouchStart = (e: TouchEvent) => {
       if (e.touches.length === 2) {
-        // Pinch gesture
+        // Pinch gesture start
         e.preventDefault();
-        initialDistance = getDistance(e.touches);
+        const distance = getDistance(e.touches);
+        initialDistance = distance;
+        lastDistance = distance;
         initialScale = scale;
+        isPinching = true;
         isDragging = false;
-      } else if (e.touches.length === 1 && scale > 1) {
-        // Pan gesture when zoomed
+      } else if (e.touches.length === 1 && scale > 1 && !isPinching) {
+        // Pan gesture when zoomed and not pinching
         const touch = e.touches[0];
         lastTouchX = touch.clientX;
         lastTouchY = touch.clientY;
@@ -522,18 +527,22 @@ function ProgramEditorPage() {
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (e.touches.length === 2) {
-        // Pinch zoom
+      if (e.touches.length === 2 && isPinching) {
+        // Continue pinch zoom
         e.preventDefault();
         const currentDistance = getDistance(e.touches);
-        if (initialDistance > 0) {
-          // Increase sensitivity significantly for mobile devices
-          const scaleMultiplier = Math.pow(currentDistance / initialDistance, 2.5);
-          const newScale = Math.max(0.3, Math.min(5, initialScale * scaleMultiplier));
+        
+        if (lastDistance > 0 && currentDistance > 0) {
+          // Use incremental scaling for smoother, continuous zoom
+          const distanceRatio = currentDistance / lastDistance;
+          const scaleIncrement = Math.pow(distanceRatio, 3); // High sensitivity
+          const newScale = Math.max(0.3, Math.min(5, scale * scaleIncrement));
+          
           setScale(newScale);
+          lastDistance = currentDistance;
         }
-      } else if (e.touches.length === 1 && isDragging && scale > 1) {
-        // Pan when zoomed
+      } else if (e.touches.length === 1 && isDragging && scale > 1 && !isPinching) {
+        // Pan when zoomed and not pinching
         e.preventDefault();
         const touch = e.touches[0];
         const deltaX = touch.clientX - lastTouchX;
@@ -548,6 +557,12 @@ function ProgramEditorPage() {
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length < 2) {
+        isPinching = false;
+        initialDistance = 0;
+        lastDistance = 0;
+      }
+      
       if (e.touches.length === 0) {
         isDragging = false;
         // Reset position if scale is back to 1
