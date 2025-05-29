@@ -1462,8 +1462,9 @@ function ProgramEditorPage() {
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : (
-              <div className="space-y-8">
-                {weeks.map((week) => (
+              <>
+                <div className="space-y-8">
+                  {weeks.map((week) => (
                   <div key={week.weekNumber} className="space-y-2">
                     <div className="flex justify-between items-center">
                       <h3 className="text-lg font-medium">
@@ -1548,7 +1549,8 @@ function ProgramEditorPage() {
                       </TableBody>
                     </Table>
                   </div>
-                ))}
+                  ))}
+                </div>
                 
                 <div className="flex justify-center gap-4 pt-4">
                   <Button 
@@ -1568,7 +1570,7 @@ function ProgramEditorPage() {
                     Add 5 Weeks
                   </Button>
                 </div>
-              </div>
+              </>
             )}
           </div>
         </div>
