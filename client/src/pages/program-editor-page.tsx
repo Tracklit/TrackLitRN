@@ -1551,28 +1551,29 @@ function ProgramEditorPage() {
                   </div>
                   ))}
                 </div>
-                
-                <div className="flex justify-center gap-4 pt-4">
-                  <Button 
-                    variant="outline" 
-                    onClick={handleAddWeek}
-                    disabled={isAddingWeek}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Week
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={handleAddFiveWeeks}
-                    disabled={isAddingWeek}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add 5 Weeks
-                  </Button>
-                </div>
               </div>
             )}
           </div>
+        </div>
+        
+        {/* Add Week buttons moved completely outside the scrollable container */}
+        <div className="flex justify-center gap-4 pt-4">
+          <Button 
+            variant="outline" 
+            onClick={handleAddWeek}
+            disabled={isAddingWeek}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Week
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={handleAddFiveWeeks}
+            disabled={isAddingWeek}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add 5 Weeks
+          </Button>
         </div>
       </div>
     </div>
