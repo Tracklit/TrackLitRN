@@ -527,7 +527,9 @@ function ProgramEditorPage() {
         e.preventDefault();
         const currentDistance = getDistance(e.touches);
         if (initialDistance > 0) {
-          const newScale = Math.max(0.5, Math.min(3, initialScale * (currentDistance / initialDistance)));
+          // Increase sensitivity significantly for mobile devices
+          const scaleMultiplier = Math.pow(currentDistance / initialDistance, 2.5);
+          const newScale = Math.max(0.3, Math.min(5, initialScale * scaleMultiplier));
           setScale(newScale);
         }
       } else if (e.touches.length === 1 && isDragging && scale > 1) {
@@ -560,8 +562,8 @@ function ProgramEditorPage() {
     const handleWheel = (e: WheelEvent) => {
       if (e.ctrlKey || e.metaKey) {
         e.preventDefault();
-        const delta = e.deltaY * -0.01;
-        const newScale = Math.max(0.5, Math.min(3, scale + delta));
+        const delta = e.deltaY * -0.05; // Increased sensitivity for desktop too
+        const newScale = Math.max(0.3, Math.min(5, scale + delta));
         setScale(newScale);
         
         if (newScale <= 1) {
