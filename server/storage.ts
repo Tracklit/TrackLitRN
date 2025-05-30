@@ -48,6 +48,10 @@ import {
   InsertProgramSession,
   ProgramPurchase,
   InsertProgramPurchase,
+  SprinthiaConversation,
+  InsertSprinthiaConversation,
+  SprinthiaMessage,
+  InsertSprinthiaMessage,
   CoachAthlete,
   InsertCoachAthlete,
   WorkoutReaction,
@@ -2493,6 +2497,71 @@ export class DatabaseStorage implements IStorage {
         eq(follows.followerId, userId),
         eq(follows.followingId, targetUserId)
       ));
+
+  // Sprinthia AI Methods
+  async getSprinthiaConversations(userId: number): Promise<SprinthiaConversation[]> {
+    return await db
+      .select()
+      .from(sprinthiaConversations)
+      .where(eq(sprinthiaConversations.userId, userId))
+      .orderBy(desc(sprinthiaConversations.updatedAt));
+  }
+
+  async createSprinthiaConversation(data: InsertSprinthiaConversation): Promise<SprinthiaConversation> {
+    const [conversation] = await db
+      .insert(sprinthiaConversations)
+      .values(data)
+      .returning();
+    return conversation;
+  }
+
+  async getSprinthiaMessages(conversationId: number): Promise<SprinthiaMessage[]> {
+    return await db
+      .select()
+      .from(sprinthiaMessages)
+      .where(eq(sprinthiaMessages.conversationId, conversationId))
+      .orderBy(sprinthiaMessages.createdAt);
+  }
+
+  async createSprinthiaMessage(data: InsertSprinthiaMessage): Promise<SprinthiaMessage> {
+    const [message] = await db
+      .insert(sprinthiaMessages)
+      .values(data)
+      .returning();
+    return message;
+  }
+
+  async deleteSprinthiaConversation(conversationId: number, userId: number): Promise<void> {
+    // First verify the conversation belongs to the user
+    const conversation = await db
+      .select()
+      .from(sprinthiaConversations)
+      .where(and(
+        eq(sprinthiaConversations.id, conversationId),
+        eq(sprinthiaConversations.userId, userId)
+      ));
+    
+    if (!conversation.length) {
+      throw new Error("Conversation not found or access denied");
+    }
+
+    // Delete messages first (due to foreign key constraint)
+    await db
+      .delete(sprinthiaMessages)
+      .where(eq(sprinthiaMessages.conversationId, conversationId));
+    
+    // Then delete the conversation
+    await db
+      .delete(sprinthiaConversations)
+      .where(eq(sprinthiaConversations.id, conversationId));
+  }
+
+  async updateUserPrompts(userId: number, prompts: number): Promise<void> {
+    await db
+      .update(users)
+      .set({ sprinthiaPrompts: prompts })
+      .where(eq(users.id, userId));
+  }
 
     const isFollower = await db
       .select()

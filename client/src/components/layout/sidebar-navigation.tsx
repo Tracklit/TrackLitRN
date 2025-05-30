@@ -16,7 +16,8 @@ import {
   Dumbbell, 
   MessagesSquare, 
   Coins,
-  BookOpen
+  BookOpen,
+  Brain
 } from "lucide-react";
 
 interface NavItemProps {

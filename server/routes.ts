@@ -4141,6 +4141,155 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Sprinthia AI API Routes
+  app.get("/api/sprinthia/conversations", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const conversations = await dbStorage.getSprinthiaConversations(req.user!.id);
+      res.json(conversations);
+    } catch (error) {
+      console.error("Error fetching conversations:", error);
+      res.status(500).json({ error: "Failed to fetch conversations" });
+    }
+  });
+
+  app.post("/api/sprinthia/conversations", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const { title } = req.body;
+      const conversation = await dbStorage.createSprinthiaConversation({
+        userId: req.user!.id,
+        title: title || "New Conversation"
+      });
+      res.status(201).json(conversation);
+    } catch (error) {
+      console.error("Error creating conversation:", error);
+      res.status(500).json({ error: "Failed to create conversation" });
+    }
+  });
+
+  app.get("/api/sprinthia/conversations/:id/messages", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const conversationId = parseInt(req.params.id);
+      const messages = await dbStorage.getSprinthiaMessages(conversationId);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      res.status(500).json({ error: "Failed to fetch messages" });
+    }
+  });
+
+  app.post("/api/sprinthia/conversations/:id/messages", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const conversationId = parseInt(req.params.id);
+      const { content } = req.body;
+      
+      // Check if user has enough prompts
+      const user = req.user!;
+      if (user.sprinthiaPrompts <= 0) {
+        return res.status(403).json({ error: "No prompts remaining. Purchase more to continue using Sprinthia." });
+      }
+
+      // Save user message
+      const userMessage = await dbStorage.createSprinthiaMessage({
+        conversationId,
+        role: "user",
+        content,
+        promptCost: 1
+      });
+
+      // Generate AI response using OpenAI
+      const { getChatCompletion } = await import("./openai");
+      
+      const sprinthiaPrompt = `You are Sprinthia, an expert AI coach specializing in track and field events (track events only - sprints, middle distance, and long distance running). You help athletes with workout creation, race planning and strategy, general training questions, rehabilitation advice, and nutrition guidance specifically for track athletes.
+
+Keep your responses focused, practical, and encouraging. Provide specific, actionable advice based on current best practices in track and field training.
+
+User message: ${content}`;
+
+      const aiResponse = await getChatCompletion(sprinthiaPrompt);
+
+      // Save AI response
+      const assistantMessage = await dbStorage.createSprinthiaMessage({
+        conversationId,
+        role: "assistant",
+        content: aiResponse,
+        promptCost: 0
+      });
+
+      // Deduct one prompt from user
+      await dbStorage.updateUserPrompts(user.id, user.sprinthiaPrompts - 1);
+
+      // Return both messages
+      res.json({ userMessage, assistantMessage });
+    } catch (error) {
+      console.error("Error creating message:", error);
+      res.status(500).json({ error: "Failed to create message" });
+    }
+  });
+
+  app.delete("/api/sprinthia/conversations/:id", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const conversationId = parseInt(req.params.id);
+      await dbStorage.deleteSprinthiaConversation(conversationId, req.user!.id);
+      res.json({ message: "Conversation deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting conversation:", error);
+      res.status(500).json({ error: "Failed to delete conversation" });
+    }
+  });
+
+  // Spike purchase routes for Sprinthia prompts
+  app.post("/api/purchase/prompts", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const { package: packageType } = req.body;
+      const user = req.user!;
+      
+      let cost = 0;
+      let prompts = 0;
+      
+      switch (packageType) {
+        case "small":
+          cost = 100; // 100 spikes for 10 prompts
+          prompts = 10;
+          break;
+        case "medium":
+          cost = 250; // 250 spikes for 30 prompts (better value)
+          prompts = 30;
+          break;
+        case "large":
+          cost = 500; // 500 spikes for 75 prompts (best value)
+          prompts = 75;
+          break;
+        default:
+          return res.status(400).json({ error: "Invalid package type" });
+      }
+      
+      if (user.spikes < cost) {
+        return res.status(403).json({ error: "Not enough spikes to purchase this package" });
+      }
+      
+      // Deduct spikes and add prompts
+      await dbStorage.deductSpikesFromUser(user.id, cost, 'prompt_purchase', null, `Purchased ${prompts} Sprinthia prompts`);
+      await dbStorage.updateUserPrompts(user.id, user.sprinthiaPrompts + prompts);
+      
+      res.json({ message: `Successfully purchased ${prompts} prompts for ${cost} spikes` });
+    } catch (error) {
+      console.error("Error purchasing prompts:", error);
+      res.status(500).json({ error: "Failed to purchase prompts" });
+    }
+  });
+
   // Workout Reactions API
   app.get("/api/sessions/:sessionId/reactions", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
