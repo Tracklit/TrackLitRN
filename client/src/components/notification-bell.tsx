@@ -105,7 +105,7 @@ export function NotificationBell() {
     
     // Handle different notification types
     if (notification.type === 'friend_request') {
-      setLocation('/friends');
+      setLocation('/friends?tab=pending');
       setIsOpen(false);
     } else if (notification.actionUrl) {
       setLocation(notification.actionUrl);

@@ -47,6 +47,16 @@ interface CoachingRequest {
 export default function FriendsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState("friends");
+
+  // Check URL parameters for tab selection
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    if (tabParam === 'pending') {
+      setActiveTab('pending');
+    }
+  }, []);
 
   // Fetch current user
   const { data: currentUser } = useQuery({
@@ -203,7 +213,7 @@ export default function FriendsPage() {
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-bold text-white mb-8">Friends</h1>
 
-          <Tabs defaultValue="friends" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 bg-gray-800 border-gray-700">
               <TabsTrigger value="friends" className="data-[state=active]:bg-[#ff8c00]">
                 Your Friends
