@@ -225,25 +225,23 @@ export default function SprinthiaPage() {
             {/* Messages area */}
             <div className="flex-1 overflow-y-auto p-6" style={{ maxHeight: 'calc(100vh - 400px)' }}>
               {!currentConversationId && messages.length === 0 ? (
-                <div className="h-full flex flex-col justify-center">
-                  <div className="text-center max-w-md mx-auto">
-                    <div 
-                      className="w-full h-72 mx-auto mb-6 bg-cover rounded-lg"
-                      style={{ 
-                        backgroundImage: 'url(/brain-header.jpg)',
-                        backgroundPosition: 'center -70px'
-                      }}
-                    />
-                    <h2 className="text-2xl font-bold mb-2">Hi {user?.name?.split(' ')[0] || user?.username || 'there'}, how can I help you today?</h2>
-                    <p className="text-muted-foreground mb-6">
-                      Your AI training companion for track and field. Ask questions about workouts, 
-                      race strategy, rehabilitation, nutrition, or training plans.
-                    </p>
-                    <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Zap className="h-4 w-4" />
-                        {user?.sprinthiaPrompts || 0} prompts left
-                      </div>
+                <div className="text-center max-w-md mx-auto pt-20">
+                  <div 
+                    className="w-full h-72 mx-auto mb-6 bg-cover rounded-lg"
+                    style={{ 
+                      backgroundImage: 'url(/brain-header.jpg)',
+                      backgroundPosition: 'center -70px'
+                    }}
+                  />
+                  <h2 className="text-2xl font-bold mb-2">Hi {user?.name?.split(' ')[0] || user?.username || 'there'}, how can I help you today?</h2>
+                  <p className="text-muted-foreground mb-6">
+                    Your AI training companion for track and field. Ask questions about workouts, 
+                    race strategy, rehabilitation, nutrition, or training plans.
+                  </p>
+                  <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Zap className="h-4 w-4" />
+                      {user?.sprinthiaPrompts || 0} prompts left
                     </div>
                   </div>
                 </div>
