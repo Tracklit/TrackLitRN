@@ -201,7 +201,7 @@ export default function SprinthiaPage() {
             {/* Messages area */}
             <div className="flex-1 overflow-y-auto p-6">
               {!currentConversationId && messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center" style={{ height: 'calc(100% - 400px)' }}>
+                <div className="flex-1 flex items-center justify-center">
                   <div className="text-center max-w-md">
                     <Brain className="h-16 w-16 mx-auto mb-4 text-primary" />
                     <h2 className="text-2xl font-bold mb-2">Welcome to Sprinthia AI</h2>
@@ -209,7 +209,7 @@ export default function SprinthiaPage() {
                       Your AI training companion for track and field. Ask questions about workouts, 
                       race strategy, rehabilitation, nutrition, or training plans.
                     </p>
-                    <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground" style={{ marginBottom: '-200px' }}>
                       <div className="flex items-center gap-1">
                         <Zap className="h-4 w-4" />
                         {user?.sprinthiaPrompts || 0} prompts left
