@@ -231,7 +231,7 @@ export default function SprinthiaPage() {
                       className="w-full h-48 mx-auto mb-6 bg-cover bg-top rounded-lg"
                       style={{ backgroundImage: 'url(/brain-header.jpg)' }}
                     />
-                    <h2 className="text-2xl font-bold mb-2">Welcome to Sprinthia</h2>
+                    <h2 className="text-2xl font-bold mb-2">Hi {user?.name?.split(' ')[0] || user?.username || 'there'}, how can I help you today?</h2>
                     <p className="text-muted-foreground mb-6">
                       Your AI training companion for track and field. Ask questions about workouts, 
                       race strategy, rehabilitation, nutrition, or training plans.
