@@ -231,7 +231,7 @@ export default function SprinthiaPage() {
                       className="w-full h-48 mx-auto mb-6 bg-cover rounded-lg"
                       style={{ 
                         backgroundImage: 'url(/brain-header.jpg)',
-                        backgroundPosition: 'center -50px'
+                        backgroundPosition: 'center -70px'
                       }}
                     />
                     <h2 className="text-2xl font-bold mb-2">Hi {user?.name?.split(' ')[0] || user?.username || 'there'}, how can I help you today?</h2>
