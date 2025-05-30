@@ -170,61 +170,54 @@ export default function SprinthiaSimple() {
             )}
 
             {messages.map((message) => (
-              <div
-                key={message.id}
-                className={cn(
-                  "flex gap-3",
-                  message.role === 'user' ? 'justify-end' : 'justify-start'
-                )}
-              >
-                {message.role === 'assistant' && (
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-0.5 shrink-0">
-                    <div className="w-full h-full rounded-full bg-background overflow-hidden">
-                      <img src={brainImage} alt="Sprinthia AI" className="w-full h-full object-cover" />
-                    </div>
-                  </div>
-                )}
-                
+              <div key={message.id} className="w-full mb-6">
+                <div className={cn(
+                  "mb-2 text-sm font-medium",
+                  message.role === 'user' ? 'text-blue-600' : 'text-purple-600'
+                )}>
+                  {message.role === 'user' ? 'You' : 'Sprinthia'}
+                </div>
                 <div
                   className={cn(
-                    "max-w-[80%] rounded-2xl px-4 py-3 shadow-sm",
+                    "w-full rounded-lg px-4 py-3 shadow-sm",
                     message.role === 'user'
-                      ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white ml-12'
-                      : 'bg-muted/70 border'
+                      ? 'bg-blue-50 border-l-4 border-blue-500'
+                      : 'bg-muted/50 border-l-4 border-purple-500'
                   )}
                 >
-                  <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
-                  <div className="text-xs opacity-70 mt-2">
+                  <div className="whitespace-pre-wrap leading-relaxed text-foreground">
+                    {message.content
+                      .replace(/\*\*(.*?)\*\*/g, '$1')
+                      .replace(/\*(.*?)\*/g, '$1')
+                      .replace(/^#+\s*/gm, '')
+                      .replace(/^\*\s*/gm, '• ')
+                      .replace(/^-\s*/gm, '• ')
+                    }
+                  </div>
+                  <div className="text-xs opacity-70 mt-3 pt-2 border-t border-border">
                     {new Date(message.timestamp).toLocaleTimeString([], { 
                       hour: '2-digit', 
                       minute: '2-digit' 
                     })}
                   </div>
                 </div>
-
-                {message.role === 'user' && (
-                  <Avatar className="h-10 w-10 shrink-0">
-                    <AvatarFallback className="bg-gradient-to-br from-gray-500 to-gray-600 text-white">
-                      <User className="h-5 w-5" />
-                    </AvatarFallback>
-                  </Avatar>
-                )}
               </div>
             ))}
 
             {/* Typing indicator */}
             {isGenerating && (
-              <div className="flex gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-0.5 shrink-0">
-                  <div className="w-full h-full rounded-full bg-background overflow-hidden">
-                    <img src={brainImage} alt="Sprinthia AI" className="w-full h-full object-cover" />
-                  </div>
+              <div className="w-full mb-6">
+                <div className="mb-2 text-sm font-medium text-purple-600">
+                  Sprinthia
                 </div>
-                <div className="bg-muted/70 border rounded-2xl px-4 py-3 shadow-sm">
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+                <div className="w-full bg-muted/50 border-l-4 border-purple-500 rounded-lg px-4 py-3 shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Thinking</span>
+                    <div className="flex gap-1">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                      <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                      <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"></div>
+                    </div>
                   </div>
                 </div>
               </div>
