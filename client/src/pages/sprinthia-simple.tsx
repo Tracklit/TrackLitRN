@@ -214,16 +214,16 @@ export default function SprinthiaSimple() {
             {/* Typing indicator */}
             {isGenerating && (
               <div className="flex gap-3">
-                <Avatar className="h-8 w-8 bg-gradient-to-br from-blue-500 to-purple-600">
-                  <AvatarFallback>
-                    <Brain className="h-4 w-4 text-white" />
-                  </AvatarFallback>
-                </Avatar>
-                <div className="bg-muted rounded-lg px-4 py-3">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-0.5 shrink-0">
+                  <div className="w-full h-full rounded-full bg-background flex items-center justify-center">
+                    <Brain className="h-4 w-4 text-blue-500" />
+                  </div>
+                </div>
+                <div className="bg-muted/70 border rounded-2xl px-4 py-3 shadow-sm">
                   <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
                   </div>
                 </div>
               </div>
@@ -233,24 +233,32 @@ export default function SprinthiaSimple() {
           </div>
 
           {/* Input */}
-          <div className="p-6 border-t border-border">
-            <div className="flex gap-3">
-              <Input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Ask Sprinthia about training, races, rehabilitation, or nutrition..."
-                className="flex-1"
-                disabled={isGenerating}
-              />
-              <Button 
-                onClick={handleSendMessage}
-                disabled={!input.trim() || isGenerating || (user?.subscriptionTier !== 'star' && !user?.sprinthiaPrompts)}
-                size="icon"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
+          <div className="p-6 border-t border-border bg-gradient-to-r from-background to-muted/10">
+            <div className="flex gap-3 max-w-4xl mx-auto">
+              <div className="flex-1 relative">
+                <Input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Ask Sprinthia about training, races, rehabilitation, or nutrition..."
+                  className="pr-12 h-12 rounded-xl border-2 focus:border-blue-500 transition-colors bg-background/50 backdrop-blur-sm"
+                  disabled={isGenerating}
+                />
+                <Button 
+                  onClick={handleSendMessage}
+                  disabled={!input.trim() || isGenerating || (user?.subscriptionTier !== 'star' && !user?.sprinthiaPrompts)}
+                  size="icon"
+                  className="absolute right-1 top-1 h-10 w-10 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 transition-all"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
+            {user?.subscriptionTier !== 'star' && user?.sprinthiaPrompts === 0 && (
+              <p className="text-sm text-muted-foreground text-center mt-3">
+                You've used all your prompts. Upgrade to Pro or Star to continue using Sprinthia.
+              </p>
+            )}
           </div>
         </div>
       </div>
