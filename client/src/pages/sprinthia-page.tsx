@@ -201,7 +201,7 @@ export default function SprinthiaPage() {
             {/* Messages area */}
             <div className="flex-1 overflow-y-auto p-6">
               {!currentConversationId && messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center" style={{ height: 'calc(100% - 200px)' }}>
+                <div className="flex flex-col items-center justify-center" style={{ height: 'calc(100% - 400px)' }}>
                   <div className="text-center max-w-md">
                     <Brain className="h-16 w-16 mx-auto mb-4 text-primary" />
                     <h2 className="text-2xl font-bold mb-2">Welcome to Sprinthia AI</h2>
