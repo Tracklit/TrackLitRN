@@ -90,7 +90,7 @@ export default function SprinthiaPage() {
 
   const handleSendMessage = () => {
     if (!input.trim()) return;
-    if (!user?.sprinthiaPrompts || user.sprinthiaPrompts <= 0) {
+    if (user?.subscriptionTier !== 'star' && (!user?.sprinthiaPrompts || user.sprinthiaPrompts <= 0)) {
       toast({
         title: "No prompts remaining",
         description: "Purchase more Spike packs to continue using Sprinthia",

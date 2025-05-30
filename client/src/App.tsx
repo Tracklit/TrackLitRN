@@ -48,7 +48,7 @@ import AthleteProfilePage from "@/pages/athlete-profile-page";
 import AthleteProfile from "@/pages/athlete-profile";
 import PublicProfilePage from "@/pages/public-profile-page";
 import AdminPage from "@/pages/admin-page";
-import SprinthiaPage from "@/pages/sprinthia-page-new";
+import SprinthiaPage from "@/pages/sprinthia-simple";
 import RehabPage from "@/pages/rehab-page";
 import HamstringRehabPage from "@/pages/rehab/acute-muscle/hamstring";
 import FootRehabPage from "@/pages/rehab/chronic-injuries/foot";
