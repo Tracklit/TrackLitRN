@@ -116,18 +116,27 @@ export default function SprinthiaSimple() {
         
         <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full">
           {/* Header */}
-          <div className="p-6 border-b border-border">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600">
-                <Brain className="h-6 w-6 text-white" />
+          <div className="p-6 border-b border-border bg-gradient-to-r from-background to-muted/20">
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-0.5">
+                  <div className="w-full h-full rounded-full bg-background flex items-center justify-center">
+                    <Brain className="h-6 w-6 text-blue-500" />
+                  </div>
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-background"></div>
               </div>
-              <div>
-                <h1 className="text-2xl font-bold">Sprinthia</h1>
-                <p className="text-muted-foreground">Your AI track and field coach</p>
+              <div className="flex-1">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+                  Sprinthia
+                </h1>
+                <p className="text-muted-foreground text-sm">Your AI track and field coach • Always available</p>
               </div>
-              <div className="ml-auto text-right">
-                <p className="text-sm text-muted-foreground">Remaining Prompts</p>
-                <p className="font-semibold">{getPromptDisplay()}</p>
+              <div className="text-right">
+                <div className="bg-muted/50 rounded-lg px-3 py-2 border">
+                  <p className="text-xs text-muted-foreground mb-1">Remaining</p>
+                  <p className="font-semibold text-sm">{getPromptDisplay()}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -135,10 +144,27 @@ export default function SprinthiaSimple() {
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {messages.length === 0 && (
-              <div className="text-center py-12">
-                <Brain className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Hi {user?.name?.split(' ')[0]}, how can I help you today?</h3>
-                <p className="text-muted-foreground">Ask me about training, races, rehabilitation, or nutrition.</p>
+              <div className="text-center py-16">
+                <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-0.5">
+                  <div className="w-full h-full rounded-full bg-background flex items-center justify-center">
+                    <Brain className="h-8 w-8 text-blue-500" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-semibold mb-3">Hi {user?.name?.split(' ')[0] || 'there'}, how can I help you today?</h3>
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                  Ask me about training plans, race preparation, injury rehabilitation, or nutrition advice.
+                </p>
+                <div className="flex flex-wrap gap-2 justify-center max-w-2xl mx-auto">
+                  {['Create a sprint workout', 'Race strategy for 400m', 'Hamstring injury recovery', 'Pre-race nutrition'].map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      onClick={() => setInput(suggestion)}
+                      className="px-3 py-2 text-sm bg-muted/50 hover:bg-muted rounded-lg border transition-colors"
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -151,27 +177,33 @@ export default function SprinthiaSimple() {
                 )}
               >
                 {message.role === 'assistant' && (
-                  <Avatar className="h-8 w-8 bg-gradient-to-br from-blue-500 to-purple-600">
-                    <AvatarFallback>
-                      <Brain className="h-4 w-4 text-white" />
-                    </AvatarFallback>
-                  </Avatar>
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-0.5 shrink-0">
+                    <div className="w-full h-full rounded-full bg-background flex items-center justify-center">
+                      <Brain className="h-4 w-4 text-blue-500" />
+                    </div>
+                  </div>
                 )}
                 
                 <div
                   className={cn(
-                    "max-w-[80%] rounded-lg px-4 py-3",
+                    "max-w-[80%] rounded-2xl px-4 py-3 shadow-sm",
                     message.role === 'user'
-                      ? 'bg-primary text-primary-foreground ml-12'
-                      : 'bg-muted'
+                      ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white ml-12'
+                      : 'bg-muted/70 border'
                   )}
                 >
-                  <p className="whitespace-pre-wrap">{message.content}</p>
+                  <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                  <div className="text-xs opacity-70 mt-2">
+                    {new Date(message.timestamp).toLocaleTimeString([], { 
+                      hour: '2-digit', 
+                      minute: '2-digit' 
+                    })}
+                  </div>
                 </div>
 
                 {message.role === 'user' && (
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback>
+                  <Avatar className="h-8 w-8 shrink-0">
+                    <AvatarFallback className="bg-gradient-to-br from-gray-500 to-gray-600 text-white">
                       <User className="h-4 w-4" />
                     </AvatarFallback>
                   </Avatar>
