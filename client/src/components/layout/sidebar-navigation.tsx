@@ -167,6 +167,18 @@ export function SidebarNavigation({ isMobile = false }: { isMobile?: boolean }) 
             Coaches
           </NavItem>
           
+          {/* AI Section */}
+          <div className="pt-4 pb-2">
+            <p className="text-xs text-gray-400 px-3 font-medium">AI</p>
+          </div>
+          <NavItem 
+            href="/sprinthia" 
+            icon={<Brain className="h-5 w-5" />} 
+            isActive={location === '/sprinthia'}
+          >
+            Sprinthia
+          </NavItem>
+          
           {/* Account Section */}
           <div className="pt-4 pb-2">
             <p className="text-xs text-darkGray px-3 font-medium">ACCOUNT</p>

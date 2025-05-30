@@ -48,6 +48,7 @@ import AthleteProfilePage from "@/pages/athlete-profile-page";
 import AthleteProfile from "@/pages/athlete-profile";
 import PublicProfilePage from "@/pages/public-profile-page";
 import AdminPage from "@/pages/admin-page";
+import SprinthiaPage from "@/pages/sprinthia-page";
 import RehabPage from "@/pages/rehab-page";
 import HamstringRehabPage from "@/pages/rehab/acute-muscle/hamstring";
 import FootRehabPage from "@/pages/rehab/chronic-injuries/foot";
@@ -92,6 +93,9 @@ function Router() {
       <ProtectedRoute path="/rehab" component={RehabPage} />
       <ProtectedRoute path="/rehab/acute-muscle/hamstring" component={HamstringRehabPage} />
       <ProtectedRoute path="/rehab/chronic-injuries/foot" component={FootRehabPage} />
+      
+      {/* AI */}
+      <ProtectedRoute path="/sprinthia" component={SprinthiaPage} />
       
       {/* Account */}
       <ProtectedRoute path="/spikes" component={SpikesPage} />

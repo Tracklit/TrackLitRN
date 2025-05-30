@@ -101,7 +101,9 @@ import {
   conversations,
   coachAthletes,
   coachingRequests,
-  InsertCoachingRequest
+  InsertCoachingRequest,
+  sprinthiaConversations,
+  sprinthiaMessages
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, lt, gte, desc, asc, inArray, or, isNotNull, isNull, ne, sql, exists } from "drizzle-orm";
@@ -2498,6 +2500,20 @@ export class DatabaseStorage implements IStorage {
         eq(follows.followingId, targetUserId)
       ));
 
+    const isFollower = await db
+      .select()
+      .from(follows)
+      .where(and(
+        eq(follows.followerId, targetUserId),
+        eq(follows.followingId, userId)
+      ));
+
+    return {
+      isFollowing: isFollowing.length > 0,
+      isFollower: isFollower.length > 0
+    };
+  }
+
   // Sprinthia AI Methods
   async getSprinthiaConversations(userId: number): Promise<SprinthiaConversation[]> {
     return await db
@@ -2562,25 +2578,7 @@ export class DatabaseStorage implements IStorage {
       .set({ sprinthiaPrompts: prompts })
       .where(eq(users.id, userId));
   }
-
-    const isFollower = await db
-      .select()
-      .from(follows)
-      .where(and(
-        eq(follows.followerId, targetUserId),
-        eq(follows.followingId, userId)
-      ));
-
-    // Check for pending friend requests in both directions
-    const pendingRequest = await db
-      .select()
-      .from(notifications)
-      .where(and(
-        eq(notifications.type, 'friend_request'),
-        or(
-          and(eq(notifications.userId, targetUserId), sql`JSON_EXTRACT(${notifications.data}, '$.fromUserId') = ${userId}`),
-          and(eq(notifications.userId, userId), sql`JSON_EXTRACT(${notifications.data}, '$.fromUserId') = ${targetUserId}`)
-        )
+}
       ));
 
     const followersCount = await db
