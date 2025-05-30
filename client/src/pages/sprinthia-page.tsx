@@ -126,8 +126,8 @@ export default function SprinthiaPage() {
       <div className="flex-1 flex flex-col">
         <Header />
         
-        {/* Single column chat layout */}
-        <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full">
+        {/* Sprinthia layout */}
+        <div className="flex-1 overflow-hidden">
           {/* Top bar with title and info */}
           <div className="flex items-center justify-between p-4 border-b border-border">
             <div className="flex items-center gap-3">
@@ -220,31 +220,32 @@ export default function SprinthiaPage() {
             </div>
           </div>
 
-          {/* Main chat area */}
-          <div className="flex-1 flex flex-col">
-            {/* Messages area */}
-            <div className="flex-1 overflow-y-auto p-6 pb-24" style={{ maxHeight: 'calc(100vh - 400px)' }}>
-              {!currentConversationId && messages.length === 0 ? (
-                <div className="text-center max-w-md mx-auto pt-20">
-                  <div 
-                    className="w-full h-72 mx-auto mb-6 bg-cover rounded-lg"
-                    style={{ 
-                      backgroundImage: 'url(/brain-header.jpg)',
-                      backgroundPosition: 'center -70px'
-                    }}
-                  />
-                  <h2 className="text-2xl font-bold mb-2">Hi {user?.name?.split(' ')[0] || user?.username || 'there'}, how can I help you today?</h2>
-                  <p className="text-muted-foreground mb-6">
-                    Your AI training companion for track and field. Ask questions about workouts, 
-                    race strategy, rehabilitation, nutrition, or training plans.
-                  </p>
-                  <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Zap className="h-4 w-4" />
-                      {user?.sprinthiaPrompts || 0} prompts left
+          {/* Chat content with clean layout */}
+          <div className="h-full flex flex-col">
+            {/* Messages container */}
+            <div className="flex-1 overflow-auto">
+              <div className="p-6 min-h-full">
+                {!currentConversationId && messages.length === 0 ? (
+                  <div className="text-center max-w-md mx-auto pt-20">
+                    <div 
+                      className="w-full h-72 mx-auto mb-6 bg-cover rounded-lg"
+                      style={{ 
+                        backgroundImage: 'url(/brain-header.jpg)',
+                        backgroundPosition: 'center -70px'
+                      }}
+                    />
+                    <h2 className="text-2xl font-bold mb-2">Hi {user?.name?.split(' ')[0] || user?.username || 'there'}, how can I help you today?</h2>
+                    <p className="text-muted-foreground mb-6">
+                      Your AI training companion for track and field. Ask questions about workouts, 
+                      race strategy, rehabilitation, nutrition, or training plans.
+                    </p>
+                    <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Zap className="h-4 w-4" />
+                        {user?.sprinthiaPrompts || 0} prompts left
+                      </div>
                     </div>
                   </div>
-                </div>
               ) : (
                 <div className="space-y-6 max-w-4xl mx-auto w-full">
                   {messagesLoading ? (
