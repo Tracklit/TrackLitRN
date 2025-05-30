@@ -172,6 +172,30 @@ export default function SprinthiaPage() {
                       </div>
                     </div>
 
+                    <div className="space-y-3">
+                      <h3 className="font-semibold">Subscription Benefits</h3>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center justify-between p-2 rounded border">
+                          <span>Free</span>
+                          <span className="text-muted-foreground">1 prompt/month</span>
+                        </div>
+                        <div className="flex items-center justify-between p-2 rounded border bg-orange-50">
+                          <div className="flex items-center gap-1">
+                            <Crown className="h-3 w-3 text-orange-500" />
+                            <span>Pro</span>
+                          </div>
+                          <span className="text-muted-foreground">50 prompts/month</span>
+                        </div>
+                        <div className="flex items-center justify-between p-2 rounded border bg-purple-50">
+                          <div className="flex items-center gap-1">
+                            <Star className="h-3 w-3 text-purple-500" />
+                            <span>Star</span>
+                          </div>
+                          <span className="text-muted-foreground">Unlimited prompts</span>
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="space-y-2">
                       <h3 className="font-semibold">Purchase Options</h3>
                       <p className="text-sm text-muted-foreground">
