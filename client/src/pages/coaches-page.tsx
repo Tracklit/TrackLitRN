@@ -5,7 +5,7 @@ import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/use-auth';
 import { Header } from '@/components/layout/header';
 import { SidebarNavigation } from '@/components/layout/sidebar-navigation';
-import { BottomNavigation } from '@/components/layout/bottom-navigation';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -531,7 +531,6 @@ export default function CoachesPage() {
       </main>
       
       <SidebarNavigation />
-      <BottomNavigation />
     </div>
   );
 }

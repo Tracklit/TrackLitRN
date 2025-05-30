@@ -16,6 +16,7 @@ export const users = pgTable("users", {
   bio: text("bio"),
   profileImageUrl: text("profile_image_url"),
   spikes: integer("spikes").default(0), // In-app currency/tokens
+  sprinthiaPrompts: integer("sprinthia_prompts").default(1), // Available AI prompts
   defaultClubId: integer("default_club_id"), // Will be connected through relations
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -889,6 +890,24 @@ export type InsertLoginStreak = z.infer<typeof insertLoginStreakSchema>;
 export type InsertSpikeTransaction = z.infer<typeof insertSpikeTransactionSchema>;
 export type InsertReferral = z.infer<typeof insertReferralSchema>;
 
+// Sprinthia AI Conversations
+export const sprinthiaConversations = pgTable("sprinthia_conversations", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  title: text("title").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const sprinthiaMessages = pgTable("sprinthia_messages", {
+  id: serial("id").primaryKey(),
+  conversationId: integer("conversation_id").notNull().references(() => sprinthiaConversations.id),
+  role: text("role", { enum: ['user', 'assistant'] }).notNull(),
+  content: text("content").notNull(),
+  promptCost: integer("prompt_cost").default(1), // How many prompts this message cost
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Workout Library System
 export const workoutLibrary = pgTable("workout_library", {
   id: serial("id").primaryKey(),
@@ -1300,6 +1319,40 @@ export type InsertProgramProgress = z.infer<typeof insertProgramProgressSchema>;
 export type CoachAthlete = typeof coachAthletes.$inferSelect;
 export type InsertCoachAthlete = z.infer<typeof insertCoachAthleteSchema>;
 
+// Sprinthia Relations
+export const sprinthiaConversationsRelations = relations(sprinthiaConversations, ({ one, many }) => ({
+  user: one(users, {
+    fields: [sprinthiaConversations.userId],
+    references: [users.id],
+  }),
+  messages: many(sprinthiaMessages),
+}));
+
+export const sprinthiaMessagesRelations = relations(sprinthiaMessages, ({ one }) => ({
+  conversation: one(sprinthiaConversations, {
+    fields: [sprinthiaMessages.conversationId],
+    references: [sprinthiaConversations.id],
+  }),
+}));
+
+// Sprinthia Schemas
+export const insertSprinthiaConversationSchema = createInsertSchema(sprinthiaConversations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSprinthiaMessageSchema = createInsertSchema(sprinthiaMessages).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Sprinthia Types
+export type SprinthiaConversation = typeof sprinthiaConversations.$inferSelect;
+export type SprinthiaMessage = typeof sprinthiaMessages.$inferSelect;
+export type InsertSprinthiaConversation = z.infer<typeof insertSprinthiaConversationSchema>;
+export type InsertSprinthiaMessage = z.infer<typeof insertSprinthiaMessageSchema>;
+
 // Additional relations for users with spikes system
 export const usersSpikesRelations = relations(users, ({ many, one }) => ({
   userAchievements: many(userAchievements),
@@ -1308,4 +1361,5 @@ export const usersSpikesRelations = relations(users, ({ many, one }) => ({
   referrals: many(referrals, { relationName: "referrer" }),
   workouts: many(workoutLibrary),
   workoutPreviews: many(workoutSessionPreview),
+  sprinthiaConversations: many(sprinthiaConversations),
 }));
