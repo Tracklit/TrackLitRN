@@ -269,8 +269,21 @@ export default function AthletesPage() {
 
   if (isLoading && page === 1) {
     return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" aria-label="Loading"/>
+      <div className="min-h-screen bg-[#010a18] text-white">
+        <div className="container mx-auto px-4 py-6">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold mb-4">Athletes</h1>
+            <div className="relative mb-6">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search athletes..."
+                disabled
+                className="pl-10 bg-gray-800 border-gray-700 text-white placeholder-gray-400"
+              />
+            </div>
+          </div>
+          <ListSkeleton items={6} />
+        </div>
       </div>
     );
   }

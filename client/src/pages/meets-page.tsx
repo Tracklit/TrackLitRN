@@ -6,6 +6,7 @@ import { Meet } from '@shared/schema';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar, MapPin, Loader2, Plus, Users, Crown, UserPlus, X, Cloud, Wind, Bell, Trophy, Clock, Target, MoreVertical, Trash2, ExternalLink } from 'lucide-react';
+import { CardSkeleton } from '@/components/card-skeleton';
 import { CreateMeetModal } from '@/components/create-meet-modal';
 import { PreparationTimeline } from '@/components/preparation-timeline';
 import { MeetCalendar } from '@/components/meet-calendar';
@@ -340,8 +341,10 @@ export default function MeetsPage() {
               
               <TabsContent value="upcoming">
                 {isLoading ? (
-                  <div className="flex justify-center py-12">
-                    <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+                  <div className="grid gap-4">
+                    {Array.from({ length: 3 }).map((_, index) => (
+                      <CardSkeleton key={index} />
+                    ))}
                   </div>
                 ) : upcomingMeets.length > 0 ? (
                   <div className="space-y-4">

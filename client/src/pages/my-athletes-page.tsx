@@ -6,6 +6,7 @@ import { UserCheck, MessageSquare, UserMinus } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { ListSkeleton } from "@/components/list-skeleton";
 
 export default function MyAthletesPage() {
   const { toast } = useToast();
@@ -84,9 +85,7 @@ export default function MyAthletesPage() {
           <h1 className="text-3xl font-bold text-white mb-8">My Athletes</h1>
 
           {loadingAthletes ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-            </div>
+            <ListSkeleton items={5} />
           ) : coachAthletes.length === 0 ? (
             <Card className="bg-gray-800 border-gray-700">
               <CardContent className="flex flex-col items-center justify-center py-8">
