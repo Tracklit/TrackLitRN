@@ -132,7 +132,7 @@ export default function SprinthiaPage() {
           <div className="flex items-center justify-between p-4 border-b border-border">
             <div className="flex items-center gap-3">
               <Brain className="h-6 w-6 text-primary" />
-              <h1 className="text-xl font-semibold">Sprinthia AI</h1>
+              <h1 className="text-xl font-semibold">Sprinthia</h1>
             </div>
             
             <div className="flex items-center gap-2">
@@ -144,7 +144,7 @@ export default function SprinthiaPage() {
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Sprinthia AI Information</DialogTitle>
+                    <DialogTitle>Sprinthia Information</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
                     <div>
@@ -228,10 +228,10 @@ export default function SprinthiaPage() {
                 <div className="flex-1 flex flex-col justify-center">
                   <div className="text-center max-w-md mx-auto">
                     <div 
-                      className="w-full h-48 mx-auto mb-6 bg-cover bg-center rounded-lg"
+                      className="w-full h-48 mx-auto mb-6 bg-cover bg-top rounded-lg"
                       style={{ backgroundImage: 'url(/brain-header.jpg)' }}
                     />
-                    <h2 className="text-2xl font-bold mb-2">Welcome to Sprinthia AI</h2>
+                    <h2 className="text-2xl font-bold mb-2">Welcome to Sprinthia</h2>
                     <p className="text-muted-foreground mb-6">
                       Your AI training companion for track and field. Ask questions about workouts, 
                       race strategy, rehabilitation, nutrition, or training plans.

@@ -180,7 +180,7 @@ export default function HomePage() {
       disabled: false,
     },
     {
-      title: "Sprinthia AI",
+      title: "Sprinthia",
       description: "AI training companion",
       icon: <MessageCircle className="h-6 w-6 text-primary" />,
       href: "/sprinthia",
@@ -229,7 +229,7 @@ export default function HomePage() {
                       className="h-1/2 bg-cover bg-center bg-no-repeat relative"
                       style={{ 
                         backgroundImage: `url(${card.headerImage || trackImages[index % 4]})`,
-                        backgroundPosition: card.headerImage ? 'center -50px' : 'center'
+                        backgroundPosition: card.headerImage ? 'center -70px' : 'center'
                       }}
                     >
                       <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-all duration-300" />
