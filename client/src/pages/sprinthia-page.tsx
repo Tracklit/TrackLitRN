@@ -126,103 +126,73 @@ export default function SprinthiaPage() {
       <div className="flex-1 flex flex-col">
         <Header />
         
-        <div className="flex-1 flex">
-          {/* Sidebar with conversations */}
-          <div className="w-64 border-r border-border bg-muted/30 flex flex-col">
-            <div className="p-4 border-b border-border">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold">Sprinthia AI</h2>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <Info className="h-4 w-4" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Sprinthia AI Information</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <h3 className="font-semibold mb-2">Your Current Plan</h3>
-                        <div className="flex items-center gap-2">
-                          {user?.subscriptionTier === 'free' && <Badge variant="secondary">Free</Badge>}
-                          {user?.subscriptionTier === 'pro' && <Badge className="bg-orange-500"><Crown className="h-3 w-3 mr-1" />Pro</Badge>}
-                          {user?.subscriptionTier === 'star' && <Badge className="bg-purple-500"><Star className="h-3 w-3 mr-1" />Star</Badge>}
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <h3 className="font-semibold mb-2">Remaining Prompts</h3>
-                        <div className="flex items-center gap-2">
-                          <Zap className="h-4 w-4 text-yellow-500" />
-                          <span>{user?.sprinthiaPrompts || 0} prompts</span>
-                        </div>
-                      </div>
-
-                      <div>
-                        <h3 className="font-semibold mb-2">Available Spikes</h3>
-                        <div className="flex items-center gap-2">
-                          <Brain className="h-4 w-4 text-blue-500" />
-                          <span>{user?.spikes || 0} Spikes</span>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <h3 className="font-semibold">Purchase Options</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Need more prompts? Purchase Spike packs to continue using Sprinthia AI for workout planning, race strategy, and training advice.
-                        </p>
-                        <Button className="w-full" variant="outline">
-                          Buy Spike Packs
-                        </Button>
+        {/* Single column chat layout */}
+        <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full">
+          {/* Top bar with title and info */}
+          <div className="flex items-center justify-between p-4 border-b border-border">
+            <div className="flex items-center gap-3">
+              <Brain className="h-6 w-6 text-primary" />
+              <h1 className="text-xl font-semibold">Sprinthia AI</h1>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <Info className="h-4 w-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Sprinthia AI Information</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-semibold mb-2">Your Current Plan</h3>
+                      <div className="flex items-center gap-2">
+                        {user?.subscriptionTier === 'free' && <Badge variant="secondary">Free</Badge>}
+                        {user?.subscriptionTier === 'pro' && <Badge className="bg-orange-500"><Crown className="h-3 w-3 mr-1" />Pro</Badge>}
+                        {user?.subscriptionTier === 'star' && <Badge className="bg-purple-500"><Star className="h-3 w-3 mr-1" />Star</Badge>}
                       </div>
                     </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
+                    
+                    <div>
+                      <h3 className="font-semibold mb-2">Remaining Prompts</h3>
+                      <div className="flex items-center gap-2">
+                        <Zap className="h-4 w-4 text-yellow-500" />
+                        <span>{user?.sprinthiaPrompts || 0} prompts</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="font-semibold mb-2">Available Spikes</h3>
+                      <div className="flex items-center gap-2">
+                        <Brain className="h-4 w-4 text-blue-500" />
+                        <span>{user?.spikes || 0} Spikes</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h3 className="font-semibold">Purchase Options</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Need more prompts? Purchase Spike packs to continue using Sprinthia AI for workout planning, race strategy, and training advice.
+                      </p>
+                      <Button className="w-full" variant="outline">
+                        Buy Spike Packs
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
               
               <Button 
                 onClick={startNewConversation}
-                className="w-full"
                 variant="outline"
+                size="sm"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 New Chat
               </Button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-2">
-              {conversationsLoading ? (
-                <div className="space-y-2">
-                  {[...Array(3)].map((_, i) => (
-                    <div key={i} className="h-12 bg-muted/50 rounded animate-pulse" />
-                  ))}
-                </div>
-              ) : conversations.length === 0 ? (
-                <div className="text-center text-muted-foreground text-sm mt-8">
-                  No conversations yet
-                </div>
-              ) : (
-                conversations.map((conversation: SprinthiaConversation) => (
-                  <button
-                    key={conversation.id}
-                    onClick={() => setCurrentConversationId(conversation.id)}
-                    className={cn(
-                      "w-full text-left p-3 rounded-lg mb-2 transition-colors",
-                      "hover:bg-muted/50",
-                      currentConversationId === conversation.id ? "bg-muted" : ""
-                    )}
-                  >
-                    <div className="font-medium text-sm truncate">
-                      {conversation.title}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {new Date(conversation.createdAt).toLocaleDateString()}
-                    </div>
-                  </button>
-                ))
-              )}
             </div>
           </div>
 
