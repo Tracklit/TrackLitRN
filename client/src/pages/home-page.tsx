@@ -35,7 +35,8 @@ import {
   MoreHorizontal,
   UserCircle,
   X,
-  BookOpen
+  BookOpen,
+  MessageCircle
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { CreateMeetModal } from '@/components/create-meet-modal';
@@ -177,6 +178,13 @@ export default function HomePage() {
       icon: <Clock className="h-6 w-6 text-primary" />,
       href: "/training-tools",
       disabled: false,
+    },
+    {
+      title: "Sprinthia AI",
+      description: "AI training companion",
+      icon: <MessageCircle className="h-6 w-6 text-primary" />,
+      href: "/sprinthia",
+      disabled: false,
     }
   ];
 
@@ -192,9 +200,9 @@ export default function HomePage() {
 
         {/* Quote removed as requested */}
         
-        {/* Main Category Cards - 2 column layout with smaller sizes for mobile */}
+        {/* Main Category Cards - flexible grid layout */}
         <section className="mb-4">
-          <div className="grid grid-cols-2 gap-2 mx-auto" style={{ maxWidth: "540px", margin: "0 auto 8px" }}>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mx-auto" style={{ maxWidth: "540px", margin: "0 auto 8px" }}>
             {categoryCards.map((card, index) => (
               card.disabled ? (
                 <Card key={index} className="h-[140px] mx-auto mb-2 overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 border-muted/50">
