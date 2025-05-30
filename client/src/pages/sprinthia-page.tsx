@@ -228,8 +228,11 @@ export default function SprinthiaPage() {
                 <div className="flex-1 flex flex-col justify-center">
                   <div className="text-center max-w-md mx-auto">
                     <div 
-                      className="w-full h-48 mx-auto mb-6 bg-cover bg-top rounded-lg"
-                      style={{ backgroundImage: 'url(/brain-header.jpg)' }}
+                      className="w-full h-48 mx-auto mb-6 bg-cover rounded-lg"
+                      style={{ 
+                        backgroundImage: 'url(/brain-header.jpg)',
+                        backgroundPosition: 'center -50px'
+                      }}
                     />
                     <h2 className="text-2xl font-bold mb-2">Hi {user?.name?.split(' ')[0] || user?.username || 'there'}, how can I help you today?</h2>
                     <p className="text-muted-foreground mb-6">
