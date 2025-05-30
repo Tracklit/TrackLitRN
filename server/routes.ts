@@ -4247,6 +4247,70 @@ User message: ${content}`;
     }
   });
 
+  // Simplified chat endpoint for the new interface
+  app.post("/api/sprinthia/chat", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const { message, conversationId } = req.body;
+      const user = req.user!;
+      
+      // Check if user has enough prompts
+      if (!user.sprinthiaPrompts || user.sprinthiaPrompts <= 0) {
+        return res.status(403).json({ error: "No prompts remaining. Purchase more to continue using Sprinthia." });
+      }
+
+      let currentConversationId = conversationId;
+      
+      // Create new conversation if none exists
+      if (!currentConversationId) {
+        const conversation = await dbStorage.createSprinthiaConversation({
+          userId: user.id,
+          title: message.slice(0, 50) + (message.length > 50 ? "..." : "")
+        });
+        currentConversationId = conversation.id;
+      }
+
+      // Save user message
+      await dbStorage.createSprinthiaMessage({
+        conversationId: currentConversationId,
+        role: "user",
+        content: message,
+        promptCost: 1
+      });
+
+      // Generate AI response using OpenAI
+      const { getChatCompletion } = await import("./openai");
+      
+      const sprinthiaPrompt = `You are Sprinthia, an expert AI coach specializing in track and field events (track events only - sprints, middle distance, and long distance running). You help athletes with workout creation, race planning and strategy, general training questions, rehabilitation advice, and nutrition guidance specifically for track athletes.
+
+Keep your responses focused, practical, and encouraging. Provide specific, actionable advice based on current best practices in track and field training.
+
+User message: ${message}`;
+
+      const aiResponse = await getChatCompletion(sprinthiaPrompt);
+
+      // Save AI response
+      await dbStorage.createSprinthiaMessage({
+        conversationId: currentConversationId,
+        role: "assistant",
+        content: aiResponse,
+        promptCost: 0
+      });
+
+      // Deduct prompt from user
+      await dbStorage.updateUserPrompts(user.id, user.sprinthiaPrompts - 1);
+
+      res.json({ 
+        conversationId: currentConversationId,
+        response: aiResponse 
+      });
+    } catch (error) {
+      console.error("Error in Sprinthia chat:", error);
+      res.status(500).json({ error: "Failed to process chat message" });
+    }
+  });
+
   // Spike purchase routes for Sprinthia prompts
   app.post("/api/purchase/prompts", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
