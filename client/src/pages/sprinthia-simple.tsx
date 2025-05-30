@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Send, Brain, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import brainImage from '@assets/IMG_4120.jpeg';
 
 interface ChatMessage {
   id: string;
@@ -120,8 +121,8 @@ export default function SprinthiaSimple() {
             <div className="flex items-center gap-4">
               <div className="relative">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-0.5">
-                  <div className="w-full h-full rounded-full bg-background flex items-center justify-center">
-                    <Brain className="h-6 w-6 text-blue-500" />
+                  <div className="w-full h-full rounded-full bg-background overflow-hidden">
+                    <img src={brainImage} alt="Sprinthia AI" className="w-full h-full object-cover" />
                   </div>
                 </div>
                 <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-background"></div>
@@ -145,9 +146,9 @@ export default function SprinthiaSimple() {
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {messages.length === 0 && (
               <div className="text-center py-16">
-                <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-0.5">
-                  <div className="w-full h-full rounded-full bg-background flex items-center justify-center">
-                    <Brain className="h-8 w-8 text-blue-500" />
+                <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-0.5">
+                  <div className="w-full h-full rounded-full bg-background overflow-hidden">
+                    <img src={brainImage} alt="Sprinthia AI" className="w-full h-full object-cover" />
                   </div>
                 </div>
                 <h3 className="text-xl font-semibold mb-3">Hi {user?.name?.split(' ')[0] || 'there'}, how can I help you today?</h3>
@@ -177,9 +178,9 @@ export default function SprinthiaSimple() {
                 )}
               >
                 {message.role === 'assistant' && (
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-0.5 shrink-0">
-                    <div className="w-full h-full rounded-full bg-background flex items-center justify-center">
-                      <Brain className="h-4 w-4 text-blue-500" />
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-0.5 shrink-0">
+                    <div className="w-full h-full rounded-full bg-background overflow-hidden">
+                      <img src={brainImage} alt="Sprinthia AI" className="w-full h-full object-cover" />
                     </div>
                   </div>
                 )}
@@ -202,9 +203,9 @@ export default function SprinthiaSimple() {
                 </div>
 
                 {message.role === 'user' && (
-                  <Avatar className="h-8 w-8 shrink-0">
+                  <Avatar className="h-10 w-10 shrink-0">
                     <AvatarFallback className="bg-gradient-to-br from-gray-500 to-gray-600 text-white">
-                      <User className="h-4 w-4" />
+                      <User className="h-5 w-5" />
                     </AvatarFallback>
                   </Avatar>
                 )}
@@ -214,9 +215,9 @@ export default function SprinthiaSimple() {
             {/* Typing indicator */}
             {isGenerating && (
               <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-0.5 shrink-0">
-                  <div className="w-full h-full rounded-full bg-background flex items-center justify-center">
-                    <Brain className="h-4 w-4 text-blue-500" />
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-0.5 shrink-0">
+                  <div className="w-full h-full rounded-full bg-background overflow-hidden">
+                    <img src={brainImage} alt="Sprinthia AI" className="w-full h-full object-cover" />
                   </div>
                 </div>
                 <div className="bg-muted/70 border rounded-2xl px-4 py-3 shadow-sm">
