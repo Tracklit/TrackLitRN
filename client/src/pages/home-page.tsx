@@ -200,9 +200,9 @@ export default function HomePage() {
 
         {/* Quote removed as requested */}
         
-        {/* Main Category Cards - flexible grid layout */}
+        {/* Main Category Cards - 2x3 grid layout */}
         <section className="mb-4">
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mx-auto" style={{ maxWidth: "540px", margin: "0 auto 8px" }}>
+          <div className="grid grid-cols-2 gap-2 mx-auto" style={{ maxWidth: "540px", margin: "0 auto 8px" }}>
             {categoryCards.map((card, index) => (
               card.disabled ? (
                 <Card key={index} className="h-[140px] mx-auto mb-2 overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 border-muted/50">
