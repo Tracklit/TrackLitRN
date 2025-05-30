@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { UserCheck, Clock, MessageCircle, UserMinus, Target } from "lucide-react";
 import { Link } from "wouter";
+import { ListSkeleton } from "@/components/list-skeleton";
 
 interface Friend {
   id: number;
@@ -230,9 +231,7 @@ export default function FriendsPage() {
 
             <TabsContent value="friends" className="mt-6">
               {loadingFriends ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-                </div>
+                <ListSkeleton items={5} />
               ) : friends.length === 0 ? (
                 <Card className="bg-gray-800 border-gray-700">
                   <CardContent className="flex flex-col items-center justify-center py-8">
@@ -341,9 +340,7 @@ export default function FriendsPage() {
 
             <TabsContent value="pending" className="mt-6">
               {loadingRequests ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-                </div>
+                <ListSkeleton items={3} />
               ) : pendingRequests.length === 0 ? (
                 <Card className="bg-gray-800 border-gray-700">
                   <CardContent className="flex flex-col items-center justify-center py-8">

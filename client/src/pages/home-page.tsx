@@ -274,7 +274,20 @@ export default function HomePage() {
               >
                 <X className="h-4 w-4" />
               </Button>
-              {sessionPreviews && (
+              {isLoadingPreviews ? (
+                <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                    <div className="flex-1">
+                      <Skeleton className="h-4 w-32 mb-2" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                  </div>
+                  <Separator className="my-3" />
+                  <Skeleton className="h-4 w-full mb-2" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+              ) : sessionPreviews && sessionPreviews.length > 0 && (
                 <div 
                   className="cursor-pointer animate-fadeIn pr-8"
                   onClick={() => openSessionDetails(sessionPreviews[activeSessionIndex])}

@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
+import { ListSkeleton } from "@/components/list-skeleton";
 
 interface User {
   id: number;
