@@ -199,7 +199,7 @@ export default function SprinthiaPage() {
           {/* Main chat area */}
           <div className="flex-1 flex flex-col">
             {/* Messages area */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-6" style={{ maxHeight: 'calc(100vh - 400px)' }}>
               {!currentConversationId && messages.length === 0 ? (
                 <div className="flex-1 flex items-center justify-center">
                   <div className="text-center max-w-md">
@@ -289,7 +289,7 @@ export default function SprinthiaPage() {
             </div>
 
             {/* Input area */}
-            <div className="border-t border-border p-4" style={{ marginTop: '-200px' }}>
+            <div className="border-t border-border p-4">
               <div className="max-w-4xl mx-auto">
                 <div className="flex gap-2">
                   <Input
