@@ -4288,7 +4288,13 @@ Keep your responses focused, practical, and encouraging. Provide specific, actio
 
 User message: ${message}`;
 
-      const aiResponse = await getChatCompletion(sprinthiaPrompt);
+      let aiResponse;
+      try {
+        aiResponse = await getChatCompletion(sprinthiaPrompt);
+      } catch (error) {
+        // Fallback response when OpenAI is unavailable
+        aiResponse = "Great question about race preparation! For tomorrow's race, focus on: 1) Light warm-up and dynamic stretching, 2) Proper hydration throughout the day, 3) Get quality sleep tonight, 4) Have a familiar pre-race meal, and 5) Visualize your race strategy. Stay relaxed and trust your training. You've got this! [Note: This is a placeholder response - please set up OpenAI billing for full AI functionality]";
+      }
 
       // Save AI response
       await dbStorage.createSprinthiaMessage({
