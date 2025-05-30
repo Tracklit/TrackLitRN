@@ -229,7 +229,7 @@ export default function HomePage() {
                       className="h-1/2 bg-cover bg-center bg-no-repeat relative"
                       style={{ 
                         backgroundImage: `url(${card.headerImage || trackImages[index % 4]})`,
-                        backgroundPosition: card.headerImage ? 'center 25px' : 'center'
+                        backgroundPosition: card.headerImage ? 'center top' : 'center'
                       }}
                     >
                       <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-all duration-300" />

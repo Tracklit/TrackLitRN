@@ -228,7 +228,7 @@ export default function SprinthiaPage() {
                 <div className="flex-1 flex items-center justify-center">
                   <div className="text-center max-w-md">
                     <div 
-                      className="w-full h-16 mx-auto mb-4 bg-cover bg-center rounded-lg"
+                      className="w-full h-64 mx-auto mb-4 bg-cover bg-center rounded-lg"
                       style={{ backgroundImage: 'url(/brain-header.jpg)' }}
                     />
                     <h2 className="text-2xl font-bold mb-2">Welcome to Sprinthia AI</h2>
