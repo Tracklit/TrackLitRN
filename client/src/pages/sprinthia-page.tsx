@@ -160,7 +160,11 @@ export default function SprinthiaPage() {
                       <h3 className="font-semibold mb-2">Remaining Prompts</h3>
                       <div className="flex items-center gap-2">
                         <Zap className="h-4 w-4 text-yellow-500" />
-                        <span>{user?.sprinthiaPrompts || 0} prompts</span>
+                        <span>
+                          {user?.subscriptionTier === 'star' 
+                            ? 'Unlimited' 
+                            : `${user?.sprinthiaPrompts || 0} prompts`}
+                        </span>
                       </div>
                     </div>
 
@@ -331,17 +335,17 @@ export default function SprinthiaPage() {
                   />
                   <Button 
                     onClick={handleSendMessage}
-                    disabled={!input.trim() || sendMessageMutation.isPending || isTyping || !user?.sprinthiaPrompts}
+                    disabled={!input.trim() || sendMessageMutation.isPending || isTyping || (user?.subscriptionTier !== 'star' && !user?.sprinthiaPrompts)}
                     size="icon"
                   >
                     <Send className="h-4 w-4" />
                   </Button>
                 </div>
                 
-                {(!user?.sprinthiaPrompts || user.sprinthiaPrompts <= 0) && (
+                {user?.subscriptionTier !== 'star' && (!user?.sprinthiaPrompts || user.sprinthiaPrompts <= 0) && (
                   <Alert className="mt-2">
                     <AlertDescription>
-                      You have no prompts remaining. Purchase Spike packs to continue using Sprinthia AI.
+                      You have no prompts remaining. Purchase Spike packs to continue using Sprinthia.
                     </AlertDescription>
                   </Alert>
                 )}
