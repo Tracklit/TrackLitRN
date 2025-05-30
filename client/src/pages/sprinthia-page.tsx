@@ -317,7 +317,7 @@ export default function SprinthiaPage() {
             </div>
 
             {/* Input area */}
-            <div className="border-t border-border p-4 fixed bottom-0 left-0 right-0 bg-background z-10">
+            <div className="border-t border-border p-4 bg-background">
               <div className="max-w-4xl mx-auto">
                 <div className="flex gap-2">
                   <Input
