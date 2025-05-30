@@ -225,7 +225,7 @@ export default function SprinthiaPage() {
             {/* Messages area */}
             <div className="flex-1 overflow-y-auto p-6" style={{ maxHeight: 'calc(100vh - 400px)' }}>
               {!currentConversationId && messages.length === 0 ? (
-                <div className="flex-1 flex flex-col justify-center">
+                <div className="h-full flex flex-col justify-center">
                   <div className="text-center max-w-md mx-auto">
                     <div 
                       className="w-full h-48 mx-auto mb-6 bg-cover rounded-lg"
