@@ -4255,8 +4255,8 @@ User message: ${content}`;
       const { message, conversationId } = req.body;
       const user = req.user!;
       
-      // Check if user has enough prompts
-      if (!user.sprinthiaPrompts || user.sprinthiaPrompts <= 0) {
+      // Check if user has enough prompts (Star users get unlimited)
+      if (user.subscriptionTier !== 'star' && (!user.sprinthiaPrompts || user.sprinthiaPrompts <= 0)) {
         return res.status(403).json({ error: "No prompts remaining. Purchase more to continue using Sprinthia." });
       }
 
@@ -4304,8 +4304,10 @@ User message: ${message}`;
         promptCost: 0
       });
 
-      // Deduct prompt from user
-      await dbStorage.updateUserPrompts(user.id, user.sprinthiaPrompts - 1);
+      // Deduct prompt from user (unless they're Star tier)
+      if (user.subscriptionTier !== 'star') {
+        await dbStorage.updateUserPrompts(user.id, user.sprinthiaPrompts - 1);
+      }
 
       res.json({ 
         conversationId: currentConversationId,
