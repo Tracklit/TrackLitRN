@@ -181,11 +181,7 @@ export default function SprinthiaPage() {
                           backgroundPosition: 'center -70px'
                         }}
                       />
-                      <h2 className="text-2xl font-bold mb-2">Hi {user?.name?.split(' ')[0] || user?.username || 'there'}, how can I help you today?</h2>
-                      <p className="text-muted-foreground mb-6">
-                        Your AI training companion for track and field. Ask questions about workouts, 
-                        race strategy, rehabilitation, nutrition, or training plans.
-                      </p>
+                      <h2 className="text-2xl font-bold mb-6">Hi {user?.name?.split(' ')[0] || user?.username || 'there'}, how can I help you today?</h2>
                       <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Zap className="h-4 w-4" />
