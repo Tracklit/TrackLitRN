@@ -209,7 +209,7 @@ export default function SprinthiaPage() {
                       Your AI training companion for track and field. Ask questions about workouts, 
                       race strategy, rehabilitation, nutrition, or training plans.
                     </p>
-                    <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground" style={{ marginBottom: '-200px' }}>
+                    <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <Zap className="h-4 w-4" />
                         {user?.sprinthiaPrompts || 0} prompts left
@@ -289,7 +289,7 @@ export default function SprinthiaPage() {
             </div>
 
             {/* Input area */}
-            <div className="border-t border-border p-4">
+            <div className="border-t border-border p-4" style={{ marginTop: '-200px' }}>
               <div className="max-w-4xl mx-auto">
                 <div className="flex gap-2">
                   <Input
