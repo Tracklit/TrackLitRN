@@ -205,7 +205,7 @@ export default function HomePage() {
           <div className="grid grid-cols-2 gap-2 mx-auto" style={{ maxWidth: "540px", margin: "0 auto 8px" }}>
             {categoryCards.map((card, index) => (
               card.disabled ? (
-                <Card key={index} className="h-[140px] mx-auto mb-2 overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 border-muted/50">
+                <Card key={index} className="h-[140px] overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 border-muted/50">
                   <CardContent className="p-2.5 relative h-full flex flex-col justify-center opacity-50">
                     <div className="flex flex-col items-center text-center gap-2">
                       <div className="p-1.5 rounded-full bg-muted/50 border border-muted/50">
@@ -222,7 +222,7 @@ export default function HomePage() {
                 </Card>
               ) : (
                 <Link href={card.href} key={index}>
-                  <Card className="cursor-pointer hover:shadow-md transition-all duration-300 border border-muted hover:border-primary h-[140px] mx-auto mb-2 overflow-hidden group relative">
+                  <Card className="cursor-pointer hover:shadow-md transition-all duration-300 border border-muted hover:border-primary h-[140px] overflow-hidden group relative">
                     {/* Header Image - Top Half */}
                     <div 
                       className="h-1/2 bg-cover bg-center bg-no-repeat relative"
