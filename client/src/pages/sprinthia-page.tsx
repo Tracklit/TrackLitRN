@@ -227,7 +227,10 @@ export default function SprinthiaPage() {
               {!currentConversationId && messages.length === 0 ? (
                 <div className="flex-1 flex items-center justify-center">
                   <div className="text-center max-w-md">
-                    <Brain className="h-16 w-16 mx-auto mb-4 text-primary" />
+                    <div 
+                      className="h-16 w-16 mx-auto mb-4 bg-cover bg-center rounded-lg"
+                      style={{ backgroundImage: 'url(/brain-header.jpg)' }}
+                    />
                     <h2 className="text-2xl font-bold mb-2">Welcome to Sprinthia AI</h2>
                     <p className="text-muted-foreground mb-6">
                       Your AI training companion for track and field. Ask questions about workouts, 
