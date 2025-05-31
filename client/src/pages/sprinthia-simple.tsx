@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import { Send, Brain, User, Copy, Check } from 'lucide-react';
+import { Send, Brain, User, Copy, Check, History, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import brainImage from '@assets/IMG_4120.jpeg';
 
@@ -17,6 +17,13 @@ interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
+}
+
+interface SprinthiaConversation {
+  id: number;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export default function SprinthiaSimple() {
@@ -28,11 +35,44 @@ export default function SprinthiaSimple() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [conversationId, setConversationId] = useState<number | null>(null);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
 
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isGenerating]);
+
+  // Fetch conversation history
+  const { data: conversations = [] } = useQuery<SprinthiaConversation[]>({
+    queryKey: ['/api/sprinthia/conversations'],
+    enabled: !!user,
+  });
+
+  // Load a specific conversation
+  const loadConversation = async (id: number) => {
+    try {
+      const response = await apiRequest('GET', `/api/sprinthia/conversations/${id}/messages`);
+      const messagesData = await response.json();
+      
+      // Convert database messages to chat messages format
+      const chatMessages: ChatMessage[] = messagesData.map((msg: any) => ({
+        id: msg.id.toString(),
+        role: msg.role,
+        content: msg.content,
+        timestamp: msg.createdAt,
+      }));
+      
+      setMessages(chatMessages);
+      setConversationId(id);
+      setShowHistory(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load conversation",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Send message mutation
   const sendMessageMutation = useMutation({
@@ -134,7 +174,59 @@ export default function SprinthiaSimple() {
       <div className="flex-1 flex flex-col">
         <Header />
         
-        <div className="flex-1 flex flex-col max-w-6xl mx-auto w-full">
+        <div className="flex-1 flex">
+          {/* Conversation History Sidebar */}
+          {showHistory && (
+            <div className="w-80 border-r border-border bg-background/50 flex flex-col">
+              <div className="p-4 border-b border-border">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-semibold">Conversation History</h2>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setMessages([]);
+                      setConversationId(null);
+                      setShowHistory(false);
+                    }}
+                    className="flex items-center gap-1"
+                  >
+                    <Plus className="h-4 w-4" />
+                    New
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-2">
+                {conversations.length === 0 ? (
+                  <div className="text-center text-muted-foreground p-4">
+                    <History className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No conversations yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {conversations.map((conversation) => (
+                      <button
+                        key={conversation.id}
+                        onClick={() => loadConversation(conversation.id)}
+                        className={cn(
+                          "w-full text-left p-3 rounded-lg border transition-colors hover:bg-muted/50",
+                          conversationId === conversation.id && "bg-muted border-primary"
+                        )}
+                      >
+                        <h3 className="font-medium text-sm truncate">{conversation.title}</h3>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {new Date(conversation.createdAt).toLocaleDateString()}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          
+          <div className="flex-1 flex flex-col max-w-6xl mx-auto w-full">
           {/* Header */}
           <div className="p-6 border-b border-border bg-background">
             <div className="flex items-center gap-4">
@@ -152,7 +244,16 @@ export default function SprinthiaSimple() {
                 </h1>
                 <p className="text-muted-foreground text-sm">Your AI track and field coach • Always available</p>
               </div>
-              <div className="text-right">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowHistory(!showHistory)}
+                  className="flex items-center gap-1"
+                >
+                  <History className="h-4 w-4" />
+                  History
+                </Button>
                 <div className="bg-muted/50 rounded-lg px-3 py-2 border">
                   <p className="text-xs text-muted-foreground mb-1">Remaining</p>
                   <p className="font-semibold text-sm">{getPromptDisplay()}</p>
@@ -291,6 +392,7 @@ export default function SprinthiaSimple() {
                 You've used all your prompts. Upgrade to Pro or Star to continue using Sprinthia.
               </p>
             )}
+          </div>
           </div>
         </div>
       </div>

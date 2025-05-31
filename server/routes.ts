@@ -4247,6 +4247,33 @@ User message: ${content}`;
     }
   });
 
+  // Get user's conversation history
+  app.get("/api/sprinthia/conversations", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const conversations = await dbStorage.getSprinthiaConversations(req.user!.id);
+      res.json(conversations);
+    } catch (error) {
+      console.error("Error fetching conversations:", error);
+      res.status(500).json({ error: "Failed to fetch conversations" });
+    }
+  });
+
+  // Get messages for a specific conversation
+  app.get("/api/sprinthia/conversations/:id/messages", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const conversationId = parseInt(req.params.id);
+      const messages = await dbStorage.getSprinthiaMessages(conversationId);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      res.status(500).json({ error: "Failed to fetch messages" });
+    }
+  });
+
   // Simplified chat endpoint for the new interface
   app.post("/api/sprinthia/chat", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
