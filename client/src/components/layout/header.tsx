@@ -34,7 +34,7 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
               <InstallAppButton />
             </div>
             
-            <div className="flex items-center space-x-1">
+            <div className="flex items-center space-x-1 mr-4">
               <NotificationBell />
               
               {/* Direct Messages Icon */}
@@ -51,7 +51,7 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="focus:outline-none" aria-label="User menu">
+                <button className="focus:outline-none opacity-0 pointer-events-none" aria-label="User menu">
                   <Avatar className="h-9 w-9">
                     <AvatarImage src="/default-avatar.png" />
                     <AvatarFallback name={user.name} />

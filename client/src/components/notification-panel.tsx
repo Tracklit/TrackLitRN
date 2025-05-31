@@ -135,23 +135,20 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
   return (
     <div 
       className={cn(
-        "fixed inset-0 z-50 transition-all duration-600 ease-in-out",
+        "fixed inset-0 z-[9999] transition-all duration-[1200ms] ease-out",
         isOpen ? "bg-black/50" : "bg-transparent pointer-events-none"
       )} 
       onClick={onClose}
     >
       <div 
         className={cn(
-          "fixed right-0 top-0 h-full w-full bg-background shadow-xl transform transition-all duration-600 ease-in-out",
+          "fixed right-0 top-0 h-full w-full bg-background shadow-xl transform transition-all duration-[1200ms] ease-out",
           isOpen ? "translate-x-0" : "translate-x-full"
         )}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4 border-b bg-muted/50">
-          <div className="flex items-center space-x-3">
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
+          <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Bell className="h-5 w-5" />
               <h3 className="text-lg font-semibold">Notifications</h3>
@@ -161,6 +158,9 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                 </Badge>
               )}
             </div>
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
           </div>
         </div>
         
