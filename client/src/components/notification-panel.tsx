@@ -138,7 +138,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
       )} 
       onClick={onClose}
       style={{
-        transition: 'all 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+        transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
         opacity: isOpen ? 1 : 0,
         backgroundColor: isOpen ? 'rgba(0, 0, 0, 0.5)' : 'transparent'
       }}
@@ -147,7 +147,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
         className="fixed right-0 top-0 h-full w-full bg-background shadow-xl"
         onClick={(e) => e.stopPropagation()}
         style={{
-          transition: 'transform 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+          transition: 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
           transform: isOpen ? 'translateX(0%)' : 'translateX(100%)'
         }}
       >

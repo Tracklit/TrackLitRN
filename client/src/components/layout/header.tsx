@@ -30,11 +30,11 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
         {user && (
           <div className="flex items-center space-x-4">
             {/* Install App Button */}
-            <div className="ml-1">
+            <div className="ml-8">
               <InstallAppButton />
             </div>
             
-            <div className="flex items-center space-x-1 mr-4">
+            <div className="flex items-center space-x-1 mr-8">
               <NotificationBell />
               
               {/* Direct Messages Icon */}
