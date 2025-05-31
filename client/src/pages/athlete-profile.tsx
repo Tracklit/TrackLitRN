@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { User, Users, Crown, Target } from 'lucide-react';
+import { User, Users, Crown, Target, Eye, EyeOff } from 'lucide-react';
 
 export default function AthleteProfile() {
   const { user } = useAuth();
@@ -57,8 +57,36 @@ export default function AthleteProfile() {
     },
   });
 
+  // Mutation to update privacy status
+  const updatePrivacyStatusMutation = useMutation({
+    mutationFn: async (isPrivate: boolean) => {
+      const response = await apiRequest('PATCH', '/api/user/privacy-status', { isPrivate });
+      return response.json();
+    },
+    onSuccess: (updatedUser) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      toast({
+        title: updatedUser.isPrivate ? "Account Made Private" : "Account Made Public",
+        description: updatedUser.isPrivate 
+          ? "Other users cannot find you unless you connect with them first." 
+          : "Other users can now find and connect with you.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Update Failed",
+        description: error.message || "Failed to update privacy status",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleCoachToggle = (checked: boolean) => {
     updateCoachStatusMutation.mutate(checked);
+  };
+
+  const handlePrivacyToggle = (checked: boolean) => {
+    updatePrivacyStatusMutation.mutate(checked);
   };
 
   const getSubscriptionBadgeColor = (tier: string) => {
@@ -153,6 +181,36 @@ export default function AthleteProfile() {
               {user?.isCoach && coachLimits && (
                 <div className="bg-[#0f1419] p-3 rounded-lg border border-gray-700">
                   {getCoachLimitInfo()}
+                </div>
+              )}
+            </div>
+
+            {/* Privacy Toggle */}
+            <div className="space-y-4 border-t border-gray-700 pt-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label htmlFor="privacy-toggle" className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                    {user?.isPrivate ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    Private Account
+                  </Label>
+                  <p className="text-xs text-gray-400">
+                    When enabled, other users cannot find you unless you connect with them first
+                  </p>
+                </div>
+                <Switch
+                  id="privacy-toggle"
+                  checked={user?.isPrivate || false}
+                  onCheckedChange={handlePrivacyToggle}
+                  disabled={updatePrivacyStatusMutation.isPending}
+                />
+              </div>
+              
+              {user?.isPrivate && (
+                <div className="bg-[#0f1419] p-3 rounded-lg border border-gray-700">
+                  <div className="flex items-center gap-2 text-sm text-gray-300">
+                    <EyeOff className="w-4 h-4 text-orange-400" />
+                    Your account is private. Only admins and users you request connections to can see your profile.
+                  </div>
                 </div>
               )}
             </div>

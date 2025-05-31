@@ -5356,6 +5356,20 @@ Keep the response professional, evidence-based, and specific to track and field 
     }
   });
 
+  // Update user privacy status
+  app.patch("/api/user/privacy-status", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const { isPrivate } = req.body;
+      const updatedUser = await dbStorage.updateUser(req.user.id, { isPrivate });
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating privacy status:", error);
+      res.status(500).json({ error: "Failed to update privacy status" });
+    }
+  });
+
   // Get coach's athletes
   app.get("/api/coach/athletes", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
