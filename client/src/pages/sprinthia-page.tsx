@@ -131,7 +131,13 @@ export default function SprinthiaPage() {
           {/* Top bar with title and info */}
           <div className="flex items-center justify-between p-4 border-b border-border">
             <div className="flex items-center gap-3">
-              <Brain className="h-6 w-6 text-primary" />
+              <div className="w-6 h-6 rounded-full overflow-hidden">
+                <img 
+                  src="/sprinthia-avatar.jpeg?v=3" 
+                  alt="Sprinthia"
+                  className="w-full h-full object-cover"
+                />
+              </div>
               <h1 className="text-xl font-semibold">Sprinthia</h1>
             </div>
             
