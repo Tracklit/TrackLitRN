@@ -364,6 +364,9 @@ export const practiceMedia = pgTable("practice_media", {
   type: text("type", { enum: ['image', 'video'] }).notNull(),
   url: text("url").notNull(),
   thumbnail: text("thumbnail"),
+  thumbUrl: text("thumb_url"), // 200x200 square thumbnail
+  mediumUrl: text("medium_url"), // 400x300 for cards
+  largeUrl: text("large_url"), // 800x400 for large displays
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -400,7 +403,13 @@ export const clubs = pgTable("clubs", {
   // isPaid and price removed as they don't exist in the actual DB
   inviteCode: text("invite_code"), // Unique invite code for the club
   logoUrl: text("logo_url"),
+  logoThumbUrl: text("logo_thumb_url"), // 200x200 square logo
+  logoMediumUrl: text("logo_medium_url"), // 400x300 logo
+  logoLargeUrl: text("logo_large_url"), // 800x400 logo
   bannerUrl: text("banner_url"), // New field for club banner image
+  bannerThumbUrl: text("banner_thumb_url"), // 200x200 square banner
+  bannerMediumUrl: text("banner_medium_url"), // 400x300 banner
+  bannerLargeUrl: text("banner_large_url"), // 800x400 banner
   createdAt: timestamp("created_at").defaultNow(),
   isPremium: boolean("is_premium").default(false), // Whether the club has premium features
 });

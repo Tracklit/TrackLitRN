@@ -54,7 +54,7 @@ import {
 } from "@shared/schema";
 
 // Initialize default achievements
-// Image compression utility function
+// Image compression and cropping utility functions
 async function compressImage(inputPath: string, outputPath: string, quality: number = 80): Promise<void> {
   try {
     const inputStats = fs.statSync(inputPath);
@@ -84,6 +84,60 @@ async function compressImage(inputPath: string, outputPath: string, quality: num
   } catch (error) {
     console.error('Error compressing image:', error);
     // If compression fails, keep the original file
+  }
+}
+
+// Generate multiple optimized image sizes for different containers
+async function generateImageSizes(inputPath: string, baseFilename: string, outputDir: string): Promise<{ original: string; thumb: string; medium: string; large: string }> {
+  const baseNameWithoutExt = path.parse(baseFilename).name;
+  const ext = '.webp'; // Use WebP for best compression
+  
+  const sizes = {
+    thumb: { width: 200, height: 200, suffix: '_thumb' },    // Square thumbnails
+    medium: { width: 400, height: 300, suffix: '_medium' },  // Card headers
+    large: { width: 800, height: 400, suffix: '_large' }    // Banners/large displays
+  };
+  
+  const results = {
+    original: `${baseNameWithoutExt}${ext}`,
+    thumb: `${baseNameWithoutExt}${sizes.thumb.suffix}${ext}`,
+    medium: `${baseNameWithoutExt}${sizes.medium.suffix}${ext}`,
+    large: `${baseNameWithoutExt}${sizes.large.suffix}${ext}`
+  };
+  
+  try {
+    // Generate original compressed version
+    await sharp(inputPath)
+      .jpeg({ quality: 85, progressive: true })
+      .png({ quality: 85, progressive: true })
+      .webp({ quality: 85 })
+      .toFile(path.join(outputDir, results.original));
+    
+    // Generate different sizes
+    await sharp(inputPath)
+      .resize(sizes.thumb.width, sizes.thumb.height, { fit: 'cover', position: 'center' })
+      .webp({ quality: 85 })
+      .toFile(path.join(outputDir, results.thumb));
+      
+    await sharp(inputPath)
+      .resize(sizes.medium.width, sizes.medium.height, { fit: 'cover', position: 'center' })
+      .webp({ quality: 85 })
+      .toFile(path.join(outputDir, results.medium));
+      
+    await sharp(inputPath)
+      .resize(sizes.large.width, sizes.large.height, { fit: 'cover', position: 'center' })
+      .webp({ quality: 85 })
+      .toFile(path.join(outputDir, results.large));
+    
+    // Remove original after processing
+    fs.unlinkSync(inputPath);
+    
+    console.log(`Generated image sizes for ${baseFilename}: original, thumb (${sizes.thumb.width}x${sizes.thumb.height}), medium (${sizes.medium.width}x${sizes.medium.height}), large (${sizes.large.width}x${sizes.large.height})`);
+    
+    return results;
+  } catch (error) {
+    console.error('Error generating image sizes:', error);
+    throw error;
   }
 }
 
@@ -418,35 +472,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Determine file type
       const fileType = req.file.mimetype.startsWith('image/') ? 'image' : 'video';
       
-      let finalFilename = req.file.filename;
+      let mediaUrls: any = {};
       
-      // Compress image if it's an image file
+      // Generate multiple sizes for images
       if (fileType === 'image') {
-        const originalPath = req.file.path;
-        const compressedFilename = `compressed_${req.file.filename}`;
-        const compressedPath = path.join(path.dirname(originalPath), compressedFilename);
-        
         try {
-          await compressImage(originalPath, compressedPath, 85);
-          finalFilename = compressedFilename;
+          const outputDir = path.dirname(req.file.path);
+          const imageSizes = await generateImageSizes(req.file.path, req.file.filename, outputDir);
+          
+          mediaUrls = {
+            url: `/uploads/practice/${imageSizes.original}`,
+            thumbUrl: `/uploads/practice/${imageSizes.thumb}`,
+            mediumUrl: `/uploads/practice/${imageSizes.medium}`,
+            largeUrl: `/uploads/practice/${imageSizes.large}`,
+          };
         } catch (compressionError) {
-          console.error('Image compression failed, using original:', compressionError);
-          // Continue with original file if compression fails
+          console.error('Image size generation failed, using original:', compressionError);
+          mediaUrls = {
+            url: `/uploads/practice/${req.file.filename}`,
+          };
         }
+      } else {
+        // For videos, just use the original file
+        mediaUrls = {
+          url: `/uploads/practice/${req.file.filename}`,
+          thumbnail: `/uploads/practice/${req.file.filename}`, // Video thumbnail generation could be added later
+        };
       }
-      
-      // Create file path URL
-      const fileUrl = `/uploads/practice/${finalFilename}`;
-      
-      // Create thumbnail if it's a video (for now we'll just use the same URL)
-      const thumbnail = fileType === 'video' ? fileUrl : undefined;
       
       // Create media record in database
       const mediaData: InsertPracticeMedia = {
         completionId: parseInt(completionId as string),
         type: fileType,
-        url: fileUrl,
-        thumbnail,
+        ...mediaUrls,
       };
       
       const media = await dbStorage.createPracticeMedia(mediaData);
