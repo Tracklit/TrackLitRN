@@ -119,8 +119,8 @@ export default function SprinthiaSimple() {
           {/* Header */}
           <div className="p-6 border-b border-border bg-gradient-to-r from-background to-muted/20">
             <div className="flex items-center gap-4">
-              <div className="relative">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-0.5">
+              <div className="relative" style={{ paddingTop: '10px' }}>
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500" style={{ padding: '1px' }}>
                   <div className="w-full h-full rounded-full bg-background overflow-hidden">
                     <img src={brainImage} alt="Sprinthia AI" className="w-full h-full object-cover" />
                   </div>
@@ -146,7 +146,7 @@ export default function SprinthiaSimple() {
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {messages.length === 0 && (
               <div className="text-center py-16">
-                <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-0.5">
+                <div className="mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500" style={{ width: '92px', height: '92px', padding: '1px', marginTop: '10px' }}>
                   <div className="w-full h-full rounded-full bg-background overflow-hidden">
                     <img src={brainImage} alt="Sprinthia AI" className="w-full h-full object-cover" />
                   </div>
