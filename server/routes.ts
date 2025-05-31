@@ -4279,22 +4279,56 @@ User message: ${content}`;
         promptCost: 1
       });
 
-      // Generate AI response using OpenAI
+      // Fetch user's program context for AI
+      let programContext = "";
+      try {
+        const programs = await dbStorage.getPrograms(user.id);
+        const assignedPrograms = await dbStorage.getAssignedPrograms(user.id);
+        
+        if (programs.length > 0 || assignedPrograms.length > 0) {
+          programContext = "ATHLETE'S CURRENT PROGRAMS:\n";
+          
+          // Add owned programs
+          for (const program of programs.slice(0, 2)) { // Limit to 2 most recent
+            const sessions = await dbStorage.getProgramSessions(program.id);
+            const recentSessions = sessions.slice(-5); // Last 5 sessions
+            
+            programContext += `\nProgram: ${program.title} (${program.category}, ${program.level})\n`;
+            programContext += `Duration: ${program.duration} weeks, Total Sessions: ${program.totalSessions}\n`;
+            if (program.description) programContext += `Description: ${program.description}\n`;
+            
+            if (recentSessions.length > 0) {
+              programContext += "Recent Sessions:\n";
+              recentSessions.forEach(session => {
+                programContext += `- Day ${session.dayNumber}: ${session.title || 'Training Session'}\n`;
+                if (session.shortDistanceWorkout) programContext += `  Sprint: ${session.shortDistanceWorkout}\n`;
+                if (session.mediumDistanceWorkout) programContext += `  Mid-Distance: ${session.mediumDistanceWorkout}\n`;
+                if (session.longDistanceWorkout) programContext += `  Distance: ${session.longDistanceWorkout}\n`;
+                if (session.preActivation1 || session.preActivation2) {
+                  programContext += `  Activation: ${[session.preActivation1, session.preActivation2].filter(Boolean).join(', ')}\n`;
+                }
+                if (session.extraSession) programContext += `  Extra: ${session.extraSession}\n`;
+              });
+            }
+          }
+          
+          // Add assigned programs
+          for (const assignment of assignedPrograms.slice(0, 2)) {
+            const program = await dbStorage.getProgram(assignment.programId);
+            if (program) {
+              programContext += `\nAssigned Program: ${program.title} (by coach)\n`;
+              programContext += `Category: ${program.category}, Level: ${program.level}\n`;
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching program context:", error);
+      }
+
+      // Generate AI response using enhanced OpenAI integration
       const { getChatCompletion } = await import("./openai");
       
-      const sprinthiaPrompt = `You are Sprinthia, an expert AI coach specializing in track and field events (track events only - sprints, middle distance, and long distance running). You help athletes with workout creation, race planning and strategy, general training questions, rehabilitation advice, and nutrition guidance specifically for track athletes.
-
-Keep your responses focused, practical, and encouraging. Provide specific, actionable advice based on current best practices in track and field training.
-
-User message: ${message}`;
-
-      let aiResponse;
-      try {
-        aiResponse = await getChatCompletion(sprinthiaPrompt);
-      } catch (error) {
-        // Fallback response when OpenAI is unavailable
-        aiResponse = "Great question about race preparation! For tomorrow's race, focus on: 1) Light warm-up and dynamic stretching, 2) Proper hydration throughout the day, 3) Get quality sleep tonight, 4) Have a familiar pre-race meal, and 5) Visualize your race strategy. Stay relaxed and trust your training. You've got this! [Note: This is a placeholder response - please set up OpenAI billing for full AI functionality]";
-      }
+      const aiResponse = await getChatCompletion(message, programContext);
 
       // Save AI response
       await dbStorage.createSprinthiaMessage({
