@@ -2289,36 +2289,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const ext = path.extname(req.file.originalname);
       const filename = `club-${fileType}-${clubId}-${uniqueSuffix}${ext}`;
       
-      // Move file to a permanent location (it's already saved by multer)
-      const oldPath = req.file.path;
-      const newPath = path.join(uploadsDir, filename);
+      let imageUrls: any = {};
       
-      fs.renameSync(oldPath, newPath);
-      
-      // Compress the image
-      const compressedFilename = `compressed_${filename}`;
-      const compressedPath = path.join(uploadsDir, compressedFilename);
-      
-      let fileUrl: string;
       try {
-        await compressImage(newPath, compressedPath, 85);
-        // Use compressed version
-        fileUrl = `/uploads/${compressedFilename}`;
+        // Generate multiple optimized sizes
+        const outputDir = path.dirname(req.file.path);
+        const imageSizes = await generateImageSizes(req.file.path, filename, outputDir);
+        
+        imageUrls = {
+          [`${fileType}Url`]: `/uploads/${imageSizes.original}`,
+          [`${fileType}ThumbUrl`]: `/uploads/${imageSizes.thumb}`,
+          [`${fileType}MediumUrl`]: `/uploads/${imageSizes.medium}`,
+          [`${fileType}LargeUrl`]: `/uploads/${imageSizes.large}`,
+        };
       } catch (compressionError) {
-        console.error('Image compression failed, using original:', compressionError);
-        // Fall back to original if compression fails
-        fileUrl = `/uploads/${filename}`;
+        console.error('Image size generation failed, using original:', compressionError);
+        // Move file to permanent location and use original
+        const newPath = path.join(uploadsDir, filename);
+        fs.renameSync(req.file.path, newPath);
+        
+        imageUrls = {
+          [`${fileType}Url`]: `/uploads/${filename}`,
+        };
       }
       
-      // Update the club in the database
-      if (fileType === 'logo') {
-        await dbStorage.updateClub(clubId, { logoUrl: fileUrl });
-      } else if (fileType === 'banner') {
-        await dbStorage.updateClub(clubId, { bannerUrl: fileUrl });
-      }
+      // Update the club in the database with all image sizes
+      await dbStorage.updateClub(clubId, imageUrls);
       
-      // Return the file URL
-      res.json({ fileUrl });
+      // Return the main file URL for compatibility
+      const mainUrl = imageUrls[`${fileType}Url`];
+      res.json({ fileUrl: mainUrl, imageUrls });
     } catch (error: any) {
       console.error(`Error uploading club ${req.body.fileType}:`, error);
       res.status(500).send(`Error uploading image: ${error.message || error}`);

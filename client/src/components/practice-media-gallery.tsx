@@ -24,6 +24,9 @@ interface Media {
   type: 'image' | 'video';
   url: string;
   thumbnail?: string;
+  thumbUrl?: string;    // 200x200 square thumbnail
+  mediumUrl?: string;   // 400x300 for cards
+  largeUrl?: string;    // 800x400 for large displays
   createdAt: string;
 }
 
@@ -217,9 +220,10 @@ export function PracticeMediaGallery({
                 
                 {media.type === 'image' ? (
                   <img 
-                    src={media.url} 
+                    src={media.thumbUrl || media.url} 
                     alt="Practice media" 
                     className="w-full h-full object-cover"
+                    loading="lazy"
                   />
                 ) : (
                   <div className="relative w-full h-full bg-slate-900">
@@ -227,6 +231,7 @@ export function PracticeMediaGallery({
                       src={media.thumbnail || media.url} 
                       alt="Video thumbnail" 
                       className="w-full h-full object-cover opacity-80"
+                      loading="lazy"
                     />
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="bg-black/60 rounded-full p-2">
@@ -259,7 +264,7 @@ export function PracticeMediaGallery({
           
           {selectedMedia?.type === 'image' ? (
             <img 
-              src={selectedMedia.url} 
+              src={selectedMedia.largeUrl || selectedMedia.url} 
               alt="Practice media" 
               className="w-full h-auto max-h-[80vh] object-contain"
             />
