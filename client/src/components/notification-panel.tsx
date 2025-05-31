@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -71,13 +71,17 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
   // Fetch all notifications
   const { data: notifications = [], isLoading: notificationsLoading } = useQuery({
     queryKey: ["/api/notifications"],
-    select: (data: Notification[]) => data || [],
-    onSuccess: (data) => {
-      setAllNotifications(data);
-      setOffset(25);
-      setHasMore(data.length === 25);
-    }
+    select: (data: Notification[]) => data || []
   });
+
+  // Update state when notifications data changes
+  useEffect(() => {
+    if (notifications.length > 0) {
+      setAllNotifications(notifications);
+      setOffset(25);
+      setHasMore(notifications.length === 25);
+    }
+  }, [notifications]);
 
   // Fetch pending follow requests
   const { data: pendingRequests = [], isLoading: requestsLoading } = useQuery({
@@ -159,7 +163,30 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
     declineRequestMutation.mutate(requestId);
   };
 
-  const unreadCount = notifications.filter((n: Notification) => !n.isRead).length + pendingRequests.length;
+  // Load more notifications
+  const loadMoreNotifications = async () => {
+    if (!hasMore || isLoadingMore) return;
+    
+    setIsLoadingMore(true);
+    try {
+      const response = await apiRequest("GET", `/api/notifications?limit=25&offset=${offset}`);
+      const olderNotifications = await response.json();
+      
+      setAllNotifications(prev => [...prev, ...olderNotifications]);
+      setOffset(prev => prev + 25);
+      setHasMore(olderNotifications.length === 25);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load older notifications",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
+  const unreadCount = allNotifications.filter((n: Notification) => !n.isRead).length + pendingRequests.length;
 
   return (
     <div 
@@ -271,17 +298,17 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                   </div>
                 ))}
               </div>
-            ) : notifications.length === 0 && pendingRequests.length === 0 ? (
+            ) : allNotifications.length === 0 && pendingRequests.length === 0 ? (
               <div className="text-center py-8">
                 <Bell className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No notifications</h3>
                 <p className="text-gray-500">You're all caught up!</p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {notifications.map((notification: Notification, index) => {
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {allNotifications.map((notification: Notification, index) => {
                   const isNewNotification = !notification.isRead;
-                  const previousNotification = notifications[index - 1];
+                  const previousNotification = allNotifications[index - 1];
                   const showDivider = index > 0 && !isNewNotification && previousNotification?.isRead === false;
 
                   return (
@@ -395,6 +422,28 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                     </div>
                   );
                 })}
+                
+                {/* Load Older Button */}
+                {hasMore && (
+                  <div className="mt-4 text-center">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={loadMoreNotifications}
+                      disabled={isLoadingMore}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      {isLoadingMore ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Loading...
+                        </>
+                      ) : (
+                        'Load Older'
+                      )}
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>
