@@ -16,7 +16,8 @@ import {
   MessagesSquare, 
   Coins,
   BookOpen,
-  Target
+  Target,
+  Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -254,6 +255,26 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               <Award className="h-4 w-4 mr-3" />
               Coaches
             </a>
+            
+            {/* Admin Section - Only show for admin users */}
+            {(currentUser as any)?.role === 'admin' && (
+              <>
+                <div className="pt-4 pb-2">
+                  <p className="text-xs text-gray-400 px-4 font-medium">ADMIN</p>
+                </div>
+                <a
+                  href="/admin-panel"
+                  className={cn(
+                    "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",
+                    location === "/admin-panel" ? "bg-[#ff8c00] text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                  )}
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Shield className="h-4 w-4 mr-3" />
+                  Admin Panel
+                </a>
+              </>
+            )}
             
             {/* Account Section */}
             <div className="pt-4 pb-2">
