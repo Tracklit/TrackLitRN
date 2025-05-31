@@ -307,11 +307,14 @@ export default function SprinthiaSimple() {
                 >
                   <div className="whitespace-pre-wrap leading-relaxed text-foreground">
                     {message.content
-                      .replace(/\*\*(.*?)\*\*/g, '$1')
-                      .replace(/\*(.*?)\*/g, '$1')
-                      .replace(/^#+\s*/gm, '')
+                      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                      .replace(/^#+\s*(.*?)$/gm, '<strong>$1</strong>')
                       .replace(/^\*\s*/gm, '• ')
                       .replace(/^-\s*/gm, '• ')
+                      .split('\n').map((line, index) => (
+                        <span key={index} dangerouslySetInnerHTML={{ __html: line }} />
+                      )).reduce((prev, curr, index) => [prev, <br key={`br-${index}`} />, curr])
                     }
                   </div>
                   <div className="flex items-center justify-between text-xs opacity-70 mt-3 pt-2 border-t border-border">

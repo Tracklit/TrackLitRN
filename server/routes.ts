@@ -9,6 +9,7 @@ import { z } from "zod";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import sharp from "sharp";
 import { transcribeAudioHandler, upload as audioUpload } from "./routes/transcribe";
 import { getUserJournalEntries, createJournalEntry, updateJournalEntry, deleteJournalEntry } from "./routes/journal";
 import { getWeatherForecast } from "./weather";
