@@ -22,13 +22,13 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
 
   return (
     <header className={cn("bg-[#010a18] shadow-sm fixed top-0 left-0 right-0 z-30", className)}>
-      <div className="w-full px-4 py-3 flex items-center">
+      <div className="w-full px-4 py-3 flex items-center justify-between">
         <div className="flex items-center">
           <h1 className="text-xl font-bold text-white ml-11">{title}</h1>
         </div>
         
         {user && (
-          <div className="flex items-center space-x-4 absolute right-4">
+          <div className="flex items-center space-x-4">
             {/* Install App Button */}
             <InstallAppButton />
             
