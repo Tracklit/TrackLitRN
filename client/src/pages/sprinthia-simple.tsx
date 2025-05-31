@@ -227,7 +227,7 @@ export default function SprinthiaSimple() {
           )}
           
           <div className="flex-1 flex flex-col max-w-6xl mx-auto w-full">
-          {/* Header */}
+            {/* Header */}
           <div className="p-6 border-b border-border bg-background">
             <div className="flex items-center gap-4">
               <div className="relative">
