@@ -185,7 +185,7 @@ export default function HomePage() {
       icon: <MessageCircle className="h-6 w-6 text-primary" />,
       href: "/sprinthia",
       disabled: false,
-      headerImage: "/sprinthia-avatar.jpeg"
+      headerImage: "/sprinthia-avatar-fresh.jpeg"
     }
   ];
 
