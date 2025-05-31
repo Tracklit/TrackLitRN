@@ -73,7 +73,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
       <Button 
         variant="ghost" 
         size="icon" 
-        className="relative z-10 -mt-1"
+        className="relative z-[1] -mt-1"
         onClick={() => setIsOpen(!isOpen)}
       >
         {isOpen ? (
@@ -86,7 +86,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
       
       <div
         className={cn(
-          "fixed inset-0 z-20 bg-background/80 backdrop-blur-sm transition-opacity duration-300",
+          "fixed inset-0 z-[10] bg-background/80 backdrop-blur-sm transition-opacity duration-300",
           isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
         onClick={() => setIsOpen(false)}
@@ -94,7 +94,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
       
       <div
         className={cn(
-          "fixed top-0 left-0 bottom-0 z-20 w-3/4 max-w-xs bg-gray-900 shadow-xl transition-transform duration-300 ease-in-out",
+          "fixed top-0 left-0 bottom-0 z-[10] w-3/4 max-w-xs bg-gray-900 shadow-xl transition-transform duration-300 ease-in-out",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
