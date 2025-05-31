@@ -296,23 +296,29 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                               {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                             </p>
                             
-                            {/* Accept button for connection requests - only show if not read */}
-                            {!notification.isRead && (
-                              <div className="flex space-x-2 mt-2">
-                                <Button
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
+                            {/* Accept button for connection requests */}
+                            <div className="flex space-x-2 mt-2">
+                              <Button
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (!notification.isRead) {
                                     handleAcceptRequest(notification.relatedId!);
-                                  }}
-                                  className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 h-7"
-                                  disabled={acceptRequestMutation.isPending}
-                                >
-                                  <Check className="h-3 w-3 mr-1" />
-                                  {acceptRequestMutation.isPending ? 'Accepting...' : 'Accept'}
-                                </Button>
-                              </div>
-                            )}
+                                  }
+                                }}
+                                className={cn(
+                                  "px-3 py-1 h-7",
+                                  notification.isRead 
+                                    ? "bg-gray-400 text-gray-600 cursor-not-allowed" 
+                                    : "bg-green-600 hover:bg-green-700 text-white"
+                                )}
+                                disabled={notification.isRead || acceptRequestMutation.isPending}
+                              >
+                                <Check className="h-3 w-3 mr-1" />
+                                {notification.isRead ? 'Accepted' : 
+                                 acceptRequestMutation.isPending ? 'Accepting...' : 'Accept'}
+                              </Button>
+                            </div>
                           </div>
                           
                           {!notification.isRead && (
