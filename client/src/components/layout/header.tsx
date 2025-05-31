@@ -22,32 +22,26 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
 
   return (
     <header className={cn("bg-[#010a18] shadow-sm fixed top-0 left-0 right-0 z-30", className)}>
-      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center">
+      <div className="relative w-full px-4 py-3">
+        {/* Title on the left */}
+        <div className="absolute left-4 top-1/2 -translate-y-1/2">
           <h1 className="text-xl font-bold text-white ml-11">{title}</h1>
         </div>
         
+        {/* Icons on the right */}
         {user && (
-          <div className="flex items-center justify-end flex-1">
-            {/* Install App Button */}
-            <div className="mr-4">
-              <InstallAppButton />
-            </div>
-            
-            <div className="flex items-center space-x-1">
-              <NotificationBell />
-              
-              {/* Direct Messages Icon */}
-              <Link href="/messages">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 text-gray-300 hover:text-white hover:bg-white/10"
-                >
-                  <MessageSquare className="h-5 w-5" />
-                </Button>
-              </Link>
-            </div>
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-4">
+            <InstallAppButton />
+            <NotificationBell />
+            <Link href="/messages">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 text-gray-300 hover:text-white hover:bg-white/10"
+              >
+                <MessageSquare className="h-5 w-5" />
+              </Button>
+            </Link>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
