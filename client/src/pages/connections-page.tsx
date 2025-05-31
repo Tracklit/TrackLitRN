@@ -162,7 +162,7 @@ export default function ConnectionsPage() {
                     <div className="space-y-3 max-h-64 overflow-y-auto">
                       {pendingRequests.map((request: ConnectionRequest) => (
                         <div key={request.id} className="flex items-center space-x-3">
-                          <Avatar className="h-10 w-10">
+                          <Avatar className="h-8 w-8">
                             <AvatarImage src={request.follower.profileImageUrl} />
                             <AvatarFallback>
                               {request.follower.name.charAt(0).toUpperCase()}
@@ -243,7 +243,7 @@ export default function ConnectionsPage() {
           {searchResults.map((user: any) => (
             <div key={`search-${user.id}`} className="flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors border-b border-muted/20">
               <div className="flex items-center space-x-3 flex-1 min-w-0">
-                <Avatar className="h-12 w-12">
+                <Avatar className="h-9 w-9">
                   <AvatarImage src={user.profileImageUrl} />
                   <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
@@ -352,7 +352,7 @@ export default function ConnectionsPage() {
             {filteredConnections.map((connection: Connection) => (
               <div key={connection.id} className="flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors">
                 <div className="flex items-center space-x-3 flex-1 min-w-0">
-                  <Avatar className="h-12 w-12">
+                  <Avatar className="h-9 w-9">
                     <AvatarImage src={connection.profileImageUrl} />
                     <AvatarFallback>
                       {connection.name.charAt(0).toUpperCase()}

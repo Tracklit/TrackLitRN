@@ -133,10 +133,16 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
   const unreadCount = notifications.filter((n: Notification) => !n.isRead).length + pendingRequests.length;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50" onClick={onClose}>
+    <div 
+      className={cn(
+        "fixed inset-0 z-50 transition-all duration-300 ease-in-out",
+        isOpen ? "bg-black/50" : "bg-transparent pointer-events-none"
+      )} 
+      onClick={onClose}
+    >
       <div 
         className={cn(
-          "fixed right-0 top-0 h-full w-96 bg-background border-l shadow-xl transform transition-transform duration-300 ease-in-out",
+          "fixed right-0 top-0 h-full w-96 bg-background border-l shadow-xl transform transition-all duration-300 ease-in-out",
           isOpen ? "translate-x-0" : "translate-x-full"
         )}
         onClick={(e) => e.stopPropagation()}
@@ -164,8 +170,12 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
             <div className="p-4 border-b bg-primary/10">
               <h4 className="text-sm font-semibold text-primary mb-3">Connection Requests</h4>
               <div className="space-y-3">
-                {pendingRequests.map((request: FollowRequest) => (
-                  <div key={request.id} className="flex items-center space-x-3 p-3 rounded-lg bg-card border">
+                {pendingRequests.map((request: FollowRequest, index) => (
+                  <div 
+                    key={request.id} 
+                    className="flex items-center space-x-3 p-3 rounded-lg bg-card border animate-in slide-in-from-right-2 duration-300"
+                    style={{ animationDelay: `${index * 100}ms` }}
+                  >
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={request.follower.profileImageUrl} />
                       <AvatarFallback>
@@ -189,10 +199,11 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                       <Button
                         size="sm"
                         onClick={() => handleAcceptRequest(request.id)}
-                        className="bg-orange-500 hover:bg-orange-600"
+                        className="bg-green-600 hover:bg-green-700 text-white px-3"
                         disabled={acceptRequestMutation.isPending}
                       >
-                        <Check className="h-3 w-3" />
+                        <Check className="h-3 w-3 mr-1" />
+                        Accept
                       </Button>
                       <Button
                         size="sm"
@@ -233,15 +244,16 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
               </div>
             ) : (
               <div className="space-y-3">
-                {notifications.map((notification: Notification) => (
+                {notifications.map((notification: Notification, index) => (
                   <div
                     key={notification.id}
                     className={cn(
-                      "flex items-start space-x-3 p-3 rounded-lg cursor-pointer transition-colors",
+                      "flex items-start space-x-3 p-3 rounded-lg cursor-pointer transition-all duration-200 animate-in slide-in-from-right-1",
                       notification.isRead 
                         ? "hover:bg-gray-50" 
                         : "bg-blue-50 hover:bg-blue-100 border-l-4 border-blue-500"
                     )}
+                    style={{ animationDelay: `${(pendingRequests?.length || 0) * 100 + index * 50}ms` }}
                     onClick={() => handleNotificationClick(notification)}
                   >
                     <div className="flex-shrink-0 mt-1">
