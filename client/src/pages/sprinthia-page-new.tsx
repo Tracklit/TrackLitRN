@@ -241,8 +241,12 @@ export default function SprinthiaPage() {
                     
                     {isTyping && (
                       <div className="flex gap-3">
-                        <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                          <Brain className="h-4 w-4 text-primary-foreground" />
+                        <div className="w-8 h-8 rounded-full overflow-hidden shrink-0">
+                          <img 
+                            src="/sprinthia-avatar.jpeg?v=2" 
+                            alt="Sprinthia"
+                            className="w-full h-full object-cover"
+                          />
                         </div>
                         <div className="bg-muted rounded-lg px-4 py-3">
                           <div className="flex space-x-1">
