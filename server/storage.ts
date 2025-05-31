@@ -2235,12 +2235,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Notification operations
-  async getNotifications(userId: number): Promise<Notification[]> {
+  async getNotifications(userId: number, limit: number = 25, offset: number = 0): Promise<Notification[]> {
     return await db
       .select()
       .from(notifications)
       .where(eq(notifications.userId, userId))
-      .orderBy(desc(notifications.createdAt));
+      .orderBy(desc(notifications.createdAt))
+      .limit(limit)
+      .offset(offset);
   }
 
   async createNotification(notification: InsertNotification): Promise<Notification> {

@@ -4691,7 +4691,10 @@ User message: ${content}`;
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     try {
-      const notifications = await dbStorage.getNotifications(req.user!.id);
+      const limit = parseInt(req.query.limit as string) || 25;
+      const offset = parseInt(req.query.offset as string) || 0;
+      
+      const notifications = await dbStorage.getNotifications(req.user!.id, limit, offset);
       res.json(notifications);
     } catch (error) {
       console.error("Error fetching notifications:", error);

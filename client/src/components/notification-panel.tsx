@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { ArrowRight, Check, Bell, Clock, UserPlus, Trophy, MessageSquare, X } from "lucide-react";
+import { ArrowRight, Check, Bell, Clock, UserPlus, Trophy, MessageSquare, X, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
@@ -63,11 +63,20 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
+  const [allNotifications, setAllNotifications] = useState<Notification[]>([]);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // Fetch all notifications
   const { data: notifications = [], isLoading: notificationsLoading } = useQuery({
     queryKey: ["/api/notifications"],
-    select: (data: Notification[]) => data || []
+    select: (data: Notification[]) => data || [],
+    onSuccess: (data) => {
+      setAllNotifications(data);
+      setOffset(25);
+      setHasMore(data.length === 25);
+    }
   });
 
   // Fetch pending follow requests
@@ -291,7 +300,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                         <div
                           className={cn(
                             "flex items-start space-x-3 p-3 rounded-lg animate-in slide-in-from-right-1",
-                            notification.isRead ? "bg-muted/50" : "bg-background"
+                            notification.isRead ? "bg-muted/80" : "bg-card"
                           )}
                           style={{ 
                             animationDelay: `${(pendingRequests?.length || 0) * 100 + index * 50}ms`
