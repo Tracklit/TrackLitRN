@@ -290,9 +290,9 @@ export default function SprinthiaSimple() {
             )}
 
             {messages.map((message) => (
-              <div key={message.id} className="w-full mb-3">
+              <div key={message.id} className="w-full mb-6">
                 <div className={cn(
-                  "mb-1 text-lg font-medium",
+                  "mb-2 text-sm font-medium",
                   message.role === 'user' ? 'text-blue-600' : 'text-purple-600'
                 )}>
                   {message.role === 'user' ? 'You' : 'Sprinthia'}
@@ -306,7 +306,7 @@ export default function SprinthiaSimple() {
                   )}
                 >
                   <div className={cn(
-                    "leading-relaxed text-foreground",
+                    "whitespace-pre-wrap leading-relaxed text-foreground",
                     message.role === 'assistant' ? 'text-justify' : ''
                   )}>
                     {message.content
@@ -315,20 +315,9 @@ export default function SprinthiaSimple() {
                       .replace(/^#+\s*/gm, '')
                       .replace(/^\*\s*/gm, '• ')
                       .replace(/^-\s*/gm, '• ')
-                      .split('\n\n')
-                      .map((paragraph, index) => (
-                        <p key={index} className="mb-1.5 last:mb-0">
-                          {paragraph.split('\n').map((line, lineIndex) => (
-                            <span key={lineIndex}>
-                              {line}
-                              {lineIndex < paragraph.split('\n').length - 1 && <br />}
-                            </span>
-                          ))}
-                        </p>
-                      ))
                     }
                   </div>
-                  <div className="flex items-center justify-between text-xs opacity-70 mt-1.5 pt-1.5 border-t border-border">
+                  <div className="flex items-center justify-between text-xs opacity-70 mt-3 pt-2 border-t border-border">
                     <span>
                       {new Date(message.timestamp).toLocaleTimeString([], { 
                         hour: '2-digit', 
