@@ -8,6 +8,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { ArrowRight, Check, Bell, Clock, UserPlus, Trophy, MessageSquare, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useLocation } from "wouter";
 
 interface Notification {
   id: number;
@@ -61,6 +62,7 @@ function getNotificationIcon(type: string) {
 export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   // Fetch all notifications
   const { data: notifications = [], isLoading: notificationsLoading } = useQuery({
@@ -116,7 +118,8 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
     }
     
     if (notification.actionUrl) {
-      window.location.href = notification.actionUrl;
+      setLocation(notification.actionUrl);
+      onClose();
     }
   };
 
