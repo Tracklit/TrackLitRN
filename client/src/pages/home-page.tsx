@@ -179,6 +179,7 @@ export default function HomePage() {
       icon: <Clock className="h-6 w-6 text-primary" />,
       href: "/training-tools",
       disabled: false,
+      headerImage: "/tools-card-compressed.jpeg"
     },
     {
       title: "Sprinthia",
@@ -231,7 +232,7 @@ export default function HomePage() {
                       style={{ 
                         backgroundImage: `url(${card.headerImage || trackImages[index % 4]})`,
                         backgroundPosition: card.headerImage 
-                          ? (card.title === 'Programs' ? 'center' : 'center -85px')
+                          ? (card.title === 'Programs' || card.title === 'Tools' ? 'center' : 'center -85px')
                           : 'center'
                       }}
                     >
