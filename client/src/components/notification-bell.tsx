@@ -17,13 +17,13 @@ export function NotificationBell({ className }: NotificationBellProps) {
   // Fetch notifications to get unread count
   const { data: notifications = [] } = useQuery({
     queryKey: ["/api/notifications"],
-    select: (data) => data || []
+    select: (data: any[]) => data || []
   });
 
   // Fetch pending requests count
   const { data: pendingRequests = [] } = useQuery({
     queryKey: ["/api/friend-requests/pending"],
-    select: (data) => data || []
+    select: (data: any[]) => data || []
   });
 
   // Mark all notifications as read
@@ -34,12 +34,12 @@ export function NotificationBell({ className }: NotificationBellProps) {
     }
   });
 
-  const unreadCount = notifications.filter((n: any) => !n.isRead).length + pendingRequests.length;
+  const unreadCount = (notifications as any[]).filter((n: any) => !n.isRead).length + (pendingRequests as any[]).length;
 
   const handleOpenPanel = () => {
     setShowPanel(true);
     // Mark all notifications as read when opening the panel
-    if (notifications.some((n: any) => !n.isRead)) {
+    if ((notifications as any[]).some((n: any) => !n.isRead)) {
       markAllAsReadMutation.mutate();
     }
   };
