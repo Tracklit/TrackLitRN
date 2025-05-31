@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import { Send, Brain, User } from 'lucide-react';
+import { Send, Brain, User, Copy, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import brainImage from '@assets/IMG_4120.jpeg';
 
@@ -27,6 +27,7 @@ export default function SprinthiaSimple() {
   const [isGenerating, setIsGenerating] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [conversationId, setConversationId] = useState<number | null>(null);
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -108,6 +109,24 @@ export default function SprinthiaSimple() {
     return `${user?.sprinthiaPrompts || 0} prompts`;
   };
 
+  const handleCopyMessage = async (content: string, messageId: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedMessageId(messageId);
+      toast({
+        title: "Copied!",
+        description: "Response copied to clipboard",
+      });
+      setTimeout(() => setCopiedMessageId(null), 2000);
+    } catch (err) {
+      toast({
+        title: "Failed to copy",
+        description: "Could not copy to clipboard",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="flex h-screen bg-background">
       <SidebarNavigation />
@@ -145,7 +164,7 @@ export default function SprinthiaSimple() {
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {messages.length === 0 && (
-              <div className="text-center py-16">
+              <div className="text-center py-2">
                 <div className="mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500" style={{ width: '92px', height: '92px', padding: '1px' }}>
                   <div className="w-full h-full rounded-full bg-background overflow-hidden">
                     <img src={brainImage} alt="Sprinthia AI" className="w-full h-full object-cover object-top" />
@@ -197,11 +216,27 @@ export default function SprinthiaSimple() {
                       .replace(/^-\s*/gm, '• ')
                     }
                   </div>
-                  <div className="text-xs opacity-70 mt-3 pt-2 border-t border-border">
-                    {new Date(message.timestamp).toLocaleTimeString([], { 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
-                    })}
+                  <div className="flex items-center justify-between text-xs opacity-70 mt-3 pt-2 border-t border-border">
+                    <span>
+                      {new Date(message.timestamp).toLocaleTimeString([], { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                      })}
+                    </span>
+                    {message.role === 'assistant' && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleCopyMessage(message.content, message.id)}
+                        className="h-6 w-6 p-0 hover:bg-muted"
+                      >
+                        {copiedMessageId === message.id ? (
+                          <Check className="h-3 w-3 text-green-500" />
+                        ) : (
+                          <Copy className="h-3 w-3" />
+                        )}
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
