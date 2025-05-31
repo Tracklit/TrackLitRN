@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import { Send, MessageSquare, Zap, Crown, Star, Brain, Info, Plus } from 'lucide-react';
+import { Send, MessageSquare, Zap, Crown, Star, Info, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SprinthiaConversation {
