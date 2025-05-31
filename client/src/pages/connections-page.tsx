@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { UserCheck, UserPlus, UserMinus, Search, Check, X, ChevronDown, Users } from "lucide-react";
+import { UserCheck, UserPlus, UserMinus, Search, Check, X, ChevronDown, Users, MoreHorizontal } from "lucide-react";
 import { Link } from "wouter";
 import { ListSkeleton } from "@/components/list-skeleton";
 import { useAuth } from "@/hooks/use-auth";
@@ -138,236 +139,288 @@ export default function ConnectionsPage() {
   );
 
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <Users className="h-6 w-6" />
-          <h1 className="text-2xl font-bold">Connections</h1>
-          {connections.length > 0 && (
-            <Badge variant="secondary">{connections.length}</Badge>
-          )}
-        </div>
-
-        {/* Pending Requests Dropdown */}
-        {pendingRequests.length > 0 && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="relative">
-                <UserPlus className="h-4 w-4 mr-2" />
-                Pending Requests
-                <Badge className="ml-2 bg-orange-500 text-white">
-                  {pendingRequests.length}
-                </Badge>
-                <ChevronDown className="h-4 w-4 ml-2" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80">
-              <div className="p-2">
-                <h4 className="font-semibold text-sm mb-3">Connection Requests</h4>
-                <div className="space-y-3 max-h-64 overflow-y-auto">
-                  {pendingRequests.map((request: ConnectionRequest) => (
-                    <div key={request.id} className="flex items-center space-x-3 p-2 rounded-lg bg-muted/50">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={request.follower.profileImageUrl} />
-                        <AvatarFallback>
-                          {request.follower.name.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">
-                          {request.follower.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground truncate">
-                          @{request.follower.username}
-                        </p>
-                      </div>
-                      
-                      <div className="flex space-x-1">
-                        <Button
-                          size="sm"
-                          onClick={() => handleAcceptRequest(request.id)}
-                          className="bg-green-600 hover:bg-green-700 h-7 w-7 p-0"
-                          disabled={acceptRequestMutation.isPending}
-                        >
-                          <Check className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDeclineRequest(request.id)}
-                          className="h-7 w-7 p-0"
-                          disabled={declineRequestMutation.isPending}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </div>
-
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-        <Input
-          placeholder="Search connections or find new people..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
-        />
-      </div>
-
-      {/* Search Results */}
-      {searchTerm && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Search Results</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {searchLoading ? (
-              <ListSkeleton />
-            ) : searchResults.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">
-                No users found matching "{searchTerm}"
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {searchResults.map((user: any) => (
-                  <div key={user.id} className="flex items-center justify-between p-3 rounded-lg border">
-                    <div className="flex items-center space-x-3">
-                      <Avatar>
-                        <AvatarImage src={user.profileImageUrl} />
-                        <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="flex items-center space-x-2">
-                          <p className="font-medium">{user.name}</p>
-                          {user.isCoach && (
-                            <Badge variant="secondary">Coach</Badge>
-                          )}
-                          {user.isPrivate && (
-                            <Badge variant="outline">Private</Badge>
-                          )}
+    <div className="max-w-md mx-auto bg-background min-h-screen">
+      {/* Header */}
+      <div className="sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b px-4 py-3 z-10">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-semibold">Connections</h1>
+          <div className="flex items-center space-x-3">
+            {/* Pending Requests Button */}
+            {pendingRequests.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="relative">
+                    <UserPlus className="h-5 w-5" />
+                    <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs bg-red-500 text-white rounded-full flex items-center justify-center">
+                      {pendingRequests.length}
+                    </Badge>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-80">
+                  <div className="p-3">
+                    <h4 className="font-semibold text-sm mb-3">Connection Requests</h4>
+                    <div className="space-y-3 max-h-64 overflow-y-auto">
+                      {pendingRequests.map((request: ConnectionRequest) => (
+                        <div key={request.id} className="flex items-center space-x-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={request.follower.profileImageUrl} />
+                            <AvatarFallback>
+                              {request.follower.name.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">
+                              {request.follower.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              @{request.follower.username}
+                            </p>
+                          </div>
+                          
+                          <div className="flex space-x-1">
+                            <Button
+                              size="sm"
+                              onClick={() => handleAcceptRequest(request.id)}
+                              disabled={acceptRequestMutation.isPending}
+                              className="h-7 px-3 text-xs"
+                            >
+                              Accept
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDeclineRequest(request.id)}
+                              disabled={declineRequestMutation.isPending}
+                              className="h-7 px-3 text-xs"
+                            >
+                              Decline
+                            </Button>
+                          </div>
                         </div>
-                        <p className="text-sm text-muted-foreground">@{user.username}</p>
-                        {user.bio && (
-                          <p className="text-sm text-muted-foreground mt-1">{user.bio}</p>
-                        )}
-                      </div>
+                      ))}
                     </div>
-                    
-                    {user.id !== user?.id && (
-                      <div className="flex space-x-2">
-                        {user.connectionStatus === 'connected' ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRemoveConnection(user.id)}
-                          >
-                            <UserMinus className="h-4 w-4 mr-2" />
-                            Remove
-                          </Button>
-                        ) : user.connectionStatus === 'pending' ? (
-                          <Button variant="outline" size="sm" disabled>
-                            Pending
-                          </Button>
-                        ) : (
-                          <Button
-                            size="sm"
-                            onClick={() => handleSendRequest(user.id)}
-                            disabled={sendRequestMutation.isPending}
-                          >
-                            <UserPlus className="h-4 w-4 mr-2" />
-                            Connect
-                          </Button>
-                        )}
-                      </div>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            
+            <Link href="/athletes">
+              <Button variant="ghost" size="sm">
+                <UserPlus className="h-5 w-5" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+        
+        {/* Search Bar */}
+        <div className="mt-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search connections..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 bg-muted/50 border-0"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Connections Count */}
+      <div className="px-4 py-3 border-b">
+        <p className="text-sm text-muted-foreground">
+          {connections.length} {connections.length === 1 ? 'connection' : 'connections'}
+        </p>
+      </div>
+
+      {/* Search Results Section */}
+      {searchTerm && searchResults.length > 0 && (
+        <div className="border-b">
+          <div className="px-4 py-2">
+            <p className="text-sm font-medium text-muted-foreground">Search Results</p>
+          </div>
+          {searchResults.map((user: any) => (
+            <div key={`search-${user.id}`} className="flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors border-b border-muted/20">
+              <div className="flex items-center space-x-3 flex-1 min-w-0">
+                <Avatar className="h-12 w-12">
+                  <AvatarImage src={user.profileImageUrl} />
+                  <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center space-x-2">
+                    <Link href={`/user/${user.id}`}>
+                      <p className="font-medium hover:underline cursor-pointer truncate">
+                        {user.name}
+                      </p>
+                    </Link>
+                    {user.isCoach && (
+                      <Badge variant="secondary" className="text-xs px-1.5 py-0.5">
+                        Coach
+                      </Badge>
+                    )}
+                    {user.isPrivate && (
+                      <Badge variant="outline" className="text-xs px-1.5 py-0.5">
+                        Private
+                      </Badge>
                     )}
                   </div>
-                ))}
+                  <p className="text-sm text-muted-foreground truncate">
+                    @{user.username}
+                  </p>
+                  {user.bio && (
+                    <p className="text-sm text-muted-foreground mt-0.5 line-clamp-1 truncate">
+                      {user.bio}
+                    </p>
+                  )}
+                </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Connections List */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Your Connections</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {connectionsLoading ? (
-            <ListSkeleton />
-          ) : filteredConnections.length === 0 ? (
-            <div className="text-center py-8">
-              <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-muted-foreground mb-2">
-                {searchTerm ? "No connections found" : "No connections yet"}
-              </h3>
-              <p className="text-muted-foreground">
-                {searchTerm 
-                  ? `No connections match "${searchTerm}"`
-                  : "Start connecting with other athletes and coaches to build your network."
-                }
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {filteredConnections.map((connection: Connection) => (
-                <div key={connection.id} className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center space-x-3">
-                    <Avatar>
-                      <AvatarImage src={connection.profileImageUrl} />
-                      <AvatarFallback>{connection.name.charAt(0).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        <p className="font-medium">{connection.name}</p>
-                        {connection.isCoach && (
-                          <Badge variant="secondary">Coach</Badge>
-                        )}
-                        {connection.subscriptionTier === 'pro' && (
-                          <Badge className="bg-orange-500">Pro</Badge>
-                        )}
-                        {connection.subscriptionTier === 'star' && (
-                          <Badge className="bg-purple-500">Star</Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground">@{connection.username}</p>
-                      {connection.bio && (
-                        <p className="text-sm text-muted-foreground mt-1">{connection.bio}</p>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="flex space-x-2">
-                    <Link href={`/profile/${connection.username}`}>
-                      <Button variant="outline" size="sm">
-                        View Profile
-                      </Button>
-                    </Link>
+              
+              {user.id !== user?.id && (
+                <div className="ml-3">
+                  {user.connectionStatus === 'connected' ? (
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleRemoveConnection(connection.id)}
-                      disabled={removeConnectionMutation.isPending}
+                      onClick={() => handleRemoveConnection(user.id)}
+                      className="h-8 px-3"
                     >
-                      <UserMinus className="h-4 w-4 mr-2" />
                       Remove
                     </Button>
+                  ) : user.connectionStatus === 'pending' ? (
+                    <Button variant="outline" size="sm" disabled className="h-8 px-3">
+                      Pending
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      onClick={() => handleSendRequest(user.id)}
+                      disabled={sendRequestMutation.isPending}
+                      className="h-8 px-3"
+                    >
+                      Connect
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Connections List */}
+      <div className="pb-20">
+        {connectionsLoading ? (
+          <div className="p-4">
+            <div className="space-y-4">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="flex items-center space-x-3">
+                  <Skeleton className="h-12 w-12 rounded-full" />
+                  <div className="space-y-2 flex-1">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-24" />
                   </div>
+                  <Skeleton className="h-8 w-20" />
                 </div>
               ))}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        ) : filteredConnections.length === 0 ? (
+          <div className="p-8 text-center">
+            <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium mb-2">
+              {searchTerm ? "No connections found" : "No connections yet"}
+            </h3>
+            <p className="text-muted-foreground mb-6">
+              {searchTerm 
+                ? `No connections match "${searchTerm}"`
+                : "Connect with other athletes and coaches to build your network"
+              }
+            </p>
+            {!searchTerm && (
+              <Link href="/athletes">
+                <Button>
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Find People to Connect
+                </Button>
+              </Link>
+            )}
+          </div>
+        ) : (
+          <div>
+            {filteredConnections.map((connection: Connection) => (
+              <div key={connection.id} className="flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors">
+                <div className="flex items-center space-x-3 flex-1 min-w-0">
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={connection.profileImageUrl} />
+                    <AvatarFallback>
+                      {connection.name.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center space-x-2">
+                      <Link href={`/user/${connection.id}`}>
+                        <p className="font-medium hover:underline cursor-pointer truncate">
+                          {connection.name}
+                        </p>
+                      </Link>
+                      {connection.isCoach && (
+                        <Badge variant="secondary" className="text-xs px-1.5 py-0.5">
+                          Coach
+                        </Badge>
+                      )}
+                      {connection.subscriptionTier === 'pro' && (
+                        <Badge className="text-xs px-1.5 py-0.5 bg-orange-500">
+                          PRO
+                        </Badge>
+                      )}
+                      {connection.subscriptionTier === 'star' && (
+                        <Badge className="text-xs px-1.5 py-0.5 bg-yellow-500">
+                          STAR
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground truncate">
+                      @{connection.username}
+                    </p>
+                    {connection.bio && (
+                      <p className="text-sm text-muted-foreground mt-0.5 line-clamp-1 truncate">
+                        {connection.bio}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-2 ml-3">
+                  <Link href={`/messages?user=${connection.id}`}>
+                    <Button variant="outline" size="sm" className="h-8 px-3">
+                      Message
+                    </Button>
+                  </Link>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem 
+                        onClick={() => handleRemoveConnection(connection.id)}
+                        className="text-destructive"
+                      >
+                        <UserMinus className="h-4 w-4 mr-2" />
+                        Remove Connection
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
