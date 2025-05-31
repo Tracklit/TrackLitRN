@@ -302,7 +302,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
           )}
 
           {/* General Notifications Section */}
-          <div className="p-4">
+          <div className="px-4 pb-0">
             {notificationsLoading ? (
               <div className="space-y-3">
                 {[...Array(3)].map((_, i) => (
@@ -444,7 +444,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                 
                 {/* Load Older Button */}
                 {hasMore && (
-                  <div className="mt-4 text-center">
+                  <div className="mt-4 text-center pb-2">
                     <Button
                       variant="ghost"
                       size="sm"
