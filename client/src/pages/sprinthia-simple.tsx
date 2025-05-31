@@ -8,9 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import { Send, Brain, User, Copy, Check, History, Plus } from 'lucide-react';
+import { Send, User, Copy, Check, History, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import brainImage from '@assets/IMG_4120.jpeg';
 
 interface ChatMessage {
   id: string;
@@ -233,7 +232,7 @@ export default function SprinthiaSimple() {
               <div className="relative">
                 <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500" style={{ padding: '1px' }}>
                   <div className="w-full h-full rounded-full bg-background overflow-hidden">
-                    <img src={brainImage} alt="Sprinthia AI" className="w-full h-full object-cover object-top" />
+                    <img src="/sprinthia-avatar-fresh.jpeg" alt="Sprinthia AI" className="w-full h-full object-cover object-top" />
                   </div>
                 </div>
                 <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-background"></div>
@@ -268,7 +267,7 @@ export default function SprinthiaSimple() {
               <div className="text-center py-2">
                 <div className="mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500" style={{ width: '92px', height: '92px', padding: '1px' }}>
                   <div className="w-full h-full rounded-full bg-background overflow-hidden">
-                    <img src={brainImage} alt="Sprinthia AI" className="w-full h-full object-cover object-top" />
+                    <img src="/sprinthia-avatar-fresh.jpeg" alt="Sprinthia AI" className="w-full h-full object-cover object-top" />
                   </div>
                 </div>
                 <h3 className="text-xl font-semibold mb-3">Hi {user?.name?.split(' ')[0] || 'there'}, how can I help you today?</h3>
