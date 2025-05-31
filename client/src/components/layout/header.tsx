@@ -22,20 +22,17 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
 
   return (
     <header className={cn("bg-[#010a18] shadow-sm fixed top-0 left-0 right-0 z-30", className)}>
-      <div className="w-full px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center">
+      <div className="relative w-full px-4 py-3">
+        {/* Title on the left */}
+        <div className="absolute left-4 top-1/2 -translate-y-1/2">
           <h1 className="text-xl font-bold text-white ml-11">{title}</h1>
         </div>
         
+        {/* Icons on the right */}
         {user && (
-          <div className="flex items-center space-x-4">
-            {/* Install App Button */}
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-4">
             <InstallAppButton />
-            
-            {/* Notification Bell */}
             <NotificationBell />
-            
-            {/* Direct Messages Icon */}
             <Link href="/messages">
               <Button
                 variant="ghost"
