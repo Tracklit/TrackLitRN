@@ -2578,6 +2578,161 @@ export class DatabaseStorage implements IStorage {
       .set({ sprinthiaPrompts: prompts })
       .where(eq(users.id, userId));
   }
+
+  // Friend management methods
+  async getFriends(userId: number): Promise<any[]> {
+    // Get friend notifications that were accepted (converted to friendships)
+    const friendNotifications = await db
+      .select({
+        id: notifications.id,
+        userId: notifications.userId,
+        type: notifications.type,
+        title: notifications.title,
+        message: notifications.message,
+        relatedId: notifications.relatedId,
+        isRead: notifications.isRead,
+        createdAt: notifications.createdAt
+      })
+      .from(notifications)
+      .where(
+        and(
+          eq(notifications.type, 'friend_accepted'),
+          or(
+            eq(notifications.userId, userId),
+            eq(notifications.relatedId, userId)
+          )
+        )
+      );
+
+    // Get user details for each friend
+    const friends = [];
+    for (const notification of friendNotifications) {
+      const friendId = notification.userId === userId ? notification.relatedId : notification.userId;
+      if (friendId) {
+        const [friend] = await db.select().from(users).where(eq(users.id, friendId));
+        if (friend) {
+          friends.push({
+            id: friend.id,
+            username: friend.username,
+            name: friend.name,
+            email: friend.email,
+            bio: friend.bio,
+            isPremium: friend.isPremium,
+            createdAt: friend.createdAt
+          });
+        }
+      }
+    }
+
+    return friends;
+  }
+
+  async getPendingFriendRequests(userId: number): Promise<any[]> {
+    // Get unread friend request notifications for this user
+    const requests = await db
+      .select({
+        id: notifications.id,
+        fromUserId: notifications.relatedId,
+        message: notifications.message,
+        createdAt: notifications.createdAt
+      })
+      .from(notifications)
+      .where(
+        and(
+          eq(notifications.userId, userId),
+          eq(notifications.type, 'friend_request_received'),
+          eq(notifications.isRead, false)
+        )
+      );
+
+    // Get user details for each request sender
+    const requestsWithUsers = [];
+    for (const request of requests) {
+      if (request.fromUserId) {
+        const [user] = await db.select().from(users).where(eq(users.id, request.fromUserId));
+        if (user) {
+          requestsWithUsers.push({
+            id: request.id,
+            follower: {
+              id: user.id,
+              username: user.username,
+              name: user.name,
+              bio: user.bio
+            },
+            createdAt: request.createdAt
+          });
+        }
+      }
+    }
+
+    return requestsWithUsers;
+  }
+
+  async acceptFriendRequest(requestId: number, userId: number): Promise<void> {
+    // Get the friend request notification
+    const [request] = await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.id, requestId));
+
+    if (!request || request.userId !== userId) {
+      throw new Error("Friend request not found or unauthorized");
+    }
+
+    await db.transaction(async (tx) => {
+      // Mark the original request as read
+      await tx
+        .update(notifications)
+        .set({ isRead: true })
+        .where(eq(notifications.id, requestId));
+
+      // Create mutual friendship by creating acceptance notifications for both users
+      if (request.relatedId) {
+        // Notify the requester that their request was accepted
+        await tx.insert(notifications).values({
+          userId: request.relatedId,
+          type: 'friend_accepted',
+          title: 'Friend Request Accepted',
+          message: `Your friend request was accepted!`,
+          relatedId: userId,
+          isRead: false
+        });
+
+        // Create a friendship record for the accepter
+        await tx.insert(notifications).values({
+          userId: userId,
+          type: 'friend_accepted', 
+          title: 'New Friend',
+          message: `You are now friends!`,
+          relatedId: request.relatedId,
+          isRead: false
+        });
+      }
+    });
+  }
+
+  async declineFriendRequest(requestId: number): Promise<void> {
+    // Simply mark the request as read (declined)
+    await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(eq(notifications.id, requestId));
+  }
+
+  async removeFriend(userId: number, friendId: number): Promise<void> {
+    // Remove friendship by deleting the friend_accepted notifications
+    await db
+      .delete(notifications)
+      .where(
+        and(
+          eq(notifications.type, 'friend_accepted'),
+          or(
+            and(eq(notifications.userId, userId), eq(notifications.relatedId, friendId)),
+            and(eq(notifications.userId, friendId), eq(notifications.relatedId, userId))
+          )
+        )
+      );
+  }
 }
 
 export const storage = new DatabaseStorage();
