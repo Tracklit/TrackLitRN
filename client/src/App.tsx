@@ -141,11 +141,7 @@ function MainApp() {
   };
   
   return (
-    <div className="min-h-screen text-foreground" 
-      style={{ 
-        background: "linear-gradient(135deg, hsl(220, 80%, 4%), hsl(215, 70%, 13%))",
-        minHeight: "100vh" 
-      }}>
+    <div className="min-h-screen text-foreground bg-background">
       {/* Top Header Bar */}
       <Header />
       

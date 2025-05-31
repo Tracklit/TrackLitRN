@@ -187,7 +187,7 @@ export default function SprinthiaSimple() {
                 >
                   <div className={cn(
                     "whitespace-pre-wrap leading-relaxed text-foreground",
-                    message.role === 'assistant' ? 'text-center' : ''
+                    message.role === 'assistant' ? 'text-justify' : ''
                   )}>
                     {message.content
                       .replace(/\*\*(.*?)\*\*/g, '$1')
