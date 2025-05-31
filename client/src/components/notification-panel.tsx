@@ -308,12 +308,12 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                                     handleAcceptRequest(notification.relatedId!);
                                   }
                                 }}
-                                className={cn(
-                                  "px-3 py-1 h-7",
-                                  notification.isRead 
-                                    ? "bg-gray-400 text-gray-600 cursor-not-allowed" 
-                                    : "bg-green-600 hover:bg-green-700 text-white"
-                                )}
+                                className="px-3 py-1 h-7 transition-none"
+                                style={{
+                                  backgroundColor: notification.isRead ? '#9ca3af' : '#16a34a',
+                                  color: notification.isRead ? '#4b5563' : '#ffffff',
+                                  border: 'none'
+                                }}
                                 disabled={notification.isRead || acceptRequestMutation.isPending}
                               >
                                 <Check className="h-3 w-3 mr-1" />
