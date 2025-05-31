@@ -221,9 +221,10 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
       }}
     >
       <div 
-        className="fixed right-0 top-0 h-full w-full bg-background shadow-xl"
+        className="fixed right-0 top-0 w-full bg-background shadow-xl flex flex-col"
         onClick={(e) => e.stopPropagation()}
         style={{
+          height: '100vh',
           transition: 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
           transform: isOpen ? 'translateX(0%)' : 'translateX(100%)'
         }}
@@ -245,7 +246,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
           </div>
         </div>
         
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto pb-0">
           {/* Connection Requests Section */}
           {pendingRequests.length > 0 && (
             <div className="p-4 border-b bg-primary/10">
@@ -444,7 +445,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                 
                 {/* Load Older Button */}
                 {hasMore && (
-                  <div className="mt-4 text-center pb-2">
+                  <div className="mt-4 text-center">
                     <Button
                       variant="ghost"
                       size="sm"
