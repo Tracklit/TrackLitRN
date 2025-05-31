@@ -265,11 +265,6 @@ export default function SprinthiaSimple() {
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {messages.length === 0 && (
               <div className="text-center py-2">
-                <div className="mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500" style={{ width: '92px', height: '92px', padding: '1px' }}>
-                  <div className="w-full h-full rounded-full bg-background overflow-hidden">
-                    <img src="/sprinthia-avatar-compressed.jpeg" alt="Sprinthia AI" className="w-full h-full object-cover" style={{ objectPosition: '50% 20%' }} />
-                  </div>
-                </div>
                 <h3 className="text-xl font-semibold mb-3">Hi {user?.name?.split(' ')[0] || 'there'}, how can I help you today?</h3>
                 <p className="text-muted-foreground mb-6 max-w-md mx-auto">
                   Ask me about training plans, race preparation, injury rehabilitation, or nutrition advice.
