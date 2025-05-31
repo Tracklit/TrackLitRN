@@ -19,6 +19,7 @@ export const users = pgTable("users", {
   sprinthiaPrompts: integer("sprinthia_prompts").default(1), // Available AI prompts
   defaultClubId: integer("default_club_id"), // Will be connected through relations
   isBlocked: boolean("is_blocked").default(false), // For admin blocking
+  isPrivate: boolean("is_private").default(false), // Privacy setting for profile visibility
   createdAt: timestamp("created_at").defaultNow(),
 });
 
