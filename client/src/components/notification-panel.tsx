@@ -124,12 +124,24 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
   };
 
   const handleAcceptRequest = (requestId: number) => {
+    // Immediately update the UI state to prevent flash
+    const updatedNotifications = (notifications as any[]).map(notif => 
+      notif.relatedId === requestId ? { ...notif, isRead: true } : notif
+    );
+    
+    // Update the query cache immediately
+    queryClient.setQueryData(["/api/notifications"], updatedNotifications);
+    
     acceptRequestMutation.mutate(requestId, {
       onSuccess: () => {
         // Refresh all relevant data after successful accept
         queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
         queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
         queryClient.invalidateQueries({ queryKey: ["/api/friend-requests/pending"] });
+      },
+      onError: () => {
+        // Revert optimistic update on error
+        queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       }
     });
   };
