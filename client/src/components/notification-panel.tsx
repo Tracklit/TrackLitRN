@@ -70,20 +70,15 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
 
   // Hide bottom navigation when panel is open
   useEffect(() => {
-    const bottomNav = document.querySelector('nav.fixed.bottom-0');
-    if (bottomNav) {
-      if (isOpen) {
-        (bottomNav as HTMLElement).style.display = 'none';
-      } else {
-        (bottomNav as HTMLElement).style.display = 'block';
-      }
+    if (isOpen) {
+      document.body.classList.add('notification-panel-open');
+    } else {
+      document.body.classList.remove('notification-panel-open');
     }
     
     // Cleanup on unmount
     return () => {
-      if (bottomNav) {
-        (bottomNav as HTMLElement).style.display = 'block';
-      }
+      document.body.classList.remove('notification-panel-open');
     };
   }, [isOpen]);
 
@@ -210,7 +205,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
   return (
     <div 
       className={cn(
-        "fixed inset-0 z-[99999]",
+        "fixed inset-0 z-[999999]",
         !isOpen && "pointer-events-none"
       )} 
       onClick={onClose}
