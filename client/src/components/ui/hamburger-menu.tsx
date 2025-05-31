@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import { NotificationBell } from "@/components/notification-bell";
 
 interface HamburgerMenuProps {
   className?: string;
