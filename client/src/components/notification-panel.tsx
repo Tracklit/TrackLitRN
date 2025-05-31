@@ -291,11 +291,10 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                         <div
                           className={cn(
                             "flex items-start space-x-3 p-3 rounded-lg animate-in slide-in-from-right-1",
-                            notification.isRead ? "bg-gray-50" : "bg-white"
+                            notification.isRead ? "bg-muted/50" : "bg-background"
                           )}
                           style={{ 
-                            animationDelay: `${(pendingRequests?.length || 0) * 100 + index * 50}ms`,
-                            backgroundColor: notification.isRead ? '#f9fafb' : '#ffffff'
+                            animationDelay: `${(pendingRequests?.length || 0) * 100 + index * 50}ms`
                           }}
                         >
                           <div className="flex-shrink-0 mt-1">
