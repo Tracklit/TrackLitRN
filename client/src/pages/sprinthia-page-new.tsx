@@ -210,7 +210,7 @@ export default function SprinthiaPage() {
                           {message.role === 'assistant' && (
                             <div className="w-8 h-8 rounded-full overflow-hidden shrink-0">
                               <img 
-                                src="/sprinthia-new.jpeg" 
+                                src="/sprinthia-avatar-fresh.jpeg" 
                                 alt="Sprinthia"
                                 className="w-full h-full object-cover"
                               />
