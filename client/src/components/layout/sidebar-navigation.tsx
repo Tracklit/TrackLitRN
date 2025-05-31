@@ -212,6 +212,22 @@ export function SidebarNavigation({ isMobile = false }: { isMobile?: boolean }) 
           >
             Settings
           </NavItem>
+          
+          {/* Admin Section - Only show for admin users */}
+          {user.role === 'admin' && (
+            <>
+              <div className="pt-4 pb-2">
+                <p className="text-xs text-darkGray px-3 font-medium">ADMIN</p>
+              </div>
+              <NavItem 
+                href="/admin-panel" 
+                icon={<Shield className="h-5 w-5" />} 
+                isActive={location === '/admin-panel'}
+              >
+                Admin Panel
+              </NavItem>
+            </>
+          )}
         </ul>
       </div>
       
