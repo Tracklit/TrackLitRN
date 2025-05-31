@@ -283,7 +283,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                             {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                           </p>
                           
-                          {/* Accept/Decline buttons for connection requests */}
+                          {/* Accept button for connection requests */}
                           <div className="flex space-x-2 mt-2">
                             <Button
                               size="sm"
@@ -293,16 +293,6 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                             >
                               <Check className="h-3 w-3 mr-1" />
                               Accept
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleDeclineRequest(notification.relatedId!)}
-                              disabled={declineRequestMutation.isPending}
-                              className="px-3 py-1 h-7"
-                            >
-                              <X className="h-3 w-3 mr-1" />
-                              Decline
                             </Button>
                           </div>
                         </div>
