@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Header } from '@/components/layout/header';
 import { SidebarNavigation } from '@/components/layout/sidebar-navigation';
-import { BottomNavigation } from '@/components/layout/bottom-navigation';
+
 import { Meet, Result } from '@shared/schema';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Wind, PlusCircle, Medal, TrendingUp } from 'lucide-react';
@@ -247,7 +247,7 @@ export default function ResultsPage() {
       </main>
       
       <SidebarNavigation />
-      <BottomNavigation />
+
     </div>
   );
 }

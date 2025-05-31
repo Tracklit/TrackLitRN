@@ -252,8 +252,4 @@ article::-webkit-scrollbar,
   margin-bottom: 0 !important;
 }
 
-/* Force hide bottom navigation when notification panel is open */
-.notification-panel-open nav.fixed.bottom-0 {
-  display: none !important;
-  z-index: -1 !important;
-}
+
