@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { ArrowLeft, Check, Bell, Clock, UserPlus, Trophy, MessageSquare, X } from "lucide-react";
+import { ArrowRight, Check, Bell, Clock, UserPlus, Trophy, MessageSquare, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -163,7 +163,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
               )}
             </div>
             <Button variant="ghost" size="sm" onClick={onClose}>
-              <ArrowLeft className="h-5 w-5" />
+              <ArrowRight className="h-5 w-5" />
             </Button>
           </div>
         </div>
