@@ -54,6 +54,39 @@ import {
 } from "@shared/schema";
 
 // Initialize default achievements
+// Image compression utility function
+async function compressImage(inputPath: string, outputPath: string, quality: number = 80): Promise<void> {
+  try {
+    const inputStats = fs.statSync(inputPath);
+    
+    // Only compress if it's an image file
+    if (!inputPath.match(/\.(jpg|jpeg|png|webp)$/i)) {
+      return;
+    }
+    
+    await sharp(inputPath)
+      .resize(1920, 1080, { 
+        fit: 'inside', 
+        withoutEnlargement: true 
+      })
+      .jpeg({ quality, progressive: true })
+      .png({ quality, progressive: true })
+      .webp({ quality })
+      .toFile(outputPath);
+    
+    // Remove original file after compression if it's different
+    if (inputPath !== outputPath) {
+      fs.unlinkSync(inputPath);
+    }
+    
+    const outputStats = fs.statSync(outputPath);
+    console.log(`Image compressed: ${inputStats.size} -> ${outputStats.size} bytes (${Math.round((1 - outputStats.size/inputStats.size) * 100)}% reduction)`);
+  } catch (error) {
+    console.error('Error compressing image:', error);
+    // If compression fails, keep the original file
+  }
+}
+
 async function initializeDefaultAchievements() {
   try {
     // Check if we already have achievements
@@ -385,8 +418,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Determine file type
       const fileType = req.file.mimetype.startsWith('image/') ? 'image' : 'video';
       
+      let finalFilename = req.file.filename;
+      
+      // Compress image if it's an image file
+      if (fileType === 'image') {
+        const originalPath = req.file.path;
+        const compressedFilename = `compressed_${req.file.filename}`;
+        const compressedPath = path.join(path.dirname(originalPath), compressedFilename);
+        
+        try {
+          await compressImage(originalPath, compressedPath, 85);
+          finalFilename = compressedFilename;
+        } catch (compressionError) {
+          console.error('Image compression failed, using original:', compressionError);
+          // Continue with original file if compression fails
+        }
+      }
+      
       // Create file path URL
-      const fileUrl = `/uploads/${req.file.filename}`;
+      const fileUrl = `/uploads/practice/${finalFilename}`;
       
       // Create thumbnail if it's a video (for now we'll just use the same URL)
       const thumbnail = fileType === 'video' ? fileUrl : undefined;
@@ -1839,7 +1889,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Move file to final location
         fs.renameSync(req.file.path, finalPath);
-        profileImageUrl = `/uploads/profiles/${fileName}`;
+        
+        // Compress the profile image
+        const compressedFileName = `compressed_${fileName}`;
+        const compressedPath = path.join('uploads/profiles', compressedFileName);
+        
+        try {
+          await compressImage(finalPath, compressedPath, 85);
+          profileImageUrl = `/uploads/profiles/${compressedFileName}`;
+        } catch (compressionError) {
+          console.error('Profile image compression failed, using original:', compressionError);
+          profileImageUrl = `/uploads/profiles/${fileName}`;
+        }
       }
 
       // Update user profile
@@ -2176,8 +2237,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       fs.renameSync(oldPath, newPath);
       
-      // Update relative path for the database
-      const fileUrl = `/uploads/${filename}`;
+      // Compress the image
+      const compressedFilename = `compressed_${filename}`;
+      const compressedPath = path.join(uploadsDir, compressedFilename);
+      
+      let fileUrl: string;
+      try {
+        await compressImage(newPath, compressedPath, 85);
+        // Use compressed version
+        fileUrl = `/uploads/${compressedFilename}`;
+      } catch (compressionError) {
+        console.error('Image compression failed, using original:', compressionError);
+        // Fall back to original if compression fails
+        fileUrl = `/uploads/${filename}`;
+      }
       
       // Update the club in the database
       if (fileType === 'logo') {
