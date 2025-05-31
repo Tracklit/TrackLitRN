@@ -9,6 +9,7 @@ import {
   LineChart, 
   Users, 
   User,
+  UserCheck,
   Settings, 
   Crown, 
   Award, 
@@ -146,6 +147,13 @@ export function SidebarNavigation({ isMobile = false }: { isMobile?: boolean }) 
             <p className="text-xs text-darkGray px-3 font-medium">SOCIAL</p>
           </div>
 
+          <NavItem 
+            href="/connections" 
+            icon={<UserCheck className="h-5 w-5" />} 
+            isActive={location === '/connections'}
+          >
+            Connections
+          </NavItem>
           <NavItem 
             href="/messages" 
             icon={<MessagesSquare className="h-5 w-5" />} 

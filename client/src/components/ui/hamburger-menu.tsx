@@ -199,15 +199,15 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               <p className="text-xs text-gray-400 px-4 font-medium">SOCIAL</p>
             </div>
             <a
-              href="/follows"
+              href="/connections"
               className={cn(
                 "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",
-                location === "/follows" ? "bg-[#ff8c00] text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                location === "/connections" ? "bg-[#ff8c00] text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
               )}
               onClick={() => setIsOpen(false)}
             >
               <UserCheck className="h-4 w-4 mr-3" />
-              Follows
+              Connections
             </a>
             {(currentUser as any)?.isCoach && (
               <a
