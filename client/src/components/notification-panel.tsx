@@ -68,6 +68,25 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
+  // Hide bottom navigation when panel is open
+  useEffect(() => {
+    const bottomNav = document.querySelector('nav.fixed.bottom-0');
+    if (bottomNav) {
+      if (isOpen) {
+        (bottomNav as HTMLElement).style.display = 'none';
+      } else {
+        (bottomNav as HTMLElement).style.display = 'block';
+      }
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      if (bottomNav) {
+        (bottomNav as HTMLElement).style.display = 'block';
+      }
+    };
+  }, [isOpen]);
+
   // Fetch all notifications
   const { data: notifications = [], isLoading: notificationsLoading } = useQuery({
     queryKey: ["/api/notifications"],
