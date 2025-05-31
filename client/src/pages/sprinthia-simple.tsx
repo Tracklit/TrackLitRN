@@ -117,7 +117,7 @@ export default function SprinthiaSimple() {
         
         <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full">
           {/* Header */}
-          <div className="p-6 border-b border-border bg-gradient-to-r from-background to-muted/20">
+          <div className="p-6 border-b border-border bg-background">
             <div className="flex items-center gap-4">
               <div className="relative">
                 <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500" style={{ padding: '1px' }}>
@@ -181,11 +181,14 @@ export default function SprinthiaSimple() {
                   className={cn(
                     "w-full rounded-lg px-4 py-3 shadow-sm",
                     message.role === 'user'
-                      ? 'bg-blue-50 border-l-4 border-blue-500'
+                      ? 'bg-muted/30 border-l-4 border-blue-500'
                       : 'bg-muted/50 border-l-4 border-purple-500'
                   )}
                 >
-                  <div className="whitespace-pre-wrap leading-relaxed text-foreground">
+                  <div className={cn(
+                    "whitespace-pre-wrap leading-relaxed text-foreground",
+                    message.role === 'assistant' ? 'text-center' : ''
+                  )}>
                     {message.content
                       .replace(/\*\*(.*?)\*\*/g, '$1')
                       .replace(/\*(.*?)\*/g, '$1')
