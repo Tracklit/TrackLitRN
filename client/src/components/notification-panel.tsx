@@ -135,10 +135,13 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
   return (
     <div className="fixed inset-0 z-50 bg-black/50" onClick={onClose}>
       <div 
-        className="fixed right-0 top-0 h-full w-96 bg-white shadow-xl transform transition-transform duration-300 ease-in-out"
+        className={cn(
+          "fixed right-0 top-0 h-full w-96 bg-background border-l shadow-xl transform transition-transform duration-300 ease-in-out",
+          isOpen ? "translate-x-0" : "translate-x-full"
+        )}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-4 border-b bg-gray-50">
+        <div className="p-4 border-b bg-muted/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Bell className="h-5 w-5" />
@@ -156,13 +159,13 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
         </div>
         
         <div className="flex-1 overflow-y-auto">
-          {/* Follow Requests Section */}
+          {/* Connection Requests Section */}
           {pendingRequests.length > 0 && (
-            <div className="p-4 border-b bg-blue-50">
-              <h4 className="text-sm font-semibold text-blue-900 mb-3">Follow Requests</h4>
+            <div className="p-4 border-b bg-primary/10">
+              <h4 className="text-sm font-semibold text-primary mb-3">Connection Requests</h4>
               <div className="space-y-3">
                 {pendingRequests.map((request: FollowRequest) => (
-                  <div key={request.id} className="flex items-center space-x-3 p-3 rounded-lg bg-white border">
+                  <div key={request.id} className="flex items-center space-x-3 p-3 rounded-lg bg-card border">
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={request.follower.profileImageUrl} />
                       <AvatarFallback>
