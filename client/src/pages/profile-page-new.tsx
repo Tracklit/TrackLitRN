@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Crown, Edit, Camera, Check, X } from 'lucide-react';
+import { Crown, Edit, Camera, Check, X, Eye, EyeOff } from 'lucide-react';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -242,8 +242,36 @@ export default function ProfilePage() {
     },
   });
 
+  // Mutation to update privacy status
+  const updatePrivacyStatusMutation = useMutation({
+    mutationFn: async (isPrivate: boolean) => {
+      const response = await apiRequest('PATCH', '/api/user/privacy-status', { isPrivate });
+      return response.json();
+    },
+    onSuccess: (updatedUser) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      toast({
+        title: updatedUser.isPrivate ? "Account Made Private" : "Account Made Public",
+        description: updatedUser.isPrivate 
+          ? "Other users cannot find you unless you connect with them first." 
+          : "Other users can now find and connect with you.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Update Failed",
+        description: error.message || "Failed to update privacy status",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleCoachToggle = (checked: boolean) => {
     updateCoachStatusMutation.mutate(checked);
+  };
+
+  const handlePrivacyToggle = (checked: boolean) => {
+    updatePrivacyStatusMutation.mutate(checked);
   };
 
   return (
@@ -566,6 +594,22 @@ export default function ProfilePage() {
                         checked={user?.isCoach || false}
                         onCheckedChange={handleCoachToggle}
                         disabled={updateCoachStatusMutation.isPending}
+                      />
+                    </div>
+
+                    {/* Private Account Toggle */}
+                    <div className="flex items-center justify-between p-4 bg-blue-800/30 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        {user?.isPrivate ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        <div>
+                          <p className="font-medium">Private Account</p>
+                          <p className="text-sm text-gray-400">Hide your profile from other users</p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={user?.isPrivate || false}
+                        onCheckedChange={handlePrivacyToggle}
+                        disabled={updatePrivacyStatusMutation.isPending}
                       />
                     </div>
                     
