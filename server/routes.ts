@@ -5052,8 +5052,8 @@ Keep the response professional, evidence-based, and specific to track and field 
       const existingRequests = await pool.query(`
         SELECT id FROM notifications 
         WHERE type = 'friend_request' 
-        AND ((user_id = $1 AND JSON_EXTRACT(data, '$.fromUserId') = $2) 
-             OR (user_id = $2 AND JSON_EXTRACT(data, '$.fromUserId') = $1))
+        AND ((user_id = $1 AND (data->>'fromUserId')::int = $2) 
+             OR (user_id = $2 AND (data->>'fromUserId')::int = $1))
       `, [receiverId, req.user.id]);
 
       if (existingRequests.rows.length > 0) {
