@@ -290,9 +290,9 @@ export default function SprinthiaSimple() {
             )}
 
             {messages.map((message) => (
-              <div key={message.id} className="w-full mb-6">
+              <div key={message.id} className="w-full mb-3">
                 <div className={cn(
-                  "mb-2 text-sm font-medium",
+                  "mb-1 text-lg font-medium",
                   message.role === 'user' ? 'text-blue-600' : 'text-purple-600'
                 )}>
                   {message.role === 'user' ? 'You' : 'Sprinthia'}
@@ -317,7 +317,7 @@ export default function SprinthiaSimple() {
                       .replace(/^-\s*/gm, '• ')
                     }
                   </div>
-                  <div className="flex items-center justify-between text-xs opacity-70 mt-3 pt-2 border-t border-border">
+                  <div className="flex items-center justify-between text-xs opacity-70 mt-1.5 pt-1.5 border-t border-border">
                     <span>
                       {new Date(message.timestamp).toLocaleTimeString([], { 
                         hour: '2-digit', 
