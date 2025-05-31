@@ -164,6 +164,7 @@ export default function HomePage() {
       icon: <BookOpen className="h-6 w-6 text-primary" />,
       href: "/programs",
       disabled: false,
+      headerImage: "/programs-card-compressed.jpeg"
     },
     {
       title: "Race",
