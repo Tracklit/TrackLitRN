@@ -38,8 +38,9 @@ export function NotificationBell({ className }: NotificationBellProps) {
 
   const handleOpenPanel = () => {
     setShowPanel(true);
-    // Mark all notifications as read when opening the panel
-    if ((notifications as any[]).some((n: any) => !n.isRead)) {
+    // Don't auto-mark connection requests as read when opening panel
+    const nonConnectionNotifications = (notifications as any[]).filter((n: any) => !n.isRead && n.type !== 'connection_request');
+    if (nonConnectionNotifications.length > 0) {
       markAllAsReadMutation.mutate();
     }
   };

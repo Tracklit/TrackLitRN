@@ -126,8 +126,10 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
   const handleAcceptRequest = (requestId: number) => {
     acceptRequestMutation.mutate(requestId, {
       onSuccess: () => {
-        // Mark the notification as read after successful accept
+        // Refresh all relevant data after successful accept
         queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/friend-requests/pending"] });
       }
     });
   };
