@@ -221,10 +221,9 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
       }}
     >
       <div 
-        className="fixed right-0 top-0 w-full bg-background shadow-xl flex flex-col"
+        className="fixed right-0 top-0 w-full bg-background shadow-xl flex flex-col notification-panel-no-bottom-space"
         onClick={(e) => e.stopPropagation()}
         style={{
-          height: '100vh',
           transition: 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
           transform: isOpen ? 'translateX(0%)' : 'translateX(100%)'
         }}
@@ -246,7 +245,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
           </div>
         </div>
         
-        <div className="flex-1 overflow-y-auto pb-0">
+        <div className="notification-panel-content">
           {/* Connection Requests Section */}
           {pendingRequests.length > 0 && (
             <div className="p-4 border-b bg-primary/10">
