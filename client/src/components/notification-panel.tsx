@@ -300,26 +300,28 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                             
                             {/* Accept button for connection requests */}
                             <div className="flex space-x-2 mt-2">
-                              <Button
-                                size="sm"
+                              <button
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   if (!notification.isRead) {
                                     handleAcceptRequest(notification.relatedId!);
                                   }
                                 }}
-                                className="px-3 py-1 h-7 transition-none"
+                                disabled={notification.isRead || acceptRequestMutation.isPending}
+                                className="px-3 py-1 h-7 rounded-md text-xs font-medium flex items-center gap-1 cursor-pointer disabled:cursor-not-allowed"
                                 style={{
                                   backgroundColor: notification.isRead ? '#9ca3af' : '#16a34a',
                                   color: notification.isRead ? '#4b5563' : '#ffffff',
-                                  border: 'none'
+                                  border: 'none',
+                                  outline: 'none',
+                                  boxShadow: 'none',
+                                  transition: 'none'
                                 }}
-                                disabled={notification.isRead || acceptRequestMutation.isPending}
                               >
-                                <Check className="h-3 w-3 mr-1" />
+                                <Check className="h-3 w-3" />
                                 {notification.isRead ? 'Accepted' : 
                                  acceptRequestMutation.isPending ? 'Accepting...' : 'Accept'}
-                              </Button>
+                              </button>
                             </div>
                           </div>
                           
