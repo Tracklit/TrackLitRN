@@ -4199,18 +4199,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/users/:id/block", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
+    // Check if user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+    
     try {
       const userId = parseInt(req.params.id);
-      await dbStorage.blockUser(userId);
-      res.json({ message: "User blocked successfully" });
+      const user = await dbStorage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Toggle block status
+      await dbStorage.updateUser(userId, { isBlocked: !user.isBlocked });
+      res.json({ message: `User ${user.isBlocked ? 'unblocked' : 'blocked'} successfully` });
     } catch (error) {
-      console.error("Error blocking user:", error);
-      res.status(500).json({ message: "Error blocking user" });
+      console.error("Error updating user block status:", error);
+      res.status(500).json({ message: "Error updating user status" });
     }
   });
 
   app.post("/api/admin/users/:id/delete", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    // Check if user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: "Admin access required" });
+    }
     
     try {
       const userId = parseInt(req.params.id);
@@ -4221,6 +4237,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Error deleting user" });
     }
   });
+
+  app.post("/api/admin/users/:id/reset", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    // Check if user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+    
+    try {
+      const userId = parseInt(req.params.id);
+      const user = await dbStorage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Generate a secure reset token
+      const crypto = require('crypto');
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+      
+      // Store reset token in database
+      await db.insert(passwordResetTokens).values({
+        userId: userId,
+        token: resetToken,
+        expiresAt: expiresAt,
+        used: false
+      });
+      
+      // In a real app, you would send an email here
+      // For now, just log the reset link
+      console.log(`Password reset link for ${user.email}: /reset-password/${resetToken}`);
+      
+      res.json({ message: "Password reset initiated. Reset link has been generated." });
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      res.status(500).json({ message: "Error resetting password" });
+    }
+  });
+
+
 
   app.post("/api/admin/users/:id/reset", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);

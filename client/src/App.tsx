@@ -48,6 +48,7 @@ import AthleteProfilePage from "@/pages/athlete-profile-page";
 import AthleteProfile from "@/pages/athlete-profile";
 import PublicProfilePage from "@/pages/public-profile-page";
 import AdminPage from "@/pages/admin-page";
+import AdminPanel from "@/pages/admin-panel";
 import SprinthiaPage from "@/pages/sprinthia-simple";
 import RehabPage from "@/pages/rehab-page";
 import HamstringRehabPage from "@/pages/rehab/acute-muscle/hamstring";
@@ -106,6 +107,7 @@ function Router() {
       {/* Public Profiles - separate URL pattern */}
       <Route path="/user/:userId" component={PublicProfilePage} />
       <ProtectedRoute path="/admin" component={AdminPage} />
+      <ProtectedRoute path="/admin-panel" component={AdminPanel} />
       
       {/* Auth */}
       <Route path="/auth" component={AuthPage} />

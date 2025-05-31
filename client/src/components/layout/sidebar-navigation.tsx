@@ -17,7 +17,8 @@ import {
   MessagesSquare, 
   Coins,
   BookOpen,
-  Brain
+  Brain,
+  Shield
 } from "lucide-react";
 
 interface NavItemProps {
