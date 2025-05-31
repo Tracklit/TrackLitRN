@@ -2627,6 +2627,53 @@ export class DatabaseStorage implements IStorage {
     return friends;
   }
 
+  async getFollowing(userId: number): Promise<any[]> {
+    // Get users that this user is following (where they sent accepted friend requests)
+    const followingNotifications = await db
+      .select({
+        id: notifications.id,
+        userId: notifications.userId,
+        type: notifications.type,
+        title: notifications.title,
+        message: notifications.message,
+        relatedId: notifications.relatedId,
+        isRead: notifications.isRead,
+        createdAt: notifications.createdAt
+      })
+      .from(notifications)
+      .where(
+        and(
+          eq(notifications.type, 'friend_accepted'),
+          eq(notifications.relatedId, userId) // This user was the recipient of the acceptance
+        )
+      );
+
+    // Get user details for each person this user is following
+    const following = [];
+    for (const notification of followingNotifications) {
+      const followedUserId = notification.userId;
+      if (followedUserId) {
+        const [followedUser] = await db.select().from(users).where(eq(users.id, followedUserId));
+        if (followedUser) {
+          following.push({
+            id: followedUser.id,
+            username: followedUser.username,
+            name: followedUser.name,
+            email: followedUser.email,
+            bio: followedUser.bio,
+            profileImageUrl: followedUser.profileImageUrl,
+            isPrivate: followedUser.isPrivate || false,
+            isCoach: followedUser.isCoach || false,
+            subscriptionTier: followedUser.subscriptionTier,
+            createdAt: followedUser.createdAt
+          });
+        }
+      }
+    }
+
+    return following;
+  }
+
   async getPendingFriendRequests(userId: number): Promise<any[]> {
     // Get unread friend request notifications for this user
     const requests = await db

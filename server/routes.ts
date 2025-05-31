@@ -5134,7 +5134,7 @@ Keep the response professional, evidence-based, and specific to track and field 
     }
   });
 
-  // Get friends list
+  // Get friends list (followers)
   app.get("/api/friends", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) {
       return res.sendStatus(401);
@@ -5146,6 +5146,21 @@ Keep the response professional, evidence-based, and specific to track and field 
     } catch (error) {
       console.error("Error fetching friends:", error);
       res.status(500).send("Error fetching friends");
+    }
+  });
+
+  // Get following list (users this user follows)
+  app.get("/api/following", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const following = await dbStorage.getFollowing(req.user.id);
+      res.json(following);
+    } catch (error) {
+      console.error("Error fetching following:", error);
+      res.status(500).send("Error fetching following");
     }
   });
 
