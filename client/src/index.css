@@ -2,6 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent white background flash on notification accept button */
+.notification-accept-btn {
+  background-color: var(--btn-bg) !important;
+  color: var(--btn-color) !important;
+}
+
+.notification-accept-btn:active,
+.notification-accept-btn:focus,
+.notification-accept-btn:hover {
+  background-color: var(--btn-bg) !important;
+  color: var(--btn-color) !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.notification-accept-btn:disabled {
+  background-color: #9ca3af !important;
+  color: #4b5563 !important;
+}
+
 /* Custom styling for hiding scrollbars while maintaining scroll functionality */
 body, div, aside, nav, main, section, article, 
 .hamburger-menu, [data-radix-scroll-area-viewport], 

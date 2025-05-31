@@ -308,15 +308,17 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                                   }
                                 }}
                                 disabled={notification.isRead || acceptRequestMutation.isPending}
-                                className="px-3 py-1 h-7 rounded-md text-xs font-medium flex items-center gap-1 cursor-pointer disabled:cursor-not-allowed"
+                                className="px-3 py-1 h-7 rounded-md text-xs font-medium flex items-center gap-1 cursor-pointer disabled:cursor-not-allowed notification-accept-btn"
                                 style={{
+                                  '--btn-bg': notification.isRead ? '#9ca3af' : '#16a34a',
+                                  '--btn-color': notification.isRead ? '#4b5563' : '#ffffff',
                                   backgroundColor: notification.isRead ? '#9ca3af' : '#16a34a',
                                   color: notification.isRead ? '#4b5563' : '#ffffff',
                                   border: 'none',
                                   outline: 'none',
                                   boxShadow: 'none',
                                   transition: 'none'
-                                }}
+                                } as React.CSSProperties}
                               >
                                 <Check className="h-3 w-3" />
                                 {notification.isRead ? 'Accepted' : 
