@@ -28,25 +28,23 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
         </div>
         
         {user && (
-          <div className="flex items-center justify-end flex-1">
-            <div className="flex items-center space-x-4">
-              {/* Install App Button */}
-              <InstallAppButton />
-              
-              {/* Notification Bell */}
-              <NotificationBell />
-              
-              {/* Direct Messages Icon */}
-              <Link href="/messages">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 text-gray-300 hover:text-white hover:bg-white/10"
-                >
-                  <MessageSquare className="h-5 w-5" />
-                </Button>
-              </Link>
-            </div>
+          <div className="flex items-center space-x-4 ml-auto mr-4">
+            {/* Install App Button */}
+            <InstallAppButton />
+            
+            {/* Notification Bell */}
+            <NotificationBell />
+            
+            {/* Direct Messages Icon */}
+            <Link href="/messages">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 text-gray-300 hover:text-white hover:bg-white/10"
+              >
+                <MessageSquare className="h-5 w-5" />
+              </Button>
+            </Link>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
