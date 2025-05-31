@@ -128,24 +128,28 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
     declineRequestMutation.mutate(requestId);
   };
 
-  if (!isOpen) return null;
-
   const unreadCount = notifications.filter((n: Notification) => !n.isRead).length + pendingRequests.length;
 
   return (
     <div 
       className={cn(
-        "fixed inset-0 z-[9999] transition-all duration-[1200ms] ease-out",
-        isOpen ? "bg-black/50" : "bg-transparent pointer-events-none"
+        "fixed inset-0 z-[99999]",
+        !isOpen && "pointer-events-none"
       )} 
       onClick={onClose}
+      style={{
+        transition: 'all 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+        opacity: isOpen ? 1 : 0,
+        backgroundColor: isOpen ? 'rgba(0, 0, 0, 0.5)' : 'transparent'
+      }}
     >
       <div 
-        className={cn(
-          "fixed right-0 top-0 h-full w-full bg-background shadow-xl transform transition-all duration-[1200ms] ease-out",
-          isOpen ? "translate-x-0" : "translate-x-full"
-        )}
+        className="fixed right-0 top-0 h-full w-full bg-background shadow-xl"
         onClick={(e) => e.stopPropagation()}
+        style={{
+          transition: 'transform 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+          transform: isOpen ? 'translateX(0%)' : 'translateX(100%)'
+        }}
       >
         <div className="p-4 border-b bg-muted/50">
           <div className="flex items-center justify-between">
