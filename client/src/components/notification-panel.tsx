@@ -289,8 +289,14 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                       {/* Special handling for connection request notifications */}
                       {notification.type === 'connection_request' && notification.relatedId ? (
                         <div
-                          className="flex items-start space-x-3 p-3 rounded-lg transition-all duration-200 animate-in slide-in-from-right-1 hover:bg-gray-50"
-                          style={{ animationDelay: `${(pendingRequests?.length || 0) * 100 + index * 50}ms` }}
+                          className={cn(
+                            "flex items-start space-x-3 p-3 rounded-lg animate-in slide-in-from-right-1",
+                            notification.isRead ? "bg-gray-50" : "bg-white"
+                          )}
+                          style={{ 
+                            animationDelay: `${(pendingRequests?.length || 0) * 100 + index * 50}ms`,
+                            backgroundColor: notification.isRead ? '#f9fafb' : '#ffffff'
+                          }}
                         >
                           <div className="flex-shrink-0 mt-1">
                             {getNotificationIcon(notification.type)}
