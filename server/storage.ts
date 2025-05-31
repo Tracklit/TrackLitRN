@@ -2716,45 +2716,52 @@ export class DatabaseStorage implements IStorage {
   }
 
   async acceptFriendRequest(requestId: number, userId: number): Promise<void> {
-    // Get the friend request notification
-    const [request] = await db
+    // Get the follow request
+    const [followRequest] = await db
       .select()
-      .from(notifications)
-      .where(eq(notifications.id, requestId));
+      .from(follows)
+      .where(eq(follows.id, requestId));
 
-    if (!request || request.userId !== userId) {
+    if (!followRequest || followRequest.followingId !== userId) {
       throw new Error("Friend request not found or unauthorized");
     }
 
     await db.transaction(async (tx) => {
-      // Mark the original request as read
+      // Delete the follow request
+      await tx
+        .delete(follows)
+        .where(eq(follows.id, requestId));
+
+      // Mark any related notifications as read
       await tx
         .update(notifications)
         .set({ isRead: true })
-        .where(eq(notifications.id, requestId));
+        .where(and(
+          eq(notifications.userId, userId),
+          eq(notifications.type, 'connection_request'),
+          eq(notifications.relatedId, requestId)
+        ));
 
-      // Create mutual friendship by creating acceptance notifications for both users
-      if (request.relatedId) {
-        // Notify the requester that their request was accepted
-        await tx.insert(notifications).values({
-          userId: request.relatedId,
-          type: 'friend_accepted',
-          title: 'Friend Request Accepted',
-          message: `Your friend request was accepted!`,
-          relatedId: userId,
-          isRead: false
-        });
+      // Create mutual friendship
+      await tx.insert(follows).values({
+        followerId: userId,
+        followingId: followRequest.followerId
+      });
 
-        // Create a friendship record for the accepter
-        await tx.insert(notifications).values({
-          userId: userId,
-          type: 'friend_accepted', 
-          title: 'New Friend',
-          message: `You are now friends!`,
-          relatedId: request.relatedId,
-          isRead: false
-        });
-      }
+      await tx.insert(follows).values({
+        followerId: followRequest.followerId,
+        followingId: userId
+      });
+
+      // Notify the requester that their request was accepted
+      await tx.insert(notifications).values({
+        userId: followRequest.followerId,
+        type: 'friend_accepted',
+        title: 'Connection Request Accepted',
+        message: `Your connection request was accepted!`,
+        relatedId: userId,
+        isRead: false
+      });
     });
   }
 

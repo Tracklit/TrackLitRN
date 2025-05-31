@@ -252,95 +252,96 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
             ) : (
               <div className="space-y-3">
                 {notifications.map((notification: Notification, index) => {
-                  // Special handling for connection request notifications
-                  if (notification.type === 'connection_request' && notification.relatedId) {
-                    return (
-                      <div
-                        key={notification.id}
-                        className={cn(
-                          "flex items-start space-x-3 p-3 rounded-lg transition-all duration-200 animate-in slide-in-from-right-1",
-                          notification.isRead 
-                            ? "bg-gray-50" 
-                            : "bg-blue-50 border-l-4 border-blue-500"
-                        )}
-                        style={{ animationDelay: `${(pendingRequests?.length || 0) * 100 + index * 50}ms` }}
-                      >
-                        <div className="flex-shrink-0 mt-1">
-                          {getNotificationIcon(notification.type)}
-                        </div>
-                        
-                        <div className="flex-1 min-w-0">
-                          <p className={cn(
-                            "text-sm truncate",
-                            notification.isRead ? "text-gray-600" : "text-gray-900 font-medium"
-                          )}>
-                            {notification.title}
-                          </p>
-                          <p className="text-xs text-gray-500 truncate">
-                            {notification.message}
-                          </p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
-                          </p>
-                          
-                          {/* Accept button for connection requests */}
-                          <div className="flex space-x-2 mt-2">
-                            <Button
-                              size="sm"
-                              onClick={() => handleAcceptRequest(notification.relatedId!)}
-                              className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 h-7"
-                              disabled={acceptRequestMutation.isPending}
-                            >
-                              <Check className="h-3 w-3 mr-1" />
-                              Accept
-                            </Button>
-                          </div>
-                        </div>
-                        
-                        {!notification.isRead && (
-                          <div className="flex-shrink-0">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  }
+                  const isNewNotification = !notification.isRead;
+                  const previousNotification = notifications[index - 1];
+                  const showDivider = index > 0 && !isNewNotification && previousNotification?.isRead === false;
 
-                  // Regular notification handling
                   return (
-                    <div
-                      key={notification.id}
-                      className={cn(
-                        "flex items-start space-x-3 p-3 rounded-lg cursor-pointer transition-all duration-200 animate-in slide-in-from-right-1",
-                        notification.isRead 
-                          ? "hover:bg-gray-50" 
-                          : "bg-blue-50 hover:bg-blue-100 border-l-4 border-blue-500"
+                    <div key={notification.id}>
+                      {/* Show divider before first read notification */}
+                      {showDivider && (
+                        <div className="flex items-center my-4">
+                          <div className="flex-1 h-px bg-gray-200"></div>
+                          <span className="px-3 text-xs text-gray-500 bg-background">Older notifications</span>
+                          <div className="flex-1 h-px bg-gray-200"></div>
+                        </div>
                       )}
-                      style={{ animationDelay: `${(pendingRequests?.length || 0) * 100 + index * 50}ms` }}
-                      onClick={() => handleNotificationClick(notification)}
-                    >
-                      <div className="flex-shrink-0 mt-1">
-                        {getNotificationIcon(notification.type)}
-                      </div>
-                      
-                      <div className="flex-1 min-w-0">
-                        <p className={cn(
-                          "text-sm truncate",
-                          notification.isRead ? "text-gray-600" : "text-gray-900 font-medium"
-                        )}>
-                          {notification.title}
-                        </p>
-                        <p className="text-xs text-gray-500 truncate">
-                          {notification.message}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
-                        </p>
-                      </div>
-                      
-                      {!notification.isRead && (
-                        <div className="flex-shrink-0">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+
+                      {/* Special handling for connection request notifications */}
+                      {notification.type === 'connection_request' && notification.relatedId ? (
+                        <div
+                          className="flex items-start space-x-3 p-3 rounded-lg transition-all duration-200 animate-in slide-in-from-right-1 hover:bg-gray-50"
+                          style={{ animationDelay: `${(pendingRequests?.length || 0) * 100 + index * 50}ms` }}
+                        >
+                          <div className="flex-shrink-0 mt-1">
+                            {getNotificationIcon(notification.type)}
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <p className={cn(
+                              "text-sm truncate",
+                              notification.isRead ? "text-gray-600" : "text-gray-900 font-medium"
+                            )}>
+                              {notification.title}
+                            </p>
+                            <p className="text-xs text-gray-500 truncate">
+                              {notification.message}
+                            </p>
+                            <p className="text-xs text-gray-400 mt-1">
+                              {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                            </p>
+                            
+                            {/* Accept button for connection requests */}
+                            <div className="flex space-x-2 mt-2">
+                              <Button
+                                size="sm"
+                                onClick={() => handleAcceptRequest(notification.relatedId!)}
+                                className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 h-7"
+                                disabled={acceptRequestMutation.isPending}
+                              >
+                                <Check className="h-3 w-3 mr-1" />
+                                Accept
+                              </Button>
+                            </div>
+                          </div>
+                          
+                          {!notification.isRead && (
+                            <div className="flex-shrink-0">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        // Regular notification handling
+                        <div
+                          className="flex items-start space-x-3 p-3 rounded-lg cursor-pointer transition-all duration-200 animate-in slide-in-from-right-1 hover:bg-gray-50"
+                          style={{ animationDelay: `${(pendingRequests?.length || 0) * 100 + index * 50}ms` }}
+                          onClick={() => handleNotificationClick(notification)}
+                        >
+                          <div className="flex-shrink-0 mt-1">
+                            {getNotificationIcon(notification.type)}
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <p className={cn(
+                              "text-sm truncate",
+                              notification.isRead ? "text-gray-600" : "text-gray-900 font-medium"
+                            )}>
+                              {notification.title}
+                            </p>
+                            <p className="text-xs text-gray-500 truncate">
+                              {notification.message}
+                            </p>
+                            <p className="text-xs text-gray-400 mt-1">
+                              {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                            </p>
+                          </div>
+                          
+                          {!notification.isRead && (
+                            <div className="flex-shrink-0">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
