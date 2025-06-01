@@ -405,7 +405,7 @@ export default function AthletesPage() {
                         size="sm"
                         className="border-gray-600 text-gray-400 hover:bg-gray-600/20"
                       >
-                        {pendingFriendRequests.has(athlete.id) ? "Sending..." : "Add Friend"}
+                        {pendingFriendRequests.has(athlete.id) ? "Sending..." : "Connect"}
                       </Button>
                     )}
                   </div>
