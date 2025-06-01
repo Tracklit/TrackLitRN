@@ -12,7 +12,7 @@ import { Link } from "wouter";
 import { ListSkeleton } from "@/components/list-skeleton";
 import { useAuth } from "@/hooks/use-auth";
 
-interface Follow {
+interface Connection {
   id: number;
   username: string;
   name: string;
@@ -24,7 +24,7 @@ interface Follow {
   subscriptionTier?: string;
 }
 
-interface FollowRequest {
+interface ConnectionRequest {
   id: number;
   followerId: number;
   followingId: number;
@@ -43,7 +43,7 @@ interface FollowRequest {
 interface NotificationPanelProps {
   isOpen: boolean;
   onClose: () => void;
-  requests: FollowRequest[];
+  requests: ConnectionRequest[];
   onAccept: (requestId: number) => void;
   onDecline: (requestId: number) => void;
 }
@@ -118,65 +118,65 @@ function NotificationPanel({ isOpen, onClose, requests, onAccept, onDecline }: N
   );
 }
 
-export default function FollowsPage() {
+export default function ConnectionsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
 
-  // Fetch followers
-  const { data: followers = [], isLoading: followersLoading } = useQuery({
+  // Fetch connections
+  const { data: connections = [], isLoading: connectionsLoading } = useQuery({
     queryKey: ["/api/friends"],
     select: (data) => data || []
   });
 
-  // Fetch following
-  const { data: following = [], isLoading: followingLoading } = useQuery({
+  // Fetch connected users
+  const { data: connectedUsers = [], isLoading: connectedUsersLoading } = useQuery({
     queryKey: ["/api/following"],
     select: (data) => data || []
   });
 
-  // Fetch pending follow requests
+  // Fetch pending connection requests
   const { data: pendingRequests = [], isLoading: requestsLoading } = useQuery({
     queryKey: ["/api/friend-requests/pending"],
     select: (data) => data || []
   });
 
-  // Accept follow request
+  // Accept connection request
   const acceptRequestMutation = useMutation({
     mutationFn: (requestId: number) => apiRequest("POST", `/api/friend-requests/${requestId}/accept`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/friend-requests/pending"] });
       queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
-      toast({ title: "Follow request accepted" });
+      toast({ title: "Connection request accepted" });
     },
     onError: () => {
       toast({ title: "Failed to accept request", variant: "destructive" });
     }
   });
 
-  // Decline follow request
+  // Decline connection request
   const declineRequestMutation = useMutation({
     mutationFn: (requestId: number) => apiRequest("POST", `/api/friend-requests/${requestId}/decline`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/friend-requests/pending"] });
-      toast({ title: "Follow request declined" });
+      toast({ title: "Connection request declined" });
     },
     onError: () => {
       toast({ title: "Failed to decline request", variant: "destructive" });
     }
   });
 
-  // Unfollow user
-  const unfollowMutation = useMutation({
+  // Remove connection
+  const removeConnectionMutation = useMutation({
     mutationFn: (userId: number) => apiRequest("DELETE", `/api/friends/${userId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/following"] });
       queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
-      toast({ title: "Unfollowed user" });
+      toast({ title: "Connection removed" });
     },
     onError: () => {
-      toast({ title: "Failed to unfollow", variant: "destructive" });
+      toast({ title: "Failed to remove connection", variant: "destructive" });
     }
   });
 
@@ -188,13 +188,13 @@ export default function FollowsPage() {
     declineRequestMutation.mutate(requestId);
   };
 
-  const handleUnfollow = (userId: number) => {
-    if (confirm("Are you sure you want to unfollow this user?")) {
-      unfollowMutation.mutate(userId);
+  const handleRemoveConnection = (userId: number) => {
+    if (confirm("Are you sure you want to remove this connection?")) {
+      removeConnectionMutation.mutate(userId);
     }
   };
 
-  const UserCard = ({ user: followUser, showUnfollow = false }: { user: Follow; showUnfollow?: boolean }) => (
+  const UserCard = ({ user: connectionUser, showRemove = false }: { user: Connection; showRemove?: boolean }) => (
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-4">
         <div className="flex items-center space-x-3">
@@ -228,15 +228,15 @@ export default function FollowsPage() {
             )}
           </div>
           
-          {showUnfollow && (
+          {showRemove && (
             <Button
               size="sm"
               variant="outline"
-              onClick={() => handleUnfollow(followUser.id)}
-              disabled={unfollowMutation.isPending}
+              onClick={() => handleRemoveConnection(connectionUser.id)}
+              disabled={removeConnectionMutation.isPending}
             >
               <UserMinus className="h-3 w-3 mr-1" />
-              Unfollow
+              Remove
             </Button>
           )}
         </div>
