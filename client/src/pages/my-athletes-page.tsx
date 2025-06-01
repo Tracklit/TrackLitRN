@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { UserCheck, MessageSquare, UserMinus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { UserCheck, MessageSquare, UserMinus, UserPlus, Search } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -10,6 +13,8 @@ import { ListSkeleton } from "@/components/list-skeleton";
 
 export default function MyAthletesPage() {
   const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Fetch current user
   const { data: currentUser } = useQuery({
@@ -20,6 +25,44 @@ export default function MyAthletesPage() {
   const { data: coachAthletes = [], isLoading: loadingAthletes } = useQuery({
     queryKey: ["/api/coach/athletes"],
     enabled: !!currentUser?.isCoach,
+  });
+
+  // Fetch connections for search
+  const { data: connections = [] } = useQuery({
+    queryKey: ["/api/friends"],
+    enabled: !!currentUser?.isCoach,
+  });
+
+  // Filter connections for search
+  const filteredConnections = connections.filter((connection: any) =>
+    connection.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    connection.username.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Filter out connections that are already athletes
+  const availableConnections = filteredConnections.filter((connection: any) => 
+    !coachAthletes.some((athlete: any) => athlete.id === connection.id)
+  );
+
+  // Add athlete mutation
+  const addAthleteMutation = useMutation({
+    mutationFn: (athleteId: number) => apiRequest("POST", "/api/coach/athletes", { athleteId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/coach/athletes"] });
+      toast({
+        title: "Athlete added successfully",
+        description: "The connection has been added to your athletes list.",
+      });
+      setIsDialogOpen(false);
+      setSearchTerm("");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to add athlete",
+        description: error.message || "Please try again",
+        variant: "destructive"
+      });
+    }
   });
 
   // Remove athlete mutation
@@ -82,7 +125,71 @@ export default function MyAthletesPage() {
     <div className="min-h-screen bg-[#010a18] text-white">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold text-white mb-8">My Athletes</h1>
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold text-white">My Athletes</h1>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-blue-600 hover:bg-blue-700">
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Add Athlete
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-gray-800 border-gray-700">
+                <DialogHeader>
+                  <DialogTitle className="text-white">Add Athlete from Connections</DialogTitle>
+                  <DialogDescription className="text-gray-300">
+                    Search and select a connection to add as your athlete.
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="space-y-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Search connections..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 bg-gray-700 border-gray-600 text-white"
+                    />
+                  </div>
+                  
+                  <div className="max-h-60 overflow-y-auto space-y-2">
+                    {searchTerm && availableConnections.length > 0 ? (
+                      availableConnections.map((connection: any) => (
+                        <div
+                          key={connection.id}
+                          className="flex items-center justify-between p-3 bg-gray-700 rounded-lg hover:bg-gray-600 cursor-pointer"
+                          onClick={() => addAthleteMutation.mutate(connection.id)}
+                        >
+                          <div className="flex items-center space-x-3">
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={connection.profileImageUrl} />
+                              <AvatarFallback>{connection.name.charAt(0).toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium text-white">{connection.name}</p>
+                              <p className="text-sm text-gray-400">@{connection.username}</p>
+                            </div>
+                          </div>
+                          <Button size="sm" variant="outline">
+                            Add
+                          </Button>
+                        </div>
+                      ))
+                    ) : searchTerm ? (
+                      <p className="text-center text-gray-400 py-4">
+                        No available connections found
+                      </p>
+                    ) : (
+                      <p className="text-center text-gray-400 py-4">
+                        Start typing to search your connections
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
 
           {loadingAthletes ? (
             <ListSkeleton items={5} />
