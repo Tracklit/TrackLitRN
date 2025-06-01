@@ -201,6 +201,7 @@ export interface IStorage {
   
   // Coach-Athlete operations (for connections page)
   getCoachAthletes(coachUserId: number): Promise<User[]>;
+  getCoachAthleteCount(coachUserId: number): Promise<number>;
   addCoachAthlete(coachUserId: number, athleteId: number): Promise<Coach>;
   removeCoachAthlete(coachUserId: number, athleteId: number): Promise<boolean>;
   
@@ -582,6 +583,18 @@ export class DatabaseStorage implements IStorage {
       ));
     
     return coachRelations.map(relation => relation.athlete);
+  }
+
+  async getCoachAthleteCount(coachUserId: number): Promise<number> {
+    const result = await db
+      .select({ count: sql`count(*)` })
+      .from(coaches)
+      .where(and(
+        eq(coaches.userId, coachUserId),
+        eq(coaches.status, 'accepted')
+      ));
+    
+    return Number(result[0]?.count || 0);
   }
 
   async addCoachAthlete(coachUserId: number, athleteId: number): Promise<Coach> {
