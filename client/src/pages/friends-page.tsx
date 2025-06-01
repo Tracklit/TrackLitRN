@@ -64,12 +64,12 @@ export default function FriendsPage() {
     queryKey: ["/api/user"],
   });
 
-  // Fetch friends
-  const { data: friends = [], isLoading: loadingFriends } = useQuery({
+  // Fetch connections
+  const { data: connections = [], isLoading: loadingConnections } = useQuery({
     queryKey: ["/api/friends"],
   });
 
-  // Fetch friend requests
+  // Fetch connection requests
   const { data: pendingRequests = [], isLoading: loadingRequests } = useQuery({
     queryKey: ["/api/friend-requests/pending"],
   });
@@ -84,27 +84,27 @@ export default function FriendsPage() {
     queryKey: ["/api/coach/athletes"],
   });
 
-  // Remove friend mutation
-  const removeFriendMutation = useMutation({
-    mutationFn: (friendId: number) => 
-      apiRequest("DELETE", `/api/friends/${friendId}`),
+  // Remove connection mutation
+  const removeConnectionMutation = useMutation({
+    mutationFn: (connectionId: number) => 
+      apiRequest("DELETE", `/api/friends/${connectionId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
       toast({
-        title: "Friend removed",
-        description: "The friend has been removed from your list.",
+        title: "Connection removed",
+        description: "The connection has been removed from your list.",
       });
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to remove friend",
+        description: error.message || "Failed to remove connection",
         variant: "destructive",
       });
     },
   });
 
-  // Accept friend request mutation
+  // Accept connection request mutation
   const acceptRequestMutation = useMutation({
     mutationFn: (requestId: number) => 
       apiRequest("POST", `/api/friend-requests/${requestId}/accept`),
@@ -112,20 +112,20 @@ export default function FriendsPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/friend-requests/pending"] });
       queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
       toast({
-        title: "Friend request accepted",
-        description: "You are now friends!",
+        title: "Connection request accepted",
+        description: "You are now connected!",
       });
     },
   });
 
-  // Decline friend request mutation
+  // Decline connection request mutation
   const declineRequestMutation = useMutation({
     mutationFn: (requestId: number) => 
       apiRequest("POST", `/api/friend-requests/${requestId}/decline`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/friend-requests/pending"] });
       toast({
-        title: "Friend request declined",
+        title: "Connection request declined",
         description: "The request has been declined.",
       });
     },
@@ -160,8 +160,8 @@ export default function FriendsPage() {
     },
   });
 
-  const handleRemoveFriend = (friendId: number) => {
-    removeFriendMutation.mutate(friendId);
+  const handleRemoveConnection = (connectionId: number) => {
+    removeConnectionMutation.mutate(connectionId);
   };
 
   const handleAcceptRequest = (requestId: number) => {
@@ -230,13 +230,13 @@ export default function FriendsPage() {
             </TabsList>
 
             <TabsContent value="friends" className="mt-6">
-              {loadingFriends ? (
+              {loadingConnections ? (
                 <ListSkeleton items={5} />
-              ) : friends.length === 0 ? (
+              ) : connections.length === 0 ? (
                 <Card className="bg-gray-800 border-gray-700">
                   <CardContent className="flex flex-col items-center justify-center py-8">
                     <UserCheck className="h-12 w-12 text-gray-400 mb-4" />
-                    <h3 className="text-lg font-semibold mb-2 text-white">No friends yet</h3>
+                    <h3 className="text-lg font-semibold mb-2 text-white">No connections yet</h3>
                     <p className="text-gray-400 text-center">
                       Start connecting with other athletes by visiting the Athletes page.
                     </p>
@@ -244,7 +244,7 @@ export default function FriendsPage() {
                 </Card>
               ) : (
                 <div className="space-y-0">
-                  {friends.map((friend) => (
+                  {connections.map((connection) => (
                     <div key={friend.id} className="flex items-center py-4 px-4 hover:bg-gray-800/50 transition-colors border-b border-gray-800 last:border-b-0">
                       <Avatar className="h-7 w-7 mr-4">
                         <AvatarImage src="/default-avatar.png" />
