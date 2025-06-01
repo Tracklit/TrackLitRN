@@ -3762,9 +3762,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Check if the assignee is eligible (in same club/group or a coached athlete)
       const clubMembers = await dbStorage.getCoachableUsers(req.user!.id);
-      const isEligible = clubMembers.some(member => member.id === assigneeId);
+      const coachAthletes = req.user!.isCoach ? await dbStorage.getCoachAthletes(req.user!.id) : [];
       
-      if (!isEligible) {
+      const isClubMember = clubMembers.some(member => member.id === assigneeId);
+      const isCoachAthlete = coachAthletes.some(athlete => athlete.id === assigneeId);
+      
+      if (!isClubMember && !isCoachAthlete) {
         return res.status(403).json({ error: "You can only assign programs to your club members or athletes" });
       }
       
