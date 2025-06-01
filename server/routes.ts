@@ -3708,11 +3708,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get users from clubs where this user is an admin/coach
       const clubMembers = await dbStorage.getCoachableUsers(req.user!.id);
       
+      // Get coach's athletes (if user is a coach)
+      const coachAthletes = req.user!.isCoach ? await dbStorage.getCoachAthletes(req.user!.id) : [];
+      
+      // Combine both lists and remove duplicates
+      const allPotentialAssignees = [...clubMembers];
+      coachAthletes.forEach(athlete => {
+        if (!allPotentialAssignees.find(member => member.id === athlete.id)) {
+          allPotentialAssignees.push(athlete);
+        }
+      });
+      
       // Filter out users who already have this program assigned
       const existingAssignees = await dbStorage.getProgramAssignees(programId);
       const existingAssigneeIds = existingAssignees.map(a => a.assigneeId);
       
-      const eligibleAssignees = clubMembers.filter(member => 
+      const eligibleAssignees = allPotentialAssignees.filter(member => 
         !existingAssigneeIds.includes(member.id) && 
         member.id !== req.user!.id
       );
