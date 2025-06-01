@@ -2728,13 +2728,22 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Friend request notification not found or unauthorized");
     }
 
-    if (notification.isRead) {
-      throw new Error("Friend request has already been processed");
-    }
-
     const senderId = notification.relatedId;
     if (!senderId) {
       throw new Error("Invalid friend request notification");
+    }
+
+    // Check if connection already exists to prevent duplicates
+    const [existingConnection] = await db
+      .select()
+      .from(follows)
+      .where(and(
+        eq(follows.followerId, userId),
+        eq(follows.followingId, senderId)
+      ));
+
+    if (existingConnection) {
+      throw new Error("Connection already exists");
     }
 
     await db.transaction(async (tx) => {
