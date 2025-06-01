@@ -2581,9 +2581,13 @@ export class DatabaseStorage implements IStorage {
         eq(follows.followingId, userId)
       ));
 
+    const following = isFollowing.length > 0;
+    const follower = isFollower.length > 0;
+
     return {
-      isFollowing: isFollowing.length > 0,
-      isFollower: isFollower.length > 0
+      isFollowing: following,
+      isFollower: follower,
+      areFriends: following && follower // Bidirectional connection = friends
     };
   }
 

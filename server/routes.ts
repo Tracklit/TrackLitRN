@@ -5426,10 +5426,7 @@ Keep the response professional, evidence-based, and specific to track and field 
         return res.status(400).json({ error: "Can only add friends as athletes" });
       }
 
-      const relationship = await dbStorage.addCoachAthlete({
-        coachId: req.user.id,
-        athleteId
-      });
+      const relationship = await dbStorage.addCoachAthlete(req.user.id, athleteId);
 
       res.json(relationship);
     } catch (error) {
