@@ -199,6 +199,11 @@ export interface IStorage {
   updateCoach(id: number, coachData: Partial<Coach>): Promise<Coach | undefined>;
   deleteCoach(id: number): Promise<boolean>;
   
+  // Coach-Athlete operations (for connections page)
+  getCoachAthletes(coachUserId: number): Promise<User[]>;
+  addCoachAthlete(coachUserId: number, athleteId: number): Promise<Coach>;
+  removeCoachAthlete(coachUserId: number, athleteId: number): Promise<boolean>;
+  
   // Athlete Group operations
   getAthleteGroup(id: number): Promise<AthleteGroup | undefined>;
   getAthleteGroupsByCoachId(coachId: number): Promise<AthleteGroup[]>;
@@ -560,6 +565,59 @@ export class DatabaseStorage implements IStorage {
 
   async deleteCoach(id: number): Promise<boolean> {
     const result = await db.delete(coaches).where(eq(coaches.id, id));
+    return !!result;
+  }
+
+  // Coach-Athlete operations (for connections page)
+  async getCoachAthletes(coachUserId: number): Promise<User[]> {
+    const coachRelations = await db
+      .select({
+        athlete: users
+      })
+      .from(coaches)
+      .innerJoin(users, eq(coaches.athleteId, users.id))
+      .where(and(
+        eq(coaches.userId, coachUserId),
+        eq(coaches.status, 'accepted')
+      ));
+    
+    return coachRelations.map(relation => relation.athlete);
+  }
+
+  async addCoachAthlete(coachUserId: number, athleteId: number): Promise<Coach> {
+    // Check if relationship already exists
+    const existing = await db
+      .select()
+      .from(coaches)
+      .where(and(
+        eq(coaches.userId, coachUserId),
+        eq(coaches.athleteId, athleteId)
+      ));
+
+    if (existing.length > 0) {
+      throw new Error('Coach-athlete relationship already exists');
+    }
+
+    const [coachRelation] = await db
+      .insert(coaches)
+      .values({
+        userId: coachUserId,
+        athleteId: athleteId,
+        status: 'accepted' // Direct addition from connections
+      })
+      .returning();
+
+    return coachRelation;
+  }
+
+  async removeCoachAthlete(coachUserId: number, athleteId: number): Promise<boolean> {
+    const result = await db
+      .delete(coaches)
+      .where(and(
+        eq(coaches.userId, coachUserId),
+        eq(coaches.athleteId, athleteId)
+      ));
+    
     return !!result;
   }
 
