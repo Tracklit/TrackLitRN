@@ -138,16 +138,16 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
     }
   };
 
-  const handleAcceptRequest = (requestId: number) => {
+  const handleAcceptRequest = (notificationId: number) => {
     // Immediately update the UI state to prevent flash
     const updatedNotifications = (notifications as any[]).map(notif => 
-      notif.relatedId === requestId ? { ...notif, isRead: true } : notif
+      notif.id === notificationId ? { ...notif, isRead: true } : notif
     );
     
     // Update the query cache immediately
     queryClient.setQueryData(["/api/notifications"], updatedNotifications);
     
-    acceptRequestMutation.mutate(requestId, {
+    acceptRequestMutation.mutate(notificationId, {
       onSuccess: () => {
         // Refresh all relevant data after successful accept
         queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
@@ -359,7 +359,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   if (!notification.isRead) {
-                                    handleAcceptRequest(notification.relatedId!);
+                                    handleAcceptRequest(notification.id);
                                   }
                                 }}
                                 disabled={notification.isRead || acceptRequestMutation.isPending}

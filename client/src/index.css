@@ -100,14 +100,14 @@ article::-webkit-scrollbar,
 /* Removed main-content animation styles to prevent conflicts */
 
 :root {
-  /* Single color dark blue background with golden yellow accent as requested */
-  --background: 220 40% 12%;
+  /* Transparent backgrounds to allow gradient to show through */
+  --background: transparent;
   --foreground: 0 0% 95%;
-  --muted: 220 35% 18%;
+  --muted: 220 35% 18% / 0.8;
   --muted-foreground: 220 5% 65%;
-  --popover: 220 40% 12%;
+  --popover: 220 40% 12% / 0.95;
   --popover-foreground: 0 0% 95%;
-  --card: 220 35% 15%;
+  --card: 220 35% 15% / 0.8;
   --card-foreground: 0 0% 95%;
   --border: 220 20% 15%;
   --input: 220 20% 15%;
@@ -126,7 +126,7 @@ article::-webkit-scrollbar,
   --chart-3: 160 70% 40%;
   --chart-4: 260 70% 40%;
   --chart-5: 300 70% 50%;
-  --sidebar-background: 220 30% 12%; /* Lighter blue for the menu */
+  --sidebar-background: 220 30% 12% / 0.9; /* Lighter blue for the menu */
   --sidebar-foreground: 0 0% 95%;
   --sidebar-primary: 45 100% 50%;
   --sidebar-primary-foreground: 220 30% 8%;
