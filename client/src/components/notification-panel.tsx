@@ -204,11 +204,12 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
       }}
     >
       <div 
-        className="fixed right-0 top-0 w-full bg-background shadow-xl flex flex-col notification-panel-no-bottom-space"
+        className="fixed right-0 top-0 w-full shadow-xl flex flex-col notification-panel-no-bottom-space"
         onClick={(e) => e.stopPropagation()}
         style={{
           transition: 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-          transform: isOpen ? 'translateX(0%)' : 'translateX(100%)'
+          transform: isOpen ? 'translateX(0%)' : 'translateX(100%)',
+          backgroundColor: 'hsl(220, 40%, 12%)'
         }}
       >
         <div className="p-4 border-b bg-muted/50">
