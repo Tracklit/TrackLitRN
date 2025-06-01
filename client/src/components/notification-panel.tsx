@@ -100,27 +100,27 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
     }
   });
 
-  // Accept follow request
+  // Accept connection request
   const acceptRequestMutation = useMutation({
     mutationFn: (requestId: number) => apiRequest("POST", `/api/friend-requests/${requestId}/accept`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/friend-requests/pending"] });
       queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
-      toast({ title: "Follow request accepted" });
+      toast({ title: "Connection request accepted" });
     },
     onError: () => {
       toast({ title: "Failed to accept request", variant: "destructive" });
     }
   });
 
-  // Decline follow request
+  // Decline connection request
   const declineRequestMutation = useMutation({
     mutationFn: (requestId: number) => apiRequest("POST", `/api/friend-requests/${requestId}/decline`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/friend-requests/pending"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
-      toast({ title: "Follow request declined" });
+      toast({ title: "Connection request declined" });
     },
     onError: () => {
       toast({ title: "Failed to decline request", variant: "destructive" });
