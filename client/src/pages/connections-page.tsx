@@ -50,22 +50,22 @@ export default function ConnectionsPage() {
   const { user } = useAuth();
 
   // Fetch connections (friends)
-  const { data: connections = [], isLoading: connectionsLoading } = useQuery({
+  const { data: connections = [], isLoading: connectionsLoading } = useQuery<Connection[]>({
     queryKey: ["/api/friends"],
-    select: (data) => data || []
+    select: (data: Connection[]) => data || []
   });
 
   // Fetch pending connection requests
-  const { data: pendingRequests = [], isLoading: requestsLoading } = useQuery({
+  const { data: pendingRequests = [], isLoading: requestsLoading } = useQuery<ConnectionRequest[]>({
     queryKey: ["/api/friend-requests/pending"],
-    select: (data) => data || []
+    select: (data: ConnectionRequest[]) => data || []
   });
 
   // Search for users
-  const { data: searchResults = [], isLoading: searchLoading } = useQuery({
+  const { data: searchResults = [], isLoading: searchLoading } = useQuery<Connection[]>({
     queryKey: ["/api/users/search", searchTerm],
     enabled: searchTerm.length > 0,
-    select: (data) => data || []
+    select: (data: Connection[]) => data || []
   });
 
   // Accept connection request
@@ -117,6 +117,29 @@ export default function ConnectionsPage() {
     }
   });
 
+  // Add athlete mutation for coaches
+  const addAthleteMutation = useMutation({
+    mutationFn: (athleteId: number) => apiRequest("POST", "/api/coach/athletes", { athleteId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/coach/athletes"] });
+      toast({ title: "Athlete added successfully" });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Failed to add athlete", 
+        description: error.message || "Please try again",
+        variant: "destructive" 
+      });
+    }
+  });
+
+  // Fetch coach athletes to check existing relationships
+  const { data: coachAthletes = [] } = useQuery<any[]>({
+    queryKey: ["/api/coach/athletes"],
+    enabled: user?.isCoach || user?.role === 'coach' || user?.role === 'both',
+    select: (data: any[]) => data || []
+  });
+
   const handleAcceptRequest = (requestId: number) => {
     acceptRequestMutation.mutate(requestId);
   };
@@ -132,6 +155,18 @@ export default function ConnectionsPage() {
   const handleRemoveConnection = (userId: number) => {
     removeConnectionMutation.mutate(userId);
   };
+
+  const handleAddAsAthlete = (athleteId: number) => {
+    addAthleteMutation.mutate(athleteId);
+  };
+
+  // Helper function to check if user is already an athlete of this coach
+  const isAlreadyAthlete = (userId: number) => {
+    return (coachAthletes as any[]).some((athlete: any) => athlete.id === userId);
+  };
+
+  // Check if current user is a coach
+  const isCoach = user?.isCoach || user?.role === 'coach' || user?.role === 'both';
 
   const filteredConnections = connections.filter((connection: Connection) =>
     connection.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -406,6 +441,14 @@ export default function ConnectionsPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      {isCoach && !isAlreadyAthlete(connection.id) && (
+                        <DropdownMenuItem 
+                          onClick={() => handleAddAsAthlete(connection.id)}
+                        >
+                          <UserPlus className="h-4 w-4 mr-2" />
+                          Add As Athlete
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem 
                         onClick={() => handleRemoveConnection(connection.id)}
                         className="text-destructive"

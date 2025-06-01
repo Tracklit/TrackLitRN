@@ -10,7 +10,7 @@ import { UserCheck, Clock, MessageCircle, UserMinus, Target } from "lucide-react
 import { Link } from "wouter";
 import { ListSkeleton } from "@/components/list-skeleton";
 
-interface Friend {
+interface Connection {
   id: number;
   username: string;
   name: string;
@@ -20,7 +20,7 @@ interface Friend {
   isCoach?: boolean;
 }
 
-interface FriendRequest {
+interface ConnectionRequest {
   id: number;
   followerId: number;
   followingId: number;
