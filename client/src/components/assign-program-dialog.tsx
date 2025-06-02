@@ -172,7 +172,7 @@ export function AssignProgramDialog({
           {buttonText}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] bg-background border border-border">
         <DialogHeader>
           <DialogTitle>Assign Program to Athlete</DialogTitle>
           <DialogDescription>
