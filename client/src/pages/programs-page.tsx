@@ -385,7 +385,8 @@ function CompactProgramCard({ program, type, creator, viewMode }: {
   });
   
   return (
-    <Card className="overflow-hidden transition-all hover:shadow-md h-24 bg-slate-800/95 border-slate-700/50 relative">
+    <Card className="overflow-hidden transition-all hover:shadow-md h-24 bg-slate-800/95 border-slate-700/50 relative cursor-pointer hover:bg-slate-800"
+          onClick={() => window.location.href = `/programs/${program.id}`}>
       
       <CardHeader className="p-3 pb-2">
         <div className="flex justify-between items-start">
