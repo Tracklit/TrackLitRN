@@ -116,11 +116,11 @@ export default function ProgramsPage() {
     : [];
   
   return (
-    <div className="container max-w-screen-xl mx-auto p-4 pt-20 md:pt-24 md:pl-72 pb-20 h-screen overflow-y-auto">
-      <PageHeader
-        title="Training Programs"
-        description="Create, discover, and follow training programs"
-      />
+    <div className="container max-w-screen-xl mx-auto p-4 pt-16 md:pt-18 md:pl-72 pb-20 h-screen overflow-y-auto">
+      <div className="mb-4">
+        <h1 className="text-lg font-semibold mb-1">Training Programs</h1>
+        <p className="text-xs text-muted-foreground">Create, discover, and follow training programs</p>
+      </div>
       
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
         <div className="relative w-full md:w-72">
@@ -184,8 +184,8 @@ export default function ProgramsPage() {
         {/* My Programs Tab */}
         <TabsContent value="my-programs">
           {isLoadingUserPrograms ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-              {[1, 2, 3, 4, 5].map((item) => (
+            <div className="grid grid-cols-3 gap-4">
+              {[1, 2, 3, 4, 5, 6].map((item) => (
                 <CompactProgramCardSkeleton key={item} />
               ))}
             </div>
@@ -201,7 +201,7 @@ export default function ProgramsPage() {
               }
             />
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+            <div className="grid grid-cols-3 gap-4">
               {filteredUserPrograms.map((program) => (
                 <CompactProgramCard 
                   key={program.id} 
@@ -216,8 +216,8 @@ export default function ProgramsPage() {
         {/* Purchased Programs Tab */}
         <TabsContent value="purchased">
           {isLoadingPurchasedPrograms ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-              {[1, 2, 3, 4, 5].map((item) => (
+            <div className="grid grid-cols-3 gap-4">
+              {[1, 2, 3, 4, 5, 6].map((item) => (
                 <CompactProgramCardSkeleton key={item} />
               ))}
             </div>
@@ -232,7 +232,7 @@ export default function ProgramsPage() {
               }
             />
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+            <div className="grid grid-cols-3 gap-4">
               {filteredPurchasedPrograms.map((program) => (
                 <CompactProgramCard 
                   key={program.id} 
@@ -375,73 +375,71 @@ function CompactProgramCard({ program, type, creator, viewMode }: {
   
   return (
     <Card className="overflow-hidden transition-all hover:shadow-md h-fit">
-      <div className="h-16 relative bg-slate-100 border-b overflow-hidden">
+      <div className="h-8 relative bg-slate-100 border-b overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5" />
-        <div className="absolute top-2 right-2">
-          {program.visibility === 'premium' && <Crown className="h-3 w-3 text-yellow-500" />}
-          {program.visibility === 'private' && <LockIcon className="h-3 w-3 text-muted-foreground" />}
+        <div className="absolute top-1 right-1">
+          {program.visibility === 'premium' && <Crown className="h-2 w-2 text-yellow-500" />}
+          {program.visibility === 'private' && <LockIcon className="h-2 w-2 text-muted-foreground" />}
         </div>
       </div>
       
-      <CardHeader className="p-3 pb-2">
-        <div className="flex justify-between items-start">
-          <CardTitle className="text-sm leading-tight line-clamp-2">{program.title}</CardTitle>
-        </div>
+      <CardHeader className="p-2 pb-1">
+        <CardTitle className="text-xs leading-tight line-clamp-2 font-medium">{program.title}</CardTitle>
         {program.description && (
-          <CardDescription className="text-xs line-clamp-1">{program.description}</CardDescription>
+          <CardDescription className="text-[10px] line-clamp-1 mt-0.5">{program.description}</CardDescription>
         )}
       </CardHeader>
       
-      <CardContent className="p-3 pt-0 pb-2">
-        <div className="flex flex-col space-y-1 text-xs">
+      <CardContent className="p-2 pt-0 pb-1">
+        <div className="flex flex-col space-y-0.5 text-[10px]">
           <div className="flex items-center text-muted-foreground">
-            <Calendar className="h-3 w-3 mr-1" />
+            <Calendar className="h-2 w-2 mr-1" />
             <span>{program.duration} days</span>
           </div>
           
           <div className="flex items-center text-muted-foreground">
-            <LayersIcon className="h-3 w-3 mr-1" />
+            <LayersIcon className="h-2 w-2 mr-1" />
             <span>{program.totalSessions} sessions</span>
           </div>
           
           <div className="flex items-center text-muted-foreground">
-            <TrendingUp className="h-3 w-3 mr-1" />
+            <TrendingUp className="h-2 w-2 mr-1" />
             <span className="capitalize">{program.level || "All levels"}</span>
           </div>
         </div>
         
         {progress > 0 && (
-          <div className="mt-2">
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-xs text-muted-foreground">Progress</span>
-              <span className="text-xs font-medium">{progress}%</span>
+          <div className="mt-1">
+            <div className="flex justify-between items-center mb-0.5">
+              <span className="text-[9px] text-muted-foreground">Progress</span>
+              <span className="text-[9px] font-medium">{progress}%</span>
             </div>
-            <Progress value={progress} className="h-1" />
+            <Progress value={progress} className="h-0.5" />
           </div>
         )}
       </CardContent>
       
-      <CardFooter className="p-3 pt-0 flex flex-col gap-2">
+      <CardFooter className="p-2 pt-0 flex flex-col gap-1">
         <Button 
           variant="default" 
           size="sm" 
-          className="w-full h-7 text-xs"
+          className="w-full h-5 text-[10px] px-2"
           asChild
         >
           <Link href={`/programs/${program.id}`}>
-            View Details
+            View
           </Link>
         </Button>
         
         {viewMode === "creator" && (
-          <div className="flex gap-1 w-full">
+          <div className="flex gap-0.5 w-full">
             <AssignProgramDialog program={program} buttonText="Assign" />
             
             {program.importedFromSheet && (
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="flex-1 h-7 text-xs"
+                className="flex-1 h-5 text-[10px] px-1"
                 onClick={() => {
                   setIsRefreshing(true);
                   refreshSheetMutation.mutate(program.id);
@@ -449,9 +447,9 @@ function CompactProgramCard({ program, type, creator, viewMode }: {
                 disabled={isRefreshing}
               >
                 {isRefreshing ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
+                  <Loader2 className="h-2 w-2 animate-spin" />
                 ) : (
-                  <RefreshCw className="h-3 w-3" />
+                  <RefreshCw className="h-2 w-2" />
                 )}
               </Button>
             )}
@@ -834,24 +832,24 @@ function EmptyState({ title, description, action }: {
 function CompactProgramCardSkeleton() {
   return (
     <Card className="overflow-hidden h-fit">
-      <div className="h-16 bg-muted animate-pulse" />
-      <CardHeader className="p-3 pb-2">
-        <Skeleton className="h-4 w-3/4 mb-1" />
-        <Skeleton className="h-3 w-full" />
+      <div className="h-8 bg-muted animate-pulse" />
+      <CardHeader className="p-2 pb-1">
+        <Skeleton className="h-3 w-3/4 mb-0.5" />
+        <Skeleton className="h-2 w-full" />
       </CardHeader>
-      <CardContent className="p-3 pt-0 pb-2">
-        <div className="space-y-1">
-          <Skeleton className="h-3 w-1/2" />
-          <Skeleton className="h-3 w-2/3" />
-          <Skeleton className="h-3 w-1/3" />
+      <CardContent className="p-2 pt-0 pb-1">
+        <div className="space-y-0.5">
+          <Skeleton className="h-2 w-1/2" />
+          <Skeleton className="h-2 w-2/3" />
+          <Skeleton className="h-2 w-1/3" />
         </div>
       </CardContent>
-      <CardFooter className="p-3 pt-0 flex flex-col gap-2">
-        <Skeleton className="h-7 w-full" />
-        <div className="flex gap-1 w-full">
-          <Skeleton className="h-7 flex-1" />
-          <Skeleton className="h-7 w-7" />
-          <Skeleton className="h-7 w-7" />
+      <CardFooter className="p-2 pt-0 flex flex-col gap-1">
+        <Skeleton className="h-5 w-full" />
+        <div className="flex gap-0.5 w-full">
+          <Skeleton className="h-5 flex-1" />
+          <Skeleton className="h-5 w-5" />
+          <Skeleton className="h-5 w-5" />
         </div>
       </CardFooter>
     </Card>
