@@ -18,6 +18,14 @@ import { AssignProgramDialog } from "@/components/assign-program-dialog";
 import { SelfAssignProgramDialog } from "@/components/self-assign-program-dialog";
 import { GoogleSheetImportDialog } from "@/components/google-sheet-import-dialog";
 import { DeleteProgramDialog } from "@/components/delete-program-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 import {
   BookOpen,
@@ -43,6 +51,7 @@ import {
 export default function ProgramsPage() {
   const [activeTab, setActiveTab] = useState("my-programs");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const { user } = useAuth();
   
   // Query for user's created programs
@@ -126,12 +135,42 @@ export default function ProgramsPage() {
         </div>
         
         {activeTab === "my-programs" && (
-          <Button asChild>
-            <Link href="/programs/create">
-              <Plus className="h-4 w-4 mr-2" />
-              Create Program
-            </Link>
-          </Button>
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Create Program
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Create New Program</DialogTitle>
+                <DialogDescription>
+                  Choose how you'd like to create your training program
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex flex-col gap-3 mt-4">
+                <Button asChild onClick={() => setIsCreateDialogOpen(false)}>
+                  <Link href="/programs/create">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create from Scratch
+                  </Link>
+                </Button>
+                
+                <div className="flex items-center gap-2 my-1">
+                  <div className="h-px bg-border flex-1" />
+                  <span className="text-xs text-muted-foreground">OR</span>
+                  <div className="h-px bg-border flex-1" />
+                </div>
+                
+                <GoogleSheetImportDialog 
+                  variant="outline"
+                  buttonText="Import from Google Sheet"
+                  onSuccess={() => setIsCreateDialogOpen(false)}
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
         )}
       </div>
       
@@ -145,9 +184,9 @@ export default function ProgramsPage() {
         {/* My Programs Tab */}
         <TabsContent value="my-programs">
           {isLoadingUserPrograms ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3].map((item) => (
-                <ProgramCardSkeleton key={item} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+              {[1, 2, 3, 4, 5].map((item) => (
+                <CompactProgramCardSkeleton key={item} />
               ))}
             </div>
           ) : filteredUserPrograms.length === 0 ? (
@@ -155,37 +194,31 @@ export default function ProgramsPage() {
               title="No programs yet"
               description="You haven't created any training programs yet. Get started by creating your first program."
               action={
-                <Button asChild>
-                  <Link href="/programs/create">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Program
-                  </Link>
+                <Button onClick={() => setIsCreateDialogOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Program
                 </Button>
               }
             />
           ) : (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <CreateProgramCard />
-                
-                {filteredUserPrograms.map((program) => (
-                  <ProgramCard 
-                    key={program.id} 
-                    program={program}
-                    viewMode="creator"
-                  />
-                ))}
-              </div>
-            </>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+              {filteredUserPrograms.map((program) => (
+                <CompactProgramCard 
+                  key={program.id} 
+                  program={program}
+                  viewMode="creator"
+                />
+              ))}
+            </div>
           )}
         </TabsContent>
         
         {/* Purchased Programs Tab */}
         <TabsContent value="purchased">
           {isLoadingPurchasedPrograms ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3].map((item) => (
-                <ProgramCardSkeleton key={item} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+              {[1, 2, 3, 4, 5].map((item) => (
+                <CompactProgramCardSkeleton key={item} />
               ))}
             </div>
           ) : filteredPurchasedPrograms.length === 0 ? (
@@ -199,9 +232,9 @@ export default function ProgramsPage() {
               }
             />
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3">
               {filteredPurchasedPrograms.map((program) => (
-                <ProgramCard 
+                <CompactProgramCard 
                   key={program.id} 
                   program={program}
                   viewMode="purchased"
@@ -258,6 +291,181 @@ export default function ProgramsPage() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+function CompactProgramCard({ program, type, creator, viewMode }: {
+  program: any;
+  type?: string;
+  creator?: any;
+  viewMode: "creator" | "public" | "purchased";
+}) {
+  const progress = program.progress ? Math.round((program.completedSessions / program.totalSessions) * 100) : 0;
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // Create mutation for deleting programs
+  const deleteProgramMutation = useMutation({
+    mutationFn: async (programId: number) => {
+      const response = await apiRequest("DELETE", `/api/programs/${programId}`, {});
+      
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error || "Failed to delete program");
+      }
+      
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Program deleted",
+        description: "The program has been successfully deleted",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/programs'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error deleting program",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+  
+  const handleDeleteProgram = () => {
+    deleteProgramMutation.mutate(program.id);
+  };
+  
+  const refreshSheetMutation = useMutation({
+    mutationFn: async (programId: number) => {
+      if (!program.googleSheetUrl || !program.importedFromSheet) {
+        throw new Error("This program is not linked to a Google Sheet");
+      }
+      
+      const response = await apiRequest("POST", `/api/programs/refresh-sheet/${programId}`, {
+        googleSheetUrl: program.googleSheetUrl
+      });
+      
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error || "Failed to refresh program data");
+      }
+      
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Sheet data refreshed",
+        description: "Your program has been updated with the latest spreadsheet data",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/programs'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/assigned-programs'] });
+      setIsRefreshing(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Refresh failed",
+        description: error.message,
+        variant: "destructive",
+      });
+      setIsRefreshing(false);
+    }
+  });
+  
+  return (
+    <Card className="overflow-hidden transition-all hover:shadow-md h-fit">
+      <div className="h-16 relative bg-slate-100 border-b overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5" />
+        <div className="absolute top-2 right-2">
+          {program.visibility === 'premium' && <Crown className="h-3 w-3 text-yellow-500" />}
+          {program.visibility === 'private' && <LockIcon className="h-3 w-3 text-muted-foreground" />}
+        </div>
+      </div>
+      
+      <CardHeader className="p-3 pb-2">
+        <div className="flex justify-between items-start">
+          <CardTitle className="text-sm leading-tight line-clamp-2">{program.title}</CardTitle>
+        </div>
+        {program.description && (
+          <CardDescription className="text-xs line-clamp-1">{program.description}</CardDescription>
+        )}
+      </CardHeader>
+      
+      <CardContent className="p-3 pt-0 pb-2">
+        <div className="flex flex-col space-y-1 text-xs">
+          <div className="flex items-center text-muted-foreground">
+            <Calendar className="h-3 w-3 mr-1" />
+            <span>{program.duration} days</span>
+          </div>
+          
+          <div className="flex items-center text-muted-foreground">
+            <LayersIcon className="h-3 w-3 mr-1" />
+            <span>{program.totalSessions} sessions</span>
+          </div>
+          
+          <div className="flex items-center text-muted-foreground">
+            <TrendingUp className="h-3 w-3 mr-1" />
+            <span className="capitalize">{program.level || "All levels"}</span>
+          </div>
+        </div>
+        
+        {progress > 0 && (
+          <div className="mt-2">
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-xs text-muted-foreground">Progress</span>
+              <span className="text-xs font-medium">{progress}%</span>
+            </div>
+            <Progress value={progress} className="h-1" />
+          </div>
+        )}
+      </CardContent>
+      
+      <CardFooter className="p-3 pt-0 flex flex-col gap-2">
+        <Button 
+          variant="default" 
+          size="sm" 
+          className="w-full h-7 text-xs"
+          asChild
+        >
+          <Link href={`/programs/${program.id}`}>
+            View Details
+          </Link>
+        </Button>
+        
+        {viewMode === "creator" && (
+          <div className="flex gap-1 w-full">
+            <AssignProgramDialog program={program} buttonText="Assign" buttonSize="sm" />
+            
+            {program.importedFromSheet && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex-1 h-7 text-xs"
+                onClick={() => {
+                  setIsRefreshing(true);
+                  refreshSheetMutation.mutate(program.id);
+                }}
+                disabled={isRefreshing}
+              >
+                {isRefreshing ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-3 w-3" />
+                )}
+              </Button>
+            )}
+            
+            <DeleteProgramDialog 
+              program={program} 
+              onDelete={handleDeleteProgram}
+              buttonVariant="outline"
+              buttonSize="sm"
+            />
+          </div>
+        )}
+      </CardFooter>
+    </Card>
   );
 }
 
