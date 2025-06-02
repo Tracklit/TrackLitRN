@@ -397,11 +397,11 @@ function CompactProgramCard({ program, type, creator, viewMode }: {
           {viewMode === "creator" && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-5 w-5 p-0">
+                <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={(e) => e.stopPropagation()}>
                   <MoreVertical className="h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuContent align="end" className="w-40" onClick={(e) => e.stopPropagation()}>
                 <DropdownMenuItem asChild>
                   <Link href={`/programs/${program.id}`} className="flex items-center">
                     <Eye className="h-3 w-3 mr-2" />
