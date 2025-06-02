@@ -386,22 +386,21 @@ function CompactProgramCard({ program, type, creator, viewMode }: {
   
   return (
     <Card className="overflow-hidden transition-all hover:shadow-md h-fit bg-slate-800/95 border-slate-700/50">
-      <div className="h-8 relative bg-slate-100 border-b overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5" />
-        <div className="absolute top-1 right-1">
-          {program.visibility === 'premium' && <Crown className="h-2 w-2 text-yellow-500" />}
-          {program.visibility === 'private' && <LockIcon className="h-2 w-2 text-muted-foreground" />}
-        </div>
-      </div>
       
-      <CardHeader className="p-2 pb-1">
+      <CardHeader className="p-3 pb-2">
         <div className="flex justify-between items-start">
-          <CardTitle className="text-xs leading-tight line-clamp-2 font-medium flex-1 pr-1">{program.title}</CardTitle>
+          <div className="flex-1 pr-2">
+            <CardTitle className="text-sm leading-tight line-clamp-2 font-medium">{program.title}</CardTitle>
+            <div className="flex items-center gap-1 mt-1">
+              {program.visibility === 'premium' && <Crown className="h-2 w-2 text-yellow-500" />}
+              {program.visibility === 'private' && <LockIcon className="h-2 w-2 text-muted-foreground" />}
+            </div>
+          </div>
           {viewMode === "creator" && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-4 w-4 p-0">
-                  <MoreVertical className="h-2 w-2" />
+                <Button variant="ghost" size="sm" className="h-5 w-5 p-0">
+                  <MoreVertical className="h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-40">
@@ -848,15 +847,17 @@ function EmptyState({ title, description, action }: {
 function CompactProgramCardSkeleton() {
   return (
     <Card className="overflow-hidden h-fit bg-slate-800/95 border-slate-700/50">
-      <div className="h-8 bg-muted animate-pulse" />
-      <CardHeader className="p-2 pb-1">
+      <CardHeader className="p-3 pb-2">
         <div className="flex justify-between items-start">
-          <Skeleton className="h-3 w-3/4" />
-          <Skeleton className="h-4 w-4" />
+          <div className="flex-1 pr-2">
+            <Skeleton className="h-4 w-3/4 mb-1" />
+            <Skeleton className="h-2 w-1/4" />
+          </div>
+          <Skeleton className="h-5 w-5" />
         </div>
-        <Skeleton className="h-2 w-full mt-0.5" />
+        <Skeleton className="h-2 w-full mt-2" />
       </CardHeader>
-      <CardContent className="p-2 pt-0 pb-1">
+      <CardContent className="p-3 pt-0 pb-1">
         <Skeleton className="h-0.5 w-full" />
       </CardContent>
     </Card>
