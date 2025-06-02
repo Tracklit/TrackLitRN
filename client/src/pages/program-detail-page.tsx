@@ -51,44 +51,62 @@ import { queryClient } from "@/lib/queryClient";
 function ProgramCalendar({ sessions }: { sessions: any[] }) {
   // Set initial date to the first session's month if sessions exist
   const getInitialDate = () => {
-    if (sessions.length > 0 && sessions[0].date) {
-      return new Date(sessions[0].date);
+    try {
+      if (sessions.length > 0 && sessions[0].date) {
+        const date = new Date(sessions[0].date);
+        // Check if date is valid
+        if (!isNaN(date.getTime())) {
+          return date;
+        }
+      }
+    } catch (error) {
+      console.warn('Error setting initial date:', error);
     }
     return new Date();
   };
   
-  const [currentDate, setCurrentDate] = useState(getInitialDate());
+  const [currentDate, setCurrentDate] = useState(getInitialDate);
   const [selectedSession, setSelectedSession] = useState<any>(null);
-  
-  // Debug: Log sessions data
-  console.log('Calendar sessions:', sessions);
-  console.log('Initial calendar date:', currentDate);
   
   // Group sessions by date
   const sessionsByDate = sessions.reduce((acc, session) => {
     // Handle different date formats
     let dateKey;
-    if (session.date) {
-      // Try to parse the date - could be "Mar-16", "2025-03-16", etc.
-      const dateStr = session.date.toString();
-      if (dateStr.includes('-') && dateStr.length <= 6) {
-        // Format like "Mar-16" - convert to proper date
-        const [monthStr, day] = dateStr.split('-');
-        const monthMap: { [key: string]: number } = {
-          'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
-          'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
-        };
-        const month = monthMap[monthStr];
-        const year = new Date().getFullYear(); // Use current year
-        const date = new Date(year, month, parseInt(day));
-        dateKey = date.toISOString().split('T')[0];
-      } else {
-        // Standard date format
-        const date = new Date(session.date);
-        dateKey = date.toISOString().split('T')[0];
+    try {
+      if (session.date) {
+        // Try to parse the date - could be "Mar-16", "2025-03-16", etc.
+        const dateStr = session.date.toString();
+        if (dateStr.includes('-') && dateStr.length <= 6) {
+          // Format like "Mar-16" - convert to proper date
+          const [monthStr, day] = dateStr.split('-');
+          const monthMap: { [key: string]: number } = {
+            'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
+            'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+          };
+          const month = monthMap[monthStr];
+          if (month !== undefined) {
+            const year = new Date().getFullYear(); // Use current year
+            const date = new Date(year, month, parseInt(day));
+            if (!isNaN(date.getTime())) {
+              dateKey = date.toISOString().split('T')[0];
+            }
+          }
+        } else {
+          // Standard date format
+          const date = new Date(session.date);
+          if (!isNaN(date.getTime())) {
+            dateKey = date.toISOString().split('T')[0];
+          }
+        }
       }
-    } else {
-      // Fallback to current date if no date provided
+      
+      // Fallback to current date if parsing failed
+      if (!dateKey) {
+        dateKey = new Date().toISOString().split('T')[0];
+      }
+    } catch (error) {
+      console.warn('Error parsing session date:', session.date, error);
+      // Fallback to current date if there's an error
       dateKey = new Date().toISOString().split('T')[0];
     }
     
@@ -98,8 +116,7 @@ function ProgramCalendar({ sessions }: { sessions: any[] }) {
     acc[dateKey].push(session);
     return acc;
   }, {} as { [key: string]: any[] });
-  
-  console.log('Sessions by date:', sessionsByDate);
+
 
   // Get calendar days for current month
   const year = currentDate.getFullYear();
