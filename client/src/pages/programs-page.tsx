@@ -385,17 +385,13 @@ function CompactProgramCard({ program, type, creator, viewMode }: {
   });
   
   return (
-    <Card className="overflow-hidden transition-all hover:shadow-md h-fit bg-slate-800/95 border-slate-700/50">
+    <Card className="overflow-hidden transition-all hover:shadow-md h-24 bg-slate-800/95 border-slate-700/50 relative">
       
       <CardHeader className="p-3 pb-2">
         <div className="flex justify-between items-start">
           <div className="flex-1 pr-2 text-center">
             <CardTitle className="text-sm leading-tight line-clamp-2 font-medium">{program.title}</CardTitle>
             <div className="h-px bg-slate-600/30 w-full mt-2 mb-1"></div>
-            <div className="flex items-center justify-center gap-1">
-              {program.visibility === 'premium' && <Crown className="h-2 w-2 text-yellow-500" />}
-              {program.visibility === 'private' && <LockIcon className="h-2 w-2 text-muted-foreground" />}
-            </div>
           </div>
           {viewMode === "creator" && (
             <DropdownMenu>
@@ -476,6 +472,12 @@ function CompactProgramCard({ program, type, creator, viewMode }: {
           </div>
         )}
       </CardContent>
+      
+      {/* Visibility icon in bottom right corner */}
+      <div className="absolute bottom-1 right-1">
+        {program.visibility === 'premium' && <Crown className="h-3 w-3 text-yellow-500" />}
+        {program.visibility === 'private' && <LockIcon className="h-3 w-3 text-muted-foreground" />}
+      </div>
 
     </Card>
   );
@@ -846,13 +848,12 @@ function EmptyState({ title, description, action }: {
 
 function CompactProgramCardSkeleton() {
   return (
-    <Card className="overflow-hidden h-fit bg-slate-800/95 border-slate-700/50">
+    <Card className="overflow-hidden h-24 bg-slate-800/95 border-slate-700/50 relative">
       <CardHeader className="p-3 pb-2">
         <div className="flex justify-between items-start">
           <div className="flex-1 pr-2 text-center">
             <Skeleton className="h-4 w-3/4 mb-1 mx-auto" />
             <div className="h-px bg-slate-600/30 w-full mt-2 mb-1"></div>
-            <Skeleton className="h-2 w-1/4 mx-auto" />
           </div>
           <Skeleton className="h-5 w-5" />
         </div>
@@ -860,6 +861,11 @@ function CompactProgramCardSkeleton() {
       </CardHeader>
       <CardContent className="p-3 pt-0 pb-1">
       </CardContent>
+      
+      {/* Skeleton for visibility icon */}
+      <div className="absolute bottom-1 right-1">
+        <Skeleton className="h-3 w-3" />
+      </div>
     </Card>
   );
 }
