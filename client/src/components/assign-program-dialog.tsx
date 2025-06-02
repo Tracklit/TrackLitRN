@@ -52,7 +52,7 @@ export function AssignProgramDialog({
   
   // Query for potential assignees (athletes the coach can assign programs to)
   const { data: potentialAssignees = [], isLoading } = useQuery({
-    queryKey: ['/api/programs', program.id, 'potential-assignees'],
+    queryKey: ['potential-assignees', program.id],
     queryFn: async () => {
       const response = await fetch(`/api/programs/${program.id}/potential-assignees`);
       if (!response.ok) {
