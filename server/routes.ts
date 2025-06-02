@@ -3112,9 +3112,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Check if user has access to this program
       if (program.userId !== req.user!.id && program.visibility !== 'public') {
-        // For private or premium programs, check if user has purchased or has access
+        // For private or premium programs, check if user has purchased or has been assigned access
         const purchase = await dbStorage.getPurchasedProgram(req.user!.id, programId);
-        if (!purchase) {
+        const assignment = await dbStorage.getProgramAssignment(programId, req.user!.id);
+        
+        if (!purchase && !assignment) {
           return res.status(403).json({ error: "You don't have access to this program" });
         }
       }
