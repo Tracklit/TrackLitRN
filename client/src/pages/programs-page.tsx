@@ -314,7 +314,7 @@ function CompactProgramCard({ program, type, creator, viewMode }: {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+
   
   // Create mutation for deleting programs
   const deleteProgramMutation = useMutation({
@@ -391,7 +391,8 @@ function CompactProgramCard({ program, type, creator, viewMode }: {
         <div className="flex justify-between items-start">
           <div className="flex-1 pr-2 text-center">
             <CardTitle className="text-sm leading-tight line-clamp-2 font-medium">{program.title}</CardTitle>
-            <div className="flex items-center justify-center gap-1 mt-1">
+            <div className="h-px bg-slate-600/30 w-full mt-2 mb-1"></div>
+            <div className="flex items-center justify-center gap-1">
               {program.visibility === 'premium' && <Crown className="h-2 w-2 text-yellow-500" />}
               {program.visibility === 'private' && <LockIcon className="h-2 w-2 text-muted-foreground" />}
             </div>
@@ -410,9 +411,15 @@ function CompactProgramCard({ program, type, creator, viewMode }: {
                     View Details
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setIsAssignDialogOpen(true)}>
-                  <UserPlus className="h-3 w-3 mr-2" />
-                  Assign Program
+                <DropdownMenuItem asChild>
+                  <AssignProgramDialog 
+                    program={program}
+                    variant="ghost"
+                    size="sm"
+                    fullWidth={true}
+                    buttonText="Assign Program"
+                    className="w-full justify-start p-2 h-auto font-normal"
+                  />
                 </DropdownMenuItem>
                 {program.importedFromSheet && (
                   <DropdownMenuItem 
@@ -459,7 +466,6 @@ function CompactProgramCard({ program, type, creator, viewMode }: {
       </CardHeader>
       
       <CardContent className="p-3 pt-0 pb-1">
-        <div className="h-px bg-slate-600/30 w-full mb-2"></div>
         {progress > 0 && (
           <div className="mt-1">
             <div className="flex justify-between items-center mb-0.5">
@@ -470,14 +476,7 @@ function CompactProgramCard({ program, type, creator, viewMode }: {
           </div>
         )}
       </CardContent>
-      
-      {/* Hidden AssignProgramDialog for dropdown action */}
-      {viewMode === "creator" && isAssignDialogOpen && (
-        <AssignProgramDialog 
-          program={program}
-          onSuccess={() => setIsAssignDialogOpen(false)}
-        />
-      )}
+
     </Card>
   );
 }
@@ -852,6 +851,7 @@ function CompactProgramCardSkeleton() {
         <div className="flex justify-between items-start">
           <div className="flex-1 pr-2 text-center">
             <Skeleton className="h-4 w-3/4 mb-1 mx-auto" />
+            <div className="h-px bg-slate-600/30 w-full mt-2 mb-1"></div>
             <Skeleton className="h-2 w-1/4 mx-auto" />
           </div>
           <Skeleton className="h-5 w-5" />
@@ -859,7 +859,6 @@ function CompactProgramCardSkeleton() {
         <Skeleton className="h-2 w-full mt-2" />
       </CardHeader>
       <CardContent className="p-3 pt-0 pb-1">
-        <div className="h-px bg-slate-600/30 w-full mb-2"></div>
       </CardContent>
     </Card>
   );
