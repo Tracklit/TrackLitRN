@@ -358,7 +358,7 @@ export default function AthletesPage() {
                         className="border-green-600 text-green-400 hover:bg-green-600/20"
                         disabled
                       >
-                        Friend
+                        Connected
                       </Button>
                     ) : hasPendingFriendRequest(athlete.id) ? (
                       <Button
