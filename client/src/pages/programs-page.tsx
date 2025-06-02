@@ -389,9 +389,9 @@ function CompactProgramCard({ program, type, creator, viewMode }: {
       
       <CardHeader className="p-3 pb-2">
         <div className="flex justify-between items-start">
-          <div className="flex-1 pr-2">
+          <div className="flex-1 pr-2 text-center">
             <CardTitle className="text-sm leading-tight line-clamp-2 font-medium">{program.title}</CardTitle>
-            <div className="flex items-center gap-1 mt-1">
+            <div className="flex items-center justify-center gap-1 mt-1">
               {program.visibility === 'premium' && <Crown className="h-2 w-2 text-yellow-500" />}
               {program.visibility === 'private' && <LockIcon className="h-2 w-2 text-muted-foreground" />}
             </div>
@@ -458,7 +458,8 @@ function CompactProgramCard({ program, type, creator, viewMode }: {
         )}
       </CardHeader>
       
-      <CardContent className="p-2 pt-0 pb-1">
+      <CardContent className="p-3 pt-0 pb-1">
+        <div className="h-px bg-slate-600/30 w-full mb-2"></div>
         {progress > 0 && (
           <div className="mt-1">
             <div className="flex justify-between items-center mb-0.5">
@@ -849,16 +850,16 @@ function CompactProgramCardSkeleton() {
     <Card className="overflow-hidden h-fit bg-slate-800/95 border-slate-700/50">
       <CardHeader className="p-3 pb-2">
         <div className="flex justify-between items-start">
-          <div className="flex-1 pr-2">
-            <Skeleton className="h-4 w-3/4 mb-1" />
-            <Skeleton className="h-2 w-1/4" />
+          <div className="flex-1 pr-2 text-center">
+            <Skeleton className="h-4 w-3/4 mb-1 mx-auto" />
+            <Skeleton className="h-2 w-1/4 mx-auto" />
           </div>
           <Skeleton className="h-5 w-5" />
         </div>
         <Skeleton className="h-2 w-full mt-2" />
       </CardHeader>
       <CardContent className="p-3 pt-0 pb-1">
-        <Skeleton className="h-0.5 w-full" />
+        <div className="h-px bg-slate-600/30 w-full mb-2"></div>
       </CardContent>
     </Card>
   );
