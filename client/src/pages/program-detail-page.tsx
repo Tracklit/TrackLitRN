@@ -49,11 +49,20 @@ import { queryClient } from "@/lib/queryClient";
 
 // Calendar component for displaying program sessions
 function ProgramCalendar({ sessions }: { sessions: any[] }) {
-  const [currentDate, setCurrentDate] = useState(new Date());
+  // Set initial date to the first session's month if sessions exist
+  const getInitialDate = () => {
+    if (sessions.length > 0 && sessions[0].date) {
+      return new Date(sessions[0].date);
+    }
+    return new Date();
+  };
+  
+  const [currentDate, setCurrentDate] = useState(getInitialDate());
   const [selectedSession, setSelectedSession] = useState<any>(null);
   
   // Debug: Log sessions data
   console.log('Calendar sessions:', sessions);
+  console.log('Initial calendar date:', currentDate);
   
   // Group sessions by date
   const sessionsByDate = sessions.reduce((acc, session) => {
@@ -65,7 +74,7 @@ function ProgramCalendar({ sessions }: { sessions: any[] }) {
       if (dateStr.includes('-') && dateStr.length <= 6) {
         // Format like "Mar-16" - convert to proper date
         const [monthStr, day] = dateStr.split('-');
-        const monthMap = {
+        const monthMap: { [key: string]: number } = {
           'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
           'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
         };
@@ -88,7 +97,9 @@ function ProgramCalendar({ sessions }: { sessions: any[] }) {
     }
     acc[dateKey].push(session);
     return acc;
-  }, {});
+  }, {} as { [key: string]: any[] });
+  
+  console.log('Sessions by date:', sessionsByDate);
 
   // Get calendar days for current month
   const year = currentDate.getFullYear();
