@@ -47,6 +47,189 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { queryClient } from "@/lib/queryClient";
 
+// Calendar component for displaying program sessions
+function ProgramCalendar({ sessions }: { sessions: any[] }) {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedSession, setSelectedSession] = useState<any>(null);
+  
+  // Group sessions by date
+  const sessionsByDate = sessions.reduce((acc, session) => {
+    const date = new Date(session.date);
+    const dateKey = date.toISOString().split('T')[0];
+    if (!acc[dateKey]) {
+      acc[dateKey] = [];
+    }
+    acc[dateKey].push(session);
+    return acc;
+  }, {});
+
+  // Get calendar days for current month
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  
+  const firstDayOfMonth = new Date(year, month, 1);
+  const lastDayOfMonth = new Date(year, month + 1, 0);
+  const startDate = new Date(firstDayOfMonth);
+  startDate.setDate(startDate.getDate() - firstDayOfMonth.getDay());
+  
+  const endDate = new Date(lastDayOfMonth);
+  endDate.setDate(endDate.getDate() + (6 - lastDayOfMonth.getDay()));
+  
+  const calendarDays = [];
+  const currentCalendarDate = new Date(startDate);
+  
+  while (currentCalendarDate <= endDate) {
+    calendarDays.push(new Date(currentCalendarDate));
+    currentCalendarDate.setDate(currentCalendarDate.getDate() + 1);
+  }
+
+  const monthNames = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  const goToPreviousMonth = () => {
+    setCurrentDate(new Date(year, month - 1, 1));
+  };
+
+  const goToNextMonth = () => {
+    setCurrentDate(new Date(year, month + 1, 1));
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Calendar Header */}
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium">Training Calendar</h3>
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" size="sm" onClick={goToPreviousMonth}>
+            ←
+          </Button>
+          <span className="text-sm font-medium min-w-[120px] text-center">
+            {monthNames[month]} {year}
+          </span>
+          <Button variant="outline" size="sm" onClick={goToNextMonth}>
+            →
+          </Button>
+        </div>
+      </div>
+
+      {/* Calendar Grid */}
+      <div className="border rounded-lg overflow-hidden">
+        {/* Day Headers */}
+        <div className="grid grid-cols-7 bg-muted">
+          {dayNames.map((day) => (
+            <div key={day} className="p-2 text-center text-sm font-medium border-r border-border last:border-r-0">
+              {day}
+            </div>
+          ))}
+        </div>
+
+        {/* Calendar Days */}
+        <div className="grid grid-cols-7">
+          {calendarDays.map((date, index) => {
+            const dateKey = date.toISOString().split('T')[0];
+            const daySessions = sessionsByDate[dateKey] || [];
+            const isCurrentMonth = date.getMonth() === month;
+            const isToday = date.toDateString() === new Date().toDateString();
+
+            return (
+              <div
+                key={index}
+                className={`min-h-[80px] p-1 border-r border-b border-border last:border-r-0 ${
+                  !isCurrentMonth ? 'bg-muted/30 text-muted-foreground' : 'bg-background'
+                } ${isToday ? 'bg-primary/5' : ''}`}
+              >
+                <div className={`text-sm font-medium mb-1 ${isToday ? 'text-primary' : ''}`}>
+                  {date.getDate()}
+                </div>
+                <div className="space-y-1">
+                  {daySessions.map((session, sessionIndex) => (
+                    <div
+                      key={sessionIndex}
+                      className="text-xs p-1 bg-primary/10 text-primary rounded cursor-pointer hover:bg-primary/20 truncate"
+                      onClick={() => setSelectedSession(session)}
+                      title={session.title}
+                    >
+                      Day {session.dayNumber}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Session Details Dialog */}
+      {selectedSession && (
+        <Dialog open={!!selectedSession} onOpenChange={() => setSelectedSession(null)}>
+          <DialogContent className="max-w-2xl bg-slate-900 border border-slate-700">
+            <DialogHeader>
+              <DialogTitle>Day {selectedSession.dayNumber} - {selectedSession.title}</DialogTitle>
+              <DialogDescription>
+                {new Date(selectedSession.date).toLocaleDateString()}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              {selectedSession.shortDistanceWorkout && (
+                <div>
+                  <h4 className="font-medium text-sm text-primary">Short Distance</h4>
+                  <p className="text-sm whitespace-pre-line">{selectedSession.shortDistanceWorkout}</p>
+                </div>
+              )}
+              
+              {selectedSession.mediumDistanceWorkout && (
+                <div>
+                  <h4 className="font-medium text-sm text-primary">Medium Distance</h4>
+                  <p className="text-sm whitespace-pre-line">{selectedSession.mediumDistanceWorkout}</p>
+                </div>
+              )}
+              
+              {selectedSession.longDistanceWorkout && (
+                <div>
+                  <h4 className="font-medium text-sm text-primary">Long Distance</h4>
+                  <p className="text-sm whitespace-pre-line">{selectedSession.longDistanceWorkout}</p>
+                </div>
+              )}
+              
+              {selectedSession.preActivation1 && (
+                <div>
+                  <h4 className="font-medium text-sm text-primary">Pre-Activation 1</h4>
+                  <p className="text-sm whitespace-pre-line">{selectedSession.preActivation1}</p>
+                </div>
+              )}
+              
+              {selectedSession.preActivation2 && (
+                <div>
+                  <h4 className="font-medium text-sm text-primary">Pre-Activation 2</h4>
+                  <p className="text-sm whitespace-pre-line">{selectedSession.preActivation2}</p>
+                </div>
+              )}
+              
+              {selectedSession.extraSession && (
+                <div>
+                  <h4 className="font-medium text-sm text-primary">Extra Session</h4>
+                  <p className="text-sm whitespace-pre-line">{selectedSession.extraSession}</p>
+                </div>
+              )}
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setSelectedSession(null)}>
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  );
+}
+
 function ProgramDetailContent({ program }: { program: any }) {
   // For uploaded program documents
   if (program.isUploadedProgram && program.programFileUrl) {
@@ -147,29 +330,8 @@ function ProgramDetailContent({ program }: { program: any }) {
     );
   }
   
-  // For normal programs with sessions
-  return (
-    <div className="space-y-6">
-      <h3 className="text-lg font-medium">Program Sessions</h3>
-      
-      {/* This would be replaced with actual program session data */}
-      <div className="space-y-4">
-        {Array.from({ length: program.duration || 7 }).map((_, index) => (
-          <Card key={index}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Day {index + 1}</CardTitle>
-              <CardDescription>Session Details</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Session content would be displayed here.
-              </p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
+  // For normal programs with sessions - show calendar view
+  return <ProgramCalendar sessions={program.sessions || []} />;
 }
 
 // Component to allow program creators to assign programs to athletes
