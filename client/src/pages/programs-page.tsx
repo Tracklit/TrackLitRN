@@ -26,6 +26,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import {
   BookOpen,
@@ -45,7 +51,11 @@ import {
   Tag,
   TrendingUp,
   Users,
-  Dumbbell
+  Dumbbell,
+  MoreVertical,
+  Eye,
+  UserPlus,
+  Trash2
 } from "lucide-react";
 
 export default function ProgramsPage() {
@@ -304,6 +314,7 @@ function CompactProgramCard({ program, type, creator, viewMode }: {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   
   // Create mutation for deleting programs
   const deleteProgramMutation = useMutation({
@@ -384,30 +395,71 @@ function CompactProgramCard({ program, type, creator, viewMode }: {
       </div>
       
       <CardHeader className="p-2 pb-1">
-        <CardTitle className="text-xs leading-tight line-clamp-2 font-medium">{program.title}</CardTitle>
+        <div className="flex justify-between items-start">
+          <CardTitle className="text-xs leading-tight line-clamp-2 font-medium flex-1 pr-1">{program.title}</CardTitle>
+          {viewMode === "creator" && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-4 w-4 p-0">
+                  <MoreVertical className="h-2 w-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem asChild>
+                  <Link href={`/programs/${program.id}`} className="flex items-center">
+                    <Eye className="h-3 w-3 mr-2" />
+                    View Details
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setIsAssignDialogOpen(true)}>
+                  <UserPlus className="h-3 w-3 mr-2" />
+                  Assign Program
+                </DropdownMenuItem>
+                {program.importedFromSheet && (
+                  <DropdownMenuItem 
+                    onClick={() => {
+                      setIsRefreshing(true);
+                      refreshSheetMutation.mutate(program.id);
+                    }}
+                    disabled={isRefreshing}
+                  >
+                    {isRefreshing ? (
+                      <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-3 w-3 mr-2" />
+                    )}
+                    Refresh Data
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem 
+                  onClick={handleDeleteProgram}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="h-3 w-3 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          {viewMode !== "creator" && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-4 w-4 p-0"
+              asChild
+            >
+              <Link href={`/programs/${program.id}`}>
+                <Eye className="h-2 w-2" />
+              </Link>
+            </Button>
+          )}
+        </div>
         {program.description && (
           <CardDescription className="text-[10px] line-clamp-1 mt-0.5">{program.description}</CardDescription>
         )}
       </CardHeader>
       
       <CardContent className="p-2 pt-0 pb-1">
-        <div className="flex flex-col space-y-0.5 text-[10px]">
-          <div className="flex items-center text-muted-foreground">
-            <Calendar className="h-2 w-2 mr-1" />
-            <span>{program.duration} days</span>
-          </div>
-          
-          <div className="flex items-center text-muted-foreground">
-            <LayersIcon className="h-2 w-2 mr-1" />
-            <span>{program.totalSessions} sessions</span>
-          </div>
-          
-          <div className="flex items-center text-muted-foreground">
-            <TrendingUp className="h-2 w-2 mr-1" />
-            <span className="capitalize">{program.level || "All levels"}</span>
-          </div>
-        </div>
-        
         {progress > 0 && (
           <div className="mt-1">
             <div className="flex justify-between items-center mb-0.5">
@@ -419,49 +471,13 @@ function CompactProgramCard({ program, type, creator, viewMode }: {
         )}
       </CardContent>
       
-      <CardFooter className="p-2 pt-0 flex flex-col gap-1">
-        <Button 
-          variant="default" 
-          size="sm" 
-          className="w-full h-5 text-[10px] px-2"
-          asChild
-        >
-          <Link href={`/programs/${program.id}`}>
-            View
-          </Link>
-        </Button>
-        
-        {viewMode === "creator" && (
-          <div className="flex gap-0.5 w-full">
-            <AssignProgramDialog program={program} buttonText="Assign" />
-            
-            {program.importedFromSheet && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="flex-1 h-5 text-[10px] px-1"
-                onClick={() => {
-                  setIsRefreshing(true);
-                  refreshSheetMutation.mutate(program.id);
-                }}
-                disabled={isRefreshing}
-              >
-                {isRefreshing ? (
-                  <Loader2 className="h-2 w-2 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-2 w-2" />
-                )}
-              </Button>
-            )}
-            
-            <DeleteProgramDialog 
-              programId={program.id} 
-              programTitle={program.title}
-              onDelete={handleDeleteProgram}
-            />
-          </div>
-        )}
-      </CardFooter>
+      {/* Hidden AssignProgramDialog for dropdown action */}
+      {viewMode === "creator" && isAssignDialogOpen && (
+        <AssignProgramDialog 
+          program={program}
+          onSuccess={() => setIsAssignDialogOpen(false)}
+        />
+      )}
     </Card>
   );
 }
@@ -834,24 +850,15 @@ function CompactProgramCardSkeleton() {
     <Card className="overflow-hidden h-fit">
       <div className="h-8 bg-muted animate-pulse" />
       <CardHeader className="p-2 pb-1">
-        <Skeleton className="h-3 w-3/4 mb-0.5" />
-        <Skeleton className="h-2 w-full" />
+        <div className="flex justify-between items-start">
+          <Skeleton className="h-3 w-3/4" />
+          <Skeleton className="h-4 w-4" />
+        </div>
+        <Skeleton className="h-2 w-full mt-0.5" />
       </CardHeader>
       <CardContent className="p-2 pt-0 pb-1">
-        <div className="space-y-0.5">
-          <Skeleton className="h-2 w-1/2" />
-          <Skeleton className="h-2 w-2/3" />
-          <Skeleton className="h-2 w-1/3" />
-        </div>
+        <Skeleton className="h-0.5 w-full" />
       </CardContent>
-      <CardFooter className="p-2 pt-0 flex flex-col gap-1">
-        <Skeleton className="h-5 w-full" />
-        <div className="flex gap-0.5 w-full">
-          <Skeleton className="h-5 flex-1" />
-          <Skeleton className="h-5 w-5" />
-          <Skeleton className="h-5 w-5" />
-        </div>
-      </CardFooter>
     </Card>
   );
 }
