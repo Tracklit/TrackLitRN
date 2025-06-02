@@ -435,7 +435,7 @@ function CompactProgramCard({ program, type, creator, viewMode }: {
         
         {viewMode === "creator" && (
           <div className="flex gap-1 w-full">
-            <AssignProgramDialog program={program} buttonText="Assign" buttonSize="sm" />
+            <AssignProgramDialog program={program} buttonText="Assign" />
             
             {program.importedFromSheet && (
               <Button 
@@ -457,10 +457,9 @@ function CompactProgramCard({ program, type, creator, viewMode }: {
             )}
             
             <DeleteProgramDialog 
-              program={program} 
+              programId={program.id} 
+              programTitle={program.title}
               onDelete={handleDeleteProgram}
-              buttonVariant="outline"
-              buttonSize="sm"
             />
           </div>
         )}
@@ -774,38 +773,7 @@ function ProgramCard({ program, type, creator, viewMode }: {
   );
 }
 
-function CreateProgramCard() {
-  return (
-    <Card className="overflow-hidden h-full flex flex-col justify-center border-dashed">
-      <CardContent className="pt-6 flex flex-col items-center justify-center text-center h-full">
-        <div className="bg-primary/10 p-3 rounded-full mb-4">
-          <Plus className="h-6 w-6 text-primary" />
-        </div>
-        <CardTitle className="text-xl mb-2">Create New Program</CardTitle>
-        <CardDescription className="mb-6">
-          Design your own training program to follow or share with others
-        </CardDescription>
-        
-        <div className="flex flex-col gap-3 w-full">
-          <Button asChild>
-            <Link href="/programs/create">Create Program</Link>
-          </Button>
-          
-          <div className="flex items-center gap-2 my-1">
-            <div className="h-px bg-border flex-1" />
-            <span className="text-xs text-muted-foreground">OR</span>
-            <div className="h-px bg-border flex-1" />
-          </div>
-          
-          <GoogleSheetImportDialog 
-            variant="outline"
-            buttonText="Import from Google Sheet"
-          />
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
+
 
 function WorkoutCard({ workout }: { workout: any }) {
   return (
@@ -860,6 +828,33 @@ function EmptyState({ title, description, action }: {
       <p className="text-muted-foreground mb-6 text-center max-w-md">{description}</p>
       {action}
     </div>
+  );
+}
+
+function CompactProgramCardSkeleton() {
+  return (
+    <Card className="overflow-hidden h-fit">
+      <div className="h-16 bg-muted animate-pulse" />
+      <CardHeader className="p-3 pb-2">
+        <Skeleton className="h-4 w-3/4 mb-1" />
+        <Skeleton className="h-3 w-full" />
+      </CardHeader>
+      <CardContent className="p-3 pt-0 pb-2">
+        <div className="space-y-1">
+          <Skeleton className="h-3 w-1/2" />
+          <Skeleton className="h-3 w-2/3" />
+          <Skeleton className="h-3 w-1/3" />
+        </div>
+      </CardContent>
+      <CardFooter className="p-3 pt-0 flex flex-col gap-2">
+        <Skeleton className="h-7 w-full" />
+        <div className="flex gap-1 w-full">
+          <Skeleton className="h-7 flex-1" />
+          <Skeleton className="h-7 w-7" />
+          <Skeleton className="h-7 w-7" />
+        </div>
+      </CardFooter>
+    </Card>
   );
 }
 
