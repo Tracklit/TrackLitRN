@@ -146,16 +146,31 @@ function ProgramCalendar({ sessions }: { sessions: any[] }) {
                   {date.getDate()}
                 </div>
                 <div className="space-y-1">
-                  {daySessions.map((session, sessionIndex) => (
-                    <div
-                      key={sessionIndex}
-                      className="text-xs p-1 bg-primary/10 text-primary rounded cursor-pointer hover:bg-primary/20 truncate"
-                      onClick={() => setSelectedSession(session)}
-                      title={session.title}
-                    >
-                      Day {session.dayNumber}
-                    </div>
-                  ))}
+                  {daySessions.map((session, sessionIndex) => {
+                    // Get the first available workout content to display
+                    const workoutContent = session.shortDistanceWorkout || 
+                                         session.mediumDistanceWorkout || 
+                                         session.longDistanceWorkout ||
+                                         session.preActivation1 ||
+                                         session.preActivation2 ||
+                                         session.extraSession ||
+                                         session.description ||
+                                         'Training Session';
+                    
+                    return (
+                      <div
+                        key={sessionIndex}
+                        className="text-xs p-1 bg-primary/10 text-primary rounded cursor-pointer hover:bg-primary/20"
+                        onClick={() => setSelectedSession(session)}
+                        title={workoutContent}
+                      >
+                        <div className="font-medium mb-1">Day {session.dayNumber}</div>
+                        <div className="text-[10px] line-clamp-2 text-primary/80">
+                          {workoutContent.length > 30 ? workoutContent.substring(0, 30) + '...' : workoutContent}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );
