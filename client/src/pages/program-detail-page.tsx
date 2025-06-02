@@ -52,10 +52,37 @@ function ProgramCalendar({ sessions }: { sessions: any[] }) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedSession, setSelectedSession] = useState<any>(null);
   
+  // Debug: Log sessions data
+  console.log('Calendar sessions:', sessions);
+  
   // Group sessions by date
   const sessionsByDate = sessions.reduce((acc, session) => {
-    const date = new Date(session.date);
-    const dateKey = date.toISOString().split('T')[0];
+    // Handle different date formats
+    let dateKey;
+    if (session.date) {
+      // Try to parse the date - could be "Mar-16", "2025-03-16", etc.
+      const dateStr = session.date.toString();
+      if (dateStr.includes('-') && dateStr.length <= 6) {
+        // Format like "Mar-16" - convert to proper date
+        const [monthStr, day] = dateStr.split('-');
+        const monthMap = {
+          'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
+          'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+        };
+        const month = monthMap[monthStr];
+        const year = new Date().getFullYear(); // Use current year
+        const date = new Date(year, month, parseInt(day));
+        dateKey = date.toISOString().split('T')[0];
+      } else {
+        // Standard date format
+        const date = new Date(session.date);
+        dateKey = date.toISOString().split('T')[0];
+      }
+    } else {
+      // Fallback to current date if no date provided
+      dateKey = new Date().toISOString().split('T')[0];
+    }
+    
     if (!acc[dateKey]) {
       acc[dateKey] = [];
     }
