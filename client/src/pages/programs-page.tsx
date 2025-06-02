@@ -385,7 +385,7 @@ function CompactProgramCard({ program, type, creator, viewMode }: {
   });
   
   return (
-    <Card className="overflow-hidden transition-all hover:shadow-md h-fit bg-white/80 backdrop-blur-sm border-gray-200">
+    <Card className="overflow-hidden transition-all hover:shadow-md h-fit bg-gray-50/50 border-gray-200/60">
       <div className="h-8 relative bg-slate-100 border-b overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5" />
         <div className="absolute top-1 right-1">
@@ -847,7 +847,7 @@ function EmptyState({ title, description, action }: {
 
 function CompactProgramCardSkeleton() {
   return (
-    <Card className="overflow-hidden h-fit bg-white/80 backdrop-blur-sm border-gray-200">
+    <Card className="overflow-hidden h-fit bg-gray-50/50 border-gray-200/60">
       <div className="h-8 bg-muted animate-pulse" />
       <CardHeader className="p-2 pb-1">
         <div className="flex justify-between items-start">
