@@ -1081,6 +1081,63 @@ export type InsertDirectMessage = z.infer<typeof insertDirectMessageSchema>;
 export type InsertFollow = z.infer<typeof insertFollowSchema>;
 export type InsertConversation = z.infer<typeof insertConversationSchema>;
 
+// Exercise Library
+export const exerciseLibrary = pgTable("exercise_library", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  description: text("description"),
+  type: text("type", { enum: ['upload', 'youtube'] }).notNull(),
+  fileUrl: text("file_url"), // For uploaded videos/images
+  youtubeUrl: text("youtube_url"), // For YouTube links
+  youtubeVideoId: text("youtube_video_id"), // Extracted YouTube video ID
+  thumbnailUrl: text("thumbnail_url"),
+  duration: integer("duration"), // In seconds for videos
+  fileSize: integer("file_size"), // In bytes for uploads
+  mimeType: text("mime_type"), // For uploaded files
+  isPublic: boolean("is_public").default(false),
+  tags: text("tags").array(), // Array of tags for categorization
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const exerciseLibraryRelations = relations(exerciseLibrary, ({ one, many }) => ({
+  user: one(users, {
+    fields: [exerciseLibrary.userId],
+    references: [users.id],
+  }),
+  shares: many(exerciseShares),
+}));
+
+// Exercise Shares (for sharing videos with connections/athletes)
+export const exerciseShares = pgTable("exercise_shares", {
+  id: serial("id").primaryKey(),
+  exerciseId: integer("exercise_id").notNull().references(() => exerciseLibrary.id),
+  fromUserId: integer("from_user_id").notNull().references(() => users.id),
+  toUserId: integer("to_user_id").notNull().references(() => users.id),
+  message: text("message"), // Optional message with the share
+  viewCount: integer("view_count").default(0),
+  lastViewedAt: timestamp("last_viewed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const exerciseSharesRelations = relations(exerciseShares, ({ one }) => ({
+  exercise: one(exerciseLibrary, {
+    fields: [exerciseShares.exerciseId],
+    references: [exerciseLibrary.id],
+  }),
+  fromUser: one(users, {
+    fields: [exerciseShares.fromUserId],
+    references: [users.id],
+    relationName: "shared_exercises_sent",
+  }),
+  toUser: one(users, {
+    fields: [exerciseShares.toUserId],
+    references: [users.id],
+    relationName: "shared_exercises_received",
+  }),
+}));
+
 // Training Programs
 export const trainingPrograms = pgTable("training_programs", {
   id: serial("id").primaryKey(),
@@ -1364,6 +1421,23 @@ export type SprinthiaMessage = typeof sprinthiaMessages.$inferSelect;
 export type InsertSprinthiaConversation = z.infer<typeof insertSprinthiaConversationSchema>;
 export type InsertSprinthiaMessage = z.infer<typeof insertSprinthiaMessageSchema>;
 
+// Exercise Library insert schemas and types
+export const insertExerciseLibrarySchema = createInsertSchema(exerciseLibrary).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertExerciseShareSchema = createInsertSchema(exerciseShares).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type ExerciseLibrary = typeof exerciseLibrary.$inferSelect;
+export type ExerciseShare = typeof exerciseShares.$inferSelect;
+export type InsertExerciseLibrary = z.infer<typeof insertExerciseLibrarySchema>;
+export type InsertExerciseShare = z.infer<typeof insertExerciseShareSchema>;
+
 // Additional relations for users with spikes system
 export const usersSpikesRelations = relations(users, ({ many, one }) => ({
   userAchievements: many(userAchievements),
@@ -1373,4 +1447,7 @@ export const usersSpikesRelations = relations(users, ({ many, one }) => ({
   workouts: many(workoutLibrary),
   workoutPreviews: many(workoutSessionPreview),
   sprinthiaConversations: many(sprinthiaConversations),
+  exerciseLibrary: many(exerciseLibrary),
+  exerciseSharesSent: many(exerciseShares, { relationName: "shared_exercises_sent" }),
+  exerciseSharesReceived: many(exerciseShares, { relationName: "shared_exercises_received" }),
 }));

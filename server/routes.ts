@@ -50,7 +50,14 @@ import {
   InsertProgramPurchase,
   InsertProgramProgress,
   InsertWorkoutLibrary,
-  InsertCoachAthlete
+  InsertCoachAthlete,
+  exerciseLibrary,
+  exerciseShares,
+  insertExerciseLibrarySchema,
+  insertExerciseShareSchema,
+  ExerciseLibrary,
+  InsertExerciseLibrary,
+  InsertExerciseShare
 } from "@shared/schema";
 
 // Initialize default achievements
@@ -3072,6 +3079,389 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error awarding meet creation spikes:", error);
       res.status(500).send("Error awarding meet creation spikes");
+    }
+  });
+
+  // Exercise Library endpoints
+  
+  // Get user's exercise library with pagination
+  app.get("/api/exercise-library", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = 30;
+      const offset = (page - 1) * limit;
+      
+      const exercises = await db
+        .select()
+        .from(exerciseLibrary)
+        .where(eq(exerciseLibrary.userId, req.user!.id))
+        .orderBy(sql`${exerciseLibrary.createdAt} DESC`)
+        .limit(limit)
+        .offset(offset);
+      
+      const totalCount = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(exerciseLibrary)
+        .where(eq(exerciseLibrary.userId, req.user!.id));
+      
+      res.json({
+        exercises,
+        totalCount: totalCount[0].count,
+        totalPages: Math.ceil(totalCount[0].count / limit),
+        currentPage: page
+      });
+    } catch (error) {
+      console.error("Error fetching exercise library:", error);
+      res.status(500).send("Error fetching exercise library");
+    }
+  });
+
+  // Check user's exercise library usage and limits
+  app.get("/api/exercise-library/limits", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const user = req.user!;
+      const subscriptionTier = user.subscriptionTier || 'free';
+      
+      // Count current uploads and YouTube links
+      const uploadCount = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(exerciseLibrary)
+        .where(and(
+          eq(exerciseLibrary.userId, user.id),
+          eq(exerciseLibrary.type, 'upload')
+        ));
+      
+      const youtubeCount = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(exerciseLibrary)
+        .where(and(
+          eq(exerciseLibrary.userId, user.id),
+          eq(exerciseLibrary.type, 'youtube')
+        ));
+      
+      // Define limits based on subscription tier
+      const limits = {
+        free: { uploads: 10, youtube: 50 },
+        pro: { uploads: 50, youtube: 100 },
+        star: { uploads: -1, youtube: -1 } // -1 means unlimited
+      };
+      
+      const tierLimits = limits[subscriptionTier as keyof typeof limits];
+      
+      res.json({
+        uploads: {
+          current: uploadCount[0].count,
+          limit: tierLimits.uploads,
+          canUpload: tierLimits.uploads === -1 || uploadCount[0].count < tierLimits.uploads
+        },
+        youtube: {
+          current: youtubeCount[0].count,
+          limit: tierLimits.youtube,
+          canAdd: tierLimits.youtube === -1 || youtubeCount[0].count < tierLimits.youtube
+        }
+      });
+    } catch (error) {
+      console.error("Error checking exercise library limits:", error);
+      res.status(500).send("Error checking exercise library limits");
+    }
+  });
+
+  // Upload video/image to exercise library
+  const exerciseUpload = multer({
+    dest: "uploads/exercises/",
+    limits: {
+      fileSize: 100 * 1024 * 1024, // 100MB limit
+    },
+    fileFilter: (req, file, cb) => {
+      // Allow videos and images
+      const allowedTypes = /jpeg|jpg|png|gif|mp4|mov|avi|webm/;
+      const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+      const mimetype = allowedTypes.test(file.mimetype);
+      
+      if (mimetype && extname) {
+        return cb(null, true);
+      } else {
+        cb(new Error('Only video and image files are allowed'));
+      }
+    }
+  });
+
+  app.post("/api/exercise-library/upload", exerciseUpload.single('file'), async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      if (!req.file) {
+        return res.status(400).send("No file uploaded");
+      }
+      
+      const user = req.user!;
+      const { name, description, tags, isPublic } = req.body;
+      
+      // Check upload limits
+      const subscriptionTier = user.subscriptionTier || 'free';
+      const limits = {
+        free: 10,
+        pro: 50,
+        star: -1 // unlimited
+      };
+      
+      if (limits[subscriptionTier as keyof typeof limits] !== -1) {
+        const uploadCount = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(exerciseLibrary)
+          .where(and(
+            eq(exerciseLibrary.userId, user.id),
+            eq(exerciseLibrary.type, 'upload')
+          ));
+        
+        if (uploadCount[0].count >= limits[subscriptionTier as keyof typeof limits]) {
+          // Delete uploaded file
+          fs.unlinkSync(req.file.path);
+          return res.status(403).json({ 
+            error: "Upload limit reached",
+            message: `${subscriptionTier} users can upload up to ${limits[subscriptionTier as keyof typeof limits]} files`
+          });
+        }
+      }
+      
+      // Generate unique filename
+      const fileExtension = path.extname(req.file.originalname);
+      const uniqueFilename = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}${fileExtension}`;
+      const finalPath = path.join("uploads/exercises", uniqueFilename);
+      
+      // Move file to final location
+      fs.renameSync(req.file.path, finalPath);
+      
+      // Create exercise entry
+      const exerciseData: InsertExerciseLibrary = {
+        userId: user.id,
+        name: name || req.file.originalname,
+        description: description || null,
+        type: 'upload',
+        fileUrl: `/uploads/exercises/${uniqueFilename}`,
+        youtubeUrl: null,
+        youtubeVideoId: null,
+        thumbnailUrl: null,
+        fileSize: req.file.size,
+        mimeType: req.file.mimetype,
+        isPublic: isPublic === 'true',
+        tags: tags ? tags.split(',').map((tag: string) => tag.trim()) : []
+      };
+      
+      const [newExercise] = await db
+        .insert(exerciseLibrary)
+        .values(exerciseData)
+        .returning();
+      
+      res.status(201).json(newExercise);
+    } catch (error) {
+      console.error("Error uploading exercise file:", error);
+      if (req.file) {
+        // Clean up uploaded file on error
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (cleanupError) {
+          console.error("Error cleaning up uploaded file:", cleanupError);
+        }
+      }
+      res.status(500).send("Error uploading exercise file");
+    }
+  });
+
+  // Add YouTube video to exercise library
+  app.post("/api/exercise-library/youtube", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const user = req.user!;
+      const { name, description, youtubeUrl, tags, isPublic } = req.body;
+      
+      // Validate YouTube URL and extract video ID
+      const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+      const match = youtubeUrl.match(youtubeRegex);
+      
+      if (!match) {
+        return res.status(400).json({ error: "Invalid YouTube URL" });
+      }
+      
+      const videoId = match[1];
+      
+      // Check YouTube limits
+      const subscriptionTier = user.subscriptionTier || 'free';
+      const limits = {
+        free: 50,
+        pro: 100,
+        star: -1 // unlimited
+      };
+      
+      if (limits[subscriptionTier as keyof typeof limits] !== -1) {
+        const youtubeCount = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(exerciseLibrary)
+          .where(and(
+            eq(exerciseLibrary.userId, user.id),
+            eq(exerciseLibrary.type, 'youtube')
+          ));
+        
+        if (youtubeCount[0].count >= limits[subscriptionTier as keyof typeof limits]) {
+          return res.status(403).json({ 
+            error: "YouTube link limit reached",
+            message: `${subscriptionTier} users can add up to ${limits[subscriptionTier as keyof typeof limits]} YouTube videos`
+          });
+        }
+      }
+      
+      // Create exercise entry
+      const exerciseData: InsertExerciseLibrary = {
+        userId: user.id,
+        name: name || `YouTube Video - ${videoId}`,
+        description: description || null,
+        type: 'youtube',
+        fileUrl: null,
+        youtubeUrl,
+        youtubeVideoId: videoId,
+        thumbnailUrl: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+        fileSize: null,
+        mimeType: null,
+        isPublic: isPublic || false,
+        tags: tags ? tags.split(',').map((tag: string) => tag.trim()) : []
+      };
+      
+      const [newExercise] = await db
+        .insert(exerciseLibrary)
+        .values(exerciseData)
+        .returning();
+      
+      res.status(201).json(newExercise);
+    } catch (error) {
+      console.error("Error adding YouTube video:", error);
+      res.status(500).send("Error adding YouTube video");
+    }
+  });
+
+  // Share exercise with connections/athletes
+  app.post("/api/exercise-library/:exerciseId/share", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const user = req.user!;
+      const exerciseId = parseInt(req.params.exerciseId);
+      const { toUserIds, message } = req.body;
+      
+      // Verify exercise exists and belongs to user
+      const exercise = await db
+        .select()
+        .from(exerciseLibrary)
+        .where(eq(exerciseLibrary.id, exerciseId))
+        .limit(1);
+      
+      if (!exercise.length || exercise[0].userId !== user.id) {
+        return res.status(404).send("Exercise not found");
+      }
+      
+      // Create shares for each recipient
+      const shares = [];
+      for (const toUserId of toUserIds) {
+        const shareData: InsertExerciseShare = {
+          exerciseId,
+          fromUserId: user.id,
+          toUserId,
+          message: message || null
+        };
+        
+        const [newShare] = await db
+          .insert(exerciseShares)
+          .values(shareData)
+          .returning();
+        
+        shares.push(newShare);
+      }
+      
+      res.status(201).json(shares);
+    } catch (error) {
+      console.error("Error sharing exercise:", error);
+      res.status(500).send("Error sharing exercise");
+    }
+  });
+
+  // Get shared exercises received by user
+  app.get("/api/exercise-library/shared", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = 30;
+      const offset = (page - 1) * limit;
+      
+      const sharedExercises = await db
+        .select({
+          id: exerciseShares.id,
+          exercise: exerciseLibrary,
+          fromUser: {
+            id: sql`from_user.id`,
+            username: sql`from_user.username`,
+            name: sql`from_user.name`
+          },
+          message: exerciseShares.message,
+          createdAt: exerciseShares.createdAt
+        })
+        .from(exerciseShares)
+        .innerJoin(exerciseLibrary, eq(exerciseShares.exerciseId, exerciseLibrary.id))
+        .innerJoin(sql`users as from_user`, sql`exercise_shares.from_user_id = from_user.id`)
+        .where(eq(exerciseShares.toUserId, req.user!.id))
+        .orderBy(sql`${exerciseShares.createdAt} DESC`)
+        .limit(limit)
+        .offset(offset);
+      
+      res.json(sharedExercises);
+    } catch (error) {
+      console.error("Error fetching shared exercises:", error);
+      res.status(500).send("Error fetching shared exercises");
+    }
+  });
+
+  // Delete exercise from library
+  app.delete("/api/exercise-library/:exerciseId", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const exerciseId = parseInt(req.params.exerciseId);
+      const user = req.user!;
+      
+      // Get exercise to verify ownership and get file path
+      const exercise = await db
+        .select()
+        .from(exerciseLibrary)
+        .where(eq(exerciseLibrary.id, exerciseId))
+        .limit(1);
+      
+      if (!exercise.length || exercise[0].userId !== user.id) {
+        return res.status(404).send("Exercise not found");
+      }
+      
+      // Delete file if it's an upload
+      if (exercise[0].type === 'upload' && exercise[0].fileUrl) {
+        const filePath = path.join(process.cwd(), exercise[0].fileUrl);
+        try {
+          fs.unlinkSync(filePath);
+        } catch (fileError) {
+          console.error("Error deleting file:", fileError);
+        }
+      }
+      
+      // Delete from database
+      await db
+        .delete(exerciseLibrary)
+        .where(eq(exerciseLibrary.id, exerciseId));
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting exercise:", error);
+      res.status(500).send("Error deleting exercise");
     }
   });
 
