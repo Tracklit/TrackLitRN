@@ -65,6 +65,12 @@ export default function MessagesPage() {
     },
   });
 
+  // Fetch user details when userId is provided
+  const { data: targetUser } = useQuery({
+    queryKey: ["/api/users", targetUserId],
+    enabled: !!targetUserId,
+  });
+
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -77,10 +83,31 @@ export default function MessagesPage() {
     }
   }, [selectedConversation]);
 
+  // Auto-select conversation when userId is provided
+  useEffect(() => {
+    if (targetUserId && conversations.length > 0) {
+      const conversation = conversations.find(c => c.otherUser.id === targetUserId);
+      if (conversation) {
+        setSelectedConversation(conversation.id);
+      }
+    }
+  }, [targetUserId, conversations]);
+
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !selectedConversation) return;
+    if (!newMessage.trim()) return;
 
+    // Direct messaging with targetUserId
+    if (targetUserId && targetUser) {
+      sendMessageMutation.mutate({
+        receiverId: targetUserId,
+        content: newMessage.trim(),
+      });
+      return;
+    }
+
+    // Regular conversation messaging
+    if (!selectedConversation) return;
     const conversation = conversations.find(c => c.id === selectedConversation);
     if (conversation) {
       sendMessageMutation.mutate({
@@ -98,6 +125,113 @@ export default function MessagesPage() {
   const selectedConversationData = conversations.find(c => c.id === selectedConversation);
 
   if (!user) return null;
+
+  // Instagram-style direct chat when userId is provided
+  if (targetUserId && targetUser) {
+    return (
+      <div className="h-screen flex flex-col bg-[#010a18] pt-16">
+        {/* Instagram-style Header */}
+        <div className="p-4 border-b border-gray-700 flex items-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mr-3 text-gray-300 hover:text-white"
+            onClick={() => window.history.back()}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          
+          <Avatar className="h-10 w-10 mr-3">
+            <AvatarFallback name={targetUser.name} />
+          </Avatar>
+          
+          <div className="flex-1">
+            <h2 className="font-semibold text-base text-white">
+              {targetUser.name}
+            </h2>
+            <p className="text-sm text-gray-400">
+              @{targetUser.username}
+            </p>
+          </div>
+        </div>
+
+        {/* Messages Area */}
+        <div className="flex-1 overflow-y-auto p-4">
+          {/* User Profile Section */}
+          <div className="text-center py-8 mb-6">
+            <Avatar className="h-20 w-20 mx-auto mb-4">
+              <AvatarFallback name={targetUser.name} className="text-2xl" />
+            </Avatar>
+            <h3 className="font-semibold text-lg text-white">{targetUser.name}</h3>
+            <p className="text-gray-400">@{targetUser.username}</p>
+            {targetUser.bio && (
+              <p className="text-sm text-gray-400 mt-2 max-w-xs mx-auto">
+                {targetUser.bio}
+              </p>
+            )}
+            <p className="text-xs text-gray-500 mt-2">
+              You're connected with this athlete
+            </p>
+          </div>
+
+          {/* Messages */}
+          <div className="space-y-4">
+            {messages.length === 0 ? (
+              <div className="text-center text-gray-400 py-4">
+                <p className="text-sm">Start the conversation!</p>
+              </div>
+            ) : (
+              messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={cn(
+                    "flex",
+                    message.senderId === user.id ? "justify-end" : "justify-start"
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "max-w-xs lg:max-w-md px-4 py-2 rounded-2xl",
+                      message.senderId === user.id
+                        ? "bg-blue-500 text-white"
+                        : "bg-gray-700 text-white"
+                    )}
+                  >
+                    <p className="text-sm">{message.content}</p>
+                  </div>
+                </div>
+              ))
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        </div>
+
+        {/* Instagram-style Message Input */}
+        <div className="p-4 border-t border-gray-700">
+          <form onSubmit={handleSendMessage} className="flex items-center gap-3">
+            <div className="flex-1 relative">
+              <Input
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Message..."
+                className="rounded-full border-gray-600 bg-gray-800/50 px-4 py-2 text-white placeholder-gray-400"
+                disabled={sendMessageMutation.isPending}
+              />
+            </div>
+            <Button 
+              type="submit" 
+              disabled={!newMessage.trim() || sendMessageMutation.isPending}
+              variant="ghost"
+              size="sm"
+              className="text-blue-400 font-semibold hover:text-blue-300"
+            >
+              Send
+            </Button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex bg-[#010a18] pt-16">
