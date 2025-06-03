@@ -134,6 +134,7 @@ export default function MessagesPage() {
 
   // Instagram-style direct chat when userId is provided
   if (targetUserId && targetUser && typeof targetUser === 'object' && 'name' in targetUser) {
+    const user = targetUser as any; // Type assertion for user data
     return (
       <div className="h-screen flex flex-col bg-[#010a18] pt-16">
         {/* Instagram-style Header */}
@@ -148,15 +149,15 @@ export default function MessagesPage() {
           </Button>
           
           <Avatar className="h-10 w-10 mr-3">
-            <AvatarFallback name={targetUser.name} />
+            <AvatarFallback name={user.name} />
           </Avatar>
           
           <div className="flex-1">
             <h2 className="font-semibold text-base text-white">
-              {targetUser.name}
+              {user.name}
             </h2>
             <p className="text-sm text-gray-400">
-              @{targetUser.username}
+              @{user.username}
             </p>
           </div>
         </div>
@@ -166,13 +167,13 @@ export default function MessagesPage() {
           {/* User Profile Section */}
           <div className="text-center py-8 mb-6">
             <Avatar className="h-20 w-20 mx-auto mb-4">
-              <AvatarFallback name={targetUser.name} className="text-2xl" />
+              <AvatarFallback name={user.name} className="text-2xl" />
             </Avatar>
-            <h3 className="font-semibold text-lg text-white">{targetUser.name}</h3>
-            <p className="text-gray-400">@{targetUser.username}</p>
-            {targetUser.bio && (
+            <h3 className="font-semibold text-lg text-white">{user.name}</h3>
+            <p className="text-gray-400">@{user.username}</p>
+            {user.bio && (
               <p className="text-sm text-gray-400 mt-2 max-w-xs mx-auto">
-                {targetUser.bio}
+                {user.bio}
               </p>
             )}
             <p className="text-xs text-gray-500 mt-2">
