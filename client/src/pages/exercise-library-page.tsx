@@ -60,39 +60,7 @@ export default function ExerciseLibraryPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Force dialog to stay centered
-  useEffect(() => {
-    if (!shareDialogOpen && !libraryShareDialogOpen) return;
 
-    const observer = new MutationObserver(() => {
-      const dialog = document.querySelector('[data-radix-dialog-content]') as HTMLElement;
-      if (dialog) {
-        const rect = dialog.getBoundingClientRect();
-        const centerX = window.innerWidth / 2;
-        const centerY = window.innerHeight / 2;
-        const dialogCenterX = rect.left + rect.width / 2;
-        const dialogCenterY = rect.top + rect.height / 2;
-        
-        // If dialog has moved from center, reposition it
-        if (Math.abs(dialogCenterX - centerX) > 10 || Math.abs(dialogCenterY - centerY) > 10) {
-          dialog.style.position = 'fixed';
-          dialog.style.top = '50%';
-          dialog.style.left = '50%';
-          dialog.style.transform = 'translate(-50%, -50%)';
-          dialog.style.zIndex = '9999';
-        }
-      }
-    });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['style', 'class']
-    });
-
-    return () => observer.disconnect();
-  }, [shareDialogOpen, libraryShareDialogOpen]);
 
   // Fetch exercise library
   const { data: libraryData, isLoading } = useQuery({
@@ -505,117 +473,130 @@ export default function ExerciseLibraryPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Share Dialog */}
-        <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
-          <DialogContent className="max-w-md bg-[#010a18] border border-gray-700 shadow-lg sm:max-h-[85vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="text-white">Share Exercise</DialogTitle>
-            </DialogHeader>
+        {/* Custom Share Modal */}
+        {shareDialogOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <div 
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+              onClick={() => setShareDialogOpen(false)}
+            />
             
-            {selectedExercise && (
-              <div className="space-y-4">
-                <div className="text-sm text-gray-400">
-                  Sharing: {selectedExercise.name}
+            {/* Modal Content */}
+            <div className="relative bg-[#010a18] border border-gray-700 rounded-lg shadow-xl max-w-md w-full max-h-[85vh] overflow-y-auto">
+              <div className="p-6 space-y-4">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-white">Share Exercise</h2>
+                  <button
+                    onClick={() => setShareDialogOpen(false)}
+                    className="text-gray-400 hover:text-white text-xl leading-none"
+                  >
+                    ×
+                  </button>
                 </div>
                 
-                <Tabs defaultValue="link" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 bg-gray-800">
-                    <TabsTrigger 
-                      value="link" 
-                      className="data-[state=active]:bg-gray-700 data-[state=active]:text-white text-gray-400"
-                    >
-                      Copy Link
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="internal"
-                      className="data-[state=active]:bg-gray-700 data-[state=active]:text-white text-gray-400"
-                    >
-                      Send Message
-                    </TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="link" className="space-y-4 mt-4">
-                    <div className="flex items-center space-x-2">
-                      <Input 
-                        value={`${window.location.origin}/exercise/${selectedExercise.id}`}
-                        readOnly
-                        className="flex-1 bg-gray-800 border-gray-600 text-white"
-                      />
-                      <Button
-                        size="sm"
-                        onClick={() => copyExerciseLink(selectedExercise.id)}
-                        disabled={linkCopied}
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
-                      >
-                        {linkCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                      </Button>
+                {selectedExercise && (
+                  <div className="space-y-4">
+                    <div className="text-sm text-gray-400">
+                      Sharing: {selectedExercise.name}
                     </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="internal" className="space-y-4 mt-4">
-                    <div>
-                      <Label className="text-white">Send to Connections & Athletes</Label>
-                      <div className="mt-2 max-h-32 overflow-y-auto space-y-2 bg-gray-800 p-3 rounded-md border border-gray-700">
-                        {shareContacts?.length > 0 ? (
-                          // Use Set to remove duplicates based on contact ID
-                          Array.from(new Map(shareContacts.map((contact: any) => [contact.id, contact])).values())
-                            .map((contact: any) => (
-                              <div key={`share-${contact.id}`} className="flex items-center space-x-2">
-                                <input
-                                  type="checkbox"
-                                  id={`share-contact-${contact.id}`}
-                                  checked={selectedRecipients.includes(contact.id)}
-                                  onChange={(e) => {
-                                    if (e.target.checked) {
-                                      setSelectedRecipients(prev => [...prev, contact.id]);
-                                    } else {
-                                      setSelectedRecipients(prev => prev.filter(id => id !== contact.id));
-                                    }
-                                  }}
-                                  className="rounded text-blue-600"
-                                />
-                                <label htmlFor={`share-contact-${contact.id}`} className="text-sm text-white cursor-pointer">
-                                  {contact.name || contact.username}
-                                </label>
+                    
+                    <Tabs defaultValue="link" className="w-full">
+                      <TabsList className="grid w-full grid-cols-2 bg-gray-800">
+                        <TabsTrigger 
+                          value="link" 
+                          className="data-[state=active]:bg-gray-700 data-[state=active]:text-white text-gray-400"
+                        >
+                          Copy Link
+                        </TabsTrigger>
+                        <TabsTrigger 
+                          value="internal"
+                          className="data-[state=active]:bg-gray-700 data-[state=active]:text-white text-gray-400"
+                        >
+                          Send Message
+                        </TabsTrigger>
+                      </TabsList>
+                      
+                      <TabsContent value="link" className="space-y-4 mt-4">
+                        <div className="flex items-center space-x-2">
+                          <Input 
+                            value={`${window.location.origin}/exercise/${selectedExercise.id}`}
+                            readOnly
+                            className="flex-1 bg-gray-800 border-gray-600 text-white"
+                          />
+                          <Button
+                            size="sm"
+                            onClick={() => copyExerciseLink(selectedExercise.id)}
+                            disabled={linkCopied}
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                          >
+                            {linkCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                      </TabsContent>
+                      
+                      <TabsContent value="internal" className="space-y-4 mt-4">
+                        <div>
+                          <Label className="text-white">Send to Connections & Athletes</Label>
+                          <div className="mt-2 max-h-32 overflow-y-auto space-y-2 bg-gray-800 p-3 rounded-md border border-gray-700">
+                            {shareContacts?.length > 0 ? (
+                              Array.from(new Map(shareContacts.map((contact: any) => [contact.id, contact])).values())
+                                .map((contact: any) => (
+                                  <div key={`share-${contact.id}`} className="flex items-center space-x-2">
+                                    <input
+                                      type="checkbox"
+                                      id={`share-contact-${contact.id}`}
+                                      checked={selectedRecipients.includes(contact.id)}
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          setSelectedRecipients(prev => [...prev, contact.id]);
+                                        } else {
+                                          setSelectedRecipients(prev => prev.filter(id => id !== contact.id));
+                                        }
+                                      }}
+                                      className="rounded text-blue-600"
+                                    />
+                                    <label htmlFor={`share-contact-${contact.id}`} className="text-sm text-white cursor-pointer">
+                                      {contact.name || contact.username}
+                                    </label>
+                                  </div>
+                                ))
+                            ) : (
+                              <div className="text-sm text-gray-400 text-center py-2">
+                                No connections available
                               </div>
-                            ))
-                        ) : (
-                          <div className="text-sm text-gray-400 text-center py-2">
-                            No connections available
+                            )}
                           </div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="shareMessage" className="text-white">Message (Optional)</Label>
-                      <Textarea
-                        id="shareMessage"
-                        value={shareMessage}
-                        onChange={(e) => setShareMessage(e.target.value)}
-                        placeholder="Add a message to share with this exercise..."
-                        className="mt-1 bg-gray-800 border-gray-600 text-white placeholder-gray-400"
-                      />
-                    </div>
-                    
-                    <Button 
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleShareInternal();
-                      }}
-                      disabled={selectedRecipients.length === 0 || shareMutation.isPending}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                    >
-                      <Send className="h-4 w-4 mr-2" />
-                      {shareMutation.isPending ? "Sending..." : "Send Message"}
-                    </Button>
-                  </TabsContent>
-                </Tabs>
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="shareMessage" className="text-white">Message (Optional)</Label>
+                          <Textarea
+                            id="shareMessage"
+                            value={shareMessage}
+                            onChange={(e) => setShareMessage(e.target.value)}
+                            placeholder="Add a message to share with this exercise..."
+                            className="mt-1 bg-gray-800 border-gray-600 text-white placeholder-gray-400"
+                          />
+                        </div>
+                        
+                        <Button 
+                          onClick={handleShareInternal}
+                          disabled={selectedRecipients.length === 0 || shareMutation.isPending}
+                          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                          <Send className="h-4 w-4 mr-2" />
+                          {shareMutation.isPending ? "Sending..." : "Send Message"}
+                        </Button>
+                      </TabsContent>
+                    </Tabs>
+                  </div>
+                )}
               </div>
-            )}
-          </DialogContent>
-        </Dialog>
+            </div>
+          </div>
+        )}
 
         {/* Library Share Dialog - Simplified */}
         <Dialog open={libraryShareDialogOpen} onOpenChange={setLibraryShareDialogOpen}>
