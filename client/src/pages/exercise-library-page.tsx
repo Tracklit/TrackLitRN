@@ -60,6 +60,25 @@ export default function ExerciseLibraryPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Prevent viewport changes when dialogs are open
+  useEffect(() => {
+    if (shareDialogOpen || libraryShareDialogOpen) {
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+
+      return () => {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [shareDialogOpen, libraryShareDialogOpen]);
+
   // Fetch exercise library
   const { data: libraryData, isLoading } = useQuery({
     queryKey: ['/api/exercise-library', currentPage],
@@ -261,30 +280,11 @@ export default function ExerciseLibraryPage() {
 
   const handleShareInternal = () => {
     if (selectedExercise && selectedRecipients.length > 0) {
-      // Prevent viewport changes during button interaction
-      const scrollY = window.scrollY;
-      const body = document.body;
-      const originalPosition = body.style.position;
-      const originalTop = body.style.top;
-      const originalWidth = body.style.width;
-      
-      body.style.position = 'fixed';
-      body.style.top = `-${scrollY}px`;
-      body.style.width = '100%';
-      
       shareMutation.mutate({
         exerciseId: selectedExercise.id,
         recipientIds: selectedRecipients,
         message: shareMessage
       });
-      
-      // Restore original body styles after a brief delay
-      setTimeout(() => {
-        body.style.position = originalPosition;
-        body.style.top = originalTop;
-        body.style.width = originalWidth;
-        window.scrollTo(0, scrollY);
-      }, 150);
     }
   };
 
