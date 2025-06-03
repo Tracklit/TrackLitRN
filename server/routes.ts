@@ -6094,5 +6094,114 @@ Keep the response professional, evidence-based, and specific to track and field 
     }
   });
 
+  // Library Sharing Status API
+  app.get("/api/exercise-library/sharing-status", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const user = req.user;
+      const libraryShares = await dbStorage.getLibraryShares(user.id);
+      
+      res.json({
+        currentShares: libraryShares.length,
+        sharedWith: libraryShares.map(share => share.recipientId),
+        shares: libraryShares
+      });
+    } catch (error) {
+      console.error("Error fetching library sharing status:", error);
+      res.status(500).json({ error: "Failed to fetch sharing status" });
+    }
+  });
+
+  // Share Full Library API
+  app.post("/api/exercise-library/share-library", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const { recipientIds, useSpikes = false } = req.body;
+      const user = req.user;
+      
+      // Determine subscription tier
+      const isStarUser = user.isPremium;
+      const isProUser = user.isProUser;
+      const isFreeUser = !isStarUser && !isProUser;
+      
+      // Check limits and permissions
+      const currentShares = await dbStorage.getLibraryShares(user.id);
+      const currentShareCount = currentShares.length;
+      
+      if (isFreeUser && !useSpikes) {
+        return res.status(403).json({ error: "Free users must use Spikes to share library access" });
+      }
+      
+      if (isFreeUser && useSpikes && (user.spikes || 0) < 100) {
+        return res.status(403).json({ error: "Insufficient Spikes. Need 100 Spikes to share library access" });
+      }
+      
+      if (isProUser && currentShareCount + recipientIds.length > 10) {
+        return res.status(403).json({ error: "Pro plan allows sharing with up to 10 people. Upgrade to Star for unlimited sharing." });
+      }
+      
+      // Process the library sharing
+      for (const recipientId of recipientIds) {
+        // Check if already shared
+        const existingShare = currentShares.find(share => share.recipientId === recipientId);
+        if (existingShare) continue;
+        
+        // Create library share record
+        await dbStorage.createLibraryShare({
+          sharerId: user.id,
+          recipientId,
+          sharedAt: new Date(),
+          tier: isStarUser ? 'star' : isProUser ? 'pro' : 'free'
+        });
+        
+        // Create or get conversation
+        const conversation = await dbStorage.createOrGetConversation(user.id, recipientId);
+        
+        // Send notification message
+        await dbStorage.sendMessage({
+          conversationId: conversation.id,
+          senderId: user.id,
+          content: `${user.username} has shared their full Exercise Library with you! You now have access to all their training videos and exercises.`
+        });
+        
+        // Create notification
+        await dbStorage.createNotification({
+          userId: recipientId,
+          type: "library_shared",
+          title: "Exercise Library Shared",
+          message: `${user.username} shared their full exercise library with you`,
+          actionUrl: "/tools/exercise-library",
+          isRead: false
+        });
+      }
+      
+      // Deduct spikes for free users
+      if (isFreeUser && useSpikes) {
+        await dbStorage.deductSpikesFromUser(
+          user.id, 
+          100, 
+          'library_sharing', 
+          null, 
+          `Shared library access with ${recipientIds.length} people`
+        );
+      }
+      
+      res.json({ 
+        success: true, 
+        message: "Library access shared successfully",
+        spikesUsed: isFreeUser && useSpikes ? 100 : 0
+      });
+    } catch (error) {
+      console.error("Error sharing library:", error);
+      res.status(500).json({ error: "Failed to share library access" });
+    }
+  });
+
   return httpServer;
 }

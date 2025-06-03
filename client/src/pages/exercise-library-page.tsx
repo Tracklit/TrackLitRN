@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Upload, Youtube, Send, Play, Trash2, ExternalLink, MoreVertical, Grid3X3, List, Copy, Check } from "lucide-react";
+import { Plus, Upload, Youtube, Send, Play, Trash2, ExternalLink, MoreVertical, Grid3X3, List, Copy, Check, Users, Lock, Crown } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 
@@ -55,6 +55,8 @@ export default function ExerciseLibraryPage() {
   const [linkCopied, setLinkCopied] = useState(false);
   const [selectedRecipients, setSelectedRecipients] = useState<number[]>([]);
   const [shareMessage, setShareMessage] = useState("");
+  const [libraryShareDialogOpen, setLibraryShareDialogOpen] = useState(false);
+  const [selectedLibraryRecipients, setSelectedLibraryRecipients] = useState<number[]>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -74,7 +76,20 @@ export default function ExerciseLibraryPage() {
   const { data: shareContacts } = useQuery({
     queryKey: ['/api/share-contacts'],
     queryFn: () => apiRequest('GET', '/api/connections').then(res => res.json()),
-    enabled: shareDialogOpen
+    enabled: shareDialogOpen || libraryShareDialogOpen
+  });
+
+  // Fetch user data for subscription info
+  const { data: userData } = useQuery({
+    queryKey: ['/api/user'],
+    queryFn: () => apiRequest('GET', '/api/user').then(res => res.json())
+  });
+
+  // Fetch library sharing limits
+  const { data: librarySharingData } = useQuery({
+    queryKey: ['/api/exercise-library/sharing-status'],
+    queryFn: () => apiRequest('GET', '/api/exercise-library/sharing-status').then(res => res.json()),
+    enabled: libraryShareDialogOpen
   });
 
   // Upload mutation
@@ -166,6 +181,27 @@ export default function ExerciseLibraryPage() {
     }
   });
 
+  // Library sharing mutation
+  const libraryShareMutation = useMutation({
+    mutationFn: async (data: { recipientIds: number[]; useSpikes?: boolean }) => {
+      const response = await apiRequest('POST', '/api/exercise-library/share-library', data);
+      return response.json();
+    },
+    onSuccess: () => {
+      setLibraryShareDialogOpen(false);
+      setSelectedLibraryRecipients([]);
+      queryClient.invalidateQueries({ queryKey: ['/api/exercise-library/sharing-status'] });
+      toast({ title: "Success", description: "Library access shared successfully!" });
+    },
+    onError: (error: Error) => {
+      toast({ 
+        title: "Share Failed", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    }
+  });
+
   const handleUpload = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -237,6 +273,37 @@ export default function ExerciseLibraryPage() {
     }
   };
 
+  const handleLibraryShare = (useSpikes = false) => {
+    if (selectedLibraryRecipients.length > 0) {
+      libraryShareMutation.mutate({
+        recipientIds: selectedLibraryRecipients,
+        useSpikes
+      });
+    }
+  };
+
+  const getSubscriptionTier = () => {
+    if (!userData) return 'free';
+    if (userData.isPremium) return 'star';
+    if (userData.isProUser) return 'pro';
+    return 'free';
+  };
+
+  const getLibraryShareLimit = () => {
+    const tier = getSubscriptionTier();
+    switch (tier) {
+      case 'pro': return 10;
+      case 'star': return -1; // unlimited
+      default: return 0; // free users need spikes
+    }
+  };
+
+  const canShareLibrary = () => {
+    const tier = getSubscriptionTier();
+    if (tier === 'pro' || tier === 'star') return true;
+    return (userData?.spikes || 0) >= 100; // Free users need 100 spikes
+  };
+
   const formatFileSize = (bytes: number | null) => {
     if (!bytes) return '';
     const mb = bytes / (1024 * 1024);
@@ -291,17 +358,42 @@ export default function ExerciseLibraryPage() {
               </Button>
             </div>
             
-            <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
+            <div className="flex gap-2">
+              <Button onClick={() => setUploadDialogOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Video
               </Button>
-            </DialogTrigger>
-            {uploadDialogOpen && (
-              <div className="fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-            )}
-            <DialogContent className="fixed left-[50%] top-[50%] z-50 max-w-md translate-x-[-50%] translate-y-[-50%] bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] border rounded-lg">
+
+              <Button 
+                variant="outline"
+                onClick={() => setLibraryShareDialogOpen(true)}
+                disabled={!canShareLibrary()}
+                className="relative"
+              >
+                {getSubscriptionTier() === 'star' ? (
+                  <Crown className="h-4 w-4 mr-2 text-yellow-500" />
+                ) : getSubscriptionTier() === 'pro' ? (
+                  <Users className="h-4 w-4 mr-2 text-blue-500" />
+                ) : (
+                  <Lock className="h-4 w-4 mr-2 text-gray-400" />
+                )}
+                Share Library
+                {getSubscriptionTier() === 'free' && (
+                  <Badge variant="secondary" className="ml-2 text-xs">
+                    100 Spikes
+                  </Badge>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Upload Dialog */}
+        <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+          {uploadDialogOpen && (
+            <div className="fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+          )}
+          <DialogContent className="fixed left-[50%] top-[50%] z-50 max-w-md translate-x-[-50%] translate-y-[-50%] bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] border rounded-lg">
               <DialogHeader>
                 <DialogTitle>Add Video</DialogTitle>
               </DialogHeader>
@@ -476,7 +568,124 @@ export default function ExerciseLibraryPage() {
               )}
             </DialogContent>
           </Dialog>
-          </div>
+
+          {/* Library Share Dialog */}
+          <Dialog open={libraryShareDialogOpen} onOpenChange={setLibraryShareDialogOpen}>
+            {libraryShareDialogOpen && (
+              <div className="fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+            )}
+            <DialogContent className="fixed left-[50%] top-[50%] z-50 max-w-md translate-x-[-50%] translate-y-[-50%] bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] border rounded-lg">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  {getSubscriptionTier() === 'star' ? (
+                    <Crown className="h-5 w-5 text-yellow-500" />
+                  ) : getSubscriptionTier() === 'pro' ? (
+                    <Users className="h-5 w-5 text-blue-500" />
+                  ) : (
+                    <Lock className="h-5 w-5 text-gray-400" />
+                  )}
+                  Share Full Library Access
+                </DialogTitle>
+              </DialogHeader>
+              
+              <div className="space-y-4">
+                {/* Subscription Status */}
+                <div className="p-3 rounded-lg border bg-muted/50">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Your Plan:</span>
+                    <Badge variant={getSubscriptionTier() === 'star' ? 'default' : getSubscriptionTier() === 'pro' ? 'secondary' : 'outline'}>
+                      {getSubscriptionTier().toUpperCase()}
+                    </Badge>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {getSubscriptionTier() === 'star' && "Unlimited library sharing"}
+                    {getSubscriptionTier() === 'pro' && `Share with up to ${getLibraryShareLimit()} people`}
+                    {getSubscriptionTier() === 'free' && "Requires 100 Spikes to unlock sharing"}
+                  </div>
+                </div>
+
+                {/* Current Usage (if applicable) */}
+                {librarySharingData && (getSubscriptionTier() === 'pro' || getSubscriptionTier() === 'star') && (
+                  <div className="text-sm">
+                    <div className="flex justify-between">
+                      <span>Shared with:</span>
+                      <span>{librarySharingData.currentShares || 0}{getLibraryShareLimit() !== -1 ? `/${getLibraryShareLimit()}` : ''}</span>
+                    </div>
+                    {getSubscriptionTier() === 'pro' && (
+                      <Progress 
+                        value={(librarySharingData.currentShares || 0) / getLibraryShareLimit() * 100} 
+                        className="h-2 mt-1"
+                      />
+                    )}
+                  </div>
+                )}
+
+                {/* Recipient Selection */}
+                <div>
+                  <Label>Share with Connections & Athletes</Label>
+                  <div className="mt-2 max-h-32 overflow-y-auto space-y-2">
+                    {shareContacts?.filter((contact: any) => 
+                      !librarySharingData?.sharedWith?.includes(contact.id)
+                    ).map((contact: any) => (
+                      <div key={contact.id} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id={`library-contact-${contact.id}`}
+                          checked={selectedLibraryRecipients.includes(contact.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedLibraryRecipients(prev => [...prev, contact.id]);
+                            } else {
+                              setSelectedLibraryRecipients(prev => prev.filter(id => id !== contact.id));
+                            }
+                          }}
+                          className="rounded"
+                        />
+                        <label htmlFor={`library-contact-${contact.id}`} className="text-sm">
+                          {contact.username}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-2">
+                  {getSubscriptionTier() === 'free' ? (
+                    <Button 
+                      onClick={() => handleLibraryShare(true)}
+                      disabled={selectedLibraryRecipients.length === 0 || libraryShareMutation.isPending || (userData?.spikes || 0) < 100}
+                      className="flex-1"
+                    >
+                      <Users className="h-4 w-4 mr-2" />
+                      {libraryShareMutation.isPending ? "Sharing..." : "Use 100 Spikes to Share"}
+                    </Button>
+                  ) : (
+                    <Button 
+                      onClick={() => handleLibraryShare()}
+                      disabled={
+                        selectedLibraryRecipients.length === 0 || 
+                        libraryShareMutation.isPending ||
+                        (getSubscriptionTier() === 'pro' && (librarySharingData?.currentShares || 0) + selectedLibraryRecipients.length > getLibraryShareLimit())
+                      }
+                      className="flex-1"
+                    >
+                      <Users className="h-4 w-4 mr-2" />
+                      {libraryShareMutation.isPending ? "Sharing..." : "Share Library Access"}
+                    </Button>
+                  )}
+                </div>
+
+                {/* Warning for Pro users near limit */}
+                {getSubscriptionTier() === 'pro' && librarySharingData && 
+                 (librarySharingData.currentShares || 0) + selectedLibraryRecipients.length > getLibraryShareLimit() && (
+                  <p className="text-xs text-destructive">
+                    Selection exceeds your Pro plan limit. Upgrade to Star for unlimited sharing.
+                  </p>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Exercise Grid */}
