@@ -1183,10 +1183,11 @@ export default function PracticePage() {
             </div>
           </CardContent>
         </Card>
-        
-        {/* Media Upload Section - Collapsible */}
-        <Collapsible className="mb-6 border border-border/30 rounded-md overflow-hidden">
-          <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-3 bg-muted/30 hover:bg-muted/40 transition-colors">
+      )}
+      
+      {/* Media Upload Section - Collapsible */}
+      <Collapsible className="mb-6 border border-border/30 rounded-md overflow-hidden">
+        <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-3 bg-muted/30 hover:bg-muted/40 transition-colors">
             <div className="flex items-center gap-2">
               <Camera className="h-4 w-4 text-muted-foreground" />
               <h3 className="font-medium text-sm">Media</h3>
