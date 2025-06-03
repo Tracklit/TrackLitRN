@@ -351,7 +351,12 @@ function PracticePage() {
                     <div className="space-y-3">
                       <div className="p-3 bg-background/80 rounded-md border border-border/50">
                         <div className="space-y-3">
-                          {activeSessionData.isRestDay || !activeSessionData.date || activeSessionData.date.trim() === '' ? (
+                          {activeSessionData.isRestDay || 
+                           !activeSessionData.date || 
+                           activeSessionData.date.trim() === '' ||
+                           (!activeSessionData.shortDistanceWorkout && 
+                            !activeSessionData.mediumDistanceWorkout && 
+                            !activeSessionData.longDistanceWorkout) ? (
                             <div className="p-3 bg-muted/30 rounded-md">
                               <p className="text-center font-medium">Rest Day</p>
                               <p className="text-sm text-center text-muted-foreground">
