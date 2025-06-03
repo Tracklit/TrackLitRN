@@ -565,6 +565,145 @@ export default function PracticePage() {
   
   // We're using direct inline calculation now, so no need for this effect
   
+  // Function to save the workout and journal entry directly to database
+  async function saveWorkout() {
+    if (!user) return;
+    
+    setIsSaving(true);
+    console.log('Starting workout save process...');
+    
+    try {
+      // Mark session as completed if needed
+      if (selectedProgram && activeSessionData) {
+        await fetch(`/api/programs/${selectedProgram.programId}/sessions/${activeSessionData.dayNumber}/complete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      // Get today's date for title
+      const today = new Date();
+      const formattedDate = today.toLocaleDateString('en-CA'); // YYYY-MM-DD
+      const entryTitle = `${activeSessionData?.title || 'Training'} - ${formattedDate}`;
+      
+      // Check if there's already an entry for this session today
+      const checkResponse = await fetch('/api/journal');
+      if (checkResponse.ok) {
+        const existingEntries = await checkResponse.json();
+        const duplicateEntry = existingEntries.find((entry: any) => entry.title === entryTitle);
+        
+        if (duplicateEntry) {
+          // Use a custom dialog instead of browser confirm
+          setIsSaving(false);
+          
+          // Create and show a custom dialog with our UI
+          const confirmCreate = await new Promise<boolean>((resolve) => {
+            // Create custom dialog
+            const dialog = document.createElement('div');
+            dialog.style.cssText = `
+              position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+              background: rgba(0,0,0,0.5); z-index: 9999; 
+              display: flex; align-items: center; justify-content: center;
+            `;
+            
+            const content = document.createElement('div');
+            content.style.cssText = `
+              background: white; padding: 24px; border-radius: 8px; 
+              max-width: 400px; margin: 20px;
+            `;
+            
+            content.innerHTML = `
+              <h3 style="margin: 0 0 16px 0; font-weight: 600;">Duplicate Entry Found</h3>
+              <p style="margin: 0 0 20px 0; color: #666;">An entry for "${entryTitle}" already exists. Do you want to create another one?</p>
+              <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button id="cancel-btn" style="padding: 8px 16px; border: 1px solid #ccc; background: white; border-radius: 4px; cursor: pointer;">Cancel</button>
+                <button id="confirm-btn" style="padding: 8px 16px; border: none; background: #007bff; color: white; border-radius: 4px; cursor: pointer;">Create Anyway</button>
+              </div>
+            `;
+            
+            dialog.appendChild(content);
+            document.body.appendChild(dialog);
+            
+            document.getElementById('cancel-btn')?.addEventListener('click', () => {
+              document.body.removeChild(dialog);
+              resolve(false);
+            });
+            
+            document.getElementById('confirm-btn')?.addEventListener('click', () => {
+              document.body.removeChild(dialog);
+              resolve(true);
+            });
+          });
+          
+          if (!confirmCreate) {
+            return;
+          }
+          
+          setIsSaving(true);
+        }
+      }
+
+      // Create journal entry object
+      const journalEntry = {
+        title: entryTitle,
+        content: diaryNotes || 'No notes for this session.',
+        mood: moodValue,
+        workoutData: {
+          program: selectedProgram?.program?.title || 'Training Session',
+          session: activeSessionData?.title || 'Session',
+          dayNumber: activeSessionData?.dayNumber || 1,
+          exercises: activeSessionData?.exercises || [],
+          moodRating: moodValue,
+          notes: diaryNotes,
+          completedAt: new Date().toISOString(),
+          // Include splits data if available
+          splitsData: sessionData?.splits || [],
+          timingData: sessionData?.timing || {}
+        }
+      };
+
+      console.log('Saving journal entry:', journalEntry);
+
+      // Save to journal
+      const response = await fetch('/api/journal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(journalEntry)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(`Failed to save journal entry: ${errorData}`);
+      }
+
+      console.log('Journal entry saved successfully');
+
+      // Show success message
+      toast({
+        title: "Workout Saved!",
+        description: "Your training session has been saved to your journal.",
+      });
+
+      // Reset form
+      setDiaryNotes('');
+      setMoodValue(7);
+      setSessionData({}); 
+      
+      // Show completion modal
+      setSessionCompleteOpen(true);
+
+    } catch (error) {
+      console.error('Error saving workout:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to save workout. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  }
+  
   return (
     <PageContainer
       breadcrumbs={[
@@ -1482,37 +1621,6 @@ export default function PracticePage() {
       </Dialog>
     </PageContainer>
   );
-  
-  // Function to save the workout and journal entry directly to database
-  async function saveWorkout() {
-    if (!user) return;
-    
-    setIsSaving(true);
-    console.log('Starting workout save process...');
-    
-    try {
-      // Mark session as completed if needed
-      if (selectedProgram && activeSessionData) {
-        await fetch(`/api/programs/${selectedProgram.programId}/sessions/${activeSessionData.dayNumber}/complete`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        });
-      }
-
-      // Get today's date for title
-      const today = new Date();
-      const formattedDate = today.toLocaleDateString('en-CA'); // YYYY-MM-DD
-      const entryTitle = `${activeSessionData?.title || 'Training'} - ${formattedDate}`;
-      
-      // Check if there's already an entry for this session today
-      const checkResponse = await fetch('/api/journal');
-      if (checkResponse.ok) {
-        const existingEntries = await checkResponse.json();
-        const duplicateEntry = existingEntries.find(entry => entry.title === entryTitle);
-        
-        if (duplicateEntry) {
-          // Use a custom dialog instead of browser confirm
-          setIsSaving(false);
           
           // Create and show a custom dialog with our UI
           const confirmCreate = await new Promise<boolean>((resolve) => {
