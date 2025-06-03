@@ -326,7 +326,7 @@ export default function ExerciseLibraryPage() {
         ) : libraryData?.exercises?.length > 0 ? (
           <>
 {viewMode === 'grid' ? (
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 {libraryData.exercises.map((exercise: ExerciseLibraryItem) => (
                   <Card key={exercise.id} className="group hover:shadow-lg transition-shadow">
                     <div className="relative aspect-video overflow-hidden rounded-t-lg">
@@ -347,15 +347,7 @@ export default function ExerciseLibraryPage() {
                           <Play className="h-4 w-4" />
                         </Button>
                       </div>
-                      
-                      {/* Type badge */}
-                      <Badge 
-                        variant={exercise.type === 'youtube' ? 'destructive' : 'secondary'}
-                        className="absolute top-2 right-2"
-                      >
-                        {exercise.type === 'youtube' ? <Youtube className="h-3 w-3 mr-1" /> : <Upload className="h-3 w-3 mr-1" />}
-                        {exercise.type}
-                      </Badge>
+
                     </div>
                     
                     <CardContent className="p-4">
@@ -420,15 +412,7 @@ export default function ExerciseLibraryPage() {
                             <Play className="h-3 w-3" />
                           </Button>
                         </div>
-                        
-                        {/* Type badge */}
-                        <Badge 
-                          variant={exercise.type === 'youtube' ? 'destructive' : 'secondary'}
-                          className="absolute top-1 right-1 text-xs"
-                        >
-                          {exercise.type === 'youtube' ? <Youtube className="h-2 w-2 mr-1" /> : <Upload className="h-2 w-2 mr-1" />}
-                          {exercise.type}
-                        </Badge>
+
                       </div>
                       
                       <div className="flex-1 min-w-0">
