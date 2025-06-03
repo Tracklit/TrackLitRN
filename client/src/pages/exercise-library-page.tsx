@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Upload, Youtube, Share2, Play, Trash2, ExternalLink, MoreVertical, Grid3X3, List } from "lucide-react";
+import { Plus, Upload, Youtube, Send, Play, Trash2, ExternalLink, MoreVertical, Grid3X3, List, Copy, Check } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 
@@ -52,6 +52,9 @@ export default function ExerciseLibraryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [fullscreenVideo, setFullscreenVideo] = useState<ExerciseLibraryItem | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [selectedRecipients, setSelectedRecipients] = useState<number[]>([]);
+  const [shareMessage, setShareMessage] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -65,6 +68,13 @@ export default function ExerciseLibraryPage() {
   const { data: limits } = useQuery<LibraryLimits>({
     queryKey: ['/api/exercise-library/limits'],
     queryFn: () => apiRequest('GET', '/api/exercise-library/limits').then(res => res.json())
+  });
+
+  // Fetch connections and athletes for sharing
+  const { data: shareContacts } = useQuery({
+    queryKey: ['/api/share-contacts'],
+    queryFn: () => apiRequest('GET', '/api/connections').then(res => res.json()),
+    enabled: shareDialogOpen
   });
 
   // Upload mutation
@@ -135,6 +145,27 @@ export default function ExerciseLibraryPage() {
     }
   });
 
+  // Share mutation for internal messaging
+  const shareMutation = useMutation({
+    mutationFn: async (data: { exerciseId: number; recipientIds: number[]; message: string }) => {
+      const response = await apiRequest('POST', '/api/exercise-library/share', data);
+      return response.json();
+    },
+    onSuccess: () => {
+      setShareDialogOpen(false);
+      setSelectedRecipients([]);
+      setShareMessage("");
+      toast({ title: "Success", description: "Exercise shared successfully!" });
+    },
+    onError: (error: Error) => {
+      toast({ 
+        title: "Share Failed", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    }
+  });
+
   const handleUpload = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -182,6 +213,28 @@ export default function ExerciseLibraryPage() {
 
   const closeFullscreen = () => {
     setFullscreenVideo(null);
+  };
+
+  const copyExerciseLink = async (exerciseId: number) => {
+    const link = `${window.location.origin}/exercise/${exerciseId}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+      toast({ title: "Success", description: "Link copied to clipboard!" });
+    } catch (err) {
+      toast({ title: "Error", description: "Failed to copy link", variant: "destructive" });
+    }
+  };
+
+  const handleShareInternal = () => {
+    if (selectedExercise && selectedRecipients.length > 0) {
+      shareMutation.mutate({
+        exerciseId: selectedExercise.id,
+        recipientIds: selectedRecipients,
+        message: shareMessage
+      });
+    }
   };
 
   const formatFileSize = (bytes: number | null) => {
