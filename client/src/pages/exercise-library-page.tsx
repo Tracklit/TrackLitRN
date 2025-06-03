@@ -179,8 +179,8 @@ export default function ExerciseLibraryPage() {
   return (
     <PageContainer
       breadcrumbs={[
-        { label: "Tools", href: "/tools" },
-        { label: "Exercise Library" }
+        { name: "Tools", href: "/training-tools" },
+        { name: "Exercise Library", href: "/tools/exercise-library" }
       ]}
     >
       <div className="space-y-6">
@@ -496,7 +496,7 @@ export default function ExerciseLibraryPage() {
                 />
               ) : (
                 <video
-                  src={fullscreenVideo.fileUrl || ''}
+                  src={fullscreenVideo.fileUrl || undefined}
                   controls
                   autoPlay
                   className="w-full h-full object-contain"

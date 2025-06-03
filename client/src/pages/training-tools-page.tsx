@@ -48,6 +48,13 @@ export default function WorkoutToolsPage() {
       disabled: false
     },
     {
+      title: "Exercise Library",
+      description: "Store and organize your training videos",
+      icon: <Video className="h-6 w-6 text-primary" />,
+      href: "/tools/exercise-library",
+      disabled: false
+    },
+    {
       title: "Rep Starter",
       description: "Countdown timer for repetitions",
       icon: <RefreshCw className="h-6 w-6 text-muted-foreground" />,
