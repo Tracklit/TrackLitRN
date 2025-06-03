@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Search, Send, ArrowLeft, MoreVertical } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useParams } from "wouter";
+import { useParams, useLocation } from "wouter";
 import type { DirectMessage, User, Conversation } from "@shared/schema";
 
 interface ConversationWithUser extends Conversation {
@@ -24,8 +24,14 @@ interface MessageWithUser extends DirectMessage {
 
 export default function MessagesPage() {
   const { user } = useAuth();
+  const [location] = useLocation();
   const params = useParams();
-  const targetUserId = params.userId ? parseInt(params.userId) : null;
+  
+  // Extract userId from URL path
+  const pathParts = location.split('/');
+  const targetUserId = pathParts.length > 2 && pathParts[1] === 'messages' && pathParts[2] 
+    ? parseInt(pathParts[2]) 
+    : null;
   const [selectedConversation, setSelectedConversation] = useState<number | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
