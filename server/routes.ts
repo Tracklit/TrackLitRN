@@ -10,6 +10,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import sharp from "sharp";
+import Stripe from "stripe";
 import { transcribeAudioHandler, upload as audioUpload } from "./routes/transcribe";
 import { getUserJournalEntries, createJournalEntry, updateJournalEntry, deleteJournalEntry } from "./routes/journal";
 import { getWeatherForecast } from "./weather";
@@ -311,6 +312,14 @@ async function initializeDefaultAchievements() {
     console.error("Error initializing default achievements:", error);
   }
 }
+
+// Initialize Stripe
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
+}
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: "2025-04-30.basil",
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
@@ -4039,7 +4048,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // 7. Purchase a program
+  // ============================================================
+  // Stripe Payment Routes
+  // ============================================================
+  
+  // Create payment intent for program purchase
+  app.post("/api/programs/:id/create-payment-intent", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const programId = parseInt(req.params.id);
+      const program = await dbStorage.getProgram(programId);
+      
+      if (!program) {
+        return res.status(404).json({ error: "Program not found" });
+      }
+      
+      // Check if the user already purchased this program
+      const existingPurchase = await dbStorage.getPurchasedProgram(req.user!.id, programId);
+      if (existingPurchase) {
+        return res.status(400).json({ error: "You already own this program" });
+      }
+      
+      // Check if program has a price set for Stripe
+      if (!program.price || program.price <= 0 || program.priceType !== 'money') {
+        return res.status(400).json({ error: "This program is not available for purchase with Stripe" });
+      }
+      
+      // Create payment intent
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(program.price * 100), // Convert to cents
+        currency: "usd",
+        metadata: {
+          programId: programId.toString(),
+          userId: req.user!.id.toString(),
+          programTitle: program.title,
+        },
+      });
+      
+      res.json({ clientSecret: paymentIntent.client_secret });
+    } catch (error: any) {
+      console.error("Error creating payment intent:", error);
+      res.status(500).json({ error: "Error creating payment intent: " + error.message });
+    }
+  });
+
+  // Confirm payment and complete purchase
+  app.post("/api/programs/:id/confirm-payment", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const { paymentIntentId } = req.body;
+      
+      if (!paymentIntentId) {
+        return res.status(400).json({ error: "Payment intent ID is required" });
+      }
+      
+      const programId = parseInt(req.params.id);
+      
+      // Retrieve payment intent from Stripe to verify payment
+      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+      
+      if (paymentIntent.status !== 'succeeded') {
+        return res.status(400).json({ error: "Payment not completed" });
+      }
+      
+      // Verify the payment is for this program and user
+      if (
+        paymentIntent.metadata.programId !== programId.toString() ||
+        paymentIntent.metadata.userId !== req.user!.id.toString()
+      ) {
+        return res.status(400).json({ error: "Payment verification failed" });
+      }
+      
+      // Check if purchase already exists (prevent double processing)
+      const existingPurchase = await dbStorage.getPurchasedProgram(req.user!.id, programId);
+      if (existingPurchase) {
+        return res.status(400).json({ error: "Program already purchased" });
+      }
+      
+      const program = await dbStorage.getProgram(programId);
+      if (!program) {
+        return res.status(404).json({ error: "Program not found" });
+      }
+      
+      // Record the purchase
+      const purchase = await dbStorage.purchaseProgram({
+        programId,
+        userId: req.user!.id,
+        price: Math.round(paymentIntent.amount / 100), // Convert back from cents
+        isFree: false
+      });
+      
+      res.status(201).json({ purchase, paymentIntent: paymentIntent.id });
+    } catch (error: any) {
+      console.error("Error confirming payment:", error);
+      res.status(500).json({ error: "Error confirming payment: " + error.message });
+    }
+  });
+
+  // 7. Purchase a program (Spikes-based)
   app.post("/api/programs/:id/purchase", async (req: Request, res: Response) => {
     try {
       if (!req.isAuthenticated()) {
