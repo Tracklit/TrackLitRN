@@ -664,8 +664,7 @@ export default function ExerciseLibraryPage() {
                           onClick={() => openFullscreen(exercise)}
                           className="bg-red-600 hover:bg-red-700 text-white border-red-600"
                         >
-                          <Play className="h-4 w-4 mr-2 fill-white" />
-                          Play
+                          <Play className="h-4 w-4 fill-white" />
                         </Button>
                       </div>
 
