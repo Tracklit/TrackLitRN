@@ -6128,15 +6128,25 @@ Keep the response professional, evidence-based, and specific to track and field 
         // Create or get conversation
         const conversation = await dbStorage.createOrGetConversation(req.user.id, recipientId);
         
-        // Prepare share message
+        // Prepare share message with structured data for video content
+        const exerciseData = {
+          type: 'exercise_share',
+          exerciseId: exercise.id,
+          exerciseName: exercise.name,
+          videoUrl: exercise.type === 'youtube' ? exercise.youtubeUrl : exercise.fileUrl,
+          thumbnailUrl: exercise.thumbnailUrl,
+          videoType: exercise.type,
+          description: exercise.description
+        };
+        
         const shareContent = message 
-          ? `${message}\n\nShared exercise: ${exercise.name}\nLink: ${process.env.BASE_URL || 'http://localhost:5000'}/exercise/${exerciseId}`
-          : `Shared exercise: ${exercise.name}\nLink: ${process.env.BASE_URL || 'http://localhost:5000'}/exercise/${exerciseId}`;
+          ? `${message}\n\n📹 ${exercise.name}\n${JSON.stringify(exerciseData)}`
+          : `📹 Shared exercise: ${exercise.name}\n${JSON.stringify(exerciseData)}`;
         
         // Send the message
         await dbStorage.sendMessage({
-          conversationId: conversation.id,
           senderId: req.user.id,
+          receiverId: recipientId,
           content: shareContent
         });
 

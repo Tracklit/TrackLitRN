@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Search, Send, ArrowLeft, MoreVertical } from "lucide-react";
+import { Search, Send, ArrowLeft, MoreVertical, Play, ExternalLink } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
@@ -15,6 +15,102 @@ import type { DirectMessage, User, Conversation } from "@shared/schema";
 interface ConversationWithUser extends Conversation {
   otherUser: User;
   lastMessage?: DirectMessage;
+}
+
+interface ExerciseData {
+  type: 'exercise_share';
+  exerciseId: number;
+  exerciseName: string;
+  videoUrl: string | null;
+  thumbnailUrl: string | null;
+  videoType: 'youtube' | 'upload';
+  description: string | null;
+}
+
+// Component to render exercise video content in messages
+function ExerciseVideoMessage({ exerciseData }: { exerciseData: ExerciseData }) {
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const getYouTubeVideoId = (url: string) => {
+    const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+    const match = url.match(regex);
+    return match ? match[1] : null;
+  };
+
+  const renderVideoPlayer = () => {
+    if (exerciseData.videoType === 'youtube' && exerciseData.videoUrl) {
+      const videoId = getYouTubeVideoId(exerciseData.videoUrl);
+      if (videoId) {
+        return (
+          <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden">
+            {isPlaying ? (
+              <iframe
+                src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            ) : (
+              <div 
+                className="relative w-full h-full cursor-pointer group"
+                onClick={() => setIsPlaying(true)}
+              >
+                <img
+                  src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
+                  alt={exerciseData.exerciseName}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center group-hover:bg-opacity-40 transition-all">
+                  <Play className="h-12 w-12 text-white" fill="white" />
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+    } else if (exerciseData.videoType === 'upload' && exerciseData.videoUrl) {
+      return (
+        <video
+          controls
+          className="w-full aspect-video bg-black rounded-lg"
+          poster={exerciseData.thumbnailUrl || undefined}
+        >
+          <source src={exerciseData.videoUrl} type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
+      );
+    }
+    return null;
+  };
+
+  return (
+    <div className="max-w-sm bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-2">
+      <div className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
+        <Play className="h-4 w-4" />
+        {exerciseData.exerciseName}
+      </div>
+      
+      {renderVideoPlayer()}
+      
+      {exerciseData.description && (
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          {exerciseData.description}
+        </p>
+      )}
+      
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-xs"
+          onClick={() => window.open(`/exercise/${exerciseData.exerciseId}`, '_blank')}
+        >
+          <ExternalLink className="h-3 w-3 mr-1" />
+          View Details
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 interface MessageWithUser extends DirectMessage {
@@ -217,10 +313,48 @@ export default function MessagesPage() {
                         : "bg-gray-700 text-white"
                     )}
                   >
-                    <p className="text-sm">{message.content}</p>
-                    <p className="text-xs opacity-70 mt-1">
-                      {formatDistanceToNow(new Date(message.createdAt || new Date()), { addSuffix: true })}
-                    </p>
+                    {(() => {
+                      // Check if message contains exercise video data
+                      const exerciseMatch = message.content.match(/\{.*"type":"exercise_share".*\}/);
+                      if (exerciseMatch) {
+                        try {
+                          const exerciseData = JSON.parse(exerciseMatch[0]) as ExerciseData;
+                          const textContent = message.content.replace(exerciseMatch[0], '').replace(/📹.*?\n/, '').trim();
+                          
+                          return (
+                            <div className="space-y-2">
+                              {textContent && (
+                                <p className="text-sm">{textContent}</p>
+                              )}
+                              <ExerciseVideoMessage exerciseData={exerciseData} />
+                              <p className="text-xs opacity-70">
+                                {formatDistanceToNow(new Date(message.createdAt || new Date()), { addSuffix: true })}
+                              </p>
+                            </div>
+                          );
+                        } catch (error) {
+                          // Fall back to regular text if JSON parsing fails
+                          return (
+                            <div>
+                              <p className="text-sm">{message.content}</p>
+                              <p className="text-xs opacity-70 mt-1">
+                                {formatDistanceToNow(new Date(message.createdAt || new Date()), { addSuffix: true })}
+                              </p>
+                            </div>
+                          );
+                        }
+                      }
+                      
+                      // Regular text message
+                      return (
+                        <div>
+                          <p className="text-sm">{message.content}</p>
+                          <p className="text-xs opacity-70 mt-1">
+                            {formatDistanceToNow(new Date(message.createdAt || new Date()), { addSuffix: true })}
+                          </p>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               ))
