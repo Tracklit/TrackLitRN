@@ -386,52 +386,32 @@ article::-webkit-scrollbar,
   margin-bottom: 0 !important;
 }
 
-/* Fix transparent success toast - force solid background */
+/* Fix transparent success toast - use theme background */
 [data-radix-toast-root] {
-  background-color: white !important;
-  border: 1px solid #e5e7eb !important;
+  background-color: hsl(var(--background)) !important;
+  border: 1px solid hsl(var(--border)) !important;
   opacity: 1 !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-  color: #374151 !important;
+  color: hsl(var(--foreground)) !important;
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  [data-radix-toast-root] {
-    background-color: #1f2937 !important;
-    border: 1px solid #374151 !important;
-    color: #f9fafb !important;
-  }
-}
-
-/* Override all toast elements */
+/* Override all toast elements to use theme colors */
 [data-radix-toast-viewport] [data-state="open"],
 [data-radix-toast-viewport] > *,
 [role="status"],
 .toast {
-  background-color: white !important;
-  border: 1px solid #e5e7eb !important;
+  background-color: hsl(var(--background)) !important;
+  border: 1px solid hsl(var(--border)) !important;
   opacity: 1 !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-  color: #374151 !important;
-}
-
-/* Dark mode for all toast elements */
-@media (prefers-color-scheme: dark) {
-  [data-radix-toast-viewport] [data-state="open"],
-  [data-radix-toast-viewport] > *,
-  [role="status"],
-  .toast {
-    background-color: #1f2937 !important;
-    border: 1px solid #374151 !important;
-    color: #f9fafb !important;
-  }
+  color: hsl(var(--foreground)) !important;
 }
 
 /* Ensure toast content is visible */
 [data-radix-toast-viewport] *,
 [data-radix-toast-root] * {
   opacity: 1 !important;
+  color: hsl(var(--foreground)) !important;
 }
 
 
