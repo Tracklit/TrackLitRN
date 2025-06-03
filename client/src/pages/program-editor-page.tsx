@@ -1340,12 +1340,6 @@ function ProgramEditorPage() {
         </div>
         <div className="flex gap-2">
           <Button
-            variant="outline"
-            onClick={() => navigate(`/programs/${programId}`)}
-          >
-            Cancel
-          </Button>
-          <Button
             type="submit"
             form="program-editor-form"
             disabled={isSubmitting}
