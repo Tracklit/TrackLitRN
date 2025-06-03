@@ -104,7 +104,7 @@ export default function ExerciseLibraryPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/exercise-library'] });
       queryClient.invalidateQueries({ queryKey: ['/api/exercise-library/limits'] });
-      setYoutubeDialogOpen(false);
+      setUploadDialogOpen(false);
       toast({ title: "Success", description: "YouTube video added successfully!" });
     },
     onError: (error: Error) => {
@@ -138,7 +138,29 @@ export default function ExerciseLibraryPage() {
   const handleUpload = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    uploadMutation.mutate(formData);
+    const youtubeUrl = formData.get('youtubeUrl') as string;
+    const file = formData.get('file') as File;
+    
+    // Check if YouTube URL is provided
+    if (youtubeUrl && youtubeUrl.trim()) {
+      const data = {
+        name: formData.get('name'),
+        description: formData.get('description'),
+        youtubeUrl: youtubeUrl.trim(),
+        tags: formData.get('tags'),
+        isPublic: formData.get('isPublic') === 'on'
+      };
+      youtubeMutation.mutate(data);
+    } else if (file && file.size > 0) {
+      // Handle file upload
+      uploadMutation.mutate(formData);
+    } else {
+      toast({
+        title: "Error",
+        description: "Please provide either a file or YouTube URL",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleYouTube = (e: React.FormEvent<HTMLFormElement>) => {
@@ -220,13 +242,12 @@ export default function ExerciseLibraryPage() {
             <DialogTrigger asChild>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
-                Add Exercise
+                Add Video
               </Button>
             </DialogTrigger>
-            <div className={uploadDialogOpen ? "fixed inset-0 z-50 bg-black/50" : "hidden"} />
-            <DialogContent className="max-w-md bg-background border shadow-lg z-50">
+            <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>Add Exercise</DialogTitle>
+                <DialogTitle>Add Video</DialogTitle>
               </DialogHeader>
               
               <form onSubmit={handleUpload} className="space-y-4">
