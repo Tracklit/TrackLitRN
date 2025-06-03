@@ -62,7 +62,7 @@ export default function MessagesPage() {
     queryKey: ["/api/direct-messages", targetUserId],
     queryFn: async () => {
       if (!targetUserId) return [];
-      const response = await apiRequest("GET", `/api/direct-messages?userId=${targetUserId}`);
+      const response = await apiRequest("GET", `/api/direct-messages/${targetUserId}`);
       return response.json();
     },
     enabled: !!targetUserId,
