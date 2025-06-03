@@ -1343,17 +1343,12 @@ function ProgramEditorPage() {
             type="submit"
             form="program-editor-form"
             disabled={isSubmitting}
+            size="icon"
           >
             {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                Save Program
-              </>
+              <Save className="h-4 w-4" />
             )}
           </Button>
         </div>
@@ -1459,10 +1454,29 @@ function ProgramEditorPage() {
       </div>
 
       <div className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Training Schedule</h2>
-        <p className="text-sm text-gray-600 mb-4">
-          Click on any cell to add or edit workout details. You can mark days as rest days.
-        </p>
+        <div className="flex items-center gap-2 mb-4">
+          <h2 className="text-xl font-semibold">Training Schedule</h2>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-6 w-6">
+                <Info className="h-4 w-4" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Training Schedule Help</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Click on any cell to add or edit workout details. You can mark days as rest days.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Use the calendar to schedule your training across weeks and days.
+                </p>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
         
         <div className="w-full border rounded-lg overflow-x-auto">
           <div className="p-4 min-w-[1400px]">
