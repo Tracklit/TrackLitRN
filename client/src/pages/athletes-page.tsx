@@ -117,7 +117,12 @@ export default function AthletesPage() {
         if (page === 1) {
           setAllAthletes(validData.athletes);
         } else {
-          setAllAthletes(prev => [...prev, ...validData.athletes]);
+          // Deduplicate by user ID before adding new athletes
+          setAllAthletes(prev => {
+            const existingIds = new Set(prev.map(athlete => athlete.id));
+            const newAthletes = validData.athletes.filter(athlete => !existingIds.has(athlete.id));
+            return [...prev, ...newAthletes];
+          });
         }
         return validData;
       }

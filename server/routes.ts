@@ -1315,6 +1315,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let allUsers = await dbStorage.getAllUsers();
       allUsers = allUsers.filter(user => user.id !== req.user.id);
       
+      // Remove any potential duplicates by ID
+      const uniqueUsers = new Map();
+      allUsers.forEach(user => {
+        uniqueUsers.set(user.id, user);
+      });
+      allUsers = Array.from(uniqueUsers.values());
+      
       // Sort by newest first (highest ID)
       allUsers.sort((a, b) => b.id - a.id);
       
