@@ -5451,6 +5451,26 @@ Keep the response professional, evidence-based, and specific to track and field 
     }
   });
 
+  // Send direct message
+  app.post("/api/direct-messages", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const { receiverId, content } = req.body;
+      const message = await dbStorage.sendMessage({
+        senderId: req.user.id,
+        receiverId,
+        content
+      });
+      res.json(message);
+    } catch (error) {
+      console.error("Error sending direct message:", error);
+      res.status(500).send("Error sending direct message");
+    }
+  });
+
   app.post("/api/conversations", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) {
       return res.sendStatus(401);
