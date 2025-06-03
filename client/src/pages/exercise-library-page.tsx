@@ -64,17 +64,60 @@ export default function ExerciseLibraryPage() {
   useEffect(() => {
     if (shareDialogOpen || libraryShareDialogOpen) {
       const scrollY = window.scrollY;
+      const originalStyle = {
+        position: document.body.style.position,
+        top: document.body.style.top,
+        width: document.body.style.width,
+        overflow: document.body.style.overflow,
+        height: document.body.style.height
+      };
+
+      // Lock body position
       document.body.style.position = 'fixed';
       document.body.style.top = `-${scrollY}px`;
       document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
+      document.body.style.height = '100%';
+
+      // Prevent all touch events on body
+      const preventTouch = (e: TouchEvent) => {
+        if (e.target && !(e.target as Element).closest('[role="dialog"]')) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      };
+
+      // Prevent viewport meta tag scaling
+      const viewport = document.querySelector('meta[name=viewport]');
+      const originalViewport = viewport?.getAttribute('content');
+      if (viewport) {
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+      }
+
+      document.addEventListener('touchstart', preventTouch, { passive: false });
+      document.addEventListener('touchmove', preventTouch, { passive: false });
+      document.addEventListener('touchend', preventTouch, { passive: false });
 
       return () => {
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
-        document.body.style.overflow = '';
+        // Restore original styles
+        document.body.style.position = originalStyle.position;
+        document.body.style.top = originalStyle.top;
+        document.body.style.width = originalStyle.width;
+        document.body.style.overflow = originalStyle.overflow;
+        document.body.style.height = originalStyle.height;
+        
+        // Restore scroll position
         window.scrollTo(0, scrollY);
+        
+        // Restore viewport
+        if (viewport && originalViewport) {
+          viewport.setAttribute('content', originalViewport);
+        }
+        
+        // Remove event listeners
+        document.removeEventListener('touchstart', preventTouch);
+        document.removeEventListener('touchmove', preventTouch);
+        document.removeEventListener('touchend', preventTouch);
       };
     }
   }, [shareDialogOpen, libraryShareDialogOpen]);
