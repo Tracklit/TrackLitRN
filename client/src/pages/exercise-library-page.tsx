@@ -384,6 +384,98 @@ export default function ExerciseLibraryPage() {
               </form>
             </DialogContent>
           </Dialog>
+
+          {/* Share Dialog */}
+          <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+            {shareDialogOpen && (
+              <div className="fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+            )}
+            <DialogContent className="fixed left-[50%] top-[50%] z-50 max-w-md translate-x-[-50%] translate-y-[-50%] bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] border rounded-lg">
+              <DialogHeader>
+                <DialogTitle>Share Exercise</DialogTitle>
+              </DialogHeader>
+              
+              {selectedExercise && (
+                <div className="space-y-4">
+                  <div className="text-sm text-muted-foreground">
+                    Sharing: {selectedExercise.name}
+                  </div>
+                  
+                  <Tabs defaultValue="link" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="link">Copy Link</TabsTrigger>
+                      <TabsTrigger value="internal">Send Message</TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="link" className="space-y-4">
+                      <div className="flex items-center space-x-2">
+                        <Input 
+                          value={`${window.location.origin}/exercise/${selectedExercise.id}`}
+                          readOnly
+                          className="flex-1"
+                        />
+                        <Button
+                          size="sm"
+                          onClick={() => copyExerciseLink(selectedExercise.id)}
+                          disabled={linkCopied}
+                        >
+                          {linkCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="internal" className="space-y-4">
+                      <div>
+                        <Label>Send to Connections & Athletes</Label>
+                        <div className="mt-2 max-h-32 overflow-y-auto space-y-2">
+                          {shareContacts?.map((contact: any) => (
+                            <div key={contact.id} className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id={`contact-${contact.id}`}
+                                checked={selectedRecipients.includes(contact.id)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedRecipients(prev => [...prev, contact.id]);
+                                  } else {
+                                    setSelectedRecipients(prev => prev.filter(id => id !== contact.id));
+                                  }
+                                }}
+                                className="rounded"
+                              />
+                              <label htmlFor={`contact-${contact.id}`} className="text-sm">
+                                {contact.username}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="shareMessage">Message (Optional)</Label>
+                        <Textarea
+                          id="shareMessage"
+                          value={shareMessage}
+                          onChange={(e) => setShareMessage(e.target.value)}
+                          placeholder="Add a message to share with this exercise..."
+                          className="mt-1"
+                        />
+                      </div>
+                      
+                      <Button 
+                        onClick={handleShareInternal}
+                        disabled={selectedRecipients.length === 0 || shareMutation.isPending}
+                        className="w-full"
+                      >
+                        <Send className="h-4 w-4 mr-2" />
+                        {shareMutation.isPending ? "Sending..." : "Send Message"}
+                      </Button>
+                    </TabsContent>
+                  </Tabs>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
           </div>
         </div>
 
@@ -449,7 +541,7 @@ export default function ExerciseLibraryPage() {
                                 setShareDialogOpen(true);
                               }}
                             >
-                              <Share2 className="h-4 w-4 mr-2" />
+                              <Send className="h-4 w-4 mr-2" />
                               Share
                             </DropdownMenuItem>
                             <DropdownMenuItem
@@ -514,7 +606,7 @@ export default function ExerciseLibraryPage() {
                                   setShareDialogOpen(true);
                                 }}
                               >
-                                <Share2 className="h-4 w-4 mr-2" />
+                                <Send className="h-4 w-4 mr-2" />
                                 Share
                               </DropdownMenuItem>
                               <DropdownMenuItem
