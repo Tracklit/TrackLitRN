@@ -99,25 +99,47 @@ article::-webkit-scrollbar,
 
 /* Removed main-content animation styles to prevent conflicts */
 
-/* Remove all hover states on mobile devices */
-@media (hover: none) and (pointer: coarse) {
+/* Remove all hover states on mobile devices - Multiple approaches for compatibility */
+@media (hover: none) and (pointer: coarse),
+       (max-width: 768px),
+       screen and (max-device-width: 768px) {
   * {
     -webkit-touch-callout: none !important;
     -webkit-user-select: none !important;
     -moz-user-select: none !important;
     -ms-user-select: none !important;
     user-select: none !important;
+    -webkit-tap-highlight-color: transparent !important;
   }
   
   /* Override all hover states on mobile */
+  *:hover,
+  *:active,
+  *:focus,
   button:hover,
+  button:active,
+  button:focus,
   a:hover,
+  a:active,
+  a:focus,
   div:hover,
+  div:active,
+  div:focus,
   span:hover,
+  span:active,
+  span:focus,
   input:hover,
+  input:active,
+  input:focus,
   textarea:hover,
+  textarea:active,
+  textarea:focus,
   [role="button"]:hover,
+  [role="button"]:active,
+  [role="button"]:focus,
   [tabindex]:hover,
+  [tabindex]:active,
+  [tabindex]:focus,
   .hover\:bg-accent:hover,
   .hover\:bg-muted:hover,
   .hover\:bg-destructive:hover,
@@ -137,7 +159,10 @@ article::-webkit-scrollbar,
   .hover\:border-destructive:hover,
   .hover\:underline:hover,
   .group:hover .group-hover\:opacity-100,
-  .group:hover .group-hover\:scale-105 {
+  .group:hover .group-hover\:scale-105,
+  .card:hover,
+  .card:active,
+  .card:focus {
     background-color: initial !important;
     color: initial !important;
     opacity: initial !important;
@@ -145,6 +170,32 @@ article::-webkit-scrollbar,
     box-shadow: initial !important;
     border-color: initial !important;
     text-decoration: initial !important;
+    outline: none !important;
+    border: initial !important;
+    -webkit-tap-highlight-color: transparent !important;
+    filter: none !important;
+  }
+}
+
+/* Force disable hover states globally on small screens */
+@media (max-width: 1024px) {
+  .card:hover,
+  .card:active,
+  .card:focus,
+  [data-hover]:hover,
+  [data-hover]:active,
+  [data-hover]:focus {
+    background-color: initial !important;
+    color: initial !important;
+    opacity: initial !important;
+    transform: initial !important;
+    box-shadow: initial !important;
+    border-color: initial !important;
+    text-decoration: initial !important;
+    outline: none !important;
+    border: initial !important;
+    -webkit-tap-highlight-color: transparent !important;
+    filter: none !important;
   }
 }
 
