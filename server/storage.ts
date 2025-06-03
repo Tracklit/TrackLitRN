@@ -2362,29 +2362,32 @@ export class DatabaseStorage implements IStorage {
     const userConversations = await db
       .select({
         id: conversations.id,
-        participant1Id: conversations.participant1Id,
-        participant2Id: conversations.participant2Id,
+        user1Id: conversations.user1Id,
+        user2Id: conversations.user2Id,
         lastMessageAt: conversations.lastMessageAt,
         createdAt: conversations.createdAt
       })
       .from(conversations)
       .where(or(
-        eq(conversations.participant1Id, userId),
-        eq(conversations.participant2Id, userId)
+        eq(conversations.user1Id, userId),
+        eq(conversations.user2Id, userId)
       ))
       .orderBy(desc(conversations.lastMessageAt));
 
     // Get user details for each conversation
     const conversationsWithUsers = await Promise.all(
-      conversations.map(async (conv) => {
-        const otherUserId = conv.participant1Id === userId ? conv.participant2Id : conv.participant1Id;
+      userConversations.map(async (conv) => {
+        const otherUserId = conv.user1Id === userId ? conv.user2Id : conv.user1Id;
         const otherUser = await this.getUser(otherUserId);
         
-        // Get last message
+        // Get last message between these two users
         const lastMessage = await db
           .select()
           .from(directMessages)
-          .where(eq(directMessages.conversationId, conv.id))
+          .where(or(
+            and(eq(directMessages.senderId, userId), eq(directMessages.receiverId, otherUserId)),
+            and(eq(directMessages.senderId, otherUserId), eq(directMessages.receiverId, userId))
+          ))
           .orderBy(desc(directMessages.createdAt))
           .limit(1);
 
@@ -2400,15 +2403,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getConversationMessages(conversationId: number, userId: number): Promise<any[]> {
-    // Verify user is participant in conversation
+    // Get the conversation to find the other participant
     const conversation = await db
       .select()
-      .from(conversationsTable)
+      .from(conversations)
       .where(and(
-        eq(conversationsTable.id, conversationId),
+        eq(conversations.id, conversationId),
         or(
-          eq(conversationsTable.participant1Id, userId),
-          eq(conversationsTable.participant2Id, userId)
+          eq(conversations.user1Id, userId),
+          eq(conversations.user2Id, userId)
         )
       ));
 
@@ -2416,19 +2419,24 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Conversation not found or access denied");
     }
 
-    // Get messages with sender details
+    const conv = conversation[0];
+    const otherUserId = conv.user1Id === userId ? conv.user2Id : conv.user1Id;
+
+    // Get messages between these two users
     const messages = await db
       .select({
         id: directMessages.id,
         content: directMessages.content,
         senderId: directMessages.senderId,
         receiverId: directMessages.receiverId,
-        conversationId: directMessages.conversationId,
         createdAt: directMessages.createdAt,
         isRead: directMessages.isRead
       })
       .from(directMessages)
-      .where(eq(directMessages.conversationId, conversationId))
+      .where(or(
+        and(eq(directMessages.senderId, userId), eq(directMessages.receiverId, otherUserId)),
+        and(eq(directMessages.senderId, otherUserId), eq(directMessages.receiverId, userId))
+      ))
       .orderBy(asc(directMessages.createdAt));
 
     // Get user details for each message
@@ -2451,15 +2459,15 @@ export class DatabaseStorage implements IStorage {
     // Check if conversation already exists
     const existing = await db
       .select()
-      .from(conversationsTable)
+      .from(conversations)
       .where(or(
         and(
-          eq(conversationsTable.participant1Id, user1Id),
-          eq(conversationsTable.participant2Id, user2Id)
+          eq(conversations.user1Id, user1Id),
+          eq(conversations.user2Id, user2Id)
         ),
         and(
-          eq(conversationsTable.participant1Id, user2Id),
-          eq(conversationsTable.participant2Id, user1Id)
+          eq(conversations.user1Id, user2Id),
+          eq(conversations.user2Id, user1Id)
         )
       ));
 
@@ -2469,47 +2477,38 @@ export class DatabaseStorage implements IStorage {
 
     // Create new conversation
     const [conversation] = await db
-      .insert(conversationsTable)
+      .insert(conversations)
       .values({
-        participant1Id: user1Id,
-        participant2Id: user2Id
+        user1Id: user1Id,
+        user2Id: user2Id
       })
       .returning();
 
     return conversation;
   }
 
-  async sendMessage(messageData: { conversationId: number; senderId: number; content: string }): Promise<any> {
-    // Get conversation to determine receiver
-    const conversation = await db
-      .select()
-      .from(conversationsTable)
-      .where(eq(conversationsTable.id, messageData.conversationId));
-
-    if (!conversation.length) {
-      throw new Error("Conversation not found");
-    }
-
-    const receiverId = conversation[0].participant1Id === messageData.senderId 
-      ? conversation[0].participant2Id 
-      : conversation[0].participant1Id;
-
+  async sendMessage(messageData: { senderId: number; receiverId: number; content: string }): Promise<any> {
     // Insert message
     const [message] = await db
       .insert(directMessages)
       .values({
-        conversationId: messageData.conversationId,
         senderId: messageData.senderId,
-        receiverId,
+        receiverId: messageData.receiverId,
         content: messageData.content
       })
       .returning();
 
+    // Create or update conversation
+    await this.createOrGetConversation(messageData.senderId, messageData.receiverId);
+
     // Update conversation last message time
     await db
-      .update(conversationsTable)
+      .update(conversations)
       .set({ lastMessageAt: new Date() })
-      .where(eq(conversationsTable.id, messageData.conversationId));
+      .where(or(
+        and(eq(conversations.user1Id, messageData.senderId), eq(conversations.user2Id, messageData.receiverId)),
+        and(eq(conversations.user1Id, messageData.receiverId), eq(conversations.user2Id, messageData.senderId))
+      ));
 
     // Get sender info for notification
     const [sender] = await db
