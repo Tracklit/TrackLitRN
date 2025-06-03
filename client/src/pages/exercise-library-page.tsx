@@ -309,7 +309,7 @@ export default function ExerciseLibraryPage() {
     >
       <div className="space-y-6">
         {/* Header with Upload Button and View Toggle */}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-2xl font-bold">Exercise Library</h1>
             <p className="text-muted-foreground">
@@ -508,10 +508,10 @@ export default function ExerciseLibraryPage() {
                       <Label>Send to Connections & Athletes</Label>
                       <div className="mt-2 max-h-32 overflow-y-auto space-y-2">
                         {shareContacts?.map((contact: any) => (
-                          <div key={contact.id} className="flex items-center space-x-2">
+                          <div key={`share-${contact.id}`} className="flex items-center space-x-2">
                             <input
                               type="checkbox"
-                              id={`contact-${contact.id}`}
+                              id={`share-contact-${contact.id}`}
                               checked={selectedRecipients.includes(contact.id)}
                               onChange={(e) => {
                                 if (e.target.checked) {
@@ -522,7 +522,7 @@ export default function ExerciseLibraryPage() {
                               }}
                               className="rounded"
                             />
-                            <label htmlFor={`contact-${contact.id}`} className="text-sm">
+                            <label htmlFor={`share-contact-${contact.id}`} className="text-sm">
                               {contact.username}
                             </label>
                           </div>
@@ -593,10 +593,10 @@ export default function ExerciseLibraryPage() {
                 <Label>Share with Connections & Athletes</Label>
                 <div className="mt-2 max-h-32 overflow-y-auto space-y-2">
                   {shareContacts?.map((contact: any) => (
-                    <div key={contact.id} className="flex items-center space-x-2">
+                    <div key={`library-${contact.id}`} className="flex items-center space-x-2">
                       <input
                         type="checkbox"
-                        id={`library-contact-${contact.id}`}
+                        id={`library-share-contact-${contact.id}`}
                         checked={selectedLibraryRecipients.includes(contact.id)}
                         onChange={(e) => {
                           if (e.target.checked) {
@@ -607,7 +607,7 @@ export default function ExerciseLibraryPage() {
                         }}
                         className="rounded"
                       />
-                      <label htmlFor={`library-contact-${contact.id}`} className="text-sm">
+                      <label htmlFor={`library-share-contact-${contact.id}`} className="text-sm">
                         {contact.username}
                       </label>
                     </div>
@@ -708,16 +708,13 @@ export default function ExerciseLibraryPage() {
                         </DropdownMenu>
                       </div>
                       
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge variant="outline" className="text-xs">
-                          {exercise.type === 'youtube' ? 'YouTube' : 'Upload'}
-                        </Badge>
-                        {exercise.fileSize && (
+                      {exercise.fileSize && (
+                        <div className="flex items-center gap-2 mt-2">
                           <span className="text-xs text-muted-foreground">
                             {formatFileSize(exercise.fileSize)}
                           </span>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 ))}
@@ -756,16 +753,13 @@ export default function ExerciseLibraryPage() {
                               {exercise.description}
                             </p>
                           )}
-                          <div className="flex items-center gap-2 mt-2">
-                            <Badge variant="outline" className="text-xs">
-                              {exercise.type === 'youtube' ? 'YouTube' : 'Upload'}
-                            </Badge>
-                            {exercise.fileSize && (
+                          {exercise.fileSize && (
+                            <div className="flex items-center gap-2 mt-2">
                               <span className="text-xs text-muted-foreground">
                                 {formatFileSize(exercise.fileSize)}
                               </span>
-                            )}
-                          </div>
+                            </div>
+                          )}
                         </div>
                         
                         <DropdownMenu>
