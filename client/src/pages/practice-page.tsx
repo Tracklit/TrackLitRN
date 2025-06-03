@@ -21,7 +21,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Mic, Loader2, MapPin, ChevronLeft, ChevronRight, ChevronDown, Calendar, Play, Pause, Camera, Video, Upload, X, Save, CheckCircle, ClipboardList } from "lucide-react";
+import { Mic, Loader2, MapPin, ChevronLeft, ChevronRight, ChevronDown, Calendar, Play, Pause, Camera, Video, Upload, X, Save, CheckCircle, ClipboardList, Calculator, ChevronUp, CalendarRange, Dumbbell, Target } from "lucide-react";
+import { Link } from "wouter";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { WorkoutReactions } from "@/components/workout-reactions";
 import {
@@ -59,6 +60,12 @@ function PracticePage() {
   
   // State for session data
   const [activeSessionData, setActiveSessionData] = useState<any>(null);
+  
+  // Calculator states
+  const [calculatorOpen, setCalculatorOpen] = useState(false);
+  const [useFirstFootTiming, setUseFirstFootTiming] = useState(false);
+  const [adjustForTrackType, setAdjustForTrackType] = useState(false);
+  const [currentTrackType, setCurrentTrackType] = useState<"indoor" | "outdoor">("outdoor");
   
   // Fetch program sessions if we have a selected program
   const { 
@@ -104,6 +111,130 @@ function PracticePage() {
   
   // Check if user is premium (Pro or Star subscription)
   const isPremiumUser = athleteProfile?.subscription === 'pro' || athleteProfile?.subscription === 'star';
+
+  // Best times for common distances (in seconds)
+  const bestTimes: Record<string, number> = {
+    "50": 6.1,
+    "60": 7.3,
+    "80": 9.6,
+    "90": 10.8,
+    "100": 12.0,
+    "110": 13.2,
+    "120": 14.5,
+    "150": 18.3,
+    "180": 22.1,
+    "200": 24.8,
+    "220": 27.6,
+    "250": 31.7,
+    "280": 35.9,
+    "300": 38.8,
+    "350": 47.2,
+    "400": 54.1,
+    "500": 72.8,
+    "600": 94.5
+  };
+
+  // Calculate distance marks at specific points
+  const distanceMarks = [50, 60, 80, 90, 100, 110, 120, 150, 180, 200, 220, 250, 280, 300, 350, 400, 500, 600];
+
+  // Function to save the workout and journal entry directly to database
+  async function saveWorkout() {
+    if (!user) return;
+    
+    setIsSaving(true);
+    console.log('Starting workout save process...');
+    
+    try {
+      // Mark session as completed if needed
+      if (selectedProgram && activeSessionData) {
+        await fetch(`/api/programs/${selectedProgram.programId}/sessions/${activeSessionData.dayNumber}/complete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      // Get today's date for title
+      const today = new Date();
+      const formattedDate = today.toLocaleDateString('en-CA'); // YYYY-MM-DD
+      const entryTitle = `${activeSessionData?.title || 'Training'} - ${formattedDate}`;
+      
+      // Create journal entry object
+      const journalEntry = {
+        title: entryTitle,
+        content: diaryNotes || 'No notes for this session.',
+        mood: moodValue,
+        workoutData: {
+          program: selectedProgram?.program?.title || 'Training Session',
+          session: activeSessionData?.title || 'Session',
+          dayNumber: activeSessionData?.dayNumber || 1,
+          exercises: activeSessionData?.exercises || [],
+          moodRating: moodValue,
+          notes: diaryNotes,
+          completedAt: new Date().toISOString()
+        }
+      };
+
+      console.log('Saving journal entry:', journalEntry);
+
+      // Save to journal
+      const response = await fetch('/api/journal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(journalEntry)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(`Failed to save journal entry: ${errorData}`);
+      }
+
+      console.log('Journal entry saved successfully');
+
+      // Show success message
+      toast({
+        title: "Workout Saved!",
+        description: "Your training session has been saved to your journal.",
+      });
+
+      // Reset form
+      setDiaryNotes('');
+      setMoodValue(7);
+      
+      // Show completion modal
+      setSessionCompleteOpen(true);
+
+    } catch (error) {
+      console.error('Error saving workout:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to save workout. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  // Set up effects for program selection and session loading
+  useEffect(() => {
+    if (assignedPrograms && assignedPrograms.length > 0 && !selectedProgram) {
+      setSelectedProgram(assignedPrograms[0]);
+    }
+  }, [assignedPrograms]);
+
+  useEffect(() => {
+    if (programSessions && programSessions.length > 0) {
+      // Find session for current day offset
+      const today = new Date();
+      const targetDate = new Date(today.getTime() + currentDayOffset * 24 * 60 * 60 * 1000);
+      
+      // Calculate day number based on program start
+      const dayNumber = Math.abs(currentDayOffset) + 1;
+      const session = programSessions.find(s => s.dayNumber === dayNumber) || programSessions[0];
+      
+      setActiveSessionData(session);
+    }
+  }, [programSessions, currentDayOffset]);
 
   return (
     <PageContainer
@@ -177,6 +308,272 @@ function PracticePage() {
       {/* Only show workout content if no meets are scheduled */}
       {!hasMeetsToday && (
         <>
+          {/* Daily Session Content */}
+          <div className={`space-y-4 transition-opacity duration-200 ${fadeTransition ? 'opacity-100' : 'opacity-0'}`}>
+            <div className="bg-muted/40 p-3 rounded-md">
+              {selectedProgram ? (
+                <div className="space-y-4">
+                  {/* Show active session if available */}
+                  {activeSessionData ? (
+                    <div className="space-y-3">
+                      <div className="p-3 bg-background/80 rounded-md border border-border/50">
+                        <div className="space-y-3">
+                          {activeSessionData.isRestDay ? (
+                            <div className="p-3 bg-muted/30 rounded-md">
+                              <p className="text-center font-medium">Rest Day</p>
+                              <p className="text-sm text-center text-muted-foreground">
+                                Take time to recover and prepare for your next training session.
+                              </p>
+                            </div>
+                          ) : (
+                            <>
+                              {/* Pre-activation exercises */}
+                              {activeSessionData.preActivation1 && activeSessionData.preActivation1.trim() !== "" && (
+                                <div className="p-2 bg-background/50 rounded border border-border/50">
+                                  <p className="font-medium text-sm mb-2">Pre-Activation</p>
+                                  <div className="whitespace-pre-line text-sm mt-1 pl-2 border-l-2 border-primary/30">
+                                    {activeSessionData.preActivation1.replace(/^"|"$/g, '')}
+                                  </div>
+                                </div>
+                              )}
+                            
+                              {/* Show imported workout information with proper hierarchy, filtered by athlete profile */}
+                              {activeSessionData.shortDistanceWorkout && 
+                               activeSessionData.shortDistanceWorkout.trim() !== "" && 
+                               (!athleteProfile || athleteProfile.sprint60m100m !== false || 
+                                (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
+                                 !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
+                                 !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
+                                <div className="p-2 bg-background/50 rounded border border-border/50">
+                                  <div className="flex items-start">
+                                    <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
+                                      <Dumbbell className="h-4 w-4 text-primary" />
+                                    </div>
+                                    <div>
+                                      <p className="font-medium text-sm">60m/100m</p>
+                                      <div className="whitespace-pre-line text-sm mt-1">
+                                        {activeSessionData.shortDistanceWorkout.replace(/^"|"$/g, '')}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {activeSessionData.mediumDistanceWorkout && 
+                               activeSessionData.mediumDistanceWorkout.trim() !== "" && 
+                               (!athleteProfile || athleteProfile.sprint200m || 
+                                (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
+                                 !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
+                                 !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
+                                <div className="p-2 bg-background/50 rounded border border-border/50">
+                                  <div className="flex items-start">
+                                    <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
+                                      <Dumbbell className="h-4 w-4 text-primary" />
+                                    </div>
+                                    <div>
+                                      <p className="font-medium text-sm">200m</p>
+                                      <div className="whitespace-pre-line text-sm mt-1">
+                                        {activeSessionData.mediumDistanceWorkout.replace(/^"|"$/g, '')}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {activeSessionData.longDistanceWorkout && 
+                               activeSessionData.longDistanceWorkout.trim() !== "" && 
+                               (!athleteProfile || athleteProfile.sprint400m || 
+                                (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
+                                 !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
+                                 !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
+                                <div className="p-2 bg-background/50 rounded border border-border/50">
+                                  <div className="flex items-start">
+                                    <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
+                                      <Dumbbell className="h-4 w-4 text-primary" />
+                                    </div>
+                                    <div>
+                                      <p className="font-medium text-sm">400m</p>
+                                      <div className="whitespace-pre-line text-sm mt-1">
+                                        {activeSessionData.longDistanceWorkout.replace(/^"|"$/g, '')}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ) : isLoadingProgramSessions ? (
+                    <div className="flex justify-center py-6">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="p-4 bg-background/80 rounded border border-border/50">
+                        <p className="mb-2 font-medium">{selectedProgram.program?.title}</p>
+                        <p className="text-sm text-muted-foreground mb-3">{selectedProgram.program?.description}</p>
+                        
+                        {selectedProgram.notes && (
+                          <div className="p-3 bg-muted/30 rounded-md mb-3">
+                            <h5 className="text-xs font-medium mb-1">Assignment Notes:</h5>
+                            <p className="text-sm">{selectedProgram.notes}</p>
+                          </div>
+                        )}
+                        
+                        <div className="flex justify-between items-center">
+                          <Badge variant="outline">
+                            {selectedProgram.program?.level || ""}
+                          </Badge>
+                          <Badge variant="outline">
+                            {selectedProgram.program?.category || ""}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center justify-between mt-2">
+                    <Link href={`/programs/${selectedProgram.programId}`} className="text-sm text-primary hover:underline">
+                      View Program
+                    </Link>
+                    
+                    {/* Workout Reactions - Like/Dislike functionality */}
+                    {activeSessionData && (
+                      <WorkoutReactions 
+                        sessionId={activeSessionData.programSessionId || activeSessionData.dayNumber || 1} 
+                        isOwnWorkout={true}
+                        className="ml-auto"
+                      />
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="p-6 bg-background/50 rounded border border-border/50 text-center">
+                    <div className="flex flex-col items-center gap-3 py-4">
+                      <CalendarRange className="h-10 w-10 text-muted-foreground opacity-70" />
+                      <p className="text-sm text-muted-foreground">No training session selected</p>
+                      <p className="text-xs text-muted-foreground mt-1">Select a program from below to view your workouts</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* Target Times Calculator */}
+            <Collapsible 
+              open={calculatorOpen}
+              onOpenChange={setCalculatorOpen}
+              className="bg-muted/40 p-3 rounded-md"
+            >
+              <CollapsibleTrigger asChild>
+                <div className="flex items-center justify-between cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <Calculator className="h-4 w-4 text-primary" />
+                    <span>Target Times</span>
+                  </div>
+                  {calculatorOpen ? (
+                    <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-3 space-y-2 animate-in fade-in-0 slide-in-from-top-5">
+                <div className="flex flex-col space-y-2 bg-muted/30 p-2 rounded mb-2">
+                  <div className="text-xs font-medium">Timing Options</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="first-foot" 
+                        checked={useFirstFootTiming}
+                        onCheckedChange={(checked) => setUseFirstFootTiming(checked === true)}
+                      />
+                      <label 
+                        htmlFor="first-foot" 
+                        className="text-xs cursor-pointer"
+                      >
+                        First foot timing
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="track-adjust" 
+                        checked={adjustForTrackType}
+                        onCheckedChange={(checked) => setAdjustForTrackType(checked === true)}
+                      />
+                      <label 
+                        htmlFor="track-adjust" 
+                        className="text-xs cursor-pointer"
+                      >
+                        Track adjustment
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Target Goals Section */}
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="p-2 bg-background/50 rounded border border-border/50">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Target className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium">60m/100m Goal</span>
+                    </div>
+                    <div className="text-lg font-bold text-primary">
+                      {athleteProfile?.sprint60m100mGoal ? `${athleteProfile.sprint60m100mGoal}s` : 'Not set'}
+                    </div>
+                  </div>
+                  
+                  <div className="p-2 bg-background/50 rounded border border-border/50">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Target className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium">200m Goal</span>
+                    </div>
+                    <div className="text-lg font-bold text-primary">
+                      {athleteProfile?.sprint200mGoal ? `${athleteProfile.sprint200mGoal}s` : 'Not set'}
+                    </div>
+                  </div>
+                  
+                  <div className="p-2 bg-background/50 rounded border border-border/50">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Target className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium">400m Goal</span>
+                    </div>
+                    <div className="text-lg font-bold text-primary">
+                      {athleteProfile?.sprint400mGoal ? `${athleteProfile.sprint400mGoal}s` : 'Not set'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Distance/Time Table */}
+                <div className="bg-background/50 rounded border border-border/50 overflow-hidden">
+                  <div className="grid grid-cols-4 gap-1 text-xs font-medium bg-primary/10 p-2">
+                    <div>Distance</div>
+                    <div>Target</div>
+                    <div>±0.1s</div>
+                    <div>±0.2s</div>
+                  </div>
+                  <div className="max-h-32 overflow-y-auto">
+                    {distanceMarks.map((distance) => {
+                      const baseTime = bestTimes[distance.toString()];
+                      
+                      return (
+                        <div key={distance} className="grid grid-cols-4 gap-1 text-xs p-2 border-b border-border/20 last:border-b-0">
+                          <div className="font-medium">{distance}m</div>
+                          <div>{baseTime}s</div>
+                          <div className="text-muted-foreground">{(baseTime + 0.1).toFixed(1)}s</div>
+                          <div className="text-muted-foreground">{(baseTime + 0.2).toFixed(1)}s</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
+
           {/* Training Journal Section */}
           <Card className="mb-6 border border-border/30">
             <CardContent className="p-4">
@@ -532,6 +929,94 @@ function PracticePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Assigned Programs Section */}
+      <Card className="mt-6">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium">Your Programs</h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowAssignedPrograms(!showAssignedPrograms)}
+            >
+              {showAssignedPrograms ? (
+                <>
+                  <ChevronUp className="h-4 w-4 mr-1" />
+                  Hide
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-4 w-4 mr-1" />
+                  Show ({assignedPrograms?.length || 0})
+                </>
+              )}
+            </Button>
+          </div>
+
+          {showAssignedPrograms && (
+            <div className="space-y-3">
+              {isLoadingPrograms ? (
+                <div className="flex justify-center py-4">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+              ) : assignedPrograms && assignedPrograms.length > 0 ? (
+                assignedPrograms.map((assignment) => (
+                  <div
+                    key={assignment.id}
+                    className={`p-3 rounded-md border cursor-pointer transition-colors ${
+                      selectedProgram?.id === assignment.id
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-primary/50 hover:bg-muted/30'
+                    }`}
+                    onClick={() => setSelectedProgram(assignment)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-medium">{assignment.program?.title}</h4>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {assignment.program?.description}
+                        </p>
+                        
+                        {assignment.notes && (
+                          <div className="mt-2 p-2 bg-muted/30 rounded text-xs">
+                            <span className="font-medium">Notes: </span>
+                            {assignment.notes}
+                          </div>
+                        )}
+                        
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="outline" className="text-xs">
+                            {assignment.program?.level}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            {assignment.program?.category}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            {assignment.program?.totalSessions} sessions
+                          </Badge>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 ml-4">
+                        {selectedProgram?.id === assignment.id && (
+                          <CheckCircle className="h-5 w-5 text-primary" />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-6">
+                  <p className="text-sm text-muted-foreground">
+                    No programs assigned to you yet.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </PageContainer>
   );
 }
