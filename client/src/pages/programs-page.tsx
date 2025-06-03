@@ -39,6 +39,7 @@ import {
   CalendarDays,
   Clock,
   Crown,
+  CreditCard,
   FileText,
   Filter,
   Info,

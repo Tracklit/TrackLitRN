@@ -23,7 +23,8 @@ import {
   Edit,
   Loader2,
   Download,
-  ExternalLink
+  ExternalLink,
+  CreditCard
 } from "lucide-react";
 import { ProgramDocumentPreview } from "@/components/program-document-preview";
 import { AssignProgramDialog } from "@/components/assign-program-dialog";
@@ -607,10 +608,19 @@ function ProgramDetail() {
                   <AssignProgramDialog program={program} fullWidth={true} buttonText="Assign Program" />
                 )
               ) : program.visibility === 'premium' ? (
-                <Button className="w-full">
-                  <Crown className="h-3.5 w-3.5 mr-1.5 text-yellow-500" />
-                  Purchase ({program.price || 0} Spikes)
-                </Button>
+                program.priceType === 'money' ? (
+                  <Button className="w-full" asChild>
+                    <Link href={`/programs/${program.id}/checkout`}>
+                      <CreditCard className="h-3.5 w-3.5 mr-1.5" />
+                      Purchase ${program.price || 0}
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button className="w-full">
+                    <Crown className="h-3.5 w-3.5 mr-1.5 text-yellow-500" />
+                    Purchase ({program.price || 0} Spikes)
+                  </Button>
+                )
               ) : program.visibility === 'private' ? (
                 <Button className="w-full" disabled>
                   <LockIcon className="h-3.5 w-3.5 mr-1.5" />
