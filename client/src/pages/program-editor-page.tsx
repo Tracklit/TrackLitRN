@@ -516,7 +516,7 @@ function ProgramEditorPage() {
   useEffect(() => {
     if (program && !isUploadedDocumentProgram) {
       // Use program start date or today if not available
-      const startDate = program.startDate ? new Date(program.startDate) : new Date();
+      const baseDate = program.startDate ? new Date(program.startDate) : new Date();
       
       if (sessions && sessions.length > 0) {
         const weeklyData: { [key: number]: Session[] } = {};
@@ -533,7 +533,8 @@ function ProgramEditorPage() {
         // Convert grouped data to weeks array
         const weeksArray: WeekData[] = Object.keys(weeklyData).map((weekNum) => {
           const weekNumber = parseInt(weekNum);
-          const weekStartDate = addWeeks(startDate, weekNumber);
+          // Use the proper week start calculation that aligns to Sunday
+          const weekStartDate = getWeekStartDate(baseDate, weekNumber);
           
           return {
             weekNumber,
@@ -551,7 +552,7 @@ function ProgramEditorPage() {
         for (let i = 0; i < 5; i++) {
           newWeeks.push({
             weekNumber: i,
-            startDate: addWeeks(startDate, i),
+            startDate: getWeekStartDate(baseDate, i),
             days: [],
           });
         }
@@ -567,7 +568,10 @@ function ProgramEditorPage() {
     if (weeks.length > 0) {
       const lastWeek = weeks[weeks.length - 1];
       const newWeekNumber = lastWeek.weekNumber + 1;
-      const newStartDate = addWeeks(lastWeek.startDate, 1);
+      const baseDate = form.getValues("startDate") 
+        ? new Date(form.getValues("startDate")) 
+        : new Date();
+      const newStartDate = getWeekStartDate(baseDate, newWeekNumber);
       
       const newWeeks = [...weeks, {
         weekNumber: newWeekNumber,
@@ -578,13 +582,13 @@ function ProgramEditorPage() {
       setWeeks(newWeeks);
     } else {
       // If no weeks exist yet, create the first week
-      const startDate = form.getValues("startDate") 
+      const baseDate = form.getValues("startDate") 
         ? new Date(form.getValues("startDate")) 
         : new Date();
         
       setWeeks([{
         weekNumber: 0,
-        startDate,
+        startDate: getWeekStartDate(baseDate, 0),
         days: [],
       }]);
     }
@@ -597,10 +601,13 @@ function ProgramEditorPage() {
     if (weeks.length > 0) {
       const lastWeek = weeks[weeks.length - 1];
       const newWeeks = [...weeks];
+      const baseDate = form.getValues("startDate") 
+        ? new Date(form.getValues("startDate")) 
+        : new Date();
       
       for (let i = 1; i <= 5; i++) {
         const newWeekNumber = lastWeek.weekNumber + i;
-        const newStartDate = addWeeks(lastWeek.startDate, i);
+        const newStartDate = getWeekStartDate(baseDate, newWeekNumber);
         
         newWeeks.push({
           weekNumber: newWeekNumber,
@@ -753,6 +760,14 @@ function ProgramEditorPage() {
         });
       });
     }
+  };
+
+  // Helper to get the correct start of week (Sunday) for any given date
+  const getWeekStartDate = (date: Date, weekOffset: number = 0) => {
+    // Get the start of the week (Sunday) for the given date
+    const startOfCurrentWeek = startOfWeek(date, { weekStartsOn: 0 }); // 0 = Sunday
+    // Add the week offset
+    return addWeeks(startOfCurrentWeek, weekOffset);
   };
 
   // Helper to get date for a specific week and day
