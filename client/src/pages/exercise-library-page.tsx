@@ -160,15 +160,19 @@ export default function ExerciseLibraryPage() {
       return response.json();
     },
     onSuccess: () => {
+      // Clear all state and close modal
       setShareDialogOpen(false);
       setSelectedRecipients([]);
       setShareMessage("");
+      setSelectedExercise(null);
+      queryClient.invalidateQueries({ queryKey: ['/api/conversations'] });
       toast({ title: "Success", description: "Exercise shared successfully!" });
     },
     onError: (error: Error) => {
+      console.error('Share error:', error);
       toast({ 
         title: "Share Failed", 
-        description: error.message,
+        description: error.message || "Failed to share exercise",
         variant: "destructive" 
       });
     }
@@ -469,28 +473,28 @@ export default function ExerciseLibraryPage() {
 
         {/* Share Dialog */}
         <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
-          <DialogContent className="max-w-md bg-white dark:bg-gray-900 border shadow-lg">
+          <DialogContent className="max-w-md bg-[#010a18] border border-gray-700 shadow-lg">
             <DialogHeader>
-              <DialogTitle className="text-gray-900 dark:text-white">Share Exercise</DialogTitle>
+              <DialogTitle className="text-white">Share Exercise</DialogTitle>
             </DialogHeader>
             
             {selectedExercise && (
               <div className="space-y-4">
-                <div className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="text-sm text-gray-400">
                   Sharing: {selectedExercise.name}
                 </div>
                 
                 <Tabs defaultValue="link" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 bg-gray-100 dark:bg-gray-800">
+                  <TabsList className="grid w-full grid-cols-2 bg-gray-800">
                     <TabsTrigger 
                       value="link" 
-                      className="data-[state=active]:bg-white data-[state=active]:text-gray-900 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-white"
+                      className="data-[state=active]:bg-gray-700 data-[state=active]:text-white text-gray-400"
                     >
                       Copy Link
                     </TabsTrigger>
                     <TabsTrigger 
                       value="internal"
-                      className="data-[state=active]:bg-white data-[state=active]:text-gray-900 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-white"
+                      className="data-[state=active]:bg-gray-700 data-[state=active]:text-white text-gray-400"
                     >
                       Send Message
                     </TabsTrigger>
@@ -501,7 +505,7 @@ export default function ExerciseLibraryPage() {
                       <Input 
                         value={`${window.location.origin}/exercise/${selectedExercise.id}`}
                         readOnly
-                        className="flex-1 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
+                        className="flex-1 bg-gray-800 border-gray-600 text-white"
                       />
                       <Button
                         size="sm"
@@ -516,30 +520,33 @@ export default function ExerciseLibraryPage() {
                   
                   <TabsContent value="internal" className="space-y-4 mt-4">
                     <div>
-                      <Label className="text-gray-900 dark:text-white">Send to Connections & Athletes</Label>
-                      <div className="mt-2 max-h-32 overflow-y-auto space-y-2 bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
-                        {shareContacts?.map((contact: any) => (
-                          <div key={`share-${contact.id}`} className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id={`share-contact-${contact.id}`}
-                              checked={selectedRecipients.includes(contact.id)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedRecipients(prev => [...prev, contact.id]);
-                                } else {
-                                  setSelectedRecipients(prev => prev.filter(id => id !== contact.id));
-                                }
-                              }}
-                              className="rounded text-blue-600"
-                            />
-                            <label htmlFor={`share-contact-${contact.id}`} className="text-sm text-gray-900 dark:text-white cursor-pointer">
-                              {contact.name || contact.username}
-                            </label>
-                          </div>
-                        ))}
-                        {(!shareContacts || shareContacts.length === 0) && (
-                          <div className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
+                      <Label className="text-white">Send to Connections & Athletes</Label>
+                      <div className="mt-2 max-h-32 overflow-y-auto space-y-2 bg-gray-800 p-3 rounded-md border border-gray-700">
+                        {shareContacts?.length > 0 ? (
+                          // Use Set to remove duplicates based on contact ID
+                          Array.from(new Map(shareContacts.map((contact: any) => [contact.id, contact])).values())
+                            .map((contact: any) => (
+                              <div key={`share-${contact.id}`} className="flex items-center space-x-2">
+                                <input
+                                  type="checkbox"
+                                  id={`share-contact-${contact.id}`}
+                                  checked={selectedRecipients.includes(contact.id)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedRecipients(prev => [...prev, contact.id]);
+                                    } else {
+                                      setSelectedRecipients(prev => prev.filter(id => id !== contact.id));
+                                    }
+                                  }}
+                                  className="rounded text-blue-600"
+                                />
+                                <label htmlFor={`share-contact-${contact.id}`} className="text-sm text-white cursor-pointer">
+                                  {contact.name || contact.username}
+                                </label>
+                              </div>
+                            ))
+                        ) : (
+                          <div className="text-sm text-gray-400 text-center py-2">
                             No connections available
                           </div>
                         )}
@@ -547,13 +554,13 @@ export default function ExerciseLibraryPage() {
                     </div>
                     
                     <div>
-                      <Label htmlFor="shareMessage" className="text-gray-900 dark:text-white">Message (Optional)</Label>
+                      <Label htmlFor="shareMessage" className="text-white">Message (Optional)</Label>
                       <Textarea
                         id="shareMessage"
                         value={shareMessage}
                         onChange={(e) => setShareMessage(e.target.value)}
                         placeholder="Add a message to share with this exercise..."
-                        className="mt-1 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
+                        className="mt-1 bg-gray-800 border-gray-600 text-white placeholder-gray-400"
                       />
                     </div>
                     
