@@ -853,7 +853,7 @@ export default function ExerciseLibraryPage() {
                 variant="ghost"
                 size="sm"
                 onClick={closeFullscreen}
-                className="absolute top-4 right-4 z-10 text-white hover:bg-white/20"
+                className="absolute top-4 left-4 z-10 text-white hover:bg-white/20"
               >
                 ✕
               </Button>
