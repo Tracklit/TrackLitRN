@@ -60,66 +60,38 @@ export default function ExerciseLibraryPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Prevent viewport changes when dialogs are open
+  // Force dialog to stay centered
   useEffect(() => {
-    if (shareDialogOpen || libraryShareDialogOpen) {
-      const scrollY = window.scrollY;
-      const originalStyle = {
-        position: document.body.style.position,
-        top: document.body.style.top,
-        width: document.body.style.width,
-        overflow: document.body.style.overflow,
-        height: document.body.style.height
-      };
+    if (!shareDialogOpen && !libraryShareDialogOpen) return;
 
-      // Lock body position
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
-      document.body.style.overflow = 'hidden';
-      document.body.style.height = '100%';
-
-      // Prevent all touch events on body
-      const preventTouch = (e: TouchEvent) => {
-        if (e.target && !(e.target as Element).closest('[role="dialog"]')) {
-          e.preventDefault();
-          e.stopPropagation();
+    const observer = new MutationObserver(() => {
+      const dialog = document.querySelector('[data-radix-dialog-content]') as HTMLElement;
+      if (dialog) {
+        const rect = dialog.getBoundingClientRect();
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+        const dialogCenterX = rect.left + rect.width / 2;
+        const dialogCenterY = rect.top + rect.height / 2;
+        
+        // If dialog has moved from center, reposition it
+        if (Math.abs(dialogCenterX - centerX) > 10 || Math.abs(dialogCenterY - centerY) > 10) {
+          dialog.style.position = 'fixed';
+          dialog.style.top = '50%';
+          dialog.style.left = '50%';
+          dialog.style.transform = 'translate(-50%, -50%)';
+          dialog.style.zIndex = '9999';
         }
-      };
-
-      // Prevent viewport meta tag scaling
-      const viewport = document.querySelector('meta[name=viewport]');
-      const originalViewport = viewport?.getAttribute('content');
-      if (viewport) {
-        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
       }
+    });
 
-      document.addEventListener('touchstart', preventTouch, { passive: false });
-      document.addEventListener('touchmove', preventTouch, { passive: false });
-      document.addEventListener('touchend', preventTouch, { passive: false });
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['style', 'class']
+    });
 
-      return () => {
-        // Restore original styles
-        document.body.style.position = originalStyle.position;
-        document.body.style.top = originalStyle.top;
-        document.body.style.width = originalStyle.width;
-        document.body.style.overflow = originalStyle.overflow;
-        document.body.style.height = originalStyle.height;
-        
-        // Restore scroll position
-        window.scrollTo(0, scrollY);
-        
-        // Restore viewport
-        if (viewport && originalViewport) {
-          viewport.setAttribute('content', originalViewport);
-        }
-        
-        // Remove event listeners
-        document.removeEventListener('touchstart', preventTouch);
-        document.removeEventListener('touchmove', preventTouch);
-        document.removeEventListener('touchend', preventTouch);
-      };
-    }
+    return () => observer.disconnect();
   }, [shareDialogOpen, libraryShareDialogOpen]);
 
   // Fetch exercise library
@@ -535,19 +507,7 @@ export default function ExerciseLibraryPage() {
 
         {/* Share Dialog */}
         <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
-          <DialogContent 
-            className="max-w-md bg-[#010a18] border border-gray-700 shadow-lg sm:max-h-[85vh] overflow-y-auto will-change-auto transform-gpu"
-            style={{
-              position: 'fixed',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              zIndex: 9999,
-              touchAction: 'none'
-            }}
-            onPointerDownOutside={(e) => e.preventDefault()}
-            onInteractOutside={(e) => e.preventDefault()}
-          >
+          <DialogContent className="max-w-md bg-[#010a18] border border-gray-700 shadow-lg sm:max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-white">Share Exercise</DialogTitle>
             </DialogHeader>
