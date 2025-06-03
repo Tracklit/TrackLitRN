@@ -200,136 +200,87 @@ export default function ExerciseLibraryPage() {
                 Add Exercise
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md bg-background/95 backdrop-blur-sm border">
               <DialogHeader>
                 <DialogTitle>Add Exercise</DialogTitle>
               </DialogHeader>
               
-              <Tabs defaultValue="upload" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="upload" className="flex items-center gap-2">
-                    <Upload className="h-4 w-4" />
-                    Upload
-                  </TabsTrigger>
-                  <TabsTrigger value="youtube" className="flex items-center gap-2">
-                    <Youtube className="h-4 w-4" />
-                    YouTube
-                  </TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="upload" className="space-y-4">
-                  <form onSubmit={handleUpload} className="space-y-4">
-                    <div>
-                      <Label htmlFor="file">Video/Image File</Label>
-                      <Input
-                        id="file"
-                        name="file"
-                        type="file"
-                        accept="video/*,image/*"
-                        required
-                        disabled={!limits?.uploads.canUpload}
-                      />
-                      {limits && (
-                        <div className="mt-2">
-                          <div className="flex justify-between text-xs text-muted-foreground">
-                            <span>Usage: {limits.uploads.current}/{limits.uploads.limit === -1 ? '∞' : limits.uploads.limit}</span>
-                          </div>
-                          {limits.uploads.limit !== -1 && (
-                            <Progress 
-                              value={(limits.uploads.current / limits.uploads.limit) * 100} 
-                              className="h-1 mt-1"
-                            />
-                          )}
-                        </div>
+              <form onSubmit={handleUpload} className="space-y-4">
+                <div>
+                  <Label htmlFor="file">Video/Image File</Label>
+                  <Input
+                    id="file"
+                    name="file"
+                    type="file"
+                    accept="video/*,image/*"
+                    disabled={!limits?.uploads.canUpload}
+                  />
+                  {limits && (
+                    <div className="mt-2">
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>Usage: {limits.uploads.current}/{limits.uploads.limit === -1 ? '∞' : limits.uploads.limit}</span>
+                      </div>
+                      {limits.uploads.limit !== -1 && (
+                        <Progress 
+                          value={(limits.uploads.current / limits.uploads.limit) * 100} 
+                          className="h-1 mt-1"
+                        />
                       )}
                     </div>
-                    
-                    <div>
-                      <Label htmlFor="name">Name</Label>
-                      <Input id="name" name="name" placeholder="Exercise name" />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="description">Description</Label>
-                      <Textarea id="description" name="description" placeholder="Exercise description" />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="tags">Tags (comma-separated)</Label>
-                      <Input id="tags" name="tags" placeholder="warm-up, speed, technique" />
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <input type="checkbox" id="isPublic" name="isPublic" />
-                      <Label htmlFor="isPublic">Make public</Label>
-                    </div>
-                    
-                    <Button 
-                      type="submit" 
-                      className="w-full"
-                      disabled={uploadMutation.isPending || !limits?.uploads.canUpload}
-                    >
-                      {uploadMutation.isPending ? "Uploading..." : "Upload"}
-                    </Button>
-                  </form>
-                </TabsContent>
-                
-                <TabsContent value="youtube" className="space-y-4">
-                  <form onSubmit={handleYouTube} className="space-y-4">
-                    <div>
-                      <Label htmlFor="youtubeUrl">YouTube URL</Label>
-                      <Input
-                        id="youtubeUrl"
-                        name="youtubeUrl"
-                        placeholder="https://www.youtube.com/watch?v=..."
-                        required
-                        disabled={!limits?.youtube.canAdd}
-                      />
-                      {limits && (
-                        <div className="mt-2">
-                          <div className="flex justify-between text-xs text-muted-foreground">
-                            <span>Usage: {limits.youtube.current}/{limits.youtube.limit === -1 ? '∞' : limits.youtube.limit}</span>
-                          </div>
-                          {limits.youtube.limit !== -1 && (
-                            <Progress 
-                              value={(limits.youtube.current / limits.youtube.limit) * 100} 
-                              className="h-1 mt-1"
-                            />
-                          )}
-                        </div>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="youtubeUrl">YouTube URL (Optional)</Label>
+                  <Input 
+                    id="youtubeUrl" 
+                    name="youtubeUrl" 
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    type="url"
+                  />
+                  {limits && (
+                    <div className="mt-2">
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>YouTube Usage: {limits.youtube.current}/{limits.youtube.limit === -1 ? '∞' : limits.youtube.limit}</span>
+                      </div>
+                      {limits.youtube.limit !== -1 && (
+                        <Progress 
+                          value={(limits.youtube.current / limits.youtube.limit) * 100} 
+                          className="h-1 mt-1"
+                        />
                       )}
                     </div>
-                    
-                    <div>
-                      <Label htmlFor="name">Name</Label>
-                      <Input id="name" name="name" placeholder="Exercise name" />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="description">Description</Label>
-                      <Textarea id="description" name="description" placeholder="Exercise description" />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="tags">Tags (comma-separated)</Label>
-                      <Input id="tags" name="tags" placeholder="warm-up, speed, technique" />
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <input type="checkbox" id="isPublic" name="isPublic" />
-                      <Label htmlFor="isPublic">Make public</Label>
-                    </div>
-                    
-                    <Button 
-                      type="submit" 
-                      className="w-full"
-                      disabled={youtubeMutation.isPending || !limits?.youtube.canAdd}
-                    >
-                      {youtubeMutation.isPending ? "Adding..." : "Add YouTube Video"}
-                    </Button>
-                  </form>
-                </TabsContent>
-              </Tabs>
+                  )}
+                </div>
+                
+                <div>
+                  <Label htmlFor="name">Name</Label>
+                  <Input id="name" name="name" placeholder="Exercise name" required />
+                </div>
+                
+                <div>
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea id="description" name="description" placeholder="Exercise description" />
+                </div>
+                
+                <div>
+                  <Label htmlFor="tags">Tags (comma-separated)</Label>
+                  <Input id="tags" name="tags" placeholder="warm-up, speed, technique" />
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <input type="checkbox" id="isPublic" name="isPublic" />
+                  <Label htmlFor="isPublic">Make public</Label>
+                </div>
+                
+                <Button 
+                  type="submit" 
+                  className="w-full"
+                  disabled={uploadMutation.isPending}
+                >
+                  {uploadMutation.isPending ? "Adding..." : "Add Exercise"}
+                </Button>
+              </form>
             </DialogContent>
           </Dialog>
         </div>
