@@ -685,15 +685,17 @@ export default function PracticePage() {
               </div>
             )}
 
-            <div className={`space-y-4 mt-6 transition-opacity duration-200 ${fadeTransition ? 'opacity-100' : 'opacity-0'}`}>
-              {/* Program content or default content */}
-              <div className="bg-muted/40 p-3 rounded-md">
-                {/* Removed Program Content label */}
-                
-                {selectedProgram ? (
-                  <div className="space-y-4">
-                    {/* Show active session if available */}
-                    {activeSessionData ? (
+            {/* Only show daily sessions if there are no meets scheduled for today */}
+            {todaysMeets.length === 0 && (
+              <div className={`space-y-4 mt-6 transition-opacity duration-200 ${fadeTransition ? 'opacity-100' : 'opacity-0'}`}>
+                {/* Program content or default content */}
+                <div className="bg-muted/40 p-3 rounded-md">
+                  {/* Removed Program Content label */}
+                  
+                  {selectedProgram ? (
+                    <div className="space-y-4">
+                      {/* Show active session if available */}
+                      {activeSessionData ? (
                       <div className="space-y-3">
                         <div className="p-3 bg-background/80 rounded-md border border-border/50">
                           {/* Date and description removed */}
@@ -1286,6 +1288,11 @@ export default function PracticePage() {
           </Collapsible>
         )}
       </div>
+            )}
+          </div>
+        )}
+      </div>
+    )}
 
       {/* Premium Feature Modal */}
       <Dialog open={showPremiumModal} onOpenChange={setShowPremiumModal}>
