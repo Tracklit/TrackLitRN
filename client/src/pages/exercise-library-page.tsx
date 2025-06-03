@@ -200,7 +200,8 @@ export default function ExerciseLibraryPage() {
                 Add Exercise
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md bg-background/95 backdrop-blur-sm border">
+            <div className={uploadDialogOpen ? "fixed inset-0 z-50 bg-black/50" : "hidden"} />
+            <DialogContent className="max-w-md bg-background border shadow-lg z-50">
               <DialogHeader>
                 <DialogTitle>Add Exercise</DialogTitle>
               </DialogHeader>
