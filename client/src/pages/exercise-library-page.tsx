@@ -473,7 +473,7 @@ export default function ExerciseLibraryPage() {
 
         {/* Share Dialog */}
         <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
-          <DialogContent className="max-w-md bg-[#010a18] border border-gray-700 shadow-lg">
+          <DialogContent className="max-w-md bg-[#010a18] border border-gray-700 shadow-lg sm:max-h-[85vh] overflow-y-auto will-change-auto transform-gpu">
             <DialogHeader>
               <DialogTitle className="text-white">Share Exercise</DialogTitle>
             </DialogHeader>
@@ -565,7 +565,11 @@ export default function ExerciseLibraryPage() {
                     </div>
                     
                     <Button 
-                      onClick={handleShareInternal}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleShareInternal();
+                      }}
                       disabled={selectedRecipients.length === 0 || shareMutation.isPending}
                       className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                     >

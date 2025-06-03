@@ -22,6 +22,18 @@
   color: #4b5563 !important;
 }
 
+/* Dialog positioning fixes for mobile */
+[data-radix-dialog-content] {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  max-height: 85vh !important;
+  overflow-y: auto !important;
+  will-change: auto !important;
+  backface-visibility: hidden !important;
+}
+
 /* Custom styling for hiding scrollbars while maintaining scroll functionality */
 body, div, aside, nav, main, section, article, 
 .hamburger-menu, [data-radix-scroll-area-viewport], 
