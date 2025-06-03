@@ -664,36 +664,35 @@ function PracticePage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-medium">Training Journal</h3>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">How do you feel?</span>
-                  <div 
-                    className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-white text-sm"
-                    style={{ 
-                      background: moodValue <= 3 ? '#ef4444' : 
-                                moodValue <= 5 ? '#f59e0b' : 
-                                '#22c55e'
-                    }}
-                  >
-                    {moodValue}
-                  </div>
-                </div>
               </div>
               
               <div className="space-y-4">
-                {/* Mood Slider */}
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <label className="text-sm font-medium">Mood (1-10)</label>
-                    <span className="text-xs text-muted-foreground">{moodValue}/10</span>
+                {/* Mood Tracking Slider */}
+                <div className="p-3 bg-muted/30 rounded-md">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm font-medium">How did you feel today?</div>
+                    <div className="text-lg font-bold">{moodValue}/10</div>
                   </div>
-                  <Slider
-                    value={[moodValue]}
-                    onValueChange={(value) => setMoodValue(value[0])}
-                    max={10}
-                    min={1}
-                    step={1}
-                    className="w-full"
-                  />
+                  <div className="px-1">
+                    <Slider
+                      value={[moodValue]}
+                      min={1}
+                      max={10}
+                      step={0.5}
+                      onValueChange={(value) => setMoodValue(value[0])}
+                      className="mood-slider"
+                    />
+                  </div>
+                  <div className="flex justify-between mt-1 text-xs">
+                    <span className="text-red-500">Poor</span>
+                    <span className="text-amber-500">Average (5)</span>
+                    <span className="text-green-500">Excellent</span>
+                  </div>
+                  <div className="flex justify-between px-1 mt-1">
+                    <div className="text-[9px] text-muted-foreground">1</div>
+                    <div className="text-[9px] text-muted-foreground">5</div>
+                    <div className="text-[9px] text-muted-foreground">10</div>
+                  </div>
                 </div>
 
                 {/* Voice Recording Section - Premium Gated */}
