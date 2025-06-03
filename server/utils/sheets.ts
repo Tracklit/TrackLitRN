@@ -178,22 +178,8 @@ export async function fetchSpreadsheetData(sheetId: string) {
           [preActivation1, preActivation2, shortDistanceWorkout, mediumDistanceWorkout, longDistanceWorkout, extraSession]
           .map(val => val.replace(/^"|"$/g, ''));
         
-        // Process the date value if it's in Month-Day format
+        // Keep the original date value from Column A for display
         let formattedDate = dateValue;
-        if (dateValue && dateValue.includes('-')) {
-          const [month, day] = dateValue.split('-');
-          if (month && day) {
-            // Convert month name to month number
-            const monthMap: {[key: string]: string} = {
-              'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06',
-              'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'
-            };
-            
-            const monthNum = monthMap[month] || month;
-            const currentYear = new Date().getFullYear();
-            formattedDate = `${currentYear}-${monthNum}-${day.padStart(2, '0')}`;
-          }
-        }
         
         // Determine if it's a rest day (all workout cells empty)
         const isRestDay = !shortDistanceWorkout && !mediumDistanceWorkout && !longDistanceWorkout;
