@@ -538,10 +538,10 @@ export default function ExerciseLibraryPage() {
           <DialogContent 
             className="max-w-md bg-[#010a18] border border-gray-700 shadow-lg sm:max-h-[85vh] overflow-y-auto will-change-auto transform-gpu"
             style={{
-              position: 'fixed !important',
-              top: '50% !important',
-              left: '50% !important',
-              transform: 'translate(-50%, -50%) !important',
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
               zIndex: 9999,
               touchAction: 'none'
             }}

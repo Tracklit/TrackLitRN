@@ -22,24 +22,39 @@
   color: #4b5563 !important;
 }
 
-/* Dialog positioning fixes for mobile */
-[role="dialog"] {
+/* Dialog positioning fixes for mobile - Complete viewport lock */
+[data-state="open"][role="dialog"] {
   position: fixed !important;
   top: 50% !important;
   left: 50% !important;
   transform: translate(-50%, -50%) !important;
   max-height: 85vh !important;
   overflow-y: auto !important;
-  will-change: auto !important;
-  backface-visibility: hidden !important;
-  z-index: 50 !important;
+  z-index: 9999 !important;
+  touch-action: manipulation !important;
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
 }
 
-/* Prevent body scroll when dialog is open */
-body:has([role="dialog"]) {
-  overflow: hidden !important;
+/* Lock viewport completely when modal is open */
+html:has([data-state="open"][role="dialog"]),
+body:has([data-state="open"][role="dialog"]) {
   position: fixed !important;
+  overflow: hidden !important;
   width: 100% !important;
+  height: 100% !important;
+  -webkit-overflow-scrolling: auto !important;
+  overscroll-behavior: none !important;
+  touch-action: none !important;
+}
+
+/* Prevent all touch interactions on overlay */
+[data-radix-dialog-overlay] {
+  touch-action: none !important;
+  -webkit-touch-callout: none !important;
 }
 
 /* Custom styling for hiding scrollbars while maintaining scroll functionality */
