@@ -766,10 +766,19 @@ function ProgramCard({ program, type, creator, viewMode }: {
               <Link href={`/programs/${program.id}`}>Preview</Link>
             </Button>
             {program.visibility === 'premium' ? (
-              <Button variant="default" size="sm">
-                <Crown className="h-3.5 w-3.5 mr-1.5 text-yellow-500" />
-                Purchase
-              </Button>
+              program.priceType === 'money' ? (
+                <Button variant="default" size="sm" asChild>
+                  <Link href={`/programs/${program.id}/checkout`}>
+                    <CreditCard className="h-3.5 w-3.5 mr-1.5" />
+                    ${program.price || 0}
+                  </Link>
+                </Button>
+              ) : (
+                <Button variant="default" size="sm">
+                  <Crown className="h-3.5 w-3.5 mr-1.5 text-yellow-500" />
+                  Purchase
+                </Button>
+              )
             ) : program.visibility === 'private' ? (
               <Button variant="default" size="sm" disabled>
                 <LockIcon className="h-3.5 w-3.5 mr-1.5" />
