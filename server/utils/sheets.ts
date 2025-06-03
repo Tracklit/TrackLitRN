@@ -181,8 +181,8 @@ export async function fetchSpreadsheetData(sheetId: string) {
         // Keep the original date value from Column A for display
         let formattedDate = dateValue;
         
-        // Determine if it's a rest day (all workout cells empty)
-        const isRestDay = !shortDistanceWorkout && !mediumDistanceWorkout && !longDistanceWorkout;
+        // Determine if it's a rest day (empty date in Column A OR all workout cells empty)
+        const isRestDay = !dateValue || dateValue.trim() === '' || (!shortDistanceWorkout && !mediumDistanceWorkout && !longDistanceWorkout);
         
         return {
           dayNumber: index + 1,
