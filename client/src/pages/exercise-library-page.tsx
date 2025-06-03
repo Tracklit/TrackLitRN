@@ -11,7 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Upload, Youtube, Share2, Play, Trash2, ExternalLink } from "lucide-react";
+import { Plus, Upload, Youtube, Share2, Play, Trash2, ExternalLink, MoreVertical, Grid3X3, List } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 
 interface ExerciseLibraryItem {
@@ -50,6 +51,7 @@ export default function ExerciseLibraryPage() {
   const [selectedExercise, setSelectedExercise] = useState<ExerciseLibraryItem | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [fullscreenVideo, setFullscreenVideo] = useState<ExerciseLibraryItem | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -184,7 +186,7 @@ export default function ExerciseLibraryPage() {
       ]}
     >
       <div className="space-y-6">
-        {/* Header with Upload Button */}
+        {/* Header with Upload Button and View Toggle */}
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold">Exercise Library</h1>
@@ -193,7 +195,28 @@ export default function ExerciseLibraryPage() {
             </p>
           </div>
           
-          <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+          <div className="flex items-center gap-4">
+            {/* View Toggle */}
+            <div className="flex items-center border rounded-lg p-1">
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+                className="h-8 px-3"
+              >
+                <Grid3X3 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className="h-8 px-3"
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
@@ -284,11 +307,12 @@ export default function ExerciseLibraryPage() {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         {/* Exercise Grid */}
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-4"}>
             {Array.from({ length: 6 }).map((_, i) => (
               <Card key={i} className="animate-pulse">
                 <div className="aspect-video bg-muted" />
@@ -301,90 +325,211 @@ export default function ExerciseLibraryPage() {
           </div>
         ) : libraryData?.exercises?.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {libraryData.exercises.map((exercise: ExerciseLibraryItem) => (
-                <Card key={exercise.id} className="group hover:shadow-lg transition-shadow">
-                  <div className="relative aspect-video overflow-hidden rounded-t-lg">
-                    <img
-                      src={getThumbnail(exercise)}
-                      alt={exercise.name}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = '/placeholder-video.jpg';
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <Button
-                        size="sm"
-                        onClick={() => openFullscreen(exercise)}
-                        className="mr-2"
-                      >
-                        <Play className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => {
-                          setSelectedExercise(exercise);
-                          setShareDialogOpen(true);
+{viewMode === 'grid' ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {libraryData.exercises.map((exercise: ExerciseLibraryItem) => (
+                  <Card key={exercise.id} className="group hover:shadow-lg transition-shadow">
+                    <div className="relative aspect-video overflow-hidden rounded-t-lg">
+                      <img
+                        src={getThumbnail(exercise) || '/placeholder-video.jpg'}
+                        alt={exercise.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = '/placeholder-video.jpg';
                         }}
-                        className="mr-2"
+                      />
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Button
+                          size="sm"
+                          onClick={() => openFullscreen(exercise)}
+                        >
+                          <Play className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      
+                      {/* Action Dropdown */}
+                      <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="h-8 w-8 p-0"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start">
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedExercise(exercise);
+                                setShareDialogOpen(true);
+                              }}
+                            >
+                              <Share2 className="h-4 w-4 mr-2" />
+                              Share
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => deleteMutation.mutate(exercise.id)}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                      
+                      {/* Type badge */}
+                      <Badge 
+                        variant={exercise.type === 'youtube' ? 'destructive' : 'secondary'}
+                        className="absolute top-2 right-2"
                       >
-                        <Share2 className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => deleteMutation.mutate(exercise.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                        {exercise.type === 'youtube' ? <Youtube className="h-3 w-3 mr-1" /> : <Upload className="h-3 w-3 mr-1" />}
+                        {exercise.type}
+                      </Badge>
                     </div>
                     
-                    {/* Type badge */}
-                    <Badge 
-                      variant={exercise.type === 'youtube' ? 'destructive' : 'secondary'}
-                      className="absolute top-2 right-2"
-                    >
-                      {exercise.type === 'youtube' ? <Youtube className="h-3 w-3 mr-1" /> : <Upload className="h-3 w-3 mr-1" />}
-                      {exercise.type}
-                    </Badge>
-                  </div>
-                  
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold truncate">{exercise.name}</h3>
-                    {exercise.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                        {exercise.description}
-                      </p>
-                    )}
-                    
-                    {exercise.tags && exercise.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {exercise.tags.slice(0, 3).map((tag, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                        {exercise.tags.length > 3 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{exercise.tags.length - 3}
-                          </Badge>
+                    <CardContent className="p-4">
+                      <h3 className="font-semibold truncate">{exercise.name}</h3>
+                      {exercise.description && (
+                        <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                          {exercise.description}
+                        </p>
+                      )}
+                      
+                      {exercise.tags && exercise.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {exercise.tags.slice(0, 3).map((tag, index) => (
+                            <Badge key={index} variant="outline" className="text-xs">
+                              {tag}
+                            </Badge>
+                          ))}
+                          {exercise.tags.length > 3 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{exercise.tags.length - 3}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                      
+                      <div className="flex justify-between items-center mt-3 text-xs text-muted-foreground">
+                        <span>{new Date(exercise.createdAt).toLocaleDateString()}</span>
+                        {exercise.fileSize && (
+                          <span>{formatFileSize(exercise.fileSize)}</span>
                         )}
                       </div>
-                    )}
-                    
-                    <div className="flex justify-between items-center mt-3 text-xs text-muted-foreground">
-                      <span>{new Date(exercise.createdAt).toLocaleDateString()}</span>
-                      {exercise.fileSize && (
-                        <span>{formatFileSize(exercise.fileSize)}</span>
-                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {libraryData.exercises.map((exercise: ExerciseLibraryItem) => (
+                  <Card key={exercise.id} className="group hover:shadow-lg transition-shadow">
+                    <div className="flex gap-4 p-4">
+                      <div className="relative w-32 h-20 flex-shrink-0 overflow-hidden rounded-lg">
+                        <img
+                          src={getThumbnail(exercise) || '/placeholder-video.jpg'}
+                          alt={exercise.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = '/placeholder-video.jpg';
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Button
+                            size="sm"
+                            onClick={() => openFullscreen(exercise)}
+                          >
+                            <Play className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        
+                        {/* Type badge */}
+                        <Badge 
+                          variant={exercise.type === 'youtube' ? 'destructive' : 'secondary'}
+                          className="absolute top-1 right-1 text-xs"
+                        >
+                          {exercise.type === 'youtube' ? <Youtube className="h-2 w-2 mr-1" /> : <Upload className="h-2 w-2 mr-1" />}
+                          {exercise.type}
+                        </Badge>
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold truncate">{exercise.name}</h3>
+                            {exercise.description && (
+                              <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                                {exercise.description}
+                              </p>
+                            )}
+                            
+                            {exercise.tags && exercise.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {exercise.tags.slice(0, 4).map((tag, index) => (
+                                  <Badge key={index} variant="outline" className="text-xs">
+                                    {tag}
+                                  </Badge>
+                                ))}
+                                {exercise.tags.length > 4 && (
+                                  <Badge variant="outline" className="text-xs">
+                                    +{exercise.tags.length - 4}
+                                  </Badge>
+                                )}
+                              </div>
+                            )}
+                            
+                            <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                              <span>{new Date(exercise.createdAt).toLocaleDateString()}</span>
+                              {exercise.fileSize && (
+                                <span>{formatFileSize(exercise.fileSize)}</span>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {/* Action Dropdown */}
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setSelectedExercise(exercise);
+                                    setShareDialogOpen(true);
+                                  }}
+                                >
+                                  <Share2 className="h-4 w-4 mr-2" />
+                                  Share
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => deleteMutation.mutate(exercise.id)}
+                                  className="text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                  </Card>
+                ))}
+              </div>
+            )}
 
             {/* Pagination */}
             {libraryData.totalPages > 1 && (
