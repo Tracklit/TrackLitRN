@@ -525,6 +525,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // API Routes - prefix all routes with /api
   
+  // User search endpoint
+  app.get("/api/users/search", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const query = req.query.q as string;
+      
+      if (!query || query.length < 2) {
+        return res.json([]);
+      }
+      
+      const users = await dbStorage.searchUsers(query);
+      res.json(users);
+    } catch (error) {
+      console.error("Error searching users:", error);
+      res.status(500).json({ error: "Failed to search users" });
+    }
+  });
+
   // Google authentication endpoint
   app.post("/api/auth/google", async (req: Request, res: Response) => {
     try {

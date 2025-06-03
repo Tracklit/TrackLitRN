@@ -57,6 +57,8 @@ export default function ExerciseLibraryPage() {
   const [shareMessage, setShareMessage] = useState("");
   const [libraryShareDialogOpen, setLibraryShareDialogOpen] = useState(false);
   const [selectedLibraryRecipients, setSelectedLibraryRecipients] = useState<number[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -74,11 +76,28 @@ export default function ExerciseLibraryPage() {
     queryFn: () => apiRequest('GET', '/api/exercise-library/limits').then(res => res.json())
   });
 
-  // Fetch connections and athletes for sharing
+  // Search users function
+  const searchUsers = async (query: string) => {
+    if (query.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    
+    try {
+      const response = await apiRequest('GET', `/api/users/search?q=${encodeURIComponent(query)}`);
+      const results = await response.json();
+      setSearchResults(results);
+    } catch (error) {
+      console.error('Search error:', error);
+      setSearchResults([]);
+    }
+  };
+
+  // Fetch connections and athletes for sharing (library share only)
   const { data: shareContacts } = useQuery({
     queryKey: ['/api/share-contacts'],
     queryFn: () => apiRequest('GET', '/api/connections').then(res => res.json()),
-    enabled: shareDialogOpen || libraryShareDialogOpen
+    enabled: libraryShareDialogOpen
   });
 
   // Fetch user data for subscription info
@@ -514,7 +533,7 @@ export default function ExerciseLibraryPage() {
                           value="internal"
                           className="data-[state=active]:bg-gray-700 data-[state=active]:text-white text-gray-400"
                         >
-                          Send Message
+                          Send Directly
                         </TabsTrigger>
                       </TabsList>
                       
@@ -538,36 +557,69 @@ export default function ExerciseLibraryPage() {
                       
                       <TabsContent value="internal" className="space-y-4 mt-4">
                         <div>
-                          <Label className="text-white">Send to Connections & Athletes</Label>
-                          <div className="mt-2 max-h-32 overflow-y-auto space-y-2 bg-gray-800 p-3 rounded-md border border-gray-700">
-                            {shareContacts?.length > 0 ? (
-                              Array.from(new Map(shareContacts.map((contact: any) => [contact.id, contact])).values())
-                                .map((contact: any) => (
-                                  <div key={`share-${contact.id}`} className="flex items-center space-x-2">
-                                    <input
-                                      type="checkbox"
-                                      id={`share-contact-${contact.id}`}
-                                      checked={selectedRecipients.includes(contact.id)}
-                                      onChange={(e) => {
-                                        if (e.target.checked) {
-                                          setSelectedRecipients(prev => [...prev, contact.id]);
-                                        } else {
-                                          setSelectedRecipients(prev => prev.filter(id => id !== contact.id));
-                                        }
-                                      }}
-                                      className="rounded text-blue-600"
-                                    />
-                                    <label htmlFor={`share-contact-${contact.id}`} className="text-sm text-white cursor-pointer">
-                                      {contact.name || contact.username}
-                                    </label>
-                                  </div>
-                                ))
-                            ) : (
-                              <div className="text-sm text-gray-400 text-center py-2">
-                                No connections available
+                          <Label className="text-white">Search Users</Label>
+                          <Input
+                            value={searchQuery}
+                            onChange={(e) => {
+                              setSearchQuery(e.target.value);
+                              searchUsers(e.target.value);
+                            }}
+                            placeholder="Type username to search..."
+                            className="mt-2 bg-gray-800 border-gray-600 text-white placeholder-gray-400"
+                          />
+                          
+                          {searchResults.length > 0 && (
+                            <div className="mt-2 max-h-32 overflow-y-auto space-y-2 bg-gray-800 p-3 rounded-md border border-gray-700">
+                              {searchResults.map((user: any) => (
+                                <div key={`search-${user.id}`} className="flex items-center space-x-2">
+                                  <input
+                                    type="checkbox"
+                                    id={`search-user-${user.id}`}
+                                    checked={selectedRecipients.includes(user.id)}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setSelectedRecipients(prev => [...prev, user.id]);
+                                      } else {
+                                        setSelectedRecipients(prev => prev.filter(id => id !== user.id));
+                                      }
+                                    }}
+                                    className="rounded text-blue-600"
+                                  />
+                                  <label htmlFor={`search-user-${user.id}`} className="text-sm text-white cursor-pointer">
+                                    {user.name || user.username}
+                                  </label>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {searchQuery.length >= 2 && searchResults.length === 0 && (
+                            <div className="mt-2 text-sm text-gray-400 text-center py-2">
+                              No users found for "{searchQuery}"
+                            </div>
+                          )}
+                          
+                          {selectedRecipients.length > 0 && (
+                            <div className="mt-2">
+                              <Label className="text-white text-sm">Selected Recipients:</Label>
+                              <div className="mt-1 flex flex-wrap gap-2">
+                                {selectedRecipients.map(recipientId => {
+                                  const recipient = searchResults.find(user => user.id === recipientId);
+                                  return recipient ? (
+                                    <span key={recipientId} className="bg-blue-600 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
+                                      {recipient.name || recipient.username}
+                                      <button 
+                                        onClick={() => setSelectedRecipients(prev => prev.filter(id => id !== recipientId))}
+                                        className="text-blue-200 hover:text-white"
+                                      >
+                                        ×
+                                      </button>
+                                    </span>
+                                  ) : null;
+                                })}
                               </div>
-                            )}
-                          </div>
+                            </div>
+                          )}
                         </div>
                         
                         <div>
