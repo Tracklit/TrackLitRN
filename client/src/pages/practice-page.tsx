@@ -232,11 +232,15 @@ function PracticePage() {
       const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
       const targetDateString = `${monthNames[targetDate.getMonth()]}-${targetDate.getDate()}`;
       
+      console.log(`Looking for session with date: ${targetDateString}`);
+      console.log('Available sessions:', programSessions.slice(0, 5).map(s => ({ date: s.date, hasWorkout: !!(s.shortDistanceWorkout || s.mediumDistanceWorkout || s.longDistanceWorkout) })));
+      
       // Find session that matches the target date
       let session = programSessions.find(s => s.date === targetDateString);
       
       // If no session found for this date, create a rest day session
       if (!session) {
+        console.log(`No session found for ${targetDateString}, creating rest day`);
         session = {
           dayNumber: Math.abs(currentDayOffset) + 1,
           date: targetDateString,
@@ -253,6 +257,12 @@ function PracticePage() {
           completed_at: null,
           isRestDay: true
         };
+      } else {
+        console.log(`Found session for ${targetDateString}:`, { 
+          date: session.date, 
+          hasWorkout: !!(session.shortDistanceWorkout || session.mediumDistanceWorkout || session.longDistanceWorkout),
+          isRestDay: session.isRestDay 
+        });
       }
       
       setActiveSessionData(session);
