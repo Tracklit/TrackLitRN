@@ -658,14 +658,13 @@ export default function ExerciseLibraryPage() {
                         }}
                       />
                       
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <div className="absolute inset-0 bg-black/40 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <Button
                           size="sm"
-                          variant="secondary"
                           onClick={() => openFullscreen(exercise)}
-                          className="bg-white/90 hover:bg-white"
+                          className="bg-red-600 hover:bg-red-700 text-white border-red-600"
                         >
-                          <Play className="h-4 w-4 mr-2" />
+                          <Play className="h-4 w-4 mr-2 fill-white" />
                           Play
                         </Button>
                       </div>
@@ -734,14 +733,13 @@ export default function ExerciseLibraryPage() {
                               e.currentTarget.src = '/placeholder-video.jpg';
                             }}
                           />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <div className="absolute inset-0 bg-black/40 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center">
                             <Button
                               size="sm"
-                              variant="secondary"
                               onClick={() => openFullscreen(exercise)}
-                              className="bg-white/90 hover:bg-white p-2"
+                              className="bg-red-600 hover:bg-red-700 text-white border-red-600 p-2"
                             >
-                              <Play className="h-3 w-3" />
+                              <Play className="h-3 w-3 fill-white" />
                             </Button>
                           </div>
                         </div>
