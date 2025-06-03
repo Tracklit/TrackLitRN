@@ -386,42 +386,51 @@ article::-webkit-scrollbar,
   margin-bottom: 0 !important;
 }
 
-/* Fix transparent success toast - make all toasts solid */
+/* Fix transparent success toast - force solid background */
+[data-radix-toast-root] {
+  background-color: white !important;
+  border: 1px solid #e5e7eb !important;
+  opacity: 1 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  color: #374151 !important;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  [data-radix-toast-root] {
+    background-color: #1f2937 !important;
+    border: 1px solid #374151 !important;
+    color: #f9fafb !important;
+  }
+}
+
+/* Override all toast elements */
 [data-radix-toast-viewport] [data-state="open"],
-[data-sonner-toaster] [data-sonner-toast],
-.toaster [data-state="open"],
-[role="status"] {
-  background-color: hsl(var(--background)) !important;
-  border: 1px solid hsl(var(--border)) !important;
-  opacity: 1 !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-}
-
-/* Target all toast variants specifically */
 [data-radix-toast-viewport] > *,
-[data-sonner-toaster] > *,
-.toaster > * {
-  background-color: hsl(var(--background)) !important;
-  border: 1px solid hsl(var(--border)) !important;
+[role="status"],
+.toast {
+  background-color: white !important;
+  border: 1px solid #e5e7eb !important;
   opacity: 1 !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  color: #374151 !important;
 }
 
-/* Make sure toast content and text is visible */
-[data-radix-toast-viewport] * {
-  opacity: 1 !important;
-  color: hsl(var(--foreground)) !important;
+/* Dark mode for all toast elements */
+@media (prefers-color-scheme: dark) {
+  [data-radix-toast-viewport] [data-state="open"],
+  [data-radix-toast-viewport] > *,
+  [role="status"],
+  .toast {
+    background-color: #1f2937 !important;
+    border: 1px solid #374151 !important;
+    color: #f9fafb !important;
+  }
 }
 
-[data-sonner-toaster] * {
-  opacity: 1 !important;
-  color: hsl(var(--foreground)) !important;
-}
-
-/* Override any transparent styling on toasts */
-.toast,
-[class*="toast"] {
-  background-color: hsl(var(--background)) !important;
+/* Ensure toast content is visible */
+[data-radix-toast-viewport] *,
+[data-radix-toast-root] * {
   opacity: 1 !important;
 }
 
