@@ -338,6 +338,12 @@ export default function PracticePage() {
   
   // Function to handle voice recording
   const toggleRecording = async () => {
+    // Check if user has Pro or Star subscription for voice recording
+    if (!user?.isPremium && user?.subscriptionTier !== 'pro' && user?.subscriptionTier !== 'star') {
+      setShowPremiumModal(true);
+      return;
+    }
+    
     if (isRecording) {
       // Stop recording
       if (mediaRecorderRef.current) {
@@ -1079,7 +1085,7 @@ export default function PracticePage() {
                       variant="outline" 
                       size="sm" 
                       className="h-7 px-2 text-xs flex items-center gap-1"
-                      onClick={isPremiumUser ? toggleRecording : () => setShowPremiumModal(true)}
+                      onClick={toggleRecording}
                       disabled={isTranscribing}
                     >
                       {isRecording ? (
@@ -1288,13 +1294,9 @@ export default function PracticePage() {
           </Collapsible>
         )}
       </div>
-            )}
-          </div>
-        )}
-      </div>
     )}
 
-      {/* Premium Feature Modal */}
+    {/* Premium Feature Modal */}
       <Dialog open={showPremiumModal} onOpenChange={setShowPremiumModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
