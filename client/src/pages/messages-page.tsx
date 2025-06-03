@@ -71,6 +71,12 @@ export default function MessagesPage() {
     enabled: !!targetUserId,
   });
 
+  // Fetch direct messages when userId is provided
+  const { data: directMessages = [] } = useQuery({
+    queryKey: ["/api/direct-messages", targetUserId],
+    enabled: !!targetUserId,
+  });
+
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -127,7 +133,7 @@ export default function MessagesPage() {
   if (!user) return null;
 
   // Instagram-style direct chat when userId is provided
-  if (targetUserId && targetUser) {
+  if (targetUserId && targetUser && typeof targetUser === 'object' && 'name' in targetUser) {
     return (
       <div className="h-screen flex flex-col bg-[#010a18] pt-16">
         {/* Instagram-style Header */}
@@ -176,12 +182,12 @@ export default function MessagesPage() {
 
           {/* Messages */}
           <div className="space-y-4">
-            {messages.length === 0 ? (
+            {directMessages.length === 0 ? (
               <div className="text-center text-gray-400 py-4">
                 <p className="text-sm">Start the conversation!</p>
               </div>
             ) : (
-              messages.map((message) => (
+              directMessages.map((message: any) => (
                 <div
                   key={message.id}
                   className={cn(

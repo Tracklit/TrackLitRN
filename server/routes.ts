@@ -5384,6 +5384,27 @@ Keep the response professional, evidence-based, and specific to track and field 
     }
   });
 
+  // Get user by ID for direct messaging
+  app.get("/api/users/:userId", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const userId = parseInt(req.params.userId);
+      const user = await dbStorage.getUser(userId);
+      if (!user) {
+        return res.status(404).send("User not found");
+      }
+      // Remove sensitive data
+      const { password, ...safeUser } = user;
+      res.json(safeUser);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).send("Error fetching user");
+    }
+  });
+
   // Direct Messages API
   app.get("/api/conversations", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) {
@@ -5411,6 +5432,22 @@ Keep the response professional, evidence-based, and specific to track and field 
     } catch (error) {
       console.error("Error fetching messages:", error);
       res.status(500).send("Error fetching messages");
+    }
+  });
+
+  // Get direct messages between current user and another user
+  app.get("/api/direct-messages/:userId", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const otherUserId = parseInt(req.params.userId);
+      const messages = await dbStorage.getDirectMessagesBetweenUsers(req.user.id, otherUserId);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching direct messages:", error);
+      res.status(500).send("Error fetching direct messages");
     }
   });
 

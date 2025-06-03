@@ -2455,6 +2455,39 @@ export class DatabaseStorage implements IStorage {
     return messagesWithUsers;
   }
 
+  async getDirectMessagesBetweenUsers(userId1: number, userId2: number): Promise<any[]> {
+    const messages = await db
+      .select({
+        id: directMessages.id,
+        content: directMessages.content,
+        senderId: directMessages.senderId,
+        receiverId: directMessages.receiverId,
+        createdAt: directMessages.createdAt,
+        isRead: directMessages.isRead
+      })
+      .from(directMessages)
+      .where(or(
+        and(eq(directMessages.senderId, userId1), eq(directMessages.receiverId, userId2)),
+        and(eq(directMessages.senderId, userId2), eq(directMessages.receiverId, userId1))
+      ))
+      .orderBy(asc(directMessages.createdAt));
+
+    // Get user details for each message
+    const messagesWithUsers = await Promise.all(
+      messages.map(async (msg) => {
+        const sender = await this.getUser(msg.senderId);
+        const receiver = await this.getUser(msg.receiverId);
+        return {
+          ...msg,
+          sender,
+          receiver
+        };
+      })
+    );
+
+    return messagesWithUsers;
+  }
+
   async createOrGetConversation(user1Id: number, user2Id: number): Promise<any> {
     // Check if conversation already exists
     const existing = await db
