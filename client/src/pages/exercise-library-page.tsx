@@ -85,13 +85,6 @@ export default function ExerciseLibraryPage() {
     queryFn: () => apiRequest('GET', '/api/user').then(res => res.json())
   });
 
-  // Fetch library sharing limits
-  const { data: librarySharingData } = useQuery({
-    queryKey: ['/api/exercise-library/sharing-status'],
-    queryFn: () => apiRequest('GET', '/api/exercise-library/sharing-status').then(res => res.json()),
-    enabled: libraryShareDialogOpen
-  });
-
   // Upload mutation
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
@@ -190,7 +183,6 @@ export default function ExerciseLibraryPage() {
     onSuccess: () => {
       setLibraryShareDialogOpen(false);
       setSelectedLibraryRecipients([]);
-      queryClient.invalidateQueries({ queryKey: ['/api/exercise-library/sharing-status'] });
       toast({ title: "Success", description: "Library access shared successfully!" });
     },
     onError: (error: Error) => {
@@ -289,15 +281,6 @@ export default function ExerciseLibraryPage() {
     return 'free';
   };
 
-  const getLibraryShareLimit = () => {
-    const tier = getSubscriptionTier();
-    switch (tier) {
-      case 'pro': return 10;
-      case 'star': return -1; // unlimited
-      default: return 0; // free users need spikes
-    }
-  };
-
   const canShareLibrary = () => {
     const tier = getSubscriptionTier();
     if (tier === 'pro' || tier === 'star') return true;
@@ -314,16 +297,13 @@ export default function ExerciseLibraryPage() {
     if (exercise.type === 'youtube' && exercise.thumbnailUrl) {
       return exercise.thumbnailUrl;
     }
-    if (exercise.type === 'upload' && exercise.mimeType?.startsWith('image/')) {
-      return exercise.fileUrl;
-    }
-    return '/placeholder-video.jpg'; // You might want to add a default video thumbnail
+    return '/placeholder-video.jpg';
   };
 
   return (
     <PageContainer
       breadcrumbs={[
-        { name: "Tools", href: "/training-tools" },
+        { name: "Tools", href: "/tools" },
         { name: "Exercise Library", href: "/tools/exercise-library" }
       ]}
     >
@@ -390,307 +370,268 @@ export default function ExerciseLibraryPage() {
 
         {/* Upload Dialog */}
         <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
-          {uploadDialogOpen && (
-            <div className="fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-          )}
-          <DialogContent className="fixed left-[50%] top-[50%] z-50 max-w-md translate-x-[-50%] translate-y-[-50%] bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] border rounded-lg">
-              <DialogHeader>
-                <DialogTitle>Add Video</DialogTitle>
-              </DialogHeader>
-              
-              <form onSubmit={handleUpload} className="space-y-4">
-                <div>
-                  <Label htmlFor="file">Video/Image File</Label>
-                  <Input
-                    id="file"
-                    name="file"
-                    type="file"
-                    accept="video/*,image/*"
-                    disabled={!limits?.uploads.canUpload}
-                  />
-                  {limits && (
-                    <div className="mt-2">
-                      <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>Usage: {limits.uploads.current}/{limits.uploads.limit === -1 ? '∞' : limits.uploads.limit}</span>
-                      </div>
-                      {limits.uploads.limit !== -1 && (
-                        <Progress 
-                          value={(limits.uploads.current / limits.uploads.limit) * 100} 
-                          className="h-1 mt-1"
-                        />
-                      )}
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Add Video</DialogTitle>
+            </DialogHeader>
+            
+            <form onSubmit={handleUpload} className="space-y-4">
+              <div>
+                <Label htmlFor="file">Video/Image File</Label>
+                <Input
+                  id="file"
+                  name="file"
+                  type="file"
+                  accept="video/*,image/*"
+                  disabled={!limits?.uploads.canUpload}
+                />
+                {limits && (
+                  <div className="mt-2">
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>Usage: {limits.uploads.current}/{limits.uploads.limit === -1 ? '∞' : limits.uploads.limit}</span>
                     </div>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="youtubeUrl">YouTube URL (Optional)</Label>
-                  <Input 
-                    id="youtubeUrl" 
-                    name="youtubeUrl" 
-                    placeholder="https://www.youtube.com/watch?v=..."
-                    type="url"
-                  />
-                  {limits && (
-                    <div className="mt-2">
-                      <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>YouTube Usage: {limits.youtube.current}/{limits.youtube.limit === -1 ? '∞' : limits.youtube.limit}</span>
-                      </div>
-                      {limits.youtube.limit !== -1 && (
-                        <Progress 
-                          value={(limits.youtube.current / limits.youtube.limit) * 100} 
-                          className="h-1 mt-1"
-                        />
-                      )}
-                    </div>
-                  )}
-                </div>
-                
-                <div>
-                  <Label htmlFor="name">Name</Label>
-                  <Input id="name" name="name" placeholder="Exercise name" required />
-                </div>
-                
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea id="description" name="description" placeholder="Exercise description" />
-                </div>
-                
-                <div>
-                  <Label htmlFor="tags">Tags (comma-separated)</Label>
-                  <Input id="tags" name="tags" placeholder="warm-up, speed, technique" />
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <input type="checkbox" id="isPublic" name="isPublic" />
-                  <Label htmlFor="isPublic">Make public</Label>
-                </div>
-                
-                <Button 
-                  type="submit" 
-                  className="w-full"
-                  disabled={uploadMutation.isPending}
-                >
-                  {uploadMutation.isPending ? "Adding..." : "Add Exercise"}
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-
-          {/* Share Dialog */}
-          <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
-            {shareDialogOpen && (
-              <div className="fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-            )}
-            <DialogContent className="fixed left-[50%] top-[50%] z-50 max-w-md translate-x-[-50%] translate-y-[-50%] bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] border rounded-lg">
-              <DialogHeader>
-                <DialogTitle>Share Exercise</DialogTitle>
-              </DialogHeader>
-              
-              {selectedExercise && (
-                <div className="space-y-4">
-                  <div className="text-sm text-muted-foreground">
-                    Sharing: {selectedExercise.name}
-                  </div>
-                  
-                  <Tabs defaultValue="link" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="link">Copy Link</TabsTrigger>
-                      <TabsTrigger value="internal">Send Message</TabsTrigger>
-                    </TabsList>
-                    
-                    <TabsContent value="link" className="space-y-4">
-                      <div className="flex items-center space-x-2">
-                        <Input 
-                          value={`${window.location.origin}/exercise/${selectedExercise.id}`}
-                          readOnly
-                          className="flex-1"
-                        />
-                        <Button
-                          size="sm"
-                          onClick={() => copyExerciseLink(selectedExercise.id)}
-                          disabled={linkCopied}
-                        >
-                          {linkCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                        </Button>
-                      </div>
-                    </TabsContent>
-                    
-                    <TabsContent value="internal" className="space-y-4">
-                      <div>
-                        <Label>Send to Connections & Athletes</Label>
-                        <div className="mt-2 max-h-32 overflow-y-auto space-y-2">
-                          {shareContacts?.map((contact: any) => (
-                            <div key={contact.id} className="flex items-center space-x-2">
-                              <input
-                                type="checkbox"
-                                id={`contact-${contact.id}`}
-                                checked={selectedRecipients.includes(contact.id)}
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setSelectedRecipients(prev => [...prev, contact.id]);
-                                  } else {
-                                    setSelectedRecipients(prev => prev.filter(id => id !== contact.id));
-                                  }
-                                }}
-                                className="rounded"
-                              />
-                              <label htmlFor={`contact-${contact.id}`} className="text-sm">
-                                {contact.username}
-                              </label>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="shareMessage">Message (Optional)</Label>
-                        <Textarea
-                          id="shareMessage"
-                          value={shareMessage}
-                          onChange={(e) => setShareMessage(e.target.value)}
-                          placeholder="Add a message to share with this exercise..."
-                          className="mt-1"
-                        />
-                      </div>
-                      
-                      <Button 
-                        onClick={handleShareInternal}
-                        disabled={selectedRecipients.length === 0 || shareMutation.isPending}
-                        className="w-full"
-                      >
-                        <Send className="h-4 w-4 mr-2" />
-                        {shareMutation.isPending ? "Sending..." : "Send Message"}
-                      </Button>
-                    </TabsContent>
-                  </Tabs>
-                </div>
-              )}
-            </DialogContent>
-          </Dialog>
-
-          {/* Library Share Dialog */}
-          <Dialog open={libraryShareDialogOpen} onOpenChange={setLibraryShareDialogOpen}>
-            {libraryShareDialogOpen && (
-              <div className="fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-            )}
-            <DialogContent className="fixed left-[50%] top-[50%] z-50 max-w-md translate-x-[-50%] translate-y-[-50%] bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] border rounded-lg">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  {getSubscriptionTier() === 'star' ? (
-                    <Crown className="h-5 w-5 text-yellow-500" />
-                  ) : getSubscriptionTier() === 'pro' ? (
-                    <Users className="h-5 w-5 text-blue-500" />
-                  ) : (
-                    <Lock className="h-5 w-5 text-gray-400" />
-                  )}
-                  Share Full Library Access
-                </DialogTitle>
-              </DialogHeader>
-              
-              <div className="space-y-4">
-                {/* Subscription Status */}
-                <div className="p-3 rounded-lg border bg-muted/50">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Your Plan:</span>
-                    <Badge variant={getSubscriptionTier() === 'star' ? 'default' : getSubscriptionTier() === 'pro' ? 'secondary' : 'outline'}>
-                      {getSubscriptionTier().toUpperCase()}
-                    </Badge>
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    {getSubscriptionTier() === 'star' && "Unlimited library sharing"}
-                    {getSubscriptionTier() === 'pro' && `Share with up to ${getLibraryShareLimit()} people`}
-                    {getSubscriptionTier() === 'free' && "Requires 100 Spikes to unlock sharing"}
-                  </div>
-                </div>
-
-                {/* Current Usage (if applicable) */}
-                {librarySharingData && (getSubscriptionTier() === 'pro' || getSubscriptionTier() === 'star') && (
-                  <div className="text-sm">
-                    <div className="flex justify-between">
-                      <span>Shared with:</span>
-                      <span>{librarySharingData.currentShares || 0}{getLibraryShareLimit() !== -1 ? `/${getLibraryShareLimit()}` : ''}</span>
-                    </div>
-                    {getSubscriptionTier() === 'pro' && (
+                    {limits.uploads.limit !== -1 && (
                       <Progress 
-                        value={(librarySharingData.currentShares || 0) / getLibraryShareLimit() * 100} 
-                        className="h-2 mt-1"
+                        value={(limits.uploads.current / limits.uploads.limit) * 100} 
+                        className="h-1 mt-1"
                       />
                     )}
                   </div>
                 )}
+              </div>
 
-                {/* Recipient Selection */}
-                <div>
-                  <Label>Share with Connections & Athletes</Label>
-                  <div className="mt-2 max-h-32 overflow-y-auto space-y-2">
-                    {shareContacts?.filter((contact: any) => 
-                      !librarySharingData?.sharedWith?.includes(contact.id)
-                    ).map((contact: any) => (
-                      <div key={contact.id} className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          id={`library-contact-${contact.id}`}
-                          checked={selectedLibraryRecipients.includes(contact.id)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedLibraryRecipients(prev => [...prev, contact.id]);
-                            } else {
-                              setSelectedLibraryRecipients(prev => prev.filter(id => id !== contact.id));
-                            }
-                          }}
-                          className="rounded"
-                        />
-                        <label htmlFor={`library-contact-${contact.id}`} className="text-sm">
-                          {contact.username}
-                        </label>
-                      </div>
-                    ))}
+              <div>
+                <Label htmlFor="youtubeUrl">YouTube URL (Optional)</Label>
+                <Input 
+                  id="youtubeUrl" 
+                  name="youtubeUrl" 
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  type="url"
+                />
+                {limits && (
+                  <div className="mt-2">
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>YouTube Usage: {limits.youtube.current}/{limits.youtube.limit === -1 ? '∞' : limits.youtube.limit}</span>
+                    </div>
+                    {limits.youtube.limit !== -1 && (
+                      <Progress 
+                        value={(limits.youtube.current / limits.youtube.limit) * 100} 
+                        className="h-1 mt-1"
+                      />
+                    )}
                   </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-2">
-                  {getSubscriptionTier() === 'free' ? (
-                    <Button 
-                      onClick={() => handleLibraryShare(true)}
-                      disabled={selectedLibraryRecipients.length === 0 || libraryShareMutation.isPending || (userData?.spikes || 0) < 100}
-                      className="flex-1"
-                    >
-                      <Users className="h-4 w-4 mr-2" />
-                      {libraryShareMutation.isPending ? "Sharing..." : "Use 100 Spikes to Share"}
-                    </Button>
-                  ) : (
-                    <Button 
-                      onClick={() => handleLibraryShare()}
-                      disabled={
-                        selectedLibraryRecipients.length === 0 || 
-                        libraryShareMutation.isPending ||
-                        (getSubscriptionTier() === 'pro' && (librarySharingData?.currentShares || 0) + selectedLibraryRecipients.length > getLibraryShareLimit())
-                      }
-                      className="flex-1"
-                    >
-                      <Users className="h-4 w-4 mr-2" />
-                      {libraryShareMutation.isPending ? "Sharing..." : "Share Library Access"}
-                    </Button>
-                  )}
-                </div>
-
-                {/* Warning for Pro users near limit */}
-                {getSubscriptionTier() === 'pro' && librarySharingData && 
-                 (librarySharingData.currentShares || 0) + selectedLibraryRecipients.length > getLibraryShareLimit() && (
-                  <p className="text-xs text-destructive">
-                    Selection exceeds your Pro plan limit. Upgrade to Star for unlimited sharing.
-                  </p>
                 )}
               </div>
-            </DialogContent>
-          </Dialog>
-        </div>
+
+              <div>
+                <Label htmlFor="name">Exercise Name</Label>
+                <Input 
+                  id="name" 
+                  name="name" 
+                  required 
+                  placeholder="e.g., Sprint intervals"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="description">Description (Optional)</Label>
+                <Textarea 
+                  id="description" 
+                  name="description" 
+                  placeholder="Describe this exercise..."
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="tags">Tags (Optional)</Label>
+                <Input 
+                  id="tags" 
+                  name="tags" 
+                  placeholder="sprint, speed, intervals"
+                />
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <input type="checkbox" id="isPublic" name="isPublic" />
+                <Label htmlFor="isPublic">Make public</Label>
+              </div>
+
+              <Button 
+                type="submit" 
+                className="w-full"
+                disabled={uploadMutation.isPending}
+              >
+                {uploadMutation.isPending ? "Adding..." : "Add Exercise"}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Share Dialog */}
+        <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Share Exercise</DialogTitle>
+            </DialogHeader>
+            
+            {selectedExercise && (
+              <div className="space-y-4">
+                <div className="text-sm text-muted-foreground">
+                  Sharing: {selectedExercise.name}
+                </div>
+                
+                <Tabs defaultValue="link" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="link">Copy Link</TabsTrigger>
+                    <TabsTrigger value="internal">Send Message</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="link" className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <Input 
+                        value={`${window.location.origin}/exercise/${selectedExercise.id}`}
+                        readOnly
+                        className="flex-1"
+                      />
+                      <Button
+                        size="sm"
+                        onClick={() => copyExerciseLink(selectedExercise.id)}
+                        disabled={linkCopied}
+                      >
+                        {linkCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="internal" className="space-y-4">
+                    <div>
+                      <Label>Send to Connections & Athletes</Label>
+                      <div className="mt-2 max-h-32 overflow-y-auto space-y-2">
+                        {shareContacts?.map((contact: any) => (
+                          <div key={contact.id} className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id={`contact-${contact.id}`}
+                              checked={selectedRecipients.includes(contact.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedRecipients(prev => [...prev, contact.id]);
+                                } else {
+                                  setSelectedRecipients(prev => prev.filter(id => id !== contact.id));
+                                }
+                              }}
+                              className="rounded"
+                            />
+                            <label htmlFor={`contact-${contact.id}`} className="text-sm">
+                              {contact.username}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="shareMessage">Message (Optional)</Label>
+                      <Textarea
+                        id="shareMessage"
+                        value={shareMessage}
+                        onChange={(e) => setShareMessage(e.target.value)}
+                        placeholder="Add a message to share with this exercise..."
+                        className="mt-1"
+                      />
+                    </div>
+                    
+                    <Button 
+                      onClick={handleShareInternal}
+                      disabled={selectedRecipients.length === 0 || shareMutation.isPending}
+                      className="w-full"
+                    >
+                      <Send className="h-4 w-4 mr-2" />
+                      {shareMutation.isPending ? "Sending..." : "Send Message"}
+                    </Button>
+                  </TabsContent>
+                </Tabs>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Library Share Dialog - Simplified */}
+        <Dialog open={libraryShareDialogOpen} onOpenChange={setLibraryShareDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                {getSubscriptionTier() === 'star' ? (
+                  <Crown className="h-5 w-5 text-yellow-500" />
+                ) : getSubscriptionTier() === 'pro' ? (
+                  <Users className="h-5 w-5 text-blue-500" />
+                ) : (
+                  <Lock className="h-5 w-5 text-gray-400" />
+                )}
+                Share Full Library Access
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              {/* Subscription Status */}
+              <div className="p-3 rounded-lg border bg-muted/50">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Your Plan:</span>
+                  <Badge variant={getSubscriptionTier() === 'star' ? 'default' : getSubscriptionTier() === 'pro' ? 'secondary' : 'outline'}>
+                    {getSubscriptionTier().toUpperCase()}
+                  </Badge>
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {getSubscriptionTier() === 'star' && "Unlimited library sharing"}
+                  {getSubscriptionTier() === 'pro' && "Share with up to 10 people"}
+                  {getSubscriptionTier() === 'free' && "Requires 100 Spikes to unlock sharing"}
+                </div>
+              </div>
+
+              {/* Recipient Selection */}
+              <div>
+                <Label>Share with Connections & Athletes</Label>
+                <div className="mt-2 max-h-32 overflow-y-auto space-y-2">
+                  {shareContacts?.map((contact: any) => (
+                    <div key={contact.id} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id={`library-contact-${contact.id}`}
+                        checked={selectedLibraryRecipients.includes(contact.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedLibraryRecipients(prev => [...prev, contact.id]);
+                          } else {
+                            setSelectedLibraryRecipients(prev => prev.filter(id => id !== contact.id));
+                          }
+                        }}
+                        className="rounded"
+                      />
+                      <label htmlFor={`library-contact-${contact.id}`} className="text-sm">
+                        {contact.username}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Action Button */}
+              <Button 
+                onClick={() => handleLibraryShare(getSubscriptionTier() === 'free')}
+                disabled={selectedLibraryRecipients.length === 0 || libraryShareMutation.isPending}
+                className="w-full"
+              >
+                <Users className="h-4 w-4 mr-2" />
+                {libraryShareMutation.isPending ? "Sharing..." : 
+                 getSubscriptionTier() === 'free' ? "Use 100 Spikes to Share" : "Share Library Access"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Exercise Grid */}
         {isLoading ? (
-          <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-4"}>
+          <div className={viewMode === 'grid' ? "grid grid-cols-2 gap-4" : "space-y-4"}>
             {Array.from({ length: 6 }).map((_, i) => (
               <Card key={i} className="animate-pulse">
                 <div className="aspect-video bg-muted" />
@@ -703,26 +644,29 @@ export default function ExerciseLibraryPage() {
           </div>
         ) : libraryData?.exercises?.length > 0 ? (
           <>
-{viewMode === 'grid' ? (
+            {viewMode === 'grid' ? (
               <div className="grid grid-cols-2 gap-4">
                 {libraryData.exercises.map((exercise: ExerciseLibraryItem) => (
                   <Card key={exercise.id} className="group hover:shadow-lg transition-shadow">
                     <div className="relative aspect-video overflow-hidden rounded-t-lg">
                       <img
-                        src={getThumbnail(exercise) || '/placeholder-video.jpg'}
+                        src={getThumbnail(exercise)}
                         alt={exercise.name}
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = '/placeholder-video.jpg';
+                          e.currentTarget.src = '/placeholder-video.jpg';
                         }}
                       />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <Button
                           size="sm"
+                          variant="secondary"
                           onClick={() => openFullscreen(exercise)}
+                          className="bg-white/90 hover:bg-white"
                         >
-                          <Play className="h-4 w-4" />
+                          <Play className="h-4 w-4 mr-2" />
+                          Play
                         </Button>
                       </div>
 
@@ -736,8 +680,8 @@ export default function ExerciseLibraryPage() {
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
-                              size="sm"
                               variant="ghost"
+                              size="sm"
                               className="h-8 w-8 p-0 ml-2"
                             >
                               <MoreVertical className="h-4 w-4" />
@@ -763,6 +707,17 @@ export default function ExerciseLibraryPage() {
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
+                      
+                      <div className="flex items-center gap-2 mt-2">
+                        <Badge variant="outline" className="text-xs">
+                          {exercise.type === 'youtube' ? 'YouTube' : 'Upload'}
+                        </Badge>
+                        {exercise.fileSize && (
+                          <span className="text-xs text-muted-foreground">
+                            {formatFileSize(exercise.fileSize)}
+                          </span>
+                        )}
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
@@ -771,65 +726,79 @@ export default function ExerciseLibraryPage() {
               <div className="space-y-4">
                 {libraryData.exercises.map((exercise: ExerciseLibraryItem) => (
                   <Card key={exercise.id} className="group hover:shadow-lg transition-shadow">
-                    <div className="flex gap-4 p-4">
-                      <div className="relative w-32 h-20 flex-shrink-0 overflow-hidden rounded-lg">
-                        <img
-                          src={getThumbnail(exercise) || '/placeholder-video.jpg'}
-                          alt={exercise.name}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = '/placeholder-video.jpg';
-                          }}
-                        />
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <Button
-                            size="sm"
-                            onClick={() => openFullscreen(exercise)}
-                          >
-                            <Play className="h-3 w-3" />
-                          </Button>
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-4">
+                        <div className="relative w-32 h-20 overflow-hidden rounded-lg flex-shrink-0">
+                          <img
+                            src={getThumbnail(exercise)}
+                            alt={exercise.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src = '/placeholder-video.jpg';
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => openFullscreen(exercise)}
+                              className="bg-white/90 hover:bg-white p-2"
+                            >
+                              <Play className="h-3 w-3" />
+                            </Button>
+                          </div>
                         </div>
-
-                      </div>
-                      
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-center">
-                          <h3 className="font-semibold truncate flex-1">{exercise.name}</h3>
-                          
-                          {/* Action Dropdown - Always visible */}
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-8 w-8 p-0 ml-2"
-                              >
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setSelectedExercise(exercise);
-                                  setShareDialogOpen(true);
-                                }}
-                              >
-                                <Send className="h-4 w-4 mr-2" />
-                                Share
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => deleteMutation.mutate(exercise.id)}
-                                className="text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                        
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold truncate">{exercise.name}</h3>
+                          {exercise.description && (
+                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                              {exercise.description}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-2 mt-2">
+                            <Badge variant="outline" className="text-xs">
+                              {exercise.type === 'youtube' ? 'YouTube' : 'Upload'}
+                            </Badge>
+                            {exercise.fileSize && (
+                              <span className="text-xs text-muted-foreground">
+                                {formatFileSize(exercise.fileSize)}
+                              </span>
+                            )}
+                          </div>
                         </div>
+                        
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedExercise(exercise);
+                                setShareDialogOpen(true);
+                              }}
+                            >
+                              <Send className="h-4 w-4 mr-2" />
+                              Share
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => deleteMutation.mutate(exercise.id)}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
-                    </div>
+                    </CardContent>
                   </Card>
                 ))}
               </div>

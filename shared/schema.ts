@@ -1121,6 +1121,16 @@ export const exerciseShares = pgTable("exercise_shares", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Library Shares (for sharing full exercise library access)
+export const libraryShares = pgTable("library_shares", {
+  id: serial("id").primaryKey(),
+  sharerId: integer("sharer_id").notNull().references(() => users.id),
+  recipientId: integer("recipient_id").notNull().references(() => users.id),
+  sharedAt: timestamp("shared_at").defaultNow(),
+  tier: text("tier", { enum: ['free', 'pro', 'star'] }).notNull(),
+  isActive: boolean("is_active").default(true),
+});
+
 export const exerciseSharesRelations = relations(exerciseShares, ({ one }) => ({
   exercise: one(exerciseLibrary, {
     fields: [exerciseShares.exerciseId],
@@ -1135,6 +1145,19 @@ export const exerciseSharesRelations = relations(exerciseShares, ({ one }) => ({
     fields: [exerciseShares.toUserId],
     references: [users.id],
     relationName: "shared_exercises_received",
+  }),
+}));
+
+export const librarySharesRelations = relations(libraryShares, ({ one }) => ({
+  sharer: one(users, {
+    fields: [libraryShares.sharerId],
+    references: [users.id],
+    relationName: "library_shares_given",
+  }),
+  recipient: one(users, {
+    fields: [libraryShares.recipientId],
+    references: [users.id],
+    relationName: "library_shares_received",
   }),
 }));
 
@@ -1433,10 +1456,17 @@ export const insertExerciseShareSchema = createInsertSchema(exerciseShares).omit
   createdAt: true,
 });
 
+export const insertLibraryShareSchema = createInsertSchema(libraryShares).omit({
+  id: true,
+  sharedAt: true,
+});
+
 export type ExerciseLibrary = typeof exerciseLibrary.$inferSelect;
 export type ExerciseShare = typeof exerciseShares.$inferSelect;
+export type LibraryShare = typeof libraryShares.$inferSelect;
 export type InsertExerciseLibrary = z.infer<typeof insertExerciseLibrarySchema>;
 export type InsertExerciseShare = z.infer<typeof insertExerciseShareSchema>;
+export type InsertLibraryShare = z.infer<typeof insertLibraryShareSchema>;
 
 // Additional relations for users with spikes system
 export const usersSpikesRelations = relations(users, ({ many, one }) => ({
