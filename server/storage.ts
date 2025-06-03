@@ -62,6 +62,7 @@ import {
   InsertWorkoutLibrary,
   WorkoutSessionPreview,
   InsertWorkoutSessionPreview,
+  exerciseLibrary,
   users,
   meets,
   results,
@@ -280,6 +281,14 @@ export interface IStorage {
   createOrUpdateWorkoutReaction(reaction: InsertWorkoutReaction): Promise<WorkoutReaction>;
   deleteWorkoutReaction(userId: number, sessionId: number): Promise<boolean>;
   
+  // Exercise Library operations
+  getExerciseLibraryItem(id: number, userId?: number): Promise<any>;
+  getExerciseLibrary(userId: number, page?: number, limit?: number): Promise<{ exercises: any[], total: number }>;
+  createExerciseLibraryItem(item: any): Promise<any>;
+  updateExerciseLibraryItem(id: number, data: any): Promise<any>;
+  deleteExerciseLibraryItem(id: number): Promise<boolean>;
+  getExerciseLibraryLimits(userId: number): Promise<any>;
+
   // Session store
   sessionStore: session.Store;
 
@@ -420,6 +429,105 @@ export class DatabaseStorage implements IStorage {
         )
       )
       .limit(10);
+  }
+
+  // Exercise Library operations
+  async getExerciseLibraryItem(id: number, userId?: number): Promise<any> {
+    const [exercise] = await db
+      .select()
+      .from(exerciseLibrary)
+      .where(
+        userId 
+          ? and(eq(exerciseLibrary.id, id), eq(exerciseLibrary.userId, userId))
+          : eq(exerciseLibrary.id, id)
+      );
+    return exercise;
+  }
+
+  async getExerciseLibrary(userId: number, page: number = 1, limit: number = 30): Promise<{ exercises: any[], total: number }> {
+    const offset = (page - 1) * limit;
+    
+    const exercises = await db
+      .select()
+      .from(exerciseLibrary)
+      .where(eq(exerciseLibrary.userId, userId))
+      .orderBy(sql`${exerciseLibrary.createdAt} DESC`)
+      .limit(limit)
+      .offset(offset);
+    
+    const totalCount = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(exerciseLibrary)
+      .where(eq(exerciseLibrary.userId, userId));
+    
+    return {
+      exercises,
+      total: totalCount[0].count
+    };
+  }
+
+  async createExerciseLibraryItem(item: any): Promise<any> {
+    const [exercise] = await db
+      .insert(exerciseLibrary)
+      .values(item)
+      .returning();
+    return exercise;
+  }
+
+  async updateExerciseLibraryItem(id: number, data: any): Promise<any> {
+    const [exercise] = await db
+      .update(exerciseLibrary)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(exerciseLibrary.id, id))
+      .returning();
+    return exercise;
+  }
+
+  async deleteExerciseLibraryItem(id: number): Promise<boolean> {
+    const result = await db
+      .delete(exerciseLibrary)
+      .where(eq(exerciseLibrary.id, id));
+    return !!result;
+  }
+
+  async getExerciseLibraryLimits(userId: number): Promise<any> {
+    const user = await this.getUser(userId);
+    const tier = user?.subscriptionTier || 'free';
+    
+    const limits = {
+      free: { uploads: 10, youtube: 25 },
+      pro: { uploads: 50, youtube: 100 },
+      star: { uploads: -1, youtube: -1 } // unlimited
+    };
+    
+    const uploadCount = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(exerciseLibrary)
+      .where(and(
+        eq(exerciseLibrary.userId, userId),
+        eq(exerciseLibrary.type, 'upload')
+      ));
+    
+    const youtubeCount = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(exerciseLibrary)
+      .where(and(
+        eq(exerciseLibrary.userId, userId),
+        eq(exerciseLibrary.type, 'youtube')
+      ));
+    
+    return {
+      uploads: {
+        current: uploadCount[0].count,
+        limit: limits[tier as keyof typeof limits].uploads,
+        canUpload: limits[tier as keyof typeof limits].uploads === -1 || uploadCount[0].count < limits[tier as keyof typeof limits].uploads
+      },
+      youtube: {
+        current: youtubeCount[0].count,
+        limit: limits[tier as keyof typeof limits].youtube,
+        canAdd: limits[tier as keyof typeof limits].youtube === -1 || youtubeCount[0].count < limits[tier as keyof typeof limits].youtube
+      }
+    };
   }
 
   // Meet operations
