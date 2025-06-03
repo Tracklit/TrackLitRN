@@ -233,7 +233,27 @@ function PracticePage() {
       const targetDateString = `${monthNames[targetDate.getMonth()]}-${targetDate.getDate()}`;
       
       // Find session that matches the target date
-      const session = programSessions.find(s => s.date === targetDateString) || programSessions[0];
+      let session = programSessions.find(s => s.date === targetDateString);
+      
+      // If no session found for this date, create a rest day session
+      if (!session) {
+        session = {
+          dayNumber: Math.abs(currentDayOffset) + 1,
+          date: targetDateString,
+          preActivation1: null,
+          preActivation2: null,
+          shortDistanceWorkout: null,
+          mediumDistanceWorkout: null,
+          longDistanceWorkout: null,
+          extraSession: null,
+          title: "Rest Day",
+          description: "Rest and Recovery",
+          notes: null,
+          completed: false,
+          completed_at: null,
+          isRestDay: true
+        };
+      }
       
       setActiveSessionData(session);
     }
