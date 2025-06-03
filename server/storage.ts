@@ -2553,7 +2553,7 @@ export class DatabaseStorage implements IStorage {
     if (sender) {
       const { notificationSystem } = await import("./notification-system");
       await notificationSystem.sendMessageNotification(
-        receiverId, 
+        messageData.receiverId, 
         messageData.senderId, 
         sender.username
       );
