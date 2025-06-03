@@ -387,24 +387,41 @@ article::-webkit-scrollbar,
 }
 
 /* Fix transparent success toast - make all toasts solid */
-[data-radix-toast-viewport] [data-state="open"] {
-  background-color: hsl(var(--background)) !important;
-  border: 1px solid hsl(var(--border)) !important;
-  opacity: 1 !important;
-}
-
-/* Specifically target success toasts */
-[data-radix-toast-viewport] [data-state="open"]:has([data-description*="sent"]),
-[data-radix-toast-viewport] [data-state="open"]:has([data-description*="success"]),
-[data-radix-toast-viewport] [data-state="open"]:has([data-description*="Success"]) {
+[data-radix-toast-viewport] [data-state="open"],
+[data-sonner-toaster] [data-sonner-toast],
+.toaster [data-state="open"],
+[role="status"] {
   background-color: hsl(var(--background)) !important;
   border: 1px solid hsl(var(--border)) !important;
   opacity: 1 !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
 }
 
-/* Make sure toast content is visible */
-[data-radix-toast-viewport] [data-state="open"] * {
+/* Target all toast variants specifically */
+[data-radix-toast-viewport] > *,
+[data-sonner-toaster] > *,
+.toaster > * {
+  background-color: hsl(var(--background)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  opacity: 1 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Make sure toast content and text is visible */
+[data-radix-toast-viewport] * {
+  opacity: 1 !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+[data-sonner-toaster] * {
+  opacity: 1 !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Override any transparent styling on toasts */
+.toast,
+[class*="toast"] {
+  background-color: hsl(var(--background)) !important;
   opacity: 1 !important;
 }
 
