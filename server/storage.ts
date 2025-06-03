@@ -2359,20 +2359,20 @@ export class DatabaseStorage implements IStorage {
 
   // Direct Messages operations
   async getUserConversations(userId: number): Promise<any[]> {
-    const conversations = await db
+    const userConversations = await db
       .select({
-        id: conversationsTable.id,
-        participant1Id: conversationsTable.participant1Id,
-        participant2Id: conversationsTable.participant2Id,
-        lastMessageAt: conversationsTable.lastMessageAt,
-        createdAt: conversationsTable.createdAt
+        id: conversations.id,
+        participant1Id: conversations.participant1Id,
+        participant2Id: conversations.participant2Id,
+        lastMessageAt: conversations.lastMessageAt,
+        createdAt: conversations.createdAt
       })
-      .from(conversationsTable)
+      .from(conversations)
       .where(or(
-        eq(conversationsTable.participant1Id, userId),
-        eq(conversationsTable.participant2Id, userId)
+        eq(conversations.participant1Id, userId),
+        eq(conversations.participant2Id, userId)
       ))
-      .orderBy(desc(conversationsTable.lastMessageAt));
+      .orderBy(desc(conversations.lastMessageAt));
 
     // Get user details for each conversation
     const conversationsWithUsers = await Promise.all(

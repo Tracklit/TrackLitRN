@@ -429,7 +429,7 @@ export default function ConnectionsPage() {
                 </div>
                 
                 <div className="flex items-center space-x-2 ml-3">
-                  <Link href={`/messages?user=${connection.id}`}>
+                  <Link href={`/messages/${connection.id}`}>
                     <Button variant="outline" size="sm" className="h-8 px-3">
                       Message
                     </Button>
