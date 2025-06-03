@@ -662,9 +662,9 @@ export default function ExerciseLibraryPage() {
                         <Button
                           size="sm"
                           onClick={() => openFullscreen(exercise)}
-                          className="bg-red-600 hover:bg-red-700 text-white border-red-600"
+                          className="bg-red-600 md:hover:bg-red-700 text-white border-red-600 h-8 w-8 p-0"
                         >
-                          <Play className="h-4 w-4 fill-white" />
+                          <Play className="h-3 w-3 fill-white" />
                         </Button>
                       </div>
 
@@ -736,9 +736,9 @@ export default function ExerciseLibraryPage() {
                             <Button
                               size="sm"
                               onClick={() => openFullscreen(exercise)}
-                              className="bg-red-600 hover:bg-red-700 text-white border-red-600 p-2"
+                              className="bg-red-600 md:hover:bg-red-700 text-white border-red-600 h-6 w-6 p-0"
                             >
-                              <Play className="h-3 w-3 fill-white" />
+                              <Play className="h-2.5 w-2.5 fill-white" />
                             </Button>
                           </div>
                         </div>

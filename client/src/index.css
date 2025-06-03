@@ -99,6 +99,55 @@ article::-webkit-scrollbar,
 
 /* Removed main-content animation styles to prevent conflicts */
 
+/* Remove all hover states on mobile devices */
+@media (hover: none) and (pointer: coarse) {
+  * {
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    user-select: none !important;
+  }
+  
+  /* Override all hover states on mobile */
+  button:hover,
+  a:hover,
+  div:hover,
+  span:hover,
+  input:hover,
+  textarea:hover,
+  [role="button"]:hover,
+  [tabindex]:hover,
+  .hover\:bg-accent:hover,
+  .hover\:bg-muted:hover,
+  .hover\:bg-destructive:hover,
+  .hover\:bg-primary:hover,
+  .hover\:bg-secondary:hover,
+  .hover\:bg-red-700:hover,
+  .hover\:text-accent-foreground:hover,
+  .hover\:text-muted-foreground:hover,
+  .hover\:text-destructive-foreground:hover,
+  .hover\:text-primary-foreground:hover,
+  .hover\:text-secondary-foreground:hover,
+  .hover\:opacity-100:hover,
+  .hover\:opacity-80:hover,
+  .hover\:scale-105:hover,
+  .hover\:shadow-lg:hover,
+  .hover\:border-primary:hover,
+  .hover\:border-destructive:hover,
+  .hover\:underline:hover,
+  .group:hover .group-hover\:opacity-100,
+  .group:hover .group-hover\:scale-105 {
+    background-color: initial !important;
+    color: initial !important;
+    opacity: initial !important;
+    transform: initial !important;
+    box-shadow: initial !important;
+    border-color: initial !important;
+    text-decoration: initial !important;
+  }
+}
+
 :root {
   /* Transparent backgrounds to allow gradient to show through */
   --background: transparent;
