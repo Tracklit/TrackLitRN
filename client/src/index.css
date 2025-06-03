@@ -386,32 +386,49 @@ article::-webkit-scrollbar,
   margin-bottom: 0 !important;
 }
 
-/* Fix transparent success toast - use theme background */
-[data-radix-toast-root] {
-  background-color: hsl(var(--background)) !important;
-  border: 1px solid hsl(var(--border)) !important;
-  opacity: 1 !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-  color: hsl(var(--foreground)) !important;
-}
-
-/* Override all toast elements to use theme colors */
+/* Force solid toast backgrounds - override all possible selectors */
+[data-radix-toast-root],
+[data-state="open"][data-radix-toast-root],
+.group[data-radix-toast-root],
+[data-radix-toast-viewport] > [data-radix-toast-root],
 [data-radix-toast-viewport] [data-state="open"],
 [data-radix-toast-viewport] > *,
 [role="status"],
-.toast {
+.toast,
+.group.pointer-events-auto {
   background-color: hsl(var(--background)) !important;
+  background: hsl(var(--background)) !important;
   border: 1px solid hsl(var(--border)) !important;
   opacity: 1 !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
   color: hsl(var(--foreground)) !important;
 }
 
-/* Ensure toast content is visible */
+/* Target specific toast classes that might be causing transparency */
+.group.pointer-events-auto.relative.flex,
+.group[data-state="open"],
+[class*="toast"][class*="group"],
+[class*="pointer-events-auto"] {
+  background-color: hsl(var(--background)) !important;
+  background: hsl(var(--background)) !important;
+  opacity: 1 !important;
+}
+
+/* Ensure all child elements inherit proper colors */
 [data-radix-toast-viewport] *,
-[data-radix-toast-root] * {
+[data-radix-toast-root] *,
+.toast *,
+[role="status"] * {
   opacity: 1 !important;
   color: hsl(var(--foreground)) !important;
+}
+
+/* Override any transparency from CSS variables or classes */
+:root [data-radix-toast-root],
+:root .toast,
+:root [role="status"] {
+  --tw-bg-opacity: 1 !important;
+  background-color: hsl(var(--background)) !important;
 }
 
 
