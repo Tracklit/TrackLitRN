@@ -32,6 +32,8 @@ export default function MessagesPage() {
   const targetUserId = pathParts.length > 2 && pathParts[1] === 'messages' && pathParts[2] 
     ? parseInt(pathParts[2]) 
     : null;
+    
+  console.log('URL parts:', { location, pathParts, targetUserId });
   const [selectedConversation, setSelectedConversation] = useState<number | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
