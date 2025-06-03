@@ -113,27 +113,9 @@ article::-webkit-scrollbar,
   }
   
   /* Override all hover states on mobile */
-  *:hover,
-  *:active,
-  *:focus,
   button:hover,
   button:active,
   button:focus,
-  a:hover,
-  a:active,
-  a:focus,
-  div:hover,
-  div:active,
-  div:focus,
-  span:hover,
-  span:active,
-  span:focus,
-  input:hover,
-  input:active,
-  input:focus,
-  textarea:hover,
-  textarea:active,
-  textarea:focus,
   [role="button"]:hover,
   [role="button"]:active,
   [role="button"]:focus,
@@ -146,11 +128,6 @@ article::-webkit-scrollbar,
   .hover\:bg-primary:hover,
   .hover\:bg-secondary:hover,
   .hover\:bg-red-700:hover,
-  .hover\:text-accent-foreground:hover,
-  .hover\:text-muted-foreground:hover,
-  .hover\:text-destructive-foreground:hover,
-  .hover\:text-primary-foreground:hover,
-  .hover\:text-secondary-foreground:hover,
   .hover\:opacity-100:hover,
   .hover\:opacity-80:hover,
   .hover\:scale-105:hover,
@@ -163,17 +140,36 @@ article::-webkit-scrollbar,
   .card:hover,
   .card:active,
   .card:focus {
-    background-color: initial !important;
-    color: initial !important;
-    opacity: initial !important;
     transform: initial !important;
     box-shadow: initial !important;
-    border-color: initial !important;
-    text-decoration: initial !important;
     outline: none !important;
-    border: initial !important;
     -webkit-tap-highlight-color: transparent !important;
     filter: none !important;
+  }
+  
+  /* Specific text color hover states to disable */
+  .hover\:text-accent-foreground:hover,
+  .hover\:text-muted-foreground:hover,
+  .hover\:text-destructive-foreground:hover,
+  .hover\:text-primary-foreground:hover,
+  .hover\:text-secondary-foreground:hover {
+    color: inherit !important;
+  }
+  
+  /* Background color hover states to disable */
+  .hover\:bg-accent:hover,
+  .hover\:bg-muted:hover,
+  .hover\:bg-destructive:hover,
+  .hover\:bg-primary:hover,
+  .hover\:bg-secondary:hover,
+  .hover\:bg-red-700:hover {
+    background-color: inherit !important;
+  }
+  
+  /* Border color hover states to disable */
+  .hover\:border-primary:hover,
+  .hover\:border-destructive:hover {
+    border-color: inherit !important;
   }
 }
 
@@ -185,15 +181,9 @@ article::-webkit-scrollbar,
   [data-hover]:hover,
   [data-hover]:active,
   [data-hover]:focus {
-    background-color: initial !important;
-    color: initial !important;
-    opacity: initial !important;
     transform: initial !important;
     box-shadow: initial !important;
-    border-color: initial !important;
-    text-decoration: initial !important;
     outline: none !important;
-    border: initial !important;
     -webkit-tap-highlight-color: transparent !important;
     filter: none !important;
   }
