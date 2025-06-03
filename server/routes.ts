@@ -6021,5 +6021,78 @@ Keep the response professional, evidence-based, and specific to track and field 
     }
   });
 
+  // Connections API (for share functionality)
+  app.get("/api/connections", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      // Get both friends and coach's athletes for sharing
+      const friends = await dbStorage.getFriends(req.user.id);
+      const coachAthletes = await dbStorage.getCoachAthletes(req.user.id);
+      
+      // Combine and deduplicate
+      const connections = [...friends, ...coachAthletes.filter(athlete => 
+        !friends.some(friend => friend.id === athlete.id)
+      )];
+      
+      res.json(connections);
+    } catch (error) {
+      console.error("Error fetching connections:", error);
+      res.status(500).send("Error fetching connections");
+    }
+  });
+
+  // Exercise Library Share API
+  app.post("/api/exercise-library/share", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const { exerciseId, recipientIds, message } = req.body;
+      
+      // Verify exercise exists and user has access
+      const exercise = await dbStorage.getExerciseLibraryItem(exerciseId, req.user.id);
+      if (!exercise) {
+        return res.status(404).json({ error: "Exercise not found" });
+      }
+
+      // Send messages to all recipients
+      for (const recipientId of recipientIds) {
+        // Create or get conversation
+        const conversation = await dbStorage.createOrGetConversation(req.user.id, recipientId);
+        
+        // Prepare share message
+        const shareContent = message 
+          ? `${message}\n\nShared exercise: ${exercise.name}\nLink: ${process.env.BASE_URL || 'http://localhost:5000'}/exercise/${exerciseId}`
+          : `Shared exercise: ${exercise.name}\nLink: ${process.env.BASE_URL || 'http://localhost:5000'}/exercise/${exerciseId}`;
+        
+        // Send the message
+        await dbStorage.sendMessage({
+          conversationId: conversation.id,
+          senderId: req.user.id,
+          content: shareContent
+        });
+
+        // Create notification
+        await dbStorage.createNotification({
+          userId: recipientId,
+          type: "exercise_shared",
+          title: "Exercise Shared",
+          message: `${req.user.username} shared an exercise with you`,
+          actionUrl: `/messages/${conversation.id}`,
+          isRead: false
+        });
+      }
+
+      res.json({ success: true, message: "Exercise shared successfully" });
+    } catch (error) {
+      console.error("Error sharing exercise:", error);
+      res.status(500).json({ error: "Failed to share exercise" });
+    }
+  });
+
   return httpServer;
 }
