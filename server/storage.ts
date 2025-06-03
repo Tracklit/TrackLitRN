@@ -403,6 +403,25 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async searchUsers(query: string): Promise<User[]> {
+    return db
+      .select({
+        id: users.id,
+        username: users.username,
+        name: users.name,
+        email: users.email,
+        profileImageUrl: users.profileImageUrl
+      })
+      .from(users)
+      .where(
+        or(
+          sql`${users.username} ILIKE ${`%${query}%`}`,
+          sql`${users.name} ILIKE ${`%${query}%`}`
+        )
+      )
+      .limit(10);
+  }
+
   // Meet operations
   async getMeet(id: number): Promise<Meet | undefined> {
     const [meet] = await db.select().from(meets).where(eq(meets.id, id));
