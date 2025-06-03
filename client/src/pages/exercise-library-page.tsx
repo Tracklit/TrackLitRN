@@ -261,11 +261,30 @@ export default function ExerciseLibraryPage() {
 
   const handleShareInternal = () => {
     if (selectedExercise && selectedRecipients.length > 0) {
+      // Prevent viewport changes during button interaction
+      const scrollY = window.scrollY;
+      const body = document.body;
+      const originalPosition = body.style.position;
+      const originalTop = body.style.top;
+      const originalWidth = body.style.width;
+      
+      body.style.position = 'fixed';
+      body.style.top = `-${scrollY}px`;
+      body.style.width = '100%';
+      
       shareMutation.mutate({
         exerciseId: selectedExercise.id,
         recipientIds: selectedRecipients,
         message: shareMessage
       });
+      
+      // Restore original body styles after a brief delay
+      setTimeout(() => {
+        body.style.position = originalPosition;
+        body.style.top = originalTop;
+        body.style.width = originalWidth;
+        window.scrollTo(0, scrollY);
+      }, 150);
     }
   };
 

@@ -23,7 +23,7 @@
 }
 
 /* Dialog positioning fixes for mobile */
-[data-radix-dialog-content] {
+[role="dialog"] {
   position: fixed !important;
   top: 50% !important;
   left: 50% !important;
@@ -32,6 +32,14 @@
   overflow-y: auto !important;
   will-change: auto !important;
   backface-visibility: hidden !important;
+  z-index: 50 !important;
+}
+
+/* Prevent body scroll when dialog is open */
+body:has([role="dialog"]) {
+  overflow: hidden !important;
+  position: fixed !important;
+  width: 100% !important;
 }
 
 /* Custom styling for hiding scrollbars while maintaining scroll functionality */
