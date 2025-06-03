@@ -224,13 +224,16 @@ function PracticePage() {
 
   useEffect(() => {
     if (programSessions && programSessions.length > 0) {
-      // Find session for current day offset
+      // Calculate the target date based on current day offset
       const today = new Date();
       const targetDate = new Date(today.getTime() + currentDayOffset * 24 * 60 * 60 * 1000);
       
-      // Calculate day number based on program start
-      const dayNumber = Math.abs(currentDayOffset) + 1;
-      const session = programSessions.find(s => s.dayNumber === dayNumber) || programSessions[0];
+      // Format target date to match session date format (e.g., "Jun-3")
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const targetDateString = `${monthNames[targetDate.getMonth()]}-${targetDate.getDate()}`;
+      
+      // Find session that matches the target date
+      const session = programSessions.find(s => s.date === targetDateString) || programSessions[0];
       
       setActiveSessionData(session);
     }
