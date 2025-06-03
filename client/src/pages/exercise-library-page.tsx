@@ -348,19 +348,32 @@ export default function ExerciseLibraryPage() {
                         </Button>
                       </div>
                       
-                      {/* Action Dropdown */}
-                      <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {/* Type badge */}
+                      <Badge 
+                        variant={exercise.type === 'youtube' ? 'destructive' : 'secondary'}
+                        className="absolute top-2 right-2"
+                      >
+                        {exercise.type === 'youtube' ? <Youtube className="h-3 w-3 mr-1" /> : <Upload className="h-3 w-3 mr-1" />}
+                        {exercise.type}
+                      </Badge>
+                    </div>
+                    
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start">
+                        <h3 className="font-semibold truncate flex-1">{exercise.name}</h3>
+                        
+                        {/* Action Dropdown - Always visible */}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
                               size="sm"
-                              variant="secondary"
-                              className="h-8 w-8 p-0"
+                              variant="ghost"
+                              className="h-8 w-8 p-0 ml-2"
                             >
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start">
+                          <DropdownMenuContent align="end">
                             <DropdownMenuItem
                               onClick={() => {
                                 setSelectedExercise(exercise);
@@ -379,46 +392,6 @@ export default function ExerciseLibraryPage() {
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                      </div>
-                      
-                      {/* Type badge */}
-                      <Badge 
-                        variant={exercise.type === 'youtube' ? 'destructive' : 'secondary'}
-                        className="absolute top-2 right-2"
-                      >
-                        {exercise.type === 'youtube' ? <Youtube className="h-3 w-3 mr-1" /> : <Upload className="h-3 w-3 mr-1" />}
-                        {exercise.type}
-                      </Badge>
-                    </div>
-                    
-                    <CardContent className="p-4">
-                      <h3 className="font-semibold truncate">{exercise.name}</h3>
-                      {exercise.description && (
-                        <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                          {exercise.description}
-                        </p>
-                      )}
-                      
-                      {exercise.tags && exercise.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {exercise.tags.slice(0, 3).map((tag, index) => (
-                            <Badge key={index} variant="outline" className="text-xs">
-                              {tag}
-                            </Badge>
-                          ))}
-                          {exercise.tags.length > 3 && (
-                            <Badge variant="outline" className="text-xs">
-                              +{exercise.tags.length - 3}
-                            </Badge>
-                          )}
-                        </div>
-                      )}
-                      
-                      <div className="flex justify-between items-center mt-3 text-xs text-muted-foreground">
-                        <span>{new Date(exercise.createdAt).toLocaleDateString()}</span>
-                        {exercise.fileSize && (
-                          <span>{formatFileSize(exercise.fileSize)}</span>
-                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -459,70 +432,39 @@ export default function ExerciseLibraryPage() {
                       </div>
                       
                       <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold truncate">{exercise.name}</h3>
-                            {exercise.description && (
-                              <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                                {exercise.description}
-                              </p>
-                            )}
-                            
-                            {exercise.tags && exercise.tags.length > 0 && (
-                              <div className="flex flex-wrap gap-1 mt-2">
-                                {exercise.tags.slice(0, 4).map((tag, index) => (
-                                  <Badge key={index} variant="outline" className="text-xs">
-                                    {tag}
-                                  </Badge>
-                                ))}
-                                {exercise.tags.length > 4 && (
-                                  <Badge variant="outline" className="text-xs">
-                                    +{exercise.tags.length - 4}
-                                  </Badge>
-                                )}
-                              </div>
-                            )}
-                            
-                            <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                              <span>{new Date(exercise.createdAt).toLocaleDateString()}</span>
-                              {exercise.fileSize && (
-                                <span>{formatFileSize(exercise.fileSize)}</span>
-                              )}
-                            </div>
-                          </div>
+                        <div className="flex justify-between items-center">
+                          <h3 className="font-semibold truncate flex-1">{exercise.name}</h3>
                           
-                          {/* Action Dropdown */}
-                          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-8 w-8 p-0"
-                                >
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    setSelectedExercise(exercise);
-                                    setShareDialogOpen(true);
-                                  }}
-                                >
-                                  <Share2 className="h-4 w-4 mr-2" />
-                                  Share
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => deleteMutation.mutate(exercise.id)}
-                                  className="text-destructive"
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
+                          {/* Action Dropdown - Always visible */}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0 ml-2"
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSelectedExercise(exercise);
+                                  setShareDialogOpen(true);
+                                }}
+                              >
+                                <Share2 className="h-4 w-4 mr-2" />
+                                Share
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => deleteMutation.mutate(exercise.id)}
+                                className="text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </div>
                     </div>
