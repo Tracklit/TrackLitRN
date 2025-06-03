@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage as dbStorage } from "./storage";
 import { pool, db } from "./db";
 import { meets, notifications } from "@shared/schema";
-import { and, eq, or, sql } from "drizzle-orm";
+import { and, eq, or, sql, isNotNull } from "drizzle-orm";
 import { setupAuth } from "./auth";
 import { z } from "zod";
 import multer from "multer";
@@ -3132,7 +3132,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(exerciseLibrary)
         .where(and(
           eq(exerciseLibrary.userId, user.id),
-          eq(exerciseLibrary.type, 'upload')
+          sql`${exerciseLibrary.fileUrl} IS NOT NULL`
         ));
       
       const youtubeCount = await db
@@ -3140,7 +3140,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(exerciseLibrary)
         .where(and(
           eq(exerciseLibrary.userId, user.id),
-          eq(exerciseLibrary.type, 'youtube')
+          sql`${exerciseLibrary.youtubeUrl} IS NOT NULL`
         ));
       
       // Define limits based on subscription tier
