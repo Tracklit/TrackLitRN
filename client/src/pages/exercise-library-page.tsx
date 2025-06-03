@@ -535,7 +535,19 @@ export default function ExerciseLibraryPage() {
 
         {/* Share Dialog */}
         <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
-          <DialogContent className="max-w-md bg-[#010a18] border border-gray-700 shadow-lg sm:max-h-[85vh] overflow-y-auto will-change-auto transform-gpu">
+          <DialogContent 
+            className="max-w-md bg-[#010a18] border border-gray-700 shadow-lg sm:max-h-[85vh] overflow-y-auto will-change-auto transform-gpu"
+            style={{
+              position: 'fixed !important',
+              top: '50% !important',
+              left: '50% !important',
+              transform: 'translate(-50%, -50%) !important',
+              zIndex: 9999,
+              touchAction: 'none'
+            }}
+            onPointerDownOutside={(e) => e.preventDefault()}
+            onInteractOutside={(e) => e.preventDefault()}
+          >
             <DialogHeader>
               <DialogTitle className="text-white">Share Exercise</DialogTitle>
             </DialogHeader>
