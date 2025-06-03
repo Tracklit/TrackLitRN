@@ -505,20 +505,30 @@ export default function ExerciseLibraryPage() {
             )}
           </>
         ) : (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <div className="text-center">
-                <h3 className="text-lg font-semibold mb-2">No exercises yet</h3>
-                <p className="text-muted-foreground mb-4">
-                  Start building your exercise library by uploading videos or adding YouTube links
-                </p>
-                <Button onClick={() => setUploadDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Your First Exercise
-                </Button>
+          <div className={viewMode === 'grid' ? "grid grid-cols-2 gap-4" : "space-y-4"}>
+            {/* Skeleton Card */}
+            <Card className="opacity-50 border-dashed">
+              <div className="relative aspect-video overflow-hidden rounded-t-lg bg-muted/50 flex items-center justify-center">
+                <div className="text-center">
+                  <Plus className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">No videos yet</p>
+                </div>
               </div>
-            </CardContent>
-          </Card>
+              <CardContent className="p-4">
+                <div className="flex justify-between items-center">
+                  <div className="text-muted-foreground text-sm">Add your first video</div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setUploadDialogOpen(true)}
+                    className="h-8 w-8 p-0"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         )}
 
         {/* Fullscreen Video Player */}
