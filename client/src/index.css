@@ -298,28 +298,41 @@ article::-webkit-scrollbar,
     background-attachment: fixed !important;
   }
 
-  /* Ensure all main containers are transparent to show gradient */
-  #root, 
-  .flex.h-screen, 
-  [class*="bg-background"]:not([data-sprinthia-page]),
-  .bg-background:not([data-sprinthia-page]),
-  main:not([data-sprinthia-page]),
-  .container:not([data-sprinthia-page]),
-  [data-main-content]:not([data-sprinthia-page]) {
-    background: transparent !important;
+  /* Force transparent background on all elements except specific exceptions */
+  * {
     background-color: transparent !important;
   }
 
-  /* Force transparent background on all divs except Sprinthia */
-  body:not(:has([data-sprinthia-page])) div {
-    background-color: transparent !important;
+  /* Restore backgrounds for specific UI elements that need them */
+  .card,
+  [data-radix-dialog-content],
+  [data-radix-popover-content],
+  [data-radix-dropdown-menu-content],
+  [data-radix-select-content],
+  .toast,
+  [role="dialog"],
+  [role="menu"],
+  [role="listbox"],
+  button,
+  input,
+  textarea,
+  select {
+    background-color: hsl(var(--card)) !important;
   }
 
-  /* Keep cards and dialogs with slight transparency */
-  body:not(:has([data-sprinthia-page])) .card,
-  body:not(:has([data-sprinthia-page])) [data-radix-dialog-content] {
-    background-color: rgba(15, 23, 42, 0.8) !important;
-    backdrop-filter: blur(10px);
+  /* Sidebar specific styling */
+  nav,
+  aside,
+  .sidebar,
+  [data-sidebar] {
+    background-color: hsl(var(--sidebar-background)) !important;
+  }
+
+  /* Header styling */
+  header,
+  .header {
+    background-color: rgba(15, 23, 42, 0.9) !important;
+    backdrop-filter: blur(10px) !important;
   }
 
   /* Sprinthia page gets solid background */
