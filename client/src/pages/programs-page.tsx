@@ -62,7 +62,6 @@ import {
 export default function ProgramsPage() {
   const [activeTab, setActiveTab] = useState("my-programs");
   const [searchQuery, setSearchQuery] = useState("");
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const { user } = useAuth();
   
   // Query for user's created programs
@@ -146,42 +145,12 @@ export default function ProgramsPage() {
         </div>
         
         {activeTab === "my-programs" && (
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Program
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Create New Program</DialogTitle>
-                <DialogDescription>
-                  Choose how you'd like to create your training program
-                </DialogDescription>
-              </DialogHeader>
-              <div className="flex flex-col gap-3 mt-4">
-                <Button asChild onClick={() => setIsCreateDialogOpen(false)}>
-                  <Link href="/programs/create">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create from Scratch
-                  </Link>
-                </Button>
-                
-                <div className="flex items-center gap-2 my-1">
-                  <div className="h-px bg-border flex-1" />
-                  <span className="text-xs text-muted-foreground">OR</span>
-                  <div className="h-px bg-border flex-1" />
-                </div>
-                
-                <GoogleSheetImportDialog 
-                  variant="outline"
-                  buttonText="Import from Google Sheet"
-                  onSuccess={() => setIsCreateDialogOpen(false)}
-                />
-              </div>
-            </DialogContent>
-          </Dialog>
+          <Button asChild>
+            <Link href="/programs/create">
+              <Plus className="h-4 w-4 mr-2" />
+              Create Program
+            </Link>
+          </Button>
         )}
       </div>
       
@@ -205,9 +174,11 @@ export default function ProgramsPage() {
               title="No programs yet"
               description="You haven't created any training programs yet. Get started by creating your first program."
               action={
-                <Button onClick={() => setIsCreateDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Program
+                <Button asChild>
+                  <Link href="/programs/create">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Program
+                  </Link>
                 </Button>
               }
             />

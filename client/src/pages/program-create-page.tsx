@@ -1,118 +1,87 @@
+import { useState } from "react";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { PageHeader } from "@/components/page-header";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { FileUp, Upload } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { ArrowLeft, CalendarDays, Clock, Crown, Loader2 } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
+import { 
+  ArrowLeft, 
+  FileUp,
+  Users,
+  BookOpen,
+  Loader2,
+  Upload,
+  CheckCircle2
+} from "lucide-react";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from "@/components/ui/tabs";
+import { GoogleSheetImportDialog } from "@/components/google-sheet-import-dialog";
 
-// Form validation schema
-const programFormSchema = z.object({
-  title: z.string().min(3, { message: "Title must be at least 3 characters" }),
-  description: z.string().min(10, { message: "Description must be at least 10 characters" }),
-  visibility: z.enum(["private", "public", "premium"], {
-    required_error: "Please select a visibility option",
-  }),
-  price: z.coerce.number().min(0, { message: "Price cannot be negative" }).optional(),
-  // File upload related fields
-  useFileUpload: z.boolean().default(false),
-  programFile: z.any().optional(),
-});
+interface CreateProgramForm {
+  title: string;
+  description: string;
+  visibility: 'public' | 'premium' | 'private';
+  price: number;
+  priceType: 'spikes' | 'money';
+  category: string;
+  level: string;
+  duration: number;
+}
 
-export default function ProgramCreatePage() {
+function ProgramCreatePage() {
   const { toast } = useToast();
   const { user } = useAuth();
-  const [, navigate] = useLocation();
-  const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   
-  // Form setup
-  const form = useForm<z.infer<typeof programFormSchema>>({
-    resolver: zodResolver(programFormSchema),
-    defaultValues: {
-      title: "",
-      description: "",
-      visibility: "private",
-      price: 0,
-      useFileUpload: false,
-    },
+  const [formData, setFormData] = useState<CreateProgramForm>({
+    title: "",
+    description: "",
+    visibility: "public",
+    price: 0,
+    priceType: "spikes",
+    category: "sprint",
+    level: "beginner",
+    duration: 4
   });
-  
-  // Create program mutation
+
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+
+  // Create regular program mutation
   const createProgramMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof programFormSchema>) => {
-      // Handle file upload if useFileUpload is true and there's a programFile
-      if (data.useFileUpload && data.programFile) {
-        const formData = new FormData();
-        
-        // Add program metadata
-        formData.append('title', data.title);
-        formData.append('description', data.description || '');
-        formData.append('category', 'general');
-        formData.append('level', 'intermediate');
-        // Set a default duration (4 weeks)
-        formData.append('duration', '28');
-        formData.append('visibility', data.visibility);
-        formData.append('price', data.price?.toString() || '0');
-        formData.append('isUploadedProgram', 'true');
-        
-        // Add the program file
-        formData.append('programFile', data.programFile);
-        
-        const res = await fetch('/api/programs/upload', {
-          method: 'POST',
-          body: formData,
-          // Don't set Content-Type header, browser will set it with boundary for FormData
-          credentials: 'include',
-        });
-        
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.error || "Failed to upload program");
-        }
-        
-        return res.json();
-      } else {
-        // Regular program creation without file
-        // Set default values for removed fields
-        const programData = {
-          ...data,
-          category: 'general',
-          level: 'intermediate',
-          duration: 28 // 4 weeks default duration
-        };
-        const res = await apiRequest("POST", "/api/programs", programData);
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.error || "Failed to create program");
-        }
-        return res.json();
+    mutationFn: async (data: CreateProgramForm) => {
+      const response = await apiRequest("POST", "/api/programs", data);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to create program");
       }
+      return response.json();
     },
-    onSuccess: (newProgram) => {
-      // Invalidate and refetch the programs list to show the new program immediately
-      queryClient.invalidateQueries({ queryKey: ['/api/programs'] });
-      
+    onSuccess: (data) => {
       toast({
-        title: "Program created",
-        description: "Your training program has been created successfully",
+        title: "Success",
+        description: "Program created successfully!",
       });
-      
-      // Navigate to the programs page - the list will be automatically refreshed
-      navigate("/programs");
+      queryClient.invalidateQueries({ queryKey: ['/api/programs'] });
+      setLocation(`/programs/${data.id}/edit`);
     },
     onError: (error: Error) => {
       toast({
@@ -122,19 +91,107 @@ export default function ProgramCreatePage() {
       });
     },
   });
-  
-  // Form submission handler
-  const onSubmit = (data: z.infer<typeof programFormSchema>) => {
-    createProgramMutation.mutate(data);
+
+  // Upload document program mutation
+  const uploadProgramMutation = useMutation({
+    mutationFn: async (formData: FormData) => {
+      const response = await fetch("/api/programs/upload", {
+        method: "POST",
+        body: formData,
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to upload program");
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Success",
+        description: "Program uploaded successfully!",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/programs'] });
+      setUploadSuccess(true);
+      setTimeout(() => {
+        setLocation(`/programs/${data.id}`);
+      }, 1500);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.title.trim()) {
+      toast({
+        title: "Error",
+        description: "Program title is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createProgramMutation.mutate(formData);
   };
-  
+
+  const handleFileUpload = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!uploadFile) {
+      toast({
+        title: "Error",
+        description: "Please select a file to upload",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.title.trim()) {
+      toast({
+        title: "Error",
+        description: "Program title is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const formDataToSend = new FormData();
+    formDataToSend.append("file", uploadFile);
+    formDataToSend.append("title", formData.title);
+    formDataToSend.append("description", formData.description);
+    formDataToSend.append("visibility", formData.visibility);
+    formDataToSend.append("price", formData.price.toString());
+    formDataToSend.append("priceType", formData.priceType);
+    formDataToSend.append("category", formData.category);
+    formDataToSend.append("level", formData.level);
+
+    uploadProgramMutation.mutate(formDataToSend);
+  };
+
+  const updateFormData = (field: keyof CreateProgramForm, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  if (uploadSuccess) {
+    return (
+      <div className="container max-w-screen-xl mx-auto p-4 pt-20 md:pt-24 md:pl-72 pb-20">
+        <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
+          <CheckCircle2 className="h-16 w-16 text-green-500 mb-4" />
+          <h2 className="text-2xl font-bold mb-2">Program Uploaded Successfully!</h2>
+          <p className="text-muted-foreground mb-4">Redirecting to program details...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container max-w-screen-xl mx-auto p-4 pt-20 md:pt-24 md:pl-72 pb-20">
-      <PageHeader
-        title="Create Training Program"
-        description="Design a new training program for yourself or to share with others"
-      />
-      
       <div className="mb-6">
         <Button variant="outline" asChild>
           <Link href="/programs">
@@ -143,283 +200,385 @@ export default function ProgramCreatePage() {
           </Link>
         </Button>
       </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Program Details</CardTitle>
-              <CardDescription>Create your training program with all the necessary details</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  {/* File Upload Toggle Switch */}
-                  <FormField
-                    control={form.control}
-                    name="useFileUpload"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
-                        <div className="space-y-0.5">
-                          <FormLabel>Upload Program File</FormLabel>
-                          <FormDescription>
-                            Upload an Excel, PDF, or Word document instead of creating a program manually
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
 
-                  {/* File Upload Input (shown when toggle is on) */}
-                  {form.watch("useFileUpload") && (
-                    <div className="space-y-2">
-                      <Label htmlFor="programFile" className="text-sm font-medium">
-                        Program Document
-                      </Label>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          id="programFile"
-                          type="file"
-                          className="flex-1"
-                          accept=".pdf,.doc,.docx,.xls,.xlsx"
-                          onChange={(e) => {
-                            if (e.target.files && e.target.files[0]) {
-                              form.setValue("programFile", e.target.files[0]);
-                            }
-                          }}
-                        />
-                        <div className="bg-primary/10 rounded-full p-2">
-                          <FileUp className="h-4 w-4 text-primary" />
-                        </div>
+      <PageHeader 
+        title="Create New Program"
+        description="Build a training program for your athletes or share with the community"
+      />
+
+      <div className="max-w-2xl mx-auto mt-6">
+        <Tabs defaultValue="builder" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="builder">
+              <BookOpen className="h-4 w-4 mr-2" />
+              Program Builder
+            </TabsTrigger>
+            <TabsTrigger value="upload">
+              <FileUp className="h-4 w-4 mr-2" />
+              Upload Document
+            </TabsTrigger>
+            <TabsTrigger value="import">
+              <Upload className="h-4 w-4 mr-2" />
+              Import from Sheets
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Program Builder Tab */}
+          <TabsContent value="builder">
+            <Card>
+              <CardHeader>
+                <CardTitle>Build Custom Program</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleFormSubmit} className="space-y-6">
+                  {/* Basic Information */}
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="title">Program Title *</Label>
+                      <Input
+                        id="title"
+                        value={formData.title}
+                        onChange={(e) => updateFormData("title", e.target.value)}
+                        placeholder="Enter program title..."
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="description">Description</Label>
+                      <Textarea
+                        id="description"
+                        value={formData.description}
+                        onChange={(e) => updateFormData("description", e.target.value)}
+                        placeholder="Describe your training program..."
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Program Settings */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="category">Category</Label>
+                      <Select
+                        value={formData.category}
+                        onValueChange={(value) => updateFormData("category", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="sprint">Sprint</SelectItem>
+                          <SelectItem value="middle_distance">Middle Distance</SelectItem>
+                          <SelectItem value="long_distance">Long Distance</SelectItem>
+                          <SelectItem value="jumping">Jumping</SelectItem>
+                          <SelectItem value="throwing">Throwing</SelectItem>
+                          <SelectItem value="combined">Combined Events</SelectItem>
+                          <SelectItem value="general">General</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="level">Level</Label>
+                      <Select
+                        value={formData.level}
+                        onValueChange={(value) => updateFormData("level", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="beginner">Beginner</SelectItem>
+                          <SelectItem value="intermediate">Intermediate</SelectItem>
+                          <SelectItem value="advanced">Advanced</SelectItem>
+                          <SelectItem value="elite">Elite</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="duration">Duration (weeks)</Label>
+                      <Input
+                        id="duration"
+                        type="number"
+                        min="1"
+                        max="52"
+                        value={formData.duration}
+                        onChange={(e) => updateFormData("duration", parseInt(e.target.value) || 1)}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="visibility">Visibility</Label>
+                      <Select
+                        value={formData.visibility}
+                        onValueChange={(value) => updateFormData("visibility", value as any)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="public">Public (Free)</SelectItem>
+                          <SelectItem value="premium">Premium (Paid)</SelectItem>
+                          <SelectItem value="private">Private</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Premium Settings */}
+                  {formData.visibility === 'premium' && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/50">
+                      <div>
+                        <Label htmlFor="priceType">Price Type</Label>
+                        <Select
+                          value={formData.priceType}
+                          onValueChange={(value) => updateFormData("priceType", value as any)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="spikes">Spikes</SelectItem>
+                            <SelectItem value="money">Money (USD)</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        Accepted formats: PDF, Word documents, Excel spreadsheets
-                      </p>
+
+                      <div>
+                        <Label htmlFor="price">
+                          Price ({formData.priceType === 'money' ? '$' : 'Spikes'})
+                        </Label>
+                        <Input
+                          id="price"
+                          type="number"
+                          min="0"
+                          step={formData.priceType === 'money' ? "0.01" : "1"}
+                          value={formData.price}
+                          onChange={(e) => updateFormData("price", parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
                     </div>
                   )}
 
-                  <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Program Title</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., 12-Week Sprint Training" {...field} />
-                        </FormControl>
-                        <FormDescription>
-                          Give your program a clear, descriptive title
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
+                  <Button 
+                    type="submit" 
+                    className="w-full"
+                    disabled={createProgramMutation.isPending}
+                  >
+                    {createProgramMutation.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Creating Program...
+                      </>
+                    ) : (
+                      <>
+                        <BookOpen className="h-4 w-4 mr-2" />
+                        Create Program
+                      </>
                     )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="Describe your program, its goals, and who it's designed for..." 
-                            {...field} 
-                            rows={4}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Provide details about what athletes will achieve with this program
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  {/* Category and Experience Level fields removed */}
-                  
-                  {/* Program Structure section removed */}
-                  
-                  <FormField
-                    control={form.control}
-                    name="visibility"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel>Program Visibility</FormLabel>
-                        <FormControl>
-                          <RadioGroup 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
-                            className="grid grid-cols-1 md:grid-cols-3 gap-2"
-                          >
-                            <FormItem className="flex flex-col items-center space-y-2 rounded-lg border p-3 cursor-pointer hover:bg-muted/30 transition-colors [&:has([data-state=checked])]:border-primary [&:has([data-state=checked])]:bg-primary/5">
-                              <FormControl>
-                                <RadioGroupItem value="private" />
-                              </FormControl>
-                              <div className="space-y-1 text-center">
-                                <p className="font-medium">Private</p>
-                                <p className="text-xs text-muted-foreground">
-                                  Only visible to assigned athletes or clubs
-                                </p>
-                              </div>
-                            </FormItem>
-                            <FormItem className="flex flex-col items-center space-y-2 rounded-lg border p-3 cursor-pointer hover:bg-muted/30 transition-colors [&:has([data-state=checked])]:border-primary [&:has([data-state=checked])]:bg-primary/5">
-                              <FormControl>
-                                <RadioGroupItem value="public" />
-                              </FormControl>
-                              <div className="space-y-1 text-center">
-                                <p className="font-medium">Public</p>
-                                <p className="text-xs text-muted-foreground">
-                                  Anyone can view and use the program
-                                </p>
-                              </div>
-                            </FormItem>
-                            <FormItem className="flex flex-col items-center space-y-2 rounded-lg border p-3 cursor-pointer hover:bg-muted/30 transition-colors [&:has([data-state=checked])]:border-primary [&:has([data-state=checked])]:bg-primary/5">
-                              <FormControl>
-                                <RadioGroupItem value="premium" />
-                              </FormControl>
-                              <div className="space-y-1 text-center flex flex-col items-center">
-                                <p className="font-medium flex items-center">
-                                  <Crown className="h-4 w-4 mr-1 text-yellow-500" />
-                                  Premium
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  Users pay Spikes to access
-                                </p>
-                              </div>
-                            </FormItem>
-                          </RadioGroup>
-                        </FormControl>
-                        <FormDescription>
-                          Choose how your program is shared with others
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  {form.watch("visibility") === "premium" && (
-                    <FormField
-                      control={form.control}
-                      name="price"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Price (Spikes)</FormLabel>
-                          <FormControl>
-                            <Input type="number" min={0} {...field} />
-                          </FormControl>
-                          <FormDescription>
-                            How many spikes will users need to spend to purchase this program?
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
-                  
-                  {/* Second upload toggle removed to avoid duplication */}
-                  
-                  {/* The file upload section has been moved to the top of the form */}
-                  
-                  <div className="flex justify-end space-x-2 pt-4">
-                    <Button variant="outline" type="button" asChild>
-                      <Link href="/programs">Cancel</Link>
-                    </Button>
-                    <Button 
-                      type="submit" 
-                      disabled={createProgramMutation.isPending}
-                    >
-                      {createProgramMutation.isPending && (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      )}
-                      Create Program
-                    </Button>
-                  </div>
+                  </Button>
                 </form>
-              </Form>
-            </CardContent>
-          </Card>
-        </div>
-        
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Program Preview</CardTitle>
-              <CardDescription>Here's how your program will look</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-36 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-md mb-4"></div>
-              <h3 className="text-lg font-semibold mb-1">
-                {form.watch("title") || "Program Title"}
-              </h3>
-              <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                {form.watch("description") || "Program description will appear here..."}
-              </p>
-              <div className="flex items-center text-sm text-muted-foreground mb-2">
-                <CalendarDays className="h-4 w-4 mr-1" />
-                <span>28 days</span>
-              </div>
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Clock className="h-4 w-4 mr-1" />
-                <span>Intermediate level</span>
-              </div>
-              
-              {form.watch("visibility") === "premium" && (
-                <div className="mt-4 p-2 bg-yellow-100 dark:bg-yellow-900/40 rounded-md flex items-center">
-                  <Crown className="h-4 w-4 text-yellow-600 dark:text-yellow-400 mr-2" />
-                  <span className="text-sm text-yellow-700 dark:text-yellow-300">
-                    Premium: {form.watch("price") || 0} Spikes
-                  </span>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Upload Document Tab */}
+          <TabsContent value="upload">
+            <Card>
+              <CardHeader>
+                <CardTitle>Upload Program Document</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleFileUpload} className="space-y-6">
+                  {/* Basic Information */}
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="upload-title">Program Title *</Label>
+                      <Input
+                        id="upload-title"
+                        value={formData.title}
+                        onChange={(e) => updateFormData("title", e.target.value)}
+                        placeholder="Enter program title..."
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="upload-description">Description</Label>
+                      <Textarea
+                        id="upload-description"
+                        value={formData.description}
+                        onChange={(e) => updateFormData("description", e.target.value)}
+                        placeholder="Describe your training program..."
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+
+                  {/* File Upload */}
+                  <div>
+                    <Label htmlFor="file-upload">Program File *</Label>
+                    <Input
+                      id="file-upload"
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                      required
+                    />
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Supported formats: PDF, DOC, DOCX (Max 10MB)
+                    </p>
+                  </div>
+
+                  {/* Program Settings */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="upload-category">Category</Label>
+                      <Select
+                        value={formData.category}
+                        onValueChange={(value) => updateFormData("category", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="sprint">Sprint</SelectItem>
+                          <SelectItem value="middle_distance">Middle Distance</SelectItem>
+                          <SelectItem value="long_distance">Long Distance</SelectItem>
+                          <SelectItem value="jumping">Jumping</SelectItem>
+                          <SelectItem value="throwing">Throwing</SelectItem>
+                          <SelectItem value="combined">Combined Events</SelectItem>
+                          <SelectItem value="general">General</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="upload-level">Level</Label>
+                      <Select
+                        value={formData.level}
+                        onValueChange={(value) => updateFormData("level", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="beginner">Beginner</SelectItem>
+                          <SelectItem value="intermediate">Intermediate</SelectItem>
+                          <SelectItem value="advanced">Advanced</SelectItem>
+                          <SelectItem value="elite">Elite</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="upload-visibility">Visibility</Label>
+                      <Select
+                        value={formData.visibility}
+                        onValueChange={(value) => updateFormData("visibility", value as any)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="public">Public (Free)</SelectItem>
+                          <SelectItem value="premium">Premium (Paid)</SelectItem>
+                          <SelectItem value="private">Private</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Premium Settings */}
+                  {formData.visibility === 'premium' && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/50">
+                      <div>
+                        <Label htmlFor="upload-priceType">Price Type</Label>
+                        <Select
+                          value={formData.priceType}
+                          onValueChange={(value) => updateFormData("priceType", value as any)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="spikes">Spikes</SelectItem>
+                            <SelectItem value="money">Money (USD)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="upload-price">
+                          Price ({formData.priceType === 'money' ? '$' : 'Spikes'})
+                        </Label>
+                        <Input
+                          id="upload-price"
+                          type="number"
+                          min="0"
+                          step={formData.priceType === 'money' ? "0.01" : "1"}
+                          value={formData.price}
+                          onChange={(e) => updateFormData("price", parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <Button 
+                    type="submit" 
+                    className="w-full"
+                    disabled={uploadProgramMutation.isPending}
+                  >
+                    {uploadProgramMutation.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Uploading Program...
+                      </>
+                    ) : (
+                      <>
+                        <FileUp className="h-4 w-4 mr-2" />
+                        Upload Program
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Import from Google Sheets Tab */}
+          <TabsContent value="import">
+            <Card>
+              <CardHeader>
+                <CardTitle>Import from Google Sheets</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-lg font-semibold mb-2">Import Training Program</h3>
+                  <p className="text-muted-foreground mb-6">
+                    Import your training program directly from a Google Sheet
+                  </p>
+                  <GoogleSheetImportDialog 
+                    buttonText="Import from Google Sheets"
+                    variant="default"
+                    size="lg"
+                    className="min-w-[200px]"
+                  />
                 </div>
-              )}
-            </CardContent>
-            <CardFooter className="flex justify-between border-t p-4">
-              <div className="text-sm text-muted-foreground flex items-center">
-                {form.watch("visibility") === "public" && "Public program"}
-                {form.watch("visibility") === "private" && "Private program"}
-                {form.watch("visibility") === "premium" && (
-                  <span className="flex items-center">
-                    <Crown className="h-3.5 w-3.5 mr-1 text-yellow-500" />
-                    Premium program
-                  </span>
-                )}
-              </div>
-              <div className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
-                General
-              </div>
-            </CardFooter>
-          </Card>
-          
-          <Card className="mt-4">
-            <CardHeader>
-              <CardTitle>What's Next?</CardTitle>
-              <CardDescription>After creating your program:</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ol className="list-decimal pl-5 space-y-2 text-sm">
-                <li>Add training sessions to your program</li>
-                <li>Set up specific workouts for each day</li>
-                <li>Customize the training intensity and volume</li>
-                <li>Add notes and instructions for athletes</li>
-                <li>Preview how the program will look to users</li>
-              </ol>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
 }
 
-// Protected route wrapper
 export function Component() {
-  return (
-    <ProtectedRoute path="/programs/create" component={ProgramCreatePage} />
-  );
+  return <ProtectedRoute path="/programs/create" component={ProgramCreatePage} />;
 }
+
+export default ProgramCreatePage;
