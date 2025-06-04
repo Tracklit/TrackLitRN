@@ -431,69 +431,20 @@ article::-webkit-scrollbar,
   background-color: hsl(var(--background)) !important;
 }
 
-/* Force solid backgrounds for all dialog components */
+/* Ensure dialog components have solid backgrounds and proper positioning */
 [data-radix-dialog-content],
-[data-radix-alert-dialog-content],
-[data-state="open"][data-radix-dialog-content],
-[data-state="open"][data-radix-alert-dialog-content],
-.group[data-radix-dialog-content],
-.group[data-radix-alert-dialog-content],
-[role="dialog"],
-[role="alertdialog"] {
-  background-color: white !important;
-  background: white !important;
+[data-radix-alert-dialog-content] {
+  background-color: hsl(var(--card)) !important;
+  color: hsl(var(--card-foreground)) !important;
   opacity: 1 !important;
-  --tw-bg-opacity: 1 !important;
-  border: 1px solid hsl(var(--border)) !important;
   box-shadow: 0 10px 50px rgba(0, 0, 0, 0.3) !important;
-}
-
-/* Dark mode dialog backgrounds */
-@media (prefers-color-scheme: dark) {
-  [data-radix-dialog-content],
-  [data-radix-alert-dialog-content],
-  [data-state="open"][data-radix-dialog-content],
-  [data-state="open"][data-radix-alert-dialog-content],
-  .group[data-radix-dialog-content],
-  .group[data-radix-alert-dialog-content],
-  [role="dialog"],
-  [role="alertdialog"] {
-    background-color: #1f2937 !important;
-    background: #1f2937 !important;
-    color: white !important;
-  }
 }
 
 /* Ensure dialog overlays are properly opaque */
 [data-radix-dialog-overlay],
-[data-radix-alert-dialog-overlay],
-[data-state="open"][data-radix-dialog-overlay],
-[data-state="open"][data-radix-alert-dialog-overlay] {
+[data-radix-alert-dialog-overlay] {
   background-color: rgba(0, 0, 0, 0.8) !important;
-  background: rgba(0, 0, 0, 0.8) !important;
-  opacity: 1 !important;
   backdrop-filter: blur(2px) !important;
-}
-
-/* Prevent any child elements from causing transparency */
-[data-radix-dialog-content] *,
-[data-radix-alert-dialog-content] *,
-[role="dialog"] *,
-[role="alertdialog"] * {
-  opacity: 1 !important;
-}
-
-/* Force proper positioning and prevent movement */
-[data-radix-dialog-content],
-[data-radix-alert-dialog-content],
-[role="dialog"],
-[role="alertdialog"] {
-  position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  z-index: 50 !important;
-  pointer-events: auto !important;
 }
 
 
