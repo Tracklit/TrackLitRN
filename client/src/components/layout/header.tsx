@@ -1,4 +1,4 @@
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/use-auth-simple";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -14,10 +14,15 @@ interface HeaderProps {
 }
 
 export function Header({ title = "TrackLit", className }: HeaderProps) {
-  const { user, logoutMutation } = useAuth();
+  const { user } = useAuth();
 
-  const handleLogout = () => {
-    logoutMutation.mutate();
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/logout', { method: 'POST' });
+      window.location.reload();
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   return (

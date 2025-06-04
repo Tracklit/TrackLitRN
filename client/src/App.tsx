@@ -57,7 +57,7 @@ import RehabPage from "@/pages/rehab-page";
 import HamstringRehabPage from "@/pages/rehab/acute-muscle/hamstring";
 import FootRehabPage from "@/pages/rehab/chronic-injuries/foot";
 import { ProtectedRoute } from "@/lib/protected-route";
-import { AuthProvider, useAuth } from "@/hooks/use-auth-minimal";
+import { AuthProvider, useAuth } from "@/hooks/use-auth-simple";
 
 function Router() {
   return (

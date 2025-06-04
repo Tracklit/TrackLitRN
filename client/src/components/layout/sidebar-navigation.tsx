@@ -1,4 +1,4 @@
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/use-auth-simple";
 import { getInitials } from "@/lib/utils";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
