@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modal Dialog Fix Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Exact modal styles from the working test */
+        .modal-overlay {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            z-index: 50 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: rgba(0, 0, 0, 0.8) !important;
+            backdrop-filter: blur(8px) !important;
+            pointer-events: auto !important;
+        }
+        
+        .modal-content {
+            position: relative !important;
+            background: #010a18 !important;
+            padding: 1.5rem !important;
+            border-radius: 0.5rem !important;
+            max-width: 28rem !important;
+            width: 100% !important;
+            margin: 1rem !important;
+            pointer-events: auto !important;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+
+        /* Prevent any positioning changes on tap */
+        .modal-overlay, .modal-content {
+            transform: none !important;
+            transition: none !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-950 text-white">
+    <div class="p-8">
+        <div class="max-w-4xl mx-auto space-y-8">
+            <h1 class="text-3xl font-bold text-center mb-8">Modal Dialog Fix Verification</h1>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Test 1: Save Workout Modal -->
+                <div class="bg-gray-900 p-6 rounded-lg space-y-4">
+                    <h2 class="text-xl font-semibold text-white">Test 1: Save Workout</h2>
+                    <p class="text-gray-300 text-sm">This modal should stay completely fixed when tapped</p>
+                    
+                    <button 
+                        onclick="showModal('modal1')"
+                        class="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium transition-colors"
+                    >
+                        Open Save Workout Modal
+                    </button>
+                </div>
+
+                <!-- Test 2: Share Content Modal -->
+                <div class="bg-gray-900 p-6 rounded-lg space-y-4">
+                    <h2 class="text-xl font-semibold text-white">Test 2: Share Content</h2>
+                    <p class="text-gray-300 text-sm">This modal should stay completely fixed when tapped</p>
+                    
+                    <button 
+                        onclick="showModal('modal2')"
+                        class="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded font-medium transition-colors"
+                    >
+                        Open Share Modal
+                    </button>
+                </div>
+
+                <!-- Test 3: Delete Confirmation -->
+                <div class="bg-gray-900 p-6 rounded-lg space-y-4">
+                    <h2 class="text-xl font-semibold text-white">Test 3: Delete Confirmation</h2>
+                    <p class="text-gray-300 text-sm">This modal should stay completely fixed when tapped</p>
+                    
+                    <button 
+                        onclick="showModal('modal3')"
+                        class="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-medium transition-colors"
+                    >
+                        Open Delete Modal
+                    </button>
+                </div>
+
+                <!-- Test 4: Settings Modal -->
+                <div class="bg-gray-900 p-6 rounded-lg space-y-4">
+                    <h2 class="text-xl font-semibold text-white">Test 4: Settings</h2>
+                    <p class="text-gray-300 text-sm">This modal should stay completely fixed when tapped</p>
+                    
+                    <button 
+                        onclick="showModal('modal4')"
+                        class="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded font-medium transition-colors"
+                    >
+                        Open Settings Modal
+                    </button>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <h3 class="text-lg font-semibold mb-2">Testing Instructions:</h3>
+                <p class="text-gray-300">1. Tap each button to open a modal</p>
+                <p class="text-gray-300">2. Tap directly on the modal content</p>
+                <p class="text-gray-300">3. Verify the modal stays completely fixed in position</p>
+                <p class="text-gray-300">4. The modal should not move, shift, or jump when tapped</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 1: Save Workout -->
+    <div id="modal1" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="text-lg font-semibold text-white mb-4">Save Workout</h3>
+            
+            <div class="bg-gray-800 p-4 rounded-md mb-4">
+                <h4 class="font-medium mb-2 text-white">Training Session</h4>
+                <p class="text-sm text-gray-300">Mood: Excellent (8/10)</p>
+                <p class="text-sm text-gray-300">Duration: 45 minutes</p>
+                <p class="text-sm text-gray-300">Type: Sprint Training</p>
+            </div>
+            
+            <div class="flex gap-2">
+                <button
+                    onclick="hideModal('modal1')"
+                    class="flex-1 px-4 py-2 border border-gray-600 text-gray-300 hover:bg-gray-700 rounded font-medium transition-colors"
+                >
+                    Cancel
+                </button>
+                <button
+                    onclick="alert('Workout saved!'); hideModal('modal1')"
+                    class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium transition-colors"
+                >
+                    Save
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 2: Share Content -->
+    <div id="modal2" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="text-lg font-semibold text-white mb-4">Share Exercise</h3>
+            
+            <div class="bg-gray-800 p-4 rounded-md mb-4">
+                <h4 class="font-medium mb-2 text-white">100m Sprint Technique</h4>
+                <p class="text-sm text-gray-300">Share this exercise with your team or social media</p>
+            </div>
+            
+            <div class="space-y-2 mb-4">
+                <button class="w-full px-4 py-2 bg-blue-500 text-white rounded">Share to Team</button>
+                <button class="w-full px-4 py-2 bg-green-500 text-white rounded">Share to Social</button>
+                <button class="w-full px-4 py-2 bg-gray-600 text-white rounded">Copy Link</button>
+            </div>
+            
+            <button
+                onclick="hideModal('modal2')"
+                class="w-full px-4 py-2 border border-gray-600 text-gray-300 hover:bg-gray-700 rounded font-medium transition-colors"
+            >
+                Close
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal 3: Delete Confirmation -->
+    <div id="modal3" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="text-lg font-semibold text-white mb-4">Delete Exercise</h3>
+            
+            <div class="bg-red-900/20 border border-red-700 p-4 rounded-md mb-4">
+                <p class="text-white font-medium">Are you sure you want to delete this exercise?</p>
+                <p class="text-gray-300 text-sm mt-1">This action cannot be undone.</p>
+            </div>
+            
+            <div class="flex gap-2">
+                <button
+                    onclick="hideModal('modal3')"
+                    class="flex-1 px-4 py-2 border border-gray-600 text-gray-300 hover:bg-gray-700 rounded font-medium transition-colors"
+                >
+                    Cancel
+                </button>
+                <button
+                    onclick="alert('Exercise deleted!'); hideModal('modal3')"
+                    class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-medium transition-colors"
+                >
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 4: Settings -->
+    <div id="modal4" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="text-lg font-semibold text-white mb-4">Exercise Settings</h3>
+            
+            <div class="space-y-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Difficulty Level</label>
+                    <select class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded">
+                        <option>Beginner</option>
+                        <option>Intermediate</option>
+                        <option>Advanced</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Duration (minutes)</label>
+                    <input type="number" value="30" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded">
+                </div>
+                
+                <div class="flex items-center">
+                    <input type="checkbox" id="reminder" class="mr-2">
+                    <label for="reminder" class="text-gray-300">Send reminder notifications</label>
+                </div>
+            </div>
+            
+            <div class="flex gap-2">
+                <button
+                    onclick="hideModal('modal4')"
+                    class="flex-1 px-4 py-2 border border-gray-600 text-gray-300 hover:bg-gray-700 rounded font-medium transition-colors"
+                >
+                    Cancel
+                </button>
+                <button
+                    onclick="alert('Settings saved!'); hideModal('modal4')"
+                    class="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded font-medium transition-colors"
+                >
+                    Save Settings
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+        
+        function hideModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+        
+        // Close modal when clicking outside (but not when clicking inside)
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal-overlay')) {
+                hideModal(e.target.id);
+            }
+        });
+
+        // Prevent any movement when clicking on modal content
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.modal-content')) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        });
+    </script>
+</body>
+</html>
