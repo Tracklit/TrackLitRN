@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { PageHeader } from "@/components/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,7 +14,6 @@ import { Link, useLocation } from "wouter";
 import { 
   ArrowLeft, 
   FileUp,
-  Users,
   BookOpen,
   Loader2,
   Upload,
@@ -27,12 +26,6 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from "@/components/ui/tabs";
 import { GoogleSheetImportDialog } from "@/components/google-sheet-import-dialog";
 
 interface CreateProgramForm {
@@ -51,6 +44,7 @@ function ProgramCreatePage() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   
+  const [selectedMethod, setSelectedMethod] = useState<'builder' | 'upload' | 'import' | null>(null);
   const [formData, setFormData] = useState<CreateProgramForm>({
     title: "",
     description: "",
@@ -206,404 +200,441 @@ function ProgramCreatePage() {
         description="Build a training program for your athletes or share with the community"
       />
 
-      <div className="max-w-2xl mx-auto mt-6">
-        <Tabs defaultValue="builder" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 h-auto p-1 bg-muted/50 rounded-lg border">
-            <TabsTrigger 
-              value="builder" 
-              className="flex flex-col items-center p-4 h-auto data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md transition-all"
-            >
-              <BookOpen className="h-5 w-5 mb-2" />
-              <span className="text-sm font-medium">Program Builder</span>
-              <span className="text-xs text-muted-foreground mt-1">Create custom sessions</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="upload" 
-              className="flex flex-col items-center p-4 h-auto data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md transition-all"
-            >
-              <FileUp className="h-5 w-5 mb-2" />
-              <span className="text-sm font-medium">Upload Document</span>
-              <span className="text-xs text-muted-foreground mt-1">PDF, DOC, DOCX files</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="import" 
-              className="flex flex-col items-center p-4 h-auto data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md transition-all"
-            >
-              <Upload className="h-5 w-5 mb-2" />
-              <span className="text-sm font-medium">Import from Sheets</span>
-              <span className="text-xs text-muted-foreground mt-1">Google Sheets integration</span>
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Program Builder Tab */}
-          <TabsContent value="builder" className="mt-6">
-            <Card className="border-2">
-              <CardHeader className="bg-muted/30">
-                <CardTitle className="flex items-center">
-                  <BookOpen className="h-5 w-5 mr-2 text-primary" />
-                  Build Custom Program
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Create a structured training program with custom sessions and exercises
-                </p>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleFormSubmit} className="space-y-6">
-                  {/* Basic Information */}
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="title">Program Title *</Label>
-                      <Input
-                        id="title"
-                        value={formData.title}
-                        onChange={(e) => updateFormData("title", e.target.value)}
-                        placeholder="Enter program title..."
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="description">Description</Label>
-                      <Textarea
-                        id="description"
-                        value={formData.description}
-                        onChange={(e) => updateFormData("description", e.target.value)}
-                        placeholder="Describe your training program..."
-                        rows={3}
-                      />
-                    </div>
+      <div className="max-w-4xl mx-auto mt-6">
+        {!selectedMethod ? (
+          <>
+            {/* Creation Method Selection */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <Card 
+                className="cursor-pointer border-2 hover:border-primary/50 transition-all hover:shadow-md"
+                onClick={() => setSelectedMethod('builder')}
+              >
+                <CardHeader className="text-center pb-6">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+                    <BookOpen className="h-8 w-8 text-primary" />
                   </div>
-
-                  {/* Program Settings */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="category">Category</Label>
-                      <Select
-                        value={formData.category}
-                        onValueChange={(value) => updateFormData("category", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="sprint">Sprint</SelectItem>
-                          <SelectItem value="middle_distance">Middle Distance</SelectItem>
-                          <SelectItem value="long_distance">Long Distance</SelectItem>
-                          <SelectItem value="jumping">Jumping</SelectItem>
-                          <SelectItem value="throwing">Throwing</SelectItem>
-                          <SelectItem value="combined">Combined Events</SelectItem>
-                          <SelectItem value="general">General</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="level">Level</Label>
-                      <Select
-                        value={formData.level}
-                        onValueChange={(value) => updateFormData("level", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="beginner">Beginner</SelectItem>
-                          <SelectItem value="intermediate">Intermediate</SelectItem>
-                          <SelectItem value="advanced">Advanced</SelectItem>
-                          <SelectItem value="elite">Elite</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="duration">Duration (weeks)</Label>
-                      <Input
-                        id="duration"
-                        type="number"
-                        min="1"
-                        max="52"
-                        value={formData.duration}
-                        onChange={(e) => updateFormData("duration", parseInt(e.target.value) || 1)}
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="visibility">Visibility</Label>
-                      <Select
-                        value={formData.visibility}
-                        onValueChange={(value) => updateFormData("visibility", value as any)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="public">Public (Free)</SelectItem>
-                          <SelectItem value="premium">Premium (Paid)</SelectItem>
-                          <SelectItem value="private">Private</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <CardTitle className="text-xl mb-2">Program Builder</CardTitle>
+                  <CardDescription className="text-sm leading-relaxed">
+                    Create a structured training program with custom sessions and exercises
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+              
+              <Card 
+                className="cursor-pointer border-2 hover:border-primary/50 transition-all hover:shadow-md"
+                onClick={() => setSelectedMethod('upload')}
+              >
+                <CardHeader className="text-center pb-6">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+                    <FileUp className="h-8 w-8 text-primary" />
                   </div>
-
-                  {/* Premium Settings */}
-                  {formData.visibility === 'premium' && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/50">
-                      <div>
-                        <Label htmlFor="priceType">Price Type</Label>
-                        <Select
-                          value={formData.priceType}
-                          onValueChange={(value) => updateFormData("priceType", value as any)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="spikes">Spikes</SelectItem>
-                            <SelectItem value="money">Money (USD)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="price">
-                          Price ({formData.priceType === 'money' ? '$' : 'Spikes'})
-                        </Label>
-                        <Input
-                          id="price"
-                          type="number"
-                          min="0"
-                          step={formData.priceType === 'money' ? "0.01" : "1"}
-                          value={formData.price}
-                          onChange={(e) => updateFormData("price", parseFloat(e.target.value) || 0)}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  <Button 
-                    type="submit" 
-                    className="w-full"
-                    disabled={createProgramMutation.isPending}
-                  >
-                    {createProgramMutation.isPending ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Creating Program...
-                      </>
-                    ) : (
-                      <>
-                        <BookOpen className="h-4 w-4 mr-2" />
-                        Create Program
-                      </>
-                    )}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Upload Document Tab */}
-          <TabsContent value="upload" className="mt-6">
-            <Card className="border-2">
-              <CardHeader className="bg-muted/30">
-                <CardTitle className="flex items-center">
-                  <FileUp className="h-5 w-5 mr-2 text-primary" />
-                  Upload Program Document
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Share existing training documents in PDF, DOC, or DOCX format
-                </p>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleFileUpload} className="space-y-6">
-                  {/* Basic Information */}
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="upload-title">Program Title *</Label>
-                      <Input
-                        id="upload-title"
-                        value={formData.title}
-                        onChange={(e) => updateFormData("title", e.target.value)}
-                        placeholder="Enter program title..."
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="upload-description">Description</Label>
-                      <Textarea
-                        id="upload-description"
-                        value={formData.description}
-                        onChange={(e) => updateFormData("description", e.target.value)}
-                        placeholder="Describe your training program..."
-                        rows={3}
-                      />
-                    </div>
-                  </div>
-
-                  {/* File Upload */}
-                  <div>
-                    <Label htmlFor="file-upload">Program File *</Label>
-                    <Input
-                      id="file-upload"
-                      type="file"
-                      accept=".pdf,.doc,.docx"
-                      onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
-                      required
-                    />
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Supported formats: PDF, DOC, DOCX (Max 10MB)
-                    </p>
-                  </div>
-
-                  {/* Program Settings */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="upload-category">Category</Label>
-                      <Select
-                        value={formData.category}
-                        onValueChange={(value) => updateFormData("category", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="sprint">Sprint</SelectItem>
-                          <SelectItem value="middle_distance">Middle Distance</SelectItem>
-                          <SelectItem value="long_distance">Long Distance</SelectItem>
-                          <SelectItem value="jumping">Jumping</SelectItem>
-                          <SelectItem value="throwing">Throwing</SelectItem>
-                          <SelectItem value="combined">Combined Events</SelectItem>
-                          <SelectItem value="general">General</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="upload-level">Level</Label>
-                      <Select
-                        value={formData.level}
-                        onValueChange={(value) => updateFormData("level", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="beginner">Beginner</SelectItem>
-                          <SelectItem value="intermediate">Intermediate</SelectItem>
-                          <SelectItem value="advanced">Advanced</SelectItem>
-                          <SelectItem value="elite">Elite</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="upload-visibility">Visibility</Label>
-                      <Select
-                        value={formData.visibility}
-                        onValueChange={(value) => updateFormData("visibility", value as any)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="public">Public (Free)</SelectItem>
-                          <SelectItem value="premium">Premium (Paid)</SelectItem>
-                          <SelectItem value="private">Private</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {/* Premium Settings */}
-                  {formData.visibility === 'premium' && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/50">
-                      <div>
-                        <Label htmlFor="upload-priceType">Price Type</Label>
-                        <Select
-                          value={formData.priceType}
-                          onValueChange={(value) => updateFormData("priceType", value as any)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="spikes">Spikes</SelectItem>
-                            <SelectItem value="money">Money (USD)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="upload-price">
-                          Price ({formData.priceType === 'money' ? '$' : 'Spikes'})
-                        </Label>
-                        <Input
-                          id="upload-price"
-                          type="number"
-                          min="0"
-                          step={formData.priceType === 'money' ? "0.01" : "1"}
-                          value={formData.price}
-                          onChange={(e) => updateFormData("price", parseFloat(e.target.value) || 0)}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  <Button 
-                    type="submit" 
-                    className="w-full"
-                    disabled={uploadProgramMutation.isPending}
-                  >
-                    {uploadProgramMutation.isPending ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Uploading Program...
-                      </>
-                    ) : (
-                      <>
-                        <FileUp className="h-4 w-4 mr-2" />
-                        Upload Program
-                      </>
-                    )}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Import from Google Sheets Tab */}
-          <TabsContent value="import" className="mt-6">
-            <Card className="border-2">
-              <CardHeader className="bg-muted/30">
-                <CardTitle className="flex items-center">
-                  <Upload className="h-5 w-5 mr-2 text-primary" />
-                  Import from Google Sheets
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Connect your Google Sheets training program for automatic synchronization
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
+                  <CardTitle className="text-xl mb-2">Upload Document</CardTitle>
+                  <CardDescription className="text-sm leading-relaxed">
+                    Share existing training documents in PDF, DOC, or DOCX format
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+              
+              <Card 
+                className="cursor-pointer border-2 hover:border-primary/50 transition-all hover:shadow-md"
+                onClick={() => setSelectedMethod('import')}
+              >
+                <CardHeader className="text-center pb-6">
                   <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
                     <Upload className="h-8 w-8 text-primary" />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">Import Training Program</h3>
-                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                    Connect your Google Sheets program to automatically sync training sessions and updates
-                  </p>
-                  <GoogleSheetImportDialog 
-                    buttonText="Import from Google Sheets"
-                    variant="default"
-                    size="lg"
-                    className="min-w-[200px]"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                  <CardTitle className="text-xl mb-2">Import from Sheets</CardTitle>
+                  <CardDescription className="text-sm leading-relaxed">
+                    Connect your Google Sheets for automatic synchronization
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Selected Method Content */}
+            <div className="max-w-2xl mx-auto">
+              <Button 
+                variant="outline" 
+                className="mb-6"
+                onClick={() => setSelectedMethod(null)}
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Choose Different Method
+              </Button>
+
+              {/* Program Builder Method */}
+              {selectedMethod === 'builder' && (
+                <Card className="border-2">
+                  <CardHeader className="bg-muted/30">
+                    <CardTitle className="flex items-center">
+                      <BookOpen className="h-5 w-5 mr-2 text-primary" />
+                      Build Custom Program
+                    </CardTitle>
+                    <CardDescription>
+                      Create a structured training program with custom sessions and exercises
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <form onSubmit={handleFormSubmit} className="space-y-6">
+                      {/* Basic Information */}
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="title">Program Title *</Label>
+                          <Input
+                            id="title"
+                            value={formData.title}
+                            onChange={(e) => updateFormData("title", e.target.value)}
+                            placeholder="Enter program title..."
+                            required
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="description">Description</Label>
+                          <Textarea
+                            id="description"
+                            value={formData.description}
+                            onChange={(e) => updateFormData("description", e.target.value)}
+                            placeholder="Describe your training program..."
+                            rows={3}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Program Settings */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="category">Category</Label>
+                          <Select
+                            value={formData.category}
+                            onValueChange={(value) => updateFormData("category", value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="sprint">Sprint</SelectItem>
+                              <SelectItem value="middle_distance">Middle Distance</SelectItem>
+                              <SelectItem value="long_distance">Long Distance</SelectItem>
+                              <SelectItem value="jumping">Jumping</SelectItem>
+                              <SelectItem value="throwing">Throwing</SelectItem>
+                              <SelectItem value="combined">Combined Events</SelectItem>
+                              <SelectItem value="general">General</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="level">Level</Label>
+                          <Select
+                            value={formData.level}
+                            onValueChange={(value) => updateFormData("level", value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="beginner">Beginner</SelectItem>
+                              <SelectItem value="intermediate">Intermediate</SelectItem>
+                              <SelectItem value="advanced">Advanced</SelectItem>
+                              <SelectItem value="elite">Elite</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="duration">Duration (weeks)</Label>
+                          <Input
+                            id="duration"
+                            type="number"
+                            min="1"
+                            max="52"
+                            value={formData.duration}
+                            onChange={(e) => updateFormData("duration", parseInt(e.target.value) || 1)}
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="visibility">Visibility</Label>
+                          <Select
+                            value={formData.visibility}
+                            onValueChange={(value) => updateFormData("visibility", value as any)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="public">Public (Free)</SelectItem>
+                              <SelectItem value="premium">Premium (Paid)</SelectItem>
+                              <SelectItem value="private">Private</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      {/* Premium Settings */}
+                      {formData.visibility === 'premium' && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/50">
+                          <div>
+                            <Label htmlFor="priceType">Price Type</Label>
+                            <Select
+                              value={formData.priceType}
+                              onValueChange={(value) => updateFormData("priceType", value as any)}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="spikes">Spikes</SelectItem>
+                                <SelectItem value="money">Money (USD)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div>
+                            <Label htmlFor="price">
+                              Price ({formData.priceType === 'money' ? '$' : 'Spikes'})
+                            </Label>
+                            <Input
+                              id="price"
+                              type="number"
+                              min="0"
+                              step={formData.priceType === 'money' ? "0.01" : "1"}
+                              value={formData.price}
+                              onChange={(e) => updateFormData("price", parseFloat(e.target.value) || 0)}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      <Button 
+                        type="submit" 
+                        className="w-full"
+                        disabled={createProgramMutation.isPending}
+                      >
+                        {createProgramMutation.isPending ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Creating Program...
+                          </>
+                        ) : (
+                          <>
+                            <BookOpen className="h-4 w-4 mr-2" />
+                            Create Program
+                          </>
+                        )}
+                      </Button>
+                    </form>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Upload Document Method */}
+              {selectedMethod === 'upload' && (
+                <Card className="border-2">
+                  <CardHeader className="bg-muted/30">
+                    <CardTitle className="flex items-center">
+                      <FileUp className="h-5 w-5 mr-2 text-primary" />
+                      Upload Program Document
+                    </CardTitle>
+                    <CardDescription>
+                      Share existing training documents in PDF, DOC, or DOCX format
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <form onSubmit={handleFileUpload} className="space-y-6">
+                      {/* Basic Information */}
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="upload-title">Program Title *</Label>
+                          <Input
+                            id="upload-title"
+                            value={formData.title}
+                            onChange={(e) => updateFormData("title", e.target.value)}
+                            placeholder="Enter program title..."
+                            required
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="upload-description">Description</Label>
+                          <Textarea
+                            id="upload-description"
+                            value={formData.description}
+                            onChange={(e) => updateFormData("description", e.target.value)}
+                            placeholder="Describe your training program..."
+                            rows={3}
+                          />
+                        </div>
+                      </div>
+
+                      {/* File Upload */}
+                      <div>
+                        <Label htmlFor="file-upload">Program File *</Label>
+                        <Input
+                          id="file-upload"
+                          type="file"
+                          accept=".pdf,.doc,.docx"
+                          onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                          required
+                        />
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Supported formats: PDF, DOC, DOCX (Max 10MB)
+                        </p>
+                      </div>
+
+                      {/* Program Settings */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="upload-category">Category</Label>
+                          <Select
+                            value={formData.category}
+                            onValueChange={(value) => updateFormData("category", value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="sprint">Sprint</SelectItem>
+                              <SelectItem value="middle_distance">Middle Distance</SelectItem>
+                              <SelectItem value="long_distance">Long Distance</SelectItem>
+                              <SelectItem value="jumping">Jumping</SelectItem>
+                              <SelectItem value="throwing">Throwing</SelectItem>
+                              <SelectItem value="combined">Combined Events</SelectItem>
+                              <SelectItem value="general">General</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="upload-level">Level</Label>
+                          <Select
+                            value={formData.level}
+                            onValueChange={(value) => updateFormData("level", value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="beginner">Beginner</SelectItem>
+                              <SelectItem value="intermediate">Intermediate</SelectItem>
+                              <SelectItem value="advanced">Advanced</SelectItem>
+                              <SelectItem value="elite">Elite</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="upload-visibility">Visibility</Label>
+                          <Select
+                            value={formData.visibility}
+                            onValueChange={(value) => updateFormData("visibility", value as any)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="public">Public (Free)</SelectItem>
+                              <SelectItem value="premium">Premium (Paid)</SelectItem>
+                              <SelectItem value="private">Private</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      {/* Premium Settings */}
+                      {formData.visibility === 'premium' && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/50">
+                          <div>
+                            <Label htmlFor="upload-priceType">Price Type</Label>
+                            <Select
+                              value={formData.priceType}
+                              onValueChange={(value) => updateFormData("priceType", value as any)}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="spikes">Spikes</SelectItem>
+                                <SelectItem value="money">Money (USD)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div>
+                            <Label htmlFor="upload-price">
+                              Price ({formData.priceType === 'money' ? '$' : 'Spikes'})
+                            </Label>
+                            <Input
+                              id="upload-price"
+                              type="number"
+                              min="0"
+                              step={formData.priceType === 'money' ? "0.01" : "1"}
+                              value={formData.price}
+                              onChange={(e) => updateFormData("price", parseFloat(e.target.value) || 0)}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      <Button 
+                        type="submit" 
+                        className="w-full"
+                        disabled={uploadProgramMutation.isPending}
+                      >
+                        {uploadProgramMutation.isPending ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Uploading Program...
+                          </>
+                        ) : (
+                          <>
+                            <FileUp className="h-4 w-4 mr-2" />
+                            Upload Program
+                          </>
+                        )}
+                      </Button>
+                    </form>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Import from Google Sheets Method */}
+              {selectedMethod === 'import' && (
+                <Card className="border-2">
+                  <CardHeader className="bg-muted/30">
+                    <CardTitle className="flex items-center">
+                      <Upload className="h-5 w-5 mr-2 text-primary" />
+                      Import from Google Sheets
+                    </CardTitle>
+                    <CardDescription>
+                      Connect your Google Sheets training program for automatic synchronization
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="text-center py-8">
+                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Upload className="h-8 w-8 text-primary" />
+                      </div>
+                      <h3 className="text-lg font-semibold mb-2">Import Training Program</h3>
+                      <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                        Connect your Google Sheets program to automatically sync training sessions and updates
+                      </p>
+                      <GoogleSheetImportDialog 
+                        buttonText="Import from Google Sheets"
+                        variant="default"
+                        size="lg"
+                        className="min-w-[200px]"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
