@@ -11,33 +11,9 @@ interface FixedModalProps {
 }
 
 export function FixedModal({ isOpen, onClose, children, className, title }: FixedModalProps) {
-  const overlayRef = React.useRef<HTMLDivElement>(null)
-  const modalRef = React.useRef<HTMLDivElement>(null)
-
   React.useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
-      
-      // Prevent all touch events on the overlay from propagating
-      const overlay = overlayRef.current
-      if (overlay) {
-        const preventTouch = (e: TouchEvent) => {
-          if (e.target === overlay) {
-            e.preventDefault()
-            e.stopPropagation()
-          }
-        }
-        
-        overlay.addEventListener('touchstart', preventTouch, { passive: false })
-        overlay.addEventListener('touchmove', preventTouch, { passive: false })
-        overlay.addEventListener('touchend', preventTouch, { passive: false })
-        
-        return () => {
-          overlay.removeEventListener('touchstart', preventTouch)
-          overlay.removeEventListener('touchmove', preventTouch)
-          overlay.removeEventListener('touchend', preventTouch)
-        }
-      }
     } else {
       document.body.style.overflow = 'unset'
     }
@@ -49,73 +25,34 @@ export function FixedModal({ isOpen, onClose, children, className, title }: Fixe
 
   if (!isOpen) return null
 
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === overlayRef.current) {
-      onClose()
-    }
-  }
-
   return (
-    <div
-      ref={overlayRef}
-      className="fixed inset-0 z-[200] bg-black/80 flex items-center justify-center p-4"
-      onClick={handleOverlayClick}
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 200,
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px'
-      }}
-    >
-      <div
-        ref={modalRef}
-        className={cn(
-          "relative bg-white rounded-lg shadow-xl w-full max-w-lg p-6",
-          className
-        )}
-        style={{
-          position: 'relative',
-          backgroundColor: 'white',
-          borderRadius: '8px',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-          width: '100%',
-          maxWidth: '32rem',
-          padding: '24px',
-          transform: 'none',
-          margin: 'auto'
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {title && (
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold">{title}</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      
+      {/* Modal Content */}
+      <div className={cn(
+        "relative bg-white border border-gray-200 rounded-lg shadow-xl max-w-md w-full max-h-[85vh] overflow-y-auto",
+        "dark:bg-gray-900 dark:border-gray-700",
+        className
+      )}>
+        <div className="p-6 space-y-4">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            {title && <h2 className="text-lg font-semibold">{title}</h2>}
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-white text-xl leading-none ml-auto"
+            >
+              ×
+            </button>
           </div>
-        )}
-        
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-          style={{
-            position: 'absolute',
-            top: '16px',
-            right: '16px',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer'
-          }}
-        >
-          <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
-        </button>
-
-        {children}
+          
+          {children}
+        </div>
       </div>
     </div>
   )
