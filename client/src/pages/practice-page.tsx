@@ -869,188 +869,245 @@ function PracticePage() {
       )}
 
       {/* Premium Feature Modal */}
-      <FixedModal isOpen={showPremiumModal} onClose={() => setShowPremiumModal(false)}>
-        <FixedModalHeader>
-          <FixedModalTitle className="flex items-center gap-2 text-primary">
-            <span className="h-5 w-5 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold">PRO</span>
-            Premium Feature
-          </FixedModalTitle>
-          <FixedModalDescription>
-            Voice recording and transcription is available exclusively for premium users.
-          </FixedModalDescription>
-        </FixedModalHeader>
-        
-        <FixedModalContent>
-          <div className="space-y-4 py-4">
-            <div className="bg-muted/30 p-3 rounded-md space-y-2">
-              <h3 className="font-medium text-sm">With Premium Voice You Get:</h3>
-              <ul className="text-sm space-y-1.5">
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="text-green-500 h-4 w-4" />
-                  Voice-to-text transcription for your training notes
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="text-green-500 h-4 w-4" />
-                  Hands-free journal entry during workouts
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="text-green-500 h-4 w-4" />
-                  Media uploads for your workouts
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="text-green-500 h-4 w-4" />
-                  Advanced tracking and analytics
-                </li>
-              </ul>
-            </div>
-          </div>
-        </FixedModalContent>
-        
-        <FixedModalFooter className="flex sm:justify-between">
-          <Button
-            type="button"
-            variant="outline"
+      {showPremiumModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setShowPremiumModal(false)}
-          >
-            Maybe Later
-          </Button>
-          <Button
-            type="button"
-            className="bg-primary hover:bg-primary/90 text-white"
-            onClick={() => {
-              setShowPremiumModal(false);
-              window.location.href = '/premium';
-            }}
-          >
-            Upgrade Now
-          </Button>
-        </FixedModalFooter>
-      </FixedModal>
-      
-      {/* Media Upload Premium Modal */}
-      <FixedModal isOpen={showMediaPremiumModal} onClose={() => setShowMediaPremiumModal(false)}>
-        <FixedModalHeader>
-          <FixedModalTitle className="flex items-center gap-2 text-primary">
-            <span className="h-5 w-5 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold">PRO</span>
-            Premium Feature
-          </FixedModalTitle>
-          <FixedModalDescription>
-            Media uploads for photos and videos are available exclusively for premium users.
-          </FixedModalDescription>
-        </FixedModalHeader>
-        
-        <FixedModalContent>
-          <div className="space-y-4 py-4">
-            <div className="bg-muted/30 p-3 rounded-md space-y-2">
-              <h3 className="font-medium text-sm">With Premium Media You Get:</h3>
-              <ul className="text-sm space-y-1.5">
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="text-green-500 h-4 w-4" />
-                  Unlimited photo and video uploads
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="text-green-500 h-4 w-4" />
-                  Analyze your technique with slow-motion playback
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="text-green-500 h-4 w-4" />
-                  Create a visual record of your progress
-                </li>
-              </ul>
-            </div>
-          </div>
-        </FixedModalContent>
-        
-        <FixedModalFooter className="flex sm:justify-between">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setShowMediaPremiumModal(false)}
-          >
-            Maybe Later
-          </Button>
-          <Button
-            type="button"
-            className="bg-primary hover:bg-primary/90 text-white"
-            onClick={() => {
-              setShowMediaPremiumModal(false);
-              window.location.href = '/premium';
-            }}
-          >
-            Upgrade Now
-          </Button>
-        </FixedModalFooter>
-      </FixedModal>
-      
-      {/* Session Complete Modal */}
-      <FixedModal isOpen={sessionCompleteOpen} onClose={() => setSessionCompleteOpen(false)}>
-        <FixedModalHeader>
-          <FixedModalTitle className="flex items-center gap-2">
-            <CheckCircle className="text-green-500 h-5 w-5" />
-            Journal Entry Saved
-          </FixedModalTitle>
-          <FixedModalDescription>
-            Your training session has been completed and saved to your journal.
-          </FixedModalDescription>
-        </FixedModalHeader>
-        
-        <FixedModalContent>
-          <div className="bg-muted/30 p-4 rounded-md mb-4">
-            <h3 className="font-medium mb-2">Training Session</h3>
-            
-            {/* Display the mood rating */}
-            <div className="flex items-center gap-2 mb-3">
-              <p className="text-sm font-medium">How you felt today:</p>
-              <div className="flex items-center">
-                <div 
-                  className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-white"
-                  style={{ 
-                    background: moodValue <= 3 ? '#ef4444' : 
-                              moodValue <= 5 ? '#f59e0b' : 
-                              '#22c55e'
+          />
+          
+          {/* Modal Content */}
+          <div className="relative bg-white border border-gray-200 rounded-lg shadow-xl max-w-md w-full max-h-[85vh] overflow-y-auto dark:bg-gray-900 dark:border-gray-700">
+            <div className="p-6 space-y-4">
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold flex items-center gap-2 text-primary">
+                  <span className="h-5 w-5 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold">PRO</span>
+                  Premium Feature
+                </h2>
+                <button
+                  onClick={() => setShowPremiumModal(false)}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-white text-xl leading-none"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Voice recording and transcription is available exclusively for premium users.
+              </p>
+              
+              <div className="space-y-4 py-4">
+                <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-md space-y-2">
+                  <h3 className="font-medium text-sm">With Premium Voice You Get:</h3>
+                  <ul className="text-sm space-y-1.5">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="text-green-500 h-4 w-4" />
+                      Voice-to-text transcription for your training notes
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="text-green-500 h-4 w-4" />
+                      Hands-free journal entry during workouts
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="text-green-500 h-4 w-4" />
+                      Media uploads for your workouts
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="text-green-500 h-4 w-4" />
+                      Advanced tracking and analytics
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              
+              <div className="flex gap-2 justify-between">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowPremiumModal(false)}
+                >
+                  Maybe Later
+                </Button>
+                <Button
+                  type="button"
+                  className="bg-primary hover:bg-primary/90 text-white"
+                  onClick={() => {
+                    setShowPremiumModal(false);
+                    window.location.href = '/premium';
                   }}
                 >
-                  {moodValue}
-                </div>
-                <span className="text-xs ml-1">/10</span>
+                  Upgrade Now
+                </Button>
               </div>
             </div>
-            
-            <p className="text-sm font-medium mb-1">Journal Notes:</p>
-            <p className="text-sm text-muted-foreground">
-              {diaryNotes || "No notes added for this session."}
-            </p>
           </div>
-        </FixedModalContent>
-        
-        <FixedModalFooter className="flex sm:justify-between">
-          <Button
-            type="button"
-            variant="outline"
+        </div>
+      )}
+      
+      {/* Media Upload Premium Modal */}
+      {showMediaPremiumModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowMediaPremiumModal(false)}
+          />
+          
+          {/* Modal Content */}
+          <div className="relative bg-white border border-gray-200 rounded-lg shadow-xl max-w-md w-full max-h-[85vh] overflow-y-auto dark:bg-gray-900 dark:border-gray-700">
+            <div className="p-6 space-y-4">
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold flex items-center gap-2 text-primary">
+                  <span className="h-5 w-5 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold">PRO</span>
+                  Premium Feature
+                </h2>
+                <button
+                  onClick={() => setShowMediaPremiumModal(false)}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-white text-xl leading-none"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Media uploads for photos and videos are available exclusively for premium users.
+              </p>
+              
+              <div className="space-y-4 py-4">
+                <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-md space-y-2">
+                  <h3 className="font-medium text-sm">With Premium Media You Get:</h3>
+                  <ul className="text-sm space-y-1.5">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="text-green-500 h-4 w-4" />
+                      Unlimited photo and video uploads
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="text-green-500 h-4 w-4" />
+                      Analyze your technique with slow-motion playback
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="text-green-500 h-4 w-4" />
+                      Create a visual record of your progress
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              
+              <div className="flex gap-2 justify-between">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowMediaPremiumModal(false)}
+                >
+                  Maybe Later
+                </Button>
+                <Button
+                  type="button"
+                  className="bg-primary hover:bg-primary/90 text-white"
+                  onClick={() => {
+                    setShowMediaPremiumModal(false);
+                    window.location.href = '/premium';
+                  }}
+                >
+                  Upgrade Now
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Session Complete Modal */}
+      {sessionCompleteOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setSessionCompleteOpen(false)}
-          >
-            Close
-          </Button>
-          <Button 
-            type="button"
-            className="bg-primary text-white"
-            onClick={() => window.location.href = '/tools/journal'}
-            disabled={isSaving}
-          >
-            {isSaving ? (
-              <>
-                <Save className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <ClipboardList className="mr-2 h-4 w-4" />
-                Go to Journal
-              </>
-            )}
-          </Button>
-        </FixedModalFooter>
-      </FixedModal>
+          />
+          
+          {/* Modal Content */}
+          <div className="relative bg-white border border-gray-200 rounded-lg shadow-xl max-w-md w-full max-h-[85vh] overflow-y-auto dark:bg-gray-900 dark:border-gray-700">
+            <div className="p-6 space-y-4">
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold flex items-center gap-2">
+                  <CheckCircle className="text-green-500 h-5 w-5" />
+                  Journal Entry Saved
+                </h2>
+                <button
+                  onClick={() => setSessionCompleteOpen(false)}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-white text-xl leading-none"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Your training session has been completed and saved to your journal.
+              </p>
+              
+              <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-md">
+                <h3 className="font-medium mb-2">Training Session</h3>
+                
+                {/* Display the mood rating */}
+                <div className="flex items-center gap-2 mb-3">
+                  <p className="text-sm font-medium">How you felt today:</p>
+                  <div className="flex items-center">
+                    <div 
+                      className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-white"
+                      style={{ 
+                        background: moodValue <= 3 ? '#ef4444' : 
+                                  moodValue <= 5 ? '#f59e0b' : 
+                                  '#22c55e'
+                      }}
+                    >
+                      {moodValue}
+                    </div>
+                    <span className="text-xs ml-1">/10</span>
+                  </div>
+                </div>
+                
+                <p className="text-sm font-medium mb-1">Journal Notes:</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {diaryNotes || "No notes added for this session."}
+                </p>
+              </div>
+              
+              <div className="flex gap-2 justify-between">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setSessionCompleteOpen(false)}
+                >
+                  Close
+                </Button>
+                <Button 
+                  type="button"
+                  className="bg-primary text-white"
+                  onClick={() => window.location.href = '/tools/journal'}
+                  disabled={isSaving}
+                >
+                  {isSaving ? (
+                    <>
+                      <Save className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <ClipboardList className="mr-2 h-4 w-4" />
+                      Go to Journal
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Assigned Programs Section */}
       <Card className="mt-6">
