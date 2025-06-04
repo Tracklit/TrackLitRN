@@ -58,10 +58,14 @@ import HamstringRehabPage from "@/pages/rehab/acute-muscle/hamstring";
 import FootRehabPage from "@/pages/rehab/chronic-injuries/foot";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { AuthProvider, useAuth } from "@/hooks/use-auth-basic";
+import PracticePageMinimal from "@/pages/practice-page-minimal";
 
 function Router() {
   return (
     <Switch>
+      {/* Test Route */}
+      <Route path="/modal-test" component={PracticePageMinimal} />
+      
       {/* Dashboard */}
       <ProtectedRoute path="/" component={HomePage} />
       
