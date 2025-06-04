@@ -26,13 +26,13 @@ import { Link } from "wouter";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { WorkoutReactions } from "@/components/workout-reactions";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  FixedModal,
+  FixedModalHeader,
+  FixedModalTitle,
+  FixedModalDescription,
+  FixedModalContent,
+  FixedModalFooter,
+} from "@/components/ui/fixed-modal";
 import { DayPicker } from "react-day-picker";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -869,18 +869,18 @@ function PracticePage() {
       )}
 
       {/* Premium Feature Modal */}
-      <Dialog open={showPremiumModal} onOpenChange={setShowPremiumModal}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-primary">
-              <span className="h-5 w-5 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold">PRO</span>
-              Premium Feature
-            </DialogTitle>
-            <DialogDescription>
-              Voice recording and transcription is available exclusively for premium users.
-            </DialogDescription>
-          </DialogHeader>
-          
+      <FixedModal isOpen={showPremiumModal} onClose={() => setShowPremiumModal(false)}>
+        <FixedModalHeader>
+          <FixedModalTitle className="flex items-center gap-2 text-primary">
+            <span className="h-5 w-5 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold">PRO</span>
+            Premium Feature
+          </FixedModalTitle>
+          <FixedModalDescription>
+            Voice recording and transcription is available exclusively for premium users.
+          </FixedModalDescription>
+        </FixedModalHeader>
+        
+        <FixedModalContent>
           <div className="space-y-4 py-4">
             <div className="bg-muted/30 p-3 rounded-md space-y-2">
               <h3 className="font-medium text-sm">With Premium Voice You Get:</h3>
@@ -904,42 +904,42 @@ function PracticePage() {
               </ul>
             </div>
           </div>
-          
-          <DialogFooter className="flex sm:justify-between">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowPremiumModal(false)}
-            >
-              Maybe Later
-            </Button>
-            <Button
-              type="button"
-              className="bg-primary hover:bg-primary/90 text-white"
-              onClick={() => {
-                setShowPremiumModal(false);
-                window.location.href = '/premium';
-              }}
-            >
-              Upgrade Now
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </FixedModalContent>
+        
+        <FixedModalFooter className="flex sm:justify-between">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowPremiumModal(false)}
+          >
+            Maybe Later
+          </Button>
+          <Button
+            type="button"
+            className="bg-primary hover:bg-primary/90 text-white"
+            onClick={() => {
+              setShowPremiumModal(false);
+              window.location.href = '/premium';
+            }}
+          >
+            Upgrade Now
+          </Button>
+        </FixedModalFooter>
+      </FixedModal>
       
       {/* Media Upload Premium Modal */}
-      <Dialog open={showMediaPremiumModal} onOpenChange={setShowMediaPremiumModal}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-primary">
-              <span className="h-5 w-5 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold">PRO</span>
-              Premium Feature
-            </DialogTitle>
-            <DialogDescription>
-              Media uploads for photos and videos are available exclusively for premium users.
-            </DialogDescription>
-          </DialogHeader>
-          
+      <FixedModal isOpen={showMediaPremiumModal} onClose={() => setShowMediaPremiumModal(false)}>
+        <FixedModalHeader>
+          <FixedModalTitle className="flex items-center gap-2 text-primary">
+            <span className="h-5 w-5 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold">PRO</span>
+            Premium Feature
+          </FixedModalTitle>
+          <FixedModalDescription>
+            Media uploads for photos and videos are available exclusively for premium users.
+          </FixedModalDescription>
+        </FixedModalHeader>
+        
+        <FixedModalContent>
           <div className="space-y-4 py-4">
             <div className="bg-muted/30 p-3 rounded-md space-y-2">
               <h3 className="font-medium text-sm">With Premium Media You Get:</h3>
@@ -959,42 +959,42 @@ function PracticePage() {
               </ul>
             </div>
           </div>
-          
-          <DialogFooter className="flex sm:justify-between">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowMediaPremiumModal(false)}
-            >
-              Maybe Later
-            </Button>
-            <Button
-              type="button"
-              className="bg-primary hover:bg-primary/90 text-white"
-              onClick={() => {
-                setShowMediaPremiumModal(false);
-                window.location.href = '/premium';
-              }}
-            >
-              Upgrade Now
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </FixedModalContent>
+        
+        <FixedModalFooter className="flex sm:justify-between">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowMediaPremiumModal(false)}
+          >
+            Maybe Later
+          </Button>
+          <Button
+            type="button"
+            className="bg-primary hover:bg-primary/90 text-white"
+            onClick={() => {
+              setShowMediaPremiumModal(false);
+              window.location.href = '/premium';
+            }}
+          >
+            Upgrade Now
+          </Button>
+        </FixedModalFooter>
+      </FixedModal>
       
       {/* Session Complete Modal */}
-      <Dialog open={sessionCompleteOpen} onOpenChange={setSessionCompleteOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CheckCircle className="text-green-500 h-5 w-5" />
-              Journal Entry Saved
-            </DialogTitle>
-            <DialogDescription>
-              Your training session has been completed and saved to your journal.
-            </DialogDescription>
-          </DialogHeader>
-          
+      <FixedModal isOpen={sessionCompleteOpen} onClose={() => setSessionCompleteOpen(false)}>
+        <FixedModalHeader>
+          <FixedModalTitle className="flex items-center gap-2">
+            <CheckCircle className="text-green-500 h-5 w-5" />
+            Journal Entry Saved
+          </FixedModalTitle>
+          <FixedModalDescription>
+            Your training session has been completed and saved to your journal.
+          </FixedModalDescription>
+        </FixedModalHeader>
+        
+        <FixedModalContent>
           <div className="bg-muted/30 p-4 rounded-md mb-4">
             <h3 className="font-medium mb-2">Training Session</h3>
             
@@ -1021,36 +1021,36 @@ function PracticePage() {
               {diaryNotes || "No notes added for this session."}
             </p>
           </div>
-          
-          <DialogFooter className="flex sm:justify-between">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setSessionCompleteOpen(false)}
-            >
-              Close
-            </Button>
-            <Button 
-              type="button"
-              className="bg-primary text-white"
-              onClick={() => window.location.href = '/tools/journal'}
-              disabled={isSaving}
-            >
-              {isSaving ? (
-                <>
-                  <Save className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <ClipboardList className="mr-2 h-4 w-4" />
-                  Go to Journal
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </FixedModalContent>
+        
+        <FixedModalFooter className="flex sm:justify-between">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setSessionCompleteOpen(false)}
+          >
+            Close
+          </Button>
+          <Button 
+            type="button"
+            className="bg-primary text-white"
+            onClick={() => window.location.href = '/tools/journal'}
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <>
+                <Save className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <ClipboardList className="mr-2 h-4 w-4" />
+                Go to Journal
+              </>
+            )}
+          </Button>
+        </FixedModalFooter>
+      </FixedModal>
 
       {/* Assigned Programs Section */}
       <Card className="mt-6">
