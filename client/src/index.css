@@ -431,20 +431,18 @@ article::-webkit-scrollbar,
   background-color: hsl(var(--background)) !important;
 }
 
-/* Ensure dialog components have solid backgrounds and proper positioning */
+/* Ensure dialog components stay fixed and don't move */
 [data-radix-dialog-content],
 [data-radix-alert-dialog-content] {
-  background-color: hsl(var(--card)) !important;
-  color: hsl(var(--card-foreground)) !important;
-  opacity: 1 !important;
-  box-shadow: 0 10px 50px rgba(0, 0, 0, 0.3) !important;
+  position: fixed !important;
+  transform: translate(-50%, -50%) !important;
+  pointer-events: auto !important;
 }
 
-/* Ensure dialog overlays are properly opaque */
-[data-radix-dialog-overlay],
-[data-radix-alert-dialog-overlay] {
-  background-color: rgba(0, 0, 0, 0.8) !important;
-  backdrop-filter: blur(2px) !important;
+/* Prevent dialog movement on touch */
+[data-radix-dialog-content] *,
+[data-radix-alert-dialog-content] * {
+  touch-action: manipulation !important;
 }
 
 
