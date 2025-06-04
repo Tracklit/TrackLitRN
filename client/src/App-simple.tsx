@@ -21,8 +21,8 @@ function App() {
           <main className="pt-20">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <Switch>
-                <Route path="/practice" component={PracticePage} />
-                <Route path="/" component={PracticePage} />
+                <Route path="/practice" component={PracticePageMinimal} />
+                <Route path="/" component={PracticePageMinimal} />
               </Switch>
             </div>
           </main>
