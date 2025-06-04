@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import { Send, MessageSquare, Zap, Crown, Star, Info, Plus } from 'lucide-react';
+import { Send, MessageSquare, Zap, Crown, Star, Info, Plus, Brain } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SprinthiaConversation {
@@ -120,7 +120,7 @@ export default function SprinthiaPage() {
   };
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background" data-sprinthia-page>
       <SidebarNavigation />
       
       <div className="flex-1 flex flex-col">
@@ -235,7 +235,7 @@ export default function SprinthiaPage() {
             {/* Messages container */}
             <div className="flex-1 overflow-auto">
               <div className="p-6 min-h-full">
-                {!currentConversationId && messages.length === 0 ? (
+                {!currentConversationId && (messages as any[]).length === 0 ? (
                   <div className="text-center max-w-md mx-auto pt-20">
                     <div 
                       className="w-full h-72 mx-auto mb-6 bg-cover rounded-lg"
@@ -256,7 +256,7 @@ export default function SprinthiaPage() {
                       </div>
                     </div>
                   </div>
-              ) : (
+                ) : (
                 <div className="space-y-6 max-w-4xl mx-auto w-full">
                   {messagesLoading ? (
                     <div className="space-y-4">
@@ -271,7 +271,7 @@ export default function SprinthiaPage() {
                       ))}
                     </div>
                   ) : (
-                    messages.map((message: SprinthiaMessage) => (
+                    (messages as SprinthiaMessage[]).map((message: SprinthiaMessage) => (
                       <div
                         key={message.id}
                         className={cn(

@@ -93,7 +93,7 @@ export default function SprinthiaPage() {
   }, [messages, isTyping]);
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background" data-sprinthia-page>
       <SidebarNavigation />
       
       <div className="flex-1 flex flex-col">
