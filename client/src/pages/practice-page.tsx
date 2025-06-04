@@ -25,14 +25,7 @@ import { Mic, Loader2, MapPin, ChevronLeft, ChevronRight, ChevronDown, Calendar,
 import { Link } from "wouter";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { WorkoutReactions } from "@/components/workout-reactions";
-import {
-  FixedModal,
-  FixedModalHeader,
-  FixedModalTitle,
-  FixedModalDescription,
-  FixedModalContent,
-  FixedModalFooter,
-} from "@/components/ui/fixed-modal";
+// Using inline modal structure instead of components
 import { DayPicker } from "react-day-picker";
 import { Textarea } from "@/components/ui/textarea";
 
