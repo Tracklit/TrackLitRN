@@ -299,8 +299,27 @@ article::-webkit-scrollbar,
   }
 
   /* Ensure all main containers are transparent to show gradient */
-  #root, .flex.h-screen, [class*="bg-background"] {
+  #root, 
+  .flex.h-screen, 
+  [class*="bg-background"]:not([data-sprinthia-page]),
+  .bg-background:not([data-sprinthia-page]),
+  main:not([data-sprinthia-page]),
+  .container:not([data-sprinthia-page]),
+  [data-main-content]:not([data-sprinthia-page]) {
     background: transparent !important;
+    background-color: transparent !important;
+  }
+
+  /* Force transparent background on all divs except Sprinthia */
+  body:not(:has([data-sprinthia-page])) div {
+    background-color: transparent !important;
+  }
+
+  /* Keep cards and dialogs with slight transparency */
+  body:not(:has([data-sprinthia-page])) .card,
+  body:not(:has([data-sprinthia-page])) [data-radix-dialog-content] {
+    background-color: rgba(15, 23, 42, 0.8) !important;
+    backdrop-filter: blur(10px);
   }
 
   /* Sprinthia page gets solid background */

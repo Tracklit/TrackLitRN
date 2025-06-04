@@ -149,7 +149,7 @@ function MainApp() {
   };
   
   return (
-    <div className="min-h-screen text-foreground bg-background">
+    <div className="min-h-screen text-foreground">
       {/* Top Header Bar */}
       <Header />
       
