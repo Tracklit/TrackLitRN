@@ -57,7 +57,7 @@ import RehabPage from "@/pages/rehab-page";
 import HamstringRehabPage from "@/pages/rehab/acute-muscle/hamstring";
 import FootRehabPage from "@/pages/rehab/chronic-injuries/foot";
 import { ProtectedRoute } from "@/lib/protected-route";
-import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { AuthProvider, useAuth } from "@/hooks/use-auth-minimal";
 
 function Router() {
   return (
@@ -124,18 +124,18 @@ function Router() {
 
 function MainApp() {
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const { user, loginMutation, registerMutation } = useAuth();
+  const { user } = useAuth();
   
   // Only show onboarding for new user registrations (not logins)
   useEffect(() => {
     // For simplicity, check if the user has completed onboarding before
     const hasCompletedOnboarding = localStorage.getItem('onboardingCompleted');
     
-    // Only show onboarding if user just registered (not logged in) and hasn't completed it before
-    if (registerMutation.isSuccess && !hasCompletedOnboarding) {
+    // Only show onboarding if user exists and hasn't completed it before
+    if (user && !hasCompletedOnboarding) {
       setShowOnboarding(true);
     }
-  }, [registerMutation.isSuccess, registerMutation.data]);
+  }, [user]);
   
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
