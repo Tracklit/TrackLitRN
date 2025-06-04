@@ -20,7 +20,6 @@ import { ArrowLeft, CalendarDays, Clock, Crown, Loader2 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
 
-
 // Form validation schema
 const programFormSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters" }),
@@ -32,8 +31,6 @@ const programFormSchema = z.object({
   // File upload related fields
   useFileUpload: z.boolean().default(false),
   programFile: z.any().optional(),
-  // Google Sheet import field
-  googleSheetUrl: z.string().url().optional(),
 });
 
 export default function ProgramCreatePage() {
@@ -397,21 +394,6 @@ export default function ProgramCreatePage() {
                 General
               </div>
             </CardFooter>
-          </Card>
-          
-          <Card className="mt-4">
-            <CardHeader>
-              <CardTitle>Import from Google Sheets</CardTitle>
-              <CardDescription>Already have a program in Google Sheets? Import it directly.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button variant="outline" className="w-full" asChild>
-                <Link href="/programs">
-                  <FileUp className="mr-2 h-4 w-4" />
-                  Import from Google Sheet
-                </Link>
-              </Button>
-            </CardContent>
           </Card>
           
           <Card className="mt-4">

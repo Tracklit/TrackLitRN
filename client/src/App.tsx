@@ -57,15 +57,11 @@ import RehabPage from "@/pages/rehab-page";
 import HamstringRehabPage from "@/pages/rehab/acute-muscle/hamstring";
 import FootRehabPage from "@/pages/rehab/chronic-injuries/foot";
 import { ProtectedRoute } from "@/lib/protected-route";
-import { AuthProvider, useAuth } from "@/hooks/use-auth-basic";
-import PracticePageMinimal from "@/pages/practice-page-minimal";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
 
 function Router() {
   return (
     <Switch>
-      {/* Test Route */}
-      <Route path="/modal-test" component={PracticePageMinimal} />
-      
       {/* Dashboard */}
       <ProtectedRoute path="/" component={HomePage} />
       
@@ -128,18 +124,18 @@ function Router() {
 
 function MainApp() {
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const { user } = useAuth();
+  const { user, loginMutation, registerMutation } = useAuth();
   
   // Only show onboarding for new user registrations (not logins)
   useEffect(() => {
     // For simplicity, check if the user has completed onboarding before
     const hasCompletedOnboarding = localStorage.getItem('onboardingCompleted');
     
-    // Only show onboarding if user exists and hasn't completed it before
-    if (user && !hasCompletedOnboarding) {
+    // Only show onboarding if user just registered (not logged in) and hasn't completed it before
+    if (registerMutation.isSuccess && !hasCompletedOnboarding) {
       setShowOnboarding(true);
     }
-  }, [user]);
+  }, [registerMutation.isSuccess, registerMutation.data]);
   
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
