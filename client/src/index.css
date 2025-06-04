@@ -298,19 +298,12 @@ article::-webkit-scrollbar,
     background-attachment: fixed !important;
   }
 
-  /* Override main layout containers to be transparent */
-  #root,
-  .min-h-screen,
-  main,
-  .container,
-  .max-w-7xl,
-  .flex.h-screen,
-  div[class*="bg-background"] {
-    background: transparent !important;
+  /* Force transparent background on all elements except specific exceptions */
+  * {
     background-color: transparent !important;
   }
 
-  /* Restore backgrounds for UI elements that need them */
+  /* Restore backgrounds for specific UI elements that need them */
   .card,
   [data-radix-dialog-content],
   [data-radix-popover-content],
@@ -319,38 +312,12 @@ article::-webkit-scrollbar,
   .toast,
   [role="dialog"],
   [role="menu"],
-  [role="listbox"] {
-    background-color: hsl(var(--card)) !important;
-  }
-
-  /* Button styling */
-  button {
-    background-color: hsl(var(--primary)) !important;
-    color: hsl(var(--primary-foreground)) !important;
-  }
-
-  button[data-variant="outline"] {
-    background-color: transparent !important;
-    border: 1px solid hsl(var(--border)) !important;
-    color: hsl(var(--foreground)) !important;
-  }
-
-  button[data-variant="ghost"] {
-    background-color: transparent !important;
-    color: hsl(var(--foreground)) !important;
-  }
-
-  button[data-variant="secondary"] {
-    background-color: hsl(var(--secondary)) !important;
-    color: hsl(var(--secondary-foreground)) !important;
-  }
-
-  /* Input styling */
+  [role="listbox"],
+  button,
   input,
   textarea,
   select {
-    background-color: hsl(var(--input)) !important;
-    color: hsl(var(--foreground)) !important;
+    background-color: hsl(var(--card)) !important;
   }
 
   /* Sidebar specific styling */
