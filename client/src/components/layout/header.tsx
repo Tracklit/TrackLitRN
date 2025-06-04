@@ -1,4 +1,4 @@
-import { useAuth } from "@/hooks/use-auth-simple";
+import { useAuth } from "@/hooks/use-auth-basic";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
