@@ -208,26 +208,44 @@ function ProgramCreatePage() {
 
       <div className="max-w-2xl mx-auto mt-6">
         <Tabs defaultValue="builder" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="builder">
-              <BookOpen className="h-4 w-4 mr-2" />
-              Program Builder
+          <TabsList className="grid w-full grid-cols-3 h-auto p-1 bg-muted/50 rounded-lg border">
+            <TabsTrigger 
+              value="builder" 
+              className="flex flex-col items-center p-4 h-auto data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md transition-all"
+            >
+              <BookOpen className="h-5 w-5 mb-2" />
+              <span className="text-sm font-medium">Program Builder</span>
+              <span className="text-xs text-muted-foreground mt-1">Create custom sessions</span>
             </TabsTrigger>
-            <TabsTrigger value="upload">
-              <FileUp className="h-4 w-4 mr-2" />
-              Upload Document
+            <TabsTrigger 
+              value="upload" 
+              className="flex flex-col items-center p-4 h-auto data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md transition-all"
+            >
+              <FileUp className="h-5 w-5 mb-2" />
+              <span className="text-sm font-medium">Upload Document</span>
+              <span className="text-xs text-muted-foreground mt-1">PDF, DOC, DOCX files</span>
             </TabsTrigger>
-            <TabsTrigger value="import">
-              <Upload className="h-4 w-4 mr-2" />
-              Import from Sheets
+            <TabsTrigger 
+              value="import" 
+              className="flex flex-col items-center p-4 h-auto data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md transition-all"
+            >
+              <Upload className="h-5 w-5 mb-2" />
+              <span className="text-sm font-medium">Import from Sheets</span>
+              <span className="text-xs text-muted-foreground mt-1">Google Sheets integration</span>
             </TabsTrigger>
           </TabsList>
 
           {/* Program Builder Tab */}
-          <TabsContent value="builder">
-            <Card>
-              <CardHeader>
-                <CardTitle>Build Custom Program</CardTitle>
+          <TabsContent value="builder" className="mt-6">
+            <Card className="border-2">
+              <CardHeader className="bg-muted/30">
+                <CardTitle className="flex items-center">
+                  <BookOpen className="h-5 w-5 mr-2 text-primary" />
+                  Build Custom Program
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Create a structured training program with custom sessions and exercises
+                </p>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleFormSubmit} className="space-y-6">
@@ -385,10 +403,16 @@ function ProgramCreatePage() {
           </TabsContent>
 
           {/* Upload Document Tab */}
-          <TabsContent value="upload">
-            <Card>
-              <CardHeader>
-                <CardTitle>Upload Program Document</CardTitle>
+          <TabsContent value="upload" className="mt-6">
+            <Card className="border-2">
+              <CardHeader className="bg-muted/30">
+                <CardTitle className="flex items-center">
+                  <FileUp className="h-5 w-5 mr-2 text-primary" />
+                  Upload Program Document
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Share existing training documents in PDF, DOC, or DOCX format
+                </p>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleFileUpload} className="space-y-6">
@@ -549,17 +573,25 @@ function ProgramCreatePage() {
           </TabsContent>
 
           {/* Import from Google Sheets Tab */}
-          <TabsContent value="import">
-            <Card>
-              <CardHeader>
-                <CardTitle>Import from Google Sheets</CardTitle>
+          <TabsContent value="import" className="mt-6">
+            <Card className="border-2">
+              <CardHeader className="bg-muted/30">
+                <CardTitle className="flex items-center">
+                  <Upload className="h-5 w-5 mr-2 text-primary" />
+                  Import from Google Sheets
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Connect your Google Sheets training program for automatic synchronization
+                </p>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-8">
-                  <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Upload className="h-8 w-8 text-primary" />
+                  </div>
                   <h3 className="text-lg font-semibold mb-2">Import Training Program</h3>
-                  <p className="text-muted-foreground mb-6">
-                    Import your training program directly from a Google Sheet
+                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                    Connect your Google Sheets program to automatically sync training sessions and updates
                   </p>
                   <GoogleSheetImportDialog 
                     buttonText="Import from Google Sheets"
