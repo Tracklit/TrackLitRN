@@ -79,8 +79,10 @@ export function PageTransition({ children }: PageTransitionProps) {
   const [animationClass, setAnimationClass] = useState('');
   const [isAnimating, setIsAnimating] = useState(false);
   const [displayedContent, setDisplayedContent] = useState(children);
+  const [pendingContent, setPendingContent] = useState<React.ReactNode>(null);
   const previousLocation = useRef<string>(location);
   const previousLevel = useRef<number>(getPageLevel(location));
+  const animationTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (previousLocation.current !== location) {
@@ -88,24 +90,38 @@ export function PageTransition({ children }: PageTransitionProps) {
       const direction = getAnimationDirection(previousLevel.current, currentLevel);
       
       if (direction !== 'none') {
-        // Start animation immediately, keep showing old content
+        // Clear any existing animation
+        if (animationTimeout.current) {
+          clearTimeout(animationTimeout.current);
+        }
+        
+        // Store the new content to show later
+        setPendingContent(children);
         setIsAnimating(true);
+        
+        // Start with exit animation
         setAnimationClass(`page-exit-${direction === 'right' ? 'left' : 'right'}`);
         
-        // After exit animation completes, switch to new content with enter animation
-        setTimeout(() => {
+        // Wait for exit animation, then switch content and start enter animation
+        animationTimeout.current = setTimeout(() => {
           setDisplayedContent(children);
-          setAnimationClass(`page-enter-${direction}`);
+          setPendingContent(null);
           
-          // Complete animation
-          setTimeout(() => {
-            setAnimationClass('');
-            setIsAnimating(false);
-          }, 300);
-        }, 300); // Wait for full exit animation to complete
+          // Small delay to ensure DOM update, then start enter animation
+          requestAnimationFrame(() => {
+            setAnimationClass(`page-enter-${direction}`);
+            
+            // Complete the animation
+            animationTimeout.current = setTimeout(() => {
+              setAnimationClass('');
+              setIsAnimating(false);
+            }, 300);
+          });
+        }, 300);
       } else {
         // No animation needed, update immediately
         setDisplayedContent(children);
+        setPendingContent(null);
       }
       
       previousLocation.current = location;
@@ -113,12 +129,21 @@ export function PageTransition({ children }: PageTransitionProps) {
     }
   }, [location]);
 
-  // Update displayed content when children change but location hasn't
+  // Handle cleanup
   useEffect(() => {
-    if (!isAnimating) {
+    return () => {
+      if (animationTimeout.current) {
+        clearTimeout(animationTimeout.current);
+      }
+    };
+  }, []);
+
+  // Update displayed content when children change but location hasn't changed
+  useEffect(() => {
+    if (!isAnimating && previousLocation.current === location) {
       setDisplayedContent(children);
     }
-  }, [children, isAnimating]);
+  }, [children, isAnimating, location]);
 
   return (
     <div className={`page-transition-container ${animationClass} ${isAnimating ? 'animating' : ''}`}>
