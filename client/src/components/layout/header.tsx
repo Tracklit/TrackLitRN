@@ -24,7 +24,7 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
     <header className={cn("bg-[#010a18] shadow-sm fixed top-0 left-0 right-0 z-30", className)}>
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center">
-          <Link href="/dashboard">
+          <Link href="/">
             <h1 className="text-xl font-bold text-white ml-11 cursor-pointer hover:text-blue-300 transition-colors">{title}</h1>
           </Link>
         </div>
