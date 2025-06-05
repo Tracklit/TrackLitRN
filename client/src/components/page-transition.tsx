@@ -71,31 +71,34 @@ interface PageTransitionProps {
 export function PageTransition({ children }: PageTransitionProps) {
   const [location] = useLocation();
   const prevLocationRef = useRef<string>(location);
-
-  useEffect(() => {
-    prevLocationRef.current = location;
-  }, [location]);
+  const isFirstRender = useRef(true);
 
   const currentLevel = getPageLevel(location);
   const prevLevel = getPageLevel(prevLocationRef.current);
   
   // Determine animation direction based on hierarchy
   const isGoingDeeper = currentLevel > prevLevel;
-  const slideDirection = isGoingDeeper ? 1 : -1; // 1 = right to left, -1 = left to right
+  
+  useEffect(() => {
+    if (!isFirstRender.current) {
+      prevLocationRef.current = location;
+    }
+    isFirstRender.current = false;
+  }, [location]);
 
   const variants = {
-    initial: {
-      x: slideDirection * 100 + '%',
+    initial: (direction: number) => ({
+      x: direction > 0 ? '100%' : '-100%',
       opacity: 0
-    },
+    }),
     animate: {
       x: 0,
       opacity: 1
     },
-    exit: {
-      x: slideDirection * -100 + '%',
+    exit: (direction: number) => ({
+      x: direction > 0 ? '-100%' : '100%',
       opacity: 0
-    }
+    })
   };
 
   const transition = {
@@ -103,11 +106,15 @@ export function PageTransition({ children }: PageTransitionProps) {
     ease: "easeInOut"
   };
 
+  // Direction: 1 for deeper (slide from right), -1 for back (slide from left)
+  const direction = isGoingDeeper ? 1 : -1;
+
   return (
     <div className="relative w-full overflow-hidden">
-      <AnimatePresence mode="wait" initial={false}>
+      <AnimatePresence mode="wait" initial={false} custom={direction}>
         <motion.div
           key={location}
+          custom={direction}
           variants={variants}
           initial="initial"
           animate="animate"
