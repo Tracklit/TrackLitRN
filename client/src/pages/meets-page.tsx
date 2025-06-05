@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { BackNavigation } from '@/components/back-navigation';
+import { AnimatedLink } from '@/components/animated-link';
 
 import { Meet } from '@shared/schema';
 import { Button } from '@/components/ui/button';
@@ -352,14 +353,13 @@ export default function MeetsPage() {
                   </TabsTrigger>
                 </TabsList>
                 
-                <Button
-                  onClick={() => navigateWithAnimation('/meets/create')}
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                  disabled={isNavigating}
+                <AnimatedLink
+                  to="/meets/create"
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
                 >
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="h-4 w-4" />
                   Create Meet
-                </Button>
+                </AnimatedLink>
               </div>
               
               <TabsContent value="upcoming">
@@ -476,13 +476,12 @@ export default function MeetsPage() {
                 ) : (
                   <Card className="overflow-hidden bg-card border border-border text-center p-8">
                     <p className="text-muted-foreground mb-4">No upcoming meets</p>
-                    <Button
-                      onClick={() => navigateWithAnimation('/meets/create')}
-                      className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                      disabled={isNavigating}
+                    <AnimatedLink
+                      to="/meets/create"
+                      className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
                     >
                       Create Your First Meet
-                    </Button>
+                    </AnimatedLink>
                   </Card>
                 )}
               </TabsContent>
