@@ -69,23 +69,23 @@ export function StagedPageTransition({ children }: { children: React.ReactNode }
         newContent: children
       }));
 
-      // Stage 2: Load new page at 90% (90ms)
+      // Stage 2: Load new page at 90% (180ms)
       setTimeout(() => {
         setTransitionState(prev => ({
           ...prev,
           stage: 'loading_new'
         }));
-      }, 90);
+      }, 180);
 
-      // Stage 3: Complete transition at 100% (100ms) 
+      // Stage 3: Complete transition at 100% (200ms) 
       setTimeout(() => {
         setTransitionState(prev => ({
           ...prev,
           stage: 'completing'
         }));
-      }, 100);
+      }, 200);
 
-      // Stage 4: Reset to idle (110ms)
+      // Stage 4: Reset to idle (220ms)
       setTimeout(() => {
         setTransitionState({
           stage: 'idle',
@@ -94,7 +94,7 @@ export function StagedPageTransition({ children }: { children: React.ReactNode }
           oldLocation: location,
           newLocation: location
         });
-      }, 110);
+      }, 220);
     }
   }, [location, children]);
 
@@ -125,7 +125,7 @@ export function StagedPageTransition({ children }: { children: React.ReactNode }
             animate={{ x: 0, opacity: 1 }}
             exit="oldPageExit"
             transition={{
-              duration: 0.1,
+              duration: 0.2,
               ease: "easeInOut"
             }}
             className="w-full absolute top-0 left-0 z-10"
@@ -144,7 +144,7 @@ export function StagedPageTransition({ children }: { children: React.ReactNode }
             initial="newPageInitial"
             animate="newPageAnimate"
             transition={{
-              duration: 0.1,
+              duration: 0.2,
               ease: "easeInOut"
             }}
             className="w-full relative z-20"
