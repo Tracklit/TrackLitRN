@@ -216,7 +216,7 @@ export default function HomePage() {
         {/* Quote removed as requested */}
         
         {/* Session Preview Ticker */}
-        {sessionPreviews?.length > 0 && (
+        {sessionPreviews && sessionPreviews.length > 0 && (
           <section className="mb-6 mx-auto" style={{ maxWidth: "540px" }}>
             <div className="grid grid-cols-2 gap-2" style={{ margin: "0 auto" }}>
               <div className="col-span-2">
@@ -385,7 +385,22 @@ export default function HomePage() {
       
       {/* Session Detail Modal */}
       <Dialog open={isSessionModalOpen} onOpenChange={setIsSessionModalOpen}>
-        <DialogContent className="sm:max-w-md">
+        <div className="fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <DialogContent className="sm:max-w-md bg-background/95 border border-border shadow-lg backdrop-blur-sm fixed touch-none select-none"
+          style={{ 
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 50,
+            backgroundColor: 'hsl(var(--background))',
+            opacity: 1
+          }}
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+          onTouchStart={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
+        >
           <DialogHeader>
             <DialogTitle>{currentSession?.title}</DialogTitle>
           </DialogHeader>
