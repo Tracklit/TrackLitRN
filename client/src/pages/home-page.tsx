@@ -156,10 +156,10 @@ export default function HomePage() {
       console.log('Starting animation cycle');
       setIsAnimating(true);
       setTimeout(() => {
+        setIsAnimating(false);
         setActiveSessionIndex(prev => 
           prev >= (sessionPreviews.length - 1) ? 0 : prev + 1
         );
-        setTimeout(() => setIsAnimating(false), 60);
       }, 360);
     }, 7000);
     
