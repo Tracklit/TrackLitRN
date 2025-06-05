@@ -24,6 +24,7 @@ import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
 import MeetsPage from "@/pages/meets-page";
+import CreateMeetPage from "@/pages/create-meet-page";
 import ResultsPage from "@/pages/results-page";
 
 import ProfilePage from "@/pages/profile-page-new";
@@ -87,6 +88,7 @@ function Router() {
       
       {/* Competition */}
       <ProtectedRoute path="/meets" component={MeetsPage} />
+      <ProtectedRoute path="/meets/create" component={CreateMeetPage} />
       <ProtectedRoute path="/results" component={ResultsPage} />
       
       {/* Social */}
