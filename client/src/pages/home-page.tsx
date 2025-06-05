@@ -232,48 +232,33 @@ export default function HomePage() {
                 <X className="h-4 w-4" />
               </Button>
               {isLoadingPreviews ? (
-                <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
-                  <div className="flex items-center gap-3">
-                    <Skeleton className="h-8 w-8 rounded-full" />
+                <div className="bg-muted rounded-lg p-3 border">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-6 w-6 rounded-full" />
                     <div className="flex-1">
-                      <Skeleton className="h-4 w-32 mb-2" />
-                      <Skeleton className="h-3 w-24" />
+                      <Skeleton className="h-3 w-24 mb-1" />
+                      <Skeleton className="h-3 w-32" />
                     </div>
                   </div>
-                  <Separator className="my-3" />
-                  <Skeleton className="h-4 w-full mb-2" />
-                  <Skeleton className="h-4 w-3/4" />
                 </div>
               ) : sessionPreviews && sessionPreviews.length > 0 && (
                 <div 
                   className="cursor-pointer animate-fadeIn pr-8"
-                  onClick={() => window.open('https://www.instagram.com/joacim.lauri/', '_blank')}
+                  onClick={() => openSessionDetails(sessionPreviews[activeSessionIndex])}
+                  key={activeSessionIndex}
                 >
-                  <div className="bg-gray-800 border border-gray-700 rounded-lg p-4 relative overflow-hidden">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="h-8 w-8 rounded-full bg-gray-600 flex items-center justify-center">
-                        <UserCircle className="h-5 w-5 text-gray-300" />
-                      </div>
-                      <div>
-                        <h3 className="text-white font-semibold text-sm">
-                          {sessionPreviews[activeSessionIndex]?.user?.name || sessionPreviews[activeSessionIndex]?.user?.username || 'Anonymous'}
-                        </h3>
-                        <p className="text-gray-400 text-xs">Posted a workout session</p>
-                      </div>
+                  <div 
+                    className="flex items-center gap-2 px-3 py-1 hover:bg-primary/10 transition-all duration-300"
+                  >
+                    <div className="rounded-full bg-primary/15 h-8 w-8 flex items-center justify-center flex-shrink-0">
+                      <UserCircle className="h-4 w-4 text-primary" />
                     </div>
-                    <Separator className="my-3" />
-                    <div className="text-gray-300 text-sm leading-relaxed">
-                      {sessionPreviews[activeSessionIndex]?.previewText}
-                    </div>
-                    <div className="mt-3 flex items-center justify-between">
-                      <SimpleWorkoutLike 
-                        sessionId={sessionPreviews[activeSessionIndex]?.workoutId}
-                        size="sm"
-                        showText={false}
-                      />
-                      <span className="text-gray-500 text-xs">
-                        {sessionPreviews.length > 1 && `${activeSessionIndex + 1} of ${sessionPreviews.length}`}
-                      </span>
+                    <div className="flex-1 overflow-hidden">
+                      <div className="flex items-center gap-1 mb-0.5">
+                        <span className="text-xs font-medium">{sessionPreviews[activeSessionIndex].title}</span>
+                        <span className="text-xs text-muted-foreground">· {sessionPreviews[activeSessionIndex].user?.username}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground line-clamp-1">{sessionPreviews[activeSessionIndex].previewText}</p>
                     </div>
                   </div>
                 </div>
