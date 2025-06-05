@@ -398,8 +398,34 @@ export default function HomePage() {
             backgroundColor: 'white',
             opacity: 1
           }}
-          onTouchStart={(e) => e.stopPropagation()}
-          onTouchMove={(e) => e.stopPropagation()}
+          onTouchStart={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }}
+          onTouchMove={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }}
+          onTouchEnd={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }}
+          onPointerDown={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }}
+          onPointerMove={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }}
+          onDragStart={(e) => {
+            e.preventDefault();
+            return false;
+          }}
         >
           <DialogHeader>
             <DialogTitle>{currentSession?.title}</DialogTitle>

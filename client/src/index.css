@@ -22,10 +22,13 @@
   color: #4b5563 !important;
 }
 
-/* Modal positioning and opacity fixes with high specificity */
+/* Modal positioning and opacity fixes with maximum specificity */
 [data-radix-dialog-content],
 [data-radix-dialog-content][data-state="open"],
-[data-radix-dialog-content][data-state="closed"] {
+[data-radix-dialog-content][data-state="closed"],
+[data-radix-dialog-content]:active,
+[data-radix-dialog-content]:focus,
+[data-radix-dialog-content]:hover {
   position: fixed !important;
   top: 50% !important;
   left: 50% !important;
@@ -49,6 +52,9 @@
   will-change: auto !important;
   transition: none !important;
   animation: none !important;
+  -webkit-transform: translate(-50%, -50%) !important;
+  -moz-transform: translate(-50%, -50%) !important;
+  -ms-transform: translate(-50%, -50%) !important;
 }
 
 /* Dark mode background override */
@@ -73,6 +79,31 @@
   position: fixed !important;
   top: 50% !important;
   left: 50% !important;
+}
+
+/* Prevent all drag and movement behaviors */
+[data-radix-dialog-content] * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-user-drag: none !important;
+  -khtml-user-drag: none !important;
+  -moz-user-drag: none !important;
+  -o-user-drag: none !important;
+  user-drag: none !important;
+  drag: none !important;
+  draggable: false !important;
+}
+
+/* Lock modal overlay position */
+[data-radix-dialog-overlay] {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 999 !important;
+  background: rgba(0, 0, 0, 0.5) !important;
+  touch-action: none !important;
 }
 
 /* Prevent any gesture or touch events from affecting modal */
