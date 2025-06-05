@@ -228,8 +228,8 @@ export default function HomePage() {
         {/* Session Preview Ticker with slide animation */}
         <section className="mb-6 mx-auto relative -mt-11 z-10" style={{ maxWidth: "540px" }}>
           <div 
-            className={`px-4 relative bg-card border rounded-lg transition-all duration-300 ease-out overflow-hidden ${
-              isTickerVisible ? 'h-auto translate-y-0 opacity-100' : 'h-20 -translate-y-10 opacity-80'
+            className={`px-4 relative bg-card border rounded-lg transition-all duration-300 ease-out ${
+              isTickerVisible ? 'translate-y-0' : '-translate-y-8'
             }`}
           >
             <Button
@@ -244,7 +244,7 @@ export default function HomePage() {
               {isTickerVisible ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
             </Button>
             
-            <div className={`transition-all duration-300 ${isTickerVisible ? 'py-2 pb-7 flex items-center' : 'py-0.5'}`}>
+            <div className="py-2 pb-7 flex items-center">
               {isLoadingPreviews ? (
                 <div className="flex items-center gap-2">
                   <Skeleton className="h-6 w-6 rounded-full" />
