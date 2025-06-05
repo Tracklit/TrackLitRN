@@ -47,6 +47,7 @@ import { Component as ProgramDetailPage } from "@/pages/program-detail-page";
 import { Component as ProgramEditorPage } from "@/pages/program-editor-page";
 import { Component as DocumentProgramViewer } from "@/pages/document-program-viewer";
 import { Component as AssignedProgramsPage } from "@/pages/assigned-programs-page";
+import { AssignProgramPage } from "@/pages/assign-program-page";
 import CheckoutPage from "@/pages/checkout-page";
 import AthleteProfilePage from "@/pages/athlete-profile-page";
 import { Component as InstallAppPage } from "@/pages/install-app-page";
@@ -84,6 +85,7 @@ function Router() {
       <ProtectedRoute path="/programs/:id/checkout" component={CheckoutPage} />
       <ProtectedRoute path="/programs/:id/document" component={DocumentProgramViewer} />
       <ProtectedRoute path="/programs/:id/edit" component={ProgramEditorPage} />
+      <ProtectedRoute path="/assign-program/:programId" component={AssignProgramPage} />
       <ProtectedRoute path="/assigned-programs" component={AssignedProgramsPage} />
       
       {/* Competition */}
