@@ -229,7 +229,7 @@ export default function HomePage() {
         <section className="mb-6 mx-auto relative" style={{ maxWidth: "540px" }}>
           <div 
             className={`px-4 relative bg-card border rounded-lg transition-all duration-300 ease-out overflow-hidden ${
-              isTickerVisible ? 'h-auto translate-y-0 opacity-100' : 'h-12 -translate-y-8 opacity-80'
+              isTickerVisible ? 'h-auto translate-y-0 opacity-100' : 'h-12 -translate-y-12 opacity-80'
             }`}
           >
             <Button
