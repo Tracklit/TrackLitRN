@@ -363,7 +363,17 @@ export default function HomePage() {
                               <h2 className="text-sm font-bold">{card.title}</h2>
                               {card.title === 'Sprinthia' && (
                                 <svg className="w-3.5 h-3.5 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-2-4h4v-2h-4v2zm2.5-8C11.12 8 10 9.12 10 10.5S11.12 13 12.5 13 15 11.88 15 10.5 13.88 8 12.5 8z"/>
+                                  <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8z"/>
+                                  <circle cx="8" cy="8" r="1"/>
+                                  <circle cx="16" cy="8" r="1"/>
+                                  <circle cx="12" cy="6" r="1"/>
+                                  <circle cx="6" cy="12" r="1"/>
+                                  <circle cx="18" cy="12" r="1"/>
+                                  <circle cx="8" cy="16" r="1"/>
+                                  <circle cx="16" cy="16" r="1"/>
+                                  <circle cx="12" cy="18" r="1"/>
+                                  <circle cx="12" cy="12" r="1.5"/>
+                                  <path d="M8 8l4 4m0-4l4 4M6 12h12M8 16l4-4m4 4l-4-4"/>
                                 </svg>
                               )}
                             </div>
