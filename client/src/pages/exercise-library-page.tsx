@@ -55,6 +55,9 @@ export default function ExerciseLibraryPage() {
   const [shareMessage, setShareMessage] = useState("");
   const [libraryShareDialogOpen, setLibraryShareDialogOpen] = useState(false);
   const [selectedLibraryRecipients, setSelectedLibraryRecipients] = useState<number[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -76,11 +79,17 @@ export default function ExerciseLibraryPage() {
     queryFn: () => apiRequest('GET', '/api/user').then(res => res.json())
   });
 
-  // Fetch contacts for sharing
-  const { data: shareContacts } = useQuery({
-    queryKey: ['/api/friends'],
-    queryFn: () => apiRequest('GET', '/api/friends').then(res => res.json())
-  });
+  // Search users function
+  const searchUsers = async (query: string) => {
+    if (query.length < 2) return [];
+    try {
+      const response = await apiRequest('GET', `/api/users/search?q=${encodeURIComponent(query)}`);
+      return response.json();
+    } catch (error) {
+      console.error('Search error:', error);
+      return [];
+    }
+  };
 
   // Delete mutation
   const deleteMutation = useMutation({
@@ -180,6 +189,22 @@ export default function ExerciseLibraryPage() {
       });
     }
   };
+
+  // Handle search with debouncing
+  useEffect(() => {
+    const delayedSearch = setTimeout(async () => {
+      if (searchQuery.length >= 2) {
+        setIsSearching(true);
+        const results = await searchUsers(searchQuery);
+        setSearchResults(results);
+        setIsSearching(false);
+      } else {
+        setSearchResults([]);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayedSearch);
+  }, [searchQuery]);
 
   const getSubscriptionTier = () => {
     if (!userData) return 'free';
@@ -525,36 +550,59 @@ export default function ExerciseLibraryPage() {
                       
                       <TabsContent value="internal" className="mt-4 space-y-4">
                         <div>
-                          <Label className="text-white">Send to Connections & Athletes</Label>
-                          <div className="mt-2 max-h-32 overflow-y-auto space-y-2 bg-gray-800 rounded-md p-2">
-                            {shareContacts?.map((contact: any) => (
-                              <div key={contact.id} className="flex items-center space-x-2">
-                                <input
-                                  type="checkbox"
-                                  id={`share-contact-${contact.id}`}
-                                  checked={selectedRecipients.includes(contact.id)}
-                                  onChange={(e) => {
-                                    if (e.target.checked) {
-                                      setSelectedRecipients(prev => [...prev, contact.id]);
-                                    } else {
-                                      setSelectedRecipients(prev => prev.filter(id => id !== contact.id));
-                                    }
-                                  }}
-                                  className="rounded"
-                                />
-                                <label htmlFor={`share-contact-${contact.id}`} className="text-sm text-gray-300">
-                                  {contact.username}
-                                </label>
+                          <Label className="text-white">Search Users</Label>
+                          <div className="relative mt-2">
+                            <Input
+                              value={searchQuery}
+                              onChange={(e) => setSearchQuery(e.target.value)}
+                              placeholder="Type username to search..."
+                              className="bg-gray-800 border-gray-600 text-white placeholder-gray-400"
+                            />
+                            {isSearching && (
+                              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                <div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full" />
                               </div>
-                            ))}
+                            )}
                           </div>
+                          
+                          {searchResults.length > 0 && (
+                            <div className="mt-2 max-h-32 overflow-y-auto space-y-2 bg-gray-800 rounded-md p-2">
+                              {searchResults.map((user: any) => (
+                                <div key={user.id} className="flex items-center space-x-2">
+                                  <input
+                                    type="checkbox"
+                                    id={`share-user-${user.id}`}
+                                    checked={selectedRecipients.includes(user.id)}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setSelectedRecipients(prev => [...prev, user.id]);
+                                      } else {
+                                        setSelectedRecipients(prev => prev.filter(id => id !== user.id));
+                                      }
+                                    }}
+                                    className="rounded"
+                                  />
+                                  <label htmlFor={`share-user-${user.id}`} className="text-sm text-gray-300">
+                                    {user.username}
+                                    {user.name && <span className="text-gray-400 ml-1">({user.name})</span>}
+                                  </label>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {searchQuery.length >= 2 && searchResults.length === 0 && !isSearching && (
+                            <div className="mt-2 text-sm text-gray-400 text-center py-2">
+                              No users found for "{searchQuery}"
+                            </div>
+                          )}
                           
                           {selectedRecipients.length > 0 && (
                             <div className="mt-2">
                               <div className="text-xs text-gray-400 mb-1">Selected ({selectedRecipients.length}):</div>
                               <div className="flex flex-wrap gap-1">
                                 {selectedRecipients.map(recipientId => {
-                                  const recipient = shareContacts?.find((c: any) => c.id === recipientId);
+                                  const recipient = searchResults.find((u: any) => u.id === recipientId);
                                   return recipient ? (
                                     <span key={recipientId} className="bg-blue-600 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
                                       {recipient.name || recipient.username}
