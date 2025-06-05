@@ -19,6 +19,7 @@ import {
 } from "@/pages/routes";
 
 import { OnboardingFlow } from "@/components/onboarding-flow";
+import { PageTransition } from "@/components/page-transition";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
@@ -170,7 +171,9 @@ function MainApp() {
       {/* Main Content */}
       <main className="pt-20 lg:ml-64">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Router />
+          <PageTransition>
+            <Router />
+          </PageTransition>
         </div>
       </main>
       
