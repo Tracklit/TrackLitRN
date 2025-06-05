@@ -64,9 +64,9 @@ function getPageLevel(path: string): number {
   return 2;
 }
 
-function getAnimationDirection(fromLevel: number, toLevel: number): 'left' | 'right' | 'none' {
-  if (fromLevel < toLevel) return 'right'; // Going deeper - slide in from right
-  if (fromLevel > toLevel) return 'left';  // Going back - slide in from left
+function getAnimationDirection(fromLevel: number, toLevel: number): 'overlay-in' | 'overlay-out' | 'none' {
+  if (fromLevel < toLevel) return 'overlay-in'; // Going deeper - overlay slides in from right
+  if (fromLevel > toLevel) return 'overlay-out';  // Going back - overlay slides out to right
   return 'none'; // Same level - no animation
 }
 
@@ -78,7 +78,8 @@ export function PageTransition({ children }: PageTransitionProps) {
   const [location] = useLocation();
   const [animationClass, setAnimationClass] = useState('');
   const [isAnimating, setIsAnimating] = useState(false);
-  const [displayedContent, setDisplayedContent] = useState(children);
+  const [overlayContent, setOverlayContent] = useState<React.ReactNode>(null);
+  const [baseContent, setBaseContent] = useState(children);
   const previousLocation = useRef<string>(location);
   const previousLevel = useRef<number>(getPageLevel(location));
 
@@ -87,39 +88,55 @@ export function PageTransition({ children }: PageTransitionProps) {
       const currentLevel = getPageLevel(location);
       const direction = getAnimationDirection(previousLevel.current, currentLevel);
       
-      if (direction !== 'none') {
+      if (direction === 'overlay-in') {
+        // Going deeper - slide new content in as overlay
         setIsAnimating(true);
+        setOverlayContent(children);
+        setAnimationClass('overlay-slide-in');
         
-        // Immediately start exit animation for current content
-        setAnimationClass(`page-exit-${direction === 'right' ? 'left' : 'right'}`);
-        
-        // Switch content and start enter animation much faster
         setTimeout(() => {
-          setDisplayedContent(children);
-          setAnimationClass(`page-enter-${direction}`);
-          
-          // Complete animation faster
-          setTimeout(() => {
-            setAnimationClass('');
-            setIsAnimating(false);
-          }, 200);
-        }, 150);
+          setAnimationClass('');
+          setIsAnimating(false);
+        }, 300);
+      } else if (direction === 'overlay-out') {
+        // Going back - slide overlay out and reveal base content
+        setIsAnimating(true);
+        setBaseContent(children);
+        setAnimationClass('overlay-slide-out');
+        
+        setTimeout(() => {
+          setOverlayContent(null);
+          setAnimationClass('');
+          setIsAnimating(false);
+        }, 300);
       } else {
-        // No animation, update content immediately
-        setDisplayedContent(children);
+        // No animation or same level
+        setBaseContent(children);
+        setOverlayContent(null);
       }
       
       previousLocation.current = location;
       previousLevel.current = currentLevel;
     } else if (!isAnimating) {
       // Update content when location hasn't changed and not animating
-      setDisplayedContent(children);
+      if (overlayContent) {
+        setOverlayContent(children);
+      } else {
+        setBaseContent(children);
+      }
     }
   }, [location, children, isAnimating]);
 
   return (
-    <div className={`page-transition-container ${animationClass} ${isAnimating ? 'animating' : ''}`}>
-      {displayedContent}
+    <div className={`page-transition-container ${isAnimating ? 'animating' : ''}`}>
+      <div className="base-content">
+        {baseContent}
+      </div>
+      {overlayContent && (
+        <div className={`overlay-content ${animationClass}`}>
+          {overlayContent}
+        </div>
+      )}
     </div>
   );
 }

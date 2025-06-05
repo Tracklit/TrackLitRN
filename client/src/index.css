@@ -530,25 +530,27 @@ article::-webkit-scrollbar,
   background-color: hsl(var(--background)) !important;
 }
 
-/* Page transition animations */
-@keyframes slideOutLeft {
-  from { transform: translateX(0); }
-  to { transform: translateX(-100%); }
+/* Page overlay transition animations */
+@keyframes overlaySlideIn {
+  from { 
+    transform: translateX(100%); 
+    opacity: 0.9;
+  }
+  to { 
+    transform: translateX(0); 
+    opacity: 1;
+  }
 }
 
-@keyframes slideOutRight {
-  from { transform: translateX(0); }
-  to { transform: translateX(100%); }
-}
-
-@keyframes slideInRight {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
-}
-
-@keyframes slideInLeft {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(0); }
+@keyframes overlaySlideOut {
+  from { 
+    transform: translateX(0); 
+    opacity: 1;
+  }
+  to { 
+    transform: translateX(100%); 
+    opacity: 0.9;
+  }
 }
 
 .page-transition-container {
@@ -558,20 +560,30 @@ article::-webkit-scrollbar,
   overflow: hidden;
 }
 
-.page-enter-right {
-  animation: slideInRight 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+.base-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
 }
 
-.page-enter-left {
-  animation: slideInLeft 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+.overlay-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  background: var(--background);
+  transform: translateX(100%);
 }
 
-.page-exit-left {
-  animation: slideOutLeft 0.15s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards;
+.overlay-slide-in {
+  animation: overlaySlideIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
-.page-exit-right {
-  animation: slideOutRight 0.15s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards;
+.overlay-slide-out {
+  animation: overlaySlideOut 0.3s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards;
 }
 
 .page-transition-container.animating {
