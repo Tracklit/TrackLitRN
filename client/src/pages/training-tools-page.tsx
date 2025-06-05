@@ -70,14 +70,9 @@ export default function WorkoutToolsPage() {
     }
   ];
   
-  const breadcrumbItems = [
-    { label: "Home", href: "/" },
-    { label: "Workout Tools", href: "/training-tools" }
-  ];
-  
   return (
     <div className="container max-w-screen-xl mx-auto p-4 pt-10 pb-20">
-      <Breadcrumb items={breadcrumbItems} />
+      <BackNavigation />
       
       <PageHeader
         title="Workout Tools"
