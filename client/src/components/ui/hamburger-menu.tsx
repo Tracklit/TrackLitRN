@@ -156,8 +156,8 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
             <div className="pt-4 pb-2">
               <p className="text-xs text-gray-400 px-4 font-medium">COMPETITION</p>
             </div>
-            <a
-              href="/meets"
+            <AnimatedLink
+              to="/meets"
               className={cn(
                 "flex items-center justify-between px-4 py-2 rounded-md text-xs font-medium transition-colors",
                 location === "/meets" ? "bg-[#ff8c00] text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
@@ -171,9 +171,9 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[#ff8c00] text-white border border-[#ff8c00]">
                 PRO
               </span>
-            </a>
-            <a
-              href="/meets"
+            </AnimatedLink>
+            <AnimatedLink
+              to="/meets"
               className={cn(
                 "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",
                 location === "/meets" ? "bg-orange-500 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
@@ -182,9 +182,9 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
             >
               <Trophy className="h-4 w-4 mr-3" />
               Meets
-            </a>
-            <a
-              href="/results"
+            </AnimatedLink>
+            <AnimatedLink
+              to="/results"
               className={cn(
                 "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",
                 location === "/results" ? "bg-orange-500 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
@@ -193,7 +193,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
             >
               <LineChart className="h-4 w-4 mr-3" />
               Results
-            </a>
+            </AnimatedLink>
             
             {/* Social Section */}
             <div className="pt-4 pb-2">
