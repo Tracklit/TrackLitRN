@@ -229,7 +229,7 @@ export default function HomePage() {
         <section className="mb-6 mx-auto relative -mt-5" style={{ maxWidth: "540px" }}>
           <div 
             className={`px-4 relative bg-card border rounded-lg transition-all duration-300 ease-out overflow-hidden ${
-              isTickerVisible ? 'h-auto translate-y-0 opacity-100' : 'h-20 -translate-y-12 opacity-80'
+              isTickerVisible ? 'h-auto translate-y-0 opacity-100' : 'h-20 -translate-y-14 opacity-80'
             }`}
           >
             <Button
@@ -244,7 +244,7 @@ export default function HomePage() {
               {isTickerVisible ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
             </Button>
             
-            <div className={`transition-all duration-300 ${isTickerVisible ? 'py-2 pb-7' : 'py-0.5'}`}>
+            <div className={`transition-all duration-300 ${isTickerVisible ? 'py-2 pb-7 flex items-center' : 'py-0.5'}`}>
               {isLoadingPreviews ? (
                 <div className="flex items-center gap-2">
                   <Skeleton className="h-6 w-6 rounded-full" />
