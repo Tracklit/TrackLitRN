@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'wouter';
-import { ReactNode } from 'react';
+import { ReactNode, useRef } from 'react';
 
 interface PageTransitionProps {
   children: ReactNode;
@@ -26,66 +26,91 @@ const pageHierarchy: Record<string, number> = {
   '/workout/timer': 3,
 };
 
-// Animation variants for different transition types
-const slideVariants = {
-  enter: (direction: number) => ({
-    x: direction > 0 ? '100%' : '-100%',
-    opacity: 0,
-    scale: 0.95,
-  }),
-  center: {
-    x: 0,
-    opacity: 1,
-    scale: 1,
-  },
-  exit: (direction: number) => ({
-    x: direction < 0 ? '100%' : '-100%',
-    opacity: 0,
-    scale: 0.95,
-  }),
-};
-
-const scaleVariants = {
-  enter: {
-    scale: 0.9,
-    opacity: 0,
-    y: 20,
-  },
-  center: {
-    scale: 1,
-    opacity: 1,
-    y: 0,
-  },
-  exit: {
-    scale: 1.05,
-    opacity: 0,
-    y: -20,
-  },
-};
-
-// Transition configuration
-const transition = {
-  type: 'tween',
-  ease: [0.25, 0.46, 0.45, 0.94],
-  duration: 0.4,
-};
+// Track navigation direction
+let previousLevel: number | null = null;
 
 export function PageTransition({ children, className = '' }: PageTransitionProps) {
   const [location] = useLocation();
   
-  // Determine if this is a subpage navigation
+  // Determine navigation direction
   const currentLevel = pageHierarchy[location] ?? 0;
-  const isSubpage = currentLevel > 0;
+  const isGoingDeeper = previousLevel !== null && currentLevel > previousLevel;
+  const isGoingBack = previousLevel !== null && currentLevel < previousLevel;
   
-  // Use scale animation for subpages, slide for same-level navigation
-  const variants = isSubpage ? scaleVariants : slideVariants;
+  // Update previous level for next navigation
+  previousLevel = currentLevel;
+  
+  // Animation variants based on navigation direction
+  const getVariants = () => {
+    if (isGoingDeeper) {
+      // Going to subpage: scale up from center
+      return {
+        enter: {
+          scale: 0.9,
+          opacity: 0,
+          y: 20,
+        },
+        center: {
+          scale: 1,
+          opacity: 1,
+          y: 0,
+        },
+        exit: {
+          scale: 0.9,
+          opacity: 0,
+          y: -20,
+        },
+      };
+    } else if (isGoingBack) {
+      // Going back: scale down and slide out
+      return {
+        enter: {
+          scale: 1.1,
+          opacity: 0,
+          y: -20,
+        },
+        center: {
+          scale: 1,
+          opacity: 1,
+          y: 0,
+        },
+        exit: {
+          scale: 1.1,
+          opacity: 0,
+          y: 20,
+        },
+      };
+    } else {
+      // Same level navigation: slide horizontally
+      return {
+        enter: {
+          x: '100%',
+          opacity: 0,
+        },
+        center: {
+          x: 0,
+          opacity: 1,
+        },
+        exit: {
+          x: '-100%',
+          opacity: 0,
+        },
+      };
+    }
+  };
+
+  // Transition configuration
+  const transition = {
+    type: 'tween',
+    ease: [0.25, 0.46, 0.45, 0.94],
+    duration: 0.35,
+  };
   
   return (
     <AnimatePresence mode="wait" initial={false}>
       <motion.div
         key={location}
-        custom={1}
-        variants={variants}
+        variants={getVariants()}
         initial="enter"
         animate="center"
         exit="exit"
