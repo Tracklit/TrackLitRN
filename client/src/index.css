@@ -22,15 +22,26 @@
   color: #4b5563 !important;
 }
 
-/* Minimal dialog positioning fix */
+/* Modal positioning and opacity fixes */
 [data-radix-dialog-content] {
   position: fixed !important;
-  inset: 0 !important;
-  margin: auto !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
   width: fit-content !important;
   height: fit-content !important;
   max-width: min(calc(100vw - 2rem), 28rem) !important;
   max-height: calc(100vh - 2rem) !important;
+  background-color: hsl(var(--background)) !important;
+  opacity: 1 !important;
+  z-index: 1000 !important;
+  touch-action: none !important;
+  user-select: none !important;
+}
+
+/* Prevent modal movement on touch */
+[data-radix-dialog-content] * {
+  touch-action: none !important;
 }
 
 /* Custom styling for hiding scrollbars while maintaining scroll functionality */

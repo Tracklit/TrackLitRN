@@ -386,16 +386,15 @@ export default function HomePage() {
       {/* Session Detail Modal */}
       <Dialog open={isSessionModalOpen} onOpenChange={setIsSessionModalOpen}>
         <DialogContent 
-          className="sm:max-w-md bg-background border border-border shadow-lg touch-none select-none"
+          className="sm:max-w-md bg-background border border-border shadow-2xl touch-none select-none"
           style={{
-            position: 'fixed',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
             zIndex: 1000,
             maxHeight: '90vh',
-            overflow: 'auto'
+            overflow: 'auto',
+            backgroundColor: 'hsl(var(--background))',
+            opacity: 1
           }}
+          aria-describedby="workout-session-details"
           onTouchStart={(e) => e.stopPropagation()}
           onTouchMove={(e) => e.preventDefault()}
           onTouchEnd={(e) => e.stopPropagation()}
@@ -406,7 +405,7 @@ export default function HomePage() {
             <DialogTitle>{currentSession?.title}</DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-4">
+          <div id="workout-session-details" className="space-y-4">
             <div className="flex items-center gap-2">
               <div className="rounded-full bg-primary/10 h-8 w-8 flex items-center justify-center flex-shrink-0">
                 <UserCircle className="h-4 w-4 text-primary" />
