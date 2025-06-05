@@ -245,47 +245,49 @@ export default function HomePage() {
                       <X className="h-4 w-4" />
                     </Button>
                     
-                    {isLoadingPreviews ? (
-                      <div className="p-3 transition-opacity duration-500 ease-in-out opacity-100">
-                        <div className="flex items-center gap-2">
-                          <Skeleton className="h-6 w-6 rounded-full" />
-                          <div className="flex-1">
-                            <Skeleton className="h-3 w-24 mb-1" />
-                            <Skeleton className="h-3 w-32" />
-                          </div>
-                        </div>
-                      </div>
-                    ) : sessionPreviews && sessionPreviews.length > 0 ? (
-                      <div 
-                        className="cursor-pointer p-3 transition-opacity duration-500 ease-in-out opacity-100"
-                        onClick={() => openSessionDetails(sessionPreviews[activeSessionIndex])}
-                        key={activeSessionIndex}
-                      >
-                        <div className="flex items-center gap-2 pr-8">
-                          <div className="rounded-full bg-primary/15 h-8 w-8 flex items-center justify-center flex-shrink-0">
-                            <UserCircle className="h-4 w-4 text-primary" />
-                          </div>
-                          <div className="flex-1 overflow-hidden">
-                            <div className="flex items-center gap-1 mb-0.5">
-                              <span className="text-xs font-medium">{sessionPreviews[activeSessionIndex].title}</span>
-                              <span className="text-xs text-muted-foreground">· {sessionPreviews[activeSessionIndex].user?.username}</span>
+                    <div className="transition-opacity duration-500 ease-in-out">
+                      {isLoadingPreviews ? (
+                        <div className="p-3">
+                          <div className="flex items-center gap-2">
+                            <Skeleton className="h-6 w-6 rounded-full" />
+                            <div className="flex-1">
+                              <Skeleton className="h-3 w-24 mb-1" />
+                              <Skeleton className="h-3 w-32" />
                             </div>
-                            <p className="text-xs text-muted-foreground line-clamp-1">{sessionPreviews[activeSessionIndex].previewText}</p>
                           </div>
                         </div>
-                      </div>
-                    ) : (
-                      <div className="p-3 h-12 flex items-center transition-opacity duration-500 ease-in-out opacity-100">
-                        <span className="text-xs text-muted-foreground">No recent workouts</span>
-                      </div>
-                    )}
+                      ) : sessionPreviews && sessionPreviews.length > 0 ? (
+                        <div 
+                          className="cursor-pointer p-3"
+                          onClick={() => openSessionDetails(sessionPreviews[activeSessionIndex])}
+                          key={activeSessionIndex}
+                        >
+                          <div className="flex items-center gap-2 pr-8">
+                            <div className="rounded-full bg-primary/15 h-8 w-8 flex items-center justify-center flex-shrink-0">
+                              <UserCircle className="h-4 w-4 text-primary" />
+                            </div>
+                            <div className="flex-1 overflow-hidden">
+                              <div className="flex items-center gap-1 mb-0.5">
+                                <span className="text-xs font-medium">{sessionPreviews[activeSessionIndex].title}</span>
+                                <span className="text-xs text-muted-foreground">· {sessionPreviews[activeSessionIndex].user?.username}</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground line-clamp-1">{sessionPreviews[activeSessionIndex].previewText}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="p-3 h-12 flex items-center">
+                          <span className="text-xs text-muted-foreground">No recent workouts</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ) : (
-                  <div className="bg-card rounded-lg border relative overflow-hidden h-12 flex items-center">
+                  <div className="flex justify-end">
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-6 w-6 p-0 absolute right-2 top-2 z-10 text-muted-foreground hover:text-foreground"
+                      className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleTickerVisibility(!isTickerVisible);
@@ -293,9 +295,6 @@ export default function HomePage() {
                     >
                       <Globe className="h-4 w-4" />
                     </Button>
-                    <div className="p-3 h-12 flex items-center transition-opacity duration-500 ease-in-out opacity-30">
-                      <span className="text-xs text-muted-foreground">Workout feed hidden</span>
-                    </div>
                   </div>
                 )}
               </div>
