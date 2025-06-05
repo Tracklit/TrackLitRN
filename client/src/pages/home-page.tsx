@@ -182,6 +182,14 @@ export default function HomePage() {
       headerImage: "/tools-card-compressed.jpeg"
     },
     {
+      title: "Sprinthia",
+      description: "AI training companion",
+      icon: <MessageCircle className="h-6 w-6 text-primary" />,
+      href: "/sprinthia",
+      disabled: false,
+      headerImage: "/sprinthia-avatar-compressed.jpeg"
+    },
+    {
       title: "Today's Session",
       description: todaySession ? 
         `${todaySession.shortDistanceWorkout?.slice(0, 50)}...` || 
@@ -193,14 +201,6 @@ export default function HomePage() {
       href: "/practice",
       disabled: false,
       isSpecial: true
-    },
-    {
-      title: "Sprinthia",
-      description: "AI training companion",
-      icon: <MessageCircle className="h-6 w-6 text-primary" />,
-      href: "/sprinthia",
-      disabled: false,
-      headerImage: "/sprinthia-avatar-compressed.jpeg"
     }
   ];
 
@@ -239,38 +239,66 @@ export default function HomePage() {
               ) : (
                 <Link href={card.href} key={index}>
                   <Card className={`cursor-pointer hover:shadow-md transition-all duration-300 border border-muted hover:border-primary h-[140px] overflow-hidden group relative ${card.isSpecial ? 'border-primary/30 bg-primary/5' : ''}`}>
-                    {/* Header Image - Top Half or Special Today's Session styling */}
+                    {/* Special Today's Session - Full Canvas */}
                     {card.isSpecial ? (
-                      <div className="h-1/2 bg-gradient-to-br from-primary/20 to-primary/10 relative">
-                        <div className="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent" />
+                      <CardContent className="h-full p-3 relative flex flex-col bg-gradient-to-br from-primary/10 to-primary/5">
                         <div className="absolute top-2 right-2">
                           <Badge variant="secondary" className="text-xs bg-primary/20 text-primary border-primary/30">
                             Today
                           </Badge>
                         </div>
-                      </div>
+                        <div className="flex flex-col h-full">
+                          <div className="flex items-center gap-2 mb-2">
+                            {card.icon}
+                            <h2 className="text-sm font-bold">{card.title}</h2>
+                          </div>
+                          <div className="flex-1 space-y-1">
+                            {todaySession?.shortDistanceWorkout && (
+                              <div className="p-1.5 bg-background/60 rounded text-xs">
+                                <span className="font-medium text-primary">Short:</span> {todaySession.shortDistanceWorkout.slice(0, 30)}...
+                              </div>
+                            )}
+                            {todaySession?.mediumDistanceWorkout && (
+                              <div className="p-1.5 bg-background/60 rounded text-xs">
+                                <span className="font-medium text-primary">Medium:</span> {todaySession.mediumDistanceWorkout.slice(0, 30)}...
+                              </div>
+                            )}
+                            {todaySession?.longDistanceWorkout && (
+                              <div className="p-1.5 bg-background/60 rounded text-xs">
+                                <span className="font-medium text-primary">Long:</span> {todaySession.longDistanceWorkout.slice(0, 30)}...
+                              </div>
+                            )}
+                            {!todaySession && (
+                              <p className="text-muted-foreground text-xs">View your workout</p>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
                     ) : (
-                      <div 
-                        className="h-1/2 bg-cover bg-center bg-no-repeat relative"
-                        style={{ 
-                          backgroundImage: `url(${card.headerImage || trackImages[index % 4]})`,
-                          backgroundPosition: card.headerImage 
-                            ? (card.title === 'Programs' || card.title === 'Tools' ? 'center' : 'center -85px')
-                            : 'center'
-                        }}
-                      >
-                        <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-all duration-300" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      </div>
+                      <>
+                        {/* Header Image - Top Half */}
+                        <div 
+                          className="h-1/2 bg-cover bg-center bg-no-repeat relative"
+                          style={{ 
+                            backgroundImage: `url(${card.headerImage || trackImages[index % 4]})`,
+                            backgroundPosition: card.headerImage 
+                              ? (card.title === 'Programs' || card.title === 'Tools' ? 'center' : 'center -85px')
+                              : 'center'
+                          }}
+                        >
+                          <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-all duration-300" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        </div>
+                        
+                        {/* Content - Bottom Half */}
+                        <CardContent className="h-1/2 p-2.5 relative flex flex-col justify-center bg-background">
+                          <div className="flex flex-col items-center text-center">
+                            <h2 className="text-sm font-bold mb-1">{card.title}</h2>
+                            <p className="text-muted-foreground text-xs px-1 line-clamp-2 overflow-hidden">{card.description}</p>
+                          </div>
+                        </CardContent>
+                      </>
                     )}
-                    
-                    {/* Content - Bottom Half */}
-                    <CardContent className="h-1/2 p-2.5 relative flex flex-col justify-center bg-background">
-                      <div className="flex flex-col items-center text-center">
-                        <h2 className="text-sm font-bold mb-1">{card.title}</h2>
-                        <p className="text-muted-foreground text-xs px-1 line-clamp-2 overflow-hidden">{card.description}</p>
-                      </div>
-                    </CardContent>
                   </Card>
                 </Link>
               )
