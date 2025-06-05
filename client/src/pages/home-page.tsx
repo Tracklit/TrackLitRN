@@ -386,74 +386,68 @@ export default function HomePage() {
       {/* Session Detail Modal */}
       <Dialog open={isSessionModalOpen} onOpenChange={setIsSessionModalOpen}>
         <DialogContent 
-          className="sm:max-w-md bg-background border border-border shadow-2xl touch-none select-none"
+          className="sm:max-w-md bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 shadow-2xl"
           style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
             zIndex: 1000,
             maxHeight: '90vh',
             overflow: 'auto',
-            backgroundColor: 'hsl(var(--background))',
+            backgroundColor: 'white',
             opacity: 1
           }}
-          aria-describedby="workout-session-details"
           onTouchStart={(e) => e.stopPropagation()}
-          onTouchMove={(e) => e.preventDefault()}
-          onTouchEnd={(e) => e.stopPropagation()}
-          onPointerDown={(e) => e.stopPropagation()}
-          onPointerMove={(e) => e.preventDefault()}
+          onTouchMove={(e) => e.stopPropagation()}
         >
           <DialogHeader>
             <DialogTitle>{currentSession?.title}</DialogTitle>
           </DialogHeader>
           
-          <div id="workout-session-details" className="space-y-4">
+          <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <div className="rounded-full bg-primary/10 h-8 w-8 flex items-center justify-center flex-shrink-0">
-                <UserCircle className="h-4 w-4 text-primary" />
+              <div className="rounded-full bg-blue-100 h-8 w-8 flex items-center justify-center flex-shrink-0">
+                <UserCircle className="h-4 w-4 text-blue-600" />
               </div>
               <div>
                 <p className="text-sm font-medium">{currentSession?.user?.name}</p>
-                <p className="text-xs text-muted-foreground">@{currentSession?.user?.username}</p>
+                <p className="text-xs text-gray-500">@{currentSession?.user?.username}</p>
               </div>
             </div>
             
-            <Separator />
-            
-            <div>
+            <div className="border-t border-gray-200 pt-4">
               <h3 className="text-sm font-medium mb-2">Workout Details</h3>
               <p className="text-sm">{currentSession?.previewText}</p>
             </div>
             
-            <div className="bg-muted p-3 rounded-md">
+            <div className="bg-gray-50 dark:bg-slate-800 p-3 rounded-md">
               <h4 className="text-xs font-medium mb-2">Exercise Breakdown</h4>
               <ul className="space-y-2 text-sm">
                 <li className="flex items-center gap-2">
-                  <Dumbbell className="h-3 w-3 text-primary" />
+                  <Dumbbell className="h-3 w-3 text-blue-600" />
                   <span>6 x 200m at 30s each</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Dumbbell className="h-3 w-3 text-primary" />
+                  <Dumbbell className="h-3 w-3 text-blue-600" />
                   <span>90 second recovery between sets</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Dumbbell className="h-3 w-3 text-primary" />
+                  <Dumbbell className="h-3 w-3 text-blue-600" />
                   <span>10 minute cool down</span>
                 </li>
               </ul>
             </div>
           </div>
           
-          <DialogFooter className="flex sm:justify-between">
+          <DialogFooter className="flex justify-between mt-6">
             <div className="flex items-center gap-2">
               <DialogClose asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                >
+                <Button type="button" variant="outline">
                   Close
                 </Button>
               </DialogClose>
               
-              {/* Like functionality for other users' workouts */}
               {currentSession?.workoutId && (
                 <SimpleWorkoutLike 
                   sessionId={currentSession.workoutId} 
@@ -466,7 +460,7 @@ export default function HomePage() {
               type="button"
               onClick={saveSessionToLibrary}
               disabled={isSavingSession}
-              className="bg-primary text-white"
+              className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               {isSavingSession ? (
                 <>
