@@ -224,7 +224,7 @@ export default function HomePage() {
         <section className="mb-6 mx-auto relative -mt-11 z-10" style={{ maxWidth: "540px" }}>
           <div 
             className={`px-4 relative bg-card border rounded-lg transition-all duration-300 ease-out ${
-              isTickerVisible ? 'translate-y-0' : '-translate-y-8'
+              isTickerVisible ? 'translate-y-6' : '-translate-y-8'
             }`}
           >
             <Button
