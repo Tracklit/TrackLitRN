@@ -273,139 +273,172 @@ export default function ExerciseLibraryPage() {
           </div>
         </div>
 
-        {/* Exercise List */}
+        {/* Exercise Grid */}
         {isLoading ? (
-          <div className="text-center py-8">Loading exercises...</div>
-        ) : (
-          <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
-            {libraryData?.exercises?.map((exercise: ExerciseLibraryItem) => (
-              <Card key={exercise.id} className="overflow-hidden">
-                <CardContent className="p-0">
-                  {/* Video Thumbnail */}
-                  <div className="relative aspect-video bg-gray-100">
-                    {exercise.type === 'youtube' ? (
-                      <img
-                        src={getThumbnail(exercise)}
-                        alt={exercise.name}
-                        className="w-full h-full object-cover cursor-pointer"
-                        onClick={() => openFullscreen(exercise)}
-                      />
-                    ) : (
-                      <video
-                        src={exercise.fileUrl || ''}
-                        className="w-full h-full object-cover cursor-pointer"
-                        onClick={() => openFullscreen(exercise)}
-                      />
-                    )}
-                    
-                    <div className="absolute inset-0 bg-black/30 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <Play className="h-12 w-12 text-white" />
-                    </div>
-
-                    {/* Type Badge */}
-                    <Badge 
-                      variant={exercise.type === 'youtube' ? 'destructive' : 'secondary'}
-                      className="absolute top-2 left-2"
-                    >
-                      {exercise.type === 'youtube' ? 'YouTube' : 'Upload'}
-                    </Badge>
-
-                    {/* Actions Menu */}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute top-2 right-2 bg-black/50 text-white hover:bg-black/70"
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => {
-                          setSelectedExercise(exercise);
-                          setShareDialogOpen(true);
-                        }}>
-                          <Send className="h-4 w-4 mr-2" />
-                          Share
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => copyExerciseLink(exercise.id)}>
-                          {linkCopied ? (
-                            <>
-                              <Check className="h-4 w-4 mr-2" />
-                              Copied!
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="h-4 w-4 mr-2" />
-                              Copy Link
-                            </>
-                          )}
-                        </DropdownMenuItem>
-                        {exercise.youtubeUrl && (
-                          <DropdownMenuItem asChild>
-                            <a href={exercise.youtubeUrl} target="_blank" rel="noopener noreferrer">
-                              <ExternalLink className="h-4 w-4 mr-2" />
-                              Open YouTube
-                            </a>
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem 
-                          onClick={() => deleteMutation.mutate(exercise.id)}
-                          className="text-red-500"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-
-                  {/* Exercise Info */}
-                  <div className="p-4">
-                    <h3 className="font-semibold mb-2">{exercise.name}</h3>
-                    {exercise.description && (
-                      <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
-                        {exercise.description}
-                      </p>
-                    )}
-                    
-                    {/* Tags */}
-                    {exercise.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mb-2">
-                        {exercise.tags.slice(0, 3).map((tag, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                        {exercise.tags.length > 3 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{exercise.tags.length - 3}
-                          </Badge>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Metadata */}
-                    <div className="flex justify-between items-center text-xs text-muted-foreground">
-                      <span>{new Date(exercise.createdAt).toLocaleDateString()}</span>
-                      <div className="flex items-center gap-2">
-                        {exercise.fileSize && (
-                          <span>{formatFileSize(exercise.fileSize)}</span>
-                        )}
-                        {exercise.isPublic ? (
-                          <Badge variant="outline" className="text-xs">Public</Badge>
-                        ) : (
-                          <Badge variant="secondary" className="text-xs">Private</Badge>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+          <div className={viewMode === 'grid' ? "grid grid-cols-2 gap-4" : "space-y-4"}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Card key={i} className="animate-pulse">
+                <div className="aspect-video bg-muted" />
+                <CardContent className="p-4">
+                  <div className="h-4 bg-muted rounded mb-2" />
+                  <div className="h-3 bg-muted rounded w-2/3" />
                 </CardContent>
               </Card>
             ))}
           </div>
-        )}
+        ) : libraryData?.exercises?.length > 0 ? (
+          <>
+            {viewMode === 'grid' ? (
+              <div className="grid grid-cols-2 gap-4">
+                {libraryData.exercises.map((exercise: ExerciseLibraryItem) => (
+                  <Card key={exercise.id} className="group hover:shadow-lg transition-shadow">
+                    <div className="relative aspect-video overflow-hidden rounded-t-lg">
+                      <img
+                        src={getThumbnail(exercise)}
+                        alt={exercise.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = '/placeholder-video.jpg';
+                        }}
+                      />
+                      
+                      <div className="absolute inset-0 bg-black/40 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Button
+                          size="sm"
+                          onClick={() => openFullscreen(exercise)}
+                          className="bg-red-600 md:hover:bg-red-700 text-white border-red-600 h-8 w-8 p-0"
+                        >
+                          <Play className="h-3 w-3 fill-white" />
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start">
+                        <h3 className="font-semibold truncate flex-1">{exercise.name}</h3>
+                        
+                        {/* Action Dropdown - Always visible */}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 ml-2"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedExercise(exercise);
+                                setShareDialogOpen(true);
+                              }}
+                            >
+                              <Send className="h-4 w-4 mr-2" />
+                              Share
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => deleteMutation.mutate(exercise.id)}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                      
+                      {exercise.fileSize && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="text-xs text-muted-foreground">
+                            {formatFileSize(exercise.fileSize)}
+                          </span>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {libraryData.exercises.map((exercise: ExerciseLibraryItem) => (
+                  <Card key={exercise.id} className="group hover:shadow-lg transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-4">
+                        <div className="relative w-32 h-20 overflow-hidden rounded-lg flex-shrink-0">
+                          <img
+                            src={getThumbnail(exercise)}
+                            alt={exercise.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src = '/placeholder-video.jpg';
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-black/40 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <Button
+                              size="sm"
+                              onClick={() => openFullscreen(exercise)}
+                              className="bg-red-600 md:hover:bg-red-700 text-white border-red-600 h-6 w-6 p-0"
+                            >
+                              <Play className="h-2.5 w-2.5 fill-white" />
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold truncate">{exercise.name}</h3>
+                          {exercise.description && (
+                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                              {exercise.description}
+                            </p>
+                          )}
+                          {exercise.fileSize && (
+                            <div className="flex items-center gap-2 mt-2">
+                              <span className="text-xs text-muted-foreground">
+                                {formatFileSize(exercise.fileSize)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedExercise(exercise);
+                                setShareDialogOpen(true);
+                              }}
+                            >
+                              <Send className="h-4 w-4 mr-2" />
+                              Share
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => deleteMutation.mutate(exercise.id)}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </>
+        ) : null}
 
         {/* Empty State */}
         {!isLoading && (!libraryData?.exercises || libraryData.exercises.length === 0) && (
