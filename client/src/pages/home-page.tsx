@@ -388,7 +388,7 @@ export default function HomePage() {
           onClick={() => setIsSessionModalOpen(false)}
         >
           <div 
-            className="bg-background dark:bg-background rounded-lg shadow-2xl border border-border p-6 mx-4"
+            className="bg-white dark:bg-slate-900 rounded-lg shadow-2xl border border-border p-6 mx-4"
             style={{
               width: '100%',
               maxWidth: '28rem',
