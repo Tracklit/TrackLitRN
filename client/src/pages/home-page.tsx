@@ -60,7 +60,8 @@ export default function HomePage() {
   });
   const [activeSessionIndex, setActiveSessionIndex] = useState(0);
   const [isTextVisible, setIsTextVisible] = useState(true);
-
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [fadeOpacity, setFadeOpacity] = useState(1);
 
   const toggleTickerVisibility = (visible: boolean) => {
     setIsTickerVisible(visible);
@@ -153,11 +154,15 @@ export default function HomePage() {
     if (!sessionPreviews?.length || sessionPreviews.length <= 1) return;
     
     const interval = setInterval(() => {
-      console.log('Starting slide cycle');
-      setActiveSessionIndex(prev => 
-        prev >= (sessionPreviews.length - 1) ? 0 : prev + 1
-      );
-    }, 7000);
+      console.log('Starting fade animation cycle');
+      setFadeOpacity(0);
+      setTimeout(() => {
+        setActiveSessionIndex(prev => 
+          prev >= (sessionPreviews.length - 1) ? 0 : prev + 1
+        );
+        setFadeOpacity(1);
+      }, 300);
+    }, 5000);
     
     return () => clearInterval(interval);
   }, [sessionPreviews]);
@@ -261,9 +266,10 @@ export default function HomePage() {
                         </div>
                       ) : sessionPreviews && sessionPreviews.length > 0 ? (
                         <div 
-                          className="cursor-pointer p-3 transition-all duration-500 ease-in-out"
+                          className="cursor-pointer p-3 transition-opacity duration-300 ease-in-out"
+                          style={{ opacity: fadeOpacity }}
                           onClick={() => openSessionDetails(sessionPreviews[activeSessionIndex])}
-                          key={`session-${activeSessionIndex}-${sessionPreviews[activeSessionIndex]?.id}`}
+                          key={activeSessionIndex}
                         >
                           <div className="flex items-center gap-2 pr-8">
                             <div className="rounded-full bg-primary/15 h-8 w-8 flex items-center justify-center flex-shrink-0">
