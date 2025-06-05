@@ -4,14 +4,13 @@ import { apiRequest } from "@/lib/queryClient";
 import { PageContainer } from "@/components/page-container";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Upload, Youtube, Send, Play, Trash2, ExternalLink, MoreVertical, Grid3X3, List, Copy, Check, Users, Lock, Crown } from "lucide-react";
+import { Plus, Send, Play, Trash2, ExternalLink, MoreVertical, Grid3X3, List, Copy, Check, Users, Lock, Crown } from "lucide-react";
 import { Link } from "wouter";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
@@ -61,8 +60,6 @@ export default function ExerciseLibraryPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-
-
   // Fetch exercise library
   const { data: libraryData, isLoading } = useQuery({
     queryKey: ['/api/exercise-library', currentPage],
@@ -75,37 +72,11 @@ export default function ExerciseLibraryPage() {
     queryFn: () => apiRequest('GET', '/api/exercise-library/limits').then(res => res.json())
   });
 
-  // Search users function
-  const searchUsers = async (query: string) => {
-    if (query.length < 2) {
-      setSearchResults([]);
-      return;
-    }
-    
-    try {
-      const response = await apiRequest('GET', `/api/users/search?q=${encodeURIComponent(query)}`);
-      const results = await response.json();
-      setSearchResults(results);
-    } catch (error) {
-      console.error('Search error:', error);
-      setSearchResults([]);
-    }
-  };
-
-  // Fetch connections and athletes for sharing (library share only)
-  const { data: shareContacts } = useQuery({
-    queryKey: ['/api/share-contacts'],
-    queryFn: () => apiRequest('GET', '/api/connections').then(res => res.json()),
-    enabled: libraryShareDialogOpen
-  });
-
-  // Fetch user data for subscription info
+  // Fetch user data
   const { data: userData } = useQuery({
     queryKey: ['/api/user'],
     queryFn: () => apiRequest('GET', '/api/user').then(res => res.json())
   });
-
-
 
   // Delete mutation
   const deleteMutation = useMutation({
@@ -126,26 +97,22 @@ export default function ExerciseLibraryPage() {
     }
   });
 
-  // Share mutation for internal messaging
+  // Share mutation
   const shareMutation = useMutation({
     mutationFn: async (data: { exerciseId: number; recipientIds: number[]; message: string }) => {
       const response = await apiRequest('POST', '/api/exercise-library/share', data);
       return response.json();
     },
     onSuccess: () => {
-      // Clear all state and close modal
       setShareDialogOpen(false);
       setSelectedRecipients([]);
       setShareMessage("");
-      setSelectedExercise(null);
-      queryClient.invalidateQueries({ queryKey: ['/api/conversations'] });
       toast({ title: "Success", description: "Exercise shared successfully!" });
     },
     onError: (error: Error) => {
-      console.error('Share error:', error);
       toast({ 
         title: "Share Failed", 
-        description: error.message || "Failed to share exercise",
+        description: error.message,
         variant: "destructive" 
       });
     }
@@ -170,10 +137,6 @@ export default function ExerciseLibraryPage() {
       });
     }
   });
-
-
-
-
 
   const openFullscreen = (exercise: ExerciseLibraryItem) => {
     setFullscreenVideo(exercise);
@@ -216,15 +179,15 @@ export default function ExerciseLibraryPage() {
 
   const getSubscriptionTier = () => {
     if (!userData) return 'free';
-    if (userData.isPremium) return 'star';
-    if (userData.isProUser) return 'pro';
+    if ((userData as any).isPremium) return 'star';
+    if ((userData as any).isProUser) return 'pro';
     return 'free';
   };
 
   const canShareLibrary = () => {
     const tier = getSubscriptionTier();
     if (tier === 'pro' || tier === 'star') return true;
-    return (userData?.spikes || 0) >= 100; // Free users need 100 spikes
+    return ((userData as any)?.spikes || 0) >= 100; // Free users need 100 spikes
   };
 
   const formatFileSize = (bytes: number | null) => {
@@ -310,483 +273,156 @@ export default function ExerciseLibraryPage() {
           </div>
         </div>
 
-
-
-        {/* Custom Share Modal */}
-        {shareDialogOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <div 
-              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-              onClick={() => setShareDialogOpen(false)}
-            />
-            
-            {/* Modal Content */}
-            <div className="relative bg-[#010a18] border border-gray-700 rounded-lg shadow-xl max-w-md w-full max-h-[85vh] overflow-y-auto">
-              <div className="p-6 space-y-4">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-white">Share Exercise</h2>
-                  <button
-                    onClick={() => setShareDialogOpen(false)}
-                    className="text-gray-400 hover:text-white text-xl leading-none"
-                  >
-                    ×
-                  </button>
-                </div>
-                
-                {selectedExercise && (
-                  <div className="space-y-4">
-                    <div className="text-sm text-gray-400">
-                      Sharing: {selectedExercise.name}
-                    </div>
-                    
-                    <Tabs defaultValue="link" className="w-full">
-                      <TabsList className="grid w-full grid-cols-2 bg-gray-800">
-                        <TabsTrigger 
-                          value="link" 
-                          className="data-[state=active]:bg-gray-700 data-[state=active]:text-white text-gray-400"
-                        >
-                          Copy Link
-                        </TabsTrigger>
-                        <TabsTrigger 
-                          value="internal"
-                          className="data-[state=active]:bg-gray-700 data-[state=active]:text-white text-gray-400"
-                        >
-                          Send Directly
-                        </TabsTrigger>
-                      </TabsList>
-                      
-                      <TabsContent value="link" className="space-y-4 mt-4">
-                        <div className="flex items-center space-x-2">
-                          <Input 
-                            value={`${window.location.origin}/exercise/${selectedExercise.id}`}
-                            readOnly
-                            className="flex-1 bg-gray-800 border-gray-600 text-white"
-                          />
-                          <Button
-                            size="sm"
-                            onClick={() => copyExerciseLink(selectedExercise.id)}
-                            disabled={linkCopied}
-                            className="bg-blue-600 hover:bg-blue-700 text-white"
-                          >
-                            {linkCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                          </Button>
-                        </div>
-                      </TabsContent>
-                      
-                      <TabsContent value="internal" className="space-y-4 mt-4">
-                        <div>
-                          <Label className="text-white">Search Users</Label>
-                          <Input
-                            value={searchQuery}
-                            onChange={(e) => {
-                              setSearchQuery(e.target.value);
-                              searchUsers(e.target.value);
-                            }}
-                            placeholder="Type username to search..."
-                            className="mt-2 bg-gray-800 border-gray-600 text-white placeholder-gray-400"
-                          />
-                          
-                          {searchResults.length > 0 && (
-                            <div className="mt-2 max-h-32 overflow-y-auto space-y-2 bg-gray-800 p-3 rounded-md border border-gray-700">
-                              {searchResults.map((user: any) => (
-                                <div key={`search-${user.id}`} className="flex items-center space-x-2">
-                                  <input
-                                    type="checkbox"
-                                    id={`search-user-${user.id}`}
-                                    checked={selectedRecipients.includes(user.id)}
-                                    onChange={(e) => {
-                                      if (e.target.checked) {
-                                        setSelectedRecipients(prev => [...prev, user.id]);
-                                      } else {
-                                        setSelectedRecipients(prev => prev.filter(id => id !== user.id));
-                                      }
-                                    }}
-                                    className="rounded text-blue-600"
-                                  />
-                                  <label htmlFor={`search-user-${user.id}`} className="text-sm text-white cursor-pointer">
-                                    {user.name || user.username}
-                                  </label>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                          
-                          {searchQuery.length >= 2 && searchResults.length === 0 && (
-                            <div className="mt-2 text-sm text-gray-400 text-center py-2">
-                              No users found for "{searchQuery}"
-                            </div>
-                          )}
-                          
-                          {selectedRecipients.length > 0 && (
-                            <div className="mt-2">
-                              <Label className="text-white text-sm">Selected Recipients:</Label>
-                              <div className="mt-1 flex flex-wrap gap-2">
-                                {selectedRecipients.map(recipientId => {
-                                  const recipient = searchResults.find(user => user.id === recipientId);
-                                  return recipient ? (
-                                    <span key={recipientId} className="bg-blue-600 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
-                                      {recipient.name || recipient.username}
-                                      <button 
-                                        onClick={() => setSelectedRecipients(prev => prev.filter(id => id !== recipientId))}
-                                        className="text-blue-200 hover:text-white"
-                                      >
-                                        ×
-                                      </button>
-                                    </span>
-                                  ) : null;
-                                })}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div>
-                          <Label htmlFor="shareMessage" className="text-white">Message (Optional)</Label>
-                          <Textarea
-                            id="shareMessage"
-                            value={shareMessage}
-                            onChange={(e) => setShareMessage(e.target.value)}
-                            placeholder="Add a message to share with this exercise..."
-                            className="mt-1 bg-gray-800 border-gray-600 text-white placeholder-gray-400"
-                          />
-                        </div>
-                        
-                        <Button 
-                          onClick={handleShareInternal}
-                          disabled={selectedRecipients.length === 0 || shareMutation.isPending}
-                          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                        >
-                          <Send className="h-4 w-4 mr-2" />
-                          {shareMutation.isPending ? "Sending..." : "Send Message"}
-                        </Button>
-                      </TabsContent>
-                    </Tabs>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Library Share Dialog - Simplified */}
-        <Dialog open={libraryShareDialogOpen} onOpenChange={setLibraryShareDialogOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                {getSubscriptionTier() === 'star' ? (
-                  <Crown className="h-5 w-5 text-yellow-500" />
-                ) : getSubscriptionTier() === 'pro' ? (
-                  <Users className="h-5 w-5 text-blue-500" />
-                ) : (
-                  <Lock className="h-5 w-5 text-gray-400" />
-                )}
-                Share Full Library Access
-              </DialogTitle>
-            </DialogHeader>
-            
-            <div className="space-y-4">
-              {/* Subscription Status */}
-              <div className="p-3 rounded-lg border bg-muted/50">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Your Plan:</span>
-                  <Badge variant={getSubscriptionTier() === 'star' ? 'default' : getSubscriptionTier() === 'pro' ? 'secondary' : 'outline'}>
-                    {getSubscriptionTier().toUpperCase()}
-                  </Badge>
-                </div>
-                <div className="text-xs text-muted-foreground mt-1">
-                  {getSubscriptionTier() === 'star' && "Unlimited library sharing"}
-                  {getSubscriptionTier() === 'pro' && "Share with up to 10 people"}
-                  {getSubscriptionTier() === 'free' && "Requires 100 Spikes to unlock sharing"}
-                </div>
-              </div>
-
-              {/* Recipient Selection */}
-              <div>
-                <Label>Share with Connections & Athletes</Label>
-                <div className="mt-2 max-h-32 overflow-y-auto space-y-2">
-                  {shareContacts?.map((contact: any) => (
-                    <div key={`library-${contact.id}`} className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id={`library-share-contact-${contact.id}`}
-                        checked={selectedLibraryRecipients.includes(contact.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedLibraryRecipients(prev => [...prev, contact.id]);
-                          } else {
-                            setSelectedLibraryRecipients(prev => prev.filter(id => id !== contact.id));
-                          }
-                        }}
-                        className="rounded"
-                      />
-                      <label htmlFor={`library-share-contact-${contact.id}`} className="text-sm">
-                        {contact.username}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Action Button */}
-              <Button 
-                onClick={() => handleLibraryShare(getSubscriptionTier() === 'free')}
-                disabled={selectedLibraryRecipients.length === 0 || libraryShareMutation.isPending}
-                className="w-full"
-              >
-                <Users className="h-4 w-4 mr-2" />
-                {libraryShareMutation.isPending ? "Sharing..." : 
-                 getSubscriptionTier() === 'free' ? "Use 100 Spikes to Share" : "Share Library Access"}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Exercise Grid */}
+        {/* Exercise List */}
         {isLoading ? (
-          <div className={viewMode === 'grid' ? "grid grid-cols-2 gap-4" : "space-y-4"}>
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <div className="aspect-video bg-muted" />
-                <CardContent className="p-4">
-                  <div className="h-4 bg-muted rounded mb-2" />
-                  <div className="h-3 bg-muted rounded w-2/3" />
+          <div className="text-center py-8">Loading exercises...</div>
+        ) : (
+          <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
+            {libraryData?.exercises?.map((exercise: ExerciseLibraryItem) => (
+              <Card key={exercise.id} className="overflow-hidden">
+                <CardContent className="p-0">
+                  {/* Video Thumbnail */}
+                  <div className="relative aspect-video bg-gray-100">
+                    {exercise.type === 'youtube' ? (
+                      <img
+                        src={getThumbnail(exercise)}
+                        alt={exercise.name}
+                        className="w-full h-full object-cover cursor-pointer"
+                        onClick={() => openFullscreen(exercise)}
+                      />
+                    ) : (
+                      <video
+                        src={exercise.fileUrl || ''}
+                        className="w-full h-full object-cover cursor-pointer"
+                        onClick={() => openFullscreen(exercise)}
+                      />
+                    )}
+                    
+                    <div className="absolute inset-0 bg-black/30 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <Play className="h-12 w-12 text-white" />
+                    </div>
+
+                    {/* Type Badge */}
+                    <Badge 
+                      variant={exercise.type === 'youtube' ? 'destructive' : 'secondary'}
+                      className="absolute top-2 left-2"
+                    >
+                      {exercise.type === 'youtube' ? 'YouTube' : 'Upload'}
+                    </Badge>
+
+                    {/* Actions Menu */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-2 right-2 bg-black/50 text-white hover:bg-black/70"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => {
+                          setSelectedExercise(exercise);
+                          setShareDialogOpen(true);
+                        }}>
+                          <Send className="h-4 w-4 mr-2" />
+                          Share
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => copyExerciseLink(exercise.id)}>
+                          {linkCopied ? (
+                            <>
+                              <Check className="h-4 w-4 mr-2" />
+                              Copied!
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="h-4 w-4 mr-2" />
+                              Copy Link
+                            </>
+                          )}
+                        </DropdownMenuItem>
+                        {exercise.youtubeUrl && (
+                          <DropdownMenuItem asChild>
+                            <a href={exercise.youtubeUrl} target="_blank" rel="noopener noreferrer">
+                              <ExternalLink className="h-4 w-4 mr-2" />
+                              Open YouTube
+                            </a>
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem 
+                          onClick={() => deleteMutation.mutate(exercise.id)}
+                          className="text-red-500"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+
+                  {/* Exercise Info */}
+                  <div className="p-4">
+                    <h3 className="font-semibold mb-2">{exercise.name}</h3>
+                    {exercise.description && (
+                      <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
+                        {exercise.description}
+                      </p>
+                    )}
+                    
+                    {/* Tags */}
+                    {exercise.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {exercise.tags.slice(0, 3).map((tag, index) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                        {exercise.tags.length > 3 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{exercise.tags.length - 3}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Metadata */}
+                    <div className="flex justify-between items-center text-xs text-muted-foreground">
+                      <span>{new Date(exercise.createdAt).toLocaleDateString()}</span>
+                      <div className="flex items-center gap-2">
+                        {exercise.fileSize && (
+                          <span>{formatFileSize(exercise.fileSize)}</span>
+                        )}
+                        {exercise.isPublic ? (
+                          <Badge variant="outline" className="text-xs">Public</Badge>
+                        ) : (
+                          <Badge variant="secondary" className="text-xs">Private</Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             ))}
           </div>
-        ) : libraryData?.exercises?.length > 0 ? (
-          <>
-            {viewMode === 'grid' ? (
-              <div className="grid grid-cols-2 gap-4">
-                {libraryData.exercises.map((exercise: ExerciseLibraryItem) => (
-                  <Card key={exercise.id} className="group hover:shadow-lg transition-shadow">
-                    <div className="relative aspect-video overflow-hidden rounded-t-lg">
-                      <img
-                        src={getThumbnail(exercise)}
-                        alt={exercise.name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.currentTarget.src = '/placeholder-video.jpg';
-                        }}
-                      />
-                      
-                      <div className="absolute inset-0 bg-black/40 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Button
-                          size="sm"
-                          onClick={() => openFullscreen(exercise)}
-                          className="bg-red-600 md:hover:bg-red-700 text-white border-red-600 h-8 w-8 p-0"
-                        >
-                          <Play className="h-3 w-3 fill-white" />
-                        </Button>
-                      </div>
-
-                    </div>
-                    
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start">
-                        <h3 className="font-semibold truncate flex-1">{exercise.name}</h3>
-                        
-                        {/* Action Dropdown - Always visible */}
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 ml-2"
-                            >
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setSelectedExercise(exercise);
-                                setShareDialogOpen(true);
-                              }}
-                            >
-                              <Send className="h-4 w-4 mr-2" />
-                              Share
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => deleteMutation.mutate(exercise.id)}
-                              className="text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                      
-                      {exercise.fileSize && (
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className="text-xs text-muted-foreground">
-                            {formatFileSize(exercise.fileSize)}
-                          </span>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {libraryData.exercises.map((exercise: ExerciseLibraryItem) => (
-                  <Card key={exercise.id} className="group hover:shadow-lg transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-4">
-                        <div className="relative w-32 h-20 overflow-hidden rounded-lg flex-shrink-0">
-                          <img
-                            src={getThumbnail(exercise)}
-                            alt={exercise.name}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.currentTarget.src = '/placeholder-video.jpg';
-                            }}
-                          />
-                          <div className="absolute inset-0 bg-black/40 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <Button
-                              size="sm"
-                              onClick={() => openFullscreen(exercise)}
-                              className="bg-red-600 md:hover:bg-red-700 text-white border-red-600 h-6 w-6 p-0"
-                            >
-                              <Play className="h-2.5 w-2.5 fill-white" />
-                            </Button>
-                          </div>
-                        </div>
-                        
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold truncate">{exercise.name}</h3>
-                          {exercise.description && (
-                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                              {exercise.description}
-                            </p>
-                          )}
-                          {exercise.fileSize && (
-                            <div className="flex items-center gap-2 mt-2">
-                              <span className="text-xs text-muted-foreground">
-                                {formatFileSize(exercise.fileSize)}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                        
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                            >
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setSelectedExercise(exercise);
-                                setShareDialogOpen(true);
-                              }}
-                            >
-                              <Send className="h-4 w-4 mr-2" />
-                              Share
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => deleteMutation.mutate(exercise.id)}
-                              className="text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-
-            {/* Pagination */}
-            {libraryData.totalPages > 1 && (
-              <div className="flex justify-center space-x-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </Button>
-                <span className="flex items-center px-4">
-                  Page {currentPage} of {libraryData.totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  onClick={() => setCurrentPage(prev => Math.min(libraryData.totalPages, prev + 1))}
-                  disabled={currentPage === libraryData.totalPages}
-                >
-                  Next
-                </Button>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className={viewMode === 'grid' ? "grid grid-cols-2 gap-4" : "space-y-4"}>
-            {/* Skeleton Card */}
-            <Card className="opacity-50 border-dashed">
-              <div className="relative aspect-video overflow-hidden rounded-t-lg bg-muted/50 flex items-center justify-center">
-                <div className="text-center">
-                  <Plus className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
-                  <p className="text-sm text-muted-foreground">No videos yet</p>
-                </div>
-              </div>
-              <CardContent className="p-4">
-                <div className="flex justify-between items-center">
-                  <div className="text-muted-foreground text-sm">Add your first video</div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-8 w-8 p-0"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
         )}
 
-        {/* Fullscreen Video Player */}
-        {fullscreenVideo && (
-          <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
-            <div className="relative w-full h-full">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={closeFullscreen}
-                className="absolute top-4 left-4 z-10 text-white hover:bg-white/20"
-              >
-                ✕
-              </Button>
-              
-              {fullscreenVideo.type === 'youtube' ? (
-                <iframe
-                  src={`https://www.youtube.com/embed/${fullscreenVideo.youtubeVideoId}?autoplay=1`}
-                  className="w-full h-full"
-                  allowFullScreen
-                  allow="autoplay"
-                />
-              ) : (
-                <video
-                  src={fullscreenVideo.fileUrl || undefined}
-                  controls
-                  autoPlay
-                  className="w-full h-full object-contain"
-                />
-              )}
+        {/* Empty State */}
+        {!isLoading && (!libraryData?.exercises || libraryData.exercises.length === 0) && (
+          <div className="text-center py-12">
+            <div className="mx-auto w-12 h-12 bg-muted rounded-lg flex items-center justify-center mb-4">
+              <Play className="h-6 w-6 text-muted-foreground" />
             </div>
+            <h3 className="text-lg font-semibold mb-2">No exercises yet</h3>
+            <p className="text-muted-foreground mb-4">
+              Start building your exercise library by uploading videos or adding YouTube links
+            </p>
+            <Link href="/tools/exercise-library/add">
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Your First Video
+              </Button>
+            </Link>
           </div>
         )}
       </div>
