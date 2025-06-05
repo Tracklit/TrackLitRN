@@ -167,14 +167,11 @@ export function AssignProgramDialog({
   };
   
   const modalContent = isOpen ? (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
-      {/* Background overlay */}
-      <div 
-        className="absolute inset-0 bg-black/80" 
-        onClick={() => setIsOpen(false)}
-      />
-      
-      {/* Modal content */}
+    <div 
+      className="fixed inset-0 z-[9999] flex items-center justify-center"
+      onClick={() => setIsOpen(false)}
+    >
+      {/* Modal content - clicking inside stops propagation */}
       <div 
         className="relative bg-slate-900 border border-slate-700 rounded-lg shadow-lg w-[90vw] max-w-lg mx-4 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
