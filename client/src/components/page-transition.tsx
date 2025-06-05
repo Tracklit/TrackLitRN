@@ -106,7 +106,7 @@ export function PageTransition({ children }: PageTransitionProps) {
 
   return (
     <div className="relative w-full overflow-hidden">
-      <AnimatePresence mode="wait" initial={false} custom={direction}>
+      <AnimatePresence initial={false}>
         <motion.div
           key={location}
           custom={direction}
