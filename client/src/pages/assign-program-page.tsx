@@ -21,13 +21,13 @@ export function AssignProgramPage() {
 
   // Fetch program details
   const { data: program, isLoading: isProgramLoading } = useQuery({
-    queryKey: ['/api/programs', params?.programId],
+    queryKey: [`/api/programs/${params?.programId}`],
     enabled: !!params?.programId
   });
 
   // Fetch potential assignees
   const { data: potentialAssignees, isLoading: isLoadingAssignees } = useQuery({
-    queryKey: ['/api/programs', params?.programId, 'potential-assignees'],
+    queryKey: [`/api/programs/${params?.programId}/potential-assignees`],
     enabled: !!params?.programId
   });
 
