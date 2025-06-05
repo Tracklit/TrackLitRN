@@ -244,7 +244,7 @@ export default function HomePage() {
               {isTickerVisible ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
             </Button>
             
-            <div className={`transition-all duration-300 ${isTickerVisible ? 'py-2' : 'py-0.5'}`}>
+            <div className={`transition-all duration-300 ${isTickerVisible ? 'py-2 pb-7' : 'py-0.5'}`}>
               {isLoadingPreviews ? (
                 <div className="flex items-center gap-2">
                   <Skeleton className="h-6 w-6 rounded-full" />
