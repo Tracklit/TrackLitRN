@@ -88,7 +88,7 @@ export function PageTransition({ children }: PageTransitionProps) {
 
   const variants = {
     initial: (direction: number) => ({
-      x: direction > 0 ? '-30%' : '30%',
+      x: direction > 0 ? '-100%' : '100%',
       opacity: 1
     }),
     animate: {
@@ -96,7 +96,7 @@ export function PageTransition({ children }: PageTransitionProps) {
       opacity: 1
     },
     exit: (direction: number) => ({
-      x: direction > 0 ? '15%' : '-15%',
+      x: direction > 0 ? '100%' : '-100%',
       opacity: 1
     })
   };
