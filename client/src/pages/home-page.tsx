@@ -227,7 +227,7 @@ export default function HomePage() {
         {/* Quote removed as requested */}
         
         {/* Session Preview Ticker */}
-        {(isTickerVisible || sessionPreviews?.length > 0) && (
+        {isTickerVisible && sessionPreviews?.length > 0 && (
           <section className="mb-6 mx-auto" style={{ maxWidth: "540px" }}>
             <div className="grid grid-cols-2 gap-2" style={{ margin: "0 auto" }}>
               <div className="col-span-2">
