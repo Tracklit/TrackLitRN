@@ -60,7 +60,7 @@ export default function HomePage() {
   });
   const [activeSessionIndex, setActiveSessionIndex] = useState(0);
   const [isTextVisible, setIsTextVisible] = useState(true);
-  const [isAnimating, setIsAnimating] = useState(false);
+
 
   const toggleTickerVisibility = (visible: boolean) => {
     setIsTickerVisible(visible);
@@ -153,16 +153,10 @@ export default function HomePage() {
     if (!sessionPreviews?.length || sessionPreviews.length <= 1) return;
     
     const interval = setInterval(() => {
-      console.log('Starting animation cycle');
-      setIsAnimating(true);
-      setTimeout(() => {
-        setActiveSessionIndex(prev => 
-          prev >= (sessionPreviews.length - 1) ? 0 : prev + 1
-        );
-      }, 180); // Change content halfway through animation
-      setTimeout(() => {
-        setIsAnimating(false);
-      }, 360); // Reset animation after full duration
+      console.log('Starting slide cycle');
+      setActiveSessionIndex(prev => 
+        prev >= (sessionPreviews.length - 1) ? 0 : prev + 1
+      );
     }, 7000);
     
     return () => clearInterval(interval);
@@ -267,7 +261,7 @@ export default function HomePage() {
                         </div>
                       ) : sessionPreviews && sessionPreviews.length > 0 ? (
                         <div 
-                          className={`cursor-pointer p-3 transition-transform duration-[360ms] ease-in-out ${isAnimating ? '-translate-x-full' : 'translate-x-0'}`}
+                          className="cursor-pointer p-3 transition-all duration-500 ease-in-out"
                           onClick={() => openSessionDetails(sessionPreviews[activeSessionIndex])}
                           key={`session-${activeSessionIndex}-${sessionPreviews[activeSessionIndex]?.id}`}
                         >
