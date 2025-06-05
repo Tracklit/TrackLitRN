@@ -255,22 +255,98 @@ export default function HomePage() {
         </section>
         
         {/* Today's Session Preview */}
-        {/* Today's Session Link */}
         <section className="mb-4 mx-auto" style={{ maxWidth: "540px" }}>
           <Link href="/practice">
             <Card className="border-primary/20 w-full hover:bg-primary/5 transition-colors cursor-pointer">
-              <CardContent className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Dumbbell className="h-5 w-5 text-primary" />
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Dumbbell className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">Today's Session</CardTitle>
+                      <CardDescription className="text-sm">
+                        {todaySession ? todaySession.title : "View your workout"}
+                      </CardDescription>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-lg">Today's Session</h3>
-                    <p className="text-sm text-muted-foreground">View your workout</p>
-                  </div>
+                  <ArrowRight className="h-5 w-5 text-primary" />
                 </div>
-                <ArrowRight className="h-5 w-5 text-primary" />
-              </CardContent>
+              </CardHeader>
+              
+              {todaySession && (
+                <CardContent className="pt-0">
+                  <div className="space-y-3">
+                    {/* Short Distance Workout */}
+                    {todaySession.shortDistanceWorkout && (
+                      <div className="p-3 bg-muted/30 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant="secondary" className="text-xs">Short Distance</Badge>
+                        </div>
+                        <p className="text-sm text-foreground/90 leading-relaxed">
+                          {todaySession.shortDistanceWorkout}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {/* Medium Distance Workout */}
+                    {todaySession.mediumDistanceWorkout && (
+                      <div className="p-3 bg-muted/30 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant="secondary" className="text-xs">Medium Distance</Badge>
+                        </div>
+                        <p className="text-sm text-foreground/90 leading-relaxed">
+                          {todaySession.mediumDistanceWorkout}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {/* Long Distance Workout */}
+                    {todaySession.longDistanceWorkout && (
+                      <div className="p-3 bg-muted/30 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant="secondary" className="text-xs">Long Distance</Badge>
+                        </div>
+                        <p className="text-sm text-foreground/90 leading-relaxed">
+                          {todaySession.longDistanceWorkout}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {/* Extra Session */}
+                    {todaySession.extraSession && (
+                      <div className="p-3 bg-primary/5 rounded-lg border border-primary/20">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant="outline" className="text-xs border-primary/40 text-primary">Extra Session</Badge>
+                        </div>
+                        <p className="text-sm text-foreground/90 leading-relaxed">
+                          {todaySession.extraSession}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {/* Pre-Activation if present */}
+                    {(todaySession.preActivation1 || todaySession.preActivation2) && (
+                      <div className="p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant="outline" className="text-xs border-orange-300 text-orange-700 dark:text-orange-400">Pre-Activation</Badge>
+                        </div>
+                        {todaySession.preActivation1 && (
+                          <p className="text-sm text-foreground/90 leading-relaxed mb-2">
+                            {todaySession.preActivation1}
+                          </p>
+                        )}
+                        {todaySession.preActivation2 && (
+                          <p className="text-sm text-foreground/90 leading-relaxed">
+                            {todaySession.preActivation2}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              )}
             </Card>
           </Link>
         </section>
