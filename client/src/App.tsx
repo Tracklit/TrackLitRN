@@ -19,7 +19,7 @@ import {
 } from "@/pages/routes";
 
 import { OnboardingFlow } from "@/components/onboarding-flow";
-import { PageTransition } from "@/components/page-transition";
+import { StagedPageTransition } from "@/components/staged-page-transition";
 import { imagePreloader } from "@/lib/image-preloader";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
@@ -176,9 +176,9 @@ function MainApp() {
       {/* Main Content */}
       <main className="pt-20 lg:ml-64">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <PageTransition>
+          <StagedPageTransition>
             <Router />
-          </PageTransition>
+          </StagedPageTransition>
         </div>
       </main>
       
