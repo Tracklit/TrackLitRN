@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Upload, Youtube, Send, Play, Trash2, ExternalLink, MoreVertical, Grid3X3, List, Copy, Check, Users, Lock, Crown } from "lucide-react";
+import { Link } from "wouter";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 
@@ -45,8 +46,6 @@ interface LibraryLimits {
 }
 
 export default function ExerciseLibraryPage() {
-  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
-  const [youtubeDialogOpen, setYoutubeDialogOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<ExerciseLibraryItem | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -106,54 +105,7 @@ export default function ExerciseLibraryPage() {
     queryFn: () => apiRequest('GET', '/api/user').then(res => res.json())
   });
 
-  // Upload mutation
-  const uploadMutation = useMutation({
-    mutationFn: async (formData: FormData) => {
-      const response = await fetch('/api/exercise-library/upload', {
-        method: 'POST',
-        body: formData,
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Upload failed');
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/exercise-library'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/exercise-library/limits'] });
-      setUploadDialogOpen(false);
-      toast({ title: "Success", description: "File uploaded successfully!" });
-    },
-    onError: (error: Error) => {
-      toast({ 
-        title: "Upload Failed", 
-        description: error.message,
-        variant: "destructive" 
-      });
-    }
-  });
 
-  // YouTube mutation
-  const youtubeMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const response = await apiRequest('POST', '/api/exercise-library/youtube', data);
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/exercise-library'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/exercise-library/limits'] });
-      setUploadDialogOpen(false);
-      toast({ title: "Success", description: "YouTube video added successfully!" });
-    },
-    onError: (error: Error) => {
-      toast({ 
-        title: "Failed to Add Video", 
-        description: error.message,
-        variant: "destructive" 
-      });
-    }
-  });
 
   // Delete mutation
   const deleteMutation = useMutation({
@@ -364,10 +316,12 @@ export default function ExerciseLibraryPage() {
             </div>
             
             <div className="flex gap-2">
-              <Button onClick={() => setUploadDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Video
-              </Button>
+              <Link href="/tools/exercise-library/add">
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Video
+                </Button>
+              </Link>
 
               <Button 
                 variant="outline"

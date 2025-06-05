@@ -322,7 +322,7 @@ export default function ExerciseLibraryAddPage() {
                     <Checkbox
                       id="youtube-public"
                       checked={isPublic}
-                      onCheckedChange={(checked) => setIsPublic(checked === true)}
+                      onCheckedChange={(checked) => setIsPublic(Boolean(checked))}
                       disabled={youtubeMutation.isPending}
                     />
                     <Label htmlFor="youtube-public">Make this exercise public</Label>
