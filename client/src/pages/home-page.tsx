@@ -9,14 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CardSkeleton } from "@/components/card-skeleton";
-import { 
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog";
+
 import { 
   Dumbbell, 
   Trophy, 
@@ -59,7 +52,6 @@ export default function HomePage() {
     return saved !== null ? JSON.parse(saved) : true;
   });
   const [activeSessionIndex, setActiveSessionIndex] = useState(0);
-  const modalRef = useRef<HTMLDivElement>(null);
 
   const toggleTickerVisibility = (visible: boolean) => {
     setIsTickerVisible(visible);
@@ -120,32 +112,7 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, [sessionPreviews]);
 
-  // Force modal position lock during interactions
-  useEffect(() => {
-    if (!isSessionModalOpen || !modalRef.current) return;
 
-    const modal = modalRef.current;
-    let animationFrame: number;
-
-    const lockPosition = () => {
-      if (modal) {
-        modal.style.position = 'fixed';
-        modal.style.top = '50%';
-        modal.style.left = '50%';
-        modal.style.transform = 'translate(-50%, -50%)';
-        modal.style.zIndex = '1000';
-      }
-      animationFrame = requestAnimationFrame(lockPosition);
-    };
-
-    lockPosition();
-
-    return () => {
-      if (animationFrame) {
-        cancelAnimationFrame(animationFrame);
-      }
-    };
-  }, [isSessionModalOpen]);
   
   // Function to open session details modal
   const openSessionDetails = (session: SessionPreviewWithUser) => {
@@ -411,127 +378,116 @@ export default function HomePage() {
 
       </main>
       
-      {/* Session Detail Modal */}
-      <Dialog open={isSessionModalOpen} onOpenChange={setIsSessionModalOpen}>
-        <DialogContent 
-          ref={modalRef}
-          className="sm:max-w-md bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 shadow-2xl"
+      {/* Custom Session Modal - Built from scratch */}
+      {isSessionModalOpen && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center"
           style={{
-            position: 'fixed',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            zIndex: 1000,
-            maxHeight: '90vh',
-            overflow: 'auto',
-            backgroundColor: 'white',
-            opacity: 1
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
           }}
-          onTouchStart={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-          }}
-          onTouchMove={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-          }}
-          onTouchEnd={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-          }}
-          onPointerDown={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-          }}
-          onPointerMove={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-          }}
-          onMouseDown={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-          }}
-          onDragStart={(e) => {
-            e.preventDefault();
-            return false;
-          }}
+          onClick={() => setIsSessionModalOpen(false)}
         >
-          <DialogHeader>
-            <DialogTitle>{currentSession?.title}</DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="rounded-full bg-blue-100 h-8 w-8 flex items-center justify-center flex-shrink-0">
-                <UserCircle className="h-4 w-4 text-blue-600" />
+          <div 
+            className="bg-white dark:bg-slate-900 rounded-lg shadow-2xl border border-gray-200 dark:border-slate-700 p-6 mx-4"
+            style={{
+              width: '100%',
+              maxWidth: '28rem',
+              maxHeight: '90vh',
+              overflow: 'auto',
+              position: 'static',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                {currentSession?.title}
+              </h2>
+              <button
+                onClick={() => setIsSessionModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="rounded-full bg-blue-100 h-8 w-8 flex items-center justify-center flex-shrink-0">
+                  <UserCircle className="h-4 w-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">{currentSession?.user?.name}</p>
+                  <p className="text-xs text-gray-500">@{currentSession?.user?.username}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-medium">{currentSession?.user?.name}</p>
-                <p className="text-xs text-gray-500">@{currentSession?.user?.username}</p>
+              
+              <div className="border-t border-gray-200 pt-4">
+                <h3 className="text-sm font-medium mb-2">Workout Details</h3>
+                <p className="text-sm">{currentSession?.previewText}</p>
+              </div>
+              
+              <div className="bg-gray-50 dark:bg-slate-800 p-3 rounded-md">
+                <h4 className="text-xs font-medium mb-2">Exercise Breakdown</h4>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <Dumbbell className="h-3 w-3 text-blue-600" />
+                    <span>6 x 200m at 30s each</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Dumbbell className="h-3 w-3 text-blue-600" />
+                    <span>90 second recovery between sets</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Dumbbell className="h-3 w-3 text-blue-600" />
+                    <span>10 minute cool down</span>
+                  </li>
+                </ul>
               </div>
             </div>
             
-            <div className="border-t border-gray-200 pt-4">
-              <h3 className="text-sm font-medium mb-2">Workout Details</h3>
-              <p className="text-sm">{currentSession?.previewText}</p>
-            </div>
-            
-            <div className="bg-gray-50 dark:bg-slate-800 p-3 rounded-md">
-              <h4 className="text-xs font-medium mb-2">Exercise Breakdown</h4>
-              <ul className="space-y-2 text-sm">
-                <li className="flex items-center gap-2">
-                  <Dumbbell className="h-3 w-3 text-blue-600" />
-                  <span>6 x 200m at 30s each</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Dumbbell className="h-3 w-3 text-blue-600" />
-                  <span>90 second recovery between sets</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Dumbbell className="h-3 w-3 text-blue-600" />
-                  <span>10 minute cool down</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-          
-          <DialogFooter className="flex justify-between mt-6">
-            <div className="flex items-center gap-2">
-              <DialogClose asChild>
-                <Button type="button" variant="outline">
+            {/* Footer */}
+            <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-200 dark:border-slate-600">
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsSessionModalOpen(false)}
+                >
                   Close
                 </Button>
-              </DialogClose>
+                
+                {currentSession?.workoutId && (
+                  <SimpleWorkoutLike 
+                    sessionId={currentSession.workoutId} 
+                    className="ml-2"
+                  />
+                )}
+              </div>
               
-              {currentSession?.workoutId && (
-                <SimpleWorkoutLike 
-                  sessionId={currentSession.workoutId} 
-                  className="ml-2"
-                />
-              )}
+              <Button 
+                type="button"
+                onClick={saveSessionToLibrary}
+                disabled={isSavingSession}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                {isSavingSession ? (
+                  <>
+                    <BookmarkPlus className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <BookmarkPlus className="mr-2 h-4 w-4" />
+                    Save to Library
+                  </>
+                )}
+              </Button>
             </div>
-            
-            <Button 
-              type="button"
-              onClick={saveSessionToLibrary}
-              disabled={isSavingSession}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              {isSavingSession ? (
-                <>
-                  <BookmarkPlus className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <BookmarkPlus className="mr-2 h-4 w-4" />
-                  Save to Library
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      )}
       
       <CreateMeetModal
         isOpen={isCreateMeetOpen}
