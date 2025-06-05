@@ -768,11 +768,11 @@ export default function MeetsPage() {
       <Dialog open={isShareModalOpen} onOpenChange={setIsShareModalOpen}>
         <DialogContent className="sm:max-w-md bg-background border border-border">
           <DialogHeader>
-            <DialogTitle className="text-white flex items-center">
+            <DialogTitle className="text-foreground flex items-center">
               <UserPlus className="mr-2 h-5 w-5" />
               Invite Athletes to {meetToShare?.name}
             </DialogTitle>
-            <DialogDescription className="text-blue-300">
+            <DialogDescription className="text-muted-foreground">
               Search for athletes you're connected with to invite them to this meet.
             </DialogDescription>
           </DialogHeader>
