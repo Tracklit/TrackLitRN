@@ -30,14 +30,13 @@ import { ProgramDocumentPreview } from "@/components/program-document-preview";
 import { AssignProgramDialog } from "@/components/assign-program-dialog";
 import { DeleteProgramDialog } from "@/components/delete-program-dialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import {
   Select,
   SelectContent,
@@ -234,69 +233,81 @@ function ProgramCalendar({ sessions }: { sessions: any[] }) {
         </div>
       </div>
 
-      {/* Session Details Dialog */}
-      {selectedSession && (
-        <Dialog open={!!selectedSession} onOpenChange={() => setSelectedSession(null)}>
-          <DialogContent className="max-w-2xl bg-slate-900 border border-slate-700">
-            <DialogHeader>
-              <DialogTitle>Day {selectedSession.dayNumber} - {selectedSession.title}</DialogTitle>
-              <DialogDescription>
-                {new Date(selectedSession.date).toLocaleDateString()}
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-4">
-              {selectedSession.shortDistanceWorkout && (
-                <div>
-                  <h4 className="font-medium text-sm text-primary">Short Distance</h4>
+      {/* Session Details Drawer */}
+      <Drawer open={!!selectedSession} onOpenChange={() => setSelectedSession(null)}>
+        <DrawerContent className="max-h-[85vh]">
+          <DrawerHeader className="text-left">
+            <DrawerTitle>
+              Day {selectedSession?.dayNumber} - {selectedSession?.title}
+            </DrawerTitle>
+            <DrawerDescription>
+              {selectedSession?.date && new Date(selectedSession.date).toLocaleDateString()}
+            </DrawerDescription>
+          </DrawerHeader>
+          
+          <div className="px-4 pb-4 space-y-4 overflow-y-auto">
+            {selectedSession?.shortDistanceWorkout && (
+              <div>
+                <h4 className="font-medium text-sm text-primary mb-1">Short Distance</h4>
+                <div className="p-3 bg-muted/50 rounded-md">
                   <p className="text-sm whitespace-pre-line">{selectedSession.shortDistanceWorkout}</p>
                 </div>
-              )}
-              
-              {selectedSession.mediumDistanceWorkout && (
-                <div>
-                  <h4 className="font-medium text-sm text-primary">Medium Distance</h4>
+              </div>
+            )}
+            
+            {selectedSession?.mediumDistanceWorkout && (
+              <div>
+                <h4 className="font-medium text-sm text-primary mb-1">Medium Distance</h4>
+                <div className="p-3 bg-muted/50 rounded-md">
                   <p className="text-sm whitespace-pre-line">{selectedSession.mediumDistanceWorkout}</p>
                 </div>
-              )}
-              
-              {selectedSession.longDistanceWorkout && (
-                <div>
-                  <h4 className="font-medium text-sm text-primary">Long Distance</h4>
+              </div>
+            )}
+            
+            {selectedSession?.longDistanceWorkout && (
+              <div>
+                <h4 className="font-medium text-sm text-primary mb-1">Long Distance</h4>
+                <div className="p-3 bg-muted/50 rounded-md">
                   <p className="text-sm whitespace-pre-line">{selectedSession.longDistanceWorkout}</p>
                 </div>
-              )}
-              
-              {selectedSession.preActivation1 && (
-                <div>
-                  <h4 className="font-medium text-sm text-primary">Pre-Activation 1</h4>
+              </div>
+            )}
+            
+            {selectedSession?.preActivation1 && (
+              <div>
+                <h4 className="font-medium text-sm text-primary mb-1">Pre-Activation 1</h4>
+                <div className="p-3 bg-muted/50 rounded-md">
                   <p className="text-sm whitespace-pre-line">{selectedSession.preActivation1}</p>
                 </div>
-              )}
-              
-              {selectedSession.preActivation2 && (
-                <div>
-                  <h4 className="font-medium text-sm text-primary">Pre-Activation 2</h4>
+              </div>
+            )}
+            
+            {selectedSession?.preActivation2 && (
+              <div>
+                <h4 className="font-medium text-sm text-primary mb-1">Pre-Activation 2</h4>
+                <div className="p-3 bg-muted/50 rounded-md">
                   <p className="text-sm whitespace-pre-line">{selectedSession.preActivation2}</p>
                 </div>
-              )}
-              
-              {selectedSession.extraSession && (
-                <div>
-                  <h4 className="font-medium text-sm text-primary">Extra Session</h4>
+              </div>
+            )}
+            
+            {selectedSession?.extraSession && (
+              <div>
+                <h4 className="font-medium text-sm text-primary mb-1">Extra Session</h4>
+                <div className="p-3 bg-muted/50 rounded-md">
                   <p className="text-sm whitespace-pre-line">{selectedSession.extraSession}</p>
                 </div>
-              )}
-            </div>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setSelectedSession(null)}>
-                Close
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+              </div>
+            )}
+          </div>
+          
+          <DrawerFooter>
+            <Button variant="outline" onClick={() => setSelectedSession(null)}>
+              Close
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }
