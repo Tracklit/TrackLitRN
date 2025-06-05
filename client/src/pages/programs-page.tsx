@@ -383,7 +383,10 @@ function CompactProgramCard({ program, type, creator, viewMode }: {
                     View Details
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
+                <DropdownMenuItem 
+                  onSelect={(e) => e.preventDefault()}
+                  className="p-0"
+                >
                   <AssignProgramDialog 
                     program={program}
                     variant="ghost"
