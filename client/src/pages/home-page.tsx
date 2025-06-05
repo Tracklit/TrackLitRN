@@ -156,11 +156,13 @@ export default function HomePage() {
       console.log('Starting animation cycle');
       setIsAnimating(true);
       setTimeout(() => {
-        setIsAnimating(false);
         setActiveSessionIndex(prev => 
           prev >= (sessionPreviews.length - 1) ? 0 : prev + 1
         );
-      }, 360);
+      }, 180); // Change content halfway through animation
+      setTimeout(() => {
+        setIsAnimating(false);
+      }, 360); // Reset animation after full duration
     }, 7000);
     
     return () => clearInterval(interval);
