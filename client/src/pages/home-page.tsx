@@ -60,6 +60,7 @@ export default function HomePage() {
   });
   const [activeSessionIndex, setActiveSessionIndex] = useState(0);
   const [isTextVisible, setIsTextVisible] = useState(true);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   const toggleTickerVisibility = (visible: boolean) => {
     setIsTickerVisible(visible);
@@ -246,7 +247,7 @@ export default function HomePage() {
                       <X className="h-4 w-4" />
                     </Button>
                     
-                    <div className={`transition-opacity duration-500 ease-in-out ${isTextVisible ? 'opacity-100' : 'opacity-0'}`}>
+                    <div className="overflow-hidden">
                       {isLoadingPreviews ? (
                         <div className="p-3">
                           <div className="flex items-center gap-2">
@@ -259,7 +260,7 @@ export default function HomePage() {
                         </div>
                       ) : sessionPreviews && sessionPreviews.length > 0 ? (
                         <div 
-                          className="cursor-pointer p-3"
+                          className={`cursor-pointer p-3 transition-transform duration-300 ease-in-out ${isAnimating ? 'translate-x-full' : 'translate-x-0'}`}
                           onClick={() => openSessionDetails(sessionPreviews[activeSessionIndex])}
                           key={activeSessionIndex}
                         >
