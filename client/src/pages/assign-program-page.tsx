@@ -70,20 +70,36 @@ export function AssignProgramPage() {
   });
 
   const handleSubmit = async () => {
-    if (!selectedUser || !program) return;
+    if (!selectedUser || !program?.id) {
+      toast({
+        title: "Validation Error",
+        description: "Please select an athlete and ensure program is loaded.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsSubmitting(true);
     try {
       let assigneeId: number;
       
       if (selectedUser === "myself") {
-        if (!user) {
+        if (!user?.id) {
           throw new Error("User not found");
         }
         assigneeId = user.id;
       } else {
         assigneeId = parseInt(selectedUser);
+        if (isNaN(assigneeId)) {
+          throw new Error("Invalid assignee selected");
+        }
       }
+
+      console.log('Submitting assignment:', {
+        programId: program.id,
+        assigneeId,
+        notes: notes.trim() || undefined
+      });
 
       await assignMutation.mutateAsync({
         programId: program.id,
