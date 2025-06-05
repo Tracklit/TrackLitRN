@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useLocation } from "wouter";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 
 // Define page hierarchy levels
 const PAGE_HIERARCHY: Record<string, number> = {
@@ -106,7 +106,7 @@ export function PageTransition({ children }: PageTransitionProps) {
 
   return (
     <div className="relative w-full overflow-hidden">
-      <AnimatePresence mode="wait" initial={false} custom={direction}>
+      <AnimatePresence initial={false} custom={direction}>
         <motion.div
           key={location}
           custom={direction}
@@ -116,10 +116,18 @@ export function PageTransition({ children }: PageTransitionProps) {
           exit="exit"
           transition={{
             duration: 0.1,
-            ease: "easeInOut",
-            delay: 0.05
+            ease: "easeInOut"
           }}
           className="w-full"
+          onAnimationStart={() => {
+            // Animation starts immediately on tap
+          }}
+          onAnimationComplete={(definition) => {
+            // Animation completes after 100ms
+            if (definition === "animate") {
+              // New page fully loaded and visible
+            }
+          }}
         >
           {children}
         </motion.div>
