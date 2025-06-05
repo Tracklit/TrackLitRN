@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { HamburgerMenu } from '@/components/ui/hamburger-menu';
 import { Meet, Result, WorkoutSessionPreview } from '@shared/schema';
 import { Link } from 'wouter';
+import { AnimatedLink } from '@/components/animated-link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
