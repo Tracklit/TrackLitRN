@@ -228,50 +228,63 @@ export default function HomePage() {
         {/* Session Preview Ticker */}
         {isTickerVisible && (
           <section className="mb-6 mx-auto" style={{ maxWidth: "540px" }}>
-            <div className="px-4 relative">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 w-6 p-0 absolute right-4 top-1/2 -translate-y-1/2 z-10"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleTickerVisibility(false);
-                }}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-              {isLoadingPreviews ? (
-                <div className="bg-muted rounded-lg p-3 border">
-                  <div className="flex items-center gap-2">
-                    <Skeleton className="h-6 w-6 rounded-full" />
-                    <div className="flex-1">
-                      <Skeleton className="h-3 w-24 mb-1" />
-                      <Skeleton className="h-3 w-32" />
-                    </div>
-                  </div>
-                </div>
-              ) : sessionPreviews && sessionPreviews.length > 0 && (
-                <div 
-                  className="cursor-pointer animate-fadeIn pr-8"
-                  onClick={() => openSessionDetails(sessionPreviews[activeSessionIndex])}
-                  key={activeSessionIndex}
-                >
-                  <div 
-                    className="flex items-center gap-2 px-3 py-1 hover:bg-primary/10 transition-all duration-300 bg-muted/30 rounded-lg border"
-                  >
-                    <div className="rounded-full bg-primary/15 h-8 w-8 flex items-center justify-center flex-shrink-0">
-                      <UserCircle className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="flex-1 overflow-hidden">
-                      <div className="flex items-center gap-1 mb-0.5">
-                        <span className="text-xs font-medium">{sessionPreviews[activeSessionIndex].title}</span>
-                        <span className="text-xs text-muted-foreground">· {sessionPreviews[activeSessionIndex].user?.username}</span>
+            <div className="grid grid-cols-2 gap-2" style={{ margin: "0 auto" }}>
+              <div className="col-span-2">
+                {isLoadingPreviews ? (
+                  <div className="bg-muted rounded-lg p-3 border relative">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 absolute right-2 top-2 z-10"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleTickerVisibility(false);
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-6 w-6 rounded-full" />
+                      <div className="flex-1">
+                        <Skeleton className="h-3 w-24 mb-1" />
+                        <Skeleton className="h-3 w-32" />
                       </div>
-                      <p className="text-xs text-muted-foreground line-clamp-1">{sessionPreviews[activeSessionIndex].previewText}</p>
                     </div>
                   </div>
-                </div>
-              )}
+                ) : sessionPreviews && sessionPreviews.length > 0 && (
+                  <div 
+                    className="cursor-pointer animate-fadeIn"
+                    onClick={() => openSessionDetails(sessionPreviews[activeSessionIndex])}
+                    key={activeSessionIndex}
+                  >
+                    <div 
+                      className="flex items-center gap-2 px-3 py-1 hover:bg-primary/10 transition-all duration-300 bg-muted/30 rounded-lg border relative"
+                    >
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 absolute right-2 top-2 z-10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleTickerVisibility(false);
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                      <div className="rounded-full bg-primary/15 h-8 w-8 flex items-center justify-center flex-shrink-0">
+                        <UserCircle className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="flex-1 overflow-hidden pr-8">
+                        <div className="flex items-center gap-1 mb-0.5">
+                          <span className="text-xs font-medium">{sessionPreviews[activeSessionIndex].title}</span>
+                          <span className="text-xs text-muted-foreground">· {sessionPreviews[activeSessionIndex].user?.username}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground line-clamp-1">{sessionPreviews[activeSessionIndex].previewText}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </section>
         )}
@@ -279,19 +292,22 @@ export default function HomePage() {
         {/* Show + button when ticker is hidden */}
         {!isTickerVisible && (
           <section className="mb-6 mx-auto" style={{ maxWidth: "540px" }}>
-            <div className="px-4 relative">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 w-6 p-0 absolute right-4 top-1/2 -translate-y-1/2 z-10"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleTickerVisibility(true);
-                }}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-              <div className="h-8"></div> {/* Spacer to maintain layout */}
+            <div className="grid grid-cols-2 gap-2" style={{ margin: "0 auto" }}>
+              <div className="col-span-2">
+                <div className="bg-muted/30 rounded-lg border relative h-8 flex items-center justify-end pr-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleTickerVisibility(true);
+                    }}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
             </div>
           </section>
         )}
