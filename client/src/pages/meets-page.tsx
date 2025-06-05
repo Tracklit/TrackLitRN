@@ -271,8 +271,8 @@ export default function MeetsPage() {
   };
 
   return (
-    <div className="flex h-screen bg-[#010a18] text-white">
-      <div className="flex-1 overflow-auto">
+    <>
+      <div className="min-h-screen bg-background text-foreground">
         <main className="pt-16 pb-6">
           <div className="max-w-3xl mx-auto px-4">
             <BackNavigation />
@@ -306,26 +306,26 @@ export default function MeetsPage() {
               </div>
             )}
 
-            <h2 className="text-xl font-semibold text-white mb-4">My Meets</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-4">My Meets</h2>
             
             <Tabs defaultValue="upcoming" className="mt-4">
               <div className="flex justify-between items-center mb-6">
-                <TabsList className="bg-blue-800/30 border border-blue-700/30">
+                <TabsList className="bg-muted border border-border">
                   <TabsTrigger 
                     value="upcoming" 
-                    className="data-[state=active]:bg-blue-700 data-[state=active]:text-white"
+                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                   >
                     Upcoming
                   </TabsTrigger>
                   <TabsTrigger 
                     value="past"
-                    className="data-[state=active]:bg-blue-700 data-[state=active]:text-white"
+                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                   >
                     Past
                   </TabsTrigger>
                   <TabsTrigger 
                     value="calendar"
-                    className="data-[state=active]:bg-blue-700 data-[state=active]:text-white"
+                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                   >
                     Calendar
                   </TabsTrigger>
@@ -333,7 +333,7 @@ export default function MeetsPage() {
                 
                 <Button
                   onClick={() => setIsCreateMeetOpen(true)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 border border-blue-500"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Create Meet
@@ -766,7 +766,7 @@ export default function MeetsPage() {
 
       {/* Athlete Search Modal */}
       <Dialog open={isShareModalOpen} onOpenChange={setIsShareModalOpen}>
-        <DialogContent className="sm:max-w-md bg-[#010a18] border border-blue-800/60">
+        <DialogContent className="sm:max-w-md bg-background border border-border">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center">
               <UserPlus className="mr-2 h-5 w-5" />
@@ -867,6 +867,6 @@ export default function MeetsPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }
