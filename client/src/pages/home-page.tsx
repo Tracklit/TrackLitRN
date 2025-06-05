@@ -385,9 +385,22 @@ export default function HomePage() {
       
       {/* Session Detail Modal */}
       <Dialog open={isSessionModalOpen} onOpenChange={setIsSessionModalOpen}>
-        <DialogContent className="sm:max-w-md bg-background border border-border shadow-lg"
+        <DialogContent 
+          className="sm:max-w-md bg-background border border-border shadow-lg touch-none select-none"
+          style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 1000,
+            maxHeight: '90vh',
+            overflow: 'auto'
+          }}
           onTouchStart={(e) => e.stopPropagation()}
-          onTouchMove={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.preventDefault()}
+          onTouchEnd={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+          onPointerMove={(e) => e.preventDefault()}
         >
           <DialogHeader>
             <DialogTitle>{currentSession?.title}</DialogTitle>
