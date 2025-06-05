@@ -38,6 +38,7 @@ const PAGE_HIERARCHY: Record<string, number> = {
   "/programs/create": 3,
   "/programs/editor": 3,
   "/clubs/management": 3,
+  "/meets/create": 3,
   "/checkout": 3,
   
   // Level 4 - Detail pages
