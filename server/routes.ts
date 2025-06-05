@@ -4040,8 +4040,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Not authenticated" });
       }
       
+      // Get both purchased programs and assigned programs
       const purchases = await dbStorage.getUserPurchasedPrograms(req.user!.id);
-      res.json(purchases);
+      const assignedPrograms = await dbStorage.getAssignedPrograms(req.user!.id);
+      
+      // Transform assigned programs to match purchased programs format
+      const assignedAsPurchased = await Promise.all(
+        assignedPrograms
+          .filter(assignment => assignment.status === 'accepted') // Only show accepted assignments
+          .map(async (assignment) => {
+            const program = await dbStorage.getProgram(assignment.programId);
+            const assigner = await dbStorage.getUser(assignment.assignerId);
+            
+            return {
+              id: `assigned-${assignment.id}`, // Prefix to avoid ID conflicts
+              programId: assignment.programId,
+              userId: req.user!.id,
+              price: 0,
+              isFree: true,
+              purchasedAt: assignment.assignedAt,
+              program: program,
+              creator: {
+                username: assigner?.username || 'Unknown'
+              },
+              isAssigned: true, // Flag to indicate this is an assigned program
+              assignerName: assigner?.username || 'Unknown Coach'
+            };
+          })
+      );
+      
+      // Combine purchased and assigned programs
+      const allPrograms = [...purchases, ...assignedAsPurchased];
+      
+      res.json(allPrograms);
     } catch (error) {
       console.error("Error fetching purchased programs:", error);
       res.status(500).json({ error: "Failed to fetch purchased programs" });

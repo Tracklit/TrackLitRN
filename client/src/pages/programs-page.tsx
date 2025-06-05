@@ -57,6 +57,7 @@ import {
   MoreVertical,
   Eye,
   UserPlus,
+  UserCheck,
   Trash2
 } from "lucide-react";
 
@@ -450,9 +451,19 @@ function CompactProgramCard({ program, type, creator, viewMode }: {
       
       {/* Visibility icon in bottom right corner */}
       <div className="absolute bottom-1 right-1">
-        {program.visibility === 'premium' && <Crown className="h-3 w-3 text-yellow-500" />}
-        {program.visibility === 'private' && <LockIcon className="h-3 w-3 text-muted-foreground" />}
+        {program.isAssigned && <UserCheck className="h-3 w-3 text-blue-500" />}
+        {!program.isAssigned && program.visibility === 'premium' && <Crown className="h-3 w-3 text-yellow-500" />}
+        {!program.isAssigned && program.visibility === 'private' && <LockIcon className="h-3 w-3 text-muted-foreground" />}
       </div>
+      
+      {/* Assigned program indicator */}
+      {program.isAssigned && (
+        <div className="absolute top-1 left-1">
+          <Badge variant="secondary" className="text-[8px] px-1 py-0 h-4 bg-blue-100 text-blue-700 border-blue-200">
+            Coach: {program.assignerName}
+          </Badge>
+        </div>
+      )}
 
     </Card>
   );
