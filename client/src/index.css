@@ -2,6 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Image optimization and preloading to prevent flicker */
+img {
+  image-rendering: optimizeSpeed;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: optimize-contrast;
+  -ms-interpolation-mode: nearest-neighbor;
+}
+
+/* Preload critical images to prevent loading flicker */
+.preload-images:before {
+  content: "";
+  position: absolute;
+  left: -9999px;
+  background: 
+    url('/assets/IMG_4075.JPG'),
+    url('/assets/IMG_4076.JPG'),
+    url('/assets/IMG_4077.JPG'),
+    url('/assets/IMG_4078.JPG');
+}
+
+/* Smooth image loading transitions */
+.image-fade-in {
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.image-fade-in.loaded {
+  opacity: 1;
+}
+
+/* Background image optimization */
+.bg-image-optimized {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  image-rendering: auto;
+  will-change: transform;
+}
+
 /* Prevent white background flash on notification accept button */
 .notification-accept-btn {
   background-color: var(--btn-bg) !important;
