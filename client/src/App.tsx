@@ -20,7 +20,6 @@ import {
 
 import { OnboardingFlow } from "@/components/onboarding-flow";
 import { PageTransition } from "@/components/page-transition";
-import { imagePreloader } from "@/lib/image-preloader";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
@@ -157,7 +156,7 @@ function MainApp() {
   };
   
   return (
-    <div className="min-h-screen text-foreground preload-images">
+    <div className="min-h-screen text-foreground">
       {/* Top Header Bar */}
       <Header />
       

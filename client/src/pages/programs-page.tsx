@@ -544,7 +544,7 @@ function ProgramCard({ program, type, creator, viewMode }: {
   
   return (
     <Card className="overflow-hidden transition-all hover:shadow-md">
-      <div className="h-32 relative bg-slate-100 border-b overflow-hidden programs-thumbnail">
+      <div className="h-32 relative bg-slate-100 border-b overflow-hidden">
         {program.isUploadedProgram ? (
           <div className="absolute inset-0 flex items-center justify-center flex-col">
             <FileText className="h-10 w-10 text-slate-400" />

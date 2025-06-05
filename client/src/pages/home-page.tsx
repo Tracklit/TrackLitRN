@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { HamburgerMenu } from '@/components/ui/hamburger-menu';
 import { Meet, Result, WorkoutSessionPreview } from '@shared/schema';
 import { Link } from 'wouter';
-import { AnimatedLink } from '@/components/animated-link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -347,10 +346,12 @@ export default function HomePage() {
                       <>
                         {/* Header Image - Top Half */}
                         <div 
-                          className="h-1/2 bg-thumbnail-crop relative"
+                          className="h-1/2 bg-cover bg-center bg-no-repeat relative"
                           style={{ 
                             backgroundImage: `url(${card.headerImage || trackImages[index % 4]})`,
-                            backgroundPosition: card.title === 'Sprinthia' ? 'center -85px' : 'center'
+                            backgroundPosition: card.headerImage 
+                              ? (card.title === 'Programs' || card.title === 'Tools' ? 'center' : 'center -85px')
+                              : 'center'
                           }}
                         >
                           <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-all duration-300" />
@@ -360,24 +361,7 @@ export default function HomePage() {
                         {/* Content - Bottom Half */}
                         <CardContent className="h-1/2 p-2.5 relative flex flex-col justify-center bg-background">
                           <div className="flex flex-col items-center text-center">
-                            <div className="flex items-center gap-1 mb-1">
-                              <h2 className="text-sm font-bold">{card.title}</h2>
-                              {card.title === 'Sprinthia' && (
-                                <svg className="w-3.5 h-3.5 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8z"/>
-                                  <circle cx="8" cy="8" r="1"/>
-                                  <circle cx="16" cy="8" r="1"/>
-                                  <circle cx="12" cy="6" r="1"/>
-                                  <circle cx="6" cy="12" r="1"/>
-                                  <circle cx="18" cy="12" r="1"/>
-                                  <circle cx="8" cy="16" r="1"/>
-                                  <circle cx="16" cy="16" r="1"/>
-                                  <circle cx="12" cy="18" r="1"/>
-                                  <circle cx="12" cy="12" r="1.5"/>
-                                  <path d="M8 8l4 4m0-4l4 4M6 12h12M8 16l4-4m4 4l-4-4"/>
-                                </svg>
-                              )}
-                            </div>
+                            <h2 className="text-sm font-bold mb-1">{card.title}</h2>
                             <p className="text-muted-foreground text-xs px-1 line-clamp-2 overflow-hidden">{card.description}</p>
                           </div>
                         </CardContent>
