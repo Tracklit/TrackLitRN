@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useLocation } from 'wouter';
+import { useAnimatedNavigation } from '@/hooks/use-animated-navigation';
 import { BackNavigation } from '@/components/back-navigation';
 
 import { Meet } from '@shared/schema';
@@ -35,8 +35,7 @@ interface WeatherData {
 }
 
 export default function MeetsPage() {
-  const [, setLocation] = useLocation();
-  const [isNavigating, setIsNavigating] = useState(false);
+  const { navigateWithAnimation, isNavigating } = useAnimatedNavigation();
   const [isCreateMeetOpen, setIsCreateMeetOpen] = useState(false);
   const [selectedMeet, setSelectedMeet] = useState<Meet | null>(null);
   const [tickerMessages, setTickerMessages] = useState<string[]>([]);
@@ -273,23 +272,7 @@ export default function MeetsPage() {
     }
   };
 
-  const navigateWithAnimation = (path: string) => {
-    if (isNavigating) return; // Prevent multiple navigation attempts
-    
-    setIsNavigating(true);
-    
-    // Add exit animation class to container
-    const container = document.querySelector('.page-transition-container');
-    if (container) {
-      container.classList.add('page-exit');
-    }
-    
-    // Wait for exit animation to complete before navigating
-    setTimeout(() => {
-      setLocation(path);
-      setIsNavigating(false);
-    }, 300); // Match the animation duration
-  };
+
 
   return (
     <>
