@@ -76,7 +76,8 @@ interface PageTransitionProps {
 
 export function PageTransition({ children }: PageTransitionProps) {
   const [location] = useLocation();
-  const [isNewPage, setIsNewPage] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
+  const [shouldRender, setShouldRender] = useState(true);
   const previousLocation = useRef<string>(location);
   const previousLevel = useRef<number>(getPageLevel(location));
 
@@ -85,15 +86,23 @@ export function PageTransition({ children }: PageTransitionProps) {
       const currentLevel = getPageLevel(location);
       const direction = getAnimationDirection(previousLevel.current, currentLevel);
       
-      if (direction !== 'none') {
-        setIsNewPage(true);
+      if (direction === 'right') {
+        // Going deeper - slide in from right like notification panel
+        setIsOpen(false);
+        setShouldRender(true);
         
-        // Reset animation state after animation completes
-        const timer = setTimeout(() => {
-          setIsNewPage(false);
-        }, 400);
+        // Immediately slide in
+        setTimeout(() => {
+          setIsOpen(true);
+        }, 10);
+      } else if (direction === 'left') {
+        // Going back - slide out to right
+        setIsOpen(false);
         
-        return () => clearTimeout(timer);
+        setTimeout(() => {
+          setShouldRender(true);
+          setIsOpen(true);
+        }, 300);
       }
       
       previousLocation.current = location;
@@ -101,18 +110,16 @@ export function PageTransition({ children }: PageTransitionProps) {
     }
   }, [location]);
 
-  const currentLevel = getPageLevel(location);
-  const direction = getAnimationDirection(previousLevel.current, currentLevel);
-  
+  if (!shouldRender) return null;
+
   return (
     <div 
-      className={`${
-        isNewPage && direction === 'right' 
-          ? 'animate-in slide-in-from-right-1 duration-300' 
-          : isNewPage && direction === 'left'
-          ? 'animate-in slide-in-from-left-1 duration-300'
-          : ''
-      }`}
+      className="fixed inset-0 w-full h-full bg-background"
+      style={{
+        transition: 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+        transform: isOpen ? 'translateX(0%)' : 'translateX(100%)',
+        zIndex: 50
+      }}
     >
       {children}
     </div>
