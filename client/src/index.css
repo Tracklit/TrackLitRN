@@ -530,49 +530,25 @@ article::-webkit-scrollbar,
   background-color: hsl(var(--background)) !important;
 }
 
-/* Page transition animations with flash prevention */
+/* Page transition animations */
 @keyframes slideOutLeft {
-  from { 
-    transform: translateX(0); 
-    opacity: 1;
-  }
-  to { 
-    transform: translateX(-100%); 
-    opacity: 0;
-  }
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
 }
 
 @keyframes slideOutRight {
-  from { 
-    transform: translateX(0); 
-    opacity: 1;
-  }
-  to { 
-    transform: translateX(100%); 
-    opacity: 0;
-  }
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
 }
 
 @keyframes slideInRight {
-  from { 
-    transform: translateX(100%); 
-    opacity: 0;
-  }
-  to { 
-    transform: translateX(0); 
-    opacity: 1;
-  }
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
 }
 
 @keyframes slideInLeft {
-  from { 
-    transform: translateX(-100%); 
-    opacity: 0;
-  }
-  to { 
-    transform: translateX(0); 
-    opacity: 1;
-  }
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
 }
 
 .page-transition-container {
@@ -580,55 +556,26 @@ article::-webkit-scrollbar,
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: var(--background);
 }
 
 .page-enter-right {
   animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  opacity: 0;
-  transform: translateX(100%);
 }
 
 .page-enter-left {
   animation: slideInLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  opacity: 0;
-  transform: translateX(-100%);
 }
 
 .page-exit-left {
   animation: slideOutLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  z-index: 100;
-  background: var(--background);
 }
 
 .page-exit-right {
   animation: slideOutRight 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  z-index: 100;
-  background: var(--background);
 }
 
 .page-transition-container.animating {
   overflow: hidden;
-  background: var(--background);
-}
-
-.page-transition-container.animating > * {
-  opacity: 0;
-}
-
-.page-transition-container.animating .page-exit-left,
-.page-transition-container.animating .page-exit-right,
-.page-transition-container.animating .page-enter-left,
-.page-transition-container.animating .page-enter-right {
-  opacity: 1;
 }
 
 
