@@ -72,7 +72,7 @@ export function BackNavigation({ href, className = "" }: BackNavigationProps) {
       className={`mb-4 p-2 h-8 w-8 ${className}`}
       onClick={() => window.history.back()}
     >
-      <ChevronLeft className="h-4 w-4" />
+      <ChevronLeft className="h-6 w-6" />
     </Button>
   );
 }
