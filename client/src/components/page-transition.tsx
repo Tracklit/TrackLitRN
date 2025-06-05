@@ -1,154 +1,104 @@
-import { useState, useEffect, useRef } from "react";
-import { useLocation } from "wouter";
-
-// Define page hierarchy levels
-const PAGE_HIERARCHY: Record<string, number> = {
-  "/": 0, // Dashboard - highest level
-  "/dashboard": 0,
-  
-  // Level 1 - Main sections
-  "/tools": 1,
-  "/training-tools": 1,
-  "/meets": 1,
-  "/results": 1,
-  "/programs": 1,
-  "/clubs": 1,
-  "/messages": 1,
-  "/friends": 1,
-  "/athletes": 1,
-  "/coaches": 1,
-  "/practice": 1,
-  "/profile": 1,
-  "/spikes": 1,
-  "/subscription": 1,
-  "/sprinthia": 1,
-  
-  // Level 2 - Tool pages
-  "/tools/stopwatch": 2,
-  "/tools/start-gun": 2,
-  "/tools/journal": 2,
-  "/tools/pace-calculator": 2,
-  "/tools/photo-finish": 2,
-  "/tools/exercise-library": 2,
-  "/tools/rehabilitation": 2,
-  "/tools/sprinthia": 2,
-  
-  // Level 3 - Sub-pages
-  "/tools/exercise-library/add": 3,
-  "/programs/create": 3,
-  "/programs/editor": 3,
-  "/clubs/management": 3,
-  "/meets/create": 3,
-  "/checkout": 3,
-  
-  // Level 4 - Detail pages
-  "/programs/": 4, // Will match /programs/123
-  "/clubs/": 4, // Will match /clubs/123
-  "/athlete/": 4, // Will match /athlete/123
-};
-
-function getPageLevel(path: string): number {
-  // Exact match first
-  if (PAGE_HIERARCHY[path] !== undefined) {
-    return PAGE_HIERARCHY[path];
-  }
-  
-  // Pattern matching for dynamic routes
-  for (const [pattern, level] of Object.entries(PAGE_HIERARCHY)) {
-    if (pattern.endsWith("/") && path.startsWith(pattern)) {
-      return level;
-    }
-  }
-  
-  // Default level for unknown pages
-  return 2;
-}
-
-function getAnimationDirection(fromLevel: number, toLevel: number): 'overlay-in' | 'overlay-out' | 'none' {
-  if (fromLevel < toLevel) return 'overlay-in'; // Going deeper - overlay slides in from right
-  if (fromLevel > toLevel) return 'overlay-out';  // Going back - overlay slides out to right
-  return 'none'; // Same level - no animation
-}
+import { motion, AnimatePresence } from 'framer-motion';
+import { useLocation } from 'wouter';
+import { ReactNode } from 'react';
 
 interface PageTransitionProps {
-  children: React.ReactNode;
+  children: ReactNode;
+  className?: string;
 }
 
-export function PageTransition({ children }: PageTransitionProps) {
+// Define page hierarchy for determining animation direction
+const pageHierarchy: Record<string, number> = {
+  '/': 0,
+  '/dashboard': 0,
+  '/programs': 0,
+  '/meets': 0,
+  '/profile': 0,
+  '/social': 0,
+  '/chat': 0,
+  '/notifications': 0,
+  '/meets/create': 1,
+  '/programs/create': 1,
+  '/programs/edit': 1,
+  '/programs/view': 1,
+  '/sessions': 1,
+  '/workout': 2,
+  '/workout/timer': 3,
+};
+
+// Animation variants for different transition types
+const slideVariants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? '100%' : '-100%',
+    opacity: 0,
+    scale: 0.95,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+    scale: 1,
+  },
+  exit: (direction: number) => ({
+    x: direction < 0 ? '100%' : '-100%',
+    opacity: 0,
+    scale: 0.95,
+  }),
+};
+
+const scaleVariants = {
+  enter: {
+    scale: 0.9,
+    opacity: 0,
+    y: 20,
+  },
+  center: {
+    scale: 1,
+    opacity: 1,
+    y: 0,
+  },
+  exit: {
+    scale: 1.05,
+    opacity: 0,
+    y: -20,
+  },
+};
+
+// Transition configuration
+const transition = {
+  type: 'tween',
+  ease: [0.25, 0.46, 0.45, 0.94],
+  duration: 0.4,
+};
+
+export function PageTransition({ children, className = '' }: PageTransitionProps) {
   const [location] = useLocation();
-  const [animationClass, setAnimationClass] = useState('');
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [overlayContent, setOverlayContent] = useState<React.ReactNode>(null);
-  const [baseContent, setBaseContent] = useState(children);
-  const [shouldShowOverlay, setShouldShowOverlay] = useState(false);
-  const previousLocation = useRef<string>(location);
-  const previousLevel = useRef<number>(getPageLevel(location));
-
-  useEffect(() => {
-    if (previousLocation.current !== location) {
-      const currentLevel = getPageLevel(location);
-      const direction = getAnimationDirection(previousLevel.current, currentLevel);
-      
-      if (direction === 'overlay-in') {
-        // Going deeper - prepare overlay content but don't show it yet
-        setIsAnimating(true);
-        setOverlayContent(children);
-        
-        // Use requestAnimationFrame to ensure content is set before showing
-        requestAnimationFrame(() => {
-          setShouldShowOverlay(true);
-          setAnimationClass('overlay-slide-in');
-          
-          setTimeout(() => {
-            // Animation complete - replace base content and hide overlay
-            setBaseContent(children);
-            setOverlayContent(null);
-            setShouldShowOverlay(false);
-            setAnimationClass('');
-            setIsAnimating(false);
-          }, 300);
-        });
-      } else if (direction === 'overlay-out') {
-        // Going back - set new base content and slide out current overlay
-        setIsAnimating(true);
-        setBaseContent(children);
-        setAnimationClass('overlay-slide-out');
-        
-        setTimeout(() => {
-          setOverlayContent(null);
-          setShouldShowOverlay(false);
-          setAnimationClass('');
-          setIsAnimating(false);
-        }, 300);
-      } else {
-        // No animation or same level
-        setBaseContent(children);
-        setOverlayContent(null);
-        setShouldShowOverlay(false);
-      }
-      
-      previousLocation.current = location;
-      previousLevel.current = currentLevel;
-    } else if (!isAnimating) {
-      // Update content when location hasn't changed and not animating
-      if (overlayContent && shouldShowOverlay) {
-        setOverlayContent(children);
-      } else {
-        setBaseContent(children);
-      }
-    }
-  }, [location, children, isAnimating]);
-
+  
+  // Determine if this is a subpage navigation
+  const currentLevel = pageHierarchy[location] ?? 0;
+  const isSubpage = currentLevel > 0;
+  
+  // Use scale animation for subpages, slide for same-level navigation
+  const variants = isSubpage ? scaleVariants : slideVariants;
+  
   return (
-    <div className={`page-transition-container ${isAnimating ? 'animating' : ''}`}>
-      <div className="base-content">
-        {baseContent}
-      </div>
-      {overlayContent && shouldShowOverlay && (
-        <div className={`overlay-content ${animationClass}`}>
-          {overlayContent}
-        </div>
-      )}
-    </div>
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={location}
+        custom={1}
+        variants={variants}
+        initial="enter"
+        animate="center"
+        exit="exit"
+        transition={transition}
+        className={`${className} w-full h-full`}
+        style={{
+          position: 'relative',
+          width: '100%',
+          height: '100%',
+        }}
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
   );
 }

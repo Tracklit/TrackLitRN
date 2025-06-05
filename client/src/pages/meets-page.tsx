@@ -36,24 +36,6 @@ interface WeatherData {
 }
 
 export default function MeetsPage() {
-  const [, navigate] = useLocation();
-  const [isNavigating, setIsNavigating] = useState(false);
-
-  const navigateWithAnimation = (to: string) => {
-    if (isNavigating) return;
-    
-    setIsNavigating(true);
-    
-    // Trigger exit animation
-    document.body.classList.add("page-exit");
-
-    // Wait for animation to finish before navigating
-    setTimeout(() => {
-      navigate(to);
-      document.body.classList.remove("page-exit");
-      setIsNavigating(false);
-    }, 300);
-  };
   const [isCreateMeetOpen, setIsCreateMeetOpen] = useState(false);
   const [selectedMeet, setSelectedMeet] = useState<Meet | null>(null);
   const [tickerMessages, setTickerMessages] = useState<string[]>([]);
