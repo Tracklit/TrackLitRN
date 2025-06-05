@@ -59,6 +59,7 @@ export default function HomePage() {
     return saved !== null ? JSON.parse(saved) : true;
   });
   const [activeSessionIndex, setActiveSessionIndex] = useState(0);
+  const [isTextVisible, setIsTextVisible] = useState(true);
 
   const toggleTickerVisibility = (visible: boolean) => {
     setIsTickerVisible(visible);
@@ -245,7 +246,7 @@ export default function HomePage() {
                       <X className="h-4 w-4" />
                     </Button>
                     
-                    <div className="transition-opacity duration-500 ease-in-out">
+                    <div className={`transition-opacity duration-500 ease-in-out ${isTextVisible ? 'opacity-100' : 'opacity-0'}`}>
                       {isLoadingPreviews ? (
                         <div className="p-3">
                           <div className="flex items-center gap-2">
@@ -283,18 +284,20 @@ export default function HomePage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex justify-end">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleTickerVisibility(!isTickerVisible);
-                      }}
-                    >
-                      <Globe className="h-4 w-4" />
-                    </Button>
+                  <div className="flex justify-end mb-2">
+                    <div className="bg-card rounded-lg border">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleTickerVisibility(!isTickerVisible);
+                        }}
+                      >
+                        <Globe className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
