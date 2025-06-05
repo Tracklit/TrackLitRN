@@ -76,8 +76,7 @@ interface PageTransitionProps {
 
 export function PageTransition({ children }: PageTransitionProps) {
   const [location] = useLocation();
-  const [animationClass, setAnimationClass] = useState('');
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [isNewPage, setIsNewPage] = useState(false);
   const previousLocation = useRef<string>(location);
   const previousLevel = useRef<number>(getPageLevel(location));
 
@@ -87,21 +86,14 @@ export function PageTransition({ children }: PageTransitionProps) {
       const direction = getAnimationDirection(previousLevel.current, currentLevel);
       
       if (direction !== 'none') {
-        setIsAnimating(true);
+        setIsNewPage(true);
         
-        // Set exit animation for current content
-        setAnimationClass(`page-exit-${direction === 'right' ? 'left' : 'right'}`);
+        // Reset animation state after animation completes
+        const timer = setTimeout(() => {
+          setIsNewPage(false);
+        }, 400);
         
-        // After a brief delay, switch to enter animation
-        setTimeout(() => {
-          setAnimationClass(`page-enter-${direction}`);
-          
-          // Complete animation
-          setTimeout(() => {
-            setAnimationClass('');
-            setIsAnimating(false);
-          }, 300);
-        }, 50);
+        return () => clearTimeout(timer);
       }
       
       previousLocation.current = location;
@@ -109,8 +101,19 @@ export function PageTransition({ children }: PageTransitionProps) {
     }
   }, [location]);
 
+  const currentLevel = getPageLevel(location);
+  const direction = getAnimationDirection(previousLevel.current, currentLevel);
+  
   return (
-    <div className={`page-transition-container ${animationClass} ${isAnimating ? 'animating' : ''}`}>
+    <div 
+      className={`${
+        isNewPage && direction === 'right' 
+          ? 'animate-in slide-in-from-right-1 duration-300' 
+          : isNewPage && direction === 'left'
+          ? 'animate-in slide-in-from-left-1 duration-300'
+          : ''
+      }`}
+    >
       {children}
     </div>
   );
