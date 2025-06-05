@@ -89,7 +89,7 @@ export function PageTransition({ children }: PageTransitionProps) {
   const variants = {
     initial: (direction: number) => ({
       x: direction > 0 ? '30%' : '-30%',
-      opacity: 0
+      opacity: 1
     }),
     animate: {
       x: 0,
@@ -97,7 +97,7 @@ export function PageTransition({ children }: PageTransitionProps) {
     },
     exit: (direction: number) => ({
       x: direction > 0 ? '-15%' : '15%',
-      opacity: 0
+      opacity: 1
     })
   };
 
@@ -106,7 +106,7 @@ export function PageTransition({ children }: PageTransitionProps) {
 
   return (
     <div className="relative w-full overflow-hidden">
-      <AnimatePresence initial={false} custom={direction}>
+      <AnimatePresence mode="wait" initial={false} custom={direction}>
         <motion.div
           key={location}
           custom={direction}
