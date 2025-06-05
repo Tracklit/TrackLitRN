@@ -361,7 +361,7 @@ function CompactProgramCard({ program, type, creator, viewMode }: {
   
   return (
     <Card className="overflow-hidden transition-all hover:shadow-md h-24 bg-slate-800/95 border-slate-700/50 relative cursor-pointer hover:bg-slate-800"
-          onClick={() => window.location.href = `/programs/${program.id}`}>
+          onClick={() => window.location.href = `/programs/${program.programId || program.id}`}>
       
       <CardHeader className="p-3 pb-2">
         <div className="flex justify-between items-start">
@@ -741,10 +741,10 @@ function ProgramCard({ program, type, creator, viewMode }: {
         ) : viewMode === "purchased" ? (
           <>
             <Button variant="ghost" size="sm" asChild>
-              <Link href={`/programs/${program.id}`}>Details</Link>
+              <Link href={`/programs/${program.programId || program.id}`}>Details</Link>
             </Button>
             <Button variant="default" size="sm" asChild>
-              <Link href={`/programs/${program.id}`}>Continue</Link>
+              <Link href={`/programs/${program.programId || program.id}`}>Continue</Link>
             </Button>
           </>
         ) : (
