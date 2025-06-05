@@ -4054,28 +4054,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('Filtered assignments:', filteredAssignments);
       
+      // Deduplicate assignments by programId, keeping the latest one
+      const deduplicatedAssignments = filteredAssignments.reduce((acc, assignment) => {
+        const existing = acc.find(a => a.programId === assignment.programId);
+        if (!existing || assignment.assignedAt > existing.assignedAt) {
+          acc = acc.filter(a => a.programId !== assignment.programId);
+          acc.push(assignment);
+        }
+        return acc;
+      }, [] as typeof filteredAssignments);
+      
+      console.log('Deduplicated assignments:', deduplicatedAssignments);
+      
       const assignedAsPurchased = await Promise.all(
-        filteredAssignments
+        deduplicatedAssignments
           .map(async (assignment) => {
-            const program = await dbStorage.getProgram(assignment.programId);
-            const assigner = await dbStorage.getUser(assignment.assignerId);
-            
-            return {
-              id: `assigned-${assignment.id}`, // Prefix to avoid ID conflicts
-              programId: assignment.programId,
-              userId: req.user!.id,
-              price: 0,
-              isFree: true,
-              purchasedAt: assignment.assignedAt,
-              program: program,
-              creator: {
-                username: assigner?.username || 'Unknown'
-              },
-              isAssigned: true, // Flag to indicate this is an assigned program
-              assignerName: assigner?.username || 'Unknown Coach'
-            };
+            try {
+              const program = await dbStorage.getProgram(assignment.programId);
+              const assigner = await dbStorage.getUser(assignment.assignerId);
+              
+              if (!program) {
+                console.error(`Program not found for assignment ${assignment.id}, programId: ${assignment.programId}`);
+                return null;
+              }
+              
+              return {
+                id: `assigned-${assignment.id}`, // Prefix to avoid ID conflicts
+                programId: assignment.programId,
+                userId: req.user!.id,
+                price: 0,
+                isFree: true,
+                purchasedAt: assignment.assignedAt,
+                program: program,
+                creator: {
+                  username: assigner?.username || 'Unknown'
+                },
+                isAssigned: true, // Flag to indicate this is an assigned program
+                assignerName: assigner?.username || 'Unknown Coach'
+              };
+            } catch (error) {
+              console.error(`Error processing assignment ${assignment.id}:`, error);
+              return null;
+            }
           })
-      );
+      ).then(results => results.filter(r => r !== null));
       
       // Combine purchased and assigned programs
       const allPrograms = [...purchases, ...assignedAsPurchased];
