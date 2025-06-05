@@ -115,8 +115,8 @@ export default function ProgramsPage() {
   
   const filteredPurchasedPrograms = Array.isArray(purchasedPrograms)
     ? purchasedPrograms.filter(program => 
-        program.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        program.description?.toLowerCase().includes(searchQuery.toLowerCase())
+        program.program?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        program.program?.description?.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : [];
   
