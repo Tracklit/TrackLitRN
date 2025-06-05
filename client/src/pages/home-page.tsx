@@ -159,9 +159,9 @@ export default function HomePage() {
         setActiveSessionIndex(prev => 
           prev >= (sessionPreviews.length - 1) ? 0 : prev + 1
         );
-        setTimeout(() => setIsAnimating(false), 50);
-      }, 300);
-    }, 5000);
+        setTimeout(() => setIsAnimating(false), 60);
+      }, 360);
+    }, 7000);
     
     return () => clearInterval(interval);
   }, [sessionPreviews]);
@@ -265,7 +265,7 @@ export default function HomePage() {
                         </div>
                       ) : sessionPreviews && sessionPreviews.length > 0 ? (
                         <div 
-                          className={`cursor-pointer p-3 transition-transform duration-300 ease-in-out ${isAnimating ? 'translate-x-full' : 'translate-x-0'}`}
+                          className={`cursor-pointer p-3 transition-transform duration-[360ms] ease-in-out ${isAnimating ? 'translate-x-full' : 'translate-x-0'}`}
                           onClick={() => openSessionDetails(sessionPreviews[activeSessionIndex])}
                           key={activeSessionIndex}
                         >
