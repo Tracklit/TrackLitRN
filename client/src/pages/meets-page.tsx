@@ -36,6 +36,7 @@ interface WeatherData {
 
 export default function MeetsPage() {
   const [, setLocation] = useLocation();
+  const [isNavigating, setIsNavigating] = useState(false);
   const [isCreateMeetOpen, setIsCreateMeetOpen] = useState(false);
   const [selectedMeet, setSelectedMeet] = useState<Meet | null>(null);
   const [tickerMessages, setTickerMessages] = useState<string[]>([]);
@@ -272,6 +273,24 @@ export default function MeetsPage() {
     }
   };
 
+  const navigateWithAnimation = (path: string) => {
+    if (isNavigating) return; // Prevent multiple navigation attempts
+    
+    setIsNavigating(true);
+    
+    // Add exit animation class to container
+    const container = document.querySelector('.page-transition-container');
+    if (container) {
+      container.classList.add('page-exit');
+    }
+    
+    // Wait for exit animation to complete before navigating
+    setTimeout(() => {
+      setLocation(path);
+      setIsNavigating(false);
+    }, 300); // Match the animation duration
+  };
+
   return (
     <>
       <div className="min-h-screen bg-background text-foreground">
@@ -334,8 +353,9 @@ export default function MeetsPage() {
                 </TabsList>
                 
                 <Button
-                  onClick={() => setLocation('/meets/create')}
+                  onClick={() => navigateWithAnimation('/meets/create')}
                   className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                  disabled={isNavigating}
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Create Meet
@@ -457,8 +477,9 @@ export default function MeetsPage() {
                   <Card className="overflow-hidden bg-card border border-border text-center p-8">
                     <p className="text-muted-foreground mb-4">No upcoming meets</p>
                     <Button
-                      onClick={() => setLocation('/meets/create')}
+                      onClick={() => navigateWithAnimation('/meets/create')}
                       className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                      disabled={isNavigating}
                     >
                       Create Your First Meet
                     </Button>

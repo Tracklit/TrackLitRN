@@ -590,4 +590,19 @@ article::-webkit-scrollbar,
   overflow: hidden;
 }
 
+.page-transition-container.page-exit {
+  animation: pageExitFade 0.3s ease-out forwards;
+}
+
+@keyframes pageExitFade {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
 
