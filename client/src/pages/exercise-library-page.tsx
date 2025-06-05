@@ -171,46 +171,9 @@ export default function ExerciseLibraryPage() {
     }
   });
 
-  const handleUpload = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const youtubeUrl = formData.get('youtubeUrl') as string;
-    const file = formData.get('file') as File;
-    
-    // Check if YouTube URL is provided
-    if (youtubeUrl && youtubeUrl.trim()) {
-      const data = {
-        name: formData.get('name'),
-        description: formData.get('description'),
-        youtubeUrl: youtubeUrl.trim(),
-        tags: formData.get('tags'),
-        isPublic: formData.get('isPublic') === 'on'
-      };
-      youtubeMutation.mutate(data);
-    } else if (file && file.size > 0) {
-      // Handle file upload
-      uploadMutation.mutate(formData);
-    } else {
-      toast({
-        title: "Error",
-        description: "Please provide either a file or YouTube URL",
-        variant: "destructive"
-      });
-    }
-  };
 
-  const handleYouTube = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const data = {
-      name: formData.get('name'),
-      description: formData.get('description'),
-      youtubeUrl: formData.get('youtubeUrl'),
-      tags: formData.get('tags'),
-      isPublic: formData.get('isPublic') === 'on'
-    };
-    youtubeMutation.mutate(data);
-  };
+
+
 
   const openFullscreen = (exercise: ExerciseLibraryItem) => {
     setFullscreenVideo(exercise);
@@ -347,104 +310,7 @@ export default function ExerciseLibraryPage() {
           </div>
         </div>
 
-        {/* Upload Dialog */}
-        <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Add Video</DialogTitle>
-            </DialogHeader>
-            
-            <form onSubmit={handleUpload} className="space-y-4">
-              <div>
-                <Label htmlFor="file">Video/Image File</Label>
-                <Input
-                  id="file"
-                  name="file"
-                  type="file"
-                  accept="video/*,image/*"
-                  disabled={!limits?.uploads.canUpload}
-                />
-                {limits && (
-                  <div className="mt-2">
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Usage: {limits.uploads.current}/{limits.uploads.limit === -1 ? '∞' : limits.uploads.limit}</span>
-                    </div>
-                    {limits.uploads.limit !== -1 && (
-                      <Progress 
-                        value={(limits.uploads.current / limits.uploads.limit) * 100} 
-                        className="h-1 mt-1"
-                      />
-                    )}
-                  </div>
-                )}
-              </div>
 
-              <div>
-                <Label htmlFor="youtubeUrl">YouTube URL (Optional)</Label>
-                <Input 
-                  id="youtubeUrl" 
-                  name="youtubeUrl" 
-                  placeholder="https://www.youtube.com/watch?v=..."
-                  type="url"
-                />
-                {limits && (
-                  <div className="mt-2">
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>YouTube Usage: {limits.youtube.current}/{limits.youtube.limit === -1 ? '∞' : limits.youtube.limit}</span>
-                    </div>
-                    {limits.youtube.limit !== -1 && (
-                      <Progress 
-                        value={(limits.youtube.current / limits.youtube.limit) * 100} 
-                        className="h-1 mt-1"
-                      />
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="name">Exercise Name</Label>
-                <Input 
-                  id="name" 
-                  name="name" 
-                  required 
-                  placeholder="e.g., Sprint intervals"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="description">Description (Optional)</Label>
-                <Textarea 
-                  id="description" 
-                  name="description" 
-                  placeholder="Describe this exercise..."
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="tags">Tags (Optional)</Label>
-                <Input 
-                  id="tags" 
-                  name="tags" 
-                  placeholder="sprint, speed, intervals"
-                />
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <input type="checkbox" id="isPublic" name="isPublic" />
-                <Label htmlFor="isPublic">Make public</Label>
-              </div>
-
-              <Button 
-                type="submit" 
-                className="w-full"
-                disabled={uploadMutation.isPending}
-              >
-                {uploadMutation.isPending ? "Adding..." : "Add Exercise"}
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
 
         {/* Custom Share Modal */}
         {shareDialogOpen && (
@@ -882,7 +748,6 @@ export default function ExerciseLibraryPage() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => setUploadDialogOpen(true)}
                     className="h-8 w-8 p-0"
                   >
                     <Plus className="h-4 w-4" />
