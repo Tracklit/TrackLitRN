@@ -161,98 +161,111 @@ export function AssignProgramDialog({
   };
   
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button 
-          variant={variant} 
-          size={size} 
-          className={`${fullWidth ? "w-full" : ""} ${className}`}
-        >
-          <Users className="h-3.5 w-3.5 mr-1.5" />
-          {buttonText}
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] bg-slate-900 border border-slate-700">
-        <DialogHeader>
-          <DialogTitle>Assign Program to Athlete</DialogTitle>
-          <DialogDescription>
-            Select an athlete to assign "{program.title}" to. They will receive a notification and can access it from their dashboard.
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <label htmlFor="assignee" className="text-sm font-medium">
-              Select Athlete
-            </label>
-            {isLoading ? (
-              <div className="flex items-center justify-center h-10">
-                <Loader2 className="h-4 w-4 animate-spin text-primary" />
-              </div>
-            ) : (!potentialAssignees || (potentialAssignees.length === 0 && !user)) ? (
-              <div className="text-sm text-muted-foreground">
-                No eligible athletes found. Invite athletes to your club to assign programs to them.
-              </div>
-            ) : (
-              <Select value={selectedUser} onValueChange={setSelectedUser}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select an athlete" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Myself</SelectLabel>
-                    <SelectItem value="myself">Assign to myself</SelectItem>
-                  </SelectGroup>
-                  
-                  {Array.isArray(potentialAssignees) && potentialAssignees.length > 0 && (
-                    <SelectGroup>
-                      <SelectLabel>Other Athletes</SelectLabel>
-                      {potentialAssignees.map((user: any) => (
-                        <SelectItem key={user.id} value={user.id.toString()}>
-                          {user.name || user.username}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  )}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
+    <>
+      <Button 
+        variant={variant} 
+        size={size} 
+        className={`${fullWidth ? "w-full" : ""} ${className}`}
+        onClick={() => setIsOpen(true)}
+      >
+        <Users className="h-3.5 w-3.5 mr-1.5" />
+        {buttonText}
+      </Button>
+
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Background overlay */}
+          <div 
+            className="absolute inset-0 bg-black/80" 
+            onClick={() => setIsOpen(false)}
+          />
           
-          <div className="grid gap-2">
-            <label htmlFor="notes" className="text-sm font-medium">
-              Notes (Optional)
-            </label>
-            <Textarea
-              id="notes"
-              placeholder="Add instructions or notes for the athlete..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="min-h-[100px]"
-            />
+          {/* Modal content */}
+          <div className="relative bg-slate-900 border border-slate-700 rounded-lg shadow-lg w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="mb-6">
+                <h2 className="text-lg font-semibold">Assign Program to Athlete</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Select an athlete to assign "{program.title}" to. They will receive a notification and can access it from their dashboard.
+                </p>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label htmlFor="assignee" className="text-sm font-medium">
+                    Select Athlete
+                  </label>
+                  {isLoading ? (
+                    <div className="flex items-center justify-center h-10">
+                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                    </div>
+                  ) : (!potentialAssignees || (potentialAssignees.length === 0 && !user)) ? (
+                    <div className="text-sm text-muted-foreground">
+                      No eligible athletes found. Invite athletes to your club to assign programs to them.
+                    </div>
+                  ) : (
+                    <Select value={selectedUser} onValueChange={setSelectedUser}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select an athlete" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Myself</SelectLabel>
+                          <SelectItem value="myself">Assign to myself</SelectItem>
+                        </SelectGroup>
+                        
+                        {Array.isArray(potentialAssignees) && potentialAssignees.length > 0 && (
+                          <SelectGroup>
+                            <SelectLabel>Other Athletes</SelectLabel>
+                            {potentialAssignees.map((user: any) => (
+                              <SelectItem key={user.id} value={user.id.toString()}>
+                                {user.name || user.username}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <label htmlFor="notes" className="text-sm font-medium">
+                    Notes (Optional)
+                  </label>
+                  <Textarea
+                    id="notes"
+                    placeholder="Add instructions or notes for the athlete..."
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    className="min-h-[100px]"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-end gap-3 mt-6">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleSubmit} 
+                  disabled={isSubmitting || !selectedUser}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Assigning...
+                    </>
+                  ) : "Assign Program"}
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
-        
-        <DialogFooter>
-          <Button 
-            variant="outline" 
-            onClick={() => setIsOpen(false)}
-          >
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleSubmit} 
-            disabled={isSubmitting || !selectedUser}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Assigning...
-              </>
-            ) : "Assign Program"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      )}
+    </>
   );
 }
