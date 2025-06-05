@@ -217,7 +217,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen text-foreground pb-16">
-      <main className="pt-2 px-4 container mx-auto max-w-7xl">
+      <main className="px-4 container mx-auto max-w-7xl">
         {/* Quote removed as requested */}
         
         {/* Session Preview Ticker with slide animation */}
@@ -239,7 +239,7 @@ export default function HomePage() {
               {isTickerVisible ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
             </Button>
             
-            <div className="py-2 pb-7 flex items-center">
+            <div className="py-1 pb-3 flex items-center">
               {isLoadingPreviews ? (
                 <div className="flex items-center gap-2">
                   <Skeleton className="h-6 w-6 rounded-full" />
