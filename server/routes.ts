@@ -4047,7 +4047,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Transform assigned programs to match purchased programs format
       const assignedAsPurchased = await Promise.all(
         assignedPrograms
-          .filter(assignment => assignment.status === 'accepted') // Only show accepted assignments
+          .filter(assignment => 
+            assignment.status === 'accepted' || 
+            (assignment.assignerId === req.user!.id && assignment.assigneeId === req.user!.id) // Show self-assignments regardless of status
+          )
           .map(async (assignment) => {
             const program = await dbStorage.getProgram(assignment.programId);
             const assigner = await dbStorage.getUser(assignment.assignerId);
@@ -5373,11 +5376,15 @@ User message: ${content}`;
       }
 
       // Create program assignment
+      // Auto-accept if assigning to yourself
+      const status = assigneeId === assignerId ? 'accepted' : 'pending';
+      
       const assignment = await dbStorage.createProgramAssignment({
         programId,
         assigneeId,
         assignerId,
-        notes
+        notes,
+        status
       });
 
       // Create notification for the assignee
