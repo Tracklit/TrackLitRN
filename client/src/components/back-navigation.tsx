@@ -69,7 +69,7 @@ export function BackNavigation({ href, className = "" }: BackNavigationProps) {
     <Button
       variant="ghost"
       size="sm"
-      className={`mb-4 p-2 h-8 w-8 ${className}`}
+      className={`mb-4 p-2 h-10 w-10 ${className}`}
       onClick={() => window.history.back()}
     >
       <ChevronLeft className="h-6 w-6" />
