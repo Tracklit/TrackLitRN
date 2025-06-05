@@ -77,7 +77,8 @@ export default function CreateMeetPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <PageTransition>
+      <div className="min-h-screen bg-background text-foreground">
       <main className="pt-16 pb-6">
         <div className="max-w-2xl mx-auto px-4">
           <BackNavigation />
@@ -212,6 +213,7 @@ export default function CreateMeetPage() {
           </Card>
         </div>
       </main>
-    </div>
+      </div>
+    </PageTransition>
   );
 }
