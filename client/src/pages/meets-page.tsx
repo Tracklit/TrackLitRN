@@ -333,7 +333,7 @@ export default function MeetsPage() {
                 
                 <Button
                   onClick={() => window.location.href = '/meets/create'}
-                  className="bg-orange-500 hover:bg-orange-600 text-white"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Create Meet
@@ -456,7 +456,7 @@ export default function MeetsPage() {
                     <p className="text-muted-foreground mb-4">No upcoming meets</p>
                     <Button
                       onClick={() => window.location.href = '/meets/create'}
-                      className="bg-orange-500 hover:bg-orange-600 text-white"
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground"
                     >
                       Create Your First Meet
                     </Button>
