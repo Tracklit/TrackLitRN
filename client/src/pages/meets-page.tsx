@@ -332,8 +332,8 @@ export default function MeetsPage() {
                 </TabsList>
                 
                 <Button
-                  onClick={() => setIsCreateMeetOpen(true)}
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                  onClick={() => window.location.href = '/meets/create'}
+                  className="bg-orange-500 hover:bg-orange-600 text-white"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Create Meet
@@ -452,11 +452,11 @@ export default function MeetsPage() {
                     ))}
                   </div>
                 ) : (
-                  <Card className="overflow-hidden bg-[#010a18] border border-blue-800/60 text-center p-8">
-                    <p className="text-blue-300 mb-4">No upcoming meets</p>
+                  <Card className="overflow-hidden bg-card border border-border text-center p-8">
+                    <p className="text-muted-foreground mb-4">No upcoming meets</p>
                     <Button
-                      onClick={() => setIsCreateMeetOpen(true)}
-                      className="bg-amber-500 hover:bg-amber-600 text-white"
+                      onClick={() => window.location.href = '/meets/create'}
+                      className="bg-orange-500 hover:bg-orange-600 text-white"
                     >
                       Create Your First Meet
                     </Button>
@@ -759,10 +759,7 @@ export default function MeetsPage() {
         </main>
       </div>
       
-      <CreateMeetModal
-        isOpen={isCreateMeetOpen}
-        onClose={() => setIsCreateMeetOpen(false)}
-      />
+
 
       {/* Athlete Search Modal */}
       <Dialog open={isShareModalOpen} onOpenChange={setIsShareModalOpen}>
