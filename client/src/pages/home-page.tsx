@@ -388,7 +388,7 @@ export default function HomePage() {
           onClick={() => setIsSessionModalOpen(false)}
         >
           <div 
-            className="bg-white dark:bg-slate-900 rounded-lg shadow-2xl border border-border p-6 mx-4"
+            className="bg-slate-800 rounded-lg shadow-2xl border border-slate-600 p-6 mx-4"
             style={{
               width: '100%',
               maxWidth: '28rem',
@@ -400,12 +400,12 @@ export default function HomePage() {
           >
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-foreground">
+              <h2 className="text-lg font-semibold text-white">
                 {currentSession?.title}
               </h2>
               <button
                 onClick={() => setIsSessionModalOpen(false)}
-                className="text-muted-foreground hover:text-foreground p-1"
+                className="text-gray-300 hover:text-white p-1"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -414,33 +414,33 @@ export default function HomePage() {
             {/* Content */}
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <div className="rounded-full bg-primary/10 h-8 w-8 flex items-center justify-center flex-shrink-0">
-                  <UserCircle className="h-4 w-4 text-primary" />
+                <div className="rounded-full bg-blue-600/20 h-8 w-8 flex items-center justify-center flex-shrink-0">
+                  <UserCircle className="h-4 w-4 text-blue-400" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-foreground">{currentSession?.user?.name}</p>
-                  <p className="text-xs text-muted-foreground">@{currentSession?.user?.username}</p>
+                  <p className="text-sm font-medium text-white">{currentSession?.user?.name}</p>
+                  <p className="text-xs text-gray-300">@{currentSession?.user?.username}</p>
                 </div>
               </div>
               
-              <div className="border-t border-border pt-4">
-                <h3 className="text-sm font-medium mb-2 text-foreground">Workout Details</h3>
-                <p className="text-sm text-muted-foreground">{currentSession?.previewText}</p>
+              <div className="border-t border-slate-600 pt-4">
+                <h3 className="text-sm font-medium mb-2 text-white">Workout Details</h3>
+                <p className="text-sm text-gray-300">{currentSession?.previewText}</p>
               </div>
               
-              <div className="bg-muted p-3 rounded-md">
-                <h4 className="text-xs font-medium mb-2 text-foreground">Exercise Breakdown</h4>
-                <ul className="space-y-2 text-sm text-muted-foreground">
+              <div className="bg-slate-700 p-3 rounded-md">
+                <h4 className="text-xs font-medium mb-2 text-white">Exercise Breakdown</h4>
+                <ul className="space-y-2 text-sm text-gray-300">
                   <li className="flex items-center gap-2">
-                    <Dumbbell className="h-3 w-3 text-primary" />
+                    <Dumbbell className="h-3 w-3 text-blue-400" />
                     <span>6 x 200m at 30s each</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Dumbbell className="h-3 w-3 text-primary" />
+                    <Dumbbell className="h-3 w-3 text-blue-400" />
                     <span>90 second recovery between sets</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <Dumbbell className="h-3 w-3 text-primary" />
+                    <Dumbbell className="h-3 w-3 text-blue-400" />
                     <span>10 minute cool down</span>
                   </li>
                 </ul>
@@ -448,7 +448,7 @@ export default function HomePage() {
             </div>
             
             {/* Footer */}
-            <div className="flex justify-between items-center mt-6 pt-4 border-t border-border">
+            <div className="flex justify-between items-center mt-6 pt-4 border-t border-slate-600">
               <div className="flex items-center gap-2">
                 <Button
                   type="button"
