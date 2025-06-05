@@ -80,6 +80,7 @@ export function PageTransition({ children }: PageTransitionProps) {
   const [isAnimating, setIsAnimating] = useState(false);
   const [overlayContent, setOverlayContent] = useState<React.ReactNode>(null);
   const [baseContent, setBaseContent] = useState(children);
+  const [shouldShowOverlay, setShouldShowOverlay] = useState(false);
   const previousLocation = useRef<string>(location);
   const previousLevel = useRef<number>(getPageLevel(location));
 
@@ -89,23 +90,33 @@ export function PageTransition({ children }: PageTransitionProps) {
       const direction = getAnimationDirection(previousLevel.current, currentLevel);
       
       if (direction === 'overlay-in') {
-        // Going deeper - slide new content in as overlay
+        // Going deeper - prepare overlay content but don't show it yet
         setIsAnimating(true);
         setOverlayContent(children);
-        setAnimationClass('overlay-slide-in');
         
-        setTimeout(() => {
-          setAnimationClass('');
-          setIsAnimating(false);
-        }, 300);
+        // Use requestAnimationFrame to ensure content is set before showing
+        requestAnimationFrame(() => {
+          setShouldShowOverlay(true);
+          setAnimationClass('overlay-slide-in');
+          
+          setTimeout(() => {
+            // Animation complete - replace base content and hide overlay
+            setBaseContent(children);
+            setOverlayContent(null);
+            setShouldShowOverlay(false);
+            setAnimationClass('');
+            setIsAnimating(false);
+          }, 300);
+        });
       } else if (direction === 'overlay-out') {
-        // Going back - slide overlay out and reveal base content
+        // Going back - set new base content and slide out current overlay
         setIsAnimating(true);
         setBaseContent(children);
         setAnimationClass('overlay-slide-out');
         
         setTimeout(() => {
           setOverlayContent(null);
+          setShouldShowOverlay(false);
           setAnimationClass('');
           setIsAnimating(false);
         }, 300);
@@ -113,13 +124,14 @@ export function PageTransition({ children }: PageTransitionProps) {
         // No animation or same level
         setBaseContent(children);
         setOverlayContent(null);
+        setShouldShowOverlay(false);
       }
       
       previousLocation.current = location;
       previousLevel.current = currentLevel;
     } else if (!isAnimating) {
       // Update content when location hasn't changed and not animating
-      if (overlayContent) {
+      if (overlayContent && shouldShowOverlay) {
         setOverlayContent(children);
       } else {
         setBaseContent(children);
@@ -132,7 +144,7 @@ export function PageTransition({ children }: PageTransitionProps) {
       <div className="base-content">
         {baseContent}
       </div>
-      {overlayContent && (
+      {overlayContent && shouldShowOverlay && (
         <div className={`overlay-content ${animationClass}`}>
           {overlayContent}
         </div>
