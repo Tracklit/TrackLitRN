@@ -35,6 +35,7 @@ import {
   MoreHorizontal,
   UserCircle,
   X,
+  Plus,
   BookOpen,
   MessageCircle
 } from 'lucide-react';
@@ -52,8 +53,16 @@ export default function HomePage() {
   const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
   const [currentSession, setCurrentSession] = useState<any>(null);
   const [isSavingSession, setIsSavingSession] = useState(false);
-  const [isTickerVisible, setIsTickerVisible] = useState(true);
+  const [isTickerVisible, setIsTickerVisible] = useState(() => {
+    const saved = localStorage.getItem('tickerVisible');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
   const [activeSessionIndex, setActiveSessionIndex] = useState(0);
+
+  const toggleTickerVisibility = (visible: boolean) => {
+    setIsTickerVisible(visible);
+    localStorage.setItem('tickerVisible', JSON.stringify(visible));
+  };
   
   // Fetch data for stats
   const { data: meets } = useQuery<Meet[]>({
@@ -226,7 +235,7 @@ export default function HomePage() {
                 className="h-6 w-6 p-0 absolute right-4 top-1/2 -translate-y-1/2 z-10"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setIsTickerVisible(false);
+                  toggleTickerVisibility(false);
                 }}
               >
                 <X className="h-4 w-4" />
@@ -263,6 +272,26 @@ export default function HomePage() {
                   </div>
                 </div>
               )}
+            </div>
+          </section>
+        )}
+        
+        {/* Show + button when ticker is hidden */}
+        {!isTickerVisible && (
+          <section className="mb-6 mx-auto" style={{ maxWidth: "540px" }}>
+            <div className="px-4 relative">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0 absolute right-4 top-1/2 -translate-y-1/2 z-10"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleTickerVisibility(true);
+                }}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+              <div className="h-8"></div> {/* Spacer to maintain layout */}
             </div>
           </section>
         )}
