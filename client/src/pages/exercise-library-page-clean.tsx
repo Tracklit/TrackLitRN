@@ -55,8 +55,6 @@ export default function ExerciseLibraryPage() {
   const [shareMessage, setShareMessage] = useState("");
   const [libraryShareDialogOpen, setLibraryShareDialogOpen] = useState(false);
   const [selectedLibraryRecipients, setSelectedLibraryRecipients] = useState<number[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -323,7 +321,7 @@ export default function ExerciseLibraryPage() {
                       <div className="flex justify-between items-start">
                         <h3 className="font-semibold truncate flex-1">{exercise.name}</h3>
                         
-                        {/* Action Dropdown - Always visible */}
+                        {/* Action Dropdown */}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
@@ -444,10 +442,7 @@ export default function ExerciseLibraryPage() {
               </div>
             )}
           </>
-        ) : null}
-
-        {/* Empty State */}
-        {!isLoading && (!libraryData?.exercises || libraryData.exercises.length === 0) && (
+        ) : (
           <div className="text-center py-12">
             <div className="mx-auto w-12 h-12 bg-muted rounded-lg flex items-center justify-center mb-4">
               <Play className="h-6 w-6 text-muted-foreground" />
@@ -462,6 +457,178 @@ export default function ExerciseLibraryPage() {
                 Add Your First Video
               </Button>
             </Link>
+          </div>
+        )}
+
+        {/* Custom Share Modal */}
+        {shareDialogOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <div 
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+              onClick={() => setShareDialogOpen(false)}
+            />
+            
+            {/* Modal Content */}
+            <div className="relative bg-[#010a18] border border-gray-700 rounded-lg shadow-xl max-w-md w-full max-h-[85vh] overflow-y-auto">
+              <div className="p-6 space-y-4">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-white">Share Exercise</h2>
+                  <button
+                    onClick={() => setShareDialogOpen(false)}
+                    className="text-gray-400 hover:text-white text-xl leading-none"
+                  >
+                    ×
+                  </button>
+                </div>
+                
+                {selectedExercise && (
+                  <div className="space-y-4">
+                    <div className="text-sm text-gray-400">
+                      Sharing: {selectedExercise.name}
+                    </div>
+                    
+                    <Tabs defaultValue="link" className="w-full">
+                      <TabsList className="grid w-full grid-cols-2 bg-gray-800">
+                        <TabsTrigger 
+                          value="link" 
+                          className="text-gray-300 data-[state=active]:text-white data-[state=active]:bg-blue-600"
+                        >
+                          Copy Link
+                        </TabsTrigger>
+                        <TabsTrigger 
+                          value="internal" 
+                          className="text-gray-300 data-[state=active]:text-white data-[state=active]:bg-blue-600"
+                        >
+                          Send Message
+                        </TabsTrigger>
+                      </TabsList>
+                      
+                      <TabsContent value="link" className="mt-4 space-y-3">
+                        <div className="flex gap-2">
+                          <Input
+                            value={`${window.location.origin}/exercise/${selectedExercise.id}`}
+                            readOnly
+                            className="bg-gray-800 border-gray-600 text-white"
+                          />
+                          <Button
+                            onClick={() => copyExerciseLink(selectedExercise.id)}
+                            variant="outline"
+                            size="sm"
+                            className="border-gray-600 text-gray-300 hover:text-white hover:bg-gray-700"
+                          >
+                            {linkCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                      </TabsContent>
+                      
+                      <TabsContent value="internal" className="mt-4 space-y-4">
+                        <div>
+                          <Label className="text-white">Send to Connections & Athletes</Label>
+                          <div className="mt-2 max-h-32 overflow-y-auto space-y-2 bg-gray-800 rounded-md p-2">
+                            {shareContacts?.map((contact: any) => (
+                              <div key={contact.id} className="flex items-center space-x-2">
+                                <input
+                                  type="checkbox"
+                                  id={`share-contact-${contact.id}`}
+                                  checked={selectedRecipients.includes(contact.id)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedRecipients(prev => [...prev, contact.id]);
+                                    } else {
+                                      setSelectedRecipients(prev => prev.filter(id => id !== contact.id));
+                                    }
+                                  }}
+                                  className="rounded"
+                                />
+                                <label htmlFor={`share-contact-${contact.id}`} className="text-sm text-gray-300">
+                                  {contact.username}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {selectedRecipients.length > 0 && (
+                            <div className="mt-2">
+                              <div className="text-xs text-gray-400 mb-1">Selected ({selectedRecipients.length}):</div>
+                              <div className="flex flex-wrap gap-1">
+                                {selectedRecipients.map(recipientId => {
+                                  const recipient = shareContacts?.find((c: any) => c.id === recipientId);
+                                  return recipient ? (
+                                    <span key={recipientId} className="bg-blue-600 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
+                                      {recipient.name || recipient.username}
+                                      <button 
+                                        onClick={() => setSelectedRecipients(prev => prev.filter(id => id !== recipientId))}
+                                        className="text-blue-200 hover:text-white"
+                                      >
+                                        ×
+                                      </button>
+                                    </span>
+                                  ) : null;
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="shareMessage" className="text-white">Message (Optional)</Label>
+                          <Textarea
+                            id="shareMessage"
+                            value={shareMessage}
+                            onChange={(e) => setShareMessage(e.target.value)}
+                            placeholder="Add a message to share with this exercise..."
+                            className="mt-1 bg-gray-800 border-gray-600 text-white placeholder-gray-400"
+                          />
+                        </div>
+                        
+                        <Button 
+                          onClick={handleShareInternal}
+                          disabled={selectedRecipients.length === 0 || shareMutation.isPending}
+                          className="w-full bg-blue-600 hover:bg-blue-700"
+                        >
+                          <Send className="h-4 w-4 mr-2" />
+                          {shareMutation.isPending ? "Sending..." : "Send Exercise"}
+                        </Button>
+                      </TabsContent>
+                    </Tabs>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Fullscreen Video Player */}
+        {fullscreenVideo && (
+          <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
+            <div className="relative w-full h-full">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={closeFullscreen}
+                className="absolute top-4 left-4 z-10 text-white hover:bg-white/20"
+              >
+                ✕
+              </Button>
+              
+              {fullscreenVideo.type === 'youtube' ? (
+                <iframe
+                  src={`https://www.youtube.com/embed/${fullscreenVideo.youtubeVideoId}?autoplay=1`}
+                  className="w-full h-full"
+                  allowFullScreen
+                  allow="autoplay"
+                />
+              ) : (
+                <video
+                  src={fullscreenVideo.fileUrl || undefined}
+                  controls
+                  autoPlay
+                  className="w-full h-full object-contain"
+                />
+              )}
+            </div>
           </div>
         )}
       </div>
