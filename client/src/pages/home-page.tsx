@@ -267,9 +267,9 @@ export default function HomePage() {
                         </div>
                       ) : sessionPreviews && sessionPreviews.length > 0 ? (
                         <div 
-                          className={`cursor-pointer p-3 transition-transform duration-[360ms] ease-in-out ${isAnimating ? 'translate-x-full' : 'translate-x-0'}`}
+                          className={`cursor-pointer p-3 transition-transform duration-[360ms] ease-in-out ${isAnimating ? '-translate-x-full' : 'translate-x-0'}`}
                           onClick={() => openSessionDetails(sessionPreviews[activeSessionIndex])}
-                          key={activeSessionIndex}
+                          key={`session-${activeSessionIndex}-${sessionPreviews[activeSessionIndex]?.id}`}
                         >
                           <div className="flex items-center gap-2 pr-8">
                             <div className="rounded-full bg-primary/15 h-8 w-8 flex items-center justify-center flex-shrink-0">
