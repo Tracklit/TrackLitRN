@@ -115,7 +115,7 @@ export function PageTransition({ children }: PageTransitionProps) {
           animate="animate"
           exit="exit"
           transition={{
-            duration: 0.1,
+            duration: 0.2,
             ease: "easeInOut"
           }}
           className="w-full"
