@@ -222,7 +222,7 @@ export function PracticeMediaGallery({
                   <img 
                     src={media.thumbUrl || media.url} 
                     alt="Practice media" 
-                    className="w-full h-full object-cover"
+                    className="w-full h-full card-thumbnail"
                     loading="lazy"
                   />
                 ) : (

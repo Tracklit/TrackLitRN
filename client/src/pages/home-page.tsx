@@ -346,12 +346,11 @@ export default function HomePage() {
                       <>
                         {/* Header Image - Top Half */}
                         <div 
-                          className="h-1/2 bg-cover bg-center bg-no-repeat relative"
+                          className="h-1/2 bg-thumbnail-crop relative"
                           style={{ 
                             backgroundImage: `url(${card.headerImage || trackImages[index % 4]})`,
-                            backgroundPosition: card.headerImage 
-                              ? (card.title === 'Programs' || card.title === 'Tools' ? 'center' : 'center -85px')
-                              : 'center'
+                            backgroundPosition: 'center',
+                            filter: card.title === 'Programs' ? 'contrast(1.1) saturate(0.9) brightness(0.95)' : 'contrast(1.05) saturate(0.95)'
                           }}
                         >
                           <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-all duration-300" />

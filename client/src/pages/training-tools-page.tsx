@@ -120,9 +120,10 @@ export default function WorkoutToolsPage() {
                   {/* Header Image - For Start Gun and Stopwatch */}
                   {(card.title === "Start Gun" || card.title === "Stopwatch") && (
                     <div 
-                      className="h-1/2 bg-cover bg-center bg-no-repeat relative"
+                      className="h-1/2 bg-thumbnail-crop relative"
                       style={{ 
-                        backgroundImage: `url(${card.title === "Start Gun" ? startGunImagePath : stopwatchImagePath})` 
+                        backgroundImage: `url(${card.title === "Start Gun" ? startGunImagePath : stopwatchImagePath})`,
+                        filter: 'contrast(1.05) saturate(0.95)'
                       }}
                     >
                       <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-all duration-300" />
