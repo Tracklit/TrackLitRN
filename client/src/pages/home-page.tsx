@@ -218,7 +218,7 @@ export default function HomePage() {
         
         {/* Session Preview Ticker */}
         {isTickerVisible && (
-          <section className="mb-4 mx-auto" style={{ maxWidth: "540px" }}>
+          <section className="mb-6 mx-auto" style={{ maxWidth: "540px" }}>
             <div className="px-4 relative">
               <Button
                 variant="ghost"
