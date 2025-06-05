@@ -231,7 +231,7 @@ export default function HomePage() {
             <div className="grid grid-cols-2 gap-2" style={{ margin: "0 auto" }}>
               <div className="col-span-2">
                 {isLoadingPreviews ? (
-                  <div className="bg-muted rounded-lg p-3 border relative">
+                  <div className="bg-card rounded-lg p-3 border relative">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -258,7 +258,7 @@ export default function HomePage() {
                     key={activeSessionIndex}
                   >
                     <div 
-                      className="flex items-center gap-2 px-3 py-1 hover:bg-primary/10 transition-all duration-300 bg-muted/30 rounded-lg border relative"
+                      className="flex items-center gap-2 px-3 py-1 hover:bg-primary/10 transition-all duration-300 bg-card rounded-lg border relative"
                     >
                       <Button
                         variant="ghost"
@@ -294,11 +294,11 @@ export default function HomePage() {
           <section className="mb-6 mx-auto" style={{ maxWidth: "540px" }}>
             <div className="grid grid-cols-2 gap-2" style={{ margin: "0 auto" }}>
               <div className="col-span-2">
-                <div className="bg-muted/30 rounded-lg border relative h-8 flex items-center justify-end pr-2">
+                <div className="h-8 flex items-center justify-end pr-2">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 w-6 p-0"
+                    className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
                     onClick={(e) => {
                       e.stopPropagation();
                       toggleTickerVisibility(true);
@@ -398,23 +398,7 @@ export default function HomePage() {
         </section>
 
 
-        
-        {/* Show ticker button */}
-        {!isTickerVisible && (
-          <section className="mb-4 mx-auto" style={{ maxWidth: "540px" }}>
-            <div className="px-4 flex justify-end">
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs"
-                onClick={() => setIsTickerVisible(true)}
-              >
-                <Clock className="h-3.5 w-3.5 mr-1" />
-                Show Recent Workouts
-              </Button>
-            </div>
-          </section>
-        )}
+
       </main>
       
       {/* Session Detail Modal */}
