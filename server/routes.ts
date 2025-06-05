@@ -4099,8 +4099,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           })
       ).then(results => results.filter(r => r !== null));
       
+      console.log('Assigned as purchased after processing:', assignedAsPurchased);
+      
       // Combine purchased and assigned programs
       const allPrograms = [...purchases, ...assignedAsPurchased];
+      
+      console.log('Final combined programs:', allPrograms);
       
       res.json(allPrograms);
     } catch (error) {
