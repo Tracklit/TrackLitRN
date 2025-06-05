@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Meet } from "@shared/schema";
 import { PageContainer } from "@/components/page-container";
+import { BackNavigation } from "@/components/back-navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -270,11 +271,8 @@ function PracticePage() {
   }, [programSessions, currentDayOffset]);
 
   return (
-    <PageContainer
-      breadcrumbs={[
-        { name: "Practice", href: "/practice" }
-      ]}
-    >
+    <PageContainer>
+      <BackNavigation />
       {/* Day navigation */}
       <div className="flex items-center justify-between mb-6 max-w-xs mx-auto text-center">
         <Button

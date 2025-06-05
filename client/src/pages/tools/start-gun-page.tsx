@@ -15,7 +15,7 @@ import {
   Play, 
   StopCircle
 } from "lucide-react";
-import { Breadcrumb } from "@/components/breadcrumb";
+import { BackNavigation } from "@/components/back-navigation";
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -722,11 +722,7 @@ export default function StartGunPage() {
   
   return (
     <div className="container mx-auto px-4 pb-16">
-      <Breadcrumb items={[
-        { label: 'Home', href: '/' },
-        { label: 'Training Tools', href: '/training-tools' },
-        { label: 'Start Gun', href: '/tools/start-gun' }
-      ]} />
+      <BackNavigation />
       
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>

@@ -3,7 +3,7 @@ import { ProtectedRoute } from "@/lib/protected-route";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Play, Pause, RotateCcw, Flag, Volume2, VolumeX } from "lucide-react";
-import { Breadcrumb } from "@/components/breadcrumb";
+import { BackNavigation } from "@/components/back-navigation";
 import { PageHeader } from "@/components/page-header";
 import { StopwatchBackground } from "@/components/stopwatch-background";
 import { useToast } from "@/hooks/use-toast";
@@ -251,15 +251,9 @@ export default function StopwatchPage() {
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(2, '0')}`;
   };
 
-  const breadcrumbItems = [
-    { label: "Home", href: "/" },
-    { label: "Training Tools", href: "/training-tools" },
-    { label: "Stopwatch", href: "/tools/stopwatch" },
-  ];
-
   return (
     <div className="container max-w-screen-xl mx-auto p-4 pt-16 pb-20">
-      <Breadcrumb items={breadcrumbItems} />
+      <BackNavigation />
       
       <PageHeader
         title="Stopwatch"
