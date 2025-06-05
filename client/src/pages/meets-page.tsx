@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-
+import { BackNavigation } from '@/components/back-navigation';
 
 import { Meet } from '@shared/schema';
 import { Button } from '@/components/ui/button';
@@ -275,6 +275,7 @@ export default function MeetsPage() {
       <div className="flex-1 overflow-auto">
         <main className="pt-16 pb-6">
           <div className="max-w-3xl mx-auto px-4">
+            <BackNavigation />
             {/* Ticker Messages - Dashboard Style */}
             {tickerMessages.length > 0 && isTickerVisible && (
               <div className="mb-6 flex items-center justify-between">
