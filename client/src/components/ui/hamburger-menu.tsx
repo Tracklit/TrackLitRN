@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { NotificationBell } from "@/components/notification-bell";
+import { AnimatedLink } from "@/components/animated-link";
 
 interface HamburgerMenuProps {
   className?: string;
@@ -101,8 +102,8 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
         <div className="flex flex-col h-full">          
           <nav className="flex-1 overflow-y-auto p-4 pt-16 space-y-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             {/* Dashboard */}
-            <a
-              href="/"
+            <AnimatedLink
+              to="/"
               className={cn(
                 "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",
                 location === "/" ? "bg-[#ff8c00] text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
@@ -111,14 +112,14 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
             >
               <Home className="h-4 w-4 mr-3" />
               Dashboard
-            </a>
+            </AnimatedLink>
             
             {/* Training Section */}
             <div className="pt-4 pb-2">
               <p className="text-xs text-gray-400 px-4 font-medium">TRAINING</p>
             </div>
-            <a
-              href="/practice"
+            <AnimatedLink
+              to="/practice"
               className={cn(
                 "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",
                 location.startsWith("/practice") ? "bg-[#ff8c00] text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
@@ -127,9 +128,9 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
             >
               <Dumbbell className="h-4 w-4 mr-3" />
               Practice
-            </a>
-            <a
-              href="/programs"
+            </AnimatedLink>
+            <AnimatedLink
+              to="/programs"
               className={cn(
                 "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",
                 location === "/programs" ? "bg-[#ff8c00] text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
@@ -138,9 +139,9 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
             >
               <BookOpen className="h-4 w-4 mr-3" />
               Programs
-            </a>
-            <a
-              href="/training-tools"
+            </AnimatedLink>
+            <AnimatedLink
+              to="/training-tools"
               className={cn(
                 "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",
                 location === "/training-tools" ? "bg-[#ff8c00] text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
@@ -149,7 +150,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
             >
               <Clock className="h-4 w-4 mr-3" />
               Training Tools
-            </a>
+            </AnimatedLink>
             
             {/* Competition Section */}
             <div className="pt-4 pb-2">
