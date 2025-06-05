@@ -8,6 +8,7 @@ const PAGE_HIERARCHY: Record<string, number> = {
   
   // Level 1 - Main sections
   "/tools": 1,
+  "/training-tools": 1,
   "/meets": 1,
   "/results": 1,
   "/programs": 1,
@@ -20,6 +21,7 @@ const PAGE_HIERARCHY: Record<string, number> = {
   "/profile": 1,
   "/spikes": 1,
   "/subscription": 1,
+  "/sprinthia": 1,
   
   // Level 2 - Tool pages
   "/tools/stopwatch": 2,

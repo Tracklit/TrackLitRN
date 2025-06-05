@@ -12,7 +12,7 @@ import {
   Video
 } from "lucide-react";
 import { Link } from "wouter";
-import { Breadcrumb } from "@/components/breadcrumb";
+import { BackNavigation } from "@/components/back-navigation";
 import startGunImagePath from "@assets/startgun.png";
 import stopwatchImagePath from "@assets/IMG_4081.jpeg";
 

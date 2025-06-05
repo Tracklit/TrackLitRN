@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { PageContainer } from "@/components/page-container";
+import { BackNavigation } from "@/components/back-navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -126,22 +127,11 @@ export default function ExerciseLibraryAddPage() {
   const youtubeProgress = limits ? (limits.youtube.current / limits.youtube.limit) * 100 : 0;
 
   return (
-    <PageContainer
-      breadcrumbs={[
-        { name: "Tools", href: "/tools" },
-        { name: "Exercise Library", href: "/tools/exercise-library" },
-        { name: "Add Video", href: "/tools/exercise-library/add" }
-      ]}
-    >
+    <PageContainer>
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-4">
-          <Link href="/tools/exercise-library">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Library
-            </Button>
-          </Link>
+        <div className="space-y-4">
+          <BackNavigation />
           <div>
             <h1 className="text-2xl font-bold">Add Video to Library</h1>
             <p className="text-muted-foreground">

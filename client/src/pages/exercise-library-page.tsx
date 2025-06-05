@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { PageContainer } from "@/components/page-container";
+import { BackNavigation } from "@/components/back-navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -233,12 +234,8 @@ export default function ExerciseLibraryPage() {
   };
 
   return (
-    <PageContainer
-      breadcrumbs={[
-        { name: "Tools", href: "/tools" },
-        { name: "Exercise Library", href: "/tools/exercise-library" }
-      ]}
-    >
+    <PageContainer>
+      <BackNavigation />
       <div className="space-y-6">
         {/* Header with Upload Button and View Toggle */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
