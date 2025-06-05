@@ -90,20 +90,20 @@ export function PageTransition({ children }: PageTransitionProps) {
       if (direction !== 'none') {
         setIsAnimating(true);
         
-        // Set exit animation for current content (keep showing old content)
+        // Immediately start exit animation for current content
         setAnimationClass(`page-exit-${direction === 'right' ? 'left' : 'right'}`);
         
-        // After exit animation completes, switch content and start enter animation
+        // Switch content and start enter animation much faster
         setTimeout(() => {
           setDisplayedContent(children);
           setAnimationClass(`page-enter-${direction}`);
           
-          // Complete animation
+          // Complete animation faster
           setTimeout(() => {
             setAnimationClass('');
             setIsAnimating(false);
-          }, 300);
-        }, 300);
+          }, 200);
+        }, 150);
       } else {
         // No animation, update content immediately
         setDisplayedContent(children);
