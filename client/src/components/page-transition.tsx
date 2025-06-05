@@ -78,10 +78,9 @@ export function PageTransition({ children }: PageTransitionProps) {
   const [location] = useLocation();
   const [animationClass, setAnimationClass] = useState('');
   const [isAnimating, setIsAnimating] = useState(false);
-  const [shouldRender, setShouldRender] = useState(true);
+  const [displayedContent, setDisplayedContent] = useState(children);
   const previousLocation = useRef<string>(location);
   const previousLevel = useRef<number>(getPageLevel(location));
-  const previousChildren = useRef(children);
 
   useEffect(() => {
     if (previousLocation.current !== location) {
@@ -89,16 +88,13 @@ export function PageTransition({ children }: PageTransitionProps) {
       const direction = getAnimationDirection(previousLevel.current, currentLevel);
       
       if (direction !== 'none') {
+        // Start animation immediately, keep showing old content
         setIsAnimating(true);
-        setShouldRender(false); // Hide new content initially
-        
-        // Set exit animation for current content
         setAnimationClass(`page-exit-${direction === 'right' ? 'left' : 'right'}`);
         
-        // After exit animation starts, switch content and begin enter animation
+        // After exit animation completes, switch to new content with enter animation
         setTimeout(() => {
-          previousChildren.current = children;
-          setShouldRender(true);
+          setDisplayedContent(children);
           setAnimationClass(`page-enter-${direction}`);
           
           // Complete animation
@@ -106,23 +102,27 @@ export function PageTransition({ children }: PageTransitionProps) {
             setAnimationClass('');
             setIsAnimating(false);
           }, 300);
-        }, 150); // Increased delay to ensure exit animation is visible
+        }, 300); // Wait for full exit animation to complete
       } else {
         // No animation needed, update immediately
-        previousChildren.current = children;
+        setDisplayedContent(children);
       }
       
       previousLocation.current = location;
       previousLevel.current = currentLevel;
-    } else {
-      // Same location, update children immediately
-      previousChildren.current = children;
     }
-  }, [location, children]);
+  }, [location]);
+
+  // Update displayed content when children change but location hasn't
+  useEffect(() => {
+    if (!isAnimating) {
+      setDisplayedContent(children);
+    }
+  }, [children, isAnimating]);
 
   return (
     <div className={`page-transition-container ${animationClass} ${isAnimating ? 'animating' : ''}`}>
-      {shouldRender ? children : previousChildren.current}
+      {displayedContent}
     </div>
   );
 }
