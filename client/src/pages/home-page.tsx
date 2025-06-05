@@ -59,9 +59,6 @@ export default function HomePage() {
     return saved !== null ? JSON.parse(saved) : true;
   });
   const [activeSessionIndex, setActiveSessionIndex] = useState(0);
-  const [isTextVisible, setIsTextVisible] = useState(true);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [fadeOpacity, setFadeOpacity] = useState(1);
 
   const toggleTickerVisibility = (visible: boolean) => {
     setIsTickerVisible(visible);
@@ -149,23 +146,7 @@ export default function HomePage() {
     }
   };
   
-  // Interval for rotating through sessions with push animation
-  useEffect(() => {
-    if (!sessionPreviews?.length || sessionPreviews.length <= 1) return;
-    
-    const interval = setInterval(() => {
-      console.log('Starting fade animation cycle');
-      setFadeOpacity(0);
-      setTimeout(() => {
-        setActiveSessionIndex(prev => 
-          prev >= (sessionPreviews.length - 1) ? 0 : prev + 1
-        );
-        setFadeOpacity(1);
-      }, 300);
-    }, 5000);
-    
-    return () => clearInterval(interval);
-  }, [sessionPreviews]);
+
 
   // Category cards for main navigation
   const categoryCards = [
@@ -266,8 +247,7 @@ export default function HomePage() {
                         </div>
                       ) : sessionPreviews && sessionPreviews.length > 0 ? (
                         <div 
-                          className="cursor-pointer p-3 transition-opacity duration-300 ease-in-out"
-                          style={{ opacity: fadeOpacity }}
+                          className="cursor-pointer p-3"
                           onClick={() => openSessionDetails(sessionPreviews[activeSessionIndex])}
                           key={activeSessionIndex}
                         >
