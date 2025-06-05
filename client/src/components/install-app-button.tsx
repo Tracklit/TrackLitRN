@@ -1,23 +1,13 @@
 import { useState, useEffect } from "react";
-import { Download, ExternalLink, Check, Smartphone, Monitor, Share, Plus, MoreVertical } from "lucide-react";
+import { Download, Check, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface BeforeInstallPromptEvent extends Event {

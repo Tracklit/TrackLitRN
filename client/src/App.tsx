@@ -48,6 +48,7 @@ import { Component as DocumentProgramViewer } from "@/pages/document-program-vie
 import { Component as AssignedProgramsPage } from "@/pages/assigned-programs-page";
 import CheckoutPage from "@/pages/checkout-page";
 import AthleteProfilePage from "@/pages/athlete-profile-page";
+import { Component as InstallAppPage } from "@/pages/install-app-page";
 import AthleteProfile from "@/pages/athlete-profile";
 import PublicProfilePage from "@/pages/public-profile-page";
 import ExerciseLibraryPage from "@/pages/exercise-library-page";
@@ -112,6 +113,7 @@ function Router() {
       <ProtectedRoute path="/subscription" component={SubscriptionPage} />
       <ProtectedRoute path="/profile" component={ProfilePage} />
       <ProtectedRoute path="/athlete-profile" component={AthleteProfilePage} />
+      <ProtectedRoute path="/install-app" component={InstallAppPage} />
       
       {/* Public Profiles - separate URL pattern */}
       <Route path="/user/:userId" component={PublicProfilePage} />
