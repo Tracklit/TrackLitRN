@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAnimatedNavigation } from '@/hooks/use-animated-navigation';
+import { useLocation } from 'wouter';
 import { BackNavigation } from '@/components/back-navigation';
 
 import { Meet } from '@shared/schema';
@@ -35,7 +35,24 @@ interface WeatherData {
 }
 
 export default function MeetsPage() {
-  const { navigateWithAnimation, isNavigating } = useAnimatedNavigation();
+  const [, navigate] = useLocation();
+  const [isNavigating, setIsNavigating] = useState(false);
+
+  const navigateWithAnimation = (to: string) => {
+    if (isNavigating) return;
+    
+    setIsNavigating(true);
+    
+    // Trigger exit animation
+    document.body.classList.add("page-exit");
+
+    // Wait for animation to finish before navigating
+    setTimeout(() => {
+      navigate(to);
+      document.body.classList.remove("page-exit");
+      setIsNavigating(false);
+    }, 300);
+  };
   const [isCreateMeetOpen, setIsCreateMeetOpen] = useState(false);
   const [selectedMeet, setSelectedMeet] = useState<Meet | null>(null);
   const [tickerMessages, setTickerMessages] = useState<string[]>([]);

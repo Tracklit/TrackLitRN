@@ -590,17 +590,20 @@ article::-webkit-scrollbar,
   overflow: hidden;
 }
 
-/* Global page transition effect */
-body.page-transitioning .page-transition-container {
-  opacity: 0;
-  transform: translateX(100%);
-  transition: opacity 0.2s ease-out, transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+/* Global page exit animation */
+body.page-exit .page-transition-container {
+  animation: pageExitSlide 0.3s ease-out forwards;
 }
 
-body.page-transitioning-out .page-transition-container {
-  opacity: 0;
-  transform: translateX(-100%);
-  transition: opacity 0.2s ease-out, transform 0.3s cubic-bezier(0.55, 0.055, 0.675, 0.19);
+@keyframes pageExitSlide {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
 }
 
 
