@@ -102,7 +102,7 @@ export function PageTransition({ children }: PageTransitionProps) {
   };
 
   const transition = {
-    duration: 0.2,
+    duration: 0.1,
     ease: "easeInOut"
   };
 

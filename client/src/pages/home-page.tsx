@@ -349,7 +349,7 @@ export default function HomePage() {
                           className="h-1/2 bg-thumbnail-crop relative"
                           style={{ 
                             backgroundImage: `url(${card.headerImage || trackImages[index % 4]})`,
-                            backgroundPosition: 'center'
+                            backgroundPosition: card.title === 'Sprinthia' ? 'center -85px' : 'center'
                           }}
                         >
                           <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-all duration-300" />
@@ -359,7 +359,14 @@ export default function HomePage() {
                         {/* Content - Bottom Half */}
                         <CardContent className="h-1/2 p-2.5 relative flex flex-col justify-center bg-background">
                           <div className="flex flex-col items-center text-center">
-                            <h2 className="text-sm font-bold mb-1">{card.title}</h2>
+                            <div className="flex items-center gap-1 mb-1">
+                              <h2 className="text-sm font-bold">{card.title}</h2>
+                              {card.title === 'Sprinthia' && (
+                                <svg className="w-3.5 h-3.5 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-2-4h4v-2h-4v2zm2.5-8C11.12 8 10 9.12 10 10.5S11.12 13 12.5 13 15 11.88 15 10.5 13.88 8 12.5 8z"/>
+                                </svg>
+                              )}
+                            </div>
                             <p className="text-muted-foreground text-xs px-1 line-clamp-2 overflow-hidden">{card.description}</p>
                           </div>
                         </CardContent>
