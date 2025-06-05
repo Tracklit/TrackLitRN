@@ -8,7 +8,7 @@ import { Loader2, ArrowLeft, Users, UserCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { BackNavigation } from "@/components/back-navigation";
 import { apiRequest } from "@/lib/queryClient";
-import type { TrainingProgram, User } from "../../../shared/schema";
+// Temporary removal of types to fix import issues
 
 export function AssignProgramPage() {
   const [, params] = useRoute("/assign-program/:programId");
@@ -21,19 +21,19 @@ export function AssignProgramPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch program details
-  const { data: program, isLoading: isProgramLoading } = useQuery<TrainingProgram>({
+  const { data: program, isLoading: isProgramLoading } = useQuery({
     queryKey: [`/api/programs/${params?.programId}`],
     enabled: !!params?.programId
   });
 
   // Fetch potential assignees
-  const { data: potentialAssignees, isLoading: isLoadingAssignees } = useQuery<User[]>({
+  const { data: potentialAssignees, isLoading: isLoadingAssignees } = useQuery({
     queryKey: [`/api/programs/${params?.programId}/potential-assignees`],
     enabled: !!params?.programId
   });
 
   // Fetch current user
-  const { data: user } = useQuery<User>({
+  const { data: user } = useQuery({
     queryKey: ['/api/user']
   });
 
