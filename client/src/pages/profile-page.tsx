@@ -27,7 +27,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGr
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger, DrawerFooter } from '@/components/ui/drawer';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -289,97 +289,104 @@ export default function ProfilePage() {
                     <p className="text-darkGray">{user?.username}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Dialog open={isPublicProfileDialogOpen} onOpenChange={setIsPublicProfileDialogOpen}>
-                      <DialogTrigger asChild>
+                    <Drawer open={isPublicProfileDialogOpen} onOpenChange={setIsPublicProfileDialogOpen}>
+                      <DrawerTrigger asChild>
                         <Button variant="outline" size="sm">
                           <Edit className="h-4 w-4 mr-2" />
                           Edit Public Profile
                         </Button>
-                      </DialogTrigger>
-                      <DialogContent className="bg-[#010a18] border border-blue-800/60 text-white max-w-md">
-                        <DialogHeader>
-                          <DialogTitle>Edit Public Profile</DialogTitle>
-                        </DialogHeader>
+                      </DrawerTrigger>
+                      <DrawerContent className="bg-slate-900 border-slate-700 max-h-[85vh]">
+                        <DrawerHeader className="text-left">
+                          <DrawerTitle>Edit Public Profile</DrawerTitle>
+                        </DrawerHeader>
                         
-                        <Form {...publicProfileForm}>
-                          <form onSubmit={publicProfileForm.handleSubmit(onPublicProfileSubmit)} className="space-y-4">
-                            {/* Profile Image Upload */}
-                            <div className="flex flex-col items-center space-y-4">
-                              <div className="relative">
-                                <Avatar className="h-20 w-20">
-                                  <AvatarImage 
-                                    src={profileImagePreview || user?.profileImageUrl || "/default-avatar.png"} 
-                                  />
-                                  <AvatarFallback name={user?.name || ''} className="text-lg" />
-                                </Avatar>
-                                <label 
-                                  htmlFor="profile-image-upload" 
-                                  className="absolute -bottom-1 -right-1 bg-blue-600 rounded-full p-2 cursor-pointer hover:bg-blue-700 transition-colors"
-                                >
-                                  <Camera className="h-3 w-3" />
-                                </label>
-                                <input
-                                  id="profile-image-upload"
-                                  type="file"
-                                  accept="image/*"
-                                  onChange={handleImageChange}
-                                  className="hidden"
-                                />
-                              </div>
-                              <p className="text-xs text-gray-400 text-center">
-                                Click the camera icon to upload a new profile image
-                              </p>
-                            </div>
-
-                            <FormField
-                              control={publicProfileForm.control}
-                              name="name"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Display Name</FormLabel>
-                                  <FormControl>
-                                    <Input {...field} placeholder="Your display name" />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-
-                            <FormField
-                              control={publicProfileForm.control}
-                              name="bio"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Bio</FormLabel>
-                                  <FormControl>
-                                    <Textarea 
-                                      {...field} 
-                                      placeholder="Tell others about yourself..." 
-                                      rows={3}
-                                      maxLength={500}
+                        <div className="px-4 pb-4 overflow-y-auto">
+                          <Form {...publicProfileForm}>
+                            <form onSubmit={publicProfileForm.handleSubmit(onPublicProfileSubmit)} className="space-y-4">
+                              {/* Profile Image Upload */}
+                              <div className="flex flex-col items-center space-y-4">
+                                <div className="relative">
+                                  <Avatar className="h-20 w-20">
+                                    <AvatarImage 
+                                      src={profileImagePreview || user?.profileImageUrl || "/default-avatar.png"} 
                                     />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
+                                    <AvatarFallback name={user?.name || ''} className="text-lg" />
+                                  </Avatar>
+                                  <label 
+                                    htmlFor="profile-image-upload" 
+                                    className="absolute -bottom-1 -right-1 bg-blue-600 rounded-full p-2 cursor-pointer hover:bg-blue-700 transition-colors"
+                                  >
+                                    <Camera className="h-3 w-3" />
+                                  </label>
+                                  <input
+                                    id="profile-image-upload"
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleImageChange}
+                                    className="hidden"
+                                  />
+                                </div>
+                                <p className="text-xs text-gray-400 text-center">
+                                  Click the camera icon to upload a new profile image
+                                </p>
+                              </div>
 
-                            <div className="flex justify-end space-x-2 pt-4">
-                              <Button 
-                                type="button" 
-                                variant="outline" 
-                                onClick={() => setIsPublicProfileDialogOpen(false)}
-                              >
-                                Cancel
-                              </Button>
-                              <Button type="submit">
-                                Save Changes
-                              </Button>
-                            </div>
-                          </form>
-                        </Form>
-                      </DialogContent>
-                    </Dialog>
+                              <FormField
+                                control={publicProfileForm.control}
+                                name="name"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Display Name</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} placeholder="Your display name" />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <FormField
+                                control={publicProfileForm.control}
+                                name="bio"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Bio</FormLabel>
+                                    <FormControl>
+                                      <Textarea 
+                                        {...field} 
+                                        placeholder="Tell others about yourself..." 
+                                        rows={3}
+                                        maxLength={500}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </form>
+                          </Form>
+                        </div>
+                        
+                        <DrawerFooter>
+                          <div className="flex justify-end space-x-2">
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              onClick={() => setIsPublicProfileDialogOpen(false)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button 
+                              type="button"
+                              onClick={publicProfileForm.handleSubmit(onPublicProfileSubmit)}
+                            >
+                              Save Changes
+                            </Button>
+                          </div>
+                        </DrawerFooter>
+                      </DrawerContent>
+                    </Drawer>
                     {user?.isPremium && (
                       <Badge variant="accent">
                         <Crown className="h-3 w-3 mr-1" />

@@ -21,7 +21,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger, DrawerFooter } from '@/components/ui/drawer';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -294,63 +294,72 @@ export default function ProfilePage() {
                       </AvatarFallback>
                     </Avatar>
                     
-                    <Dialog open={isPublicProfileDialogOpen} onOpenChange={setIsPublicProfileDialogOpen}>
-                      <DialogTrigger asChild>
+                    <Drawer open={isPublicProfileDialogOpen} onOpenChange={setIsPublicProfileDialogOpen}>
+                      <DrawerTrigger asChild>
                         <Button
                           size="sm"
                           className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-blue-600 hover:bg-blue-700"
                         >
                           <Camera className="h-4 w-4" />
                         </Button>
-                      </DialogTrigger>
-                      <DialogContent className="bg-[#010a18] border border-blue-800/60 text-white max-w-md">
-                        <DialogHeader>
-                          <DialogTitle>Edit Profile Image</DialogTitle>
-                        </DialogHeader>
+                      </DrawerTrigger>
+                      <DrawerContent className="bg-slate-900 border-slate-700 max-h-[85vh]">
+                        <DrawerHeader className="text-left">
+                          <DrawerTitle>Edit Profile Image</DrawerTitle>
+                        </DrawerHeader>
                         
-                        <Form {...publicProfileForm}>
-                          <form onSubmit={publicProfileForm.handleSubmit(onPublicProfileSubmit)} className="space-y-4">
-                            <div className="flex flex-col items-center space-y-4">
-                              <div className="relative">
-                                <Avatar className="h-20 w-20">
-                                  <AvatarImage 
-                                    src={profileImagePreview || user?.profileImageUrl || "/default-avatar.png"} 
+                        <div className="px-4 pb-4 overflow-y-auto">
+                          <Form {...publicProfileForm}>
+                            <form onSubmit={publicProfileForm.handleSubmit(onPublicProfileSubmit)} className="space-y-4">
+                              <div className="flex flex-col items-center space-y-4">
+                                <div className="relative">
+                                  <Avatar className="h-20 w-20">
+                                    <AvatarImage 
+                                      src={profileImagePreview || user?.profileImageUrl || "/default-avatar.png"} 
+                                    />
+                                    <AvatarFallback name={user?.name || ''} className="text-lg" />
+                                  </Avatar>
+                                  <label 
+                                    htmlFor="profile-image-upload" 
+                                    className="absolute -bottom-1 -right-1 bg-blue-600 rounded-full p-2 cursor-pointer hover:bg-blue-700 transition-colors"
+                                  >
+                                    <Camera className="h-3 w-3" />
+                                  </label>
+                                  <input
+                                    id="profile-image-upload"
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleImageChange}
+                                    className="hidden"
                                   />
-                                  <AvatarFallback name={user?.name || ''} className="text-lg" />
-                                </Avatar>
-                                <label 
-                                  htmlFor="profile-image-upload" 
-                                  className="absolute -bottom-1 -right-1 bg-blue-600 rounded-full p-2 cursor-pointer hover:bg-blue-700 transition-colors"
-                                >
-                                  <Camera className="h-3 w-3" />
-                                </label>
-                                <input
-                                  id="profile-image-upload"
-                                  type="file"
-                                  accept="image/*"
-                                  onChange={handleImageChange}
-                                  className="hidden"
-                                />
+                                </div>
+                                <p className="text-xs text-gray-400 text-center">
+                                  Click the camera icon to upload a new profile image
+                                </p>
                               </div>
-                              <p className="text-xs text-gray-400 text-center">
-                                Click the camera icon to upload a new profile image
-                              </p>
-                            </div>
-
-                            <div className="flex justify-end space-x-2 pt-4">
-                              <Button 
-                                type="button" 
-                                variant="outline" 
-                                onClick={() => setIsPublicProfileDialogOpen(false)}
-                              >
-                                Cancel
-                              </Button>
-                              <Button type="submit">Save Changes</Button>
-                            </div>
-                          </form>
-                        </Form>
-                      </DialogContent>
-                    </Dialog>
+                            </form>
+                          </Form>
+                        </div>
+                        
+                        <DrawerFooter>
+                          <div className="flex justify-end space-x-2">
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              onClick={() => setIsPublicProfileDialogOpen(false)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button 
+                              type="button"
+                              onClick={publicProfileForm.handleSubmit(onPublicProfileSubmit)}
+                            >
+                              Save Changes
+                            </Button>
+                          </div>
+                        </DrawerFooter>
+                      </DrawerContent>
+                    </Drawer>
                   </div>
 
                   {/* Profile Info */}

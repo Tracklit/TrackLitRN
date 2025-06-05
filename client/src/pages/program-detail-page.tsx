@@ -235,7 +235,7 @@ function ProgramCalendar({ sessions }: { sessions: any[] }) {
 
       {/* Session Details Drawer */}
       <Drawer open={!!selectedSession} onOpenChange={() => setSelectedSession(null)}>
-        <DrawerContent className="max-h-[85vh]">
+        <DrawerContent className="max-h-[85vh] bg-slate-900 border-slate-700">
           <DrawerHeader className="text-left">
             <DrawerTitle>
               Day {selectedSession?.dayNumber} - {selectedSession?.title}
