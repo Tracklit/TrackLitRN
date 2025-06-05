@@ -182,6 +182,19 @@ export default function HomePage() {
       headerImage: "/tools-card-compressed.jpeg"
     },
     {
+      title: "Today's Session",
+      description: todaySession ? 
+        `${todaySession.shortDistanceWorkout?.slice(0, 50)}...` || 
+        `${todaySession.mediumDistanceWorkout?.slice(0, 50)}...` || 
+        `${todaySession.longDistanceWorkout?.slice(0, 50)}...` || 
+        "View your workout" 
+        : "View your workout",
+      icon: <Calendar className="h-6 w-6 text-primary" />,
+      href: "/practice",
+      disabled: false,
+      isSpecial: true
+    },
+    {
       title: "Sprinthia",
       description: "AI training companion",
       icon: <MessageCircle className="h-6 w-6 text-primary" />,
@@ -225,20 +238,31 @@ export default function HomePage() {
                 </Card>
               ) : (
                 <Link href={card.href} key={index}>
-                  <Card className="cursor-pointer hover:shadow-md transition-all duration-300 border border-muted hover:border-primary h-[140px] overflow-hidden group relative">
-                    {/* Header Image - Top Half */}
-                    <div 
-                      className="h-1/2 bg-cover bg-center bg-no-repeat relative"
-                      style={{ 
-                        backgroundImage: `url(${card.headerImage || trackImages[index % 4]})`,
-                        backgroundPosition: card.headerImage 
-                          ? (card.title === 'Programs' || card.title === 'Tools' ? 'center' : 'center -85px')
-                          : 'center'
-                      }}
-                    >
-                      <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-all duration-300" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    </div>
+                  <Card className={`cursor-pointer hover:shadow-md transition-all duration-300 border border-muted hover:border-primary h-[140px] overflow-hidden group relative ${card.isSpecial ? 'border-primary/30 bg-primary/5' : ''}`}>
+                    {/* Header Image - Top Half or Special Today's Session styling */}
+                    {card.isSpecial ? (
+                      <div className="h-1/2 bg-gradient-to-br from-primary/20 to-primary/10 relative">
+                        <div className="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent" />
+                        <div className="absolute top-2 right-2">
+                          <Badge variant="secondary" className="text-xs bg-primary/20 text-primary border-primary/30">
+                            Today
+                          </Badge>
+                        </div>
+                      </div>
+                    ) : (
+                      <div 
+                        className="h-1/2 bg-cover bg-center bg-no-repeat relative"
+                        style={{ 
+                          backgroundImage: `url(${card.headerImage || trackImages[index % 4]})`,
+                          backgroundPosition: card.headerImage 
+                            ? (card.title === 'Programs' || card.title === 'Tools' ? 'center' : 'center -85px')
+                            : 'center'
+                        }}
+                      >
+                        <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-all duration-300" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      </div>
+                    )}
                     
                     {/* Content - Bottom Half */}
                     <CardContent className="h-1/2 p-2.5 relative flex flex-col justify-center bg-background">
@@ -253,103 +277,7 @@ export default function HomePage() {
             ))}
           </div>
         </section>
-        
-        {/* Today's Session Preview */}
-        <section className="mb-4 mx-auto" style={{ maxWidth: "540px" }}>
-          <Link href="/practice">
-            <Card className="border-primary/20 w-full hover:bg-primary/5 transition-colors cursor-pointer">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Dumbbell className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">Today's Session</CardTitle>
-                      <CardDescription className="text-sm">
-                        {todaySession ? todaySession.title : "View your workout"}
-                      </CardDescription>
-                    </div>
-                  </div>
-                  <ArrowRight className="h-5 w-5 text-primary" />
-                </div>
-              </CardHeader>
-              
-              {todaySession && (
-                <CardContent className="pt-0">
-                  <div className="space-y-3">
-                    {/* Short Distance Workout */}
-                    {todaySession.shortDistanceWorkout && (
-                      <div className="p-3 bg-muted/30 rounded-lg">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge variant="secondary" className="text-xs">Short Distance</Badge>
-                        </div>
-                        <p className="text-sm text-foreground/90 leading-relaxed">
-                          {todaySession.shortDistanceWorkout}
-                        </p>
-                      </div>
-                    )}
-                    
-                    {/* Medium Distance Workout */}
-                    {todaySession.mediumDistanceWorkout && (
-                      <div className="p-3 bg-muted/30 rounded-lg">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge variant="secondary" className="text-xs">Medium Distance</Badge>
-                        </div>
-                        <p className="text-sm text-foreground/90 leading-relaxed">
-                          {todaySession.mediumDistanceWorkout}
-                        </p>
-                      </div>
-                    )}
-                    
-                    {/* Long Distance Workout */}
-                    {todaySession.longDistanceWorkout && (
-                      <div className="p-3 bg-muted/30 rounded-lg">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge variant="secondary" className="text-xs">Long Distance</Badge>
-                        </div>
-                        <p className="text-sm text-foreground/90 leading-relaxed">
-                          {todaySession.longDistanceWorkout}
-                        </p>
-                      </div>
-                    )}
-                    
-                    {/* Extra Session */}
-                    {todaySession.extraSession && (
-                      <div className="p-3 bg-primary/5 rounded-lg border border-primary/20">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge variant="outline" className="text-xs border-primary/40 text-primary">Extra Session</Badge>
-                        </div>
-                        <p className="text-sm text-foreground/90 leading-relaxed">
-                          {todaySession.extraSession}
-                        </p>
-                      </div>
-                    )}
-                    
-                    {/* Pre-Activation if present */}
-                    {(todaySession.preActivation1 || todaySession.preActivation2) && (
-                      <div className="p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200 dark:border-orange-800">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge variant="outline" className="text-xs border-orange-300 text-orange-700 dark:text-orange-400">Pre-Activation</Badge>
-                        </div>
-                        {todaySession.preActivation1 && (
-                          <p className="text-sm text-foreground/90 leading-relaxed mb-2">
-                            {todaySession.preActivation1}
-                          </p>
-                        )}
-                        {todaySession.preActivation2 && (
-                          <p className="text-sm text-foreground/90 leading-relaxed">
-                            {todaySession.preActivation2}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              )}
-            </Card>
-          </Link>
-        </section>
+
 
         {/* Session Preview Ticker - Moved below Today's Session */}
         {isTickerVisible && (
