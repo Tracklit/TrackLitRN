@@ -206,7 +206,7 @@ export default function HomePage() {
   // Quote removed as requested
 
   return (
-    <div className="min-h-screen text-foreground pb-16">
+    <div className="min-h-screen text-foreground pb-16 bg-background">
       <main className="pt-2 px-4 container mx-auto max-w-7xl">
         {/* Logo will be placed here in the future */}
         <div className="h-1 mx-auto" style={{ maxWidth: "540px" }}>
@@ -385,19 +385,7 @@ export default function HomePage() {
       
       {/* Session Detail Modal */}
       <Dialog open={isSessionModalOpen} onOpenChange={setIsSessionModalOpen}>
-        <div className="fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-        <DialogContent className="sm:max-w-md bg-background/95 border border-border shadow-lg backdrop-blur-sm fixed touch-none select-none"
-          style={{ 
-            position: 'fixed',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            zIndex: 50,
-            backgroundColor: 'hsl(var(--background))',
-            opacity: 1
-          }}
-          onPointerDownOutside={(e) => e.preventDefault()}
-          onEscapeKeyDown={(e) => e.preventDefault()}
+        <DialogContent className="sm:max-w-md bg-background border border-border shadow-lg"
           onTouchStart={(e) => e.stopPropagation()}
           onTouchMove={(e) => e.stopPropagation()}
         >
