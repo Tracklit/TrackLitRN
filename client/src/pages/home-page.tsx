@@ -59,6 +59,7 @@ export default function HomePage() {
     return saved !== null ? JSON.parse(saved) : true;
   });
   const [activeSessionIndex, setActiveSessionIndex] = useState(0);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   const toggleTickerVisibility = (visible: boolean) => {
     setIsTickerVisible(visible);
@@ -118,6 +119,33 @@ export default function HomePage() {
     
     return () => clearInterval(interval);
   }, [sessionPreviews]);
+
+  // Force modal position lock during interactions
+  useEffect(() => {
+    if (!isSessionModalOpen || !modalRef.current) return;
+
+    const modal = modalRef.current;
+    let animationFrame: number;
+
+    const lockPosition = () => {
+      if (modal) {
+        modal.style.position = 'fixed';
+        modal.style.top = '50%';
+        modal.style.left = '50%';
+        modal.style.transform = 'translate(-50%, -50%)';
+        modal.style.zIndex = '1000';
+      }
+      animationFrame = requestAnimationFrame(lockPosition);
+    };
+
+    lockPosition();
+
+    return () => {
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+      }
+    };
+  }, [isSessionModalOpen]);
   
   // Function to open session details modal
   const openSessionDetails = (session: SessionPreviewWithUser) => {
@@ -386,6 +414,7 @@ export default function HomePage() {
       {/* Session Detail Modal */}
       <Dialog open={isSessionModalOpen} onOpenChange={setIsSessionModalOpen}>
         <DialogContent 
+          ref={modalRef}
           className="sm:max-w-md bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 shadow-2xl"
           style={{
             position: 'fixed',
