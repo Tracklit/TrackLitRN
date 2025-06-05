@@ -3,7 +3,7 @@ import { ProtectedRoute } from "@/lib/protected-route";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Gauge } from "lucide-react";
-import { Breadcrumb } from "@/components/breadcrumb";
+import { BackNavigation } from "@/components/back-navigation";
 import { PageHeader } from "@/components/page-header";
 
 export default function PaceCalculatorPage() {
@@ -31,15 +31,9 @@ export default function PaceCalculatorPage() {
     setPaceResult({ pace: formattedPace, speed: formattedSpeed });
   };
 
-  const breadcrumbItems = [
-    { label: "Home", href: "/" },
-    { label: "Training Tools", href: "/training-tools" },
-    { label: "Pace Calculator", href: "/tools/pace-calculator" },
-  ];
-
   return (
     <div className="container max-w-screen-xl mx-auto p-4 pt-20 pb-20">
-      <Breadcrumb items={breadcrumbItems} />
+      <BackNavigation />
       
       <PageHeader
         title="Pace Calculator"

@@ -19,7 +19,7 @@ import {
   Info
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Breadcrumb } from "@/components/breadcrumb";
+import { BackNavigation } from "@/components/back-navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import PhotoFinishFullscreen from './photo-finish-fullscreen';
@@ -917,11 +917,7 @@ export default function PhotoFinishPage() {
 
   return (
     <div className="container mx-auto px-4 pb-16">
-      <Breadcrumb items={[
-        { label: 'Home', href: '/' },
-        { label: 'Training Tools', href: '/training-tools' },
-        { label: 'Photo Finish', href: '/tools/photo-finish' }
-      ]} />
+      <BackNavigation />
       
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>

@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Breadcrumb } from "@/components/breadcrumb";
+import { BackNavigation } from "@/components/back-navigation";
 import { Search, Calendar, ChevronDown, ChevronUp, BookOpen, Edit, Trash2, BadgeInfo, MoreVertical, Activity } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
@@ -213,11 +213,7 @@ export function Component() {
   
   return (
     <div className="container mx-auto px-4 pb-16">
-      <Breadcrumb items={[
-        { label: 'Home', href: '/' },
-        { label: 'Workout Tools', href: '/training-tools' },
-        { label: 'Journal', href: '/tools/journal' }
-      ]} />
+      <BackNavigation />
       
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
