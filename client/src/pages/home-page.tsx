@@ -226,7 +226,7 @@ export default function HomePage() {
         {/* Quote removed as requested */}
         
         {/* Session Preview Ticker with slide animation */}
-        <section className="mb-6 mx-auto relative -mt-5" style={{ maxWidth: "540px" }}>
+        <section className="mb-6 mx-auto relative -mt-12" style={{ maxWidth: "540px" }}>
           <div 
             className={`px-4 relative bg-card border rounded-lg transition-all duration-300 ease-out overflow-hidden ${
               isTickerVisible ? 'h-auto translate-y-0 opacity-100' : 'h-20 -translate-y-14 opacity-80'
