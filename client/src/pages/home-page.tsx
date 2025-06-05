@@ -73,8 +73,8 @@ export default function HomePage() {
   // Fetch program sessions for the primary program
   const { programSessions, isLoading: isLoadingSessions } = useProgramSessions(primaryProgramId);
   
-  // Find today's workout session (for May 23, 2025 as specified)
-  const todayDate = "May-23";
+  // Find today's workout session (Jun-5, 2025)
+  const todayDate = "Jun-5";
   const todaySession = programSessions?.find(session => session.date === todayDate) || null;
   
   // Temporary type for session previews with user data
@@ -241,12 +241,7 @@ export default function HomePage() {
                   <Card className={`cursor-pointer hover:shadow-md transition-all duration-300 border border-muted hover:border-primary h-[140px] overflow-hidden group relative ${card.isSpecial ? 'border-primary/30 bg-primary/5' : ''}`}>
                     {/* Special Today's Session - Full Canvas */}
                     {card.isSpecial ? (
-                      <CardContent className="h-full p-3 relative flex flex-col bg-gradient-to-br from-primary/10 to-primary/5">
-                        <div className="absolute top-2 right-2">
-                          <Badge variant="secondary" className="text-xs bg-primary/20 text-primary border-primary/30">
-                            Today
-                          </Badge>
-                        </div>
+                      <CardContent className="h-full p-3 relative flex flex-col bg-muted/50 dark:bg-muted/30">
                         <div className="flex flex-col h-full">
                           <div className="flex items-center gap-2 mb-2">
                             {card.icon}
@@ -254,17 +249,17 @@ export default function HomePage() {
                           </div>
                           <div className="flex-1 space-y-1">
                             {todaySession?.shortDistanceWorkout && (
-                              <div className="p-1.5 bg-background/60 rounded text-xs">
+                              <div className="p-1.5 bg-background/80 dark:bg-background/40 rounded text-xs">
                                 <span className="font-medium text-primary">Short:</span> {todaySession.shortDistanceWorkout.slice(0, 30)}...
                               </div>
                             )}
                             {todaySession?.mediumDistanceWorkout && (
-                              <div className="p-1.5 bg-background/60 rounded text-xs">
+                              <div className="p-1.5 bg-background/80 dark:bg-background/40 rounded text-xs">
                                 <span className="font-medium text-primary">Medium:</span> {todaySession.mediumDistanceWorkout.slice(0, 30)}...
                               </div>
                             )}
                             {todaySession?.longDistanceWorkout && (
-                              <div className="p-1.5 bg-background/60 rounded text-xs">
+                              <div className="p-1.5 bg-background/80 dark:bg-background/40 rounded text-xs">
                                 <span className="font-medium text-primary">Long:</span> {todaySession.longDistanceWorkout.slice(0, 30)}...
                               </div>
                             )}
