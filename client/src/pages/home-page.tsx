@@ -227,25 +227,25 @@ export default function HomePage() {
         {/* Quote removed as requested */}
         
         {/* Session Preview Ticker */}
-        {isTickerVisible && sessionPreviews?.length > 0 && (
+        {sessionPreviews?.length > 0 && (
           <section className="mb-6 mx-auto" style={{ maxWidth: "540px" }}>
             <div className="grid grid-cols-2 gap-2" style={{ margin: "0 auto" }}>
               <div className="col-span-2">
-                <div className="bg-card rounded-lg border relative overflow-hidden">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0 absolute right-2 top-2 z-10 text-muted-foreground hover:text-foreground"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleTickerVisibility(!isTickerVisible);
-                    }}
-                  >
-                    {isTickerVisible ? <X className="h-4 w-4" /> : <Globe className="h-4 w-4" />}
-                  </Button>
-                  
-                  {isTickerVisible ? (
-                    isLoadingPreviews ? (
+                {isTickerVisible ? (
+                  <div className="bg-card rounded-lg border relative overflow-hidden">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 absolute right-2 top-2 z-10 text-muted-foreground hover:text-foreground"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleTickerVisibility(!isTickerVisible);
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                    
+                    {isLoadingPreviews ? (
                       <div className="p-3 transition-opacity duration-500 ease-in-out opacity-100">
                         <div className="flex items-center gap-2">
                           <Skeleton className="h-6 w-6 rounded-full" />
@@ -278,13 +278,26 @@ export default function HomePage() {
                       <div className="p-3 h-12 flex items-center transition-opacity duration-500 ease-in-out opacity-100">
                         <span className="text-xs text-muted-foreground">No recent workouts</span>
                       </div>
-                    )
-                  ) : (
+                    )}
+                  </div>
+                ) : (
+                  <div className="bg-card rounded-lg border relative overflow-hidden h-12 flex items-center">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 absolute right-2 top-2 z-10 text-muted-foreground hover:text-foreground"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleTickerVisibility(!isTickerVisible);
+                      }}
+                    >
+                      <Globe className="h-4 w-4" />
+                    </Button>
                     <div className="p-3 h-12 flex items-center transition-opacity duration-500 ease-in-out opacity-30">
                       <span className="text-xs text-muted-foreground">Workout feed hidden</span>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
           </section>
