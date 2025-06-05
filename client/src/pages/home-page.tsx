@@ -225,29 +225,32 @@ export default function HomePage() {
 
         {/* Quote removed as requested */}
         
-        {/* Session Preview Ticker */}
-        {isTickerVisible && (
-          <section className="mb-6 mx-auto" style={{ maxWidth: "540px" }}>
-            <div className="px-4 relative">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 w-6 p-0 absolute right-4 top-1/2 -translate-y-1/2 z-10"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleTickerVisibility(false);
-                }}
-              >
-                <X className="h-4 w-4" />
-              </Button>
+        {/* Session Preview Ticker with slide animation */}
+        <section className="mb-6 mx-auto relative" style={{ maxWidth: "540px" }}>
+          <div 
+            className={`px-4 relative bg-card border rounded-lg transition-all duration-300 ease-out overflow-hidden ${
+              isTickerVisible ? 'h-auto opacity-100' : 'h-2 opacity-80'
+            }`}
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 absolute right-4 top-1/2 -translate-y-1/2 z-10"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleTickerVisibility(!isTickerVisible);
+              }}
+            >
+              {isTickerVisible ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+            </Button>
+            
+            <div className={`transition-all duration-300 ${isTickerVisible ? 'py-2' : 'py-0.5'}`}>
               {isLoadingPreviews ? (
-                <div className="bg-muted rounded-lg p-3 border">
-                  <div className="flex items-center gap-2">
-                    <Skeleton className="h-6 w-6 rounded-full" />
-                    <div className="flex-1">
-                      <Skeleton className="h-3 w-24 mb-1" />
-                      <Skeleton className="h-3 w-32" />
-                    </div>
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-6 w-6 rounded-full" />
+                  <div className="flex-1">
+                    <Skeleton className="h-3 w-24 mb-1" />
+                    <Skeleton className="h-3 w-32" />
                   </div>
                 </div>
               ) : sessionPreviews && sessionPreviews.length > 0 && (
@@ -257,7 +260,7 @@ export default function HomePage() {
                   key={activeSessionIndex}
                 >
                   <div 
-                    className="flex items-center gap-2 px-3 py-1 hover:bg-primary/10 transition-all duration-300"
+                    className="flex items-center gap-2 px-3 py-1 hover:bg-primary/10 transition-all duration-300 rounded"
                   >
                     <div className="rounded-full bg-primary/15 h-8 w-8 flex items-center justify-center flex-shrink-0">
                       <UserCircle className="h-4 w-4 text-primary" />
@@ -273,28 +276,8 @@ export default function HomePage() {
                 </div>
               )}
             </div>
-          </section>
-        )}
-        
-        {/* Show + button when ticker is hidden */}
-        {!isTickerVisible && (
-          <section className="mb-6 mx-auto" style={{ maxWidth: "540px" }}>
-            <div className="px-4 relative">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 w-6 p-0 absolute right-4 top-1/2 -translate-y-1/2 z-10"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleTickerVisibility(true);
-                }}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-              <div className="h-8"></div> {/* Spacer to maintain layout */}
-            </div>
-          </section>
-        )}
+          </div>
+        </section>
         
         {/* Main Category Cards - 2x3 grid layout */}
         <section className="mb-4">
