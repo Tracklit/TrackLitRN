@@ -148,15 +148,20 @@ export default function HomePage() {
     }
   };
   
-  // Interval for rotating through sessions
+  // Interval for rotating through sessions with push animation
   useEffect(() => {
-    if (!sessionPreviews?.length) return;
+    if (!sessionPreviews?.length || sessionPreviews.length <= 1) return;
     
     const interval = setInterval(() => {
-      setActiveSessionIndex(prev => 
-        prev >= (sessionPreviews.length - 1) ? 0 : prev + 1
-      );
-    }, 5000); // 5 second interval
+      console.log('Starting animation cycle');
+      setIsAnimating(true);
+      setTimeout(() => {
+        setActiveSessionIndex(prev => 
+          prev >= (sessionPreviews.length - 1) ? 0 : prev + 1
+        );
+        setTimeout(() => setIsAnimating(false), 50);
+      }, 300);
+    }, 5000);
     
     return () => clearInterval(interval);
   }, [sessionPreviews]);
