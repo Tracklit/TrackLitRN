@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { BackNavigation } from '@/components/back-navigation';
-import { PageTransition } from '@/components/page-transition';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -77,8 +76,7 @@ export default function CreateMeetPage() {
   };
 
   return (
-    <PageTransition>
-      <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground">
       <main className="pt-16 pb-6">
         <div className="max-w-2xl mx-auto px-4">
           <BackNavigation />
@@ -213,7 +211,6 @@ export default function CreateMeetPage() {
           </Card>
         </div>
       </main>
-      </div>
-    </PageTransition>
+    </div>
   );
 }

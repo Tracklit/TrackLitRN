@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useLocation } from "wouter";
+import { useRef, useEffect } from "react";
 
 // Define page hierarchy levels
 const PAGE_HIERARCHY: Record<string, number> = {
@@ -54,20 +55,13 @@ function getPageLevel(path: string): number {
   }
   
   // Pattern matching for dynamic routes
-  for (const [pattern, level] of Object.entries(PAGE_HIERARCHY)) {
+  for (const pattern in PAGE_HIERARCHY) {
     if (pattern.endsWith("/") && path.startsWith(pattern)) {
-      return level;
+      return PAGE_HIERARCHY[pattern];
     }
   }
   
-  // Default level for unknown pages
-  return 2;
-}
-
-function getAnimationDirection(fromLevel: number, toLevel: number): 'left' | 'right' | 'none' {
-  if (fromLevel < toLevel) return 'right'; // Going deeper - slide in from right
-  if (fromLevel > toLevel) return 'left';  // Going back - slide in from left
-  return 'none'; // Same level - no animation
+  return 1; // Default level
 }
 
 interface PageTransitionProps {
@@ -76,42 +70,54 @@ interface PageTransitionProps {
 
 export function PageTransition({ children }: PageTransitionProps) {
   const [location] = useLocation();
-  const [animationClass, setAnimationClass] = useState('');
-  const [isAnimating, setIsAnimating] = useState(false);
-  const previousLocation = useRef<string>(location);
-  const previousLevel = useRef<number>(getPageLevel(location));
+  const prevLocationRef = useRef<string>(location);
 
   useEffect(() => {
-    if (previousLocation.current !== location) {
-      const currentLevel = getPageLevel(location);
-      const direction = getAnimationDirection(previousLevel.current, currentLevel);
-      
-      if (direction !== 'none') {
-        setIsAnimating(true);
-        
-        // Set exit animation for current content
-        setAnimationClass(`page-exit-${direction === 'right' ? 'left' : 'right'}`);
-        
-        // After a brief delay, switch to enter animation
-        setTimeout(() => {
-          setAnimationClass(`page-enter-${direction}`);
-          
-          // Complete animation
-          setTimeout(() => {
-            setAnimationClass('');
-            setIsAnimating(false);
-          }, 300);
-        }, 50);
-      }
-      
-      previousLocation.current = location;
-      previousLevel.current = currentLevel;
-    }
+    prevLocationRef.current = location;
   }, [location]);
 
+  const currentLevel = getPageLevel(location);
+  const prevLevel = getPageLevel(prevLocationRef.current);
+  
+  // Determine animation direction based on hierarchy
+  const isGoingDeeper = currentLevel > prevLevel;
+  const slideDirection = isGoingDeeper ? 1 : -1; // 1 = right to left, -1 = left to right
+
+  const variants = {
+    initial: {
+      x: slideDirection * 100 + '%',
+      opacity: 0
+    },
+    animate: {
+      x: 0,
+      opacity: 1
+    },
+    exit: {
+      x: slideDirection * -100 + '%',
+      opacity: 0
+    }
+  };
+
+  const transition = {
+    duration: 0.2,
+    ease: "easeInOut"
+  };
+
   return (
-    <div className={`page-transition-container ${animationClass} ${isAnimating ? 'animating' : ''}`}>
-      {children}
+    <div className="relative w-full overflow-hidden">
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={location}
+          variants={variants}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          transition={transition}
+          className="w-full"
+        >
+          {children}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }
