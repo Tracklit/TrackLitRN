@@ -88,22 +88,20 @@ export function PageTransition({ children }: PageTransitionProps) {
 
   const variants = {
     initial: (direction: number) => ({
-      x: direction > 0 ? '100%' : '-100%',
-      opacity: 0
+      x: direction > 0 ? '30%' : '-30%',
+      opacity: 0,
+      zIndex: 10
     }),
     animate: {
       x: 0,
-      opacity: 1
+      opacity: 1,
+      zIndex: 10
     },
     exit: (direction: number) => ({
-      x: direction > 0 ? '-100%' : '100%',
-      opacity: 0
+      x: direction > 0 ? '-15%' : '15%',
+      opacity: 0,
+      zIndex: 1
     })
-  };
-
-  const transition = {
-    duration: 0.1,
-    ease: "easeInOut"
   };
 
   // Direction: 1 for deeper (slide from right), -1 for back (slide from left)
@@ -111,7 +109,7 @@ export function PageTransition({ children }: PageTransitionProps) {
 
   return (
     <div className="relative w-full overflow-hidden">
-      <AnimatePresence mode="wait" initial={false} custom={direction}>
+      <AnimatePresence initial={false} custom={direction}>
         <motion.div
           key={location}
           custom={direction}
@@ -119,8 +117,20 @@ export function PageTransition({ children }: PageTransitionProps) {
           initial="initial"
           animate="animate"
           exit="exit"
-          transition={transition}
-          className="w-full"
+          transition={{
+            x: { 
+              duration: 0.1, 
+              ease: "easeInOut",
+              delay: 0.05
+            },
+            opacity: { 
+              duration: 0.05, 
+              delay: 0.05
+            },
+            zIndex: { duration: 0 }
+          }}
+          className="w-full absolute inset-0"
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
         >
           {children}
         </motion.div>
