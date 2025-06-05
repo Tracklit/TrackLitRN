@@ -175,7 +175,10 @@ export function AssignProgramDialog({
       />
       
       {/* Modal content */}
-      <div className="relative bg-slate-900 border border-slate-700 rounded-lg shadow-lg w-[90vw] max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+      <div 
+        className="relative bg-slate-900 border border-slate-700 rounded-lg shadow-lg w-[90vw] max-w-lg mx-4 max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="p-6">
           <div className="mb-6">
             <h2 className="text-lg font-semibold">Assign Program to Athlete</h2>
