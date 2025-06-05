@@ -37,12 +37,20 @@ export function AssignProgramPage() {
   });
 
   const assignMutation = useMutation({
-    mutationFn: (data: { programId: number; assigneeId: number; notes?: string }) =>
-      fetch(`/api/assign-program`, {
+    mutationFn: async (data: { programId: number; assigneeId: number; notes?: string }) => {
+      const response = await fetch(`/api/assign-program`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
-      }).then(res => res.json()),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to assign program');
+      }
+      
+      return response.json();
+    },
     onSuccess: () => {
       toast({
         title: "Program Assigned Successfully",

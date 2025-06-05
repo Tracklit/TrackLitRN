@@ -5346,6 +5346,61 @@ User message: ${content}`;
     }
   });
 
+  // Program assignment endpoint
+  app.post("/api/assign-program", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const { programId, assigneeId, notes } = req.body;
+      const assignerId = req.user.id;
+
+      // Validate required fields
+      if (!programId || !assigneeId) {
+        return res.status(400).json({ error: "Program ID and assignee ID are required" });
+      }
+
+      // Get program details
+      const program = await dbStorage.getProgram(programId);
+      if (!program) {
+        return res.status(404).json({ error: "Program not found" });
+      }
+
+      // Check if user has permission to assign this program
+      if (program.userId !== assignerId) {
+        return res.status(403).json({ error: "You don't have permission to assign this program" });
+      }
+
+      // Create program assignment
+      const assignment = await dbStorage.createProgramAssignment({
+        programId,
+        assigneeId,
+        assignerId,
+        notes
+      });
+
+      // Create notification for the assignee
+      await dbStorage.createNotification({
+        userId: assigneeId,
+        type: "program_assigned",
+        title: "New Program Assigned",
+        message: `You have been assigned the program "${program.title}"`,
+        actionUrl: "/purchased-programs",
+        isRead: false
+      });
+
+      res.json({ 
+        success: true, 
+        message: "Program assigned successfully",
+        assignment
+      });
+    } catch (error) {
+      console.error("Error assigning program:", error);
+      res.status(500).json({ error: "Failed to assign program" });
+    }
+  });
+
   // Rehab API endpoints
   app.post("/api/rehab/assign-program", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) {
