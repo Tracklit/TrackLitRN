@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
 import { BackNavigation } from '@/components/back-navigation';
 
 import { Meet } from '@shared/schema';
@@ -34,6 +35,7 @@ interface WeatherData {
 }
 
 export default function MeetsPage() {
+  const [, setLocation] = useLocation();
   const [isCreateMeetOpen, setIsCreateMeetOpen] = useState(false);
   const [selectedMeet, setSelectedMeet] = useState<Meet | null>(null);
   const [tickerMessages, setTickerMessages] = useState<string[]>([]);
@@ -332,7 +334,7 @@ export default function MeetsPage() {
                 </TabsList>
                 
                 <Button
-                  onClick={() => window.location.href = '/meets/create'}
+                  onClick={() => setLocation('/meets/create')}
                   className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -455,7 +457,7 @@ export default function MeetsPage() {
                   <Card className="overflow-hidden bg-card border border-border text-center p-8">
                     <p className="text-muted-foreground mb-4">No upcoming meets</p>
                     <Button
-                      onClick={() => window.location.href = '/meets/create'}
+                      onClick={() => setLocation('/meets/create')}
                       className="bg-primary hover:bg-primary/90 text-primary-foreground"
                     >
                       Create Your First Meet
