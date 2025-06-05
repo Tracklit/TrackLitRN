@@ -230,7 +230,7 @@ export function PracticeMediaGallery({
                     <img 
                       src={media.thumbnail || media.url} 
                       alt="Video thumbnail" 
-                      className="w-full h-full object-cover opacity-80"
+                      className="w-full h-full card-thumbnail opacity-80"
                       loading="lazy"
                     />
                     <div className="absolute inset-0 flex items-center justify-center">

@@ -122,8 +122,7 @@ export default function WorkoutToolsPage() {
                     <div 
                       className="h-1/2 bg-thumbnail-crop relative"
                       style={{ 
-                        backgroundImage: `url(${card.title === "Start Gun" ? startGunImagePath : stopwatchImagePath})`,
-                        filter: 'contrast(1.05) saturate(0.95)'
+                        backgroundImage: `url(${card.title === "Start Gun" ? startGunImagePath : stopwatchImagePath})`
                       }}
                     >
                       <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-all duration-300" />
