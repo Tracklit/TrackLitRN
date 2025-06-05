@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { BackNavigation } from '@/components/back-navigation';
-import { AnimatedLink } from '@/components/animated-link';
 
 import { Meet } from '@shared/schema';
 import { Button } from '@/components/ui/button';
@@ -36,6 +35,7 @@ interface WeatherData {
 }
 
 export default function MeetsPage() {
+  const [, setLocation] = useLocation();
   const [isCreateMeetOpen, setIsCreateMeetOpen] = useState(false);
   const [selectedMeet, setSelectedMeet] = useState<Meet | null>(null);
   const [tickerMessages, setTickerMessages] = useState<string[]>([]);
@@ -272,8 +272,6 @@ export default function MeetsPage() {
     }
   };
 
-
-
   return (
     <>
       <div className="min-h-screen bg-background text-foreground">
@@ -335,13 +333,13 @@ export default function MeetsPage() {
                   </TabsTrigger>
                 </TabsList>
                 
-                <AnimatedLink
-                  to="/meets/create"
-                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+                <Button
+                  onClick={() => setLocation('/meets/create')}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-4 w-4 mr-2" />
                   Create Meet
-                </AnimatedLink>
+                </Button>
               </div>
               
               <TabsContent value="upcoming">
@@ -458,12 +456,12 @@ export default function MeetsPage() {
                 ) : (
                   <Card className="overflow-hidden bg-card border border-border text-center p-8">
                     <p className="text-muted-foreground mb-4">No upcoming meets</p>
-                    <AnimatedLink
-                      to="/meets/create"
-                      className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+                    <Button
+                      onClick={() => setLocation('/meets/create')}
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground"
                     >
                       Create Your First Meet
-                    </AnimatedLink>
+                    </Button>
                   </Card>
                 )}
               </TabsContent>

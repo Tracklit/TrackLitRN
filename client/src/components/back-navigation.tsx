@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import { useLocation } from "wouter";
-import { AnimatedLink } from "@/components/animated-link";
 
 interface BackNavigationProps {
   href?: string;
@@ -67,11 +66,13 @@ export function BackNavigation({ href, className = "" }: BackNavigationProps) {
   const backPath = href || getBackPath(location);
 
   return (
-    <AnimatedLink
-      to={backPath}
-      className={`inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-8 w-8 mb-4 p-2 ${className}`}
+    <Button
+      variant="ghost"
+      size="sm"
+      className={`mb-4 p-2 h-8 w-8 ${className}`}
+      onClick={() => window.history.back()}
     >
       <ChevronLeft className="h-4 w-4" />
-    </AnimatedLink>
+    </Button>
   );
 }

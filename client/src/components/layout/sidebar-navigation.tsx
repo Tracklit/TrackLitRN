@@ -1,8 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { getInitials } from "@/lib/utils";
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { AnimatedLink } from "@/components/animated-link";
 import { 
   Home, 
   Calendar, 
@@ -34,8 +33,8 @@ interface NavItemProps {
 function NavItem({ href, icon, children, isActive, badge }: NavItemProps) {
   return (
     <li>
-      <AnimatedLink 
-        to={href} 
+      <Link 
+        href={href} 
         className={cn(
           "flex items-center space-x-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors",
           isActive 
@@ -48,7 +47,7 @@ function NavItem({ href, icon, children, isActive, badge }: NavItemProps) {
           <span>{children}</span>
           {badge && badge}
         </div>
-      </AnimatedLink>
+      </Link>
     </li>
   );
 }
