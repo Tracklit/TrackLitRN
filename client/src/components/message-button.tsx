@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,27 +18,12 @@ interface ConversationWithUser extends Conversation {
 
 export function MessageButton({ className, targetUserId }: MessageButtonProps) {
   const [showPanel, setShowPanel] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Fetch conversations to get unread count
   const { data: conversations = [] } = useQuery<ConversationWithUser[]>({
     queryKey: ["/api/conversations"],
     select: (data: ConversationWithUser[]) => data || []
   });
-
-  // Track hamburger menu state by observing body class changes
-  useEffect(() => {
-    const observer = new MutationObserver(() => {
-      setIsMenuOpen(document.body.classList.contains('overflow-hidden'));
-    });
-
-    observer.observe(document.body, {
-      attributes: true,
-      attributeFilter: ['class']
-    });
-
-    return () => observer.disconnect();
-  }, []);
 
   // Calculate unread messages count (simplified - you might need a better approach)
   const unreadCount = conversations.filter(conv => 
@@ -51,10 +36,7 @@ export function MessageButton({ className, targetUserId }: MessageButtonProps) {
         variant="ghost"
         size="sm"
         onClick={() => setShowPanel(true)}
-        className={`relative transition-transform duration-300 ${className}`}
-        style={{
-          transform: isMenuOpen ? 'translateX(30px)' : 'translateX(0)'
-        }}
+        className={`relative ${className}`}
       >
         <MessageCircle className="h-5 w-5" />
         {unreadCount > 0 && (
