@@ -5,7 +5,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowLeft, Send, MoreVertical, Play, ExternalLink } from "lucide-react";
+import { ArrowLeft, Send, MoreVertical, Play, ExternalLink, ImagePlus, Paperclip, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useParams, useLocation } from "wouter";
@@ -19,6 +19,21 @@ interface ExerciseData {
   thumbnailUrl: string | null;
   videoType: 'youtube' | 'upload';
   description: string | null;
+}
+
+interface ImageData {
+  type: 'image_share';
+  imageUrl: string;
+  caption?: string;
+}
+
+interface LinkPreview {
+  type: 'link_preview';
+  url: string;
+  title?: string;
+  description?: string;
+  image?: string;
+  domain?: string;
 }
 
 interface MessageWithUser extends DirectMessage {
@@ -111,11 +126,73 @@ function ExerciseVideoMessage({ exerciseData }: { exerciseData: ExerciseData }) 
   );
 }
 
+// Component to render image messages
+function ImageMessage({ imageData }: { imageData: ImageData }) {
+  return (
+    <div className="max-w-sm">
+      <img
+        src={imageData.imageUrl}
+        alt="Shared image"
+        className="rounded-lg max-w-full h-auto"
+        style={{ maxHeight: "300px" }}
+      />
+      {imageData.caption && (
+        <p className="text-sm mt-2 opacity-90">{imageData.caption}</p>
+      )}
+    </div>
+  );
+}
+
+// Component to render link previews
+function LinkPreviewMessage({ linkData }: { linkData: LinkPreview }) {
+  return (
+    <div className="border border-border rounded-lg p-3 max-w-sm bg-muted/50">
+      <div className="flex gap-3">
+        {linkData.image && (
+          <img
+            src={linkData.image}
+            alt="Link preview"
+            className="w-16 h-16 rounded object-cover flex-shrink-0"
+          />
+        )}
+        <div className="flex-1 min-w-0">
+          <div className="text-xs text-muted-foreground mb-1">
+            {linkData.domain}
+          </div>
+          {linkData.title && (
+            <div className="font-medium text-sm mb-1 line-clamp-2">
+              {linkData.title}
+            </div>
+          )}
+          {linkData.description && (
+            <div className="text-xs text-muted-foreground line-clamp-2">
+              {linkData.description}
+            </div>
+          )}
+        </div>
+      </div>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="mt-2 p-0 h-auto text-xs"
+        onClick={() => window.open(linkData.url, '_blank')}
+      >
+        <ExternalLink className="h-3 w-3 mr-1" />
+        Visit Link
+      </Button>
+    </div>
+  );
+}
+
 export default function ConversationDetailPage() {
   const { user } = useAuth();
   const [location, setLocation] = useLocation();
   const [newMessage, setNewMessage] = useState("");
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [linkPreview, setLinkPreview] = useState<LinkPreview | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Extract userId from URL
   const pathParts = location.split('/');
@@ -149,6 +226,23 @@ export default function ConversationDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/direct-messages", targetUserId] });
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
       setNewMessage("");
+      setSelectedImage(null);
+      setImagePreview(null);
+      setLinkPreview(null);
+    },
+  });
+
+  // Image upload mutation
+  const uploadImageMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('image', file);
+      const response = await fetch('/api/upload/image', {
+        method: 'POST',
+        body: formData,
+      });
+      if (!response.ok) throw new Error('Upload failed');
+      return response.json();
     },
   });
 
@@ -157,12 +251,79 @@ export default function ConversationDetailPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim() || !targetUserId) return;
+  // Handle image selection
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Detect and parse links in message
+  const detectLinks = (text: string): string[] => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    return text.match(urlRegex) || [];
+  };
+
+  // Handle message input change with link detection
+  const handleMessageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setNewMessage(value);
+    
+    const links = detectLinks(value);
+    if (links.length > 0 && !linkPreview) {
+      // Generate simple link preview
+      const url = links[0];
+      const domain = new URL(url).hostname;
+      setLinkPreview({
+        type: 'link_preview',
+        url,
+        domain,
+        title: url,
+      });
+    } else if (links.length === 0 && linkPreview) {
+      setLinkPreview(null);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!targetUserId) return;
+    
+    let content = newMessage.trim();
+    
+    // Handle image upload first if there's an image
+    if (selectedImage) {
+      try {
+        const uploadResult = await uploadImageMutation.mutateAsync(selectedImage);
+        const imageData: ImageData = {
+          type: 'image_share',
+          imageUrl: uploadResult.url,
+          caption: content || undefined,
+        };
+        content = JSON.stringify(imageData);
+      } catch (error) {
+        console.error('Failed to upload image:', error);
+        return;
+      }
+    } else if (linkPreview && content) {
+      // Include link preview data with the message
+      const messageWithLink = {
+        text: content,
+        linkPreview: linkPreview,
+      };
+      content = JSON.stringify(messageWithLink);
+    } else if (!content) {
+      return; // Don't send empty messages
+    }
     
     sendMessageMutation.mutate({
       receiverId: targetUserId,
-      content: newMessage.trim(),
+      content,
     });
   };
 
@@ -240,13 +401,31 @@ export default function ConversationDetailPage() {
             {messages.map((message) => {
               const isFromCurrentUser = message.senderId === user?.id;
               let exerciseData: ExerciseData | null = null;
+              let imageData: ImageData | null = null;
+              let linkData: LinkPreview | null = null;
+              let messageText = message.content;
+              let hasLinkInText = false;
 
               try {
-                if (message.content.startsWith('{') && message.content.includes('exercise_share')) {
-                  exerciseData = JSON.parse(message.content);
+                if (message.content.startsWith('{')) {
+                  const parsed = JSON.parse(message.content);
+                  if (parsed.type === 'exercise_share') {
+                    exerciseData = parsed;
+                  } else if (parsed.type === 'image_share') {
+                    imageData = parsed;
+                  } else if (parsed.linkPreview) {
+                    messageText = parsed.text;
+                    linkData = parsed.linkPreview;
+                    hasLinkInText = true;
+                  }
                 }
               } catch (e) {
                 // Not JSON, treat as regular message
+                // Check if it contains links for basic link detection
+                const links = detectLinks(message.content);
+                if (links.length > 0) {
+                  hasLinkInText = true;
+                }
               }
 
               return (
@@ -275,8 +454,15 @@ export default function ConversationDetailPage() {
                   >
                     {exerciseData ? (
                       <ExerciseVideoMessage exerciseData={exerciseData} />
+                    ) : imageData ? (
+                      <ImageMessage imageData={imageData} />
+                    ) : linkData ? (
+                      <div>
+                        <p className="text-sm whitespace-pre-wrap mb-2">{messageText}</p>
+                        <LinkPreviewMessage linkData={linkData} />
+                      </div>
                     ) : (
-                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                      <p className="text-sm whitespace-pre-wrap">{messageText}</p>
                     )}
                     
                     <p className={cn(
