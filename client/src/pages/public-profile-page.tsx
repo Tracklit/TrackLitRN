@@ -89,6 +89,7 @@ export default function PublicProfilePage() {
   const [bioText, setBioText] = useState('');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileData, setProfileData] = useState({ name: '', username: '' });
+  const [isMessagePanelOpen, setIsMessagePanelOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -173,6 +174,14 @@ export default function PublicProfilePage() {
 
   const handleProfileSave = () => {
     updateProfileMutation.mutate(profileData);
+  };
+
+  const handleOpenMessage = () => {
+    setIsMessagePanelOpen(true);
+  };
+
+  const handleCloseMessagePanel = () => {
+    setIsMessagePanelOpen(false);
   };
 
   const getSubscriptionBadge = (tier: string | null) => {
@@ -314,6 +323,7 @@ export default function PublicProfilePage() {
                             <Button
                               size="sm"
                               className="bg-blue-600 hover:bg-blue-700"
+                              onClick={handleOpenMessage}
                             >
                               <MessageCircle className="h-4 w-4 mr-2" />
                               Message
@@ -554,6 +564,13 @@ export default function PublicProfilePage() {
           </div>
         </main>
       </div>
+
+      {/* Message Panel */}
+      <MessagePanel 
+        isOpen={isMessagePanelOpen}
+        onClose={handleCloseMessagePanel}
+        targetUserId={userId}
+      />
     </div>
   );
 }
