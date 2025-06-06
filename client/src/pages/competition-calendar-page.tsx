@@ -411,17 +411,19 @@ export default function CompetitionCalendarPage() {
           <div className="flex gap-2 flex-wrap">
             <Input
               type="date"
-              placeholder="Start date"
+              placeholder="From date"
               value={dateFilter.start || ''}
               onChange={(e) => setDateFilter(prev => ({ ...prev, start: e.target.value }))}
               className="w-auto text-xs"
+              title="Filter competitions starting from this date"
             />
             <Input
               type="date"
-              placeholder="End date"
+              placeholder="To date"
               value={dateFilter.end || ''}
               onChange={(e) => setDateFilter(prev => ({ ...prev, end: e.target.value }))}
               className="w-auto text-xs"
+              title="Filter competitions ending before this date"
             />
             <Button 
               variant="outline" 
