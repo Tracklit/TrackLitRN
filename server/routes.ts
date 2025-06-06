@@ -6664,6 +6664,13 @@ Keep the response professional, evidence-based, and specific to track and field 
         }
       }
       
+      // Apply sorting by date
+      competitions.sort((a, b) => {
+        const dateA = new Date(a.start);
+        const dateB = new Date(b.start);
+        return sortOrder === 'asc' ? dateA.getTime() - dateB.getTime() : dateB.getTime() - dateA.getTime();
+      });
+      
       // Apply pagination
       const total = competitions.length;
       const startIndex = (pageNum - 1) * limitNum;
