@@ -52,6 +52,22 @@ interface LinkPreview {
   domain?: string;
 }
 
+// Helper function to format message content for previews
+function formatMessagePreview(content: string, senderName: string): string {
+  try {
+    const parsed = JSON.parse(content);
+    if (parsed.type === 'image_share') {
+      return `${senderName} sent you an image`;
+    }
+    if (parsed.type === 'exercise_share') {
+      return `${senderName} shared an exercise`;
+    }
+    return content;
+  } catch {
+    return content;
+  }
+}
+
 // Component to render image messages
 function ImageMessage({ imageData }: { imageData: ImageData }) {
   return (
@@ -306,7 +322,10 @@ export function MessagePanel({ isOpen, onClose, targetUserId }: MessagePanelProp
                         {conversation.lastMessage && (
                           <p className="text-sm text-muted-foreground truncate">
                             {conversation.lastMessage.senderId === user?.id ? 'You: ' : ''}
-                            {conversation.lastMessage.content}
+                            {formatMessagePreview(
+                              conversation.lastMessage.content,
+                              conversation.otherUser.name || conversation.otherUser.username
+                            )}
                           </p>
                         )}
                       </div>
