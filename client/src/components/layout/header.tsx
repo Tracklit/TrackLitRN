@@ -21,7 +21,7 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
   };
 
   return (
-    <header className={cn("bg-[#010a18] shadow-sm fixed top-0 left-0 right-0 z-30", className)}>
+    <header className={cn("bg-[#010a18] shadow-sm fixed top-0 left-0 right-0 z-20", className)}>
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center">
           <Link href="/">
