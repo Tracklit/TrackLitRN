@@ -6613,7 +6613,9 @@ Keep the response professional, evidence-based, and specific to track and field 
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     try {
-      const { name, upcoming, major } = req.query;
+      const { name, upcoming, major, startDate, endDate, page = '1', limit = '20' } = req.query;
+      const pageNum = parseInt(page as string);
+      const limitNum = parseInt(limit as string);
       
       let competitions;
       if (upcoming === 'true') {
@@ -6622,6 +6624,19 @@ Keep the response professional, evidence-based, and specific to track and field 
         competitions = await worldAthleticsService.getMajorCompetitions();
       } else {
         competitions = await worldAthleticsService.searchCompetitions(name as string);
+      }
+      
+      // Apply date filtering
+      if (startDate || endDate) {
+        competitions = competitions.filter(comp => {
+          const compStart = new Date(comp.start);
+          const compEnd = new Date(comp.end);
+          
+          if (startDate && compEnd < new Date(startDate as string)) return false;
+          if (endDate && compStart > new Date(endDate as string)) return false;
+          
+          return true;
+        });
       }
       
       // Store new competitions in our database
@@ -6648,7 +6663,18 @@ Keep the response professional, evidence-based, and specific to track and field 
         }
       }
       
-      res.json(competitions);
+      // Apply pagination
+      const total = competitions.length;
+      const startIndex = (pageNum - 1) * limitNum;
+      const endIndex = startIndex + limitNum;
+      const paginatedCompetitions = competitions.slice(startIndex, endIndex);
+      
+      res.json({
+        competitions: paginatedCompetitions,
+        total,
+        page: pageNum,
+        totalPages: Math.ceil(total / limitNum)
+      });
     } catch (error) {
       console.error("Error fetching competitions:", error);
       res.status(500).send("Error fetching competitions");

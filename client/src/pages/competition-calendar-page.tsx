@@ -74,17 +74,28 @@ export default function CompetitionCalendarPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCompetition, setSelectedCompetition] = useState<Competition | null>(null);
   const [activeTab, setActiveTab] = useState("upcoming");
+  const [dateFilter, setDateFilter] = useState<{ start?: string; end?: string }>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(20);
   const queryClient = useQueryClient();
 
   // Fetch competitions based on active tab
-  const { data: competitions = [], isLoading } = useQuery({
+  const { data: competitionsResponse, isLoading } = useQuery({
     queryKey: ['/api/competitions', { 
       name: searchTerm || undefined,
       upcoming: activeTab === 'upcoming' ? 'true' : undefined,
-      major: activeTab === 'major' ? 'true' : undefined
+      major: activeTab === 'major' ? 'true' : undefined,
+      startDate: dateFilter.start,
+      endDate: dateFilter.end,
+      page: currentPage,
+      limit: pageSize
     }],
     enabled: activeTab !== 'favorites'
   });
+
+  const competitions = Array.isArray(competitionsResponse) ? competitionsResponse : (competitionsResponse as any)?.competitions || [];
+  const totalCompetitions = (competitionsResponse as any)?.total || competitions.length;
+  const totalPages = Math.ceil(totalCompetitions / pageSize);
 
   // Fetch favorite competitions
   const { data: favoriteCompetitions = [] } = useQuery({
@@ -386,7 +397,7 @@ export default function CompetitionCalendarPage() {
       </div>
 
       <div className="mb-6 space-y-4">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
@@ -395,6 +406,33 @@ export default function CompetitionCalendarPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
             />
+          </div>
+          
+          <div className="flex gap-2 flex-wrap">
+            <Input
+              type="date"
+              placeholder="Start date"
+              value={dateFilter.start || ''}
+              onChange={(e) => setDateFilter(prev => ({ ...prev, start: e.target.value }))}
+              className="w-auto text-xs"
+            />
+            <Input
+              type="date"
+              placeholder="End date"
+              value={dateFilter.end || ''}
+              onChange={(e) => setDateFilter(prev => ({ ...prev, end: e.target.value }))}
+              className="w-auto text-xs"
+            />
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                setDateFilter({});
+                setCurrentPage(1);
+              }}
+            >
+              Clear
+            </Button>
           </div>
         </div>
 
@@ -428,9 +466,56 @@ export default function CompetitionCalendarPage() {
             </p>
           </div>
         ) : (
-          getDisplayCompetitions().map((competition: Competition) => (
-            <CompetitionCard key={competition.id} competition={competition} />
-          ))
+          <>
+            {getDisplayCompetitions().map((competition: Competition) => (
+              <CompetitionCard key={competition.id} competition={competition} />
+            ))}
+            
+            {/* Pagination Controls */}
+            {activeTab !== 'favorites' && totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 mt-8">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(pageNum)}
+                        className="w-8 h-8 p-0 text-xs"
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            )}
+            
+            {/* Results count */}
+            <div className="text-center text-sm text-gray-500 mt-4">
+              Showing {getDisplayCompetitions().length} of {totalCompetitions} competitions
+            </div>
+          </>
         )}
       </div>
     </div>
