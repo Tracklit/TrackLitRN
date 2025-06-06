@@ -391,27 +391,31 @@ export function MessagePanel({ isOpen, onClose, targetUserId }: MessagePanelProp
                           </Avatar>
                         )}
                         
-                        <div
-                          className={cn(
-                            "rounded-2xl px-4 py-2 break-words",
-                            isFromCurrentUser
-                              ? "bg-primary text-primary-foreground ml-2"
-                              : "bg-muted mr-2"
-                          )}
-                        >
-                          {imageData ? (
+                        {imageData ? (
+                          <div className="flex flex-col gap-2">
                             <ImageMessage imageData={imageData} />
-                          ) : (
+                            <p className="text-xs opacity-70 text-muted-foreground px-1">
+                              {message.createdAt && formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
+                            </p>
+                          </div>
+                        ) : (
+                          <div
+                            className={cn(
+                              "rounded-2xl px-4 py-2 break-words",
+                              isFromCurrentUser
+                                ? "bg-primary text-primary-foreground ml-2"
+                                : "bg-muted mr-2"
+                            )}
+                          >
                             <p className="text-sm whitespace-pre-wrap">{messageText}</p>
-                          )}
-                          
-                          <p className={cn(
-                            "text-xs mt-1 opacity-70",
-                            isFromCurrentUser ? "text-primary-foreground/70" : "text-muted-foreground"
-                          )}>
-                            {message.createdAt && formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
-                          </p>
-                        </div>
+                            <p className={cn(
+                              "text-xs mt-1 opacity-70",
+                              isFromCurrentUser ? "text-primary-foreground/70" : "text-muted-foreground"
+                            )}>
+                              {message.createdAt && formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
