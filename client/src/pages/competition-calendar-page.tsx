@@ -102,9 +102,9 @@ export default function CompetitionCalendarPage() {
   const favoriteMutation = useMutation({
     mutationFn: async ({ competitionId, action }: { competitionId: number; action: 'add' | 'remove' }) => {
       if (action === 'add') {
-        return apiRequest(`/api/competitions/${competitionId}/favorite`, { method: 'POST' });
+        return await fetch(`/api/competitions/${competitionId}/favorite`, { method: 'POST' });
       } else {
-        return apiRequest(`/api/competitions/${competitionId}/favorite`, { method: 'DELETE' });
+        return await fetch(`/api/competitions/${competitionId}/favorite`, { method: 'DELETE' });
       }
     },
     onSuccess: () => {
@@ -144,7 +144,8 @@ export default function CompetitionCalendarPage() {
   };
 
   const handleFavoriteToggle = (competition: Competition) => {
-    const isFavorited = favoriteCompetitions.some((fav: any) => fav.id === competition.id);
+    const favs = Array.isArray(favoriteCompetitions) ? favoriteCompetitions : [];
+    const isFavorited = favs.some((fav: any) => fav.id === competition.id);
     favoriteMutation.mutate({
       competitionId: competition.id,
       action: isFavorited ? 'remove' : 'add'
@@ -153,9 +154,9 @@ export default function CompetitionCalendarPage() {
 
   const getDisplayCompetitions = () => {
     if (activeTab === 'favorites') {
-      return favoriteCompetitions;
+      return Array.isArray(favoriteCompetitions) ? favoriteCompetitions : [];
     }
-    return competitions;
+    return Array.isArray(competitions) ? competitions : [];
   };
 
   const CompetitionCard = ({ competition }: { competition: Competition }) => {
