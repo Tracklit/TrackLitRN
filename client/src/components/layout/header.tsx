@@ -40,7 +40,7 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
               <NotificationBell />
               
               {/* Direct Messages Panel */}
-              <MessageButton className="h-9 w-9 text-gray-300 hover:text-white hover:bg-white/10" />
+              <MessageButton />
             </div>
             
             <DropdownMenu>

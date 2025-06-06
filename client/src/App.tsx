@@ -103,9 +103,7 @@ function Router() {
       <ProtectedRoute path="/clubs" component={ClubsPage} />
       <ProtectedRoute path="/club/:id" component={ClubDetailPage} />
       <ProtectedRoute path="/club-management/:id" component={ClubManagementPage} />
-      <ProtectedRoute path="/conversations" component={ConversationsPage} />
-      <ProtectedRoute path="/messages/:userId" component={ConversationDetailPage} />
-      <ProtectedRoute path="/messages" component={ConversationsPage} />
+
       
       {/* Rehab */}
       <ProtectedRoute path="/rehab" component={RehabPage} />
