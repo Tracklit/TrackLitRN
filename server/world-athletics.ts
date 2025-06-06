@@ -13,8 +13,8 @@ const CompetitionSchema = z.object({
   location: LocationSchema,
   rankingCategory: z.string(),
   disciplines: z.array(z.string()),
-  start: z.string().transform(str => new Date(str)),
-  end: z.string().transform(str => new Date(str)),
+  start: z.union([z.string().transform(str => new Date(str)), z.date()]),
+  end: z.union([z.string().transform(str => new Date(str)), z.date()]),
   competitionGroup: z.string().nullable().optional(),
   competitionSubgroup: z.string().nullable().optional(),
   hasResults: z.boolean(),
@@ -90,34 +90,11 @@ class WorldAthleticsService {
   }
 
   private expandCompetitionsDataset(baseCompetitions: WorldAthleticsCompetition[], startDate?: string, endDate?: string): WorldAthleticsCompetition[] {
-    const expandedCompetitions = [...baseCompetitions];
-    const startYear = startDate ? new Date(startDate).getFullYear() : new Date().getFullYear();
-    const endYear = endDate ? new Date(endDate).getFullYear() : startYear + 1;
-    
-    // Generate additional competitions for each month in the date range
-    for (let year = startYear; year <= endYear; year++) {
-      for (let month = 0; month < 12; month++) {
-        const monthStart = new Date(year, month, 1);
-        const monthEnd = new Date(year, month + 1, 0);
-        
-        // Skip months outside the requested range
-        if (startDate && monthEnd < new Date(startDate)) continue;
-        if (endDate && monthStart > new Date(endDate)) continue;
-        
-        // Add 3-5 competitions per month
-        const competitionsPerMonth = Math.floor(Math.random() * 3) + 3;
-        
-        for (let i = 0; i < competitionsPerMonth; i++) {
-          const competition = this.generateCompetitionForMonth(year, month, i, baseCompetitions[i % baseCompetitions.length]);
-          expandedCompetitions.push(competition);
-        }
-      }
-    }
-    
-    return expandedCompetitions;
+    // Skip expansion for now to fix immediate issues
+    return baseCompetitions;
   }
 
-  private generateCompetitionForMonth(year: number, month: number, index: number, template: WorldAthleticsCompetition): WorldAthleticsCompetition {
+  private generateRawCompetitionForMonth(year: number, month: number, index: number, template: WorldAthleticsCompetition): WorldAthleticsCompetition {
     const competitionTypes = ['Championship', 'Invitational', 'Classic', 'Grand Prix', 'Festival', 'Open', 'Masters'];
     const cities = ['Berlin', 'Paris', 'London', 'Tokyo', 'New York', 'Sydney', 'Stockholm', 'Rome', 'Madrid', 'Vienna'];
     const countries = ['Germany', 'France', 'United Kingdom', 'Japan', 'United States', 'Australia', 'Sweden', 'Italy', 'Spain', 'Austria'];
@@ -137,8 +114,8 @@ class WorldAthleticsService {
         city: cities[cityIndex],
         country: countries[cityIndex]
       },
-      start: startDate.toISOString().split('T')[0],
-      end: endDate.toISOString().split('T')[0],
+      start: startDate,
+      end: endDate,
       rankingCategory: template.rankingCategory,
       disciplines: template.disciplines,
       competitionGroup: template.competitionGroup,
@@ -167,8 +144,8 @@ class WorldAthleticsService {
           city: 'International',
           country: 'Various'
         },
-        start: competitionDate.toISOString().split('T')[0],
-        end: competitionDate.toISOString().split('T')[0],
+        start: competitionDate,
+        end: competitionDate,
         rankingCategory: 'World Ranking',
         disciplines: ['100m', '200m', '400m', '800m', '1500m'],
         competitionGroup: null,
