@@ -52,6 +52,50 @@ interface LinkPreview {
   domain?: string;
 }
 
+interface YouTubeData {
+  type: 'youtube';
+  videoId: string;
+  url: string;
+  title?: string;
+}
+
+// Helper function to extract YouTube video ID from URL
+function extractYouTubeVideoId(url: string): string | null {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+    /youtube\.com\/v\/([^&\n?#]+)/,
+    /youtube\.com\/shorts\/([^&\n?#]+)/
+  ];
+  
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) {
+      return match[1];
+    }
+  }
+  return null;
+}
+
+// Helper function to detect if a message contains a YouTube URL
+function detectYouTubeUrl(text: string): YouTubeData | null {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const urls = text.match(urlRegex);
+  
+  if (!urls) return null;
+  
+  for (const url of urls) {
+    const videoId = extractYouTubeVideoId(url);
+    if (videoId) {
+      return {
+        type: 'youtube',
+        videoId,
+        url
+      };
+    }
+  }
+  return null;
+}
+
 // Helper function to format message content for previews
 function formatMessagePreview(content: string, senderName: string): string {
   try {
@@ -62,10 +106,41 @@ function formatMessagePreview(content: string, senderName: string): string {
     if (parsed.type === 'exercise_share') {
       return `${senderName} shared an exercise`;
     }
+    if (parsed.type === 'youtube') {
+      return `${senderName} shared a video`;
+    }
     return content;
   } catch {
+    // Check if it's a regular text message with YouTube URL
+    const youtubeData = detectYouTubeUrl(content);
+    if (youtubeData) {
+      return `${senderName} shared a video`;
+    }
     return content;
   }
+}
+
+// Component to render YouTube videos
+function YouTubeMessage({ youtubeData }: { youtubeData: YouTubeData }) {
+  return (
+    <div className="max-w-sm">
+      <div className="relative overflow-hidden rounded-xl bg-muted/20">
+        <iframe
+          width="100%"
+          height="200"
+          src={`https://www.youtube.com/embed/${youtubeData.videoId}`}
+          title="YouTube video player"
+          frameBorder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+          className="rounded-xl"
+        />
+      </div>
+      {youtubeData.title && (
+        <p className="text-sm mt-2 px-1 text-muted-foreground leading-relaxed">{youtubeData.title}</p>
+      )}
+    </div>
+  );
 }
 
 // Component to render image messages
@@ -362,6 +437,7 @@ export function MessagePanel({ isOpen, onClose, targetUserId }: MessagePanelProp
                   {messages.map((message) => {
                     const isFromCurrentUser = message.senderId === user?.id;
                     let imageData: ImageData | null = null;
+                    let youtubeData: YouTubeData | null = null;
                     let messageText = message.content;
 
                     try {
@@ -369,10 +445,16 @@ export function MessagePanel({ isOpen, onClose, targetUserId }: MessagePanelProp
                         const parsed = JSON.parse(message.content);
                         if (parsed.type === 'image_share') {
                           imageData = parsed;
+                        } else if (parsed.type === 'youtube') {
+                          youtubeData = parsed;
                         }
+                      } else {
+                        // Check if regular text contains YouTube URL
+                        youtubeData = detectYouTubeUrl(message.content);
                       }
                     } catch (e) {
-                      // Not JSON, treat as regular message
+                      // Not JSON, check for YouTube URL in text
+                      youtubeData = detectYouTubeUrl(message.content);
                     }
 
                     return (
@@ -394,6 +476,13 @@ export function MessagePanel({ isOpen, onClose, targetUserId }: MessagePanelProp
                         {imageData ? (
                           <div className="flex flex-col gap-2">
                             <ImageMessage imageData={imageData} />
+                            <p className="text-xs opacity-70 text-muted-foreground px-1">
+                              {message.createdAt && formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
+                            </p>
+                          </div>
+                        ) : youtubeData ? (
+                          <div className="flex flex-col gap-2">
+                            <YouTubeMessage youtubeData={youtubeData} />
                             <p className="text-xs opacity-70 text-muted-foreground px-1">
                               {message.createdAt && formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
                             </p>
