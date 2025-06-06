@@ -6624,7 +6624,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       } else if (major === 'true') {
         competitions = await worldAthleticsService.getMajorCompetitions();
       } else {
-        competitions = await worldAthleticsService.searchCompetitions(name as string);
+        competitions = await worldAthleticsService.searchCompetitions(name as string, startDate as string, endDate as string);
       }
       
       // Apply date filtering - filter competitions by their start date

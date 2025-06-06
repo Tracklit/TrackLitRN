@@ -102,16 +102,15 @@ export default function CompetitionCalendarPage() {
 
   // Fetch competitions based on active tab
   const { data: competitionsResponse, isLoading } = useQuery({
-    queryKey: ['/api/competitions', { 
-      name: searchTerm || undefined,
-      upcoming: activeTab === 'upcoming' ? 'true' : undefined,
-      major: activeTab === 'major' ? 'true' : undefined,
-      startDate: dateFilter.start,
-      endDate: dateFilter.end,
-      page: currentPage,
-      limit: pageSize,
-      sort: sortOrder
-    }],
+    queryKey: ['/api/competitions', 
+      searchTerm || 'all',
+      activeTab === 'upcoming' ? 'upcoming' : (activeTab === 'major' ? 'major' : 'all'),
+      dateFilter.start || 'no-start',
+      dateFilter.end || 'no-end',
+      currentPage,
+      pageSize,
+      sortOrder
+    ],
     enabled: activeTab !== 'favorites'
   });
 
