@@ -4,7 +4,6 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { SidebarNavigation } from "@/components/layout/sidebar-navigation";
 import { HamburgerMenu } from "@/components/ui/hamburger-menu";
 import { Header } from "@/components/layout/header";
 
@@ -166,20 +165,13 @@ function MainApp() {
       {/* Top Header Bar */}
       <Header />
       
-      {/* Hamburger Menu for smaller screens */}
-      <div className="lg:hidden">
-        <div className="fixed top-4 left-4 z-30">
-          <HamburgerMenu />
-        </div>
-      </div>
-
-      {/* Desktop Sidebar Navigation for larger screens */}
-      <div className="hidden lg:block fixed left-0 top-0 h-full w-64 bg-gray-900 border-r border-gray-700 z-10">
-        <SidebarNavigation />
+      {/* Hamburger Menu for all screens */}
+      <div className="fixed top-4 left-4 z-30">
+        <HamburgerMenu />
       </div>
       
       {/* Main Content */}
-      <main className="pt-20 lg:ml-64">
+      <main className="pt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <PageTransition>
             <Router />
