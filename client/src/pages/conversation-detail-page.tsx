@@ -124,7 +124,7 @@ export default function ConversationDetailPage() {
     : null;
 
   // Fetch user details
-  const { data: targetUser } = useQuery({
+  const { data: targetUser } = useQuery<User>({
     queryKey: [`/api/users/${targetUserId}`],
     enabled: !!targetUserId,
   });
@@ -283,7 +283,7 @@ export default function ConversationDetailPage() {
                       "text-xs mt-1 opacity-70",
                       isFromCurrentUser ? "text-primary-foreground/70" : "text-muted-foreground"
                     )}>
-                      {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
+                      {message.createdAt && formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
                     </p>
                   </div>
                 </div>

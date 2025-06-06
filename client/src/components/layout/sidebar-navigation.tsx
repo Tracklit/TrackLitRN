@@ -155,9 +155,9 @@ export function SidebarNavigation({ isMobile = false }: { isMobile?: boolean }) 
             Connections
           </NavItem>
           <NavItem 
-            href="/messages" 
+            href="/conversations" 
             icon={<MessagesSquare className="h-5 w-5" />} 
-            isActive={location === '/messages'}
+            isActive={location === '/conversations' || location.startsWith('/messages/')}
           >
             Messages
           </NavItem>
