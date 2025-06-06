@@ -17,6 +17,17 @@ import { getWeatherForecast } from "./weather";
 import { GoogleSpreadsheet } from "google-spreadsheet";
 import { notificationSystem } from "./notification-system";
 import { insertAthleteProfileSchema } from "@shared/athlete-profile-schema";
+import { worldAthleticsService } from "./world-athletics";
+import { 
+  competitionsTable, 
+  competitionEventsTable, 
+  athleteCompetitionResultsTable,
+  userFavoriteCompetitionsTable,
+  insertCompetitionSchema,
+  insertCompetitionEventSchema,
+  insertAthleteCompetitionResultSchema,
+  insertUserFavoriteCompetitionSchema
+} from "@shared/schema";
 import { 
   insertMeetSchema, 
   insertResultSchema, 
@@ -6590,6 +6601,243 @@ Keep the response professional, evidence-based, and specific to track and field 
     } catch (error) {
       console.error("Error sharing library:", error);
       res.status(500).json({ error: "Failed to share library access" });
+    }
+  });
+
+  // ============================================================
+  // Competition Calendar API Routes
+  // ============================================================
+
+  // Get competitions from World Athletics
+  app.get("/api/competitions", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const { name, upcoming, major } = req.query;
+      
+      let competitions;
+      if (upcoming === 'true') {
+        competitions = await worldAthleticsService.getUpcomingCompetitions();
+      } else if (major === 'true') {
+        competitions = await worldAthleticsService.getMajorCompetitions();
+      } else {
+        competitions = await worldAthleticsService.searchCompetitions(name as string);
+      }
+      
+      // Store new competitions in our database
+      for (const comp of competitions) {
+        try {
+          await db.insert(competitionsTable).values({
+            externalId: comp.id,
+            name: comp.name,
+            location: `${comp.location.city || ''}, ${comp.location.country}`.replace(/^, /, ''),
+            country: comp.location.country,
+            city: comp.location.city || null,
+            rankingCategory: comp.rankingCategory,
+            disciplines: comp.disciplines,
+            startDate: comp.start,
+            endDate: comp.end,
+            competitionGroup: comp.competitionGroup || null,
+            competitionSubgroup: comp.competitionSubgroup || null,
+            hasResults: comp.hasResults,
+            hasStartlist: comp.hasStartlist,
+            hasCompetitionInformation: comp.hasCompetitionInformation
+          }).onConflictDoNothing();
+        } catch (insertError) {
+          // Competition might already exist, which is fine
+        }
+      }
+      
+      res.json(competitions);
+    } catch (error) {
+      console.error("Error fetching competitions:", error);
+      res.status(500).send("Error fetching competitions");
+    }
+  });
+
+  // Get competition results
+  app.get("/api/competitions/:id/results", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const competitionId = parseInt(req.params.id);
+      const { eventId, day } = req.query;
+      
+      const results = await worldAthleticsService.getCompetitionResults(
+        competitionId,
+        eventId ? parseInt(eventId as string) : undefined,
+        day ? parseInt(day as string) : undefined
+      );
+      
+      // Store results in our database
+      const dbCompetition = await db.select().from(competitionsTable)
+        .where(eq(competitionsTable.externalId, competitionId)).limit(1);
+      
+      if (dbCompetition.length > 0) {
+        const localCompId = dbCompetition[0].id;
+        
+        for (const event of results) {
+          // Insert event
+          const [insertedEvent] = await db.insert(competitionEventsTable).values({
+            competitionId: localCompId,
+            externalEventId: event.eventId,
+            eventName: event.eventName || null,
+            disciplineName: event.disciplineName,
+            disciplineCode: event.disciplineCode,
+            category: event.category,
+            sex: event.sex
+          }).onConflictDoNothing().returning();
+          
+          // Insert results for each race
+          for (const race of event.races) {
+            for (const result of race.results) {
+              for (const athlete of result.athletes) {
+                await db.insert(athleteCompetitionResultsTable).values({
+                  competitionId: localCompId,
+                  eventId: insertedEvent?.id || null,
+                  athleteName: athlete.name,
+                  athleteId: athlete.id,
+                  country: result.country,
+                  place: result.place,
+                  performance: result.performance.mark,
+                  performanceValue: worldAthleticsService.convertPerformanceToValue(
+                    result.performance.mark, 
+                    event.disciplineCode
+                  ),
+                  wind: result.performance.wind || null,
+                  raceNumber: race.raceNumber,
+                  raceName: race.race,
+                  date: race.date || null
+                }).onConflictDoNothing();
+              }
+            }
+          }
+        }
+      }
+      
+      res.json(results);
+    } catch (error) {
+      console.error("Error fetching competition results:", error);
+      res.status(500).send("Error fetching competition results");
+    }
+  });
+
+  // Get competition organizer info
+  app.get("/api/competitions/:id/info", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const competitionId = parseInt(req.params.id);
+      const info = await worldAthleticsService.getCompetitionInfo(competitionId);
+      res.json(info);
+    } catch (error) {
+      console.error("Error fetching competition info:", error);
+      res.status(500).send("Error fetching competition info");
+    }
+  });
+
+  // Add competition to user favorites
+  app.post("/api/competitions/:id/favorite", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const externalCompId = parseInt(req.params.id);
+      const userId = req.user!.id;
+      
+      // Find local competition record
+      const dbCompetition = await db.select().from(competitionsTable)
+        .where(eq(competitionsTable.externalId, externalCompId)).limit(1);
+      
+      if (dbCompetition.length === 0) {
+        return res.status(404).send("Competition not found");
+      }
+      
+      const competitionId = dbCompetition[0].id;
+      
+      // Check if already favorited
+      const existing = await db.select().from(userFavoriteCompetitionsTable)
+        .where(and(
+          eq(userFavoriteCompetitionsTable.userId, userId),
+          eq(userFavoriteCompetitionsTable.competitionId, competitionId)
+        )).limit(1);
+      
+      if (existing.length > 0) {
+        return res.status(400).send("Competition already in favorites");
+      }
+      
+      const favorite = await db.insert(userFavoriteCompetitionsTable).values({
+        userId,
+        competitionId
+      }).returning();
+      
+      res.json(favorite[0]);
+    } catch (error) {
+      console.error("Error adding competition to favorites:", error);
+      res.status(500).send("Error adding to favorites");
+    }
+  });
+
+  // Remove competition from user favorites
+  app.delete("/api/competitions/:id/favorite", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const externalCompId = parseInt(req.params.id);
+      const userId = req.user!.id;
+      
+      // Find local competition record
+      const dbCompetition = await db.select().from(competitionsTable)
+        .where(eq(competitionsTable.externalId, externalCompId)).limit(1);
+      
+      if (dbCompetition.length === 0) {
+        return res.status(404).send("Competition not found");
+      }
+      
+      const competitionId = dbCompetition[0].id;
+      
+      await db.delete(userFavoriteCompetitionsTable)
+        .where(and(
+          eq(userFavoriteCompetitionsTable.userId, userId),
+          eq(userFavoriteCompetitionsTable.competitionId, competitionId)
+        ));
+      
+      res.sendStatus(200);
+    } catch (error) {
+      console.error("Error removing competition from favorites:", error);
+      res.status(500).send("Error removing from favorites");
+    }
+  });
+
+  // Get user's favorite competitions
+  app.get("/api/competitions/favorites", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const userId = req.user!.id;
+      
+      const favorites = await db.select({
+        id: competitionsTable.externalId,
+        name: competitionsTable.name,
+        location: competitionsTable.location,
+        country: competitionsTable.country,
+        city: competitionsTable.city,
+        rankingCategory: competitionsTable.rankingCategory,
+        disciplines: competitionsTable.disciplines,
+        startDate: competitionsTable.startDate,
+        endDate: competitionsTable.endDate,
+        hasResults: competitionsTable.hasResults,
+        favoriteId: userFavoriteCompetitionsTable.id,
+        favoritedAt: userFavoriteCompetitionsTable.createdAt
+      })
+      .from(userFavoriteCompetitionsTable)
+      .innerJoin(competitionsTable, eq(userFavoriteCompetitionsTable.competitionId, competitionsTable.id))
+      .where(eq(userFavoriteCompetitionsTable.userId, userId))
+      .orderBy(competitionsTable.startDate);
+      
+      res.json(favorites);
+    } catch (error) {
+      console.error("Error fetching favorite competitions:", error);
+      res.status(500).send("Error fetching favorites");
     }
   });
 
