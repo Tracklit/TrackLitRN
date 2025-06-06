@@ -901,6 +901,169 @@ export type InsertLoginStreak = z.infer<typeof insertLoginStreakSchema>;
 export type InsertSpikeTransaction = z.infer<typeof insertSpikeTransactionSchema>;
 export type InsertReferral = z.infer<typeof insertReferralSchema>;
 
+// Competition Calendar Tables
+export const competitionsTable = pgTable('competitions', {
+  id: serial('id').primaryKey(),
+  externalId: integer('external_id').unique(), // World Athletics competition ID
+  name: text('name').notNull(),
+  location: text('location'),
+  country: text('country'),
+  city: text('city'),
+  rankingCategory: text('ranking_category'),
+  disciplines: text('disciplines').array(),
+  startDate: timestamp('start_date').notNull(),
+  endDate: timestamp('end_date').notNull(),
+  competitionGroup: text('competition_group'),
+  competitionSubgroup: text('competition_subgroup'),
+  hasResults: boolean('has_results').default(false),
+  hasStartlist: boolean('has_startlist').default(false),
+  hasCompetitionInformation: boolean('has_competition_information').default(false),
+  websiteUrl: text('website_url'),
+  liveStreamUrl: text('live_stream_url'),
+  resultsUrl: text('results_url'),
+  additionalInfo: text('additional_info'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
+});
+
+export const competitionEventsTable = pgTable('competition_events', {
+  id: serial('id').primaryKey(),
+  competitionId: integer('competition_id').references(() => competitionsTable.id, { onDelete: 'cascade' }),
+  externalEventId: integer('external_event_id'),
+  eventName: text('event_name'),
+  disciplineName: text('discipline_name'),
+  disciplineCode: text('discipline_code'),
+  category: text('category'),
+  sex: text('sex'), // 'M', 'W', 'X'
+  combined: boolean('combined').default(false),
+  date: timestamp('date'),
+  day: integer('day'),
+  createdAt: timestamp('created_at').defaultNow()
+});
+
+export const athleteCompetitionResultsTable = pgTable('athlete_competition_results', {
+  id: serial('id').primaryKey(),
+  competitionId: integer('competition_id').references(() => competitionsTable.id, { onDelete: 'cascade' }),
+  eventId: integer('event_id').references(() => competitionEventsTable.id, { onDelete: 'cascade' }),
+  athleteName: text('athlete_name'),
+  athleteId: integer('athlete_id'), // World Athletics athlete ID
+  country: text('country'),
+  place: integer('place'),
+  performance: text('performance'),
+  performanceValue: integer('performance_value'), // Converted to milliseconds/centimeters
+  wind: text('wind'),
+  raceNumber: integer('race_number'),
+  raceName: text('race_name'),
+  date: timestamp('date'),
+  createdAt: timestamp('created_at').defaultNow()
+});
+
+export const userFavoriteCompetitionsTable = pgTable('user_favorite_competitions', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
+  competitionId: integer('competition_id').references(() => competitionsTable.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at').defaultNow()
+});
+
+export const competitionNotificationsTable = pgTable('competition_notifications', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
+  competitionId: integer('competition_id').references(() => competitionsTable.id, { onDelete: 'cascade' }),
+  notificationType: text('notification_type'), // 'start_reminder', 'results_available', 'favorites_competing'
+  isEnabled: boolean('is_enabled').default(true),
+  reminderDays: integer('reminder_days').default(1), // Days before event to send notification
+  createdAt: timestamp('created_at').defaultNow()
+});
+
+// Relations for competition tables
+export const competitionsRelations = relations(competitionsTable, ({ many }) => ({
+  events: many(competitionEventsTable),
+  results: many(athleteCompetitionResultsTable),
+  userFavorites: many(userFavoriteCompetitionsTable),
+  notifications: many(competitionNotificationsTable)
+}));
+
+export const competitionEventsRelations = relations(competitionEventsTable, ({ one, many }) => ({
+  competition: one(competitionsTable, {
+    fields: [competitionEventsTable.competitionId],
+    references: [competitionsTable.id]
+  }),
+  results: many(athleteCompetitionResultsTable)
+}));
+
+export const athleteCompetitionResultsRelations = relations(athleteCompetitionResultsTable, ({ one }) => ({
+  competition: one(competitionsTable, {
+    fields: [athleteCompetitionResultsTable.competitionId],
+    references: [competitionsTable.id]
+  }),
+  event: one(competitionEventsTable, {
+    fields: [athleteCompetitionResultsTable.eventId],
+    references: [competitionEventsTable.id]
+  })
+}));
+
+export const userFavoriteCompetitionsRelations = relations(userFavoriteCompetitionsTable, ({ one }) => ({
+  user: one(users, {
+    fields: [userFavoriteCompetitionsTable.userId],
+    references: [users.id]
+  }),
+  competition: one(competitionsTable, {
+    fields: [userFavoriteCompetitionsTable.competitionId],
+    references: [competitionsTable.id]
+  })
+}));
+
+export const competitionNotificationsRelations = relations(competitionNotificationsTable, ({ one }) => ({
+  user: one(users, {
+    fields: [competitionNotificationsTable.userId],
+    references: [users.id]
+  }),
+  competition: one(competitionsTable, {
+    fields: [competitionNotificationsTable.competitionId],
+    references: [competitionsTable.id]
+  })
+}));
+
+// Insert schemas for competition tables
+export const insertCompetitionSchema = createInsertSchema(competitionsTable).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertCompetitionEventSchema = createInsertSchema(competitionEventsTable).omit({
+  id: true,
+  createdAt: true
+});
+
+export const insertAthleteCompetitionResultSchema = createInsertSchema(athleteCompetitionResultsTable).omit({
+  id: true,
+  createdAt: true
+});
+
+export const insertUserFavoriteCompetitionSchema = createInsertSchema(userFavoriteCompetitionsTable).omit({
+  id: true,
+  createdAt: true
+});
+
+export const insertCompetitionNotificationSchema = createInsertSchema(competitionNotificationsTable).omit({
+  id: true,
+  createdAt: true
+});
+
+// Types
+export type Competition = typeof competitionsTable.$inferSelect;
+export type CompetitionEvent = typeof competitionEventsTable.$inferSelect;
+export type AthleteCompetitionResult = typeof athleteCompetitionResultsTable.$inferSelect;
+export type UserFavoriteCompetition = typeof userFavoriteCompetitionsTable.$inferSelect;
+export type CompetitionNotification = typeof competitionNotificationsTable.$inferSelect;
+
+export type InsertCompetition = z.infer<typeof insertCompetitionSchema>;
+export type InsertCompetitionEvent = z.infer<typeof insertCompetitionEventSchema>;
+export type InsertAthleteCompetitionResult = z.infer<typeof insertAthleteCompetitionResultSchema>;
+export type InsertUserFavoriteCompetition = z.infer<typeof insertUserFavoriteCompetitionSchema>;
+export type InsertCompetitionNotification = z.infer<typeof insertCompetitionNotificationSchema>;
+
 // Sprinthia AI Conversations
 export const sprinthiaConversations = pgTable("sprinthia_conversations", {
   id: serial("id").primaryKey(),
