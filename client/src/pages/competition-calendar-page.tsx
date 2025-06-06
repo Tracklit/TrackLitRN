@@ -93,6 +93,13 @@ export default function CompetitionCalendarPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const queryClient = useQueryClient();
 
+  // Reset page and invalidate cache when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+    // Force fresh data when date filters change
+    queryClient.invalidateQueries({ queryKey: ['/api/competitions'] });
+  }, [dateFilter.start, dateFilter.end, searchTerm, activeTab, sortOrder, queryClient]);
+
   // Fetch competitions based on active tab
   const { data: competitionsResponse, isLoading } = useQuery({
     queryKey: ['/api/competitions', { 

@@ -6627,13 +6627,13 @@ Keep the response professional, evidence-based, and specific to track and field 
         competitions = await worldAthleticsService.searchCompetitions(name as string);
       }
       
-      // Apply date filtering
+      // Apply date filtering - filter competitions by their start date
       if (startDate || endDate) {
         competitions = competitions.filter(comp => {
           const compStart = new Date(comp.start);
-          const compEnd = new Date(comp.end);
           
-          if (startDate && compEnd < new Date(startDate as string)) return false;
+          // Filter by start date range
+          if (startDate && compStart < new Date(startDate as string)) return false;
           if (endDate && compStart > new Date(endDate as string)) return false;
           
           return true;
