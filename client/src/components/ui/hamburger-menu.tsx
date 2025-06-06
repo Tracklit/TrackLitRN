@@ -69,11 +69,11 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
   }, [isOpen]);
 
   return (
-    <div className={cn("block lg:hidden", className)}>
+    <div className={cn("block", className)}>
       <Button 
         variant="ghost" 
         size="icon" 
-        className="relative -mt-1"
+        className="relative -mt-1 z-[60]"
         onClick={() => setIsOpen(!isOpen)}
       >
         {isOpen ? (
