@@ -35,6 +35,8 @@ import ClubsPage from "@/pages/clubs-page";
 import { Component as ClubDetailPage } from "@/pages/club-detail-page";
 import { Component as ClubManagementPage } from "@/pages/club-management-page";
 import MessagesPage from "@/pages/messages-page";
+import ConversationsPage from "@/pages/conversations-page";
+import ConversationDetailPage from "@/pages/conversation-detail-page";
 import AthletesPage from "@/pages/athletes-page";
 import FriendsPage from "@/pages/friends-page";
 import ConnectionsPage from "@/pages/connections-page";
@@ -101,8 +103,8 @@ function Router() {
       <ProtectedRoute path="/clubs" component={ClubsPage} />
       <ProtectedRoute path="/club/:id" component={ClubDetailPage} />
       <ProtectedRoute path="/club-management/:id" component={ClubManagementPage} />
-      <ProtectedRoute path="/messages/:userId" component={MessagesPage} />
-      <ProtectedRoute path="/messages" component={MessagesPage} />
+      <ProtectedRoute path="/conversations" component={ConversationsPage} />
+      <ProtectedRoute path="/messages/:userId" component={ConversationDetailPage} />
       
       {/* Rehab */}
       <ProtectedRoute path="/rehab" component={RehabPage} />
