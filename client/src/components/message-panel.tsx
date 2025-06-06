@@ -55,15 +55,23 @@ interface LinkPreview {
 // Component to render image messages
 function ImageMessage({ imageData }: { imageData: ImageData }) {
   return (
-    <div className="max-w-sm">
-      <img
-        src={imageData.imageUrl}
-        alt="Shared image"
-        className="rounded-lg max-w-full h-auto"
-        style={{ maxHeight: "300px" }}
-      />
+    <div className="max-w-xs">
+      <div className="relative overflow-hidden rounded-xl bg-muted/20 border border-border/50">
+        <img
+          src={imageData.imageUrl}
+          alt="Shared image"
+          className="w-full h-auto object-cover transition-transform hover:scale-105"
+          style={{ 
+            maxHeight: "240px",
+            minHeight: "120px",
+            aspectRatio: "auto"
+          }}
+          loading="lazy"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />
+      </div>
       {imageData.caption && (
-        <p className="text-sm mt-2 opacity-90">{imageData.caption}</p>
+        <p className="text-sm mt-2 px-1 text-muted-foreground leading-relaxed">{imageData.caption}</p>
       )}
     </div>
   );
