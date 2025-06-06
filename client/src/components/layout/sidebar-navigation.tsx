@@ -110,13 +110,6 @@ export function SidebarNavigation({ isMobile = false }: { isMobile?: boolean }) 
           >
             Training Tools
           </NavItem>
-          <NavItem 
-            href="/competitions" 
-            icon={<Calendar className="h-5 w-5" />} 
-            isActive={location === '/competitions'}
-          >
-            Competition Calendar
-          </NavItem>
           
           {/* Competition Section */}
           <div className="pt-4 pb-2">
