@@ -482,18 +482,89 @@ export default function ConversationDetailPage() {
 
       {/* Message Input */}
       <div className="p-4 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="flex gap-2">
+        {/* Image Preview */}
+        {imagePreview && (
+          <div className="mb-3 relative">
+            <div className="relative inline-block">
+              <img
+                src={imagePreview}
+                alt="Image preview"
+                className="rounded-lg max-w-32 max-h-32 object-cover"
+              />
+              <Button
+                variant="destructive"
+                size="sm"
+                className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
+                onClick={() => {
+                  setSelectedImage(null);
+                  setImagePreview(null);
+                  if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                  }
+                }}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Link Preview */}
+        {linkPreview && (
+          <div className="mb-3 relative">
+            <div className="bg-muted/50 rounded-lg p-3 border border-border">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-xs text-muted-foreground">Link Preview</div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0"
+                  onClick={() => setLinkPreview(null)}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+              <div className="text-sm font-medium">{linkPreview.domain}</div>
+              <div className="text-xs text-muted-foreground">{linkPreview.url}</div>
+            </div>
+          </div>
+        )}
+
+        <div className="flex gap-2 items-end">
+          {/* Attachment Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="p-2 h-10 w-10 rounded-full"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploadImageMutation.isPending}
+          >
+            <ImagePlus className="h-5 w-5" />
+          </Button>
+
+          {/* Hidden File Input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageSelect}
+            className="hidden"
+          />
+
+          {/* Message Input */}
           <Input
             placeholder="Message..."
             value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+            onChange={handleMessageChange}
             onKeyPress={handleKeyPress}
             className="flex-1 rounded-full bg-muted/50 border-none"
           />
+
+          {/* Send Button */}
           <Button
             onClick={handleSendMessage}
-            disabled={!newMessage.trim() || sendMessageMutation.isPending}
-            className="rounded-full px-4"
+            disabled={(!newMessage.trim() && !selectedImage) || sendMessageMutation.isPending || uploadImageMutation.isPending}
+            className="rounded-full px-4 h-10"
           >
             <Send className="h-4 w-4" />
           </Button>

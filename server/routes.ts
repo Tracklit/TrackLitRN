@@ -2015,8 +2015,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to update public profile" });
     }
   });
-  
 
+  // Image upload endpoint for messages
+  const messageImageUpload = multer({
+    dest: 'uploads/messages/',
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+    fileFilter: (req, file, cb) => {
+      const allowedTypes = /jpeg|jpg|png|gif|webp/;
+      const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+      const mimetype = allowedTypes.test(file.mimetype);
+      
+      if (mimetype && extname) {
+        return cb(null, true);
+      } else {
+        cb(new Error('Only image files are allowed'));
+      }
+    }
+  });
+
+  app.post("/api/upload/image", messageImageUpload.single('image'), async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No image file provided" });
+      }
+
+      const fileName = `message-${req.user!.id}-${Date.now()}${path.extname(req.file.originalname)}`;
+      const finalPath = path.join('uploads/messages', fileName);
+      
+      // Ensure the messages directory exists
+      const messagesDir = path.join('uploads/messages');
+      if (!fs.existsSync(messagesDir)) {
+        fs.mkdirSync(messagesDir, { recursive: true });
+      }
+      
+      // Move file to final location
+      fs.renameSync(req.file.path, finalPath);
+      
+      // Compress the image for better performance
+      const compressedFileName = `compressed_${fileName}`;
+      const compressedPath = path.join('uploads/messages', compressedFileName);
+      
+      try {
+        await sharp(finalPath)
+          .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
+          .jpeg({ quality: 85, progressive: true })
+          .toFile(compressedPath);
+        
+        // Remove original uncompressed file
+        fs.unlinkSync(finalPath);
+        
+        const imageUrl = `/uploads/messages/${compressedFileName}`;
+        res.json({ url: imageUrl });
+      } catch (compressionError) {
+        console.error('Message image compression failed, using original:', compressionError);
+        const imageUrl = `/uploads/messages/${fileName}`;
+        res.json({ url: imageUrl });
+      }
+    } catch (error) {
+      console.error("Error uploading message image:", error);
+      res.status(500).json({ error: "Failed to upload image" });
+    }
+  });
 
   // Club endpoints
   app.get("/api/clubs", async (req: Request, res: Response) => {
