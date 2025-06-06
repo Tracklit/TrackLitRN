@@ -399,11 +399,11 @@ export default function CompetitionCalendarPage() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-            <TabsTrigger value="major">Major Events</TabsTrigger>
-            <TabsTrigger value="all">All Competitions</TabsTrigger>
-            <TabsTrigger value="favorites">My Favorites</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="upcoming" className="text-xs px-2">Upcoming</TabsTrigger>
+            <TabsTrigger value="major" className="text-xs px-2">Major</TabsTrigger>
+            <TabsTrigger value="all" className="text-xs px-2">All</TabsTrigger>
+            <TabsTrigger value="favorites" className="text-xs px-2">Favorites</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
