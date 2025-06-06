@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Ensure slide-out panels appear above hamburger menu */
+.slide-out-panel {
+  z-index: 99999999 !important;
+}
+
 /* Prevent white background flash on notification accept button */
 .notification-accept-btn {
   background-color: var(--btn-bg) !important;

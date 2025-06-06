@@ -195,7 +195,7 @@ export function MessagePanel({ isOpen, onClose, targetUserId }: MessagePanelProp
   return (
     <div 
       className={cn(
-        "fixed inset-0 z-[99999]",
+        "fixed inset-0 z-[999999] slide-out-panel",
         !isOpen && "pointer-events-none"
       )} 
       onClick={onClose}
