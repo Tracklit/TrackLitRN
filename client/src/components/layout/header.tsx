@@ -30,16 +30,17 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
         </div>
         
         {user && (
-          <div className="flex items-center justify-between flex-1">
-            {/* Left aligned notification and message icons */}
-            <div className="flex items-center space-x-1 ml-4 lg:ml-0">
-              <NotificationBell />
-              <MessageButton />
+          <div className="flex items-center justify-end flex-1">
+            {/* Install App Button */}
+            <div className="mr-4">
+              <InstallAppButton />
             </div>
             
-            {/* Right aligned install button */}
-            <div className="flex items-center">
-              <InstallAppButton />
+            <div className="flex items-center space-x-1 lg:mr-0 mr-16">
+              <NotificationBell />
+              
+              {/* Direct Messages Panel */}
+              <MessageButton />
             </div>
             
             <DropdownMenu>
