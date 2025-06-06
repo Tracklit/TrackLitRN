@@ -14,6 +14,7 @@ import { Link } from "wouter";
 import { ListSkeleton } from "@/components/list-skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { formatDistanceToNow } from "date-fns";
+import { MessagePanel } from "@/components/message-panel";
 
 interface Connection {
   id: number;
@@ -45,6 +46,8 @@ interface ConnectionRequest {
 
 export default function ConnectionsPage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [isMessagePanelOpen, setIsMessagePanelOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -158,6 +161,16 @@ export default function ConnectionsPage() {
 
   const handleAddAsAthlete = (athleteId: number) => {
     addAthleteMutation.mutate(athleteId);
+  };
+
+  const handleOpenMessage = (userId: number) => {
+    setSelectedUserId(userId);
+    setIsMessagePanelOpen(true);
+  };
+
+  const handleCloseMessagePanel = () => {
+    setIsMessagePanelOpen(false);
+    setSelectedUserId(null);
   };
 
   // Helper function to check if user is already an athlete of this coach
@@ -429,11 +442,14 @@ export default function ConnectionsPage() {
                 </div>
                 
                 <div className="flex items-center space-x-2 ml-3">
-                  <Link href={`/messages/${connection.id}`}>
-                    <Button variant="outline" size="sm" className="h-8 px-3">
-                      Message
-                    </Button>
-                  </Link>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-8 px-3"
+                    onClick={() => handleOpenMessage(connection.id)}
+                  >
+                    Message
+                  </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -464,6 +480,13 @@ export default function ConnectionsPage() {
           </div>
         )}
       </div>
+
+      {/* Message Panel */}
+      <MessagePanel 
+        isOpen={isMessagePanelOpen}
+        onClose={handleCloseMessagePanel}
+        targetUserId={selectedUserId}
+      />
     </div>
   );
 }
