@@ -74,7 +74,19 @@ export default function CompetitionCalendarPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCompetition, setSelectedCompetition] = useState<Competition | null>(null);
   const [activeTab, setActiveTab] = useState("upcoming");
-  const [dateFilter, setDateFilter] = useState<{ start?: string; end?: string }>({});
+  // Set default date range: current date to 6 months from now
+  const getDefaultDateRange = () => {
+    const today = new Date();
+    const sixMonthsLater = new Date();
+    sixMonthsLater.setMonth(today.getMonth() + 6);
+    
+    return {
+      start: today.toISOString().split('T')[0],
+      end: sixMonthsLater.toISOString().split('T')[0]
+    };
+  };
+
+  const [dateFilter, setDateFilter] = useState<{ start?: string; end?: string }>(getDefaultDateRange());
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(20);
   const queryClient = useQueryClient();
@@ -408,32 +420,37 @@ export default function CompetitionCalendarPage() {
             />
           </div>
           
-          <div className="flex gap-2 flex-wrap">
-            <Input
-              type="date"
-              placeholder="From date"
-              value={dateFilter.start || ''}
-              onChange={(e) => setDateFilter(prev => ({ ...prev, start: e.target.value }))}
-              className="w-auto text-xs"
-              title="Filter competitions starting from this date"
-            />
-            <Input
-              type="date"
-              placeholder="To date"
-              value={dateFilter.end || ''}
-              onChange={(e) => setDateFilter(prev => ({ ...prev, end: e.target.value }))}
-              className="w-auto text-xs"
-              title="Filter competitions ending before this date"
-            />
+          <div className="flex gap-2 flex-wrap items-center">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-gray-600 font-medium">From</label>
+              <Input
+                type="date"
+                value={dateFilter.start || ''}
+                onChange={(e) => setDateFilter(prev => ({ ...prev, start: e.target.value }))}
+                className="w-36 text-sm"
+                title="Filter competitions starting from this date"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-gray-600 font-medium">To</label>
+              <Input
+                type="date"
+                value={dateFilter.end || ''}
+                onChange={(e) => setDateFilter(prev => ({ ...prev, end: e.target.value }))}
+                className="w-36 text-sm"
+                title="Filter competitions ending before this date"
+              />
+            </div>
             <Button 
               variant="outline" 
               size="sm"
               onClick={() => {
-                setDateFilter({});
+                setDateFilter(getDefaultDateRange());
                 setCurrentPage(1);
               }}
+              className="mt-5"
             >
-              Clear
+              Reset
             </Button>
           </div>
         </div>
