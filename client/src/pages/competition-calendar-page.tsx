@@ -111,7 +111,8 @@ export default function CompetitionCalendarPage() {
       pageSize,
       sortOrder
     ],
-    enabled: activeTab !== 'favorites'
+    enabled: activeTab !== 'favorites',
+    staleTime: 0 // Always consider data stale
   });
 
   const competitions = Array.isArray(competitionsResponse) ? competitionsResponse : (competitionsResponse as any)?.competitions || [];

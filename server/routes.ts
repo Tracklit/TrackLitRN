@@ -6618,13 +6618,19 @@ Keep the response professional, evidence-based, and specific to track and field 
       const limitNum = parseInt(limit as string);
       const sortOrder = sort as string;
       
-      let competitions;
+      // Always use the enhanced search with date parameters to get expanded dataset
+      let competitions = await worldAthleticsService.searchCompetitions(name as string, startDate as string, endDate as string);
+      
+      // Apply tab-specific filtering after getting the expanded dataset
       if (upcoming === 'true') {
-        competitions = await worldAthleticsService.getUpcomingCompetitions();
+        const now = new Date();
+        competitions = competitions.filter(comp => new Date(comp.start) > now);
       } else if (major === 'true') {
-        competitions = await worldAthleticsService.getMajorCompetitions();
-      } else {
-        competitions = await worldAthleticsService.searchCompetitions(name as string, startDate as string, endDate as string);
+        competitions = competitions.filter(comp => 
+          comp.rankingCategory?.toLowerCase().includes('world') || 
+          comp.name.toLowerCase().includes('championship') ||
+          comp.name.toLowerCase().includes('games')
+        );
       }
       
       // Apply date filtering - filter competitions by their start date
