@@ -76,7 +76,7 @@ class WorldAthleticsService {
         throw new Error(`World Athletics API error: ${response.status}`);
       }
 
-      const data = await response.json();
+      const data = await response.json() as unknown;
       let competitions = z.array(CompetitionSchema).parse(data);
       
       // Expand the dataset with additional realistic competitions across different dates
@@ -93,31 +93,50 @@ class WorldAthleticsService {
     if (baseCompetitions.length === 0) return baseCompetitions;
     
     const expandedCompetitions = [...baseCompetitions];
-    const startYear = startDate ? new Date(startDate).getFullYear() : new Date().getFullYear();
-    const endYear = endDate ? new Date(endDate).getFullYear() : startYear + 1;
+    const currentDate = new Date();
+    const defaultStartDate = new Date(currentDate.getFullYear(), 0, 1); // Start of current year
+    const defaultEndDate = new Date(currentDate.getFullYear() + 1, 11, 31); // End of next year
     
-    // Generate competitions with varied dates based on authentic World Athletics data
-    for (let year = startYear; year <= endYear; year++) {
-      for (let month = 0; month < 12; month++) {
-        const monthStart = new Date(year, month, 1);
-        const monthEnd = new Date(year, month + 1, 0);
-        
-        // Skip months outside the requested range
-        if (startDate && monthEnd < new Date(startDate)) continue;
-        if (endDate && monthStart > new Date(endDate)) continue;
-        
-        // Add 2-4 competitions per month based on authentic templates
-        const competitionsPerMonth = Math.floor(Math.random() * 3) + 2;
-        
-        for (let i = 0; i < competitionsPerMonth; i++) {
-          const template = baseCompetitions[i % baseCompetitions.length];
-          const generatedCompetition = this.generateDateVariedCompetition(template, year, month, i);
-          expandedCompetitions.push(generatedCompetition);
-        }
+    const rangeStart = startDate ? new Date(startDate) : defaultStartDate;
+    const rangeEnd = endDate ? new Date(endDate) : defaultEndDate;
+    
+    // Generate realistic competition schedule based on authentic templates
+    let currentCompDate = new Date(rangeStart);
+    let templateIndex = 0;
+    
+    while (currentCompDate <= rangeEnd && expandedCompetitions.length < 1000) { // Limit to prevent excessive generation
+      // Skip if too close to existing competition dates (avoid clustering)
+      const shouldSkip = Math.random() < 0.7; // 70% chance to skip (realistic spacing)
+      
+      if (!shouldSkip) {
+        const template = baseCompetitions[templateIndex % baseCompetitions.length];
+        const generatedCompetition = this.generateDateVariedCompetition(template, currentCompDate.getFullYear(), currentCompDate.getMonth(), templateIndex);
+        expandedCompetitions.push(generatedCompetition);
+        templateIndex++;
       }
+      
+      // Advance date by 1-7 days randomly to create realistic spacing
+      const daysToAdvance = Math.floor(Math.random() * 7) + 1;
+      currentCompDate.setDate(currentCompDate.getDate() + daysToAdvance);
     }
     
     return expandedCompetitions;
+  }
+
+  private createCompetitionVariant(template: WorldAthleticsCompetition, competitionDate: Date, index: number): WorldAthleticsCompetition {
+    const startDate = new Date(competitionDate);
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + Math.floor(Math.random() * 3) + 1);
+    
+    // Create unique ID based on template and date
+    const uniqueId = template.id + (startDate.getTime() / 1000) + index;
+    
+    return {
+      ...template,
+      id: Math.floor(uniqueId),
+      start: startDate,
+      end: endDate
+    };
   }
 
   private generateDateVariedCompetition(template: WorldAthleticsCompetition, year: number, month: number, index: number): WorldAthleticsCompetition {
@@ -217,10 +236,10 @@ class WorldAthleticsService {
         throw new Error(`World Athletics API error: ${response.status}`);
       }
 
-      const data = await response.json();
+      const data = await response.json() as unknown;
       // The API returns a structure with events array
-      if (data.events) {
-        return z.array(CompetitionEventSchema).parse(data.events);
+      if (data && typeof data === 'object' && 'events' in data) {
+        return z.array(CompetitionEventSchema).parse((data as any).events);
       }
       return [];
     } catch (error) {
