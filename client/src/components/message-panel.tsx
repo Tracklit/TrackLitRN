@@ -216,17 +216,8 @@ export function MessagePanel({ isOpen, onClose, targetUserId }: MessagePanelProp
       >
         {/* Header */}
         <div className="p-4 border-b bg-muted/50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <MessageCircle className="h-5 w-5" />
-              <h3 className="text-lg font-semibold">
-                {selectedConversationUserId && targetUser 
-                  ? (targetUser.name || targetUser.username)
-                  : "Messages"
-                }
-              </h3>
-            </div>
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-end">
+            <div className="flex items-center space-x-2 mr-auto">
               {selectedConversationUserId && (
                 <Button 
                   variant="ghost" 
@@ -237,6 +228,17 @@ export function MessagePanel({ isOpen, onClose, targetUserId }: MessagePanelProp
                   Back
                 </Button>
               )}
+            </div>
+            <div className="flex items-center space-x-2">
+              <MessageCircle className="h-5 w-5" />
+              <h3 className="text-lg font-semibold">
+                {selectedConversationUserId && targetUser 
+                  ? (targetUser.name || targetUser.username)
+                  : "Messages"
+                }
+              </h3>
+            </div>
+            <div className="ml-4">
               <Button variant="ghost" size="sm" onClick={onClose}>
                 <ArrowRight className="h-5 w-5" />
               </Button>
