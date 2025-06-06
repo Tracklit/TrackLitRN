@@ -16,7 +16,8 @@ import {
   ExternalLink,
   Heart,
   HeartOff,
-  Filter
+  Filter,
+  ArrowUpDown
 } from "lucide-react";
 import { format, isAfter, isBefore, addDays } from "date-fns";
 import { apiRequest } from "@/lib/queryClient";
@@ -74,7 +75,7 @@ export default function CompetitionCalendarPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCompetition, setSelectedCompetition] = useState<Competition | null>(null);
   const [activeTab, setActiveTab] = useState("upcoming");
-  // Set default date range: current date to 6 months from now
+  // Set default date range: current date to 6 months from now (upcoming only)
   const getDefaultDateRange = () => {
     const today = new Date();
     const sixMonthsLater = new Date();
@@ -89,6 +90,7 @@ export default function CompetitionCalendarPage() {
   const [dateFilter, setDateFilter] = useState<{ start?: string; end?: string }>(getDefaultDateRange());
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(20);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const queryClient = useQueryClient();
 
   // Fetch competitions based on active tab
@@ -100,7 +102,8 @@ export default function CompetitionCalendarPage() {
       startDate: dateFilter.start,
       endDate: dateFilter.end,
       page: currentPage,
-      limit: pageSize
+      limit: pageSize,
+      sort: sortOrder
     }],
     enabled: activeTab !== 'favorites'
   });
@@ -451,6 +454,16 @@ export default function CompetitionCalendarPage() {
               className="mt-5"
             >
               Reset
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+              className="mt-5 flex items-center gap-1"
+              title={`Sort by date ${sortOrder === 'asc' ? 'newest first' : 'oldest first'}`}
+            >
+              <ArrowUpDown className="h-3 w-3" />
+              {sortOrder === 'asc' ? 'Oldest' : 'Newest'}
             </Button>
           </div>
         </div>

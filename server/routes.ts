@@ -6613,9 +6613,10 @@ Keep the response professional, evidence-based, and specific to track and field 
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     try {
-      const { name, upcoming, major, startDate, endDate, page = '1', limit = '20' } = req.query;
+      const { name, upcoming, major, startDate, endDate, page = '1', limit = '20', sort = 'asc' } = req.query;
       const pageNum = parseInt(page as string);
       const limitNum = parseInt(limit as string);
+      const sortOrder = sort as string;
       
       let competitions;
       if (upcoming === 'true') {
