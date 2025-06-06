@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Search, Send, ArrowLeft, MoreVertical, Play, ExternalLink } from "lucide-react";
+import { Search, Send, ArrowLeft, MoreVertical, Play, ExternalLink, MessageCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
@@ -393,7 +393,10 @@ export default function MessagesPage() {
       {/* Conversations Sidebar */}
       <div className="w-1/3 border-r border-gray-700 flex flex-col">
         <div className="p-4 border-b border-gray-700">
-          <h1 className="text-xl font-bold text-white mb-4">Messages</h1>
+          <div className="flex items-center justify-end mb-4">
+            <MessageCircle className="h-5 w-5 text-white mr-2" />
+            <h1 className="text-xl font-bold text-white">Messages</h1>
+          </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
