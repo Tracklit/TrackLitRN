@@ -165,7 +165,7 @@ function MainApp() {
       
       {/* Hamburger Menu for smaller screens */}
       <div className="lg:hidden">
-        <div className="fixed top-4 left-4 z-10">
+        <div className="fixed top-4 left-4 z-30">
           <HamburgerMenu />
         </div>
       </div>
