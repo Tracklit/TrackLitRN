@@ -115,6 +115,7 @@ export function SidebarNavigation({ isMobile = false }: { isMobile?: boolean }) 
           <div className="pt-4 pb-2">
             <p className="text-xs text-gray-400 px-3 font-medium">COMPETITION</p>
           </div>
+          {/* World Athletics Competition Calendar */}
           <NavItem 
             href="/competitions" 
             icon={<Calendar className="h-5 w-5" />} 
