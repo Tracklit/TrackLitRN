@@ -24,7 +24,6 @@ import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { NotificationBell } from "@/components/notification-bell";
-import { MessageButton } from "@/components/message-button";
 
 interface HamburgerMenuProps {
   className?: string;
@@ -235,14 +234,17 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               Athletes
             </a>
 
-            <div className="flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors text-gray-300 hover:bg-gray-800 hover:text-white">
+            <a
+              href="/messages"
+              className={cn(
+                "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors",
+                location === "/messages" ? "bg-orange-500 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+              )}
+              onClick={() => setIsOpen(false)}
+            >
               <MessagesSquare className="h-4 w-4 mr-3" />
-              <MessageButton 
-                showText={true}
-                onMenuClose={() => setIsOpen(false)}
-                className="text-xs font-medium p-0 h-auto bg-transparent hover:bg-transparent text-inherit"
-              />
-            </div>
+              Messages
+            </a>
             <a
               href="/coaches"
               className={cn(

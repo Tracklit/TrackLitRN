@@ -9,8 +9,6 @@ import type { DirectMessage, Conversation } from "@shared/schema";
 interface MessageButtonProps {
   className?: string;
   targetUserId?: number;
-  showText?: boolean;
-  onMenuClose?: () => void;
 }
 
 interface ConversationWithUser extends Conversation {
@@ -18,7 +16,7 @@ interface ConversationWithUser extends Conversation {
   lastMessage?: DirectMessage;
 }
 
-export function MessageButton({ className, targetUserId, showText = false, onMenuClose }: MessageButtonProps) {
+export function MessageButton({ className, targetUserId }: MessageButtonProps) {
   const [showPanel, setShowPanel] = useState(false);
 
   // Fetch conversations to get unread count
@@ -37,14 +35,10 @@ export function MessageButton({ className, targetUserId, showText = false, onMen
       <Button
         variant="ghost"
         size="sm"
-        onClick={() => {
-          setShowPanel(true);
-          onMenuClose?.();
-        }}
+        onClick={() => setShowPanel(true)}
         className={`relative ${className}`}
       >
-        {!showText && <MessageCircle className="h-5 w-5" />}
-        {showText && "Messages"}
+        <MessageCircle className="h-5 w-5" />
         {unreadCount > 0 && (
           <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-xs min-w-[1.25rem] h-5 flex items-center justify-center rounded-full">
             {unreadCount > 99 ? '99+' : unreadCount}
