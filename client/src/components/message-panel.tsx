@@ -72,7 +72,7 @@ function formatMessagePreview(content: string, senderName: string): string {
 function ImageMessage({ imageData }: { imageData: ImageData }) {
   return (
     <div className="max-w-xs">
-      <div className="relative overflow-hidden rounded-xl bg-muted/20 border border-border/50">
+      <div className="relative overflow-hidden rounded-xl bg-muted/20">
         <img
           src={imageData.imageUrl}
           alt="Shared image"
