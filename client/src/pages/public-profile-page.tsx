@@ -31,6 +31,7 @@ import {
   Shield
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { MessagePanel } from '@/components/message-panel';
 
 interface User {
   id: number;
