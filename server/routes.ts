@@ -6618,6 +6618,8 @@ Keep the response professional, evidence-based, and specific to track and field 
       const limitNum = parseInt(limit as string);
       const sortOrder = sort as string;
       
+      console.log('Competition API request:', { name, upcoming, major, startDate, endDate, page, limit, sort });
+      
       // Always use the enhanced search with date parameters to get expanded dataset
       let competitions = await worldAthleticsService.searchCompetitions(name as string, startDate as string, endDate as string);
       

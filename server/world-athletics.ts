@@ -145,8 +145,9 @@ class WorldAthleticsService {
     const endDate = new Date(startDate);
     endDate.setDate(endDate.getDate() + Math.floor(Math.random() * 3) + 1);
     
-    // Create unique ID based on template and date
-    const uniqueId = template.id + (year * 100000) + (month * 1000) + (day * 10) + index;
+    // Create truly unique ID using template ID as base with timestamp and random component
+    const timestamp = startDate.getTime();
+    const uniqueId = parseInt(`${template.id}${timestamp.toString().slice(-6)}${index.toString().padStart(3, '0')}`);
     
     return {
       ...template,
