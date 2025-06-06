@@ -6683,6 +6683,11 @@ Keep the response professional, evidence-based, and specific to track and field 
       const endIndex = startIndex + limitNum;
       const paginatedCompetitions = competitions.slice(startIndex, endIndex);
       
+      // Prevent caching to ensure fresh data for date filtering
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, private');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
       res.json({
         competitions: paginatedCompetitions,
         total,
