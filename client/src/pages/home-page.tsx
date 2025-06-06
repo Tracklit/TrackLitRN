@@ -323,17 +323,17 @@ export default function HomePage() {
                           <div className="flex-1 space-y-1">
                             {todaySession?.shortDistanceWorkout && (
                               <div className="p-1.5 bg-background/80 dark:bg-background/40 rounded text-xs">
-                                <span className="font-medium text-primary">Short:</span> {todaySession.shortDistanceWorkout.slice(0, 30)}...
+                                <span className="font-medium text-primary">60m/100m:</span> {todaySession.shortDistanceWorkout.slice(0, 30)}...
                               </div>
                             )}
                             {todaySession?.mediumDistanceWorkout && (
                               <div className="p-1.5 bg-background/80 dark:bg-background/40 rounded text-xs">
-                                <span className="font-medium text-primary">Medium:</span> {todaySession.mediumDistanceWorkout.slice(0, 30)}...
+                                <span className="font-medium text-primary">200m:</span> {todaySession.mediumDistanceWorkout.slice(0, 30)}...
                               </div>
                             )}
                             {todaySession?.longDistanceWorkout && (
                               <div className="p-1.5 bg-background/80 dark:bg-background/40 rounded text-xs">
-                                <span className="font-medium text-primary">Long:</span> {todaySession.longDistanceWorkout.slice(0, 30)}...
+                                <span className="font-medium text-primary">400m:</span> {todaySession.longDistanceWorkout.slice(0, 30)}...
                               </div>
                             )}
                             {!todaySession && (
