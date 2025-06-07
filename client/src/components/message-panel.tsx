@@ -5,7 +5,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowRight, Send, ImagePlus, X, MessageCircle } from "lucide-react";
+import { ArrowRight, ArrowLeft, Send, ImagePlus, X, MessageCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
@@ -333,15 +333,15 @@ export function MessagePanel({ isOpen, onClose, targetUserId }: MessagePanelProp
         {/* Header */}
         <div className="p-4 border-b bg-muted/50">
           <div className="flex items-center justify-end">
-            <div className="flex items-center space-x-2 mr-auto">
+            <div className="flex items-center space-x-2 mr-auto ml-5">
               {selectedConversationUserId && (
                 <Button 
                   variant="ghost" 
                   size="sm" 
                   onClick={() => setSelectedConversationUserId(null)}
-                  className="text-sm"
+                  className="p-2 h-10 w-10"
                 >
-                  Back
+                  <ArrowLeft className="h-5 w-5" />
                 </Button>
               )}
             </div>
