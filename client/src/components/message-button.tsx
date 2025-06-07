@@ -25,9 +25,13 @@ export function MessageButton({ className, targetUserId }: MessageButtonProps) {
     select: (data: ConversationWithUser[]) => data || []
   });
 
-  // Calculate unread messages count (simplified - you might need a better approach)
+  // Calculate unread messages count based on conversations where the current user is the receiver
+  const { data: user } = useQuery({ queryKey: ["/api/user"] });
+  
   const unreadCount = conversations.filter(conv => 
-    conv.lastMessage && !conv.lastMessage.isRead
+    conv.lastMessage && 
+    !conv.lastMessage.isRead && 
+    conv.lastMessage.receiverId === user?.id
   ).length;
 
   return (

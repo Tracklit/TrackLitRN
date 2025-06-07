@@ -14,10 +14,10 @@ export function NotificationBell({ className }: NotificationBellProps) {
   const [showPanel, setShowPanel] = useState(false);
   const queryClient = useQueryClient();
 
-  // Fetch notifications to get unread count
+  // Fetch notifications to get unread count (excluding message notifications)
   const { data: notifications = [] } = useQuery({
     queryKey: ["/api/notifications"],
-    select: (data: any[]) => data || []
+    select: (data: any[]) => (data || []).filter((n: any) => n.type !== 'message_received')
   });
 
   // Fetch pending requests count
@@ -38,13 +38,13 @@ export function NotificationBell({ className }: NotificationBellProps) {
 
   const handleOpenPanel = () => {
     setShowPanel(true);
-    // Mark all non-connection notifications as read immediately when opening
-    const nonConnectionNotifications = (notifications as any[]).filter((n: any) => !n.isRead && n.type !== 'connection_request');
+    // Mark all non-connection notifications as read immediately when opening (excluding message notifications)
+    const nonConnectionNotifications = (notifications as any[]).filter((n: any) => !n.isRead && n.type !== 'connection_request' && n.type !== 'message_received');
     if (nonConnectionNotifications.length > 0) {
       // Optimistically update the cache to clear the bell icon immediately
       queryClient.setQueryData(["/api/notifications"], (oldData: any[]) => {
         return oldData.map((notification: any) => {
-          if (!notification.isRead && notification.type !== 'connection_request') {
+          if (!notification.isRead && notification.type !== 'connection_request' && notification.type !== 'message_received') {
             return { ...notification, isRead: true };
           }
           return notification;

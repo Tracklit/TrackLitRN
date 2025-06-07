@@ -70,10 +70,10 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
 
 
 
-  // Fetch all notifications
+  // Fetch all notifications (excluding message notifications)
   const { data: notifications = [], isLoading: notificationsLoading } = useQuery({
     queryKey: ["/api/notifications"],
-    select: (data: Notification[]) => data || []
+    select: (data: Notification[]) => (data || []).filter((n: Notification) => n.type !== 'message_received')
   });
 
   // Update state when notifications data changes

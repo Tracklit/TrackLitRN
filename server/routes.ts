@@ -5798,6 +5798,22 @@ Keep the response professional, evidence-based, and specific to track and field 
     }
   });
 
+  // Mark messages as read
+  app.patch("/api/direct-messages/:userId/mark-read", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const otherUserId = parseInt(req.params.userId);
+      await dbStorage.markMessagesAsRead(req.user.id, otherUserId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking messages as read:", error);
+      res.status(500).send("Error marking messages as read");
+    }
+  });
+
   app.post("/api/conversations", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) {
       return res.sendStatus(401);
