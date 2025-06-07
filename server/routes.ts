@@ -3627,7 +3627,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         try {
           // Import gym data detection utilities
-          const { containsGymReference, fetchGymExercises } = await import('../server/utils/sheets');
+          const sheetsUtils = await import('./utils/sheets');
+          const { containsGymReference, fetchGymData } = sheetsUtils;
           
           // Process each session to populate gym data
           for (let i = 0; i < sessions.length; i++) {
@@ -3650,7 +3651,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 if (gymCheck.hasGym) {
                   console.log(`Found gym reference ${gymCheck.gymNumber} in session ${session.dayNumber}`);
                   try {
-                    const exercises = await fetchGymExercises(program.googleSheetId, gymCheck.gymNumber);
+                    const exercises = await fetchGymData(program.googleSheetId, gymCheck.gymNumber);
                     if (exercises.length > 0) {
                       // Merge exercises, avoiding duplicates
                       for (const exercise of exercises) {

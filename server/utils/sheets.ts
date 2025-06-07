@@ -82,7 +82,7 @@ async function fetchPublicSheet(sheetId: string, gid?: string) {
 }
 
 // Function to detect "Gym X" references in workout data
-function containsGymReference(text: string): { hasGym: boolean; gymNumber: number | null } {
+export function containsGymReference(text: string): { hasGym: boolean; gymNumber: number | null } {
   if (!text) return { hasGym: false, gymNumber: null };
   
   const gymMatch = text.match(/Gym\s+(\d+)/i);
@@ -94,7 +94,7 @@ function containsGymReference(text: string): { hasGym: boolean; gymNumber: numbe
 }
 
 // Function to fetch gym data from the "Gym" tab
-async function fetchGymData(sheetId: string, gymNumber: number): Promise<string[]> {
+export async function fetchGymData(sheetId: string, gymNumber: number): Promise<string[]> {
   try {
     console.log(`Attempting to fetch Gym ${gymNumber} data from sheet ${sheetId}`);
     
