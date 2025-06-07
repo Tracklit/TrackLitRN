@@ -393,11 +393,18 @@ export function MessagePanel({ isOpen, onClose, targetUserId }: MessagePanelProp
                       className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors cursor-pointer"
                       onClick={() => setSelectedConversationUserId(conversation.otherUser.id)}
                     >
-                      <Avatar className="h-12 w-12">
-                        <AvatarFallback className="bg-primary/10 text-primary font-medium">
-                          {conversation.otherUser.name?.charAt(0) || conversation.otherUser.username?.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
+                      <div className="relative">
+                        <Avatar className="h-12 w-12">
+                          <AvatarFallback className="bg-primary/10 text-primary font-medium">
+                            {conversation.otherUser.name?.charAt(0) || conversation.otherUser.username?.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        {conversation.lastMessage && 
+                         !conversation.lastMessage.isRead && 
+                         conversation.lastMessage.receiverId === user?.id && (
+                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-background"></div>
+                        )}
+                      </div>
                       
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
@@ -412,7 +419,11 @@ export function MessagePanel({ isOpen, onClose, targetUserId }: MessagePanelProp
                         </div>
                         
                         {conversation.lastMessage && (
-                          <p className="text-sm text-muted-foreground truncate">
+                          <p className={`text-sm truncate ${
+                            !conversation.lastMessage.isRead && conversation.lastMessage.receiverId === user?.id
+                              ? 'text-foreground font-semibold' 
+                              : 'text-muted-foreground'
+                          }`}>
                             {conversation.lastMessage.senderId === user?.id ? 'You: ' : ''}
                             {formatMessagePreview(
                               conversation.lastMessage.content,
