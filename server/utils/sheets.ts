@@ -166,9 +166,9 @@ export async function fetchGymData(sheetId: string, gymNumber: number): Promise<
           if (gymRef.gymNumber === gymNumber) {
             startIndex = i + 1; // Start from the row after the header
             console.log(`Found Gym ${gymNumber} at row ${i}, column ${j}: "${cellValue}"`);
-          } else if (gymRef.gymNumber !== gymNumber && startIndex !== -1) {
+          } else if (gymRef.gymNumber > gymNumber && startIndex !== -1) {
             endIndex = i; // End at the next gym header
-            console.log(`Found next gym section at row ${i}, ending Gym ${gymNumber} section`);
+            console.log(`Found next gym section (Gym ${gymRef.gymNumber}) at row ${i}, ending Gym ${gymNumber} section`);
             break;
           }
         }
