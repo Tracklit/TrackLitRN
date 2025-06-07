@@ -484,6 +484,25 @@ function PracticePage() {
                                   </div>
                                 </div>
                               )}
+                              
+                              {/* Gym Exercises Error State - when Gym tab is missing */}
+                              {!isLoadingGymData && !gymDataResponse?.gymData?.length && hasGymReference && (
+                                <div className="p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded border border-yellow-200 dark:border-yellow-800">
+                                  <div className="flex items-start">
+                                    <div className="bg-yellow-100 dark:bg-yellow-900/50 p-1.5 rounded-full mr-3 mt-0.5">
+                                      <Dumbbell className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                                    </div>
+                                    <div className="flex-1">
+                                      <p className="font-medium text-sm text-yellow-800 dark:text-yellow-200 mb-1">
+                                        Gym Exercises Not Available
+                                      </p>
+                                      <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                                        To display gym exercises, create a tab named "Gym" in your Google Sheets with the exercise details.
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
                             </>
                           )}
                         </div>
