@@ -294,15 +294,14 @@ function PracticePage() {
         
         <div className="flex flex-col items-center min-w-0">
           <span className="text-lg font-medium">
-            {currentDayOffset === -1 ? "Yesterday" : 
-             currentDayOffset === 0 ? "Today" : 
-             currentDayOffset === 1 ? "Tomorrow" :
-             `${Math.abs(currentDayOffset)} days ${currentDayOffset > 0 ? 'ahead' : 'ago'}`}
-          </span>
-          <span className="text-xs text-muted-foreground">
             {new Date(new Date().setDate(new Date().getDate() + currentDayOffset)).toLocaleDateString('en-US', { 
               month: 'short', 
               day: 'numeric' 
+            })}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {new Date(new Date().setDate(new Date().getDate() + currentDayOffset)).toLocaleDateString('en-US', { 
+              weekday: 'long' 
             })}
           </span>
         </div>
