@@ -234,11 +234,8 @@ export async function fetchGymData(sheetId: string, gymNumber: number): Promise<
               console.log(`Added exercise from column ${gymHeaderColumn}: "${cleanCell}"`);
             }
           }
-        } else {
-          // Hit empty cell in the gym column, stop extraction
-          console.log(`Hit empty cell in gym column ${gymHeaderColumn} at row ${i}, stopping extraction`);
-          break;
         }
+        // Continue through empty cells instead of stopping
       } else {
         // Fallback: check all columns if header column not found
         for (let j = 0; j < row.length; j++) {
