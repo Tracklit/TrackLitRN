@@ -185,29 +185,84 @@ export async function fetchGymData(sheetId: string, gymNumber: number): Promise<
       throw new Error(`Gym ${gymNumber} not found in the Gym tab. Available gyms: ${uniqueGymNumbers.join(', ')}`);
     }
     
-    // Extract the gym exercises (excluding empty rows and dates)
+    // Extract the gym exercises more precisely - only from the column where the gym header was found
     const gymExercises: string[] = [];
     console.log(`Extracting exercises from rows ${startIndex} to ${endIndex - 1}`);
+    
+    // Find which column the gym header was in
+    let gymHeaderColumn = -1;
+    if (startIndex > 0) {
+      const headerRow = gymRows[startIndex - 1];
+      for (let j = 0; j < headerRow.length; j++) {
+        const cellValue = headerRow[j] || '';
+        const gymRef = containsGymReference(cellValue);
+        if (gymRef.hasGym && gymRef.gymNumber === gymNumber) {
+          gymHeaderColumn = j;
+          console.log(`Found Gym ${gymNumber} header in column ${j}`);
+          break;
+        }
+      }
+    }
+    
+    if (gymHeaderColumn === -1) {
+      console.log("Could not determine gym header column, extracting from all columns");
+    }
     
     for (let i = startIndex; i < endIndex; i++) {
       if (i >= gymRows.length) break;
       
       const row = gymRows[i];
-      // Look for exercise descriptions in all columns, excluding dates and empty cells
-      for (let j = 0; j < row.length; j++) {
+      
+      // If we know the header column, prioritize that column but also check adjacent columns
+      const columnsToCheck = gymHeaderColumn !== -1 ? 
+        [gymHeaderColumn, gymHeaderColumn - 1, gymHeaderColumn + 1].filter(col => col >= 0 && col < row.length) :
+        Array.from({length: row.length}, (_, i) => i);
+      
+      for (const j of columnsToCheck) {
         const cell = row[j];
         if (cell && cell.trim() !== '' && cell !== '""') {
-          // Skip if it looks like a date (contains common date patterns)
-          const isDate = /^\w{3}\s?\d{1,2}$|^\d{1,2}[\/-]\d{1,2}|^\w{3}[\s-]\d{1,2}/.test(cell.trim());
-          // Skip if it contains "Gym X" pattern
-          const isGymRef = containsGymReference(cell).hasGym;
+          const cleanCell = cell.trim().replace(/^"|"$/g, ''); // Remove surrounding quotes
           
-          if (!isDate && !isGymRef) {
-            const exercise = cell.trim().replace(/^"|"$/g, ''); // Remove surrounding quotes
-            if (exercise && !gymExercises.includes(exercise)) {
-              gymExercises.push(exercise);
-              console.log(`Added exercise from column ${j}: "${exercise}"`);
+          // Skip if it looks like a date (contains common date patterns)
+          const isDate = /^\w{3}\s?\d{1,2}$|^\d{1,2}[\/-]\d{1,2}|^\w{3}[\s-]\d{1,2}/.test(cleanCell);
+          // Skip if it contains "Gym X" pattern
+          const isGymRef = containsGymReference(cleanCell).hasGym;
+          // Skip very short entries that are likely not exercises
+          const isTooShort = cleanCell.length < 4;
+          // Skip if it's just quotes or empty content
+          const isEmpty = cleanCell === '' || cleanCell === '""' || cleanCell === '"';
+          
+          if (!isDate && !isGymRef && !isTooShort && !isEmpty) {
+            if (!gymExercises.includes(cleanCell)) {
+              gymExercises.push(cleanCell);
+              console.log(`Added exercise from column ${j}: "${cleanCell}"`);
             }
+          }
+        }
+        
+        // Stop at the first empty cell in the primary column to avoid grabbing irrelevant data
+        if (gymHeaderColumn !== -1 && j === gymHeaderColumn && (!cell || cell.trim() === '' || cell === '""')) {
+          console.log(`Hit empty cell in primary column ${j} at row ${i}, stopping extraction`);
+          break;
+        }
+      }
+      
+      // If we're in the primary column and hit multiple empty rows, stop
+      if (gymHeaderColumn !== -1) {
+        const primaryCell = row[gymHeaderColumn];
+        if (!primaryCell || primaryCell.trim() === '' || primaryCell === '""') {
+          // Check if the next few rows are also empty in this column
+          let emptyCount = 0;
+          for (let nextRow = i + 1; nextRow < Math.min(i + 3, endIndex); nextRow++) {
+            if (nextRow >= gymRows.length) break;
+            const nextCell = gymRows[nextRow][gymHeaderColumn];
+            if (!nextCell || nextCell.trim() === '' || nextCell === '""') {
+              emptyCount++;
+            }
+          }
+          if (emptyCount >= 2) {
+            console.log(`Found ${emptyCount + 1} consecutive empty cells in primary column, ending extraction`);
+            break;
           }
         }
       }
