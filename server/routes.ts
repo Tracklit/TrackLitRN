@@ -3621,6 +3621,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get program sessions
       let sessions = await dbStorage.getProgramSessions(programId);
       
+      // Process gym data for sessions if this is a Google Sheet program
+      if (program.importedFromSheet && program.googleSheetId && sessions.length > 0) {
+        console.log(`Processing gym data for ${sessions.length} sessions in program ${programId}`);
+        
+        try {
+          // Import gym data detection utilities
+          const { containsGymReference, fetchGymExercises } = await import('../server/utils/sheets');
+          
+          // Process each session to populate gym data
+          for (let i = 0; i < sessions.length; i++) {
+            const session = sessions[i];
+            let gymData: string[] = [];
+            
+            // Check all workout fields for gym references
+            const workoutFields = [
+              session.shortDistanceWorkout,
+              session.mediumDistanceWorkout, 
+              session.longDistanceWorkout,
+              session.preActivation1,
+              session.preActivation2,
+              session.extraSession
+            ];
+            
+            for (const field of workoutFields) {
+              if (field) {
+                const gymCheck = containsGymReference(field);
+                if (gymCheck.hasGym) {
+                  console.log(`Found gym reference ${gymCheck.gymNumber} in session ${session.dayNumber}`);
+                  try {
+                    const exercises = await fetchGymExercises(program.googleSheetId, gymCheck.gymNumber);
+                    if (exercises.length > 0) {
+                      // Merge exercises, avoiding duplicates
+                      for (const exercise of exercises) {
+                        if (!gymData.includes(exercise)) {
+                          gymData.push(exercise);
+                        }
+                      }
+                    }
+                  } catch (error) {
+                    console.error(`Error fetching gym ${gymCheck.gymNumber} exercises:`, error);
+                  }
+                }
+              }
+            }
+            
+            // Update session with gym data
+            if (gymData.length > 0) {
+              sessions[i] = { ...session, gymData };
+              console.log(`Added ${gymData.length} gym exercises to session ${session.dayNumber}`);
+            }
+          }
+        } catch (error) {
+          console.error("Error processing gym data:", error);
+        }
+      }
+      
       // If we have no sessions but this is an imported Google Sheet, generate mock data
       if (sessions.length === 0 && program.importedFromSheet) {
         console.log("No sessions found for imported sheet, generating mock data");
