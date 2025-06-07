@@ -113,9 +113,10 @@ export async function fetchGymData(sheetId: string, gymNumber: number): Promise<
           availableSheets = metaData.sheets.map((sheet: any) => sheet.properties?.title || 'Untitled');
           console.log(`Available sheet tabs: ${availableSheets.join(', ')}`);
           
-          const gymSheet = metaData.sheets.find((sheet: any) => 
-            sheet.properties?.title?.toLowerCase().includes('gym')
-          );
+          const gymSheet = metaData.sheets.find((sheet: any) => {
+            const title = sheet.properties?.title?.toLowerCase();
+            return title === 'gym' || title === 'gyms' || title === 'gym exercises';
+          });
           if (gymSheet) {
             gymTabGid = gymSheet.properties.sheetId.toString();
             console.log(`Found Gym tab with GID: ${gymTabGid}, title: ${gymSheet.properties.title}`);
@@ -141,23 +142,11 @@ export async function fetchGymData(sheetId: string, gymNumber: number): Promise<
       }
     }
     
-    // If that fails, try common GIDs for second tabs
-    if (!gymRows) {
-      const commonGids = ['1', '2', '0'];
-      for (const gid of commonGids) {
-        try {
-          console.log(`Trying to fetch gym data with GID ${gid}`);
-          gymRows = await fetchPublicSheet(sheetId, gid);
-          console.log(`Successfully fetched data with GID ${gid}, ${gymRows.length} rows`);
-          break;
-        } catch (e) {
-          console.log(`GID ${gid} failed: ${(e as Error).message}`);
-        }
-      }
-    }
+    // Only proceed if we found the dedicated Gym tab
+    // Do not fall back to other tabs to ensure data integrity
     
     if (!gymRows || gymRows.length === 0) {
-      throw new Error(`No gym data found. Available tabs: ${availableSheets.join(', ')}`);
+      throw new Error(`No dedicated "Gym" tab found in spreadsheet. Please create a tab named "Gym" containing the gym exercises. Available tabs: ${availableSheets.join(', ')}`);
     }
     
     // Debug: Log first few rows to understand structure
