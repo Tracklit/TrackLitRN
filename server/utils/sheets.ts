@@ -154,6 +154,9 @@ export async function fetchGymData(sheetId: string, gymNumber: number): Promise<
     const foundGymNumbers: number[] = [];
     
     // Look for "Gym X" headers in any column
+    let gymHeaderRow = -1;
+    let gymHeaderCol = -1;
+    
     for (let i = 0; i < gymRows.length; i++) {
       const row = gymRows[i];
       for (let j = 0; j < row.length; j++) {
@@ -165,17 +168,63 @@ export async function fetchGymData(sheetId: string, gymNumber: number): Promise<
           
           if (gymRef.gymNumber === gymNumber) {
             startIndex = i + 1; // Start from the row after the header
+            gymHeaderRow = i;
+            gymHeaderCol = j;
             console.log(`Found Gym ${gymNumber} at row ${i}, column ${j}: "${cellValue}"`);
           } else if (gymRef.gymNumber > gymNumber && startIndex !== -1) {
-            endIndex = i; // End at the next gym header
-            console.log(`Found next gym section (Gym ${gymRef.gymNumber}) at row ${i}, ending Gym ${gymNumber} section`);
-            break;
+            // Only set end if it's actually after our start
+            if (i > gymHeaderRow) {
+              endIndex = i; // End at the next gym header
+              console.log(`Found next gym section (Gym ${gymRef.gymNumber}) at row ${i}, ending Gym ${gymNumber} section`);
+              break;
+            }
           }
         }
       }
       
       // If we found the end, break out of outer loop too
       if (endIndex < gymRows.length) break;
+    }
+    
+    // If no explicit end found, look for a reasonable stopping point
+    if (startIndex !== -1 && endIndex === gymRows.length) {
+      // Find the next row with significant content change or end of meaningful data
+      for (let i = startIndex; i < Math.min(startIndex + 20, gymRows.length); i++) {
+        const row = gymRows[i];
+        let hasAnyContent = false;
+        
+        // Check if this row has any meaningful content
+        for (let j = 0; j < row.length; j++) {
+          const cell = row[j];
+          if (cell && cell.trim() !== '' && cell !== '""') {
+            hasAnyContent = true;
+            break;
+          }
+        }
+        
+        // If we hit multiple empty rows, end here
+        if (!hasAnyContent) {
+          let emptyRowCount = 1;
+          for (let nextRow = i + 1; nextRow < Math.min(i + 3, gymRows.length); nextRow++) {
+            const nextRowData = gymRows[nextRow];
+            let nextHasContent = false;
+            for (let k = 0; k < nextRowData.length; k++) {
+              const nextCell = nextRowData[k];
+              if (nextCell && nextCell.trim() !== '' && nextCell !== '""') {
+                nextHasContent = true;
+                break;
+              }
+            }
+            if (!nextHasContent) emptyRowCount++;
+          }
+          
+          if (emptyRowCount >= 2) {
+            endIndex = i;
+            console.log(`Set end boundary at row ${i} due to ${emptyRowCount} consecutive empty rows`);
+            break;
+          }
+        }
+      }
     }
     
     const uniqueGymNumbers = foundGymNumbers.filter((num, index, arr) => arr.indexOf(num) === index).sort((a, b) => a - b);
@@ -189,23 +238,19 @@ export async function fetchGymData(sheetId: string, gymNumber: number): Promise<
     const gymExercises: string[] = [];
     console.log(`Extracting exercises from rows ${startIndex} to ${endIndex - 1}`);
     
-    // Find which column the gym header was in
-    let gymHeaderColumn = -1;
-    if (startIndex > 0) {
-      const headerRow = gymRows[startIndex - 1];
-      for (let j = 0; j < headerRow.length; j++) {
-        const cellValue = headerRow[j] || '';
-        const gymRef = containsGymReference(cellValue);
-        if (gymRef.hasGym && gymRef.gymNumber === gymNumber) {
-          gymHeaderColumn = j;
-          console.log(`Found Gym ${gymNumber} header in column ${j}`);
-          break;
-        }
-      }
-    }
+    // Use the stored gym header column
+    let gymHeaderColumn = gymHeaderCol;
     
     if (gymHeaderColumn === -1) {
       console.log("Could not determine gym header column, extracting from all columns");
+    } else {
+      console.log(`Found Gym ${gymNumber} header in column ${gymHeaderColumn}`);
+    }
+    
+    // Ensure we have a valid range
+    if (startIndex >= endIndex) {
+      console.log(`Invalid range: startIndex ${startIndex} >= endIndex ${endIndex}, adjusting endIndex`);
+      endIndex = Math.min(startIndex + 10, gymRows.length); // Give it a reasonable range to search
     }
     
     for (let i = startIndex; i < endIndex; i++) {
