@@ -52,8 +52,8 @@ function getNotificationIcon(type: string) {
       return <Check className="h-4 w-4 text-green-500" />;
     case 'meet_invitation':
       return <Trophy className="h-4 w-4 text-orange-500" />;
-    case 'message':
-      return <MessageSquare className="h-4 w-4 text-purple-500" />;
+    case 'connection_request':
+      return <UserPlus className="h-4 w-4 text-blue-500" />;
     default:
       return <Bell className="h-4 w-4 text-gray-500" />;
   }
