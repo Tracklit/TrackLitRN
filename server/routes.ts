@@ -23,6 +23,7 @@ import {
   competitionEventsTable, 
   athleteCompetitionResultsTable,
   userFavoriteCompetitionsTable,
+  directMessages,
   insertCompetitionSchema,
   insertCompetitionEventSchema,
   insertAthleteCompetitionResultSchema,
@@ -5829,6 +5830,63 @@ Keep the response professional, evidence-based, and specific to track and field 
     } catch (error) {
       console.error("Error sending message:", error);
       res.status(500).send("Error sending message");
+    }
+  });
+
+  // Mark messages as read
+  app.post("/api/direct-messages/:userId/mark-read", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const otherUserId = parseInt(req.params.userId);
+      if (isNaN(otherUserId)) {
+        return res.status(400).send("Invalid user ID");
+      }
+
+      // Mark all messages from the other user to current user as read
+      await db.update(directMessages)
+        .set({ 
+          isRead: true, 
+          readAt: new Date() 
+        })
+        .where(
+          and(
+            eq(directMessages.senderId, otherUserId),
+            eq(directMessages.receiverId, req.user.id),
+            eq(directMessages.isRead, false)
+          )
+        );
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking messages as read:", error);
+      res.status(500).send("Error marking messages as read");
+    }
+  });
+
+  // Get unread message count
+  app.get("/api/direct-messages/unread-count", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const unreadMessages = await db.select({ count: sql<number>`count(*)` })
+        .from(directMessages)
+        .where(
+          and(
+            eq(directMessages.receiverId, req.user.id),
+            eq(directMessages.isRead, false)
+          )
+        );
+
+      const count = unreadMessages[0]?.count || 0;
+      res.json({ count });
+    } catch (error) {
+      console.error("Error getting unread message count:", error);
+      res.status(500).send("Error getting unread message count");
     }
   });
 
