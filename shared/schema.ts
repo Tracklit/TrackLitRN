@@ -1457,6 +1457,7 @@ export const programSessions = pgTable("program_sessions", {
   preActivation1: text("pre_activation_1"), // Pre-Activation 1
   preActivation2: text("pre_activation_2"), // Pre-Activation 2
   extraSession: text("extra_session"), // Extra afternoon sessions
+  gymData: text("gym_data").array(), // Gym exercises fetched from "Gym X" references
   isRestDay: boolean("is_rest_day").default(false),
   
   isCompleted: boolean("is_completed").default(false),

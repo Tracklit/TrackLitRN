@@ -96,8 +96,11 @@ function containsGymReference(text: string): { hasGym: boolean; gymNumber: numbe
 // Function to fetch gym data from the "Gym" tab
 async function fetchGymData(sheetId: string, gymNumber: number): Promise<string[]> {
   try {
+    console.log(`Attempting to fetch Gym ${gymNumber} data from sheet ${sheetId}`);
+    
     // First, try to get the sheet tabs to find the "Gym" tab GID
     let gymTabGid: string | null = null;
+    let availableSheets: string[] = [];
     
     try {
       // Try to fetch sheet metadata to get tab IDs
@@ -106,47 +109,103 @@ async function fetchGymData(sheetId: string, gymNumber: number): Promise<string[
       
       if (metaResponse.ok) {
         const metaData = await metaResponse.json();
-        const gymSheet = metaData.sheets?.find((sheet: any) => 
-          sheet.properties?.title?.toLowerCase() === 'gym'
-        );
-        if (gymSheet) {
-          gymTabGid = gymSheet.properties.sheetId.toString();
+        if (metaData.sheets) {
+          availableSheets = metaData.sheets.map((sheet: any) => sheet.properties?.title || 'Untitled');
+          console.log(`Available sheet tabs: ${availableSheets.join(', ')}`);
+          
+          const gymSheet = metaData.sheets.find((sheet: any) => 
+            sheet.properties?.title?.toLowerCase().includes('gym')
+          );
+          if (gymSheet) {
+            gymTabGid = gymSheet.properties.sheetId.toString();
+            console.log(`Found Gym tab with GID: ${gymTabGid}, title: ${gymSheet.properties.title}`);
+          } else {
+            console.log("No sheet tab containing 'gym' found");
+          }
         }
       }
     } catch (e) {
-      console.warn("Could not fetch sheet metadata, trying default Gym tab access");
+      console.warn("Could not fetch sheet metadata, trying default Gym tab access:", (e as Error).message);
     }
     
-    // Fetch the Gym tab data
-    const gymRows = await fetchPublicSheet(sheetId, gymTabGid || undefined);
+    // Try multiple approaches to fetch gym data
+    let gymRows: string[][] | null = null;
+    
+    // First try with the found GID
+    if (gymTabGid) {
+      try {
+        gymRows = await fetchPublicSheet(sheetId, gymTabGid);
+        console.log(`Successfully fetched Gym tab data with ${gymRows.length} rows`);
+      } catch (e) {
+        console.warn(`Failed to fetch with GID ${gymTabGid}:`, (e as Error).message);
+      }
+    }
+    
+    // If that fails, try common GIDs for second tabs
+    if (!gymRows) {
+      const commonGids = ['1', '2', '0'];
+      for (const gid of commonGids) {
+        try {
+          console.log(`Trying to fetch gym data with GID ${gid}`);
+          gymRows = await fetchPublicSheet(sheetId, gid);
+          console.log(`Successfully fetched data with GID ${gid}, ${gymRows.length} rows`);
+          break;
+        } catch (e) {
+          console.log(`GID ${gid} failed: ${e.message}`);
+        }
+      }
+    }
     
     if (!gymRows || gymRows.length === 0) {
-      throw new Error("No gym data found");
+      throw new Error(`No gym data found. Available tabs: ${availableSheets.join(', ')}`);
+    }
+    
+    // Debug: Log first few rows to understand structure
+    console.log(`Gym tab structure (first 10 rows):`);
+    for (let i = 0; i < Math.min(10, gymRows.length); i++) {
+      console.log(`Row ${i}: ${JSON.stringify(gymRows[i])}`);
     }
     
     // Find the start and end positions for the requested gym number
     let startIndex = -1;
     let endIndex = gymRows.length;
+    const foundGymNumbers: number[] = [];
     
-    // Look for "Gym X" headers in the first column
+    // Look for "Gym X" headers in any column
     for (let i = 0; i < gymRows.length; i++) {
-      const cellValue = gymRows[i][0] || '';
-      const gymRef = containsGymReference(cellValue);
-      
-      if (gymRef.hasGym && gymRef.gymNumber === gymNumber) {
-        startIndex = i + 1; // Start from the row after the header
-      } else if (gymRef.hasGym && gymRef.gymNumber !== gymNumber && startIndex !== -1) {
-        endIndex = i; // End at the next gym header
-        break;
+      const row = gymRows[i];
+      for (let j = 0; j < row.length; j++) {
+        const cellValue = row[j] || '';
+        const gymRef = containsGymReference(cellValue);
+        
+        if (gymRef.hasGym && gymRef.gymNumber) {
+          foundGymNumbers.push(gymRef.gymNumber);
+          
+          if (gymRef.gymNumber === gymNumber) {
+            startIndex = i + 1; // Start from the row after the header
+            console.log(`Found Gym ${gymNumber} at row ${i}, column ${j}: "${cellValue}"`);
+          } else if (gymRef.gymNumber !== gymNumber && startIndex !== -1) {
+            endIndex = i; // End at the next gym header
+            console.log(`Found next gym section at row ${i}, ending Gym ${gymNumber} section`);
+            break;
+          }
+        }
       }
+      
+      // If we found the end, break out of outer loop too
+      if (endIndex < gymRows.length) break;
     }
     
+    console.log(`Found gym numbers in sheet: ${[...new Set(foundGymNumbers)].sort((a, b) => a - b).join(', ')}`);
+    
     if (startIndex === -1) {
-      throw new Error(`Gym ${gymNumber} not found in the Gym tab`);
+      throw new Error(`Gym ${gymNumber} not found in the Gym tab. Available gyms: ${[...new Set(foundGymNumbers)].sort((a, b) => a - b).join(', ')}`);
     }
     
     // Extract the gym exercises (excluding empty rows)
     const gymExercises: string[] = [];
+    console.log(`Extracting exercises from rows ${startIndex} to ${endIndex - 1}`);
+    
     for (let i = startIndex; i < endIndex; i++) {
       if (i >= gymRows.length) break;
       
@@ -155,9 +214,11 @@ async function fetchGymData(sheetId: string, gymNumber: number): Promise<string[
       const exercise = row.find(cell => cell && cell.trim() !== '');
       if (exercise && exercise.trim() !== '') {
         gymExercises.push(exercise.trim());
+        console.log(`Added exercise: "${exercise.trim()}"`);
       }
     }
     
+    console.log(`Extracted ${gymExercises.length} exercises for Gym ${gymNumber}`);
     return gymExercises;
     
   } catch (error) {
