@@ -38,9 +38,20 @@ export function NotificationBell({ className }: NotificationBellProps) {
 
   const handleOpenPanel = () => {
     setShowPanel(true);
-    // Don't auto-mark connection requests as read when opening panel
+    // Mark all non-connection notifications as read immediately when opening
     const nonConnectionNotifications = (notifications as any[]).filter((n: any) => !n.isRead && n.type !== 'connection_request');
     if (nonConnectionNotifications.length > 0) {
+      // Optimistically update the cache to clear the bell icon immediately
+      queryClient.setQueryData(["/api/notifications"], (oldData: any[]) => {
+        return oldData.map((notification: any) => {
+          if (!notification.isRead && notification.type !== 'connection_request') {
+            return { ...notification, isRead: true };
+          }
+          return notification;
+        });
+      });
+      
+      // Then sync with the server
       markAllAsReadMutation.mutate();
     }
   };

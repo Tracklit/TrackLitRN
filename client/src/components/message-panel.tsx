@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -230,28 +230,10 @@ export function MessagePanel({ isOpen, onClose, targetUserId }: MessagePanelProp
     },
   });
 
-  // Mark messages as read mutation
-  const markAsReadMutation = useMutation({
-    mutationFn: async (userId: number) => {
-      return await apiRequest("POST", `/api/direct-messages/${userId}/mark-read`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/direct-messages/unread-count"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
-    },
-  });
-
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-
-  // Mark messages as read when conversation is opened
-  useEffect(() => {
-    if (selectedConversationUserId && messages.length > 0) {
-      markAsReadMutation.mutate(selectedConversationUserId);
-    }
-  }, [selectedConversationUserId, messages.length]);
 
   // Handle image selection
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,13 +19,16 @@ interface ConversationWithUser extends Conversation {
 export function MessageButton({ className, targetUserId }: MessageButtonProps) {
   const [showPanel, setShowPanel] = useState(false);
 
-  // Fetch unread message count
-  const { data: unreadData } = useQuery({
-    queryKey: ["/api/direct-messages/unread-count"],
-    select: (data: any) => data || { count: 0 }
+  // Fetch conversations to get unread count
+  const { data: conversations = [] } = useQuery<ConversationWithUser[]>({
+    queryKey: ["/api/conversations"],
+    select: (data: ConversationWithUser[]) => data || []
   });
 
-  const unreadCount = unreadData?.count || 0;
+  // Calculate unread messages count (simplified - you might need a better approach)
+  const unreadCount = conversations.filter(conv => 
+    conv.lastMessage && !conv.lastMessage.isRead
+  ).length;
 
   return (
     <>
