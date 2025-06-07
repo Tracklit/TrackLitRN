@@ -2690,6 +2690,20 @@ export class DatabaseStorage implements IStorage {
     return message;
   }
 
+  async markMessagesAsRead(currentUserId: number, otherUserId: number): Promise<void> {
+    await db
+      .update(directMessages)
+      .set({ 
+        isRead: true,
+        readAt: new Date()
+      })
+      .where(and(
+        eq(directMessages.senderId, otherUserId),
+        eq(directMessages.receiverId, currentUserId),
+        eq(directMessages.isRead, false)
+      ));
+  }
+
   // Following/Followers operations
   async followUser(followerId: number, followingId: number): Promise<void> {
     if (followerId === followingId) {

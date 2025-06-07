@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MessageCircle } from "lucide-react";
 import { MessagePanel } from "./message-panel";
-import type { DirectMessage, Conversation } from "@shared/schema";
+import type { DirectMessage, Conversation, User } from "@shared/schema";
 
 interface MessageButtonProps {
   className?: string;
@@ -26,13 +26,13 @@ export function MessageButton({ className, targetUserId }: MessageButtonProps) {
   });
 
   // Calculate unread messages count based on conversations where the current user is the receiver
-  const { data: user } = useQuery({ queryKey: ["/api/user"] });
+  const { data: user } = useQuery<User>({ queryKey: ["/api/user"] });
   
-  const unreadCount = conversations.filter(conv => 
+  const unreadCount = user ? conversations.filter(conv => 
     conv.lastMessage && 
     !conv.lastMessage.isRead && 
-    conv.lastMessage.receiverId === user?.id
-  ).length;
+    conv.lastMessage.receiverId === user.id
+  ).length : 0;
 
   return (
     <>

@@ -230,10 +230,27 @@ export function MessagePanel({ isOpen, onClose, targetUserId }: MessagePanelProp
     },
   });
 
+  // Mark messages as read when conversation is opened
+  const markMessagesAsReadMutation = useMutation({
+    mutationFn: (otherUserId: number) => 
+      apiRequest("PATCH", `/api/direct-messages/${otherUserId}/mark-read`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/direct-messages", selectedConversationUserId] });
+    }
+  });
+
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Mark messages as read when conversation is selected
+  useEffect(() => {
+    if (selectedConversationUserId && user) {
+      markMessagesAsReadMutation.mutate(selectedConversationUserId);
+    }
+  }, [selectedConversationUserId, user?.id]);
 
   // Handle image selection
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
