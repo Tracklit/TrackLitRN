@@ -151,7 +151,7 @@ async function fetchGymData(sheetId: string, gymNumber: number): Promise<string[
           console.log(`Successfully fetched data with GID ${gid}, ${gymRows.length} rows`);
           break;
         } catch (e) {
-          console.log(`GID ${gid} failed: ${e.message}`);
+          console.log(`GID ${gid} failed: ${(e as Error).message}`);
         }
       }
     }
@@ -196,13 +196,14 @@ async function fetchGymData(sheetId: string, gymNumber: number): Promise<string[
       if (endIndex < gymRows.length) break;
     }
     
-    console.log(`Found gym numbers in sheet: ${[...new Set(foundGymNumbers)].sort((a, b) => a - b).join(', ')}`);
+    const uniqueGymNumbers = foundGymNumbers.filter((num, index, arr) => arr.indexOf(num) === index).sort((a, b) => a - b);
+    console.log(`Found gym numbers in sheet: ${uniqueGymNumbers.join(', ')}`);
     
     if (startIndex === -1) {
-      throw new Error(`Gym ${gymNumber} not found in the Gym tab. Available gyms: ${[...new Set(foundGymNumbers)].sort((a, b) => a - b).join(', ')}`);
+      throw new Error(`Gym ${gymNumber} not found in the Gym tab. Available gyms: ${uniqueGymNumbers.join(', ')}`);
     }
     
-    // Extract the gym exercises (excluding empty rows)
+    // Extract the gym exercises (excluding empty rows and dates)
     const gymExercises: string[] = [];
     console.log(`Extracting exercises from rows ${startIndex} to ${endIndex - 1}`);
     
@@ -210,11 +211,69 @@ async function fetchGymData(sheetId: string, gymNumber: number): Promise<string[
       if (i >= gymRows.length) break;
       
       const row = gymRows[i];
-      // Take the first non-empty cell as the exercise description
-      const exercise = row.find(cell => cell && cell.trim() !== '');
-      if (exercise && exercise.trim() !== '') {
-        gymExercises.push(exercise.trim());
-        console.log(`Added exercise: "${exercise.trim()}"`);
+      // Look for exercise descriptions in all columns, excluding dates and empty cells
+      for (let j = 0; j < row.length; j++) {
+        const cell = row[j];
+        if (cell && cell.trim() !== '' && cell !== '""') {
+          // Skip if it looks like a date (contains common date patterns)
+          const isDate = /^\w{3}\s?\d{1,2}$|^\d{1,2}[\/-]\d{1,2}|^\w{3}[\s-]\d{1,2}/.test(cell.trim());
+          // Skip if it contains "Gym X" pattern
+          const isGymRef = containsGymReference(cell).hasGym;
+          
+          if (!isDate && !isGymRef) {
+            const exercise = cell.trim().replace(/^"|"$/g, ''); // Remove surrounding quotes
+            if (exercise && !gymExercises.includes(exercise)) {
+              gymExercises.push(exercise);
+              console.log(`Added exercise from column ${j}: "${exercise}"`);
+            }
+          }
+        }
+      }
+    }
+    
+    // If no exercises found in the expected range, try a different approach
+    // Look for a dedicated gym section in the sheet
+    if (gymExercises.length === 0) {
+      console.log("No exercises found in expected range, trying alternative approach...");
+      
+      // Try to find a section that starts with the gym number and contains exercises
+      for (let i = 0; i < gymRows.length; i++) {
+        const row = gymRows[i];
+        const firstCell = row[0] || '';
+        
+        // Check if this row starts with our gym number
+        if (firstCell.includes(`${gymNumber}`)) {
+          console.log(`Found potential gym section starting at row ${i}`);
+          
+          // Look in subsequent rows for exercise data
+          for (let j = i + 1; j < Math.min(i + 20, gymRows.length); j++) {
+            const exerciseRow = gymRows[j];
+            const firstExerciseCell = exerciseRow[0] || '';
+            
+            // Stop if we hit another gym section or empty section
+            if (containsGymReference(firstExerciseCell).hasGym && 
+                containsGymReference(firstExerciseCell).gymNumber !== gymNumber) {
+              break;
+            }
+            
+            // Add valid exercise descriptions
+            for (const cell of exerciseRow) {
+              if (cell && cell.trim() !== '' && cell !== '""') {
+                const isDate = /^\w{3}\s?\d{1,2}$|^\d{1,2}[\/-]\d{1,2}|^\w{3}[\s-]\d{1,2}/.test(cell.trim());
+                const isGymRef = containsGymReference(cell).hasGym;
+                
+                if (!isDate && !isGymRef) {
+                  const exercise = cell.trim().replace(/^"|"$/g, '');
+                  if (exercise.length > 3 && !gymExercises.includes(exercise)) {
+                    gymExercises.push(exercise);
+                    console.log(`Added exercise from alternative search: "${exercise}"`);
+                  }
+                }
+              }
+            }
+          }
+          break;
+        }
       }
     }
     

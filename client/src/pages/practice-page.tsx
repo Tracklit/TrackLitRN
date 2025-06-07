@@ -436,6 +436,30 @@ function PracticePage() {
                                   </div>
                                 </div>
                               )}
+                              
+                              {/* Gym Exercises Section */}
+                              {activeSessionData.gymData && activeSessionData.gymData.length > 0 && (
+                                <div className="p-2 bg-background/50 rounded border border-border/50">
+                                  <div className="flex items-start">
+                                    <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
+                                      <Dumbbell className="h-4 w-4 text-primary" />
+                                    </div>
+                                    <div className="flex-1">
+                                      <p className="font-medium text-sm">Gym Exercises</p>
+                                      <div className="space-y-1 mt-2">
+                                        {activeSessionData.gymData.map((exercise: string, index: number) => (
+                                          <div key={index} className="flex items-start gap-2 text-sm">
+                                            <span className="text-primary font-mono text-xs mt-0.5 min-w-[20px]">
+                                              {(index + 1).toString().padStart(2, '0')}
+                                            </span>
+                                            <span className="flex-1">{exercise}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
                             </>
                           )}
                         </div>

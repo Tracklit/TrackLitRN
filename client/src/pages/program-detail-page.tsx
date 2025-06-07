@@ -299,6 +299,24 @@ function ProgramCalendar({ sessions }: { sessions: any[] }) {
                 </div>
               </div>
             )}
+            
+            {selectedSession?.gymData && selectedSession.gymData.length > 0 && (
+              <div>
+                <h4 className="font-medium text-sm text-primary mb-1">Gym Exercises</h4>
+                <div className="p-3 bg-muted/50 rounded-md">
+                  <div className="space-y-2">
+                    {selectedSession.gymData.map((exercise: string, index: number) => (
+                      <div key={index} className="flex items-start gap-2">
+                        <div className="text-primary font-mono text-xs mt-0.5">
+                          {(index + 1).toString().padStart(2, '0')}
+                        </div>
+                        <p className="text-sm flex-1">{exercise}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
           
           <DrawerFooter>
