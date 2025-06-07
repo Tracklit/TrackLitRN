@@ -213,13 +213,9 @@ export async function fetchGymData(sheetId: string, gymNumber: number): Promise<
       
       const row = gymRows[i];
       
-      // If we know the header column, prioritize that column but also check adjacent columns
-      const columnsToCheck = gymHeaderColumn !== -1 ? 
-        [gymHeaderColumn, gymHeaderColumn - 1, gymHeaderColumn + 1].filter(col => col >= 0 && col < row.length) :
-        Array.from({length: row.length}, (_, i) => i);
-      
-      for (const j of columnsToCheck) {
-        const cell = row[j];
+      // Only extract from the exact column where the gym header was found
+      if (gymHeaderColumn !== -1) {
+        const cell = row[gymHeaderColumn];
         if (cell && cell.trim() !== '' && cell !== '""') {
           const cleanCell = cell.trim().replace(/^"|"$/g, ''); // Remove surrounding quotes
           
@@ -235,34 +231,32 @@ export async function fetchGymData(sheetId: string, gymNumber: number): Promise<
           if (!isDate && !isGymRef && !isTooShort && !isEmpty) {
             if (!gymExercises.includes(cleanCell)) {
               gymExercises.push(cleanCell);
-              console.log(`Added exercise from column ${j}: "${cleanCell}"`);
+              console.log(`Added exercise from column ${gymHeaderColumn}: "${cleanCell}"`);
             }
           }
-        }
-        
-        // Stop at the first empty cell in the primary column to avoid grabbing irrelevant data
-        if (gymHeaderColumn !== -1 && j === gymHeaderColumn && (!cell || cell.trim() === '' || cell === '""')) {
-          console.log(`Hit empty cell in primary column ${j} at row ${i}, stopping extraction`);
+        } else {
+          // Hit empty cell in the gym column, stop extraction
+          console.log(`Hit empty cell in gym column ${gymHeaderColumn} at row ${i}, stopping extraction`);
           break;
         }
-      }
-      
-      // If we're in the primary column and hit multiple empty rows, stop
-      if (gymHeaderColumn !== -1) {
-        const primaryCell = row[gymHeaderColumn];
-        if (!primaryCell || primaryCell.trim() === '' || primaryCell === '""') {
-          // Check if the next few rows are also empty in this column
-          let emptyCount = 0;
-          for (let nextRow = i + 1; nextRow < Math.min(i + 3, endIndex); nextRow++) {
-            if (nextRow >= gymRows.length) break;
-            const nextCell = gymRows[nextRow][gymHeaderColumn];
-            if (!nextCell || nextCell.trim() === '' || nextCell === '""') {
-              emptyCount++;
+      } else {
+        // Fallback: check all columns if header column not found
+        for (let j = 0; j < row.length; j++) {
+          const cell = row[j];
+          if (cell && cell.trim() !== '' && cell !== '""') {
+            const cleanCell = cell.trim().replace(/^"|"$/g, '');
+            
+            const isDate = /^\w{3}\s?\d{1,2}$|^\d{1,2}[\/-]\d{1,2}|^\w{3}[\s-]\d{1,2}/.test(cleanCell);
+            const isGymRef = containsGymReference(cleanCell).hasGym;
+            const isTooShort = cleanCell.length < 4;
+            const isEmpty = cleanCell === '' || cleanCell === '""' || cleanCell === '"';
+            
+            if (!isDate && !isGymRef && !isTooShort && !isEmpty) {
+              if (!gymExercises.includes(cleanCell)) {
+                gymExercises.push(cleanCell);
+                console.log(`Added exercise from column ${j}: "${cleanCell}"`);
+              }
             }
-          }
-          if (emptyCount >= 2) {
-            console.log(`Found ${emptyCount + 1} consecutive empty cells in primary column, ending extraction`);
-            break;
           }
         }
       }
