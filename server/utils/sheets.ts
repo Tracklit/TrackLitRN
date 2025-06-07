@@ -142,11 +142,15 @@ export async function fetchGymData(sheetId: string, gymNumber: number): Promise<
       }
     }
     
-    // Only proceed if we found the dedicated Gym tab
-    // Do not fall back to other tabs to ensure data integrity
-    
+    // If no dedicated Gym tab found, fall back to main calendar tab
     if (!gymRows || gymRows.length === 0) {
-      throw new Error(`No dedicated "Gym" tab found in spreadsheet. Please create a tab named "Gym" containing the gym exercises. Available tabs: ${availableSheets.join(', ')}`);
+      console.log("No dedicated Gym tab found, falling back to main calendar tab");
+      try {
+        gymRows = await fetchPublicSheet(sheetId); // Fetch main tab without GID
+        console.log(`Successfully fetched main calendar tab with ${gymRows.length} rows`);
+      } catch (e) {
+        throw new Error(`No gym data found. Could not access main calendar tab or dedicated "Gym" tab. Available tabs: ${availableSheets.join(', ')}`);
+      }
     }
     
     // Debug: Log first few rows to understand structure
