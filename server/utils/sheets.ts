@@ -59,8 +59,13 @@ function parseCSV(csv: string): string[][] {
 }
 
 // Simple wrapper to directly fetch a public Google Sheet
-async function fetchPublicSheet(sheetId: string) {
-  const response = await fetch(`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`);
+async function fetchPublicSheet(sheetId: string, gid?: string) {
+  let url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
+  if (gid) {
+    url += `&gid=${gid}`;
+  }
+  
+  const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`Failed to fetch sheet data: ${response.statusText}`);
   }
@@ -74,6 +79,91 @@ async function fetchPublicSheet(sheetId: string) {
   }
   
   return rows;
+}
+
+// Function to detect "Gym X" references in workout data
+function containsGymReference(text: string): { hasGym: boolean; gymNumber: number | null } {
+  if (!text) return { hasGym: false, gymNumber: null };
+  
+  const gymMatch = text.match(/Gym\s+(\d+)/i);
+  if (gymMatch && gymMatch[1]) {
+    return { hasGym: true, gymNumber: parseInt(gymMatch[1], 10) };
+  }
+  
+  return { hasGym: false, gymNumber: null };
+}
+
+// Function to fetch gym data from the "Gym" tab
+async function fetchGymData(sheetId: string, gymNumber: number): Promise<string[]> {
+  try {
+    // First, try to get the sheet tabs to find the "Gym" tab GID
+    let gymTabGid: string | null = null;
+    
+    try {
+      // Try to fetch sheet metadata to get tab IDs
+      const metaUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}?fields=sheets.properties&key=${process.env.GOOGLE_API_KEY}`;
+      const metaResponse = await fetch(metaUrl);
+      
+      if (metaResponse.ok) {
+        const metaData = await metaResponse.json();
+        const gymSheet = metaData.sheets?.find((sheet: any) => 
+          sheet.properties?.title?.toLowerCase() === 'gym'
+        );
+        if (gymSheet) {
+          gymTabGid = gymSheet.properties.sheetId.toString();
+        }
+      }
+    } catch (e) {
+      console.warn("Could not fetch sheet metadata, trying default Gym tab access");
+    }
+    
+    // Fetch the Gym tab data
+    const gymRows = await fetchPublicSheet(sheetId, gymTabGid || undefined);
+    
+    if (!gymRows || gymRows.length === 0) {
+      throw new Error("No gym data found");
+    }
+    
+    // Find the start and end positions for the requested gym number
+    let startIndex = -1;
+    let endIndex = gymRows.length;
+    
+    // Look for "Gym X" headers in the first column
+    for (let i = 0; i < gymRows.length; i++) {
+      const cellValue = gymRows[i][0] || '';
+      const gymRef = containsGymReference(cellValue);
+      
+      if (gymRef.hasGym && gymRef.gymNumber === gymNumber) {
+        startIndex = i + 1; // Start from the row after the header
+      } else if (gymRef.hasGym && gymRef.gymNumber !== gymNumber && startIndex !== -1) {
+        endIndex = i; // End at the next gym header
+        break;
+      }
+    }
+    
+    if (startIndex === -1) {
+      throw new Error(`Gym ${gymNumber} not found in the Gym tab`);
+    }
+    
+    // Extract the gym exercises (excluding empty rows)
+    const gymExercises: string[] = [];
+    for (let i = startIndex; i < endIndex; i++) {
+      if (i >= gymRows.length) break;
+      
+      const row = gymRows[i];
+      // Take the first non-empty cell as the exercise description
+      const exercise = row.find(cell => cell && cell.trim() !== '');
+      if (exercise && exercise.trim() !== '') {
+        gymExercises.push(exercise.trim());
+      }
+    }
+    
+    return gymExercises;
+    
+  } catch (error) {
+    console.error(`Error fetching gym ${gymNumber} data:`, error);
+    return [];
+  }
 }
 
 export async function fetchSpreadsheetData(sheetId: string) {
@@ -118,7 +208,7 @@ export async function fetchSpreadsheetData(sheetId: string) {
       }
       
       // Map spreadsheet data to our program session format
-      const sessions = dataRows.map((row, index) => {
+      const sessions = await Promise.all(dataRows.map(async (row, index) => {
         // Extract values from correct columns with strict column mapping
         // Column A: Date
         // Column B: Pre-Activation 1
@@ -178,6 +268,27 @@ export async function fetchSpreadsheetData(sheetId: string) {
           [preActivation1, preActivation2, shortDistanceWorkout, mediumDistanceWorkout, longDistanceWorkout, extraSession]
           .map(val => val.replace(/^"|"$/g, ''));
         
+        // Check for Gym references in all workout fields and fetch gym data if found
+        let gymData: string[] = [];
+        const workoutFields = [shortDistanceWorkout, mediumDistanceWorkout, longDistanceWorkout, extraSession];
+        
+        for (const field of workoutFields) {
+          const gymRef = containsGymReference(field);
+          if (gymRef.hasGym && gymRef.gymNumber) {
+            console.log(`Found Gym ${gymRef.gymNumber} reference in: ${field}`);
+            try {
+              const exercises = await fetchGymData(sheetId, gymRef.gymNumber);
+              if (exercises.length > 0) {
+                gymData = exercises;
+                console.log(`Fetched ${exercises.length} exercises for Gym ${gymRef.gymNumber}`);
+              }
+            } catch (error) {
+              console.error(`Failed to fetch Gym ${gymRef.gymNumber} data:`, error);
+            }
+            break; // Only process the first gym reference found
+          }
+        }
+        
         // Keep the original date value from Column A for display
         let formattedDate = dateValue;
         
@@ -200,11 +311,12 @@ export async function fetchSpreadsheetData(sheetId: string) {
           mediumDistanceWorkout,
           longDistanceWorkout,
           extraSession,
+          gymData, // Add gym exercises data
           isRestDay,
           title: `Day ${index + 1} Training`,
           description: isRestDay ? 'Rest and Recovery' : 'Training Session',
         };
-      });
+      }));
       
       return {
         title: sheetTitle || `Training Program (Sheet ID: ${sheetId})`,
