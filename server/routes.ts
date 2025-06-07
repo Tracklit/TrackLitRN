@@ -18,6 +18,84 @@ import { GoogleSpreadsheet } from "google-spreadsheet";
 import { notificationSystem } from "./notification-system";
 import { insertAthleteProfileSchema } from "@shared/athlete-profile-schema";
 import { worldAthleticsService } from "./world-athletics";
+
+// Background processing function for gym data
+async function processGymDataInBackground(programId: number, googleSheetId: string, sessions: any[]) {
+  console.log(`Starting background gym data processing for program ${programId}`);
+  
+  try {
+    const sheetsUtils = await import('./utils/sheets');
+    const { containsGymReference, fetchGymData } = sheetsUtils;
+    
+    // Cache for gym data to avoid repeated fetches
+    const gymDataCache: { [key: number]: string[] } = {};
+    let processedCount = 0;
+    
+    // Process sessions that need gym data
+    for (const session of sessions) {
+      // Skip if session already has gym data
+      if (session.gymData && session.gymData.length > 0) {
+        continue;
+      }
+      
+      let gymData: string[] = [];
+      const workoutFields = [
+        session.shortDistanceWorkout,
+        session.mediumDistanceWorkout, 
+        session.longDistanceWorkout,
+        session.preActivation1,
+        session.preActivation2,
+        session.extraSession
+      ];
+      
+      for (const field of workoutFields) {
+        if (field) {
+          const gymCheck = containsGymReference(field);
+          if (gymCheck.hasGym && gymCheck.gymNumber) {
+            // Check cache first
+            if (gymDataCache[gymCheck.gymNumber]) {
+              const cachedExercises = gymDataCache[gymCheck.gymNumber];
+              for (const exercise of cachedExercises) {
+                if (!gymData.includes(exercise)) {
+                  gymData.push(exercise);
+                }
+              }
+            } else {
+              try {
+                const exercises = await fetchGymData(googleSheetId, gymCheck.gymNumber);
+                if (exercises.length > 0) {
+                  gymDataCache[gymCheck.gymNumber] = exercises;
+                  for (const exercise of exercises) {
+                    if (!gymData.includes(exercise)) {
+                      gymData.push(exercise);
+                    }
+                  }
+                }
+              } catch (error) {
+                console.error(`Background: Error fetching gym ${gymCheck.gymNumber}:`, error);
+              }
+            }
+          }
+        }
+      }
+      
+      // Update session in database if gym data found
+      if (gymData.length > 0) {
+        try {
+          await dbStorage.updateProgramSession(session.id, { gymData });
+          processedCount++;
+          console.log(`Background: Updated session ${session.dayNumber} with ${gymData.length} gym exercises`);
+        } catch (error) {
+          console.error(`Background: Error updating session ${session.id}:`, error);
+        }
+      }
+    }
+    
+    console.log(`Background gym data processing completed for program ${programId}. Updated ${processedCount} sessions.`);
+  } catch (error) {
+    console.error(`Background gym data processing failed for program ${programId}:`, error);
+  }
+}
 import { 
   competitionsTable, 
   competitionEventsTable, 
@@ -3621,62 +3699,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get program sessions
       let sessions = await dbStorage.getProgramSessions(programId);
       
-      // Process gym data for sessions if this is a Google Sheet program
-      if (program.importedFromSheet && program.googleSheetId && sessions.length > 0) {
-        console.log(`Processing gym data for ${sessions.length} sessions in program ${programId}`);
-        
-        try {
-          // Import gym data detection utilities
-          const sheetsUtils = await import('./utils/sheets');
-          const { containsGymReference, fetchGymData } = sheetsUtils;
-          
-          // Process each session to populate gym data
-          for (let i = 0; i < sessions.length; i++) {
-            const session = sessions[i];
-            let gymData: string[] = [];
-            
-            // Check all workout fields for gym references
-            const workoutFields = [
-              session.shortDistanceWorkout,
-              session.mediumDistanceWorkout, 
-              session.longDistanceWorkout,
-              session.preActivation1,
-              session.preActivation2,
-              session.extraSession
-            ];
-            
-            for (const field of workoutFields) {
-              if (field) {
-                const gymCheck = containsGymReference(field);
-                if (gymCheck.hasGym) {
-                  console.log(`Found gym reference ${gymCheck.gymNumber} in session ${session.dayNumber}`);
-                  try {
-                    const exercises = await fetchGymData(program.googleSheetId, gymCheck.gymNumber);
-                    if (exercises.length > 0) {
-                      // Merge exercises, avoiding duplicates
-                      for (const exercise of exercises) {
-                        if (!gymData.includes(exercise)) {
-                          gymData.push(exercise);
-                        }
-                      }
-                    }
-                  } catch (error) {
-                    console.error(`Error fetching gym ${gymCheck.gymNumber} exercises:`, error);
-                  }
-                }
-              }
-            }
-            
-            // Update session with gym data
-            if (gymData.length > 0) {
-              sessions[i] = { ...session, gymData };
-              console.log(`Added ${gymData.length} gym exercises to session ${session.dayNumber}`);
-            }
-          }
-        } catch (error) {
-          console.error("Error processing gym data:", error);
-        }
-      }
+      // Return sessions immediately without blocking on gym data processing
       
       // If we have no sessions but this is an imported Google Sheet, generate mock data
       if (sessions.length === 0 && program.importedFromSheet) {
