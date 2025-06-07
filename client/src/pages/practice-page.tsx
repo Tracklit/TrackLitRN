@@ -486,7 +486,10 @@ function PracticePage() {
                               )}
                               
                               {/* Gym Exercises Error State - when Gym tab is missing */}
-                              {!isLoadingGymData && !gymDataResponse?.gymData?.length && hasGymReference && (
+                              {!isLoadingGymData && !gymDataResponse?.gymData?.length && 
+                               (activeSessionData?.shortDistanceWorkout?.toLowerCase().includes('gym') ||
+                                activeSessionData?.mediumDistanceWorkout?.toLowerCase().includes('gym') ||
+                                activeSessionData?.longDistanceWorkout?.toLowerCase().includes('gym')) && (
                                 <div className="p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded border border-yellow-200 dark:border-yellow-800">
                                   <div className="flex items-start">
                                     <div className="bg-yellow-100 dark:bg-yellow-900/50 p-1.5 rounded-full mr-3 mt-0.5">
