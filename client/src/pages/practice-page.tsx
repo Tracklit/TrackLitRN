@@ -79,16 +79,8 @@ function PracticePage() {
   const currentProgramId = selectedProgram?.programId || null;
   const currentDayNumber = activeSessionData?.dayNumber || null;
   
-  // Debug logging for gym data request
-  console.log('Current session data:', activeSessionData);
-  console.log('Program ID:', currentProgramId, 'Day Number:', currentDayNumber);
-  
   // Fetch gym exercises for the current session
   const { data: gymDataResponse, isLoading: isLoadingGymData } = useGymData(currentProgramId, currentDayNumber);
-  
-  // Debug logging for gym data response
-  console.log('Gym data response:', gymDataResponse);
-  console.log('Is loading gym data:', isLoadingGymData);
 
   // Fetch meets to show on workout day
   const { data: meets = [] } = useQuery<Meet[]>({
