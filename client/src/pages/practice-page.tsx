@@ -75,15 +75,16 @@ function PracticePage() {
     isLoading: isLoadingProgramSessions 
   } = useProgramSessions(selectedProgram?.programId || null);
 
-  // Get current session ID for gym data fetching
-  const currentSessionId = activeSessionData?.programSessionId || activeSessionData?.id || null;
+  // Get program ID and day number for gym data fetching
+  const currentProgramId = selectedProgram?.programId || null;
+  const currentDayNumber = activeSessionData?.dayNumber || null;
   
-  // Debug logging for session ID
+  // Debug logging for gym data request
   console.log('Current session data:', activeSessionData);
-  console.log('Current session ID for gym data:', currentSessionId);
+  console.log('Program ID:', currentProgramId, 'Day Number:', currentDayNumber);
   
   // Fetch gym exercises for the current session
-  const { data: gymDataResponse, isLoading: isLoadingGymData } = useGymData(currentSessionId);
+  const { data: gymDataResponse, isLoading: isLoadingGymData } = useGymData(currentProgramId, currentDayNumber);
   
   // Debug logging for gym data response
   console.log('Gym data response:', gymDataResponse);
@@ -453,7 +454,7 @@ function PracticePage() {
                               )}
                               
                               {/* Gym Exercises Section - Dynamic Loading */}
-                              {isLoadingGymData && currentSessionId && (
+                              {isLoadingGymData && currentProgramId && currentDayNumber && (
                                 <div className="p-2 bg-background/50 rounded border border-border/50">
                                   <div className="flex items-start">
                                     <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">

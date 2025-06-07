@@ -4,19 +4,19 @@ interface GymDataResponse {
   gymData: string[];
 }
 
-export function useGymData(sessionId: number | null) {
+export function useGymData(programId: number | null, dayNumber: number | null) {
   return useQuery<GymDataResponse>({
-    queryKey: ['/api/sessions', sessionId, 'gym-data'],
+    queryKey: ['/api/programs', programId, 'days', dayNumber, 'gym-data'],
     queryFn: async () => {
-      if (!sessionId) return { gymData: [] };
+      if (!programId || !dayNumber) return { gymData: [] };
       
-      const response = await fetch(`/api/sessions/${sessionId}/gym-data`);
+      const response = await fetch(`/api/programs/${programId}/days/${dayNumber}/gym-data`);
       if (!response.ok) {
         throw new Error('Failed to fetch gym data');
       }
       return response.json();
     },
-    enabled: !!sessionId,
+    enabled: !!(programId && dayNumber),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
   });

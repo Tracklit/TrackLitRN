@@ -4227,6 +4227,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Gym data endpoint using program and day number for frontend compatibility
+  app.get('/api/programs/:programId/days/:dayNumber/gym-data', async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const programId = parseInt(req.params.programId);
+      const dayNumber = parseInt(req.params.dayNumber);
+      
+      if (!programId || !dayNumber) {
+        return res.status(400).json({ error: "Invalid program ID or day number" });
+      }
+
+      // Get the program to access the Google Sheet
+      const program = await dbStorage.getProgram(programId);
+      if (!program || !program.googleSheetId) {
+        return res.json({ gymData: [] });
+      }
+
+      // Get all sessions for this program to find the one with matching day number
+      const allSessions = await dbStorage.getProgramSessions(programId);
+      const session = allSessions.find(s => s.dayNumber === dayNumber);
+      
+      if (!session) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+
+      // Check session fields for gym references
+      const sheetsUtils = await import('./utils/sheets');
+      const { containsGymReference, fetchGymData } = sheetsUtils;
+      
+      let gymData: string[] = [];
+      const workoutFields = [
+        session.shortDistanceWorkout,
+        session.mediumDistanceWorkout, 
+        session.longDistanceWorkout,
+        session.preActivation1,
+        session.preActivation2,
+        session.extraSession
+      ];
+
+      for (const field of workoutFields) {
+        if (field) {
+          const gymCheck = containsGymReference(field);
+          if (gymCheck.hasGym && gymCheck.gymNumber) {
+            try {
+              const exercises = await fetchGymData(program.googleSheetId, gymCheck.gymNumber);
+              for (const exercise of exercises) {
+                if (!gymData.includes(exercise)) {
+                  gymData.push(exercise);
+                }
+              }
+              console.log(`Found ${exercises.length} exercises for Gym ${gymCheck.gymNumber} in day ${dayNumber}`);
+            } catch (error) {
+              console.error(`Error fetching gym ${gymCheck.gymNumber}:`, error);
+            }
+          }
+        }
+      }
+
+      res.json({ gymData });
+    } catch (error) {
+      console.error("Error fetching gym data:", error);
+      res.status(500).json({ error: "Failed to fetch gym data" });
+    }
+  });
+
   // 5. Delete a program
   app.delete("/api/programs/:id", async (req: Request, res: Response) => {
     try {
