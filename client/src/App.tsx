@@ -1,3 +1,4 @@
+import React from "react";
 import { Switch, Route } from "wouter";
 import { useState, useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
