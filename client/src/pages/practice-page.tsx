@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "@/hooks/use-toast";
 import { useAssignedPrograms } from "@/hooks/use-assigned-programs";
 import { useProgramSessions } from "@/hooks/use-program-sessions";
+import { useGymData } from "@/hooks/use-gym-data";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Meet } from "@shared/schema";
@@ -73,6 +74,20 @@ function PracticePage() {
     programSessions, 
     isLoading: isLoadingProgramSessions 
   } = useProgramSessions(selectedProgram?.programId || null);
+
+  // Get current session ID for gym data fetching
+  const currentSessionId = activeSessionData?.programSessionId || activeSessionData?.id || null;
+  
+  // Debug logging for session ID
+  console.log('Current session data:', activeSessionData);
+  console.log('Current session ID for gym data:', currentSessionId);
+  
+  // Fetch gym exercises for the current session
+  const { data: gymDataResponse, isLoading: isLoadingGymData } = useGymData(currentSessionId);
+  
+  // Debug logging for gym data response
+  console.log('Gym data response:', gymDataResponse);
+  console.log('Is loading gym data:', isLoadingGymData);
 
   // Fetch meets to show on workout day
   const { data: meets = [] } = useQuery<Meet[]>({
@@ -437,8 +452,24 @@ function PracticePage() {
                                 </div>
                               )}
                               
-                              {/* Gym Exercises Section */}
-                              {activeSessionData.gymData && activeSessionData.gymData.length > 0 && (
+                              {/* Gym Exercises Section - Dynamic Loading */}
+                              {isLoadingGymData && currentSessionId && (
+                                <div className="p-2 bg-background/50 rounded border border-border/50">
+                                  <div className="flex items-start">
+                                    <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
+                                      <Dumbbell className="h-4 w-4 text-primary" />
+                                    </div>
+                                    <div className="flex-1">
+                                      <p className="font-medium text-sm">Loading Gym Exercises...</p>
+                                      <div className="mt-2">
+                                        <div className="animate-pulse h-4 bg-muted rounded w-3/4"></div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {gymDataResponse?.gymData && gymDataResponse.gymData.length > 0 && (
                                 <div className="p-2 bg-background/50 rounded border border-border/50">
                                   <div className="flex items-start">
                                     <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
@@ -447,7 +478,7 @@ function PracticePage() {
                                     <div className="flex-1">
                                       <p className="font-medium text-sm">Gym Exercises</p>
                                       <div className="space-y-1 mt-2">
-                                        {activeSessionData.gymData.map((exercise: string, index: number) => (
+                                        {gymDataResponse.gymData.map((exercise: string, index: number) => (
                                           <div key={index} className="flex items-start gap-2 text-sm">
                                             <span className="text-primary font-mono text-xs mt-0.5 min-w-[20px]">
                                               {(index + 1).toString().padStart(2, '0')}
