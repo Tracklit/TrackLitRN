@@ -98,47 +98,36 @@ export async function fetchGymData(sheetId: string, gymNumber: number): Promise<
   try {
     console.log(`Attempting to fetch Gym ${gymNumber} data from sheet ${sheetId}`);
     
-    // First, try to get the sheet tabs to find the "Gym" tab GID
+    // Try direct access to "Gym" tab by name since metadata detection may fail
     let gymTabGid: string | null = null;
     let availableSheets: string[] = [];
     
-    try {
-      // Try to fetch sheet metadata to get tab IDs
-      const metaUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}?fields=sheets.properties&key=${process.env.GOOGLE_API_KEY}`;
-      const metaResponse = await fetch(metaUrl);
-      
-      if (metaResponse.ok) {
-        const metaData = await metaResponse.json();
-        if (metaData.sheets) {
-          availableSheets = metaData.sheets.map((sheet: any) => sheet.properties?.title || 'Untitled');
-          console.log(`Available sheet tabs: ${availableSheets.join(', ')}`);
-          
-          const gymSheet = metaData.sheets.find((sheet: any) => {
-            const title = sheet.properties?.title?.toLowerCase();
-            return title === 'gym' || title === 'gyms' || title === 'gym exercises';
-          });
-          if (gymSheet) {
-            gymTabGid = gymSheet.properties.sheetId.toString();
-            console.log(`Found Gym tab with GID: ${gymTabGid}, title: ${gymSheet.properties.title}`);
-          } else {
-            console.log("No sheet tab containing 'gym' found");
-          }
-        }
-      }
-    } catch (e) {
-      console.warn("Could not fetch sheet metadata, trying default Gym tab access:", (e as Error).message);
-    }
+    console.log("Attempting direct access to Gym tab by name...");
     
     // Try multiple approaches to fetch gym data
     let gymRows: string[][] | null = null;
     
-    // First try with the found GID
-    if (gymTabGid) {
+    // Try direct access to common gym tab names
+    const gymTabNames = ['Gym', 'GYM', 'gym', 'Gyms', 'GYMS', 'gyms', 'Gym Exercises', 'GYM EXERCISES', 'gym exercises'];
+    
+    for (const tabName of gymTabNames) {
       try {
-        gymRows = await fetchPublicSheet(sheetId, gymTabGid);
-        console.log(`Successfully fetched Gym tab data with ${gymRows.length} rows`);
+        console.log(`Trying to access tab named: "${tabName}"`);
+        
+        // Try CSV export URL with tab name
+        const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tabName)}`;
+        const response = await fetch(csvUrl);
+        
+        if (response.ok) {
+          const csvData = await response.text();
+          if (csvData && csvData.trim()) {
+            gymRows = parseCSV(csvData);
+            console.log(`Successfully fetched Gym tab "${tabName}" with ${gymRows.length} rows`);
+            break;
+          }
+        }
       } catch (e) {
-        console.warn(`Failed to fetch with GID ${gymTabGid}:`, (e as Error).message);
+        console.log(`Failed to access tab "${tabName}":`, (e as Error).message);
       }
     }
     
