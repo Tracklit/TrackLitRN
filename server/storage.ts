@@ -251,6 +251,7 @@ export interface IStorage {
   deleteProgram(id: number): Promise<boolean>;
   
   // Program sessions
+  getProgramSession(id: number): Promise<ProgramSession | undefined>;
   getProgramSessions(programId: number): Promise<ProgramSession[]>;
   createProgramSession(session: InsertProgramSession): Promise<ProgramSession>;
   updateProgramSession(id: number, data: Partial<ProgramSession>): Promise<ProgramSession | undefined>;
@@ -1928,6 +1929,15 @@ export class DatabaseStorage implements IStorage {
   }
   
   // Program Sessions Methods
+  async getProgramSession(id: number): Promise<ProgramSession | undefined> {
+    const [session] = await db
+      .select()
+      .from(programSessions)
+      .where(eq(programSessions.id, id));
+    
+    return session;
+  }
+
   async getProgramSessions(programId: number): Promise<ProgramSession[]> {
     const sessions = await db
       .select()

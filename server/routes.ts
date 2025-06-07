@@ -3667,6 +3667,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // 2. Get program by id
+  // Get gym exercises for a specific session
+  app.get("/api/sessions/:sessionId/gym-data", async (req: Request, res: Response) => {
+    try {
+      const sessionId = parseInt(req.params.sessionId);
+      if (isNaN(sessionId)) {
+        return res.status(400).json({ error: "Invalid session ID" });
+      }
+
+      const session = await dbStorage.getProgramSession(sessionId);
+      if (!session) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+
+      // If session already has gym data, return it
+      if (session.gymData && session.gymData.length > 0) {
+        return res.json({ gymData: session.gymData });
+      }
+
+      // Get the program to check if it's from Google Sheets
+      const program = await dbStorage.getProgram(session.programId);
+      if (!program || !program.importedFromSheet || !program.googleSheetId) {
+        return res.json({ gymData: [] });
+      }
+
+      // Check session fields for gym references
+      const sheetsUtils = await import('./utils/sheets');
+      const { containsGymReference, fetchGymData } = sheetsUtils;
+      
+      let gymData: string[] = [];
+      const workoutFields = [
+        session.shortDistanceWorkout,
+        session.mediumDistanceWorkout, 
+        session.longDistanceWorkout,
+        session.preActivation1,
+        session.preActivation2,
+        session.extraSession
+      ];
+
+      for (const field of workoutFields) {
+        if (field) {
+          const gymCheck = containsGymReference(field);
+          if (gymCheck.hasGym && gymCheck.gymNumber) {
+            try {
+              const exercises = await fetchGymData(program.googleSheetId, gymCheck.gymNumber);
+              for (const exercise of exercises) {
+                if (!gymData.includes(exercise)) {
+                  gymData.push(exercise);
+                }
+              }
+            } catch (error) {
+              console.error(`Error fetching gym ${gymCheck.gymNumber}:`, error);
+            }
+          }
+        }
+      }
+
+      // Update session with gym data if found
+      if (gymData.length > 0) {
+        await dbStorage.updateProgramSession(sessionId, { gymData });
+        console.log(`Updated session ${sessionId} with ${gymData.length} gym exercises`);
+      }
+
+      res.json({ gymData });
+    } catch (error) {
+      console.error("Error fetching gym data:", error);
+      res.status(500).json({ error: "Failed to fetch gym data" });
+    }
+  });
+
   app.get("/api/programs/:id", async (req: Request, res: Response) => {
     try {
       if (!req.isAuthenticated()) {
