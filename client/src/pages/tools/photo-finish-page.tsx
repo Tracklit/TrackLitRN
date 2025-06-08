@@ -68,6 +68,7 @@ export default function PhotoFinishPage() {
   const [showVideoLibrary, setShowVideoLibrary] = useState(false);
   const [fullscreenMode, setFullscreenMode] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [loadingVideo, setLoadingVideo] = useState(false);
   
   // Video poster/thumbnail state
   const [videoPoster, setVideoPoster] = useState<string>("");
@@ -675,7 +676,7 @@ export default function PhotoFinishPage() {
       const x = (timer.x / 100) * canvas.width;
       const y = (timer.y / 100) * canvas.height;
 
-      // Keep font size but make timer larger with more padding
+      // Keep font size but make timer 30% bigger overall
       const fontSize = 28; // Fixed size for better consistency
       
       // Draw timer with improved styling - proper aspect ratio font
@@ -688,12 +689,11 @@ export default function PhotoFinishPage() {
       const textWidth = metrics.width;
       const textHeight = fontSize * 0.7; // Proper text height ratio
       
-      // Larger timer with more padding
-      const paddingX = 28;
-      const paddingY = 22;
-      const bgWidth = textWidth + (paddingX * 2);
-      const bgHeight = textHeight + (paddingY * 2);
-      const cornerRadius = 3;
+      // 30% bigger timer with equal padding on all sides
+      const padding = 30; // Equal padding for all sides
+      const bgWidth = textWidth + (padding * 2);
+      const bgHeight = textHeight + (padding * 2);
+      const cornerRadius = 5;
       
       // Draw rounded background with better opacity
       ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';

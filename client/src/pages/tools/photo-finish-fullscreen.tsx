@@ -134,7 +134,7 @@ export default function PhotoFinishFullscreen({
         const posX = (timer.x / 100) * canvas.width;
         const posY = (timer.y / 100) * canvas.height;
         
-        // Keep consistent font size, make timer larger with more padding
+        // Keep consistent font size, make timer 30% bigger overall
         const fontSize = 32; // Fixed size for fullscreen mode
         
         // Setup font with proper aspect ratio
@@ -147,12 +147,11 @@ export default function PhotoFinishFullscreen({
         const textWidth = metrics.width;
         const textHeight = fontSize * 0.7; // Proper text height ratio
         
-        // Larger timer with more padding
-        const paddingX = 32;
-        const paddingY = 24;
-        const bgWidth = textWidth + (paddingX * 2);
-        const bgHeight = textHeight + (paddingY * 2);
-        const cornerRadius = 3;
+        // 30% bigger timer with equal padding on all sides
+        const padding = 34; // Equal padding for all sides
+        const bgWidth = textWidth + (padding * 2);
+        const bgHeight = textHeight + (padding * 2);
+        const cornerRadius = 5;
         
         // Draw rounded background with better opacity
         ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
