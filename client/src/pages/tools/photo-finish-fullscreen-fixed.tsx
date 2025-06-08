@@ -68,10 +68,12 @@ export default function PhotoFinishFullscreen({
   // Save video mutation
   const saveVideoMutation = useMutation({
     mutationFn: async (data: { title: string; timers: RaceTimer[] }) => {
-      return apiRequest('/api/photo-finish-videos', {
+      const response = await fetch('/api/photo-finish-videos', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/photo-finish-videos'] });

@@ -582,7 +582,7 @@ export default function PhotoFinishFullscreen({
           src={videoUrl || ''}
           className="w-full h-full object-contain"
           style={{
-            transform: `scale(${videoScale}) translate(${videoPosition.x}px, ${videoPosition.y}px)`,
+            transform: `scale(${videoScale}) translate(${videoTranslate.x}px, ${videoTranslate.y}px)`,
           }}
           onLoadedMetadata={handleVideoLoad}
           onTimeUpdate={() => {
