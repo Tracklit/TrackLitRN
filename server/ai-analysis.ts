@@ -88,14 +88,14 @@ export class SprinthiaAnalysisService {
 
     if (!usage.length) {
       // Create new usage record
-      await db.insert(aiPromptUsage).values({
+      const newUsage = await db.insert(aiPromptUsage).values({
         userId,
         weekStart,
         monthStart,
         promptsUsedThisWeek: 0,
         promptsUsedThisMonth: 0,
-      });
-      usage = [{ promptsUsedThisWeek: 0, promptsUsedThisMonth: 0 }];
+      }).returning();
+      usage = newUsage;
     }
 
     const currentUsage = usage[0];
@@ -112,22 +112,26 @@ export class SprinthiaAnalysisService {
         };
       
       case 'pro':
-        const canUsePro = currentUsage.promptsUsedThisWeek < AI_ANALYSIS_CONFIG.PRO_TIER_WEEKLY_LIMIT;
+        const weeklyUsed = currentUsage.promptsUsedThisWeek || 0;
+        const canUsePro = weeklyUsed < AI_ANALYSIS_CONFIG.PRO_TIER_WEEKLY_LIMIT;
+        const userSpikes = userRecord.spikes || 0;
         return {
-          canUsePrompt: canUsePro || userRecord.spikes >= AI_ANALYSIS_CONFIG.COST_PER_PROMPT,
+          canUsePrompt: canUsePro || userSpikes >= AI_ANALYSIS_CONFIG.COST_PER_PROMPT,
           tier: 'pro',
-          remainingPrompts: Math.max(0, AI_ANALYSIS_CONFIG.PRO_TIER_WEEKLY_LIMIT - currentUsage.promptsUsedThisWeek),
+          remainingPrompts: Math.max(0, AI_ANALYSIS_CONFIG.PRO_TIER_WEEKLY_LIMIT - weeklyUsed),
           costSpikes: canUsePro ? 0 : AI_ANALYSIS_CONFIG.COST_PER_PROMPT,
           isFreeTier: canUsePro
         };
       
       case 'free':
       default:
-        const canUseFree = currentUsage.promptsUsedThisMonth < AI_ANALYSIS_CONFIG.FREE_TIER_MONTHLY_LIMIT;
+        const monthlyUsed = currentUsage.promptsUsedThisMonth || 0;
+        const canUseFree = monthlyUsed < AI_ANALYSIS_CONFIG.FREE_TIER_MONTHLY_LIMIT;
+        const userSpikesDefault = userRecord.spikes || 0;
         return {
-          canUsePrompt: canUseFree || userRecord.spikes >= AI_ANALYSIS_CONFIG.COST_PER_PROMPT,
+          canUsePrompt: canUseFree || userSpikesDefault >= AI_ANALYSIS_CONFIG.COST_PER_PROMPT,
           tier: 'free',
-          remainingPrompts: Math.max(0, AI_ANALYSIS_CONFIG.FREE_TIER_MONTHLY_LIMIT - currentUsage.promptsUsedThisMonth),
+          remainingPrompts: Math.max(0, AI_ANALYSIS_CONFIG.FREE_TIER_MONTHLY_LIMIT - monthlyUsed),
           costSpikes: canUseFree ? 0 : AI_ANALYSIS_CONFIG.COST_PER_PROMPT,
           isFreeTier: canUseFree
         };
@@ -266,7 +270,8 @@ export class SprinthiaAnalysisService {
     const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
     if (!user.length) throw new Error("User not found");
 
-    const newBalance = Math.max(0, user[0].spikes - amount);
+    const currentSpikes = user[0].spikes || 0;
+    const newBalance = Math.max(0, currentSpikes - amount);
     
     await db.update(users)
       .set({ spikes: newBalance })
@@ -288,18 +293,26 @@ export class SprinthiaAnalysisService {
     const weekStart = this.getWeekStart(now);
     const monthStart = this.getMonthStart(now);
 
-    // Update usage counters
-    await db.update(aiPromptUsage)
-      .set({
-        promptsUsedThisWeek: tier === 'pro' ? aiPromptUsage.promptsUsedThisWeek + 1 : aiPromptUsage.promptsUsedThisWeek,
-        promptsUsedThisMonth: tier === 'free' ? aiPromptUsage.promptsUsedThisMonth + 1 : aiPromptUsage.promptsUsedThisMonth,
-        lastUsedAt: now,
-      })
+    // Get current usage
+    const currentUsage = await db.select().from(aiPromptUsage)
       .where(and(
         eq(aiPromptUsage.userId, userId),
         eq(aiPromptUsage.weekStart, weekStart),
         eq(aiPromptUsage.monthStart, monthStart)
-      ));
+      ))
+      .limit(1);
+
+    if (currentUsage.length > 0) {
+      const usage = currentUsage[0];
+      // Update usage counters
+      await db.update(aiPromptUsage)
+        .set({
+          promptsUsedThisWeek: tier === 'pro' ? (usage.promptsUsedThisWeek || 0) + 1 : usage.promptsUsedThisWeek,
+          promptsUsedThisMonth: tier === 'free' ? (usage.promptsUsedThisMonth || 0) + 1 : usage.promptsUsedThisMonth,
+          lastUsedAt: now,
+        })
+        .where(eq(aiPromptUsage.id, usage.id));
+    }
   }
 
   private getWeekStart(date: Date): string {

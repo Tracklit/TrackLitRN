@@ -10,7 +10,9 @@ import {
   Upload,
   Timer,
   MapPin,
-  Trash2
+  Trash2,
+  Brain,
+  Sparkles
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
