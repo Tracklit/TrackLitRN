@@ -66,6 +66,7 @@ export default function PhotoFinishFullscreen({
   const [showVideoLibrary, setShowVideoLibrary] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [mode, setMode] = useState<'timer' | 'finishline' | null>(null);
+  const [showSprinthiaPanel, setShowSprinthiaPanel] = useState(false);
   
   // Analysis state
   const [timers, setTimers] = useState<RaceTimer[]>([]);
@@ -83,6 +84,17 @@ export default function PhotoFinishFullscreen({
     queryKey: ['/api/photo-finish-videos'],
     enabled: showVideoLibrary
   });
+
+  // Sprinthia AI queries
+  const { data: analysisTypes = [] } = useQuery({
+    queryKey: ['/api/sprinthia/analysis-types'],
+    enabled: showSprinthiaPanel
+  });
+
+  const { data: sprinthiaLimits } = useQuery({
+    queryKey: ['/api/sprinthia/limits'],
+    enabled: showSprinthiaPanel
+  });
   // Save video mutation
   const saveVideoMutation = useMutation({
     mutationFn: (data: { title: string; timers: RaceTimer[]; finishLines: FinishLine[] }) =>
@@ -93,6 +105,23 @@ export default function PhotoFinishFullscreen({
     },
     onError: () => {
       toast({ title: 'Failed to save video', variant: 'destructive' });
+    }
+  });
+
+  // Sprinthia AI analysis mutation
+  const analyzeMutation = useMutation({
+    mutationFn: (data: { videoName: string; analysisType: string; videoTimestamp?: number }) =>
+      apiRequest('POST', '/api/sprinthia/analyze', data),
+    onSuccess: (result) => {
+      toast({ title: 'Analysis complete!' });
+      queryClient.invalidateQueries({ queryKey: ['/api/sprinthia/limits'] });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: 'Analysis failed', 
+        description: error.message || 'Unable to analyze video',
+        variant: 'destructive' 
+      });
     }
   });
   // Format time display
@@ -640,6 +669,16 @@ export default function PhotoFinishFullscreen({
             <Trash2 className="w-4 h-4 mr-2" />
             Clear All
           </Button>
+
+          <Button
+            variant={showSprinthiaPanel ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setShowSprinthiaPanel(!showSprinthiaPanel)}
+            className="text-white hover:bg-white/20"
+          >
+            <Brain className="w-4 h-4 mr-2" />
+            Sprinthia AI
+          </Button>
         </div>
         {/* Scrubber and Controls */}
         <div className="flex items-center gap-4">
@@ -678,6 +717,122 @@ export default function PhotoFinishFullscreen({
           </div>
         </div>
       </div>
+
+      {/* Sprinthia AI Analysis Panel */}
+      {showSprinthiaPanel && (
+        <div className="fixed top-0 right-0 w-96 h-full bg-black/95 border-l border-gray-700 z-50 overflow-y-auto">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <Brain className="w-6 h-6 text-blue-400" />
+                <h2 className="text-xl font-bold text-white">Sprinthia AI</h2>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowSprinthiaPanel(false)}
+                className="text-white hover:bg-white/20"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            {/* User Limits Display */}
+            {sprinthiaLimits && (
+              <div className="mb-6 p-4 bg-gray-800 rounded-lg">
+                <div className="text-sm text-gray-300 mb-2">
+                  Tier: <span className="text-white capitalize">{sprinthiaLimits.tier}</span>
+                </div>
+                <div className="text-sm text-gray-300">
+                  Remaining: {
+                    sprinthiaLimits.remainingPrompts === 'unlimited' 
+                      ? 'Unlimited' 
+                      : `${sprinthiaLimits.remainingPrompts} prompts`
+                  }
+                </div>
+                {sprinthiaLimits.costSpikes > 0 && (
+                  <div className="text-sm text-yellow-400 mt-2">
+                    Next analysis: {sprinthiaLimits.costSpikes} Spikes
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Analysis Types */}
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold text-white mb-4">Choose Analysis Type</h3>
+              {analysisTypes.map((type: any) => (
+                <div key={type.type} className="bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h4 className="font-medium text-white mb-1">{type.title}</h4>
+                      <p className="text-sm text-gray-300 mb-3">{type.description}</p>
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          if (!currentVideo?.title) {
+                            toast({ 
+                              title: 'No video selected', 
+                              description: 'Please select a video first',
+                              variant: 'destructive' 
+                            });
+                            return;
+                          }
+                          
+                          analyzeMutation.mutate({
+                            videoName: currentVideo.title,
+                            analysisType: type.type,
+                            videoTimestamp: currentTime
+                          });
+                        }}
+                        disabled={analyzeMutation.isPending}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        {analyzeMutation.isPending ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            Analyzing...
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <Sparkles className="w-4 h-4" />
+                            Analyze
+                          </div>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Analysis Results */}
+            {analyzeMutation.data && (
+              <div className="mt-6 p-4 bg-green-900/20 border border-green-500/30 rounded-lg">
+                <h4 className="font-medium text-green-400 mb-2">Analysis Complete</h4>
+                <div className="text-sm text-gray-300 whitespace-pre-wrap">
+                  {analyzeMutation.data.analysis}
+                </div>
+                {analyzeMutation.data.costSpikes > 0 && (
+                  <div className="text-xs text-yellow-400 mt-2">
+                    Cost: {analyzeMutation.data.costSpikes} Spikes
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Error Display */}
+            {analyzeMutation.error && (
+              <div className="mt-6 p-4 bg-red-900/20 border border-red-500/30 rounded-lg">
+                <h4 className="font-medium text-red-400 mb-2">Analysis Failed</h4>
+                <div className="text-sm text-gray-300">
+                  {analyzeMutation.error.message || 'Unable to analyze video'}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
