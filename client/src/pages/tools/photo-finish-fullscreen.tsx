@@ -712,3 +712,10 @@ export default function PhotoFinishFullscreen({
     </div>
   );
 }
+
+// Helper function to format time
+function formatTime(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes}:${remainingSeconds.toFixed(2).padStart(5, '0')}`;
+}
