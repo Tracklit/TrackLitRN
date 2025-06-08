@@ -414,7 +414,7 @@ export default function PhotoFinishPage() {
       
       // Draw crisp white text
       ctx.fillStyle = '#FFFFFF';
-      ctx.fillText(text, x, y);
+      ctx.fillText(text, x - textWidth / 2, y + fontSize / 3);
     });
 
   }, [currentTime, timers]);
@@ -423,7 +423,6 @@ export default function PhotoFinishPage() {
   if (videoUrl) {
     return (
       <div className="fixed inset-0 bg-black text-white overflow-hidden z-50">
-        {/* Top Controls Bar */}
         <div className="absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/80 to-transparent p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -468,7 +467,6 @@ export default function PhotoFinishPage() {
           </div>
         </div>
 
-        {/* Video Library Sidebar */}
         {showVideoLibrary && (
           <div className="absolute top-0 left-0 w-80 h-full bg-black/90 backdrop-blur-sm z-40 border-r border-gray-800">
             <div className="p-6">
@@ -514,7 +512,6 @@ export default function PhotoFinishPage() {
           </div>
         )}
 
-        {/* Main Video Area */}
         <div className="h-full w-full flex items-center justify-center relative overflow-hidden pt-16 pb-32">
           <video
             ref={videoRef}
@@ -549,16 +546,13 @@ export default function PhotoFinishPage() {
                   description: `Timer placed at ${formatTime(currentTime)}`,
                 });
               } else {
-                // Timer functionality only now
                 setMode(null);
               }
             }}
           />
         </div>
 
-        {/* Bottom Controls */}
         <div className="absolute bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black/80 to-transparent p-4">
-          {/* Tools Bar */}
           <div className="flex items-center justify-center gap-4 mb-4">
             <Button
               variant={mode === 'timer' ? 'default' : 'ghost'}
@@ -584,7 +578,6 @@ export default function PhotoFinishPage() {
             </Button>
           </div>
 
-          {/* Video Controls */}
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
@@ -599,7 +592,6 @@ export default function PhotoFinishPage() {
               {formatTime(currentTime)}
             </div>
             
-            {/* Scrubber */}
             <div className="flex-1 relative">
               <input
                 type="range"
@@ -620,7 +612,6 @@ export default function PhotoFinishPage() {
           </div>
         </div>
 
-        {/* Overlay Canvas */}
         <canvas
           ref={canvasRef}
           className="absolute inset-0 w-full h-full pointer-events-none z-30"
@@ -630,7 +621,6 @@ export default function PhotoFinishPage() {
     );
   }
 
-  // Regular upload interface when no video is loaded
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="container mx-auto px-4 py-8">
@@ -650,7 +640,6 @@ export default function PhotoFinishPage() {
             
             <CardContent className="p-8">
               {!currentVideo ? (
-                // Video Upload Interface
                 <div className="space-y-6">
                   <div className="text-center">
                     <div 
@@ -683,7 +672,6 @@ export default function PhotoFinishPage() {
                     />
                   </div>
 
-                  {/* Saved Videos */}
                   {savedVideos.length > 0 && (
                     <div className="border-t pt-6">
                       <div className="flex items-center justify-between mb-4">
@@ -717,7 +705,6 @@ export default function PhotoFinishPage() {
                   )}
                 </div>
               ) : (
-                // Video Analysis Interface
                 <div className="space-y-6">
                   {uploading && (
                     <div className="text-center py-8">
@@ -727,110 +714,106 @@ export default function PhotoFinishPage() {
                   )}
 
                   {!uploading && (
-                    <div className="relative bg-black rounded-lg overflow-hidden">
-                      <video
-                        ref={videoRef}
-                        src={videoUrl}
-                        poster={videoPoster}
-                        className="w-full h-auto max-h-[600px] object-contain"
-                        onLoadedMetadata={handleVideoLoadedMetadata}
-                        onTimeUpdate={handleVideoTimeUpdate}
-                        onPlay={handleVideoPlay}
-                        onPause={handleVideoPause}
-                        onEnded={handleVideoEnded}
-                        onMouseDown={handleMouseDown}
-                        onMouseMove={handleMouseMove}
-                        onMouseUp={handleMouseUp}
-                        onMouseLeave={handleMouseUp}
-                      />
+                    <div>
+                      <div className="relative bg-black rounded-lg overflow-hidden">
+                        <video
+                          ref={videoRef}
+                          src={videoUrl}
+                          poster={videoPoster}
+                          className="w-full h-auto max-h-[600px] object-contain"
+                          onLoadedMetadata={handleVideoLoadedMetadata}
+                          onTimeUpdate={handleVideoTimeUpdate}
+                          onPlay={handleVideoPlay}
+                          onPause={handleVideoPause}
+                          onEnded={handleVideoEnded}
+                          onMouseDown={handleMouseDown}
+                          onMouseMove={handleMouseMove}
+                          onMouseUp={handleMouseUp}
+                          onMouseLeave={handleMouseUp}
+                        />
 
-                      {/* Loading overlay */}
-                      {duration === 0 && (
-                        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                          <div className="text-white text-center">
-                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-white mb-2"></div>
-                            <p>Loading video...</p>
+                        {duration === 0 && (
+                          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                            <div className="text-white text-center">
+                              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-white mb-2"></div>
+                              <p>Loading video...</p>
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
 
-                      {/* Overlay Canvas */}
-                      <canvas
-                        ref={canvasRef}
-                        className="absolute inset-0 w-full h-full cursor-crosshair"
-                        onClick={handleCanvasClick}
-                        style={{ pointerEvents: selectedTool !== 'none' ? 'auto' : 'none' }}
-                      />
-                    </div>
-
-                    {/* Video Controls */}
-                    <div className="space-y-6">
-                      <div className="flex items-center gap-4">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={togglePlayback}
-                          className="flex items-center gap-2"
-                        >
-                          {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                          {isPlaying ? 'Pause' : 'Play'}
-                        </Button>
-                        
-                        <div className="text-sm font-mono min-w-[140px] text-center">
-                          {formatTime(currentTime)} / {formatTime(duration)}
-                        </div>
-                      </div>
-
-                      {/* Video Scrubber */}
-                      <div className="space-y-2">
-                        <Label htmlFor="video-scrubber" className="text-sm font-medium">
-                          Video Timeline
-                        </Label>
-                        <input
-                          id="video-scrubber"
-                          type="range"
-                          min={0}
-                          max={duration || 0}
-                          step={0.01}
-                          value={currentTime}
-                          onChange={(e) => handleSeek(parseFloat(e.target.value))}
-                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                        <canvas
+                          ref={canvasRef}
+                          className="absolute inset-0 w-full h-full cursor-crosshair"
+                          onClick={handleCanvasClick}
+                          style={{ pointerEvents: selectedTool !== 'none' ? 'auto' : 'none' }}
                         />
                       </div>
 
-                      {/* Analysis Tools */}
-                      <div className="border-t pt-6">
-                        <h3 className="text-lg font-semibold mb-4">Analysis Tools</h3>
-                        
-                        <div className="flex items-center gap-4 flex-wrap">
+                      <div className="space-y-6">
+                        <div className="flex items-center gap-4">
                           <Button
-                            variant={selectedTool === 'timer' ? 'default' : 'outline'}
+                            variant="outline"
                             size="sm"
-                            onClick={() => setSelectedTool(selectedTool === 'timer' ? 'none' : 'timer')}
+                            onClick={togglePlayback}
                             className="flex items-center gap-2"
                           >
-                            <Clock className="h-4 w-4" />
-                            Race Timer
+                            {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                            {isPlaying ? 'Pause' : 'Play'}
                           </Button>
                           
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={clearOverlays}
-                            className="flex items-center gap-2 ml-auto"
-                            disabled={timers.length === 0}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Clear All
-                          </Button>
+                          <div className="text-sm font-mono min-w-[140px] text-center">
+                            {formatTime(currentTime)} / {formatTime(duration)}
+                          </div>
                         </div>
 
-                        {/* Active Overlays Info */}
-                        {timers.length > 0 && (
-                          <div className="text-sm text-muted-foreground">
-                            Active overlays: {timers.length} timer{timers.length !== 1 ? 's' : ''}
+                        <div className="space-y-2">
+                          <Label htmlFor="video-scrubber" className="text-sm font-medium">
+                            Video Timeline
+                          </Label>
+                          <input
+                            id="video-scrubber"
+                            type="range"
+                            min={0}
+                            max={duration || 0}
+                            step={0.01}
+                            value={currentTime}
+                            onChange={(e) => handleSeek(parseFloat(e.target.value))}
+                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                          />
+                        </div>
+
+                        <div className="border-t pt-6">
+                          <h3 className="text-lg font-semibold mb-4">Analysis Tools</h3>
+                          
+                          <div className="flex items-center gap-4 flex-wrap">
+                            <Button
+                              variant={selectedTool === 'timer' ? 'default' : 'outline'}
+                              size="sm"
+                              onClick={() => setSelectedTool(selectedTool === 'timer' ? 'none' : 'timer')}
+                              className="flex items-center gap-2"
+                            >
+                              <Clock className="h-4 w-4" />
+                              Race Timer
+                            </Button>
+                            
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={clearOverlays}
+                              className="flex items-center gap-2 ml-auto"
+                              disabled={timers.length === 0}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              Clear All
+                            </Button>
                           </div>
-                        )}
+
+                          {timers.length > 0 && (
+                            <div className="text-sm text-muted-foreground mt-4">
+                              Active overlays: {timers.length} timer{timers.length !== 1 ? 's' : ''}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -844,7 +827,6 @@ export default function PhotoFinishPage() {
   );
 }
 
-// Export also as a component for dynamic routes
 export function Component() {
   return <PhotoFinishPage />;
 }
