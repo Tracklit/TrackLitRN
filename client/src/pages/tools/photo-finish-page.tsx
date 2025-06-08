@@ -681,14 +681,13 @@ export default function PhotoFinishPage() {
       const x = (timer.x / 100) * canvas.width;
       const y = (timer.y / 100) * canvas.height;
 
-      // Format time in MM•SS•T•H format (minutes, seconds, tenths, hundredths)
+      // Format time in MM•SS•TH format (minutes, seconds, tenths+hundredths)
       const sign = timerTime < 0 ? '-' : '';
       const absSeconds = Math.abs(timerTime);
       const mins = Math.floor(absSeconds / 60);
       const secs = Math.floor(absSeconds % 60);
-      const tenths = Math.floor((absSeconds % 1) * 10);
-      const hundredths = Math.floor((absSeconds % 0.1) * 100) % 10;
-      const text = `${sign}${mins.toString().padStart(2, '0')}•${secs.toString().padStart(2, '0')}•${tenths}•${hundredths}`;
+      const hundredths = Math.floor((absSeconds % 1) * 100);
+      const text = `${sign}${mins.toString().padStart(2, '0')}•${secs.toString().padStart(2, '0')}•${hundredths.toString().padStart(2, '0')}`;
 
       // Sleek timer design matching the provided image
       const fontSize = 48; // Large, bold numbers
