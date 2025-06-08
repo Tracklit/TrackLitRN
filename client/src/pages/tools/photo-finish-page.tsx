@@ -618,8 +618,8 @@ export default function PhotoFinishPage() {
       const timerHeight = timerSize * 0.7;
       const fontSize = timerSize * 0.35;
       
-      // Draw timer with improved styling
-      ctx.font = `bold ${fontSize}px system-ui, -apple-system, sans-serif`;
+      // Draw timer with improved styling - 3px corners, dark blue border, better font
+      ctx.font = `bold ${fontSize}px 'Inter', 'Roboto Mono', monospace`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       
@@ -629,14 +629,14 @@ export default function PhotoFinishPage() {
       const textHeight = fontSize;
       
       // Better padding for visual balance
-      const paddingX = 12;
-      const paddingY = 8;
+      const paddingX = 14;
+      const paddingY = 10;
       const bgWidth = textWidth + (paddingX * 2);
       const bgHeight = textHeight + (paddingY * 2);
-      const cornerRadius = 4;
+      const cornerRadius = 3;
       
       // Draw rounded background with better opacity
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
       ctx.beginPath();
       ctx.roundRect(
         x - bgWidth / 2,
@@ -647,8 +647,8 @@ export default function PhotoFinishPage() {
       );
       ctx.fill();
       
-      // Draw slim border
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+      // Draw dark blue border
+      ctx.strokeStyle = '#1e3a8a';
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.roundRect(
@@ -987,8 +987,8 @@ export default function PhotoFinishPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Video Library Sidebar */}
-        {showVideoLibrary && (
+        {/* Video Library Sidebar - Only show when no video is loaded */}
+        {showVideoLibrary && !currentVideo && (
           <div className="lg:col-span-1">
             <Card>
               <CardHeader>
@@ -1028,7 +1028,7 @@ export default function PhotoFinishPage() {
         )}
 
         {/* Main Video Area */}
-        <div className={showVideoLibrary ? "lg:col-span-3" : "lg:col-span-4"}>
+        <div className={showVideoLibrary && !currentVideo ? "lg:col-span-3" : "lg:col-span-4"}>
           <Card>
             <CardContent className="p-6">
               {!currentVideo ? (

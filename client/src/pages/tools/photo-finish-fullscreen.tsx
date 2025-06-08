@@ -128,7 +128,7 @@ export default function PhotoFinishFullscreen({
     const drawOverlays = () => {
       // Clear the entire canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      // Beautiful timer implementation with rounded corners and slim border
+      // Beautiful timer implementation with 3px corners, dark blue border, better font
       timers.forEach(timer => {
         const elapsedTime = currentTime - timer.startTime;
         const posX = (timer.x / 100) * canvas.width;
@@ -137,8 +137,8 @@ export default function PhotoFinishFullscreen({
         // Calculate responsive font size
         const textSize = Math.max(canvas.width * 0.04, 28);
         
-        // Setup font with proper aspect ratio
-        ctx.font = `bold ${textSize}px system-ui, -apple-system, sans-serif`;
+        // Setup font with proper typography
+        ctx.font = `bold ${textSize}px 'Inter', 'Roboto Mono', monospace`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
@@ -148,14 +148,14 @@ export default function PhotoFinishFullscreen({
         const textHeight = textSize;
         
         // Better padding for visual balance
-        const paddingX = 12;
-        const paddingY = 8;
+        const paddingX = 14;
+        const paddingY = 10;
         const bgWidth = textWidth + (paddingX * 2);
         const bgHeight = textHeight + (paddingY * 2);
-        const cornerRadius = 4;
+        const cornerRadius = 3;
         
         // Draw rounded background with better opacity
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
         ctx.beginPath();
         ctx.roundRect(
           posX - bgWidth / 2,
@@ -166,8 +166,8 @@ export default function PhotoFinishFullscreen({
         );
         ctx.fill();
         
-        // Draw slim border
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        // Draw dark blue border
+        ctx.strokeStyle = '#1e3a8a';
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.roundRect(
