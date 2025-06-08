@@ -273,46 +273,47 @@ export default function PhotoFinishPage() {
             </CardHeader>
           </Card>
 
-          {/* Upload Area */}
+          {/* Upload Area - Matching Design */}
           <Card className="bg-white border-none shadow-lg">
-            <CardContent className="p-8">
+            <CardContent className="p-0">
               <div
                 className={`
-                  border-2 border-dashed rounded-lg p-12 text-center transition-all duration-200
+                  border-2 border-dashed border-blue-400 rounded-lg m-8 p-16 text-center transition-all duration-200 bg-gray-50
                   ${isDragging 
-                    ? 'border-blue-500 bg-blue-50' 
-                    : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
+                    ? 'border-blue-600 bg-blue-50' 
+                    : 'hover:border-blue-500 hover:bg-blue-25'
                   }
                 `}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
               >
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div className="flex justify-center">
-                    <div className="p-4 bg-gray-100 rounded-full">
-                      <Upload className="h-12 w-12 text-gray-400" />
-                    </div>
+                    <Upload className="h-16 w-16 text-gray-400" />
                   </div>
                   
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-3">
                       Upload Race Video
                     </h3>
-                    <p className="text-gray-600 mb-4">
-                      Click to select a video file<br />
+                    <p className="text-gray-600 text-lg mb-2">
+                      Click to select a video file
+                    </p>
+                    <p className="text-gray-600 text-lg mb-4">
                       or drag and drop
                     </p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-gray-500 text-sm">
                       Supports MP4, MOV, AVI formats
                     </p>
                   </div>
 
-                  <div className="flex justify-center">
+                  <div className="pt-4">
                     <Button
                       onClick={() => fileInputRef.current?.click()}
                       disabled={uploading}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2"
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-medium rounded-lg"
+                      size="lg"
                     >
                       {uploading ? 'Loading...' : 'Choose File'}
                     </Button>
