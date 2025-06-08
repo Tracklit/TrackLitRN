@@ -57,6 +57,7 @@ import AthleteProfile from "@/pages/athlete-profile";
 import PublicProfilePage from "@/pages/public-profile-page";
 import ExerciseLibraryPage from "@/pages/exercise-library-page";
 import ExerciseLibraryAddPage from "@/pages/exercise-library-add-page";
+import VideoAnalysisPage from "@/pages/video-analysis-page";
 import AdminPage from "@/pages/admin-page";
 import AdminPanel from "@/pages/admin-panel";
 import SprinthiaPage from "@/pages/sprinthia-simple";
@@ -81,6 +82,7 @@ function Router() {
       <ProtectedRoute path="/tools/photo-finish" component={PhotoFinishPage} />
       <ProtectedRoute path="/tools/exercise-library" component={ExerciseLibraryPage} />
       <ProtectedRoute path="/tools/exercise-library/add" component={ExerciseLibraryAddPage} />
+      <ProtectedRoute path="/tools/video-analysis" component={VideoAnalysisPage} />
       <ProtectedRoute path="/programs" component={ProgramsPage} />
       <ProtectedRoute path="/programs/create" component={ProgramCreatePage} />
       <ProtectedRoute path="/programs/:id" component={ProgramDetailPage} />

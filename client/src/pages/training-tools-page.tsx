@@ -9,7 +9,8 @@ import {
   ArrowRight,
   BookOpen,
   Lock,
-  Video
+  Video,
+  Camera
 } from "lucide-react";
 import { Link } from "wouter";
 import { BackNavigation } from "@/components/back-navigation";
@@ -52,6 +53,13 @@ export default function WorkoutToolsPage() {
       description: "Store and organize your training videos",
       icon: <Video className="h-6 w-6 text-primary" />,
       href: "/tools/exercise-library",
+      disabled: false
+    },
+    {
+      title: "Video Analysis",
+      description: "Upload race videos and add precise timing overlays",
+      icon: <Camera className="h-6 w-6 text-primary" />,
+      href: "/tools/video-analysis",
       disabled: false
     },
     {
