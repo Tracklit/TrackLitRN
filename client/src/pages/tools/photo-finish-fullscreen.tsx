@@ -128,33 +128,40 @@ export default function PhotoFinishFullscreen({
     const drawOverlays = () => {
       // Clear the entire canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      // Beautiful timer implementation with 3px corners, dark blue border, better font
+      // Sleek timer implementation matching the design
       timers.forEach(timer => {
         const elapsedTime = currentTime - timer.startTime;
         const posX = (timer.x / 100) * canvas.width;
         const posY = (timer.y / 100) * canvas.height;
         
-        // 30% bigger timer with equal padding and 5px corners (fullscreen mode)
-        const fontSize = 42; // Increased by 30% for fullscreen
+        // Format time in MM•SS format like the design
+        const sign = elapsedTime < 0 ? '-' : '';
+        const absSeconds = Math.abs(elapsedTime);
+        const mins = Math.floor(absSeconds / 60);
+        const secs = Math.floor(absSeconds % 60);
+        const text = `${sign}${mins.toString().padStart(2, '0')}•${secs.toString().padStart(2, '0')}`;
         
-        // Setup font with proper aspect ratio
-        ctx.font = `bold ${fontSize}px 'Roboto Mono', 'SF Mono', 'Monaco', 'Inconsolata', monospace`;
+        // Larger font for fullscreen mode
+        const fontSize = 56; // Bigger for fullscreen
+        
+        // Setup bold, clean font
+        ctx.font = `900 ${fontSize}px 'Inter', 'SF Pro Display', 'Segoe UI', system-ui, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
-        const text = `${elapsedTime.toFixed(2)}s`;
         const metrics = ctx.measureText(text);
         const textWidth = metrics.width;
-        const textHeight = fontSize * 0.7; // Proper text height ratio
+        const textHeight = fontSize * 0.8; // Better text height calculation
         
-        // Equal padding all around, 30% bigger
-        const padding = 36; // Equal padding for all sides (fullscreen)
-        const bgWidth = textWidth + (padding * 2);
-        const bgHeight = textHeight + (padding * 2);
-        const cornerRadius = 5;
+        // Generous padding for sleek look
+        const paddingX = 48; // Larger for fullscreen
+        const paddingY = 28;
+        const bgWidth = textWidth + (paddingX * 2);
+        const bgHeight = textHeight + (paddingY * 2);
+        const cornerRadius = 28; // More rounded corners for modern look
         
-        // Draw rounded background with better opacity
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+        // Draw solid black rounded background
+        ctx.fillStyle = '#000000';
         ctx.beginPath();
         ctx.roundRect(
           posX - bgWidth / 2,
@@ -165,9 +172,13 @@ export default function PhotoFinishFullscreen({
         );
         ctx.fill();
         
-        // Draw dark blue border
-        ctx.strokeStyle = '#1e3a8a';
-        ctx.lineWidth = 1;
+        // Add subtle shadow effect
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+        ctx.shadowBlur = 12;
+        ctx.shadowOffsetY = 6;
+        
+        // Redraw background with shadow
+        ctx.fillStyle = '#000000';
         ctx.beginPath();
         ctx.roundRect(
           posX - bgWidth / 2,
@@ -176,10 +187,15 @@ export default function PhotoFinishFullscreen({
           bgHeight,
           cornerRadius
         );
-        ctx.stroke();
+        ctx.fill();
+        
+        // Reset shadow for text
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
         
         // Draw crisp white text
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = '#FFFFFF';
         ctx.fillText(text, posX, posY);
       });
       // Draw finish lines as vertical lines

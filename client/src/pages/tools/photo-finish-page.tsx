@@ -679,27 +679,34 @@ export default function PhotoFinishPage() {
       const x = (timer.x / 100) * canvas.width;
       const y = (timer.y / 100) * canvas.height;
 
-      // 30% bigger timer with equal padding and 5px corners
-      const fontSize = 36; // Increased by 30% from 28
+      // Format time in MM•SS format like the design
+      const sign = timerTime < 0 ? '-' : '';
+      const absSeconds = Math.abs(timerTime);
+      const mins = Math.floor(absSeconds / 60);
+      const secs = Math.floor(absSeconds % 60);
+      const text = `${sign}${mins.toString().padStart(2, '0')}•${secs.toString().padStart(2, '0')}`;
+
+      // Sleek timer design matching the provided image
+      const fontSize = 48; // Large, bold numbers
       
-      // Draw timer with improved styling - proper aspect ratio font
-      ctx.font = `bold ${fontSize}px 'Roboto Mono', 'SF Mono', 'Monaco', 'Inconsolata', monospace`;
+      // Setup bold, clean font
+      ctx.font = `900 ${fontSize}px 'Inter', 'SF Pro Display', 'Segoe UI', system-ui, sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       
-      const text = formatTime(timerTime);
       const metrics = ctx.measureText(text);
       const textWidth = metrics.width;
-      const textHeight = fontSize * 0.7; // Proper text height ratio
+      const textHeight = fontSize * 0.8; // Better text height calculation
       
-      // Equal padding all around, 30% bigger
-      const padding = 32; // Equal padding for all sides
-      const bgWidth = textWidth + (padding * 2);
-      const bgHeight = textHeight + (padding * 2);
-      const cornerRadius = 5;
+      // Generous padding for sleek look
+      const paddingX = 40;
+      const paddingY = 24;
+      const bgWidth = textWidth + (paddingX * 2);
+      const bgHeight = textHeight + (paddingY * 2);
+      const cornerRadius = 24; // More rounded corners for modern look
       
-      // Draw rounded background with better opacity
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+      // Draw solid black rounded background
+      ctx.fillStyle = '#000000';
       ctx.beginPath();
       ctx.roundRect(
         x - bgWidth / 2,
@@ -710,9 +717,13 @@ export default function PhotoFinishPage() {
       );
       ctx.fill();
       
-      // Draw dark blue border
-      ctx.strokeStyle = '#1e3a8a';
-      ctx.lineWidth = 1;
+      // Add subtle shadow effect
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+      ctx.shadowBlur = 8;
+      ctx.shadowOffsetY = 4;
+      
+      // Redraw background with shadow
+      ctx.fillStyle = '#000000';
       ctx.beginPath();
       ctx.roundRect(
         x - bgWidth / 2,
@@ -721,10 +732,15 @@ export default function PhotoFinishPage() {
         bgHeight,
         cornerRadius
       );
-      ctx.stroke();
+      ctx.fill();
+      
+      // Reset shadow for text
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
       
       // Draw crisp white text
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = '#FFFFFF';
       ctx.fillText(text, x, y);
     });
 
