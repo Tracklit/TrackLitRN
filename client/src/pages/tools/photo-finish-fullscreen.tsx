@@ -74,6 +74,7 @@ export default function PhotoFinishFullscreen({
   const [timers, setTimers] = useState<RaceTimer[]>([]);
   const [finishLines, setFinishLines] = useState<FinishLine[]>([]);
   const [activeTimer, setActiveTimer] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string>('');
   const [activeFinishLine, setActiveFinishLine] = useState<string | null>(null);
   
   // Zoom and pan state
@@ -399,6 +400,11 @@ export default function PhotoFinishFullscreen({
       setTimers(prev => [...prev, newTimer]);
       setActiveTimer(newTimer.id);
       setMode(null);
+      
+      // Show status message without toast
+      const timeStr = formatTime(currentTime);
+      setStatusMessage(`Timer placed at ${timeStr}`);
+      setTimeout(() => setStatusMessage(''), 2000);
     }
   };
   // Scrubber handlers
@@ -596,7 +602,8 @@ export default function PhotoFinishFullscreen({
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
           controls={false}
-          preload="metadata"
+          preload="auto"
+          poster={videoPoster}
         />
         
         <canvas
@@ -714,6 +721,13 @@ export default function PhotoFinishFullscreen({
             {`${Math.floor(duration / 60)}:${(duration % 60).toFixed(2).padStart(5, '0')}`}
           </div>
         </div>
+
+        {/* Status Message Display */}
+        {statusMessage && (
+          <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 bg-black/80 text-white px-4 py-2 rounded-lg text-sm">
+            {statusMessage}
+          </div>
+        )}
       </div>
 
       {/* Sprinthia AI Analysis Panel */}
