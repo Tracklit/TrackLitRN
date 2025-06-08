@@ -61,6 +61,8 @@ export default function PhotoFinishFullscreen({
   const [isDragging, setIsDragging] = useState(false);
   const [hasStartedVideo, setHasStartedVideo] = useState(false);
   const [videoPoster, setVideoPoster] = useState<string>("");
+  const [isDraggingFinishLine, setIsDraggingFinishLine] = useState(false);
+  const [draggedLineId, setDraggedLineId] = useState<string | null>(null);
   
   // UI state
   const [showVideoLibrary, setShowVideoLibrary] = useState(false);
@@ -173,24 +175,24 @@ export default function PhotoFinishFullscreen({
         const hundredths = Math.floor((absSeconds % 1) * 100);
         const text = `${sign}${mins.toString().padStart(2, '0')}•${secs.toString().padStart(2, '0')}•${hundredths.toString().padStart(2, '0')}`;
         
-        // Larger font for fullscreen mode
-        const fontSize = 56; // Bigger for fullscreen
+        // Normal timer size for fullscreen mode
+        const fontSize = 24; // Normal readable size
         
         // Setup bold, clean font
-        ctx.font = `900 ${fontSize}px 'Inter', 'SF Pro Display', 'Segoe UI', system-ui, sans-serif`;
+        ctx.font = `bold ${fontSize}px 'Courier New', monospace`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
         const metrics = ctx.measureText(text);
         const textWidth = metrics.width;
-        const textHeight = fontSize * 0.8; // Better text height calculation
+        const textHeight = fontSize;
         
-        // Generous padding for sleek look
-        const paddingX = 48; // Larger for fullscreen
-        const paddingY = 28;
+        // Normal padding
+        const paddingX = 12;
+        const paddingY = 8;
         const bgWidth = textWidth + (paddingX * 2);
         const bgHeight = textHeight + (paddingY * 2);
-        const cornerRadius = 28; // More rounded corners for modern look
+        const cornerRadius = 8;
         
         // Draw 50% transparent black rounded background
         ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
@@ -341,8 +343,6 @@ export default function PhotoFinishFullscreen({
     setDraggedLineId(null);
   };
   // Mouse drag handlers for finish line movement
-  const [isDraggingFinishLine, setIsDraggingFinishLine] = useState(false);
-  const [draggedLineId, setDraggedLineId] = useState<string | null>(null);
   const handleCanvasMouseDown = (event: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -400,10 +400,6 @@ export default function PhotoFinishFullscreen({
       setActiveTimer(newTimer.id);
       setMode(null);
     }
-    // Finish line functionality disabled
-    // else if (mode === 'finishline') {
-    //   // Functionality temporarily disabled
-    // }
   };
   // Scrubber handlers
   const handleSliderInteraction = (clientX: number, element: HTMLDivElement) => {
