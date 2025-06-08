@@ -786,8 +786,8 @@ export default function PhotoFinishPage() {
     });
   }, [currentTime, timers, finishLines]);
 
-  // Full-screen video analysis mode (like inspiration image)
-  if (fullscreenMode && videoUrl) {
+  // Note: Fullscreen mode disabled - videos now display in normal interface only
+  if (false) {
     return (
       <div className="fixed inset-0 bg-black text-white overflow-hidden z-50">
         {/* Top Controls Bar */}
