@@ -192,6 +192,7 @@ export default function PhotoFinishPage() {
     const url = URL.createObjectURL(file);
     setVideoUrl(url);
     setVideoPoster(""); // Reset poster for new video
+    setFullscreenMode(true); // Automatically enable fullscreen mode
     
     // Reset overlays when new video is loaded
     setTimers([]);
@@ -647,6 +648,7 @@ export default function PhotoFinishPage() {
     setCurrentVideo(savedVideo.file);
     const url = URL.createObjectURL(savedVideo.file);
     setVideoUrl(url);
+    setFullscreenMode(true); // Automatically enable fullscreen mode
     setShowVideoLibrary(false);
     
     // Reset overlays
@@ -786,8 +788,8 @@ export default function PhotoFinishPage() {
     });
   }, [currentTime, timers, finishLines]);
 
-  // Note: Fullscreen mode disabled - videos now display in normal interface only
-  if (false) {
+  // Always use fullscreen mode for video analysis
+  if (videoUrl) {
     return (
       <div className="fixed inset-0 bg-black text-white overflow-hidden z-50">
         {/* Top Controls Bar */}
