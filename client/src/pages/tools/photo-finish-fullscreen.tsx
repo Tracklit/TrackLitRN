@@ -134,8 +134,8 @@ export default function PhotoFinishFullscreen({
         const posX = (timer.x / 100) * canvas.width;
         const posY = (timer.y / 100) * canvas.height;
         
-        // Calculate responsive font size
-        const textSize = Math.max(canvas.width * 0.04, 28);
+        // Calculate responsive font size - reduced by 33%
+        const textSize = Math.max(canvas.width * 0.027, 19); // Reduced from 0.04 and 28
         
         // Setup font with proper typography
         ctx.font = `bold ${textSize}px 'Inter', 'Roboto Mono', monospace`;
@@ -147,9 +147,9 @@ export default function PhotoFinishFullscreen({
         const textWidth = metrics.width;
         const textHeight = textSize;
         
-        // Better padding for visual balance
-        const paddingX = 14;
-        const paddingY = 10;
+        // More padding between border and numbers
+        const paddingX = 20;
+        const paddingY = 16;
         const bgWidth = textWidth + (paddingX * 2);
         const bgHeight = textHeight + (paddingY * 2);
         const cornerRadius = 3;

@@ -616,7 +616,7 @@ export default function PhotoFinishPage() {
       const timerSize = Math.max(canvas.width * 0.1, 80); // Minimum 80px
       const timerWidth = timerSize * 2.2;
       const timerHeight = timerSize * 0.7;
-      const fontSize = timerSize * 0.35;
+      const fontSize = timerSize * 0.235; // Reduced by 33% from 0.35
       
       // Draw timer with improved styling - 3px corners, dark blue border, better font
       ctx.font = `bold ${fontSize}px 'Inter', 'Roboto Mono', monospace`;
@@ -628,9 +628,9 @@ export default function PhotoFinishPage() {
       const textWidth = metrics.width;
       const textHeight = fontSize;
       
-      // Better padding for visual balance
-      const paddingX = 14;
-      const paddingY = 10;
+      // More padding between border and numbers
+      const paddingX = 20;
+      const paddingY = 16;
       const bgWidth = textWidth + (paddingX * 2);
       const bgHeight = textHeight + (paddingY * 2);
       const cornerRadius = 3;
