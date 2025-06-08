@@ -319,44 +319,66 @@ export default function PhotoFinishFullscreen({
     setIsDraggingFinishLine(false);
     setDraggedLineId(null);
   };
-  // Mouse drag handlers for finish line movement
+  // Mouse drag handlers for finish line movement and video panning
   const [isDraggingFinishLine, setIsDraggingFinishLine] = useState(false);
   const [draggedLineId, setDraggedLineId] = useState<string | null>(null);
+  const [isMousePanning, setIsMousePanning] = useState(false);
+  
   const handleCanvasMouseDown = (event: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
     const x = ((event.clientX - rect.left) / rect.width) * 100;
     const y = ((event.clientY - rect.top) / rect.height) * 100;
+    
     // Check if clicking on a finish line (expanded hit area)
     const clickedLine = finishLines.find(line => {
       const lineX = line.x;
-      const hitAreaWidth = 5; // Percentage-based hit area
+      const hitAreaWidth = 5;
       return x >= lineX - hitAreaWidth && x <= lineX + hitAreaWidth &&
              y >= line.y && y <= line.y + line.height;
     });
+    
     if (clickedLine) {
       setIsDraggingFinishLine(true);
       setDraggedLineId(clickedLine.id);
       setActiveFinishLine(clickedLine.id);
+    } else if (videoScale > 1) {
+      // Start mouse panning when video is zoomed
+      setIsMousePanning(true);
+      setLastPanPoint({ x: event.clientX, y: event.clientY });
     }
   };
   const handleCanvasMouseMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDraggingFinishLine || !draggedLineId) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * 100;
-    // Move the finish line horizontally
-    setFinishLines(prev => prev.map(line => 
-      line.id === draggedLineId 
-        ? { ...line, x: Math.max(0, Math.min(98, x - 1)) }
-        : line
-    ));
+    if (isDraggingFinishLine && draggedLineId) {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = ((event.clientX - rect.left) / rect.width) * 100;
+      // Move the finish line horizontally
+      setFinishLines(prev => prev.map(line => 
+        line.id === draggedLineId 
+          ? { ...line, x: Math.max(0, Math.min(98, x - 1)) }
+          : line
+      ));
+    } else if (isMousePanning && videoScale > 1) {
+      // Handle video panning when zoomed
+      const deltaX = event.clientX - lastPanPoint.x;
+      const deltaY = event.clientY - lastPanPoint.y;
+      
+      setVideoTranslate(prev => ({
+        x: prev.x + deltaX,
+        y: prev.y + deltaY
+      }));
+      
+      setLastPanPoint({ x: event.clientX, y: event.clientY });
+    }
   };
+  
   const handleCanvasMouseUp = () => {
     setIsDraggingFinishLine(false);
     setDraggedLineId(null);
+    setIsMousePanning(false);
   };
   // Handle canvas interactions
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
@@ -663,6 +685,40 @@ export default function PhotoFinishFullscreen({
             <Trash2 className="w-4 h-4 mr-2" />
             Clear All
           </Button>
+          
+          {/* Zoom Controls */}
+          <div className="flex items-center gap-2 border-l border-gray-600 pl-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setVideoScale(Math.max(0.5, videoScale - 0.25))}
+              className="text-white hover:bg-white/20"
+            >
+              -
+            </Button>
+            <span className="text-white text-sm min-w-[3rem] text-center">
+              {Math.round(videoScale * 100)}%
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setVideoScale(Math.min(3, videoScale + 0.25))}
+              className="text-white hover:bg-white/20"
+            >
+              +
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setVideoScale(1);
+                setVideoTranslate({ x: 0, y: 0 });
+              }}
+              className="text-white hover:bg-white/20 text-xs"
+            >
+              Reset
+            </Button>
+          </div>
         </div>
         {/* Scrubber and Controls */}
         <div className="flex items-center gap-4">

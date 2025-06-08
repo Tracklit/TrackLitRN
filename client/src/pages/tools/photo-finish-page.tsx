@@ -279,12 +279,13 @@ export default function PhotoFinishPage() {
   useEffect(() => {
     const canvas = canvasRef.current;
     const video = videoRef.current;
-    if (!canvas || !video) return;
+    const container = containerRef.current;
+    if (!canvas || !video || !container) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Update canvas size to match video
+    // Update canvas size to match video container
     const rect = video.getBoundingClientRect();
     canvas.width = rect.width;
     canvas.height = rect.height;
@@ -292,25 +293,69 @@ export default function PhotoFinishPage() {
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw timer overlays
+    // Draw timer overlays with proper scaling
     timers.forEach(timer => {
       const elapsedTime = currentTime - timer.startTime;
       const posX = (timer.x / 100) * canvas.width;
       const posY = (timer.y / 100) * canvas.height;
       
-      // Set up text styling for MM•SS•TH format
-      const fontSize = Math.max(16, canvas.width / 30);
-      ctx.font = `bold ${fontSize}px 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif`;
+      // Scale font size based on canvas width
+      const baseFontSize = Math.min(canvas.width / 20, 48);
+      const fontSize = Math.max(18, baseFontSize);
+      
+      // Format time in MM•SS•TH format
+      const text = formatTime(elapsedTime);
+      
+      // Set up text styling
+      ctx.font = `900 ${fontSize}px 'Inter', 'SF Pro Display', 'Segoe UI', system-ui, sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       
-      // Create text with MM•SS•TH format
-      const text = formatTime(elapsedTime);
+      // Measure text for background
+      const metrics = ctx.measureText(text);
+      const textWidth = metrics.width;
+      const textHeight = fontSize * 0.8;
       
-      // Add text shadow/stroke for visibility
-      ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 3;
-      ctx.strokeText(text, posX, posY);
+      // Scale padding with font size
+      const paddingX = fontSize * 0.6;
+      const paddingY = fontSize * 0.4;
+      const bgWidth = textWidth + (paddingX * 2);
+      const bgHeight = textHeight + (paddingY * 2);
+      const cornerRadius = Math.min(fontSize * 0.3, 16);
+      
+      // Draw background with rounded corners
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+      ctx.beginPath();
+      ctx.roundRect(
+        posX - bgWidth / 2,
+        posY - bgHeight / 2,
+        bgWidth,
+        bgHeight,
+        cornerRadius
+      );
+      ctx.fill();
+      
+      // Add subtle shadow
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+      ctx.shadowBlur = 8;
+      ctx.shadowOffsetY = 2;
+      
+      // Redraw background with shadow
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+      ctx.beginPath();
+      ctx.roundRect(
+        posX - bgWidth / 2,
+        posY - bgHeight / 2,
+        bgWidth,
+        bgHeight,
+        cornerRadius
+      );
+      ctx.fill();
+      
+      // Reset shadow
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
       
       // Draw main text in white
       ctx.fillStyle = '#FFFFFF';
