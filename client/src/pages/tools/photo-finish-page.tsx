@@ -187,6 +187,8 @@ export default function PhotoFinishPage() {
       return;
     }
 
+    // Show loading state immediately when video is selected
+    setLoadingVideo(true);
     setCurrentVideo(file);
     const url = URL.createObjectURL(file);
     setVideoUrl(url);
@@ -237,8 +239,12 @@ export default function PhotoFinishPage() {
         
         const thumbnail = await generateVideoThumbnail(videoRef.current);
         setVideoPoster(thumbnail);
+        
+        // Clear loading state when video is ready
+        setLoadingVideo(false);
       } catch (error) {
         console.error('Failed to generate video thumbnail:', error);
+        setLoadingVideo(false);
       }
     }
   };
@@ -479,7 +485,7 @@ export default function PhotoFinishPage() {
         const clickY = event.clientY - rect.top;
         const distance = Math.sqrt((clickX - nodeX) ** 2 + (clickY - nodeY) ** 2);
         
-        if (distance <= 15) { // 15px hit area
+        if (distance <= 20) { // 20px hit area for better usability
           setIsDraggingNode(true);
           setDraggedNodeInfo({ lineId: line.id, nodeId: node.id });
           return;
@@ -727,41 +733,41 @@ export default function PhotoFinishPage() {
 
     // Draw finish lines
     finishLines.forEach(line => {
-      if (!line.visible || line.nodes.length < 2) return;
+      if (!line.visible) return;
 
-      ctx.strokeStyle = '#ff0000';
-      ctx.lineWidth = 4;
-      ctx.setLineDash([]);
-
-      // Draw line segments
-      ctx.beginPath();
-      for (let i = 0; i < line.nodes.length - 1; i++) {
-        const node1 = line.nodes[i];
-        const node2 = line.nodes[i + 1];
+      // Draw line if we have exactly 2 nodes
+      if (line.nodes.length === 2) {
+        const node1 = line.nodes[0];
+        const node2 = line.nodes[1];
         const x1 = (node1.x / 100) * canvas.width;
         const y1 = (node1.y / 100) * canvas.height;
         const x2 = (node2.x / 100) * canvas.width;
         const y2 = (node2.y / 100) * canvas.height;
 
-        if (i === 0) {
-          ctx.moveTo(x1, y1);
-        }
+        // Draw connecting line
+        ctx.strokeStyle = '#ff0000';
+        ctx.lineWidth = 4;
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
         ctx.lineTo(x2, y2);
+        ctx.stroke();
       }
-      ctx.stroke();
 
-      // Draw nodes
+      // Draw nodes (always visible for dragging)
       line.nodes.forEach(node => {
         const x = (node.x / 100) * canvas.width;
         const y = (node.y / 100) * canvas.height;
 
+        // Larger, more visible nodes for easier dragging
         ctx.fillStyle = '#ff0000';
         ctx.beginPath();
-        ctx.arc(x, y, 8, 0, 2 * Math.PI);
+        ctx.arc(x, y, 10, 0, 2 * Math.PI);
         ctx.fill();
 
+        // White border for contrast
         ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 3;
         ctx.stroke();
       });
     });
@@ -1159,6 +1165,15 @@ export default function PhotoFinishPage() {
                     onTouchMove={handleVideoTouchMove}
                     onTouchEnd={handleVideoTouchEnd}
                   >
+                    {loadingVideo && (
+                      <div className="absolute inset-0 bg-black flex items-center justify-center z-10">
+                        <div className="flex flex-col items-center gap-4">
+                          <div className="animate-spin w-12 h-12 border-4 border-white border-t-transparent rounded-full" />
+                          <p className="text-white text-lg">Loading video...</p>
+                        </div>
+                      </div>
+                    )}
+                    
                     <video
                       ref={videoRef}
                       src={videoUrl}
@@ -1192,7 +1207,7 @@ export default function PhotoFinishPage() {
                     {/* Finish line drawing indicator */}
                     {isDrawingLine && (
                       <div className="absolute top-4 left-4 bg-blue-500 text-white px-3 py-1 rounded-full text-sm">
-                        Click to add nodes • Double-click to finish
+                        Click to place second node
                       </div>
                     )}
                   </div>
