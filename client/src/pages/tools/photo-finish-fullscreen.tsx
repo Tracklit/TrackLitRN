@@ -580,10 +580,9 @@ export default function PhotoFinishFullscreen({
         <video
           ref={videoRef}
           src={videoUrl || ''}
-          poster={videoPoster}
           className="w-full h-full object-contain"
           style={{
-            transform: `scale(${videoScale}) translate(${videoTranslate.x}px, ${videoTranslate.y}px)`,
+            transform: `scale(${videoScale}) translate(${videoPosition.x}px, ${videoPosition.y}px)`,
           }}
           onLoadedMetadata={handleVideoLoad}
           onTimeUpdate={() => {
@@ -737,18 +736,18 @@ export default function PhotoFinishFullscreen({
             {sprinthiaLimits && (
               <div className="mb-6 p-4 bg-gray-800 rounded-lg">
                 <div className="text-sm text-gray-300 mb-2">
-                  Tier: <span className="text-white capitalize">{sprinthiaLimits.tier}</span>
+                  Tier: <span className="text-white capitalize">{(sprinthiaLimits as any)?.tier}</span>
                 </div>
                 <div className="text-sm text-gray-300">
                   Remaining: {
-                    sprinthiaLimits.remainingPrompts === 'unlimited' 
+                    (sprinthiaLimits as any)?.remainingPrompts === 'unlimited' 
                       ? 'Unlimited' 
-                      : `${sprinthiaLimits.remainingPrompts} prompts`
+                      : `${(sprinthiaLimits as any)?.remainingPrompts} prompts`
                   }
                 </div>
-                {sprinthiaLimits.costSpikes > 0 && (
+                {(sprinthiaLimits as any)?.costSpikes > 0 && (
                   <div className="text-sm text-yellow-400 mt-2">
-                    Next analysis: {sprinthiaLimits.costSpikes} Spikes
+                    Next analysis: {(sprinthiaLimits as any)?.costSpikes} Spikes
                   </div>
                 )}
               </div>
@@ -757,7 +756,7 @@ export default function PhotoFinishFullscreen({
             {/* Analysis Types */}
             <div className="space-y-3">
               <h3 className="text-lg font-semibold text-white mb-4">Choose Analysis Type</h3>
-              {analysisTypes.map((type: any) => (
+              {(analysisTypes as any)?.map((type: any) => (
                 <div key={type.type} className="bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -807,11 +806,11 @@ export default function PhotoFinishFullscreen({
               <div className="mt-6 p-4 bg-green-900/20 border border-green-500/30 rounded-lg">
                 <h4 className="font-medium text-green-400 mb-2">Analysis Complete</h4>
                 <div className="text-sm text-gray-300 whitespace-pre-wrap">
-                  {analyzeMutation.data.analysis}
+                  {(analyzeMutation.data as any)?.analysis}
                 </div>
-                {analyzeMutation.data.costSpikes > 0 && (
+                {(analyzeMutation.data as any)?.costSpikes > 0 && (
                   <div className="text-xs text-yellow-400 mt-2">
-                    Cost: {analyzeMutation.data.costSpikes} Spikes
+                    Cost: {(analyzeMutation.data as any)?.costSpikes} Spikes
                   </div>
                 )}
               </div>
