@@ -122,28 +122,19 @@ export default function PhotoFinishFullscreen({
   useEffect(() => {
     const canvas = canvasRef.current;
     const video = videoRef.current;
-    const container = containerRef.current;
-    if (!canvas || !video || !container) return;
-    
+    if (!canvas || !video) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-
-    // Update canvas size to match container
-    const rect = container.getBoundingClientRect();
-    canvas.width = rect.width;
-    canvas.height = rect.height;
-    
     const drawOverlays = () => {
       // Clear the entire canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      // Draw timer overlays with proper scaling
+      // Sleek timer implementation matching the design
       timers.forEach(timer => {
         const elapsedTime = currentTime - timer.startTime;
         const posX = (timer.x / 100) * canvas.width;
         const posY = (timer.y / 100) * canvas.height;
         
-        // Format time in MM•SS•TH format (minutes, seconds, hundredths)
+        // Format time in MM•SS•TH format (minutes, seconds, tenths+hundredths)
         const sign = elapsedTime < 0 ? '-' : '';
         const absSeconds = Math.abs(elapsedTime);
         const mins = Math.floor(absSeconds / 60);
@@ -151,9 +142,8 @@ export default function PhotoFinishFullscreen({
         const hundredths = Math.floor((absSeconds % 1) * 100);
         const text = `${sign}${mins.toString().padStart(2, '0')}•${secs.toString().padStart(2, '0')}•${hundredths.toString().padStart(2, '0')}`;
         
-        // Scale font size based on screen width - larger for fullscreen
-        const baseFontSize = Math.max(32, Math.min(canvas.width / 12, 120));
-        const fontSize = baseFontSize;
+        // Larger font for fullscreen mode
+        const fontSize = 56; // Bigger for fullscreen
         
         // Setup bold, clean font
         ctx.font = `900 ${fontSize}px 'Inter', 'SF Pro Display', 'Segoe UI', system-ui, sans-serif`;
@@ -164,9 +154,9 @@ export default function PhotoFinishFullscreen({
         const textWidth = metrics.width;
         const textHeight = fontSize * 0.8; // Better text height calculation
         
-        // Scale padding with font size
-        const paddingX = fontSize * 0.8;
-        const paddingY = fontSize * 0.5;
+        // Generous padding for sleek look
+        const paddingX = 48; // Larger for fullscreen
+        const paddingY = 28;
         const bgWidth = textWidth + (paddingX * 2);
         const bgHeight = textHeight + (paddingY * 2);
         const cornerRadius = 28; // More rounded corners for modern look
@@ -319,71 +309,49 @@ export default function PhotoFinishFullscreen({
     setIsDraggingFinishLine(false);
     setDraggedLineId(null);
   };
-  // Mouse drag handlers for finish line movement and video panning
+  // Mouse drag handlers for finish line movement
   const [isDraggingFinishLine, setIsDraggingFinishLine] = useState(false);
   const [draggedLineId, setDraggedLineId] = useState<string | null>(null);
-  const [isMousePanning, setIsMousePanning] = useState(false);
-  
   const handleCanvasMouseDown = (event: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
     const x = ((event.clientX - rect.left) / rect.width) * 100;
     const y = ((event.clientY - rect.top) / rect.height) * 100;
-    
     // Check if clicking on a finish line (expanded hit area)
     const clickedLine = finishLines.find(line => {
       const lineX = line.x;
-      const hitAreaWidth = 5;
+      const hitAreaWidth = 5; // Percentage-based hit area
       return x >= lineX - hitAreaWidth && x <= lineX + hitAreaWidth &&
              y >= line.y && y <= line.y + line.height;
     });
-    
     if (clickedLine) {
       setIsDraggingFinishLine(true);
       setDraggedLineId(clickedLine.id);
       setActiveFinishLine(clickedLine.id);
-    } else if (videoScale > 1) {
-      // Start mouse panning when video is zoomed
-      setIsMousePanning(true);
-      setLastPanPoint({ x: event.clientX, y: event.clientY });
     }
   };
   const handleCanvasMouseMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
-    if (isDraggingFinishLine && draggedLineId) {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const rect = canvas.getBoundingClientRect();
-      const x = ((event.clientX - rect.left) / rect.width) * 100;
-      // Move the finish line horizontally
-      setFinishLines(prev => prev.map(line => 
-        line.id === draggedLineId 
-          ? { ...line, x: Math.max(0, Math.min(98, x - 1)) }
-          : line
-      ));
-    } else if (isMousePanning && videoScale > 1) {
-      // Handle video panning when zoomed
-      const deltaX = event.clientX - lastPanPoint.x;
-      const deltaY = event.clientY - lastPanPoint.y;
-      
-      setVideoTranslate(prev => ({
-        x: prev.x + deltaX,
-        y: prev.y + deltaY
-      }));
-      
-      setLastPanPoint({ x: event.clientX, y: event.clientY });
-    }
+    if (!isDraggingFinishLine || !draggedLineId) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width) * 100;
+    // Move the finish line horizontally
+    setFinishLines(prev => prev.map(line => 
+      line.id === draggedLineId 
+        ? { ...line, x: Math.max(0, Math.min(98, x - 1)) }
+        : line
+    ));
   };
-  
   const handleCanvasMouseUp = () => {
     setIsDraggingFinishLine(false);
     setDraggedLineId(null);
-    setIsMousePanning(false);
   };
   // Handle canvas interactions
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     // Don't place new elements if we're dragging
-    if (isDraggingFinishLine || isMousePanning) return;
+    if (isDraggingFinishLine) return;
     
     const canvas = canvasRef.current;
     if (!canvas || !mode) return;
@@ -400,14 +368,6 @@ export default function PhotoFinishFullscreen({
       setTimers(prev => [...prev, newTimer]);
       setActiveTimer(newTimer.id);
       setMode(null);
-      
-      // Show toast notification
-      const mins = Math.floor(currentTime / 60);
-      const secs = (currentTime % 60).toFixed(2);
-      toast({
-        title: "Timer added",
-        description: `Timer placed at ${mins}:${secs.padStart(5, '0')}`,
-      });
     }
     // Finish line functionality disabled
     // else if (mode === 'finishline') {
@@ -589,25 +549,16 @@ export default function PhotoFinishFullscreen({
         </div>
       )}
       {/* Main Video Container */}
-      <div className="absolute inset-0 w-full h-full overflow-hidden" ref={containerRef}>
+      <div className="w-full h-full relative" ref={containerRef}>
         <video
           ref={videoRef}
           src={videoUrl || ''}
           poster={videoPoster}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain"
           style={{
-            transform: `scale(${videoScale}) translate(${videoTranslate.x / videoScale}px, ${videoTranslate.y / videoScale}px)`,
-            transformOrigin: 'center center',
-            minWidth: '100%',
-            minHeight: '100%',
+            transform: `scale(${videoScale}) translate(${videoTranslate.x}px, ${videoTranslate.y}px)`,
           }}
           onLoadedMetadata={handleVideoLoad}
-          onLoadedData={() => {
-            // Ensure video shows first frame
-            if (videoRef.current) {
-              videoRef.current.currentTime = 0.1;
-            }
-          }}
           onTimeUpdate={() => {
             if (videoRef.current) {
               setCurrentTime(videoRef.current.currentTime);
@@ -622,6 +573,8 @@ export default function PhotoFinishFullscreen({
         <canvas
           ref={canvasRef}
           className="absolute inset-0 w-full h-full pointer-events-auto cursor-crosshair"
+          width={1920}
+          height={1080}
           onClick={handleCanvasClick}
           onTouchStart={handleCanvasTouchStart}
           onTouchMove={handleCanvasTouchMove}
@@ -629,16 +582,6 @@ export default function PhotoFinishFullscreen({
           onMouseDown={handleCanvasMouseDown}
           onMouseMove={handleCanvasMouseMove}
           onMouseUp={handleCanvasMouseUp}
-          onWheel={(e) => {
-            e.preventDefault();
-            const delta = e.deltaY > 0 ? 0.9 : 1.1;
-            const newScale = Math.max(0.5, Math.min(3, videoScale * delta));
-            setVideoScale(newScale);
-          }}
-          style={{
-            transform: `scale(${videoScale}) translate(${videoTranslate.x / videoScale}px, ${videoTranslate.y / videoScale}px)`,
-            transformOrigin: 'center center',
-          }}
         />
         {/* Play/Pause Button Overlay */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -695,40 +638,6 @@ export default function PhotoFinishFullscreen({
             <Trash2 className="w-4 h-4 mr-2" />
             Clear All
           </Button>
-          
-          {/* Zoom Controls */}
-          <div className="flex items-center gap-2 border-l border-gray-600 pl-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setVideoScale(Math.max(0.5, videoScale - 0.25))}
-              className="text-white hover:bg-white/20"
-            >
-              -
-            </Button>
-            <span className="text-white text-sm min-w-[3rem] text-center">
-              {Math.round(videoScale * 100)}%
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setVideoScale(Math.min(3, videoScale + 0.25))}
-              className="text-white hover:bg-white/20"
-            >
-              +
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setVideoScale(1);
-                setVideoTranslate({ x: 0, y: 0 });
-              }}
-              className="text-white hover:bg-white/20 text-xs"
-            >
-              Reset
-            </Button>
-          </div>
         </div>
         {/* Scrubber and Controls */}
         <div className="flex items-center gap-4">
