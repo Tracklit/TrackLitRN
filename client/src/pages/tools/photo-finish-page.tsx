@@ -68,7 +68,6 @@ export default function PhotoFinishPage() {
   const [showVideoLibrary, setShowVideoLibrary] = useState(false);
   const [fullscreenMode, setFullscreenMode] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [loadingVideo, setLoadingVideo] = useState(false);
   
   // Video poster/thumbnail state
   const [videoPoster, setVideoPoster] = useState<string>("");
@@ -187,8 +186,8 @@ export default function PhotoFinishPage() {
       return;
     }
 
-    // Show loading state immediately when video is selected
-    setLoadingVideo(true);
+    // Show loading state immediately
+    setUploading(true);
     setCurrentVideo(file);
     const url = URL.createObjectURL(file);
     setVideoUrl(url);
@@ -199,8 +198,7 @@ export default function PhotoFinishPage() {
     setFinishLines([]);
     setSelectedTool('none');
     
-    // Automatically switch to fullscreen mode
-    setFullscreenMode(true);
+    // Loading will be cleared when video metadata loads
   };
 
   // Generate video thumbnail from first frame
@@ -239,13 +237,12 @@ export default function PhotoFinishPage() {
         
         const thumbnail = await generateVideoThumbnail(videoRef.current);
         setVideoPoster(thumbnail);
-        
-        // Clear loading state when video is ready
-        setLoadingVideo(false);
       } catch (error) {
         console.error('Failed to generate video thumbnail:', error);
-        setLoadingVideo(false);
       }
+      
+      // Clear loading state when video is ready
+      setUploading(false);
     }
   };
 
@@ -485,7 +482,7 @@ export default function PhotoFinishPage() {
         const clickY = event.clientY - rect.top;
         const distance = Math.sqrt((clickX - nodeX) ** 2 + (clickY - nodeY) ** 2);
         
-        if (distance <= 20) { // 20px hit area for better usability
+        if (distance <= 15) { // 15px hit area
           setIsDraggingNode(true);
           setDraggedNodeInfo({ lineId: line.id, nodeId: node.id });
           return;
@@ -682,8 +679,8 @@ export default function PhotoFinishPage() {
       const x = (timer.x / 100) * canvas.width;
       const y = (timer.y / 100) * canvas.height;
 
-      // Keep font size but make timer 30% bigger overall
-      const fontSize = 28; // Fixed size for better consistency
+      // 30% bigger timer with equal padding and 5px corners
+      const fontSize = 36; // Increased by 30% from 28
       
       // Draw timer with improved styling - proper aspect ratio font
       ctx.font = `bold ${fontSize}px 'Roboto Mono', 'SF Mono', 'Monaco', 'Inconsolata', monospace`;
@@ -695,8 +692,8 @@ export default function PhotoFinishPage() {
       const textWidth = metrics.width;
       const textHeight = fontSize * 0.7; // Proper text height ratio
       
-      // 30% bigger timer with equal padding on all sides
-      const padding = 30; // Equal padding for all sides
+      // Equal padding all around, 30% bigger
+      const padding = 32; // Equal padding for all sides
       const bgWidth = textWidth + (padding * 2);
       const bgHeight = textHeight + (padding * 2);
       const cornerRadius = 5;
@@ -733,41 +730,41 @@ export default function PhotoFinishPage() {
 
     // Draw finish lines
     finishLines.forEach(line => {
-      if (!line.visible) return;
+      if (!line.visible || line.nodes.length < 2) return;
 
-      // Draw line if we have exactly 2 nodes
-      if (line.nodes.length === 2) {
-        const node1 = line.nodes[0];
-        const node2 = line.nodes[1];
+      ctx.strokeStyle = '#ff0000';
+      ctx.lineWidth = 4;
+      ctx.setLineDash([]);
+
+      // Draw line segments
+      ctx.beginPath();
+      for (let i = 0; i < line.nodes.length - 1; i++) {
+        const node1 = line.nodes[i];
+        const node2 = line.nodes[i + 1];
         const x1 = (node1.x / 100) * canvas.width;
         const y1 = (node1.y / 100) * canvas.height;
         const x2 = (node2.x / 100) * canvas.width;
         const y2 = (node2.y / 100) * canvas.height;
 
-        // Draw connecting line
-        ctx.strokeStyle = '#ff0000';
-        ctx.lineWidth = 4;
-        ctx.setLineDash([]);
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
+        if (i === 0) {
+          ctx.moveTo(x1, y1);
+        }
         ctx.lineTo(x2, y2);
-        ctx.stroke();
       }
+      ctx.stroke();
 
-      // Draw nodes (always visible for dragging)
+      // Draw nodes
       line.nodes.forEach(node => {
         const x = (node.x / 100) * canvas.width;
         const y = (node.y / 100) * canvas.height;
 
-        // Larger, more visible nodes for easier dragging
         ctx.fillStyle = '#ff0000';
         ctx.beginPath();
-        ctx.arc(x, y, 10, 0, 2 * Math.PI);
+        ctx.arc(x, y, 8, 0, 2 * Math.PI);
         ctx.fill();
 
-        // White border for contrast
         ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 2;
         ctx.stroke();
       });
     });
@@ -1165,15 +1162,6 @@ export default function PhotoFinishPage() {
                     onTouchMove={handleVideoTouchMove}
                     onTouchEnd={handleVideoTouchEnd}
                   >
-                    {loadingVideo && (
-                      <div className="absolute inset-0 bg-black flex items-center justify-center z-10">
-                        <div className="flex flex-col items-center gap-4">
-                          <div className="animate-spin w-12 h-12 border-4 border-white border-t-transparent rounded-full" />
-                          <p className="text-white text-lg">Loading video...</p>
-                        </div>
-                      </div>
-                    )}
-                    
                     <video
                       ref={videoRef}
                       src={videoUrl}
@@ -1194,6 +1182,16 @@ export default function PhotoFinishPage() {
                       }}
                     />
                     
+                    {/* Loading Spinner */}
+                    {uploading && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="animate-spin w-8 h-8 border-3 border-white border-t-transparent rounded-full"></div>
+                          <div className="text-white text-sm font-medium">Loading video...</div>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Overlay Canvas */}
                     <canvas
                       ref={canvasRef}
