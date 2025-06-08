@@ -1,8 +1,8 @@
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 
-// the newest Anthropic model is "claude-sonnet-4-20250514" which was released May 14, 2025. Use this by default unless user has already selected claude-3-7-sonnet-20250219
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
+// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 export interface AnalysisRequest {
@@ -143,17 +143,17 @@ export async function analyzeVideo(request: AnalysisRequest): Promise<AnalysisRe
   const prompt = request.customPrompt || ANALYSIS_PROMPTS[request.analysisType];
   
   try {
-    const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
       max_tokens: 2000,
-      system: `You are Sprinthia, a world-renowned sprint coach and biomechanics expert. You have trained Olympic champions and world record holders. Your analysis is precise, actionable, and based on the latest sports science research. Always provide specific, implementable advice that athletes can use to improve their performance.`,
       messages: [
         {
+          role: 'system',
+          content: `You are Sprinthia, a world-renowned sprint coach and biomechanics expert. You have trained Olympic champions and world record holders. Your analysis is precise, actionable, and based on the latest sports science research. Always provide specific, implementable advice that athletes can use to improve their performance.`
+        },
+        {
           role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: `${prompt}
+          content: `${prompt}
 
 Video to analyze: ${request.videoUrl}
 
@@ -166,13 +166,11 @@ Please provide a comprehensive analysis formatted as follows:
 6. Performance Metrics to Monitor
 
 Make your analysis specific, actionable, and motivating for the athlete.`
-            }
-          ]
         }
       ]
     });
 
-    const analysisText = message.content[0].type === 'text' ? message.content[0].text : '';
+    const analysisText = response.choices[0].message.content || 'Analysis completed but no content returned.';
     
     // Parse the analysis into structured components
     const sections = analysisText.split(/\d+\.\s+/);
