@@ -618,7 +618,7 @@ export default function PhotoFinishPage() {
       const timerHeight = timerSize * 0.7;
       const fontSize = timerSize * 0.35;
       
-      // Draw timer text with semi-transparent dark background
+      // Draw timer with improved styling
       ctx.font = `bold ${fontSize}px system-ui, -apple-system, sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -628,21 +628,39 @@ export default function PhotoFinishPage() {
       const textWidth = metrics.width;
       const textHeight = fontSize;
       
-      // Padding around text
-      const padding = 8;
-      const bgWidth = textWidth + (padding * 2);
-      const bgHeight = textHeight + (padding * 2);
+      // Better padding for visual balance
+      const paddingX = 12;
+      const paddingY = 8;
+      const bgWidth = textWidth + (paddingX * 2);
+      const bgHeight = textHeight + (paddingY * 2);
+      const cornerRadius = 4;
       
-      // Draw semi-transparent dark background
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-      ctx.fillRect(
+      // Draw rounded background with better opacity
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+      ctx.beginPath();
+      ctx.roundRect(
         x - bgWidth / 2,
         y - bgHeight / 2,
         bgWidth,
-        bgHeight
+        bgHeight,
+        cornerRadius
       );
+      ctx.fill();
       
-      // Draw white text without shadow
+      // Draw slim border
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(
+        x - bgWidth / 2,
+        y - bgHeight / 2,
+        bgWidth,
+        bgHeight,
+        cornerRadius
+      );
+      ctx.stroke();
+      
+      // Draw crisp white text
       ctx.fillStyle = '#ffffff';
       ctx.fillText(text, x, y);
     });

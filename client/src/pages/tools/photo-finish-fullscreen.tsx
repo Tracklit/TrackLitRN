@@ -128,7 +128,7 @@ export default function PhotoFinishFullscreen({
     const drawOverlays = () => {
       // Clear the entire canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      // NEW TIMER IMPLEMENTATION: Semi-transparent dark background with white text
+      // Beautiful timer implementation with rounded corners and slim border
       timers.forEach(timer => {
         const elapsedTime = currentTime - timer.startTime;
         const posX = (timer.x / 100) * canvas.width;
@@ -147,21 +147,39 @@ export default function PhotoFinishFullscreen({
         const textWidth = metrics.width;
         const textHeight = textSize;
         
-        // Padding around text
-        const padding = 8;
-        const bgWidth = textWidth + (padding * 2);
-        const bgHeight = textHeight + (padding * 2);
+        // Better padding for visual balance
+        const paddingX = 12;
+        const paddingY = 8;
+        const bgWidth = textWidth + (paddingX * 2);
+        const bgHeight = textHeight + (paddingY * 2);
+        const cornerRadius = 4;
         
-        // Draw semi-transparent dark background
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-        ctx.fillRect(
+        // Draw rounded background with better opacity
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+        ctx.beginPath();
+        ctx.roundRect(
           posX - bgWidth / 2,
           posY - bgHeight / 2,
           bgWidth,
-          bgHeight
+          bgHeight,
+          cornerRadius
         );
+        ctx.fill();
         
-        // Draw white text without shadow
+        // Draw slim border
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(
+          posX - bgWidth / 2,
+          posY - bgHeight / 2,
+          bgWidth,
+          bgHeight,
+          cornerRadius
+        );
+        ctx.stroke();
+        
+        // Draw crisp white text
         ctx.fillStyle = '#ffffff';
         ctx.fillText(text, posX, posY);
       });
