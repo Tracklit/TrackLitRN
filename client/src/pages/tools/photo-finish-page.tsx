@@ -33,17 +33,7 @@ interface TimerOverlay {
   visible: boolean;
 }
 
-interface FinishLineNode {
-  id: string;
-  x: number;
-  y: number;
-}
 
-interface FinishLine {
-  id: string;
-  nodes: FinishLineNode[];
-  visible: boolean;
-}
 
 interface SavedVideo {
   id: string;
@@ -74,13 +64,9 @@ export default function PhotoFinishPage() {
   
   // Overlay state
   const [timers, setTimers] = useState<TimerOverlay[]>([]);
-  const [finishLines, setFinishLines] = useState<FinishLine[]>([]);
-  const [selectedTool, setSelectedTool] = useState<'none' | 'timer' | 'finish-line'>('none');
-  const [isDrawingLine, setIsDrawingLine] = useState(false);
-  const [currentLineId, setCurrentLineId] = useState<string | null>(null);
-  const [mode, setMode] = useState<'timer' | 'finishline' | null>(null);
+  const [selectedTool, setSelectedTool] = useState<'none' | 'timer'>('none');
+  const [mode, setMode] = useState<'timer' | null>(null);
   const [activeTimer, setActiveTimer] = useState<string | null>(null);
-  const [activeFinishLine, setActiveFinishLine] = useState<string | null>(null);
   
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -506,99 +492,19 @@ export default function PhotoFinishPage() {
         title: "Timer added",
         description: `Race timer placed at ${formatTime(currentTime)}`,
       });
-    } else if (selectedTool === 'finish-line') {
-      if (!isDrawingLine) {
-        // Start new finish line with first node
-        const lineId = `line-${Date.now()}`;
-        const newLine: FinishLine = {
-          id: lineId,
-          nodes: [{ id: `node-${Date.now()}`, x, y }],
-          visible: true
-        };
-        setFinishLines(prev => [...prev, newLine]);
-        setIsDrawingLine(true);
-        setCurrentLineId(lineId);
-        
-        toast({
-          title: "First node placed",
-          description: "Click again to place the second node and complete the finish line",
-        });
-      } else if (currentLineId) {
-        // Add second node and complete the line
-        const newNode: FinishLineNode = {
-          id: `node-${Date.now()}`,
-          x,
-          y
-        };
-        setFinishLines(prev => prev.map(line => 
-          line.id === currentLineId 
-            ? { ...line, nodes: [...line.nodes, newNode] }
-            : line
-        ));
-        
-        // Finish the line creation
-        setIsDrawingLine(false);
-        setCurrentLineId(null);
-        setSelectedTool('none');
-        
-        toast({
-          title: "Finish line created",
-          description: "You can now drag the nodes to adjust the line position",
-        });
-      }
     }
   };
 
-  // Handle node dragging
-  const handleCanvasMouseMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDraggingNode || !draggedNodeInfo || !canvasRef.current) return;
 
-    const rect = canvasRef.current.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * 100;
-    const y = ((event.clientY - rect.top) / rect.height) * 100;
-
-    setFinishLines(prev => prev.map(line => 
-      line.id === draggedNodeInfo.lineId
-        ? {
-            ...line,
-            nodes: line.nodes.map(node =>
-              node.id === draggedNodeInfo.nodeId
-                ? { ...node, x, y }
-                : node
-            )
-          }
-        : line
-    ));
-  };
-
-  const handleCanvasMouseUp = () => {
-    setIsDraggingNode(false);
-    setDraggedNodeInfo(null);
-  };
-
-  // Finish drawing line
-  const finishDrawingLine = () => {
-    setIsDrawingLine(false);
-    setCurrentLineId(null);
-    setSelectedTool('none');
-    
-    toast({
-      title: "Finish line created",
-      description: "Finish line has been placed on the video",
-    });
-  };
 
   // Clear all overlays
   const clearOverlays = () => {
     setTimers([]);
-    setFinishLines([]);
-    setIsDrawingLine(false);
-    setCurrentLineId(null);
     setSelectedTool('none');
     
     toast({
       title: "Overlays cleared",
-      description: "All timers and finish lines have been removed",
+      description: "All timers have been removed",
     });
   };
 
@@ -747,47 +653,7 @@ export default function PhotoFinishPage() {
       ctx.fillText(text, x, y);
     });
 
-    // Draw finish lines
-    finishLines.forEach(line => {
-      if (!line.visible || line.nodes.length < 2) return;
-
-      ctx.strokeStyle = '#ff0000';
-      ctx.lineWidth = 4;
-      ctx.setLineDash([]);
-
-      // Draw line segments
-      ctx.beginPath();
-      for (let i = 0; i < line.nodes.length - 1; i++) {
-        const node1 = line.nodes[i];
-        const node2 = line.nodes[i + 1];
-        const x1 = (node1.x / 100) * canvas.width;
-        const y1 = (node1.y / 100) * canvas.height;
-        const x2 = (node2.x / 100) * canvas.width;
-        const y2 = (node2.y / 100) * canvas.height;
-
-        if (i === 0) {
-          ctx.moveTo(x1, y1);
-        }
-        ctx.lineTo(x2, y2);
-      }
-      ctx.stroke();
-
-      // Draw nodes
-      line.nodes.forEach(node => {
-        const x = (node.x / 100) * canvas.width;
-        const y = (node.y / 100) * canvas.height;
-
-        ctx.fillStyle = '#ff0000';
-        ctx.beginPath();
-        ctx.arc(x, y, 8, 0, 2 * Math.PI);
-        ctx.fill();
-
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-      });
-    });
-  }, [currentTime, timers, finishLines]);
+  }, [currentTime, timers]);
 
   // Always use fullscreen mode for video analysis
   if (videoUrl) {
