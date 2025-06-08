@@ -275,6 +275,49 @@ export default function PhotoFinishPage() {
     }
   }, [currentVideo]);
 
+  // Draw timer overlays on canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const video = videoRef.current;
+    if (!canvas || !video) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Update canvas size to match video
+    const rect = video.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw timer overlays
+    timers.forEach(timer => {
+      const elapsedTime = currentTime - timer.startTime;
+      const posX = (timer.x / 100) * canvas.width;
+      const posY = (timer.y / 100) * canvas.height;
+      
+      // Set up text styling for MM•SS•TH format
+      const fontSize = Math.max(16, canvas.width / 30);
+      ctx.font = `bold ${fontSize}px 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      
+      // Create text with MM•SS•TH format
+      const text = formatTime(elapsedTime);
+      
+      // Add text shadow/stroke for visibility
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 3;
+      ctx.strokeText(text, posX, posY);
+      
+      // Draw main text in white
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillText(text, posX, posY);
+    });
+  }, [timers, currentTime, duration]);
+
   const handleVideoTimeUpdate = useCallback(() => {
     if (!videoRef.current) return;
     setCurrentTime(videoRef.current.currentTime);
@@ -559,50 +602,57 @@ export default function PhotoFinishPage() {
         )}
 
         <div className="h-full w-full flex items-center justify-center relative overflow-hidden pt-16 pb-32">
-          <video
-            ref={videoRef}
-            src={videoUrl}
-            poster={videoPoster}
-            preload="metadata"
-            className="max-h-full max-w-full object-contain"
-            onLoadedMetadata={handleVideoLoadedMetadata}
-            onLoadedData={() => {
-              // Ensure video shows first frame
-              if (videoRef.current) {
-                videoRef.current.currentTime = 0.01;
-              }
-            }}
-            onTimeUpdate={handleVideoTimeUpdate}
-            onPlay={handleVideoPlay}
-            onPause={handleVideoPause}
-            onEnded={handleVideoEnded}
-            onClick={(e) => {
-              if (mode === 'timer') {
-                const rect = e.currentTarget.getBoundingClientRect();
-                const x = ((e.clientX - rect.left) / rect.width) * 100;
-                const y = ((e.clientY - rect.top) / rect.height) * 100;
-                
-                const newTimer = {
-                  id: Date.now().toString(),
-                  x,
-                  y,
-                  startTime: currentTime,
-                  visible: true
-                };
-                
-                setTimers(prev => [...prev, newTimer]);
-                setActiveTimer(newTimer.id);
-                setMode(null);
-                
-                toast({
-                  title: "Timer added",
-                  description: `Timer placed at ${formatTime(currentTime)}`,
-                });
-              } else {
-                setMode(null);
-              }
-            }}
-          />
+          <div className="relative">
+            <video
+              ref={videoRef}
+              src={videoUrl}
+              poster={videoPoster}
+              preload="metadata"
+              className="max-h-full max-w-full object-contain"
+              onLoadedMetadata={handleVideoLoadedMetadata}
+              onLoadedData={() => {
+                // Ensure video shows first frame
+                if (videoRef.current) {
+                  videoRef.current.currentTime = 0.1;
+                }
+              }}
+              onTimeUpdate={handleVideoTimeUpdate}
+              onPlay={handleVideoPlay}
+              onPause={handleVideoPause}
+              onEnded={handleVideoEnded}
+            />
+            
+            {/* Timer overlay canvas */}
+            <canvas
+              ref={canvasRef}
+              className="absolute inset-0 w-full h-full pointer-events-none"
+              onClick={(e) => {
+                if (mode === 'timer') {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const x = ((e.clientX - rect.left) / rect.width) * 100;
+                  const y = ((e.clientY - rect.top) / rect.height) * 100;
+                  
+                  const newTimer = {
+                    id: Date.now().toString(),
+                    x,
+                    y,
+                    startTime: currentTime,
+                    visible: true
+                  };
+                  
+                  setTimers(prev => [...prev, newTimer]);
+                  setActiveTimer(newTimer.id);
+                  setMode(null);
+                  
+                  toast({
+                    title: "Timer added",
+                    description: `Timer placed at ${formatTime(currentTime)}`,
+                  });
+                }
+              }}
+              style={{ pointerEvents: mode === 'timer' ? 'auto' : 'none' }}
+            />
+          </div>
         </div>
 
         <div className="absolute bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black/80 to-transparent p-4">
@@ -888,6 +938,108 @@ export default function PhotoFinishPage() {
           </Card>
         </div>
       </div>
+      
+      {/* AI Analysis Dialog */}
+      <Dialog open={showAIDialog} onOpenChange={setShowAIDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Brain className="w-5 h-5 text-purple-600" />
+              Sprinthia AI Video Analysis
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="video-title">Video Title *</Label>
+              <Input
+                id="video-title"
+                placeholder="e.g., 100m Sprint Training"
+                value={videoTitle}
+                onChange={(e) => setVideoTitle(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Analysis Type *</Label>
+              <Select value={selectedAnalysisType} onValueChange={setSelectedAnalysisType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose analysis type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {analysisTypes.map((type) => (
+                    <SelectItem key={type.id} value={type.id}>
+                      <div className="flex items-center gap-2">
+                        <span>{type.icon}</span>
+                        <span>{type.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="custom-prompt">Custom Instructions (Optional)</Label>
+              <Textarea
+                id="custom-prompt"
+                placeholder="Add specific areas you'd like Sprinthia to focus on..."
+                value={customPrompt}
+                onChange={(e) => setCustomPrompt(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+              <Zap className="w-4 h-4 text-yellow-500" />
+              <span className="text-sm text-blue-700">
+                Analysis requires 10 spikes. Results will appear in your analysis history.
+              </span>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowAIDialog(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  if (!videoTitle || !selectedAnalysisType) {
+                    toast({
+                      title: "Missing Information",
+                      description: "Please fill in all required fields",
+                      variant: "destructive"
+                    });
+                    return;
+                  }
+
+                  analyzeVideoMutation.mutate({
+                    videoUrl: videoUrl,
+                    videoTitle,
+                    analysisType: selectedAnalysisType,
+                    customPrompt: customPrompt || undefined
+                  });
+                }}
+                disabled={analyzeVideoMutation.isPending || !videoTitle || !selectedAnalysisType}
+              >
+                {analyzeVideoMutation.isPending ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                    Starting Analysis...
+                  </>
+                ) : (
+                  <>
+                    <Brain className="w-4 h-4 mr-2" />
+                    Analyze with Sprinthia
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
