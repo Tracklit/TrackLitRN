@@ -69,6 +69,9 @@ export default function PhotoFinishPage() {
   const [fullscreenMode, setFullscreenMode] = useState(false);
   const [uploading, setUploading] = useState(false);
   
+  // Video poster/thumbnail state
+  const [videoPoster, setVideoPoster] = useState<string>("");
+  
   // Overlay state
   const [timers, setTimers] = useState<TimerOverlay[]>([]);
   const [finishLines, setFinishLines] = useState<FinishLine[]>([]);
@@ -186,6 +189,7 @@ export default function PhotoFinishPage() {
     setCurrentVideo(file);
     const url = URL.createObjectURL(file);
     setVideoUrl(url);
+    setVideoPoster(""); // Reset poster for new video
     
     // Reset overlays when new video is loaded
     setTimers([]);
@@ -196,11 +200,45 @@ export default function PhotoFinishPage() {
     setFullscreenMode(true);
   };
 
+  // Generate video thumbnail from first frame
+  const generateVideoThumbnail = (video: HTMLVideoElement): Promise<string> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataURL = canvas.toDataURL('image/jpeg', 0.8);
+        resolve(dataURL);
+      }
+    });
+  };
+
   // Handle video metadata load
-  const handleVideoLoad = () => {
+  const handleVideoLoad = async () => {
     if (videoRef.current) {
       setDuration(videoRef.current.duration);
       setCurrentTime(0);
+      
+      // Generate thumbnail from first frame
+      try {
+        videoRef.current.currentTime = 0;
+        await new Promise<void>(resolve => {
+          const onSeeked = () => {
+            videoRef.current?.removeEventListener('seeked', onSeeked);
+            resolve();
+          };
+          videoRef.current?.addEventListener('seeked', onSeeked);
+        });
+        
+        const thumbnail = await generateVideoThumbnail(videoRef.current);
+        setVideoPoster(thumbnail);
+      } catch (error) {
+        console.error('Failed to generate video thumbnail:', error);
+      }
     }
   };
 
@@ -686,7 +724,7 @@ export default function PhotoFinishPage() {
                 size="sm"
                 onClick={() => {
                   setFullscreenMode(false);
-                  setVideoUrl(null);
+                  setVideoUrl("");
                   setCurrentVideo(null);
                   setTimers([]);
                   setFinishLines([]);
@@ -767,12 +805,13 @@ export default function PhotoFinishPage() {
           <video
             ref={videoRef}
             src={videoUrl}
+            poster={videoPoster}
             className="w-full h-full object-contain"
             style={{
               transform: `scale(${videoScale}) translate(${videoTranslate.x}px, ${videoTranslate.y}px)`,
             }}
             onTimeUpdate={handleTimeUpdate}
-            onDurationChange={handleDurationChange}
+            onLoadedMetadata={handleVideoLoad}
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
             controls={false}
