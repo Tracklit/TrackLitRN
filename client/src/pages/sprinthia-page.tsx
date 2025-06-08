@@ -5,13 +5,12 @@ import { Header } from '@/components/layout/header';
 import { SidebarNavigation } from '@/components/layout/sidebar-navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { Send, MessageSquare, Zap, Crown, Star, Info, Plus, Brain } from 'lucide-react';
+import { queryClient } from '@/lib/queryClient';
+import { Send, MessageSquare, Info, Plus, Brain } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SprinthiaConversation {
@@ -46,24 +45,26 @@ export default function SprinthiaPage() {
     scrollToBottom();
   }, [activeConversationId]);
 
-  const { data: conversations = [] } = useQuery({
+  const { data: conversations = [] } = useQuery<SprinthiaConversation[]>({
     queryKey: ['/api/sprinthia/conversations'],
     enabled: !!user,
   });
 
-  const { data: messages = [] } = useQuery({
+  const { data: messages = [] } = useQuery<SprinthiaMessage[]>({
     queryKey: ['/api/sprinthia/messages', activeConversationId],
     enabled: !!activeConversationId,
   });
 
   const createConversationMutation = useMutation({
     mutationFn: async (title: string) => {
-      return apiRequest('/api/sprinthia/conversations', {
+      const response = await fetch('/api/sprinthia/conversations', {
         method: 'POST',
-        body: { title },
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title }),
       });
+      return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['/api/sprinthia/conversations'] });
       setActiveConversationId(data.id);
       toast({
@@ -75,10 +76,12 @@ export default function SprinthiaPage() {
 
   const sendMessageMutation = useMutation({
     mutationFn: async ({ conversationId, content }: { conversationId: number; content: string }) => {
-      return apiRequest('/api/sprinthia/messages', {
+      const response = await fetch('/api/sprinthia/messages', {
         method: 'POST',
-        body: { conversationId, content },
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conversationId, content }),
       });
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/sprinthia/messages', activeConversationId] });
