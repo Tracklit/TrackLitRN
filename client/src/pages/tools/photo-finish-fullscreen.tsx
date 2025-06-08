@@ -684,7 +684,7 @@ export default function PhotoFinishFullscreen({
           </Button>
           
           <div className="text-sm text-white font-mono">
-            {formatTime(currentTime)}
+            {`${Math.floor(currentTime / 60)}:${(currentTime % 60).toFixed(2).padStart(5, '0')}`}
           </div>
           
           {/* Scrubber */}
@@ -705,7 +705,7 @@ export default function PhotoFinishFullscreen({
           </div>
           
           <div className="text-sm text-white font-mono">
-            {formatTime(duration)}
+            {`${Math.floor(duration / 60)}:${(duration % 60).toFixed(2).padStart(5, '0')}`}
           </div>
         </div>
       </div>
