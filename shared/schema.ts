@@ -511,6 +511,31 @@ export const groupMessagesRelations = relations(groupMessages, ({ one }) => ({
   }),
 }));
 
+export const videoAnalysis = pgTable("video_analysis", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  description: text("description"),
+  fileUrl: text("file_url").notNull(),
+  fileName: text("file_name"),
+  thumbnailUrl: text("thumbnail_url"),
+  duration: integer("duration"), // in seconds
+  fileSize: integer("file_size"), // in bytes
+  mimeType: text("mime_type").notNull(),
+  status: text("status").default("uploading"), // uploading, processing, completed, failed
+  analysisData: text("analysis_data"), // JSON string of analysis results
+  isPublic: boolean("is_public").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const videoAnalysisRelations = relations(videoAnalysis, ({ one }) => ({
+  user: one(users, {
+    fields: [videoAnalysis.userId],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -579,7 +604,6 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertMeet = z.infer<typeof insertMeetSchema>;
 export type InsertResult = z.infer<typeof insertResultSchema>;
 export type InsertReminder = z.infer<typeof insertReminderSchema>;
-export type InsertMeetInvitation = z.infer<typeof insertMeetInvitationSchema>;
 export type InsertCoach = z.infer<typeof insertCoachSchema>;
 export type InsertAthleteGroup = z.infer<typeof insertAthleteGroupSchema>;
 export type InsertGroupMember = z.infer<typeof insertGroupMemberSchema>;
@@ -901,30 +925,7 @@ export type InsertLoginStreak = z.infer<typeof insertLoginStreakSchema>;
 export type InsertSpikeTransaction = z.infer<typeof insertSpikeTransactionSchema>;
 export type InsertReferral = z.infer<typeof insertReferralSchema>;
 
-// Video Analysis
-export const videoAnalysis = pgTable("video_analysis", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
-  name: text("name").notNull(),
-  description: text("description"),
-  fileUrl: text("file_url").notNull(), // Video file URL
-  thumbnailUrl: text("thumbnail_url"), // Generated thumbnail
-  duration: integer("duration"), // In seconds
-  fileSize: integer("file_size"), // In bytes
-  mimeType: text("mime_type").notNull(),
-  status: text("status", { enum: ['uploading', 'processing', 'completed', 'failed'] }).default('uploading'),
-  analysisData: text("analysis_data"), // JSON string for timing overlays and analysis results
-  isPublic: boolean("is_public").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
 
-export const videoAnalysisRelations = relations(videoAnalysis, ({ one }) => ({
-  user: one(users, {
-    fields: [videoAnalysis.userId],
-    references: [users.id],
-  }),
-}));
 
 export const insertVideoAnalysisSchema = createInsertSchema(videoAnalysis).omit({
   id: true,

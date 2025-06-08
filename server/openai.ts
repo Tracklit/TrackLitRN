@@ -1,88 +1,78 @@
 import OpenAI from "openai";
 
-if (!process.env.OPENAI_API_KEY) {
-  throw new Error('OPENAI_API_KEY is required');
-}
-
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({ 
+  apiKey: process.env.OPENAI_API_KEY 
+});
 
-const SPRINTHIA_SYSTEM_PROMPT = `You are Sprinthia, an elite track and field AI coach specializing in sprint, jump, and throw events. You draw expertise from world-renowned coaches and their methodologies:
-
-CORE COACHING PHILOSOPHIES:
-- Stu McMillan (Altis): High-intensity training, recovery-focused periodization
-- Fred Duncan: Technical mastery and biomechanical efficiency
-- Alex Natera: Strength-speed continuum and force-velocity profiling
-- Kristian Hansen: Danish sprinting methods and acceleration development
-- Lion Martinez: Power development and plyometric integration
-- Randy Huntington: Horizontal jumping technique and speed mechanics
-- Håkan Andersson & Anders Palmqvist: Swedish sprint methodology
-- Tony Holler: Feed the Cats system, speed reserve concepts
-- Charlie Francis: High-low training system and CNS management
-
-FUNDAMENTAL TRAINING PRINCIPLES:
-1. NEVER mix training modalities in same session (e.g., speed + speed endurance)
-2. Speed and maximum velocity work must be:
-   - Performed when fully rested
-   - Placed at beginning of session
-   - Given complete recovery between reps
-3. High-low training system: alternate high CNS days with low CNS days
-4. Quality over quantity - maintain maximum intensity for speed work
-5. Recovery is training - adequate rest between sessions is crucial
-
-SESSION STRUCTURE PRIORITIES:
-1. Warm-up and activation
-2. Speed/Power work (if included)
-3. Technical work
-4. Strength work (if not speed day)
-5. Conditioning (only on appropriate days)
-
-RECOVERY GUIDELINES:
-- 48-72 hours between high-intensity speed sessions
-- Monitor CNS fatigue through subjective wellness or HRV
-- Sleep and nutrition are non-negotiable performance factors
-
-PROGRAMMING PRINCIPLES:
-- Concurrent training: develop multiple qualities simultaneously but intelligently
-- Periodization: plan training phases based on competition calendar
-- Individual adaptation: adjust based on athlete response and background
-
-When providing training advice:
-- Reference specific methodologies from the mentioned coaches when relevant
-- Emphasize the importance of not mixing incompatible training elements
-- Always consider recovery and adaptation in recommendations
-- Provide practical, evidence-based solutions
-- Ask clarifying questions about athlete level, goals, and current phase when needed
-- If a question is vague or needs more context, ask 2-3 specific follow-up questions to provide better guidance
-- When suggesting workouts, always provide specific rep/set schemes, rest periods, and intensity levels
-- Include suggestions for next steps or related topics the athlete might want to explore
-
-CONVERSATION STYLE:
-- Be engaging and ask follow-up questions when appropriate
-- Offer multiple options when relevant (beginner/intermediate/advanced approaches)
-- Suggest related topics or follow-up questions at the end of responses
-- Keep responses comprehensive but digestible
-
-Respond in a knowledgeable, professional manner while keeping advice practical and implementable.`;
-
-export async function getChatCompletion(userMessage: string, programContext?: string): Promise<string> {
+export async function getChatCompletion(prompt: string): Promise<string> {
   try {
-    const messages = [
-      { role: "system", content: SPRINTHIA_SYSTEM_PROMPT },
-      ...(programContext ? [{ role: "system", content: `ATHLETE'S CURRENT PROGRAM CONTEXT:\n${programContext}` }] : []),
-      { role: "user", content: userMessage }
-    ];
-
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
-      messages: messages as any,
-      max_tokens: 1200,
+      messages: [
+        {
+          role: "system",
+          content: "You are Sprinthia, an expert AI sprint coach specializing in track and field performance analysis. Provide detailed, technical, and actionable feedback on sprint technique and biomechanics. Always structure your responses with clear sections and use bullet points for easy reading."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      max_tokens: 1000,
       temperature: 0.7,
     });
 
-    return response.choices[0].message.content || "I apologize, but I couldn't generate a response. Please try again.";
+    return response.choices[0].message.content || "Analysis could not be completed at this time.";
   } catch (error) {
     console.error("OpenAI API error:", error);
-    throw new Error("Failed to get AI response. Please try again later.");
+    throw new Error("Failed to generate analysis. Please try again.");
   }
+}
+
+export async function analyzeVideoWithPrompt(
+  videoName: string,
+  videoDescription: string,
+  analysisType: string
+): Promise<string> {
+  const analysisPrompts: Record<string, string> = {
+    "sprint-form": "Analyze the sprint form and running technique. Focus on body posture, arm swing, leg drive, and overall biomechanics. Provide detailed feedback on what the athlete is doing well and specific areas for improvement.",
+    "block-start": "Analyze the starting blocks technique. Examine the setup position, reaction time, first few steps, and acceleration phase. Provide technical feedback on starting mechanics and suggestions for improvement.",
+    "stride-length": "Analyze the stride length patterns throughout the sprint. Examine the relationship between stride length and speed phases, compare early acceleration vs. maximum velocity phases, and provide recommendations for optimal stride length.",
+    "stride-frequency": "Analyze the stride frequency and cadence. Calculate approximate steps per second during different phases, examine rhythm consistency, and provide feedback on optimal turnover rate.",
+    "ground-contact": "Analyze the ground contact time and foot strike patterns. Examine how long the foot stays in contact with the ground during different phases, foot placement, and provide technical feedback on contact efficiency.",
+    "flight-time": "Analyze the flight time and airborne phases between steps. Examine the relationship between ground contact and flight phases, overall stride efficiency, and provide recommendations for optimal flight mechanics."
+  };
+
+  const basePrompt = analysisPrompts[analysisType];
+  if (!basePrompt) {
+    throw new Error("Invalid analysis type");
+  }
+
+  const fullPrompt = `${basePrompt}
+
+Video Information:
+- Video Name: ${videoName}
+- Description: ${videoDescription || "No description provided"}
+
+Please provide a comprehensive analysis as Sprinthia, the AI sprint coach. Be specific, technical, and actionable in your feedback. Structure your response with the following sections:
+
+## Overall Assessment
+[Provide a brief summary of the athlete's performance]
+
+## Key Strengths
+[List what the athlete is doing well]
+
+## Areas for Improvement
+[Identify specific technical issues]
+
+## Recommendations
+[Provide actionable coaching tips and drills]
+
+## Next Steps
+[Suggest what to focus on in training]
+
+Use bullet points within each section for clarity and easy reading.`;
+
+  return await getChatCompletion(fullPrompt);
 }

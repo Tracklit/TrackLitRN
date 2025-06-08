@@ -6838,6 +6838,242 @@ Keep the response professional, evidence-based, and specific to track and field 
   });
 
   // ============================================================
+  // Video Analysis API Routes
+  // ============================================================
+
+  // Get user's uploaded videos
+  app.get("/api/video-analysis", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const videos = await dbStorage.db
+        .select()
+        .from(dbStorage.videoAnalysis)
+        .where(eq(dbStorage.videoAnalysis.userId, req.user.id))
+        .orderBy(desc(dbStorage.videoAnalysis.createdAt));
+      
+      res.json(videos);
+    } catch (error) {
+      console.error("Error fetching videos:", error);
+      res.status(500).json({ error: "Failed to fetch videos" });
+    }
+  });
+
+  // Upload video for analysis
+  app.post("/api/video-analysis/upload", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const upload = multer({
+        dest: 'uploads/video-analysis/',
+        limits: { fileSize: 100 * 1024 * 1024 }, // 100MB limit
+        fileFilter: (req, file, cb) => {
+          const allowedTypes = ['video/mp4', 'video/mov', 'video/avi', 'video/quicktime'];
+          if (allowedTypes.includes(file.mimetype)) {
+            cb(null, true);
+          } else {
+            cb(new Error('Invalid file type'));
+          }
+        }
+      }).single('file');
+
+      upload(req, res, async (err) => {
+        if (err) {
+          return res.status(400).json({ error: err.message });
+        }
+
+        if (!req.file) {
+          return res.status(400).json({ error: "No file uploaded" });
+        }
+
+        const { name, description } = req.body;
+        
+        if (!name || !name.trim()) {
+          return res.status(400).json({ error: "Video name is required" });
+        }
+
+        // Create video record in database
+        const [video] = await dbStorage.db
+          .insert(dbStorage.videoAnalysis)
+          .values({
+            userId: req.user.id,
+            name: name.trim(),
+            description: description || null,
+            fileUrl: req.file.path,
+            fileName: req.file.originalname,
+            fileSize: req.file.size,
+            mimeType: req.file.mimetype,
+            status: 'completed'
+          })
+          .returning();
+
+        res.json(video);
+      });
+    } catch (error) {
+      console.error("Error uploading video:", error);
+      res.status(500).json({ error: "Failed to upload video" });
+    }
+  });
+
+  // Analyze video with Sprinthia AI
+  app.post("/api/video-analysis/:videoId/analyze", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const videoId = parseInt(req.params.videoId);
+      const { promptId } = req.body;
+
+      if (!promptId) {
+        return res.status(400).json({ error: "Analysis type is required" });
+      }
+
+      // Get video details
+      const [video] = await dbStorage.db
+        .select()
+        .from(dbStorage.videoAnalysis)
+        .where(and(
+          eq(dbStorage.videoAnalysis.id, videoId),
+          eq(dbStorage.videoAnalysis.userId, req.user.id)
+        ));
+
+      if (!video) {
+        return res.status(404).json({ error: "Video not found" });
+      }
+
+      // Check user's prompt limits
+      const user = req.user;
+      const subscriptionTier = user.subscriptionTier || "free";
+      const currentPrompts = user.sprinthiaPrompts || 0;
+
+      let canAnalyze = false;
+      let promptCost = 0;
+
+      if (subscriptionTier === "star") {
+        canAnalyze = true;
+      } else if (subscriptionTier === "pro") {
+        canAnalyze = currentPrompts < 5;
+        promptCost = 0;
+      } else { // free tier
+        canAnalyze = currentPrompts < 1;
+        promptCost = 25; // Spikes cost for additional prompts
+      }
+
+      if (!canAnalyze) {
+        return res.status(403).json({ 
+          error: "Prompt limit reached",
+          message: subscriptionTier === "pro" 
+            ? "You've used all 5 prompts this week. Upgrade to Star for unlimited prompts."
+            : "You've used your 1 free prompt this month. Upgrade your plan or buy more with Spikes."
+        });
+      }
+
+      // Define analysis prompts
+      const analysisPrompts: Record<string, string> = {
+        "sprint-form": "Analyze the sprint form and running technique in this video. Focus on body posture, arm swing, leg drive, and overall biomechanics. Provide detailed feedback on what the athlete is doing well and specific areas for improvement.",
+        "block-start": "Analyze the starting blocks technique in this sprint video. Examine the setup position, reaction time, first few steps, and acceleration phase. Provide technical feedback on starting mechanics and suggestions for improvement.",
+        "stride-length": "Analyze the stride length patterns throughout this sprint video. Examine the relationship between stride length and speed phases, compare early acceleration vs. maximum velocity phases, and provide recommendations for optimal stride length.",
+        "stride-frequency": "Analyze the stride frequency and cadence in this sprint video. Calculate approximate steps per second during different phases of the race, examine rhythm consistency, and provide feedback on optimal turnover rate.",
+        "ground-contact": "Analyze the ground contact time and foot strike patterns in this sprint video. Examine how long the foot stays in contact with the ground during different phases, foot placement, and provide technical feedback on contact efficiency.",
+        "flight-time": "Analyze the flight time and airborne phases between steps in this sprint video. Examine the relationship between ground contact and flight phases, overall stride efficiency, and provide recommendations for optimal flight mechanics."
+      };
+
+      const prompt = analysisPrompts[promptId];
+      if (!prompt) {
+        return res.status(400).json({ error: "Invalid analysis type" });
+      }
+
+      // Generate AI analysis using OpenAI
+      const { getChatCompletion } = await import('./openai');
+      
+      const analysisPrompt = `${prompt}
+
+Video details:
+- Video name: ${video.name}
+- Description: ${video.description || "No description provided"}
+- File type: ${video.mimeType}
+
+Please provide a comprehensive analysis as Sprinthia, the AI sprint coach. Be specific, technical, and actionable in your feedback. Structure your response with clear sections and bullet points for easy reading.`;
+
+      const analysis = await getChatCompletion(analysisPrompt);
+
+      // Update user's prompt usage
+      if (subscriptionTier !== "star") {
+        await dbStorage.db
+          .update(dbStorage.users)
+          .set({ 
+            sprinthiaPrompts: currentPrompts + 1,
+            updatedAt: new Date()
+          })
+          .where(eq(dbStorage.users.id, user.id));
+      }
+
+      // Save analysis to video record
+      await dbStorage.db
+        .update(dbStorage.videoAnalysis)
+        .set({ 
+          analysisData: analysis,
+          updatedAt: new Date()
+        })
+        .where(eq(dbStorage.videoAnalysis.id, videoId));
+
+      res.json({ 
+        analysis,
+        promptsUsed: subscriptionTier !== "star" ? currentPrompts + 1 : "unlimited"
+      });
+
+    } catch (error) {
+      console.error("Error analyzing video:", error);
+      res.status(500).json({ error: "Failed to analyze video" });
+    }
+  });
+
+  // Buy additional prompts with Spikes
+  app.post("/api/video-analysis/buy-prompts", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const { quantity = 1 } = req.body;
+      const spikeCostPerPrompt = 25;
+      const totalCost = quantity * spikeCostPerPrompt;
+
+      const user = req.user;
+      const currentSpikes = user.spikes || 0;
+
+      if (currentSpikes < totalCost) {
+        return res.status(400).json({ 
+          error: "Insufficient Spikes",
+          required: totalCost,
+          current: currentSpikes
+        });
+      }
+
+      // Reset prompt count (buying resets the monthly/weekly limit)
+      const newPromptCount = 0;
+
+      // Deduct spikes and reset prompts
+      await dbStorage.db
+        .update(dbStorage.users)
+        .set({ 
+          spikes: currentSpikes - totalCost,
+          sprinthiaPrompts: newPromptCount,
+          updatedAt: new Date()
+        })
+        .where(eq(dbStorage.users.id, user.id));
+
+      res.json({ 
+        success: true,
+        spikesUsed: totalCost,
+        remainingSpikes: currentSpikes - totalCost,
+        promptsAvailable: user.subscriptionTier === "pro" ? 5 : 1
+      });
+
+    } catch (error) {
+      console.error("Error buying prompts:", error);
+      res.status(500).json({ error: "Failed to purchase prompts" });
+    }
+  });
+
+  // ============================================================
   // Competition Calendar API Routes
   // ============================================================
 
