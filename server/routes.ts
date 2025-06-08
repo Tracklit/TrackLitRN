@@ -6889,19 +6889,16 @@ Keep the response professional, evidence-based, and specific to track and field 
         }
 
         // Create video record in database
-        const [video] = await dbStorage.db
-          .insert(dbStorage.videoAnalysis)
-          .values({
-            userId: req.user.id,
-            name: name.trim(),
-            description: description || null,
-            fileUrl: req.file.path,
-            fileName: req.file.originalname,
-            fileSize: req.file.size,
-            mimeType: req.file.mimetype,
-            status: 'completed'
-          })
-          .returning();
+        const video = await dbStorage.createVideoAnalysis({
+          userId: req.user.id,
+          name: name.trim(),
+          description: description || null,
+          fileUrl: req.file.path,
+          fileName: req.file.originalname,
+          fileSize: req.file.size,
+          mimeType: req.file.mimetype,
+          status: 'completed'
+        });
 
         res.json(video);
       });
@@ -6988,23 +6985,15 @@ Please provide a comprehensive analysis as Sprinthia, the AI sprint coach. Be sp
 
       // Update user's prompt usage
       if (subscriptionTier !== "star") {
-        await dbStorage.db
-          .update(dbStorage.users)
-          .set({ 
-            sprinthiaPrompts: currentPrompts + 1,
-            updatedAt: new Date()
-          })
-          .where(eq(dbStorage.users.id, user.id));
+        await dbStorage.updateUser(user.id, { 
+          sprinthiaPrompts: currentPrompts + 1
+        });
       }
 
       // Save analysis to video record
-      await dbStorage.db
-        .update(dbStorage.videoAnalysis)
-        .set({ 
-          analysisData: analysis,
-          updatedAt: new Date()
-        })
-        .where(eq(dbStorage.videoAnalysis.id, videoId));
+      await dbStorage.updateVideoAnalysis(videoId, { 
+        analysisData: analysis
+      });
 
       res.json({ 
         analysis,
@@ -7041,14 +7030,10 @@ Please provide a comprehensive analysis as Sprinthia, the AI sprint coach. Be sp
       const newPromptCount = 0;
 
       // Deduct spikes and reset prompts
-      await dbStorage.db
-        .update(dbStorage.users)
-        .set({ 
-          spikes: currentSpikes - totalCost,
-          sprinthiaPrompts: newPromptCount,
-          updatedAt: new Date()
-        })
-        .where(eq(dbStorage.users.id, user.id));
+      await dbStorage.updateUser(user.id, { 
+        spikes: currentSpikes - totalCost,
+        sprinthiaPrompts: newPromptCount
+      });
 
       res.json({ 
         success: true,
