@@ -15,21 +15,18 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-
 interface PhotoFinishVideo {
   id: number;
   title: string;
   videoUrl: string;
   createdAt: string;
 }
-
 interface RaceTimer {
   id: string;
   x: number;
   y: number;
   startTime: number;
 }
-
 interface FinishLine {
   id: string;
   x: number;
@@ -37,13 +34,11 @@ interface FinishLine {
   width: number;
   height: number;
 }
-
 interface PhotoFinishFullscreenProps {
   videoUrl: string | null;
   currentVideo: PhotoFinishVideo | null;
   onClose: () => void;
 }
-
 export default function PhotoFinishFullscreen({ 
   videoUrl, 
   currentVideo, 
@@ -81,13 +76,11 @@ export default function PhotoFinishFullscreen({
   const [videoTranslate, setVideoTranslate] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 });
-
   // Load saved videos
   const { data: savedVideos = [] } = useQuery<PhotoFinishVideo[]>({
     queryKey: ['/api/photo-finish-videos'],
     enabled: showVideoLibrary
   });
-
   // Save video mutation
   const saveVideoMutation = useMutation({
     mutationFn: (data: { title: string; timers: RaceTimer[]; finishLines: FinishLine[] }) =>
@@ -100,29 +93,24 @@ export default function PhotoFinishFullscreen({
       toast({ title: 'Failed to save video', variant: 'destructive' });
     }
   });
-
   // Format time display
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = (seconds % 60).toFixed(2);
     return `${mins}:${secs.padStart(5, '0')}`;
   };
-
   // Video event handlers
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-
     const handleTimeUpdate = () => setCurrentTime(video.currentTime);
     const handleDurationChange = () => setDuration(video.duration);
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
-
     video.addEventListener('timeupdate', handleTimeUpdate);
     video.addEventListener('durationchange', handleDurationChange);
     video.addEventListener('play', handlePlay);
     video.addEventListener('pause', handlePause);
-
     return () => {
       video.removeEventListener('timeupdate', handleTimeUpdate);
       video.removeEventListener('durationchange', handleDurationChange);
@@ -130,26 +118,21 @@ export default function PhotoFinishFullscreen({
       video.removeEventListener('pause', handlePause);
     };
   }, [videoUrl]);
-
   // Draw overlays on canvas
   useEffect(() => {
     const canvas = canvasRef.current;
     const video = videoRef.current;
     if (!canvas || !video) return;
-
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-
     const drawOverlays = () => {
       // Clear the entire canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
       // NEW TIMER IMPLEMENTATION: Pure white text with drop shadow only
       timers.forEach(timer => {
         const elapsedTime = currentTime - timer.startTime;
         const posX = (timer.x / 100) * canvas.width;
         const posY = (timer.y / 100) * canvas.height;
-
         // Calculate responsive font size
         const textSize = Math.max(canvas.width * 0.04, 28);
         
@@ -176,13 +159,11 @@ export default function PhotoFinishFullscreen({
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 0;
       });
-
       // Draw finish lines as vertical lines
       finishLines.forEach(line => {
         const x = (line.x / 100) * canvas.width;
         const y1 = (line.y / 100) * canvas.height;
         const y2 = ((line.y + line.height) / 100) * canvas.height;
-
         ctx.strokeStyle = activeFinishLine === line.id ? '#ff0000' : '#00ff00';
         ctx.lineWidth = 4;
         ctx.beginPath();
@@ -191,20 +172,16 @@ export default function PhotoFinishFullscreen({
         ctx.stroke();
       });
     };
-
     drawOverlays();
   }, [timers, finishLines, currentTime, activeTimer, activeFinishLine]);
-
   // Touch handlers for pinch-to-zoom, two-finger panning and one-finger finish line dragging
   const [lastDistance, setLastDistance] = useState(0);
-
   const getDistance = (touch1: React.Touch, touch2: React.Touch) => {
     return Math.sqrt(
       Math.pow(touch2.clientX - touch1.clientX, 2) +
       Math.pow(touch2.clientY - touch1.clientY, 2)
     );
   };
-
   const handleCanvasTouchStart = (event: React.TouchEvent<HTMLCanvasElement>) => {
     if (event.touches.length === 2) {
       // Two-finger gestures (pinch-to-zoom and pan)
@@ -222,12 +199,10 @@ export default function PhotoFinishFullscreen({
       // Single finger - check for finish line drag
       const canvas = canvasRef.current;
       if (!canvas) return;
-
       const rect = canvas.getBoundingClientRect();
       const touch = event.touches[0];
       const x = ((touch.clientX - rect.left) / rect.width) * 100;
       const y = ((touch.clientY - rect.top) / rect.height) * 100;
-
       // Check if touching a finish line (expanded hit area)
       const clickedLine = finishLines.find(line => {
         const lineX = line.x;
@@ -235,7 +210,6 @@ export default function PhotoFinishFullscreen({
         return x >= lineX - hitAreaWidth && x <= lineX + hitAreaWidth &&
                y >= line.y && y <= line.y + line.height;
       });
-
       if (clickedLine) {
         event.preventDefault();
         setIsDraggingFinishLine(true);
@@ -244,7 +218,6 @@ export default function PhotoFinishFullscreen({
       }
     }
   };
-
   const handleCanvasTouchMove = (event: React.TouchEvent<HTMLCanvasElement>) => {
     if (event.touches.length === 2 && isPanning) {
       // Two-finger gestures (pinch-to-zoom and pan)
@@ -280,11 +253,9 @@ export default function PhotoFinishFullscreen({
       event.preventDefault();
       const canvas = canvasRef.current;
       if (!canvas) return;
-
       const rect = canvas.getBoundingClientRect();
       const touch = event.touches[0];
       const x = ((touch.clientX - rect.left) / rect.width) * 100;
-
       // Move the finish line horizontally
       setFinishLines(prev => prev.map(line => 
         line.id === draggedLineId 
@@ -293,25 +264,20 @@ export default function PhotoFinishFullscreen({
       ));
     }
   };
-
   const handleCanvasTouchEnd = () => {
     setIsPanning(false);
     setIsDraggingFinishLine(false);
     setDraggedLineId(null);
   };
-
   // Mouse drag handlers for finish line movement
   const [isDraggingFinishLine, setIsDraggingFinishLine] = useState(false);
   const [draggedLineId, setDraggedLineId] = useState<string | null>(null);
-
   const handleCanvasMouseDown = (event: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const rect = canvas.getBoundingClientRect();
     const x = ((event.clientX - rect.left) / rect.width) * 100;
     const y = ((event.clientY - rect.top) / rect.height) * 100;
-
     // Check if clicking on a finish line (expanded hit area)
     const clickedLine = finishLines.find(line => {
       const lineX = line.x;
@@ -319,23 +285,18 @@ export default function PhotoFinishFullscreen({
       return x >= lineX - hitAreaWidth && x <= lineX + hitAreaWidth &&
              y >= line.y && y <= line.y + line.height;
     });
-
     if (clickedLine) {
       setIsDraggingFinishLine(true);
       setDraggedLineId(clickedLine.id);
       setActiveFinishLine(clickedLine.id);
     }
   };
-
   const handleCanvasMouseMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDraggingFinishLine || !draggedLineId) return;
-
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const rect = canvas.getBoundingClientRect();
     const x = ((event.clientX - rect.left) / rect.width) * 100;
-
     // Move the finish line horizontally
     setFinishLines(prev => prev.map(line => 
       line.id === draggedLineId 
@@ -343,12 +304,10 @@ export default function PhotoFinishFullscreen({
         : line
     ));
   };
-
   const handleCanvasMouseUp = () => {
     setIsDraggingFinishLine(false);
     setDraggedLineId(null);
   };
-
   // Handle canvas interactions
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     // Don't place new elements if we're dragging
@@ -356,11 +315,9 @@ export default function PhotoFinishFullscreen({
     
     const canvas = canvasRef.current;
     if (!canvas || !mode) return;
-
     const rect = canvas.getBoundingClientRect();
     const x = ((event.clientX - rect.left) / rect.width) * 100;
     const y = ((event.clientY - rect.top) / rect.height) * 100;
-
     if (mode === 'timer') {
       const newTimer: RaceTimer = {
         id: Date.now().toString(),
@@ -376,7 +333,6 @@ export default function PhotoFinishFullscreen({
     //   // Functionality temporarily disabled
     // }
   };
-
   // Scrubber handlers
   const handleSliderInteraction = (clientX: number, element: HTMLDivElement) => {
     const rect = element.getBoundingClientRect();
@@ -389,7 +345,6 @@ export default function PhotoFinishFullscreen({
       setCurrentTime(time);
     }
   };
-
   const handleMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
     event.preventDefault();
     setIsDragging(true);
@@ -408,17 +363,14 @@ export default function PhotoFinishFullscreen({
     
     handleSliderInteraction(event.clientX, event.currentTarget);
   };
-
   const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
     if (isDragging) {
       handleSliderInteraction(event.clientX, event.currentTarget);
     }
   };
-
   const handleMouseUp = () => {
     setIsDragging(false);
   };
-
   // Play/pause toggle
   const togglePlayPause = () => {
     if (videoRef.current) {
@@ -429,7 +381,6 @@ export default function PhotoFinishFullscreen({
       }
     }
   };
-
   // Save video
   const handleSaveVideo = () => {
     if (!currentVideo) return;
@@ -440,7 +391,6 @@ export default function PhotoFinishFullscreen({
       finishLines
     });
   };
-
   // Generate video thumbnail from first frame
   const generateVideoThumbnail = (video: HTMLVideoElement): Promise<string> => {
     return new Promise((resolve) => {
@@ -457,7 +407,6 @@ export default function PhotoFinishFullscreen({
       }
     });
   };
-
   // Handle video metadata load and generate thumbnail
   const handleVideoLoad = async () => {
     if (videoRef.current) {
@@ -482,16 +431,13 @@ export default function PhotoFinishFullscreen({
       }
     }
   };
-
   // Auto-hide controls
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowControls(false);
     }, 3000);
-
     return () => clearTimeout(timer);
   }, [showControls]);
-
   return (
     <div 
       className="fixed inset-0 bg-black text-white overflow-hidden"
@@ -521,11 +467,9 @@ export default function PhotoFinishFullscreen({
               <FolderOpen className="w-5 h-5" />
             </Button>
           </div>
-
           <div className="text-white font-medium">
             {currentVideo?.title || 'Race Analysis'}
           </div>
-
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
@@ -545,7 +489,6 @@ export default function PhotoFinishFullscreen({
           </div>
         </div>
       </div>
-
       {/* Video Library Sidebar */}
       {showVideoLibrary && (
         <div className="absolute top-0 left-0 w-80 h-full bg-black/90 backdrop-blur-sm z-40 border-r border-gray-800">
@@ -577,7 +520,6 @@ export default function PhotoFinishFullscreen({
           </div>
         </div>
       )}
-
       {/* Main Video Container */}
       <div className="w-full h-full relative" ref={containerRef}>
         <video
@@ -613,7 +555,6 @@ export default function PhotoFinishFullscreen({
           onMouseMove={handleCanvasMouseMove}
           onMouseUp={handleCanvasMouseUp}
         />
-
         {/* Play/Pause Button Overlay */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <Button
@@ -628,7 +569,6 @@ export default function PhotoFinishFullscreen({
           </Button>
         </div>
       </div>
-
       {/* Bottom Controls Bar */}
       <div className={`absolute bottom-0 left-0 right-0 z-50 transition-opacity duration-300 ${
         showControls ? 'opacity-100' : 'opacity-0'
@@ -671,7 +611,6 @@ export default function PhotoFinishFullscreen({
             Clear All
           </Button>
         </div>
-
         {/* Scrubber and Controls */}
         <div className="flex items-center gap-4">
           <Button
@@ -712,4 +651,3 @@ export default function PhotoFinishFullscreen({
     </div>
   );
 }
-
