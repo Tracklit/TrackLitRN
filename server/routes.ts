@@ -18,6 +18,7 @@ import { GoogleSpreadsheet } from "google-spreadsheet";
 import { notificationSystem } from "./notification-system";
 import { insertAthleteProfileSchema } from "@shared/athlete-profile-schema";
 import { worldAthleticsService } from "./world-athletics";
+import { videoAnalysisRouter } from "./routes/video-analysis";
 
 // Background processing function for gym data
 async function processGymDataInBackground(programId: number, googleSheetId: string, sessions: any[]) {
@@ -6505,6 +6506,9 @@ Keep the response professional, evidence-based, and specific to track and field 
       res.status(500).json({ error: "Failed to get coach limits" });
     }
   });
+
+  // Video Analysis routes
+  app.use('/api/video-analysis', videoAnalysisRouter);
 
   const httpServer = createServer(app);
 
