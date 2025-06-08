@@ -128,36 +128,42 @@ export default function PhotoFinishFullscreen({
     const drawOverlays = () => {
       // Clear the entire canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      // NEW TIMER IMPLEMENTATION: Pure white text with drop shadow only
+      // NEW TIMER IMPLEMENTATION: Semi-transparent dark background with white text
       timers.forEach(timer => {
         const elapsedTime = currentTime - timer.startTime;
         const posX = (timer.x / 100) * canvas.width;
         const posY = (timer.y / 100) * canvas.height;
+        
         // Calculate responsive font size
         const textSize = Math.max(canvas.width * 0.04, 28);
         
-        // Setup font to match app design
-        ctx.font = `bold ${textSize}px Inter, system-ui, -apple-system, sans-serif`;
+        // Setup font with proper aspect ratio
+        ctx.font = `bold ${textSize}px system-ui, -apple-system, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
-        // Apply subtle drop shadow for readability
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
-        ctx.shadowBlur = 2;
-        ctx.shadowOffsetX = 1;
-        ctx.shadowOffsetY = 1;
+        const text = `${elapsedTime.toFixed(2)}s`;
+        const metrics = ctx.measureText(text);
+        const textWidth = metrics.width;
+        const textHeight = textSize;
         
-        // TRANSPARENT TIMER: Only white text with shadow
+        // Padding around text
+        const padding = 8;
+        const bgWidth = textWidth + (padding * 2);
+        const bgHeight = textHeight + (padding * 2);
+        
+        // Draw semi-transparent dark background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        ctx.fillRect(
+          posX - bgWidth / 2,
+          posY - bgHeight / 2,
+          bgWidth,
+          bgHeight
+        );
+        
+        // Draw white text without shadow
         ctx.fillStyle = '#ffffff';
-        ctx.fillText(`${elapsedTime.toFixed(2)}s`, posX, posY);
-        
-        // DEBUG: Ensure no background drawing occurs
-        
-        // Reset shadow properties
-        ctx.shadowColor = 'transparent';
-        ctx.shadowBlur = 0;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
+        ctx.fillText(text, posX, posY);
       });
       // Draw finish lines as vertical lines
       finishLines.forEach(line => {
@@ -348,19 +354,6 @@ export default function PhotoFinishFullscreen({
   const handleMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
     event.preventDefault();
     setIsDragging(true);
-    
-    // Auto-start video only on first interaction
-    if (videoRef.current && !hasStartedVideo) {
-      videoRef.current.play().then(() => {
-        setIsPlaying(true);
-        setHasStartedVideo(true);
-      }).catch(() => {
-        setIsPlaying(false);
-      });
-    } else if (videoRef.current && !videoRef.current.paused) {
-      videoRef.current.pause();
-    }
-    
     handleSliderInteraction(event.clientX, event.currentTarget);
   };
   const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {

@@ -325,24 +325,10 @@ export default function PhotoFinishPage() {
   // State for tracking if user has started video once
   const [hasStartedVideo, setHasStartedVideo] = useState(false);
 
-  // Mouse handlers
+  // Mouse handlers - allow scrubbing without play button requirement
   const handleMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
     event.preventDefault();
     setIsDragging(true);
-    
-    // Auto-start video only on first interaction
-    if (videoRef.current && !hasStartedVideo) {
-      videoRef.current.play().then(() => {
-        setIsPlaying(true);
-        setHasStartedVideo(true);
-      }).catch(() => {
-        setIsPlaying(false);
-      });
-    } else if (videoRef.current && !videoRef.current.paused) {
-      // Pause during scrubbing
-      videoRef.current.pause();
-    }
-    
     handleSliderInteraction(event.clientX, event.currentTarget);
   };
 
@@ -354,26 +340,12 @@ export default function PhotoFinishPage() {
 
   const handleMouseUp = () => {
     setIsDragging(false);
-    // Keep video paused after scrubbing - user controls playback
   };
 
-  // Touch handlers
+  // Touch handlers - allow scrubbing without play button requirement
   const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
     event.preventDefault();
     setIsDragging(true);
-    
-    // Auto-start video only on first interaction
-    if (videoRef.current && !hasStartedVideo) {
-      videoRef.current.play().then(() => {
-        setIsPlaying(true);
-        setHasStartedVideo(true);
-      }).catch(() => {
-        setIsPlaying(false);
-      });
-    } else if (videoRef.current && !videoRef.current.paused) {
-      // Pause during scrubbing
-      videoRef.current.pause();
-    }
     
     const touch = event.touches[0];
     handleSliderInteraction(touch.clientX, event.currentTarget);
@@ -389,7 +361,6 @@ export default function PhotoFinishPage() {
 
   const handleTouchEnd = () => {
     setIsDragging(false);
-    // Keep video paused after scrubbing - user controls playback
   };
 
   // Global mouse up handler
@@ -647,26 +618,33 @@ export default function PhotoFinishPage() {
       const timerHeight = timerSize * 0.7;
       const fontSize = timerSize * 0.35;
       
-      // Draw transparent timer text with shadow only
-      ctx.font = `bold ${fontSize}px Inter, system-ui, -apple-system, sans-serif`;
+      // Draw timer text with semi-transparent dark background
+      ctx.font = `bold ${fontSize}px system-ui, -apple-system, sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       
-      // Add drop shadow for visibility
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
-      ctx.shadowBlur = 3;
-      ctx.shadowOffsetX = 2;
-      ctx.shadowOffsetY = 2;
+      const text = formatTime(timerTime);
+      const metrics = ctx.measureText(text);
+      const textWidth = metrics.width;
+      const textHeight = fontSize;
       
-      // Draw only white text - no background or border
+      // Padding around text
+      const padding = 8;
+      const bgWidth = textWidth + (padding * 2);
+      const bgHeight = textHeight + (padding * 2);
+      
+      // Draw semi-transparent dark background
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+      ctx.fillRect(
+        x - bgWidth / 2,
+        y - bgHeight / 2,
+        bgWidth,
+        bgHeight
+      );
+      
+      // Draw white text without shadow
       ctx.fillStyle = '#ffffff';
-      ctx.fillText(formatTime(timerTime), x, y);
-      
-      // Reset shadow
-      ctx.shadowColor = 'transparent';
-      ctx.shadowBlur = 0;
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = 0;
+      ctx.fillText(text, x, y);
     });
 
     // Draw finish lines
