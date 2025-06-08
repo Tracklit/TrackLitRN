@@ -729,6 +729,7 @@ export default function PhotoFinishPage() {
                           onMouseMove={handleMouseMove}
                           onMouseUp={handleMouseUp}
                           onMouseLeave={handleMouseUp}
+                          preload="auto"
                         />
 
                         {duration === 0 && (
