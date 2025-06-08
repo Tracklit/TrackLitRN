@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
+import { createServer } from "http";
 
 const app = express();
 app.use(express.json());
@@ -107,11 +108,11 @@ app.use((req, res, next) => {
     }
   });
 
-  server.listen(port, host, () => {
-    log(`Server running on ${host}:${port}`);
-    log(`Local: http://localhost:${port}`);
-    if (process.env.REPL_SLUG && process.env.REPL_OWNER) {
-      log(`External: https://${process.env.REPL_SLUG}-${process.env.REPL_OWNER}.replit.app`);
-    }
+  const httpServer = createServer(app);
+  
+  httpServer.listen(port, '0.0.0.0', () => {
+    console.log(`Server running on 0.0.0.0:${port}`);
+    console.log(`External URL: https://${process.env.REPL_SLUG}-${process.env.REPL_OWNER}.replit.app`);
+    console.log('REPLIT_SERVER_READY');
   });
 })();
