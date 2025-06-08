@@ -20,7 +20,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { BackNavigation } from "@/components/back-navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import PhotoFinishFullscreen from './photo-finish-fullscreen';
+import PhotoFinishFullscreen from './photo-finish-fullscreen-fixed';
 import trackImagePath from "@assets/IMG_4075.JPG?url";
 
 interface TimerOverlay {
