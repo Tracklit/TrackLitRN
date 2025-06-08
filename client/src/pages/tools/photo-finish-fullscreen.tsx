@@ -134,22 +134,22 @@ export default function PhotoFinishFullscreen({
         const posX = (timer.x / 100) * canvas.width;
         const posY = (timer.y / 100) * canvas.height;
         
-        // Calculate responsive font size - reduced by 33%
-        const textSize = Math.max(canvas.width * 0.027, 19); // Reduced from 0.04 and 28
+        // Keep consistent font size, make timer larger with more padding
+        const fontSize = 32; // Fixed size for fullscreen mode
         
-        // Setup font with proper typography
-        ctx.font = `bold ${textSize}px 'Inter', 'Roboto Mono', monospace`;
+        // Setup font with proper aspect ratio
+        ctx.font = `bold ${fontSize}px 'Roboto Mono', 'SF Mono', 'Monaco', 'Inconsolata', monospace`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
         const text = `${elapsedTime.toFixed(2)}s`;
         const metrics = ctx.measureText(text);
         const textWidth = metrics.width;
-        const textHeight = textSize;
+        const textHeight = fontSize * 0.7; // Proper text height ratio
         
-        // More padding between border and numbers
-        const paddingX = 20;
-        const paddingY = 16;
+        // Larger timer with more padding
+        const paddingX = 32;
+        const paddingY = 24;
         const bgWidth = textWidth + (paddingX * 2);
         const bgHeight = textHeight + (paddingY * 2);
         const cornerRadius = 3;

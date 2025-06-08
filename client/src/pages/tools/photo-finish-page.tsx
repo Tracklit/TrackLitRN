@@ -457,13 +457,34 @@ export default function PhotoFinishPage() {
     setLastPanPoint({ x: 0, y: 0 });
   };
 
+  // State for node dragging
+  const [isDraggingNode, setIsDraggingNode] = useState(false);
+  const [draggedNodeInfo, setDraggedNodeInfo] = useState<{ lineId: string; nodeId: string } | null>(null);
+
   // Handle canvas click for adding overlays
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!canvasRef.current) return;
+    if (!canvasRef.current || isDraggingNode) return;
 
     const rect = canvasRef.current.getBoundingClientRect();
     const x = ((event.clientX - rect.left) / rect.width) * 100; // Convert to percentage
     const y = ((event.clientY - rect.top) / rect.height) * 100;
+
+    // Check if clicking on existing node for dragging
+    for (const line of finishLines) {
+      for (const node of line.nodes) {
+        const nodeX = (node.x / 100) * rect.width;
+        const nodeY = (node.y / 100) * rect.height;
+        const clickX = event.clientX - rect.left;
+        const clickY = event.clientY - rect.top;
+        const distance = Math.sqrt((clickX - nodeX) ** 2 + (clickY - nodeY) ** 2);
+        
+        if (distance <= 15) { // 15px hit area
+          setIsDraggingNode(true);
+          setDraggedNodeInfo({ lineId: line.id, nodeId: node.id });
+          return;
+        }
+      }
+    }
 
     if (selectedTool === 'timer') {
       const newTimer: TimerOverlay = {
@@ -482,7 +503,7 @@ export default function PhotoFinishPage() {
       });
     } else if (selectedTool === 'finish-line') {
       if (!isDrawingLine) {
-        // Start new finish line
+        // Start new finish line with first node
         const lineId = `line-${Date.now()}`;
         const newLine: FinishLine = {
           id: lineId,
@@ -492,8 +513,13 @@ export default function PhotoFinishPage() {
         setFinishLines(prev => [...prev, newLine]);
         setIsDrawingLine(true);
         setCurrentLineId(lineId);
+        
+        toast({
+          title: "First node placed",
+          description: "Click again to place the second node and complete the finish line",
+        });
       } else if (currentLineId) {
-        // Add node to current line
+        // Add second node and complete the line
         const newNode: FinishLineNode = {
           id: `node-${Date.now()}`,
           x,
@@ -504,8 +530,45 @@ export default function PhotoFinishPage() {
             ? { ...line, nodes: [...line.nodes, newNode] }
             : line
         ));
+        
+        // Finish the line creation
+        setIsDrawingLine(false);
+        setCurrentLineId(null);
+        setSelectedTool('none');
+        
+        toast({
+          title: "Finish line created",
+          description: "You can now drag the nodes to adjust the line position",
+        });
       }
     }
+  };
+
+  // Handle node dragging
+  const handleCanvasMouseMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isDraggingNode || !draggedNodeInfo || !canvasRef.current) return;
+
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width) * 100;
+    const y = ((event.clientY - rect.top) / rect.height) * 100;
+
+    setFinishLines(prev => prev.map(line => 
+      line.id === draggedNodeInfo.lineId
+        ? {
+            ...line,
+            nodes: line.nodes.map(node =>
+              node.id === draggedNodeInfo.nodeId
+                ? { ...node, x, y }
+                : node
+            )
+          }
+        : line
+    ));
+  };
+
+  const handleCanvasMouseUp = () => {
+    setIsDraggingNode(false);
+    setDraggedNodeInfo(null);
   };
 
   // Finish drawing line
@@ -612,25 +675,22 @@ export default function PhotoFinishPage() {
       const x = (timer.x / 100) * canvas.width;
       const y = (timer.y / 100) * canvas.height;
 
-      // Calculate timer size as 10% of video width with proper proportions
-      const timerSize = Math.max(canvas.width * 0.1, 80); // Minimum 80px
-      const timerWidth = timerSize * 2.2;
-      const timerHeight = timerSize * 0.7;
-      const fontSize = timerSize * 0.235; // Reduced by 33% from 0.35
+      // Keep font size but make timer larger with more padding
+      const fontSize = 28; // Fixed size for better consistency
       
-      // Draw timer with improved styling - 3px corners, dark blue border, better font
-      ctx.font = `bold ${fontSize}px 'Inter', 'Roboto Mono', monospace`;
+      // Draw timer with improved styling - proper aspect ratio font
+      ctx.font = `bold ${fontSize}px 'Roboto Mono', 'SF Mono', 'Monaco', 'Inconsolata', monospace`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       
       const text = formatTime(timerTime);
       const metrics = ctx.measureText(text);
       const textWidth = metrics.width;
-      const textHeight = fontSize;
+      const textHeight = fontSize * 0.7; // Proper text height ratio
       
-      // More padding between border and numbers
-      const paddingX = 20;
-      const paddingY = 16;
+      // Larger timer with more padding
+      const paddingX = 28;
+      const paddingY = 22;
       const bgWidth = textWidth + (paddingX * 2);
       const bgHeight = textHeight + (paddingY * 2);
       const cornerRadius = 3;
@@ -1122,9 +1182,11 @@ export default function PhotoFinishPage() {
                     {/* Overlay Canvas */}
                     <canvas
                       ref={canvasRef}
-                      className="absolute inset-0 w-full h-full cursor-crosshair"
+                      className={`absolute inset-0 w-full h-full ${isDraggingNode ? 'cursor-move' : 'cursor-crosshair'}`}
                       onClick={handleCanvasClick}
-                      style={{ pointerEvents: selectedTool !== 'none' ? 'auto' : 'none' }}
+                      onMouseMove={handleCanvasMouseMove}
+                      onMouseUp={handleCanvasMouseUp}
+                      style={{ pointerEvents: selectedTool !== 'none' || finishLines.length > 0 ? 'auto' : 'none' }}
                     />
                     
                     {/* Finish line drawing indicator */}
