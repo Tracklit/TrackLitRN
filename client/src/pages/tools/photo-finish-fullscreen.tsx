@@ -122,19 +122,28 @@ export default function PhotoFinishFullscreen({
   useEffect(() => {
     const canvas = canvasRef.current;
     const video = videoRef.current;
-    if (!canvas || !video) return;
+    const container = containerRef.current;
+    if (!canvas || !video || !container) return;
+    
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    // Update canvas size to match container
+    const rect = container.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    
     const drawOverlays = () => {
       // Clear the entire canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      // Sleek timer implementation matching the design
+      
+      // Draw timer overlays with proper scaling
       timers.forEach(timer => {
         const elapsedTime = currentTime - timer.startTime;
         const posX = (timer.x / 100) * canvas.width;
         const posY = (timer.y / 100) * canvas.height;
         
-        // Format time in MM•SS•TH format (minutes, seconds, tenths+hundredths)
+        // Format time in MM•SS•TH format (minutes, seconds, hundredths)
         const sign = elapsedTime < 0 ? '-' : '';
         const absSeconds = Math.abs(elapsedTime);
         const mins = Math.floor(absSeconds / 60);
@@ -142,8 +151,9 @@ export default function PhotoFinishFullscreen({
         const hundredths = Math.floor((absSeconds % 1) * 100);
         const text = `${sign}${mins.toString().padStart(2, '0')}•${secs.toString().padStart(2, '0')}•${hundredths.toString().padStart(2, '0')}`;
         
-        // Larger font for fullscreen mode
-        const fontSize = 56; // Bigger for fullscreen
+        // Scale font size based on screen width and zoom level
+        const baseFontSize = Math.min(canvas.width / 15, 80);
+        const fontSize = baseFontSize / Math.max(videoScale, 1);
         
         // Setup bold, clean font
         ctx.font = `900 ${fontSize}px 'Inter', 'SF Pro Display', 'Segoe UI', system-ui, sans-serif`;
@@ -154,9 +164,9 @@ export default function PhotoFinishFullscreen({
         const textWidth = metrics.width;
         const textHeight = fontSize * 0.8; // Better text height calculation
         
-        // Generous padding for sleek look
-        const paddingX = 48; // Larger for fullscreen
-        const paddingY = 28;
+        // Scale padding with font size
+        const paddingX = fontSize * 0.8;
+        const paddingY = fontSize * 0.5;
         const bgWidth = textWidth + (paddingX * 2);
         const bgHeight = textHeight + (paddingY * 2);
         const cornerRadius = 28; // More rounded corners for modern look
@@ -549,16 +559,23 @@ export default function PhotoFinishFullscreen({
         </div>
       )}
       {/* Main Video Container */}
-      <div className="w-full h-full relative" ref={containerRef}>
+      <div className="w-full h-full relative overflow-hidden" ref={containerRef}>
         <video
           ref={videoRef}
           src={videoUrl || ''}
           poster={videoPoster}
-          className="w-full h-full object-contain"
+          className="w-full h-full object-cover"
           style={{
-            transform: `scale(${videoScale}) translate(${videoTranslate.x}px, ${videoTranslate.y}px)`,
+            transform: `scale(${videoScale}) translate(${videoTranslate.x / videoScale}px, ${videoTranslate.y / videoScale}px)`,
+            transformOrigin: 'center center',
           }}
           onLoadedMetadata={handleVideoLoad}
+          onLoadedData={() => {
+            // Ensure video shows first frame
+            if (videoRef.current) {
+              videoRef.current.currentTime = 0.1;
+            }
+          }}
           onTimeUpdate={() => {
             if (videoRef.current) {
               setCurrentTime(videoRef.current.currentTime);
@@ -573,8 +590,6 @@ export default function PhotoFinishFullscreen({
         <canvas
           ref={canvasRef}
           className="absolute inset-0 w-full h-full pointer-events-auto cursor-crosshair"
-          width={1920}
-          height={1080}
           onClick={handleCanvasClick}
           onTouchStart={handleCanvasTouchStart}
           onTouchMove={handleCanvasTouchMove}
@@ -582,6 +597,16 @@ export default function PhotoFinishFullscreen({
           onMouseDown={handleCanvasMouseDown}
           onMouseMove={handleCanvasMouseMove}
           onMouseUp={handleCanvasMouseUp}
+          onWheel={(e) => {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? 0.9 : 1.1;
+            const newScale = Math.max(0.5, Math.min(3, videoScale * delta));
+            setVideoScale(newScale);
+          }}
+          style={{
+            transform: `scale(${videoScale}) translate(${videoTranslate.x / videoScale}px, ${videoTranslate.y / videoScale}px)`,
+            transformOrigin: 'center center',
+          }}
         />
         {/* Play/Pause Button Overlay */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
