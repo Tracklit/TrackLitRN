@@ -134,12 +134,14 @@ export default function PhotoFinishFullscreen({
         const posX = (timer.x / 100) * canvas.width;
         const posY = (timer.y / 100) * canvas.height;
         
-        // Format time in MM•SS format like the design
+        // Format time in MM•SS•T•H format (minutes, seconds, tenths, hundredths)
         const sign = elapsedTime < 0 ? '-' : '';
         const absSeconds = Math.abs(elapsedTime);
         const mins = Math.floor(absSeconds / 60);
         const secs = Math.floor(absSeconds % 60);
-        const text = `${sign}${mins.toString().padStart(2, '0')}•${secs.toString().padStart(2, '0')}`;
+        const tenths = Math.floor((absSeconds % 1) * 10);
+        const hundredths = Math.floor((absSeconds % 0.1) * 100) % 10;
+        const text = `${sign}${mins.toString().padStart(2, '0')}•${secs.toString().padStart(2, '0')}•${tenths}•${hundredths}`;
         
         // Larger font for fullscreen mode
         const fontSize = 56; // Bigger for fullscreen
@@ -160,8 +162,8 @@ export default function PhotoFinishFullscreen({
         const bgHeight = textHeight + (paddingY * 2);
         const cornerRadius = 28; // More rounded corners for modern look
         
-        // Draw solid black rounded background
-        ctx.fillStyle = '#000000';
+        // Draw 50% transparent black rounded background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
         ctx.beginPath();
         ctx.roundRect(
           posX - bgWidth / 2,
@@ -178,7 +180,7 @@ export default function PhotoFinishFullscreen({
         ctx.shadowOffsetY = 6;
         
         // Redraw background with shadow
-        ctx.fillStyle = '#000000';
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
         ctx.beginPath();
         ctx.roundRect(
           posX - bgWidth / 2,

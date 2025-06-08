@@ -681,12 +681,14 @@ export default function PhotoFinishPage() {
       const x = (timer.x / 100) * canvas.width;
       const y = (timer.y / 100) * canvas.height;
 
-      // Format time in MM•SS format like the design
+      // Format time in MM•SS•T•H format (minutes, seconds, tenths, hundredths)
       const sign = timerTime < 0 ? '-' : '';
       const absSeconds = Math.abs(timerTime);
       const mins = Math.floor(absSeconds / 60);
       const secs = Math.floor(absSeconds % 60);
-      const text = `${sign}${mins.toString().padStart(2, '0')}•${secs.toString().padStart(2, '0')}`;
+      const tenths = Math.floor((absSeconds % 1) * 10);
+      const hundredths = Math.floor((absSeconds % 0.1) * 100) % 10;
+      const text = `${sign}${mins.toString().padStart(2, '0')}•${secs.toString().padStart(2, '0')}•${tenths}•${hundredths}`;
 
       // Sleek timer design matching the provided image
       const fontSize = 48; // Large, bold numbers
@@ -707,8 +709,8 @@ export default function PhotoFinishPage() {
       const bgHeight = textHeight + (paddingY * 2);
       const cornerRadius = 24; // More rounded corners for modern look
       
-      // Draw solid black rounded background
-      ctx.fillStyle = '#000000';
+      // Draw 50% transparent black rounded background
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
       ctx.beginPath();
       ctx.roundRect(
         x - bgWidth / 2,
@@ -725,7 +727,7 @@ export default function PhotoFinishPage() {
       ctx.shadowOffsetY = 4;
       
       // Redraw background with shadow
-      ctx.fillStyle = '#000000';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
       ctx.beginPath();
       ctx.roundRect(
         x - bgWidth / 2,
