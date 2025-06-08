@@ -186,8 +186,6 @@ export default function PhotoFinishPage() {
       return;
     }
 
-    // Show loading state immediately
-    setUploading(true);
     setCurrentVideo(file);
     const url = URL.createObjectURL(file);
     setVideoUrl(url);
@@ -198,7 +196,8 @@ export default function PhotoFinishPage() {
     setFinishLines([]);
     setSelectedTool('none');
     
-    // Loading will be cleared when video metadata loads
+    // Automatically switch to fullscreen mode
+    setFullscreenMode(true);
   };
 
   // Generate video thumbnail from first frame
@@ -240,9 +239,6 @@ export default function PhotoFinishPage() {
       } catch (error) {
         console.error('Failed to generate video thumbnail:', error);
       }
-      
-      // Clear loading state when video is ready
-      setUploading(false);
     }
   };
 
@@ -679,8 +675,8 @@ export default function PhotoFinishPage() {
       const x = (timer.x / 100) * canvas.width;
       const y = (timer.y / 100) * canvas.height;
 
-      // 30% bigger timer with equal padding and 5px corners
-      const fontSize = 36; // Increased by 30% from 28
+      // Keep font size but make timer larger with more padding
+      const fontSize = 28; // Fixed size for better consistency
       
       // Draw timer with improved styling - proper aspect ratio font
       ctx.font = `bold ${fontSize}px 'Roboto Mono', 'SF Mono', 'Monaco', 'Inconsolata', monospace`;
@@ -692,11 +688,12 @@ export default function PhotoFinishPage() {
       const textWidth = metrics.width;
       const textHeight = fontSize * 0.7; // Proper text height ratio
       
-      // Equal padding all around, 30% bigger
-      const padding = 32; // Equal padding for all sides
-      const bgWidth = textWidth + (padding * 2);
-      const bgHeight = textHeight + (padding * 2);
-      const cornerRadius = 5;
+      // Larger timer with more padding
+      const paddingX = 28;
+      const paddingY = 22;
+      const bgWidth = textWidth + (paddingX * 2);
+      const bgHeight = textHeight + (paddingY * 2);
+      const cornerRadius = 3;
       
       // Draw rounded background with better opacity
       ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
@@ -1182,16 +1179,6 @@ export default function PhotoFinishPage() {
                       }}
                     />
                     
-                    {/* Loading Spinner */}
-                    {uploading && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                        <div className="flex flex-col items-center gap-3">
-                          <div className="animate-spin w-8 h-8 border-3 border-white border-t-transparent rounded-full"></div>
-                          <div className="text-white text-sm font-medium">Loading video...</div>
-                        </div>
-                      </div>
-                    )}
-
                     {/* Overlay Canvas */}
                     <canvas
                       ref={canvasRef}
@@ -1205,7 +1192,7 @@ export default function PhotoFinishPage() {
                     {/* Finish line drawing indicator */}
                     {isDrawingLine && (
                       <div className="absolute top-4 left-4 bg-blue-500 text-white px-3 py-1 rounded-full text-sm">
-                        Click to place second node
+                        Click to add nodes • Double-click to finish
                       </div>
                     )}
                   </div>
