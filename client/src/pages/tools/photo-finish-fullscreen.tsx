@@ -334,8 +334,9 @@ export default function PhotoFinishFullscreen({
       setTimers(prev => [...prev, newTimer]);
       setActiveTimer(newTimer.id);
       setMode(null);
+    }
     // Finish line functionality disabled
-    // } else if (mode === 'finishline') {
+    // else if (mode === 'finishline') {
     //   // Functionality temporarily disabled
     // }
   };
