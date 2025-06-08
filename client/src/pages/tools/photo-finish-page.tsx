@@ -854,11 +854,11 @@ export default function PhotoFinishPage() {
                   
                   const newFinishLine: FinishLine = {
                     id: Date.now().toString(),
-                    x1: x - 2,
-                    y1: y - 25,
-                    x2: x + 2,
-                    y2: y + 25,
-                    color: '#00ff00'
+                    nodes: [
+                      { id: `node-${Date.now()}-1`, x: x - 2, y: y - 25 },
+                      { id: `node-${Date.now()}-2`, x: x + 2, y: y + 25 }
+                    ],
+                    visible: true
                   };
                   
                   setFinishLines(prev => [...prev, newFinishLine]);

@@ -63,6 +63,7 @@ export default function PhotoFinishFullscreen({
   const [duration, setDuration] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [hasStartedVideo, setHasStartedVideo] = useState(false);
+  const [videoPoster, setVideoPoster] = useState<string>("");
   
   // UI state
   const [showVideoLibrary, setShowVideoLibrary] = useState(false);
@@ -82,7 +83,7 @@ export default function PhotoFinishFullscreen({
   const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 });
 
   // Load saved videos
-  const { data: savedVideos = [] } = useQuery({
+  const { data: savedVideos = [] } = useQuery<PhotoFinishVideo[]>({
     queryKey: ['/api/photo-finish-videos'],
     enabled: showVideoLibrary
   });
@@ -440,6 +441,48 @@ export default function PhotoFinishFullscreen({
     });
   };
 
+  // Generate video thumbnail from first frame
+  const generateVideoThumbnail = (video: HTMLVideoElement): Promise<string> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataURL = canvas.toDataURL('image/jpeg', 0.8);
+        resolve(dataURL);
+      }
+    });
+  };
+
+  // Handle video metadata load and generate thumbnail
+  const handleVideoLoad = async () => {
+    if (videoRef.current) {
+      setDuration(videoRef.current.duration);
+      setCurrentTime(0);
+      
+      // Generate thumbnail from first frame
+      try {
+        videoRef.current.currentTime = 0;
+        await new Promise<void>(resolve => {
+          const onSeeked = () => {
+            videoRef.current?.removeEventListener('seeked', onSeeked);
+            resolve();
+          };
+          videoRef.current?.addEventListener('seeked', onSeeked);
+        });
+        
+        const thumbnail = await generateVideoThumbnail(videoRef.current);
+        setVideoPoster(thumbnail);
+      } catch (error) {
+        console.error('Failed to generate video thumbnail:', error);
+      }
+    }
+  };
+
   // Auto-hide controls
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -509,7 +552,7 @@ export default function PhotoFinishFullscreen({
           <div className="p-4 pt-20">
             <h3 className="text-lg font-medium mb-4">Video Library</h3>
             <div className="space-y-3 max-h-[calc(100vh-120px)] overflow-y-auto">
-              {savedVideos.map((video: PhotoFinishVideo) => (
+              {(savedVideos as PhotoFinishVideo[]).map((video: PhotoFinishVideo) => (
                 <div
                   key={video.id}
                   className={`p-3 rounded-lg border cursor-pointer transition-colors ${
@@ -540,10 +583,21 @@ export default function PhotoFinishFullscreen({
         <video
           ref={videoRef}
           src={videoUrl || ''}
+          poster={videoPoster}
           className="w-full h-full object-contain"
           style={{
             transform: `scale(${videoScale}) translate(${videoTranslate.x}px, ${videoTranslate.y}px)`,
           }}
+          onLoadedMetadata={handleVideoLoad}
+          onTimeUpdate={() => {
+            if (videoRef.current) {
+              setCurrentTime(videoRef.current.currentTime);
+            }
+          }}
+          onPlay={() => setIsPlaying(true)}
+          onPause={() => setIsPlaying(false)}
+          controls={false}
+          preload="metadata"
         />
         
         <canvas
