@@ -18,7 +18,7 @@ import { GoogleSpreadsheet } from "google-spreadsheet";
 import { notificationSystem } from "./notification-system";
 import { insertAthleteProfileSchema } from "@shared/athlete-profile-schema";
 import { worldAthleticsService } from "./world-athletics";
-import { sprinthiaService } from "./ai-analysis";
+import { videoAnalysisRouter } from "./routes/video-analysis";
 
 // Background processing function for gym data
 async function processGymDataInBackground(programId: number, googleSheetId: string, sessions: any[]) {
@@ -6507,6 +6507,9 @@ Keep the response professional, evidence-based, and specific to track and field 
     }
   });
 
+  // Video Analysis routes
+  app.use('/api/video-analysis', videoAnalysisRouter);
+
   const httpServer = createServer(app);
 
   // Start automated notification processing (runs every 6 hours)
@@ -7119,64 +7122,6 @@ Keep the response professional, evidence-based, and specific to track and field 
     } catch (error) {
       console.error("Error fetching favorite competitions:", error);
       res.status(500).send("Error fetching favorites");
-    }
-  });
-
-  // Sprinthia AI Video Analysis API Routes
-  app.get("/api/sprinthia/analysis-types", (req: Request, res: Response) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    
-    const analysisTypes = sprinthiaService.getAnalysisTypes();
-    res.json(analysisTypes);
-  });
-
-  app.get("/api/sprinthia/limits", async (req: Request, res: Response) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    
-    try {
-      const limits = await sprinthiaService.checkUserLimits(req.user!.id);
-      res.json(limits);
-    } catch (error) {
-      console.error("Error checking Sprinthia limits:", error);
-      res.status(500).send("Error checking AI analysis limits");
-    }
-  });
-
-  app.post("/api/sprinthia/analyze", async (req: Request, res: Response) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    
-    try {
-      const { videoName, analysisType, customPrompt, videoTimestamp } = req.body;
-      
-      if (!videoName || !analysisType) {
-        return res.status(400).send("Missing required fields: videoName and analysisType");
-      }
-
-      const result = await sprinthiaService.analyzeVideo(
-        req.user!.id,
-        videoName,
-        analysisType,
-        customPrompt,
-        videoTimestamp
-      );
-
-      res.json(result);
-    } catch (error: any) {
-      console.error("Error performing Sprinthia analysis:", error);
-      res.status(500).send(error.message || "Error performing AI analysis");
-    }
-  });
-
-  app.get("/api/sprinthia/history", async (req: Request, res: Response) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    
-    try {
-      const limit = parseInt(req.query.limit as string) || 20;
-      const analyses = await sprinthiaService.getUserAnalyses(req.user!.id, limit);
-      res.json(analyses);
-    } catch (error) {
-      console.error("Error fetching Sprinthia analysis history:", error);
-      res.status(500).send("Error fetching analysis history");
     }
   });
 

@@ -10,9 +10,7 @@ import {
   Upload,
   Timer,
   MapPin,
-  Trash2,
-  Brain,
-  Sparkles
+  Trash2
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -61,20 +59,16 @@ export default function PhotoFinishFullscreen({
   const [isDragging, setIsDragging] = useState(false);
   const [hasStartedVideo, setHasStartedVideo] = useState(false);
   const [videoPoster, setVideoPoster] = useState<string>("");
-  const [isDraggingFinishLine, setIsDraggingFinishLine] = useState(false);
-  const [draggedLineId, setDraggedLineId] = useState<string | null>(null);
   
   // UI state
   const [showVideoLibrary, setShowVideoLibrary] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [mode, setMode] = useState<'timer' | 'finishline' | null>(null);
-  const [showSprinthiaPanel, setShowSprinthiaPanel] = useState(false);
   
   // Analysis state
   const [timers, setTimers] = useState<RaceTimer[]>([]);
   const [finishLines, setFinishLines] = useState<FinishLine[]>([]);
   const [activeTimer, setActiveTimer] = useState<string | null>(null);
-  const [statusMessage, setStatusMessage] = useState<string>('');
   const [activeFinishLine, setActiveFinishLine] = useState<string | null>(null);
   
   // Zoom and pan state
@@ -87,17 +81,6 @@ export default function PhotoFinishFullscreen({
     queryKey: ['/api/photo-finish-videos'],
     enabled: showVideoLibrary
   });
-
-  // Sprinthia AI queries
-  const { data: analysisTypes = [] } = useQuery({
-    queryKey: ['/api/sprinthia/analysis-types'],
-    enabled: showSprinthiaPanel
-  });
-
-  const { data: sprinthiaLimits } = useQuery({
-    queryKey: ['/api/sprinthia/limits'],
-    enabled: showSprinthiaPanel
-  });
   // Save video mutation
   const saveVideoMutation = useMutation({
     mutationFn: (data: { title: string; timers: RaceTimer[]; finishLines: FinishLine[] }) =>
@@ -108,23 +91,6 @@ export default function PhotoFinishFullscreen({
     },
     onError: () => {
       toast({ title: 'Failed to save video', variant: 'destructive' });
-    }
-  });
-
-  // Sprinthia AI analysis mutation
-  const analyzeMutation = useMutation({
-    mutationFn: (data: { videoName: string; analysisType: string; videoTimestamp?: number }) =>
-      apiRequest('POST', '/api/sprinthia/analyze', data),
-    onSuccess: (result) => {
-      toast({ title: 'Analysis complete!' });
-      queryClient.invalidateQueries({ queryKey: ['/api/sprinthia/limits'] });
-    },
-    onError: (error: any) => {
-      toast({ 
-        title: 'Analysis failed', 
-        description: error.message || 'Unable to analyze video',
-        variant: 'destructive' 
-      });
     }
   });
   // Format time display
@@ -156,19 +122,28 @@ export default function PhotoFinishFullscreen({
   useEffect(() => {
     const canvas = canvasRef.current;
     const video = videoRef.current;
-    if (!canvas || !video) return;
+    const container = containerRef.current;
+    if (!canvas || !video || !container) return;
+    
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    // Update canvas size to match container
+    const rect = container.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    
     const drawOverlays = () => {
       // Clear the entire canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      // Sleek timer implementation matching the design
+      
+      // Draw timer overlays with proper scaling
       timers.forEach(timer => {
         const elapsedTime = currentTime - timer.startTime;
         const posX = (timer.x / 100) * canvas.width;
         const posY = (timer.y / 100) * canvas.height;
         
-        // Format time in MM•SS•TH format (minutes, seconds, tenths+hundredths)
+        // Format time in MM•SS•TH format (minutes, seconds, hundredths)
         const sign = elapsedTime < 0 ? '-' : '';
         const absSeconds = Math.abs(elapsedTime);
         const mins = Math.floor(absSeconds / 60);
@@ -176,24 +151,25 @@ export default function PhotoFinishFullscreen({
         const hundredths = Math.floor((absSeconds % 1) * 100);
         const text = `${sign}${mins.toString().padStart(2, '0')}•${secs.toString().padStart(2, '0')}•${hundredths.toString().padStart(2, '0')}`;
         
-        // Original smaller timer size
-        const fontSize = 16; // Original smaller size
+        // Scale font size based on screen width - larger for fullscreen
+        const baseFontSize = Math.max(32, Math.min(canvas.width / 12, 120));
+        const fontSize = baseFontSize;
         
         // Setup bold, clean font
-        ctx.font = `bold ${fontSize}px 'Courier New', monospace`;
+        ctx.font = `900 ${fontSize}px 'Inter', 'SF Pro Display', 'Segoe UI', system-ui, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
         const metrics = ctx.measureText(text);
         const textWidth = metrics.width;
-        const textHeight = fontSize;
+        const textHeight = fontSize * 0.8; // Better text height calculation
         
-        // Normal padding
-        const paddingX = 12;
-        const paddingY = 8;
+        // Scale padding with font size
+        const paddingX = fontSize * 0.8;
+        const paddingY = fontSize * 0.5;
         const bgWidth = textWidth + (paddingX * 2);
         const bgHeight = textHeight + (paddingY * 2);
-        const cornerRadius = 8;
+        const cornerRadius = 28; // More rounded corners for modern look
         
         // Draw 50% transparent black rounded background
         ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
@@ -343,47 +319,71 @@ export default function PhotoFinishFullscreen({
     setIsDraggingFinishLine(false);
     setDraggedLineId(null);
   };
-  // Mouse drag handlers for finish line movement
+  // Mouse drag handlers for finish line movement and video panning
+  const [isDraggingFinishLine, setIsDraggingFinishLine] = useState(false);
+  const [draggedLineId, setDraggedLineId] = useState<string | null>(null);
+  const [isMousePanning, setIsMousePanning] = useState(false);
+  
   const handleCanvasMouseDown = (event: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
     const x = ((event.clientX - rect.left) / rect.width) * 100;
     const y = ((event.clientY - rect.top) / rect.height) * 100;
+    
     // Check if clicking on a finish line (expanded hit area)
     const clickedLine = finishLines.find(line => {
       const lineX = line.x;
-      const hitAreaWidth = 5; // Percentage-based hit area
+      const hitAreaWidth = 5;
       return x >= lineX - hitAreaWidth && x <= lineX + hitAreaWidth &&
              y >= line.y && y <= line.y + line.height;
     });
+    
     if (clickedLine) {
       setIsDraggingFinishLine(true);
       setDraggedLineId(clickedLine.id);
       setActiveFinishLine(clickedLine.id);
+    } else if (videoScale > 1) {
+      // Start mouse panning when video is zoomed
+      setIsMousePanning(true);
+      setLastPanPoint({ x: event.clientX, y: event.clientY });
     }
   };
   const handleCanvasMouseMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDraggingFinishLine || !draggedLineId) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * 100;
-    // Move the finish line horizontally
-    setFinishLines(prev => prev.map(line => 
-      line.id === draggedLineId 
-        ? { ...line, x: Math.max(0, Math.min(98, x - 1)) }
-        : line
-    ));
+    if (isDraggingFinishLine && draggedLineId) {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = ((event.clientX - rect.left) / rect.width) * 100;
+      // Move the finish line horizontally
+      setFinishLines(prev => prev.map(line => 
+        line.id === draggedLineId 
+          ? { ...line, x: Math.max(0, Math.min(98, x - 1)) }
+          : line
+      ));
+    } else if (isMousePanning && videoScale > 1) {
+      // Handle video panning when zoomed
+      const deltaX = event.clientX - lastPanPoint.x;
+      const deltaY = event.clientY - lastPanPoint.y;
+      
+      setVideoTranslate(prev => ({
+        x: prev.x + deltaX,
+        y: prev.y + deltaY
+      }));
+      
+      setLastPanPoint({ x: event.clientX, y: event.clientY });
+    }
   };
+  
   const handleCanvasMouseUp = () => {
     setIsDraggingFinishLine(false);
     setDraggedLineId(null);
+    setIsMousePanning(false);
   };
   // Handle canvas interactions
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     // Don't place new elements if we're dragging
-    if (isDraggingFinishLine) return;
+    if (isDraggingFinishLine || isMousePanning) return;
     
     const canvas = canvasRef.current;
     if (!canvas || !mode) return;
@@ -401,11 +401,18 @@ export default function PhotoFinishFullscreen({
       setActiveTimer(newTimer.id);
       setMode(null);
       
-      // Show status message without toast
-      const timeStr = formatTime(currentTime);
-      setStatusMessage(`Timer placed at ${timeStr}`);
-      setTimeout(() => setStatusMessage(''), 2000);
+      // Show toast notification
+      const mins = Math.floor(currentTime / 60);
+      const secs = (currentTime % 60).toFixed(2);
+      toast({
+        title: "Timer added",
+        description: `Timer placed at ${mins}:${secs.padStart(5, '0')}`,
+      });
     }
+    // Finish line functionality disabled
+    // else if (mode === 'finishline') {
+    //   // Functionality temporarily disabled
+    // }
   };
   // Scrubber handlers
   const handleSliderInteraction = (clientX: number, element: HTMLDivElement) => {
@@ -474,21 +481,18 @@ export default function PhotoFinishFullscreen({
       setDuration(videoRef.current.duration);
       setCurrentTime(0);
       
-      // Force first frame display and generate thumbnail
+      // Generate thumbnail from first frame
       try {
-        const video = videoRef.current;
-        video.currentTime = 0.01; // Show first frame immediately
-        
+        videoRef.current.currentTime = 0;
         await new Promise<void>(resolve => {
           const onSeeked = () => {
-            video.removeEventListener('seeked', onSeeked);
+            videoRef.current?.removeEventListener('seeked', onSeeked);
             resolve();
           };
-          video.addEventListener('seeked', onSeeked);
-          video.currentTime = 0;
+          videoRef.current?.addEventListener('seeked', onSeeked);
         });
         
-        const thumbnail = await generateVideoThumbnail(video);
+        const thumbnail = await generateVideoThumbnail(videoRef.current);
         setVideoPoster(thumbnail);
       } catch (error) {
         console.error('Failed to generate video thumbnail:', error);
@@ -585,15 +589,25 @@ export default function PhotoFinishFullscreen({
         </div>
       )}
       {/* Main Video Container */}
-      <div className="w-full h-full relative" ref={containerRef}>
+      <div className="absolute inset-0 w-full h-full overflow-hidden" ref={containerRef}>
         <video
           ref={videoRef}
           src={videoUrl || ''}
-          className="w-full h-full object-contain"
+          poster={videoPoster}
+          className="w-full h-full object-cover"
           style={{
-            transform: `scale(${videoScale}) translate(${videoTranslate.x}px, ${videoTranslate.y}px)`,
+            transform: `scale(${videoScale}) translate(${videoTranslate.x / videoScale}px, ${videoTranslate.y / videoScale}px)`,
+            transformOrigin: 'center center',
+            minWidth: '100%',
+            minHeight: '100%',
           }}
           onLoadedMetadata={handleVideoLoad}
+          onLoadedData={() => {
+            // Ensure video shows first frame
+            if (videoRef.current) {
+              videoRef.current.currentTime = 0.1;
+            }
+          }}
           onTimeUpdate={() => {
             if (videoRef.current) {
               setCurrentTime(videoRef.current.currentTime);
@@ -602,15 +616,12 @@ export default function PhotoFinishFullscreen({
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
           controls={false}
-          preload="auto"
-          poster={videoPoster}
+          preload="metadata"
         />
         
         <canvas
           ref={canvasRef}
           className="absolute inset-0 w-full h-full pointer-events-auto cursor-crosshair"
-          width={1920}
-          height={1080}
           onClick={handleCanvasClick}
           onTouchStart={handleCanvasTouchStart}
           onTouchMove={handleCanvasTouchMove}
@@ -618,6 +629,16 @@ export default function PhotoFinishFullscreen({
           onMouseDown={handleCanvasMouseDown}
           onMouseMove={handleCanvasMouseMove}
           onMouseUp={handleCanvasMouseUp}
+          onWheel={(e) => {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? 0.9 : 1.1;
+            const newScale = Math.max(0.5, Math.min(3, videoScale * delta));
+            setVideoScale(newScale);
+          }}
+          style={{
+            transform: `scale(${videoScale}) translate(${videoTranslate.x / videoScale}px, ${videoTranslate.y / videoScale}px)`,
+            transformOrigin: 'center center',
+          }}
         />
         {/* Play/Pause Button Overlay */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -674,16 +695,40 @@ export default function PhotoFinishFullscreen({
             <Trash2 className="w-4 h-4 mr-2" />
             Clear All
           </Button>
-
-          <Button
-            variant={showSprinthiaPanel ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setShowSprinthiaPanel(!showSprinthiaPanel)}
-            className="text-white hover:bg-white/20"
-          >
-            <Brain className="w-4 h-4 mr-2" />
-            Sprinthia AI
-          </Button>
+          
+          {/* Zoom Controls */}
+          <div className="flex items-center gap-2 border-l border-gray-600 pl-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setVideoScale(Math.max(0.5, videoScale - 0.25))}
+              className="text-white hover:bg-white/20"
+            >
+              -
+            </Button>
+            <span className="text-white text-sm min-w-[3rem] text-center">
+              {Math.round(videoScale * 100)}%
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setVideoScale(Math.min(3, videoScale + 0.25))}
+              className="text-white hover:bg-white/20"
+            >
+              +
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setVideoScale(1);
+                setVideoTranslate({ x: 0, y: 0 });
+              }}
+              className="text-white hover:bg-white/20 text-xs"
+            >
+              Reset
+            </Button>
+          </div>
         </div>
         {/* Scrubber and Controls */}
         <div className="flex items-center gap-4">
@@ -721,130 +766,7 @@ export default function PhotoFinishFullscreen({
             {`${Math.floor(duration / 60)}:${(duration % 60).toFixed(2).padStart(5, '0')}`}
           </div>
         </div>
-
-        {/* Status Message Display */}
-        {statusMessage && (
-          <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 bg-black/80 text-white px-4 py-2 rounded-lg text-sm">
-            {statusMessage}
-          </div>
-        )}
       </div>
-
-      {/* Sprinthia AI Analysis Panel */}
-      {showSprinthiaPanel && (
-        <div className="fixed top-0 right-0 w-96 h-full bg-black/95 border-l border-gray-700 z-50 overflow-y-auto">
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <Brain className="w-6 h-6 text-blue-400" />
-                <h2 className="text-xl font-bold text-white">Sprinthia AI</h2>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowSprinthiaPanel(false)}
-                className="text-white hover:bg-white/20"
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-
-            {/* User Limits Display */}
-            {sprinthiaLimits && (
-              <div className="mb-6 p-4 bg-gray-800 rounded-lg">
-                <div className="text-sm text-gray-300 mb-2">
-                  Tier: <span className="text-white capitalize">{(sprinthiaLimits as any)?.tier}</span>
-                </div>
-                <div className="text-sm text-gray-300">
-                  Remaining: {
-                    (sprinthiaLimits as any)?.remainingPrompts === 'unlimited' 
-                      ? 'Unlimited' 
-                      : `${(sprinthiaLimits as any)?.remainingPrompts} prompts`
-                  }
-                </div>
-                {(sprinthiaLimits as any)?.costSpikes > 0 && (
-                  <div className="text-sm text-yellow-400 mt-2">
-                    Next analysis: {(sprinthiaLimits as any)?.costSpikes} Spikes
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Analysis Types */}
-            <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-white mb-4">Choose Analysis Type</h3>
-              {(analysisTypes as any)?.map((type: any) => (
-                <div key={type.type} className="bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-white mb-1">{type.title}</h4>
-                      <p className="text-sm text-gray-300 mb-3">{type.description}</p>
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          if (!currentVideo?.title) {
-                            toast({ 
-                              title: 'No video selected', 
-                              description: 'Please select a video first',
-                              variant: 'destructive' 
-                            });
-                            return;
-                          }
-                          
-                          analyzeMutation.mutate({
-                            videoName: currentVideo.title,
-                            analysisType: type.type,
-                            videoTimestamp: currentTime
-                          });
-                        }}
-                        disabled={analyzeMutation.isPending}
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
-                      >
-                        {analyzeMutation.isPending ? (
-                          <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            Analyzing...
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <Sparkles className="w-4 h-4" />
-                            Analyze
-                          </div>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Analysis Results */}
-            {analyzeMutation.data && (
-              <div className="mt-6 p-4 bg-green-900/20 border border-green-500/30 rounded-lg">
-                <h4 className="font-medium text-green-400 mb-2">Analysis Complete</h4>
-                <div className="text-sm text-gray-300 whitespace-pre-wrap">
-                  {(analyzeMutation.data as any)?.analysis}
-                </div>
-                {(analyzeMutation.data as any)?.costSpikes > 0 && (
-                  <div className="text-xs text-yellow-400 mt-2">
-                    Cost: {(analyzeMutation.data as any)?.costSpikes} Spikes
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Error Display */}
-            {analyzeMutation.error && (
-              <div className="mt-6 p-4 bg-red-900/20 border border-red-500/30 rounded-lg">
-                <h4 className="font-medium text-red-400 mb-2">Analysis Failed</h4>
-                <div className="text-sm text-gray-300">
-                  {analyzeMutation.error.message || 'Unable to analyze video'}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

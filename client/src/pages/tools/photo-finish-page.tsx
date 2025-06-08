@@ -14,12 +14,19 @@ import {
   FolderOpen,
   Maximize,
   X,
-  Info
+  Info,
+  Brain,
+  Zap
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { BackNavigation } from "@/components/back-navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import PhotoFinishFullscreen from './photo-finish-fullscreen';
 import trackImagePath from "@assets/IMG_4075.JPG?url";
 
@@ -48,6 +55,45 @@ export default function PhotoFinishPage() {
   const [currentVideo, setCurrentVideo] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string>("");
   const [isPlaying, setIsPlaying] = useState(false);
+  
+  // AI Analysis state
+  const [showAIDialog, setShowAIDialog] = useState(false);
+  const [selectedAnalysisType, setSelectedAnalysisType] = useState('');
+  const [customPrompt, setCustomPrompt] = useState('');
+  const [videoTitle, setVideoTitle] = useState('');
+  
+  const queryClient = useQueryClient();
+  
+  const analysisTypes = [
+    { id: 'sprint_form', name: 'Sprint Form Analysis', icon: '🏃‍♂️' },
+    { id: 'block_start', name: 'Block Start Analysis', icon: '🚀' },
+    { id: 'stride_length', name: 'Stride Length Analysis', icon: '📏' },
+    { id: 'stride_frequency', name: 'Stride Frequency Analysis', icon: '⚡' },
+    { id: 'ground_contact_time', name: 'Ground Contact Time', icon: '👟' },
+    { id: 'flight_time', name: 'Flight Time Analysis', icon: '🦅' }
+  ];
+  
+  // AI Analysis mutation
+  const analyzeVideoMutation = useMutation({
+    mutationFn: (data: any) => apiRequest('/api/video-analysis/analyze', 'POST', data),
+    onSuccess: () => {
+      toast({
+        title: "Analysis Started",
+        description: "Sprinthia is analyzing your video. Check your analysis history for results."
+      });
+      setShowAIDialog(false);
+      setSelectedAnalysisType('');
+      setCustomPrompt('');
+      setVideoTitle('');
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Analysis Failed",
+        description: error.message || "Failed to start video analysis",
+        variant: "destructive"
+      });
+    }
+  });
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [savedVideos, setSavedVideos] = useState<SavedVideo[]>([]);
@@ -111,13 +157,13 @@ export default function PhotoFinishPage() {
     </Dialog>
   );
 
-  // Format time as MM:SS.HH
+  // Format time as MM•SS•TH (minutes, seconds, hundredths with bullet separators)
   const formatTime = (seconds: number) => {
     const mins = Math.floor(Math.abs(seconds) / 60);
     const secs = Math.floor(Math.abs(seconds) % 60);
     const hundredths = Math.floor((Math.abs(seconds) % 1) * 100);
     const sign = seconds < 0 ? '-' : '';
-    return `${sign}${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${hundredths.toString().padStart(2, '0')}`;
+    return `${sign}${mins.toString().padStart(2, '0')}•${secs.toString().padStart(2, '0')}•${hundredths.toString().padStart(2, '0')}`;
   };
 
   // Video controls
@@ -216,22 +262,106 @@ export default function PhotoFinishPage() {
   const handleVideoLoadedMetadata = useCallback(async () => {
     if (!videoRef.current || !currentVideo) return;
     
-    const video = videoRef.current;
-    setDuration(video.duration);
+    setDuration(videoRef.current.duration);
     setCurrentTime(0);
     setUploading(false);
     
-    // Force first frame display immediately
-    video.currentTime = 0.01;
-    
     // Generate and set poster image
     try {
-      const thumbnail = await generateVideoThumbnail(video);
+      const thumbnail = await generateVideoThumbnail(videoRef.current);
       setVideoPoster(thumbnail);
     } catch (error) {
       console.error('Failed to generate video thumbnail:', error);
     }
   }, [currentVideo]);
+
+  // Draw timer overlays on canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const video = videoRef.current;
+    const container = containerRef.current;
+    if (!canvas || !video || !container) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Update canvas size to match video container
+    const rect = video.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw timer overlays with proper scaling
+    timers.forEach(timer => {
+      const elapsedTime = currentTime - timer.startTime;
+      const posX = (timer.x / 100) * canvas.width;
+      const posY = (timer.y / 100) * canvas.height;
+      
+      // Scale font size based on canvas width
+      const baseFontSize = Math.min(canvas.width / 20, 48);
+      const fontSize = Math.max(18, baseFontSize);
+      
+      // Format time in MM•SS•TH format
+      const text = formatTime(elapsedTime);
+      
+      // Set up text styling
+      ctx.font = `900 ${fontSize}px 'Inter', 'SF Pro Display', 'Segoe UI', system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      
+      // Measure text for background
+      const metrics = ctx.measureText(text);
+      const textWidth = metrics.width;
+      const textHeight = fontSize * 0.8;
+      
+      // Scale padding with font size
+      const paddingX = fontSize * 0.6;
+      const paddingY = fontSize * 0.4;
+      const bgWidth = textWidth + (paddingX * 2);
+      const bgHeight = textHeight + (paddingY * 2);
+      const cornerRadius = Math.min(fontSize * 0.3, 16);
+      
+      // Draw background with rounded corners
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+      ctx.beginPath();
+      ctx.roundRect(
+        posX - bgWidth / 2,
+        posY - bgHeight / 2,
+        bgWidth,
+        bgHeight,
+        cornerRadius
+      );
+      ctx.fill();
+      
+      // Add subtle shadow
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+      ctx.shadowBlur = 8;
+      ctx.shadowOffsetY = 2;
+      
+      // Redraw background with shadow
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+      ctx.beginPath();
+      ctx.roundRect(
+        posX - bgWidth / 2,
+        posY - bgHeight / 2,
+        bgWidth,
+        bgHeight,
+        cornerRadius
+      );
+      ctx.fill();
+      
+      // Reset shadow
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+      
+      // Draw main text in white
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillText(text, posX, posY);
+    });
+  }, [timers, currentTime, duration]);
 
   const handleVideoTimeUpdate = useCallback(() => {
     if (!videoRef.current) return;
@@ -268,7 +398,10 @@ export default function PhotoFinishPage() {
       setTimers(prev => [...prev, newTimer]);
       setSelectedTool('none');
       
-      // Timer added - no toast notification needed
+      toast({
+        title: "Timer added",
+        description: `Race timer placed at ${formatTime(currentTime)}`,
+      });
     }
   };
 
@@ -374,8 +507,8 @@ export default function PhotoFinishPage() {
       const hundredths = Math.floor((absSeconds % 1) * 100);
       const text = `${sign}${mins.toString().padStart(2, '0')}•${secs.toString().padStart(2, '0')}•${hundredths.toString().padStart(2, '0')}`;
 
-      // Original smaller timer size
-      const fontSize = 16; // Original smaller size
+      // Sleek timer design matching the provided image
+      const fontSize = 48; // Large, bold numbers
       
       ctx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
       
@@ -384,12 +517,12 @@ export default function PhotoFinishPage() {
       const textWidth = textMetrics.width;
       const textHeight = fontSize;
       
-      // Background padding - smaller for original size
-      const paddingX = 8;
-      const paddingY = 4;
+      // Background padding
+      const paddingX = 24;
+      const paddingY = 12;
       const bgWidth = textWidth + (paddingX * 2);
       const bgHeight = textHeight + (paddingY * 2);
-      const cornerRadius = 8; // Smaller rounded corners
+      const cornerRadius = 20; // Rounded corners for modern look
       
       // Add subtle shadow
       ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
@@ -514,41 +647,60 @@ export default function PhotoFinishPage() {
         )}
 
         <div className="h-full w-full flex items-center justify-center relative overflow-hidden pt-16 pb-32">
-          <video
-            ref={videoRef}
-            src={videoUrl}
-            poster={videoPoster}
-            className="max-h-full max-w-full object-contain"
-            onLoadedMetadata={handleVideoLoadedMetadata}
-            onTimeUpdate={handleVideoTimeUpdate}
-            onPlay={handleVideoPlay}
-            onPause={handleVideoPause}
-            onEnded={handleVideoEnded}
-            preload="auto"
-            onClick={(e) => {
-              if (mode === 'timer') {
-                const rect = e.currentTarget.getBoundingClientRect();
-                const x = ((e.clientX - rect.left) / rect.width) * 100;
-                const y = ((e.clientY - rect.top) / rect.height) * 100;
-                
-                const newTimer = {
-                  id: Date.now().toString(),
-                  x,
-                  y,
-                  startTime: currentTime,
-                  visible: true
-                };
-                
-                setTimers(prev => [...prev, newTimer]);
-                setActiveTimer(newTimer.id);
-                setMode(null);
-                
-                // Timer placed - no toast notification needed
-              } else {
-                setMode(null);
-              }
-            }}
-          />
+          <div className="relative">
+            <video
+              ref={videoRef}
+              src={videoUrl}
+              poster={videoPoster}
+              preload="metadata"
+              className="max-h-full max-w-full object-contain"
+              onLoadedMetadata={handleVideoLoadedMetadata}
+              onLoadedData={() => {
+                // Ensure video shows first frame
+                if (videoRef.current) {
+                  videoRef.current.currentTime = 0.1;
+                }
+              }}
+              onTimeUpdate={handleVideoTimeUpdate}
+              onPlay={handleVideoPlay}
+              onPause={handleVideoPause}
+              onEnded={handleVideoEnded}
+            />
+            
+            {/* Timer overlay canvas */}
+            <canvas
+              ref={canvasRef}
+              className="absolute inset-0 w-full h-full pointer-events-none"
+              onClick={(e) => {
+                if (mode === 'timer') {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const x = ((e.clientX - rect.left) / rect.width) * 100;
+                  const y = ((e.clientY - rect.top) / rect.height) * 100;
+                  
+                  const newTimer = {
+                    id: Date.now().toString(),
+                    x,
+                    y,
+                    startTime: currentTime,
+                    visible: true
+                  };
+                  
+                  setTimers(prev => [...prev, newTimer]);
+                  setActiveTimer(newTimer.id);
+                  setMode(null);
+                  
+                  // Show toast notification
+                  const mins = Math.floor(currentTime / 60);
+                  const secs = (currentTime % 60).toFixed(2);
+                  toast({
+                    title: "Timer added",
+                    description: `Timer placed at ${mins}:${secs.padStart(5, '0')}`,
+                  });
+                }
+              }}
+              style={{ pointerEvents: mode === 'timer' ? 'auto' : 'none' }}
+            />
+          </div>
         </div>
 
         <div className="absolute bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black/80 to-transparent p-4">
@@ -575,6 +727,18 @@ export default function PhotoFinishPage() {
               <Trash2 className="w-4 h-4 mr-2" />
               Clear
             </Button>
+            
+            {currentVideo && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAIDialog(true)}
+                className="text-white hover:bg-white/20"
+              >
+                <Brain className="w-4 h-4 mr-2" />
+                AI Analysis
+              </Button>
+            )}
           </div>
 
           <div className="flex items-center gap-4">
@@ -729,7 +893,6 @@ export default function PhotoFinishPage() {
                           onMouseMove={handleMouseMove}
                           onMouseUp={handleMouseUp}
                           onMouseLeave={handleMouseUp}
-                          preload="auto"
                         />
 
                         {duration === 0 && (
@@ -823,6 +986,108 @@ export default function PhotoFinishPage() {
           </Card>
         </div>
       </div>
+      
+      {/* AI Analysis Dialog */}
+      <Dialog open={showAIDialog} onOpenChange={setShowAIDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Brain className="w-5 h-5 text-purple-600" />
+              Sprinthia AI Video Analysis
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="video-title">Video Title *</Label>
+              <Input
+                id="video-title"
+                placeholder="e.g., 100m Sprint Training"
+                value={videoTitle}
+                onChange={(e) => setVideoTitle(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Analysis Type *</Label>
+              <Select value={selectedAnalysisType} onValueChange={setSelectedAnalysisType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose analysis type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {analysisTypes.map((type) => (
+                    <SelectItem key={type.id} value={type.id}>
+                      <div className="flex items-center gap-2">
+                        <span>{type.icon}</span>
+                        <span>{type.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="custom-prompt">Custom Instructions (Optional)</Label>
+              <Textarea
+                id="custom-prompt"
+                placeholder="Add specific areas you'd like Sprinthia to focus on..."
+                value={customPrompt}
+                onChange={(e) => setCustomPrompt(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+              <Zap className="w-4 h-4 text-yellow-500" />
+              <span className="text-sm text-blue-700">
+                Analysis requires 10 spikes. Results will appear in your analysis history.
+              </span>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowAIDialog(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  if (!videoTitle || !selectedAnalysisType) {
+                    toast({
+                      title: "Missing Information",
+                      description: "Please fill in all required fields",
+                      variant: "destructive"
+                    });
+                    return;
+                  }
+
+                  analyzeVideoMutation.mutate({
+                    videoUrl: videoUrl,
+                    videoTitle,
+                    analysisType: selectedAnalysisType,
+                    customPrompt: customPrompt || undefined
+                  });
+                }}
+                disabled={analyzeVideoMutation.isPending || !videoTitle || !selectedAnalysisType}
+              >
+                {analyzeVideoMutation.isPending ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                    Starting Analysis...
+                  </>
+                ) : (
+                  <>
+                    <Brain className="w-4 h-4 mr-2" />
+                    Analyze with Sprinthia
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
