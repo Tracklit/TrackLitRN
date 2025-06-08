@@ -216,13 +216,17 @@ export default function PhotoFinishPage() {
   const handleVideoLoadedMetadata = useCallback(async () => {
     if (!videoRef.current || !currentVideo) return;
     
-    setDuration(videoRef.current.duration);
+    const video = videoRef.current;
+    setDuration(video.duration);
     setCurrentTime(0);
     setUploading(false);
     
+    // Force first frame display immediately
+    video.currentTime = 0.01;
+    
     // Generate and set poster image
     try {
-      const thumbnail = await generateVideoThumbnail(videoRef.current);
+      const thumbnail = await generateVideoThumbnail(video);
       setVideoPoster(thumbnail);
     } catch (error) {
       console.error('Failed to generate video thumbnail:', error);
@@ -264,10 +268,7 @@ export default function PhotoFinishPage() {
       setTimers(prev => [...prev, newTimer]);
       setSelectedTool('none');
       
-      toast({
-        title: "Timer added",
-        description: `Race timer placed at ${formatTime(currentTime)}`,
-      });
+      // Timer added - no toast notification needed
     }
   };
 
@@ -373,8 +374,8 @@ export default function PhotoFinishPage() {
       const hundredths = Math.floor((absSeconds % 1) * 100);
       const text = `${sign}${mins.toString().padStart(2, '0')}•${secs.toString().padStart(2, '0')}•${hundredths.toString().padStart(2, '0')}`;
 
-      // Sleek timer design matching the provided image
-      const fontSize = 48; // Large, bold numbers
+      // Original smaller timer size
+      const fontSize = 16; // Original smaller size
       
       ctx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
       
@@ -383,12 +384,12 @@ export default function PhotoFinishPage() {
       const textWidth = textMetrics.width;
       const textHeight = fontSize;
       
-      // Background padding
-      const paddingX = 24;
-      const paddingY = 12;
+      // Background padding - smaller for original size
+      const paddingX = 8;
+      const paddingY = 4;
       const bgWidth = textWidth + (paddingX * 2);
       const bgHeight = textHeight + (paddingY * 2);
-      const cornerRadius = 20; // Rounded corners for modern look
+      const cornerRadius = 8; // Smaller rounded corners
       
       // Add subtle shadow
       ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
@@ -523,6 +524,7 @@ export default function PhotoFinishPage() {
             onPlay={handleVideoPlay}
             onPause={handleVideoPause}
             onEnded={handleVideoEnded}
+            preload="auto"
             onClick={(e) => {
               if (mode === 'timer') {
                 const rect = e.currentTarget.getBoundingClientRect();
@@ -541,10 +543,7 @@ export default function PhotoFinishPage() {
                 setActiveTimer(newTimer.id);
                 setMode(null);
                 
-                toast({
-                  title: "Timer added",
-                  description: `Timer placed at ${formatTime(currentTime)}`,
-                });
+                // Timer placed - no toast notification needed
               } else {
                 setMode(null);
               }
