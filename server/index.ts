@@ -7,6 +7,16 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Health check endpoint for Replit
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
+});
+
+// Root endpoint for external access verification
+app.get('/ping', (req, res) => {
+  res.status(200).send('pong');
+});
+
 // Serve static files from the public directory
 app.use(express.static(path.join(process.cwd(), 'public')));
 
@@ -84,13 +94,24 @@ app.use((req, res, next) => {
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = process.env.PORT || 5000;
-  const host = process.env.HOST || "0.0.0.0";
+  const port = process.env.PORT ? parseInt(process.env.PORT) : 5000;
+  const host = "0.0.0.0";
   
+  // Add error handling for server startup
+  server.on('error', (err: any) => {
+    if (err.code === 'EADDRINUSE') {
+      log(`Port ${port} is already in use`);
+      process.exit(1);
+    } else {
+      log(`Server error: ${err.message}`);
+    }
+  });
+
   server.listen(port, host, () => {
-    log(`serving on ${host}:${port}`);
-    if (process.env.REPL_ID) {
-      log(`External URL: https://${process.env.REPL_SLUG}-${process.env.REPL_OWNER}.replit.app`);
+    log(`Server running on ${host}:${port}`);
+    log(`Local: http://localhost:${port}`);
+    if (process.env.REPL_SLUG && process.env.REPL_OWNER) {
+      log(`External: https://${process.env.REPL_SLUG}-${process.env.REPL_OWNER}.replit.app`);
     }
   });
 })();
