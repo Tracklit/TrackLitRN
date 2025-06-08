@@ -6846,11 +6846,7 @@ Keep the response professional, evidence-based, and specific to track and field 
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     try {
-      const videos = await dbStorage.db
-        .select()
-        .from(dbStorage.videoAnalysis)
-        .where(eq(dbStorage.videoAnalysis.userId, req.user.id))
-        .orderBy(desc(dbStorage.videoAnalysis.createdAt));
+      const videos = await dbStorage.getVideoAnalysisByUserId(req.user.id);
       
       res.json(videos);
     } catch (error) {
@@ -6928,15 +6924,9 @@ Keep the response professional, evidence-based, and specific to track and field 
       }
 
       // Get video details
-      const [video] = await dbStorage.db
-        .select()
-        .from(dbStorage.videoAnalysis)
-        .where(and(
-          eq(dbStorage.videoAnalysis.id, videoId),
-          eq(dbStorage.videoAnalysis.userId, req.user.id)
-        ));
-
-      if (!video) {
+      const video = await dbStorage.getVideoAnalysis(videoId);
+      
+      if (!video || video.userId !== req.user.id) {
         return res.status(404).json({ error: "Video not found" });
       }
 
