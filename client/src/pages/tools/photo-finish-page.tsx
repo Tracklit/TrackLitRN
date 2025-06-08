@@ -689,9 +689,12 @@ export default function PhotoFinishPage() {
                   setActiveTimer(newTimer.id);
                   setMode(null);
                   
+                  // Show toast notification
+                  const mins = Math.floor(currentTime / 60);
+                  const secs = (currentTime % 60).toFixed(2);
                   toast({
                     title: "Timer added",
-                    description: `Timer placed at ${formatTime(currentTime)}`,
+                    description: `Timer placed at ${mins}:${secs.padStart(5, '0')}`,
                   });
                 }
               }}

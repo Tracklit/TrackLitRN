@@ -151,9 +151,9 @@ export default function PhotoFinishFullscreen({
         const hundredths = Math.floor((absSeconds % 1) * 100);
         const text = `${sign}${mins.toString().padStart(2, '0')}•${secs.toString().padStart(2, '0')}•${hundredths.toString().padStart(2, '0')}`;
         
-        // Scale font size based on screen width and zoom level
-        const baseFontSize = Math.min(canvas.width / 15, 80);
-        const fontSize = baseFontSize / Math.max(videoScale, 1);
+        // Scale font size based on screen width - larger for fullscreen
+        const baseFontSize = Math.max(32, Math.min(canvas.width / 12, 120));
+        const fontSize = baseFontSize;
         
         // Setup bold, clean font
         ctx.font = `900 ${fontSize}px 'Inter', 'SF Pro Display', 'Segoe UI', system-ui, sans-serif`;
@@ -383,7 +383,7 @@ export default function PhotoFinishFullscreen({
   // Handle canvas interactions
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     // Don't place new elements if we're dragging
-    if (isDraggingFinishLine) return;
+    if (isDraggingFinishLine || isMousePanning) return;
     
     const canvas = canvasRef.current;
     if (!canvas || !mode) return;
@@ -400,6 +400,14 @@ export default function PhotoFinishFullscreen({
       setTimers(prev => [...prev, newTimer]);
       setActiveTimer(newTimer.id);
       setMode(null);
+      
+      // Show toast notification
+      const mins = Math.floor(currentTime / 60);
+      const secs = (currentTime % 60).toFixed(2);
+      toast({
+        title: "Timer added",
+        description: `Timer placed at ${mins}:${secs.padStart(5, '0')}`,
+      });
     }
     // Finish line functionality disabled
     // else if (mode === 'finishline') {
@@ -581,7 +589,7 @@ export default function PhotoFinishFullscreen({
         </div>
       )}
       {/* Main Video Container */}
-      <div className="w-full h-full relative overflow-hidden" ref={containerRef}>
+      <div className="absolute inset-0 w-full h-full overflow-hidden" ref={containerRef}>
         <video
           ref={videoRef}
           src={videoUrl || ''}
@@ -590,6 +598,8 @@ export default function PhotoFinishFullscreen({
           style={{
             transform: `scale(${videoScale}) translate(${videoTranslate.x / videoScale}px, ${videoTranslate.y / videoScale}px)`,
             transformOrigin: 'center center',
+            minWidth: '100%',
+            minHeight: '100%',
           }}
           onLoadedMetadata={handleVideoLoad}
           onLoadedData={() => {
