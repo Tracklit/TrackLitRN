@@ -16,6 +16,7 @@ import {
   PaceCalculatorPage,
   PhotoFinishPage
 } from "@/pages/routes";
+import SprinthiaVideoAnalysis from "@/pages/tools/sprinthia-video-analysis";
 
 import { OnboardingFlow } from "@/components/onboarding-flow";
 import { PageTransition } from "@/components/page-transition";
@@ -114,6 +115,7 @@ function Router() {
       
       {/* AI */}
       <ProtectedRoute path="/sprinthia" component={SprinthiaPage} />
+      <ProtectedRoute path="/sprinthia/video-analysis" component={SprinthiaVideoAnalysis} />
       
       {/* Account */}
       <ProtectedRoute path="/spikes" component={SpikesPage} />
