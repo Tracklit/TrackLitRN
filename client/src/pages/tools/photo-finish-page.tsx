@@ -182,7 +182,6 @@ export default function PhotoFinishPage() {
     
     // Reset overlays when new video is loaded
     setTimers([]);
-    setFinishLines([]);
     setSelectedTool('none');
     
     // Loading will be cleared when video metadata loads
@@ -448,34 +447,13 @@ export default function PhotoFinishPage() {
     setLastPanPoint({ x: 0, y: 0 });
   };
 
-  // State for node dragging
-  const [isDraggingNode, setIsDraggingNode] = useState(false);
-  const [draggedNodeInfo, setDraggedNodeInfo] = useState<{ lineId: string; nodeId: string } | null>(null);
-
   // Handle canvas click for adding overlays
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!canvasRef.current || isDraggingNode) return;
+    if (!canvasRef.current) return;
 
     const rect = canvasRef.current.getBoundingClientRect();
     const x = ((event.clientX - rect.left) / rect.width) * 100; // Convert to percentage
     const y = ((event.clientY - rect.top) / rect.height) * 100;
-
-    // Check if clicking on existing node for dragging
-    for (const line of finishLines) {
-      for (const node of line.nodes) {
-        const nodeX = (node.x / 100) * rect.width;
-        const nodeY = (node.y / 100) * rect.height;
-        const clickX = event.clientX - rect.left;
-        const clickY = event.clientY - rect.top;
-        const distance = Math.sqrt((clickX - nodeX) ** 2 + (clickY - nodeY) ** 2);
-        
-        if (distance <= 15) { // 15px hit area
-          setIsDraggingNode(true);
-          setDraggedNodeInfo({ lineId: line.id, nodeId: node.id });
-          return;
-        }
-      }
-    }
 
     if (selectedTool === 'timer') {
       const newTimer: TimerOverlay = {
@@ -671,7 +649,6 @@ export default function PhotoFinishPage() {
                   setVideoUrl("");
                   setCurrentVideo(null);
                   setTimers([]);
-                  setFinishLines([]);
                 }}
                 className="text-white hover:bg-white/20"
               >
@@ -829,23 +806,11 @@ export default function PhotoFinishPage() {
             </Button>
             
             <Button
-              variant={mode === 'finishline' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setMode(mode === 'finishline' ? null : 'finishline')}
-              className="text-white hover:bg-white/20"
-            >
-              <Target className="w-4 h-4 mr-2" />
-              Finish Line
-            </Button>
-            
-            <Button
               variant="ghost"
               size="sm"
               onClick={() => {
                 setTimers([]);
-                setFinishLines([]);
                 setActiveTimer(null);
-                setActiveFinishLine(null);
               }}
               className="text-white hover:bg-white/20"
             >
@@ -1080,19 +1045,10 @@ export default function PhotoFinishPage() {
                     {/* Overlay Canvas */}
                     <canvas
                       ref={canvasRef}
-                      className={`absolute inset-0 w-full h-full ${isDraggingNode ? 'cursor-move' : 'cursor-crosshair'}`}
+                      className="absolute inset-0 w-full h-full cursor-crosshair"
                       onClick={handleCanvasClick}
-                      onMouseMove={handleCanvasMouseMove}
-                      onMouseUp={handleCanvasMouseUp}
-                      style={{ pointerEvents: selectedTool !== 'none' || finishLines.length > 0 ? 'auto' : 'none' }}
+                      style={{ pointerEvents: selectedTool !== 'none' ? 'auto' : 'none' }}
                     />
-                    
-                    {/* Finish line drawing indicator */}
-                    {isDrawingLine && (
-                      <div className="absolute top-4 left-4 bg-blue-500 text-white px-3 py-1 rounded-full text-sm">
-                        Click to place second node
-                      </div>
-                    )}
                   </div>
 
                   {/* Video Controls */}
@@ -1165,33 +1121,11 @@ export default function PhotoFinishPage() {
                       </Button>
                       
                       <Button
-                        variant={selectedTool === 'finish-line' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setSelectedTool(selectedTool === 'finish-line' ? 'none' : 'finish-line')}
-                        className="flex items-center gap-2"
-                      >
-                        <Target className="h-4 w-4" />
-                        Finish Line
-                      </Button>
-                      
-                      {isDrawingLine && (
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={finishDrawingLine}
-                          className="flex items-center gap-2"
-                        >
-                          <RotateCcw className="h-4 w-4" />
-                          Finish Line
-                        </Button>
-                      )}
-                      
-                      <Button
                         variant="destructive"
                         size="sm"
                         onClick={clearOverlays}
                         className="flex items-center gap-2 ml-auto"
-                        disabled={timers.length === 0 && finishLines.length === 0}
+                        disabled={timers.length === 0}
                       >
                         <Trash2 className="h-4 w-4" />
                         Clear All
@@ -1199,9 +1133,9 @@ export default function PhotoFinishPage() {
                     </div>
 
                     {/* Active Overlays Info */}
-                    {(timers.length > 0 || finishLines.length > 0) && (
+                    {timers.length > 0 && (
                       <div className="text-sm text-muted-foreground">
-                        Active overlays: {timers.length} timer{timers.length !== 1 ? 's' : ''}, {finishLines.length} finish line{finishLines.length !== 1 ? 's' : ''}
+                        Active overlays: {timers.length} timer{timers.length !== 1 ? 's' : ''}
                       </div>
                     )}
                   </div>
