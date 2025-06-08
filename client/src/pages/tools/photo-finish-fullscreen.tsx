@@ -175,8 +175,8 @@ export default function PhotoFinishFullscreen({
         const hundredths = Math.floor((absSeconds % 1) * 100);
         const text = `${sign}${mins.toString().padStart(2, '0')}•${secs.toString().padStart(2, '0')}•${hundredths.toString().padStart(2, '0')}`;
         
-        // Normal timer size for fullscreen mode
-        const fontSize = 24; // Normal readable size
+        // Original smaller timer size
+        const fontSize = 16; // Original smaller size
         
         // Setup bold, clean font
         ctx.font = `bold ${fontSize}px 'Courier New', monospace`;
@@ -468,18 +468,21 @@ export default function PhotoFinishFullscreen({
       setDuration(videoRef.current.duration);
       setCurrentTime(0);
       
-      // Generate thumbnail from first frame
+      // Force first frame display and generate thumbnail
       try {
-        videoRef.current.currentTime = 0;
+        const video = videoRef.current;
+        video.currentTime = 0.01; // Show first frame immediately
+        
         await new Promise<void>(resolve => {
           const onSeeked = () => {
-            videoRef.current?.removeEventListener('seeked', onSeeked);
+            video.removeEventListener('seeked', onSeeked);
             resolve();
           };
-          videoRef.current?.addEventListener('seeked', onSeeked);
+          video.addEventListener('seeked', onSeeked);
+          video.currentTime = 0;
         });
         
-        const thumbnail = await generateVideoThumbnail(videoRef.current);
+        const thumbnail = await generateVideoThumbnail(video);
         setVideoPoster(thumbnail);
       } catch (error) {
         console.error('Failed to generate video thumbnail:', error);
