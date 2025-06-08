@@ -901,6 +901,40 @@ export type InsertLoginStreak = z.infer<typeof insertLoginStreakSchema>;
 export type InsertSpikeTransaction = z.infer<typeof insertSpikeTransactionSchema>;
 export type InsertReferral = z.infer<typeof insertReferralSchema>;
 
+// Video Analysis
+export const videoAnalysis = pgTable("video_analysis", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  description: text("description"),
+  fileUrl: text("file_url").notNull(), // Video file URL
+  thumbnailUrl: text("thumbnail_url"), // Generated thumbnail
+  duration: integer("duration"), // In seconds
+  fileSize: integer("file_size"), // In bytes
+  mimeType: text("mime_type").notNull(),
+  status: text("status", { enum: ['uploading', 'processing', 'completed', 'failed'] }).default('uploading'),
+  analysisData: text("analysis_data"), // JSON string for timing overlays and analysis results
+  isPublic: boolean("is_public").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const videoAnalysisRelations = relations(videoAnalysis, ({ one }) => ({
+  user: one(users, {
+    fields: [videoAnalysis.userId],
+    references: [users.id],
+  }),
+}));
+
+export const insertVideoAnalysisSchema = createInsertSchema(videoAnalysis).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type VideoAnalysis = typeof videoAnalysis.$inferSelect;
+export type InsertVideoAnalysis = z.infer<typeof insertVideoAnalysisSchema>;
+
 // Competition Calendar Tables
 export const competitionsTable = pgTable('competitions', {
   id: serial('id').primaryKey(),

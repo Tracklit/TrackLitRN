@@ -42,6 +42,8 @@ import {
   InsertSpikeTransaction,
   Referral,
   InsertReferral,
+  VideoAnalysis,
+  InsertVideoAnalysis,
   TrainingProgram,
   InsertTrainingProgram,
   ProgramSession,
@@ -332,6 +334,13 @@ export interface IStorage {
   markNotificationAsRead(notificationId: number): Promise<boolean>;
   markAllNotificationsAsRead(userId: number): Promise<boolean>;
   deleteNotification(notificationId: number): Promise<boolean>;
+
+  // Video Analysis operations
+  getVideoAnalysis(id: number): Promise<VideoAnalysis | undefined>;
+  getVideoAnalysisByUserId(userId: number): Promise<VideoAnalysis[]>;
+  createVideoAnalysis(video: InsertVideoAnalysis): Promise<VideoAnalysis>;
+  updateVideoAnalysis(id: number, videoData: Partial<VideoAnalysis>): Promise<VideoAnalysis | undefined>;
+  deleteVideoAnalysis(id: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3056,6 +3065,44 @@ export class DatabaseStorage implements IStorage {
           )
         )
       );
+  }
+
+  // Video Analysis operations
+  async getVideoAnalysis(id: number): Promise<VideoAnalysis | undefined> {
+    const [video] = await db.select().from(videoAnalysis).where(eq(videoAnalysis.id, id));
+    return video;
+  }
+
+  async getVideoAnalysisByUserId(userId: number): Promise<VideoAnalysis[]> {
+    return db
+      .select()
+      .from(videoAnalysis)
+      .where(eq(videoAnalysis.userId, userId))
+      .orderBy(desc(videoAnalysis.createdAt));
+  }
+
+  async createVideoAnalysis(video: InsertVideoAnalysis): Promise<VideoAnalysis> {
+    const [newVideo] = await db.insert(videoAnalysis).values(video).returning();
+    return newVideo;
+  }
+
+  async updateVideoAnalysis(id: number, videoData: Partial<VideoAnalysis>): Promise<VideoAnalysis | undefined> {
+    const [video] = await db
+      .update(videoAnalysis)
+      .set({
+        ...videoData,
+        updatedAt: new Date()
+      })
+      .where(eq(videoAnalysis.id, id))
+      .returning();
+    return video;
+  }
+
+  async deleteVideoAnalysis(id: number): Promise<boolean> {
+    const result = await db
+      .delete(videoAnalysis)
+      .where(eq(videoAnalysis.id, id));
+    return result.rowCount! > 0;
   }
 }
 
