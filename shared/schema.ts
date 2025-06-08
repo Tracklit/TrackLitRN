@@ -901,6 +901,60 @@ export type InsertLoginStreak = z.infer<typeof insertLoginStreakSchema>;
 export type InsertSpikeTransaction = z.infer<typeof insertSpikeTransactionSchema>;
 export type InsertReferral = z.infer<typeof insertReferralSchema>;
 
+// AI Video Analysis System - Sprinthia
+export const aiVideoAnalyses = pgTable("ai_video_analyses", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  videoName: text("video_name").notNull(),
+  analysisType: text("analysis_type").notNull(), // sprint_form, block_start, stride_length, stride_frequency, ground_contact_time, flight_time
+  prompt: text("prompt").notNull(),
+  response: text("response").notNull(),
+  videoTimestamp: real("video_timestamp"), // Timestamp in video if analysis is for specific moment
+  costSpikes: integer("cost_spikes").notNull().default(0), // Cost in spikes if paid
+  isFreeTier: boolean("is_free_tier").default(false), // If this was a free tier usage
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const aiPromptUsage = pgTable("ai_prompt_usage", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  weekStart: date("week_start").notNull(), // Start of the week for tracking weekly limits
+  monthStart: date("month_start").notNull(), // Start of the month for tracking monthly limits
+  promptsUsedThisWeek: integer("prompts_used_this_week").default(0),
+  promptsUsedThisMonth: integer("prompts_used_this_month").default(0),
+  lastUsedAt: timestamp("last_used_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const aiVideoAnalysesRelations = relations(aiVideoAnalyses, ({ one }) => ({
+  user: one(users, {
+    fields: [aiVideoAnalyses.userId],
+    references: [users.id],
+  }),
+}));
+
+export const aiPromptUsageRelations = relations(aiPromptUsage, ({ one }) => ({
+  user: one(users, {
+    fields: [aiPromptUsage.userId],
+    references: [users.id],
+  }),
+}));
+
+export const insertAiVideoAnalysisSchema = createInsertSchema(aiVideoAnalyses).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertAiPromptUsageSchema = createInsertSchema(aiPromptUsage).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type AiVideoAnalysis = typeof aiVideoAnalyses.$inferSelect;
+export type AiPromptUsage = typeof aiPromptUsage.$inferSelect;
+export type InsertAiVideoAnalysis = z.infer<typeof insertAiVideoAnalysisSchema>;
+export type InsertAiPromptUsage = z.infer<typeof insertAiPromptUsageSchema>;
+
 // Competition Calendar Tables
 export const competitionsTable = pgTable('competitions', {
   id: serial('id').primaryKey(),
