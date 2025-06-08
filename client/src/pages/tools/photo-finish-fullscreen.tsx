@@ -166,7 +166,7 @@ export default function PhotoFinishFullscreen({
         
         // TRANSPARENT TIMER: Only white text with shadow
         ctx.fillStyle = '#ffffff';
-        ctx.fillText(formatTime(elapsedTime), posX, posY);
+        ctx.fillText(`${elapsedTime.toFixed(2)}s`, posX, posY);
         
         // DEBUG: Ensure no background drawing occurs
         
@@ -713,9 +713,3 @@ export default function PhotoFinishFullscreen({
   );
 }
 
-// Helper function to format time
-function formatTime(seconds: number): string {
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  return `${minutes}:${remainingSeconds.toFixed(2).padStart(5, '0')}`;
-}
