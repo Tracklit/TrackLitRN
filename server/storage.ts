@@ -108,7 +108,9 @@ import {
   coachingRequests,
   InsertCoachingRequest,
   sprinthiaConversations,
-  sprinthiaMessages
+  sprinthiaMessages,
+  videoAnalyses,
+  promptUsage
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, lt, gte, desc, asc, inArray, or, isNotNull, isNull, ne, sql, exists } from "drizzle-orm";
@@ -336,6 +338,17 @@ export interface IStorage {
   markNotificationAsRead(notificationId: number): Promise<boolean>;
   markAllNotificationsAsRead(userId: number): Promise<boolean>;
   deleteNotification(notificationId: number): Promise<boolean>;
+
+  // Video Analysis operations
+  createVideoAnalysis(analysis: InsertVideoAnalysis): Promise<VideoAnalysis>;
+  getVideoAnalysis(id: number): Promise<VideoAnalysis | undefined>;
+  getUserVideoAnalyses(userId: number, limit: number, offset: number): Promise<VideoAnalysis[]>;
+  updateVideoAnalysis(id: number, data: Partial<VideoAnalysis>): Promise<VideoAnalysis | undefined>;
+
+  // Prompt Usage operations
+  getPromptUsage(userId: number, promptType: string, periodStart: Date, periodType: 'week' | 'month'): Promise<PromptUsage | undefined>;
+  updatePromptUsage(userId: number, promptType: string, weekStart: Date, monthStart: Date, spikesSpent: number): Promise<PromptUsage>;
+  updateUserSpikes(userId: number, amount: number): Promise<User | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2978,6 +2991,110 @@ export class DatabaseStorage implements IStorage {
     }
 
     return requestsWithUsers;
+  }
+
+  // Video Analysis operations
+  async createVideoAnalysis(analysis: InsertVideoAnalysis): Promise<VideoAnalysis> {
+    const [result] = await db
+      .insert(videoAnalyses)
+      .values(analysis)
+      .returning();
+    return result;
+  }
+
+  async getVideoAnalysis(id: number): Promise<VideoAnalysis | undefined> {
+    const [analysis] = await db
+      .select()
+      .from(videoAnalyses)
+      .where(eq(videoAnalyses.id, id));
+    return analysis;
+  }
+
+  async getUserVideoAnalyses(userId: number, limit: number, offset: number): Promise<VideoAnalysis[]> {
+    return await db
+      .select()
+      .from(videoAnalyses)
+      .where(eq(videoAnalyses.userId, userId))
+      .orderBy(desc(videoAnalyses.createdAt))
+      .limit(limit)
+      .offset(offset);
+  }
+
+  async updateVideoAnalysis(id: number, data: Partial<VideoAnalysis>): Promise<VideoAnalysis | undefined> {
+    const [result] = await db
+      .update(videoAnalyses)
+      .set(data)
+      .where(eq(videoAnalyses.id, id))
+      .returning();
+    return result;
+  }
+
+  // Prompt Usage operations
+  async getPromptUsage(userId: number, promptType: string, periodStart: Date, periodType: 'week' | 'month'): Promise<PromptUsage | undefined> {
+    const [usage] = await db
+      .select()
+      .from(promptUsage)
+      .where(and(
+        eq(promptUsage.userId, userId),
+        eq(promptUsage.promptType, promptType),
+        periodType === 'week' 
+          ? eq(promptUsage.weekStartDate, periodStart.toISOString().split('T')[0])
+          : eq(promptUsage.monthStartDate, periodStart.toISOString().split('T')[0])
+      ));
+    return usage;
+  }
+
+  async updatePromptUsage(userId: number, promptType: string, weekStart: Date, monthStart: Date, spikesSpent: number): Promise<PromptUsage> {
+    const weekStartStr = weekStart.toISOString().split('T')[0];
+    const monthStartStr = monthStart.toISOString().split('T')[0];
+
+    // Try to update existing record
+    const [existing] = await db
+      .select()
+      .from(promptUsage)
+      .where(and(
+        eq(promptUsage.userId, userId),
+        eq(promptUsage.promptType, promptType),
+        eq(promptUsage.weekStartDate, weekStartStr),
+        eq(promptUsage.monthStartDate, monthStartStr)
+      ));
+
+    if (existing) {
+      const [updated] = await db
+        .update(promptUsage)
+        .set({
+          usageCount: (existing.usageCount || 0) + 1,
+          spikesSpent: (existing.spikesSpent || 0) + spikesSpent,
+          updatedAt: new Date()
+        })
+        .where(eq(promptUsage.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db
+        .insert(promptUsage)
+        .values({
+          userId,
+          promptType,
+          weekStartDate: weekStartStr,
+          monthStartDate: monthStartStr,
+          usageCount: 1,
+          spikesSpent
+        })
+        .returning();
+      return created;
+    }
+  }
+
+  async updateUserSpikes(userId: number, amount: number): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({
+        spikes: sql`${users.spikes} + ${amount}`
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
   }
 
   async acceptFriendRequest(notificationId: number, userId: number): Promise<void> {
