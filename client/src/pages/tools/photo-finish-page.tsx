@@ -14,12 +14,19 @@ import {
   FolderOpen,
   Maximize,
   X,
-  Info
+  Info,
+  Brain,
+  Zap
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { BackNavigation } from "@/components/back-navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import PhotoFinishFullscreen from './photo-finish-fullscreen';
 import trackImagePath from "@assets/IMG_4075.JPG?url";
 
@@ -48,6 +55,45 @@ export default function PhotoFinishPage() {
   const [currentVideo, setCurrentVideo] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string>("");
   const [isPlaying, setIsPlaying] = useState(false);
+  
+  // AI Analysis state
+  const [showAIDialog, setShowAIDialog] = useState(false);
+  const [selectedAnalysisType, setSelectedAnalysisType] = useState('');
+  const [customPrompt, setCustomPrompt] = useState('');
+  const [videoTitle, setVideoTitle] = useState('');
+  
+  const queryClient = useQueryClient();
+  
+  const analysisTypes = [
+    { id: 'sprint_form', name: 'Sprint Form Analysis', icon: '🏃‍♂️' },
+    { id: 'block_start', name: 'Block Start Analysis', icon: '🚀' },
+    { id: 'stride_length', name: 'Stride Length Analysis', icon: '📏' },
+    { id: 'stride_frequency', name: 'Stride Frequency Analysis', icon: '⚡' },
+    { id: 'ground_contact_time', name: 'Ground Contact Time', icon: '👟' },
+    { id: 'flight_time', name: 'Flight Time Analysis', icon: '🦅' }
+  ];
+  
+  // AI Analysis mutation
+  const analyzeVideoMutation = useMutation({
+    mutationFn: (data: any) => apiRequest('/api/video-analysis/analyze', 'POST', data),
+    onSuccess: () => {
+      toast({
+        title: "Analysis Started",
+        description: "Sprinthia is analyzing your video. Check your analysis history for results."
+      });
+      setShowAIDialog(false);
+      setSelectedAnalysisType('');
+      setCustomPrompt('');
+      setVideoTitle('');
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Analysis Failed",
+        description: error.message || "Failed to start video analysis",
+        variant: "destructive"
+      });
+    }
+  });
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [savedVideos, setSavedVideos] = useState<SavedVideo[]>([]);
@@ -111,13 +157,13 @@ export default function PhotoFinishPage() {
     </Dialog>
   );
 
-  // Format time as MM:SS.HH
+  // Format time as MM•SS•TH (minutes, seconds, hundredths with bullet separators)
   const formatTime = (seconds: number) => {
     const mins = Math.floor(Math.abs(seconds) / 60);
     const secs = Math.floor(Math.abs(seconds) % 60);
     const hundredths = Math.floor((Math.abs(seconds) % 1) * 100);
     const sign = seconds < 0 ? '-' : '';
-    return `${sign}${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${hundredths.toString().padStart(2, '0')}`;
+    return `${sign}${mins.toString().padStart(2, '0')}•${secs.toString().padStart(2, '0')}•${hundredths.toString().padStart(2, '0')}`;
   };
 
   // Video controls
@@ -517,8 +563,15 @@ export default function PhotoFinishPage() {
             ref={videoRef}
             src={videoUrl}
             poster={videoPoster}
+            preload="metadata"
             className="max-h-full max-w-full object-contain"
             onLoadedMetadata={handleVideoLoadedMetadata}
+            onLoadedData={() => {
+              // Ensure video shows first frame
+              if (videoRef.current) {
+                videoRef.current.currentTime = 0.01;
+              }
+            }}
             onTimeUpdate={handleVideoTimeUpdate}
             onPlay={handleVideoPlay}
             onPause={handleVideoPause}
@@ -576,6 +629,18 @@ export default function PhotoFinishPage() {
               <Trash2 className="w-4 h-4 mr-2" />
               Clear
             </Button>
+            
+            {currentVideo && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAIDialog(true)}
+                className="text-white hover:bg-white/20"
+              >
+                <Brain className="w-4 h-4 mr-2" />
+                AI Analysis
+              </Button>
+            )}
           </div>
 
           <div className="flex items-center gap-4">
