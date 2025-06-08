@@ -7121,5 +7121,121 @@ Keep the response professional, evidence-based, and specific to track and field 
     }
   });
 
+  // Video Analysis Routes
+  const videoAnalysisUpload = multer({
+    dest: "uploads/video-analysis/",
+    limits: {
+      fileSize: 100 * 1024 * 1024, // 100MB limit
+    },
+    fileFilter: (req, file, cb) => {
+      // Allow video files only
+      const allowedTypes = /mp4|mov|avi|webm|quicktime/;
+      const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+      const mimetype = allowedTypes.test(file.mimetype);
+      
+      if (mimetype && extname) {
+        return cb(null, true);
+      } else {
+        cb(new Error('Only video files are allowed'));
+      }
+    }
+  });
+
+  // Upload video for analysis
+  app.post("/api/video-analysis/upload", videoAnalysisUpload.single('file'), async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const user = req.user!;
+      const { name, description } = req.body;
+      
+      if (!req.file) {
+        return res.status(400).json({ error: "No video file provided" });
+      }
+      
+      if (!name || !name.trim()) {
+        // Clean up uploaded file
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ error: "Video name is required" });
+      }
+      
+      // Generate unique filename
+      const fileExtension = path.extname(req.file.originalname);
+      const uniqueFilename = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}${fileExtension}`;
+      const finalPath = path.join("uploads/video-analysis", uniqueFilename);
+      
+      // Move file to final location
+      fs.renameSync(req.file.path, finalPath);
+      
+      // Create video analysis entry
+      const videoData = {
+        userId: user.id,
+        name: name.trim(),
+        description: description?.trim() || null,
+        fileUrl: `/uploads/video-analysis/${uniqueFilename}`,
+        fileSize: req.file.size,
+        mimeType: req.file.mimetype,
+        status: 'completed' as const // For now, mark as completed immediately
+      };
+      
+      const newVideo = await dbStorage.createVideoAnalysis(videoData);
+      
+      res.status(201).json({
+        id: newVideo.id,
+        name: newVideo.name,
+        description: newVideo.description,
+        fileUrl: newVideo.fileUrl,
+        status: newVideo.status,
+        createdAt: newVideo.createdAt
+      });
+    } catch (error) {
+      console.error("Error uploading video for analysis:", error);
+      
+      // Clean up file if it exists
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      
+      res.status(500).json({ error: "Failed to upload video for analysis" });
+    }
+  });
+
+  // Get user's video analysis uploads
+  app.get("/api/video-analysis", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const videos = await dbStorage.getVideoAnalysisByUserId(req.user!.id);
+      res.json(videos);
+    } catch (error) {
+      console.error("Error fetching video analysis:", error);
+      res.status(500).json({ error: "Failed to fetch video analysis" });
+    }
+  });
+
+  // Get specific video analysis
+  app.get("/api/video-analysis/:id", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const videoId = parseInt(req.params.id);
+      const video = await dbStorage.getVideoAnalysis(videoId);
+      
+      if (!video) {
+        return res.status(404).json({ error: "Video analysis not found" });
+      }
+      
+      // Check if user owns the video
+      if (video.userId !== req.user!.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      
+      res.json(video);
+    } catch (error) {
+      console.error("Error fetching video analysis:", error);
+      res.status(500).json({ error: "Failed to fetch video analysis" });
+    }
+  });
+
   return httpServer;
 }

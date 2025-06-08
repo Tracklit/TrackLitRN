@@ -106,7 +106,8 @@ import {
   coachingRequests,
   InsertCoachingRequest,
   sprinthiaConversations,
-  sprinthiaMessages
+  sprinthiaMessages,
+  videoAnalysis
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, lt, gte, desc, asc, inArray, or, isNotNull, isNull, ne, sql, exists } from "drizzle-orm";
