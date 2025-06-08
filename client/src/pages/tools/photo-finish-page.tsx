@@ -6,8 +6,6 @@ import { Input } from "@/components/ui/input";
 import { 
   Video, 
   Clock, 
-  Target, 
-  Trash2, 
   Upload, 
   Play, 
   Pause,
@@ -16,14 +14,14 @@ import {
   FolderOpen,
   Maximize,
   X,
-  Info
+  Info,
+  Trash2
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { BackNavigation } from "@/components/back-navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import PhotoFinishFullscreen from './photo-finish-fullscreen';
-import trackImagePath from "@assets/IMG_4075.JPG?url";
 
 interface TimerOverlay {
   id: string;
@@ -32,8 +30,6 @@ interface TimerOverlay {
   startTime: number; // in seconds relative to video start
   visible: boolean;
 }
-
-
 
 interface SavedVideo {
   id: string;
@@ -58,6 +54,7 @@ export default function PhotoFinishPage() {
   const [showVideoLibrary, setShowVideoLibrary] = useState(false);
   const [fullscreenMode, setFullscreenMode] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   
   // Video poster/thumbnail state
   const [videoPoster, setVideoPoster] = useState<string>("");
@@ -85,1125 +82,308 @@ export default function PhotoFinishPage() {
   const VideoLimitsInfo = () => (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-          <Info className="h-4 w-4 mr-2" />
-          Video Library Info
+        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+          <Info className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle>Video Library Limits</DialogTitle>
+          <DialogTitle>Video Storage Limits</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Your subscription tier determines how many race videos you can save in your personal library:
-          </p>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center p-3 rounded-lg bg-muted">
-              <span className="font-medium">Free Plan</span>
-              <span className="text-sm text-muted-foreground">1 saved video</span>
-            </div>
-            <div className="flex justify-between items-center p-3 rounded-lg bg-muted">
-              <span className="font-medium">Pro Plan</span>
-              <span className="text-sm text-muted-foreground">20 saved videos</span>
-            </div>
-            <div className="flex justify-between items-center p-3 rounded-lg bg-muted">
-              <span className="font-medium">Star Plan</span>
-              <span className="text-sm text-muted-foreground">Unlimited videos</span>
-            </div>
+          <div className="text-sm text-muted-foreground">
+            <p>Video storage limits by subscription tier:</p>
+            <ul className="mt-2 space-y-1">
+              <li>• <strong>Free:</strong> 1 video</li>
+              <li>• <strong>Pro:</strong> 20 videos</li>
+            </ul>
           </div>
-          <p className="text-xs text-muted-foreground">
-            You can always upload and analyze videos temporarily. Library storage lets you save your analysis for future reference.
-          </p>
+          <div className="text-sm">
+            <p>Current usage: {savedVideos.length} / {getVideoLimit()} videos</p>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
   );
 
-  // Format time for display with hundredths precision
+  // Format time display
   const formatTime = (seconds: number) => {
-    const sign = seconds < 0 ? '-' : '';
-    const absSeconds = Math.abs(seconds);
-    const mins = Math.floor(absSeconds / 60);
-    const secs = Math.floor(absSeconds % 60);
-    const hundredths = Math.floor((absSeconds % 1) * 100);
-    return `${sign}${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${hundredths.toString().padStart(2, '0')}`;
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    const hundredths = Math.floor((seconds % 1) * 100);
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${hundredths.toString().padStart(2, '0')}`;
   };
 
-  // Missing functions for fullscreen mode
-  const togglePlayPause = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play();
+  // Load saved videos from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('photo-finish-videos');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setSavedVideos(parsed.map((v: any) => ({
+          ...v,
+          createdAt: new Date(v.createdAt)
+        })));
+      } catch (e) {
+        console.error('Failed to parse saved videos:', e);
       }
     }
+  }, []);
+
+  // Save videos to localStorage
+  const saveVideosToStorage = (videos: SavedVideo[]) => {
+    localStorage.setItem('photo-finish-videos', JSON.stringify(videos));
   };
 
-  const handleDurationChange = () => {
-    if (videoRef.current) {
-      setDuration(videoRef.current.duration);
-    }
-  };
-
-  // Handle video file upload
-  const handleVideoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('video/')) {
-      toast({
-        title: "Invalid file",
-        description: "Please select a video file",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Check video limit
-    const limit = getVideoLimit();
-    if (limit > 0 && savedVideos.length >= limit) {
-      toast({
-        title: "Video limit reached",
-        description: `${user?.isPremium ? 'Pro' : 'Free'} users can save up to ${limit} video${limit === 1 ? '' : 's'}. Upgrade to save more!`,
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Show loading state immediately
-    setUploading(true);
-    setCurrentVideo(file);
-    const url = URL.createObjectURL(file);
-    setVideoUrl(url);
-    setVideoPoster(""); // Reset poster for new video
-    setFullscreenMode(true); // Automatically enable fullscreen mode
-    
-    // Reset overlays when new video is loaded
-    setTimers([]);
-    setFinishLines([]);
-    setSelectedTool('none');
-    
-    // Loading will be cleared when video metadata loads
-  };
-
-  // Generate video thumbnail from first frame
-  const generateVideoThumbnail = (video: HTMLVideoElement): Promise<string> => {
+  // Generate video thumbnail
+  const generateThumbnail = (video: HTMLVideoElement): Promise<string> => {
     return new Promise((resolve) => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      
-      if (ctx) {
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const dataURL = canvas.toDataURL('image/jpeg', 0.8);
-        resolve(dataURL);
+      if (!ctx) {
+        resolve('');
+        return;
       }
+
+      canvas.width = 320;
+      canvas.height = 180;
+      
+      video.currentTime = 1; // Seek to 1 second for thumbnail
+      video.addEventListener('seeked', () => {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.8));
+      }, { once: true });
     });
   };
 
-  // Handle video metadata load
-  const handleVideoLoad = async () => {
-    if (videoRef.current) {
-      setDuration(videoRef.current.duration);
-      setCurrentTime(0);
+  // Handle file selection
+  const handleFileSelect = async (file: File) => {
+    if (!file.type.startsWith('video/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select a video file (MP4, MOV, AVI)",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setUploading(true);
+    
+    try {
+      const url = URL.createObjectURL(file);
+      setVideoUrl(url);
+      setCurrentVideo(file);
       
-      // Generate thumbnail from first frame
-      try {
-        videoRef.current.currentTime = 0;
-        await new Promise<void>(resolve => {
-          const onSeeked = () => {
-            videoRef.current?.removeEventListener('seeked', onSeeked);
-            resolve();
-          };
-          videoRef.current?.addEventListener('seeked', onSeeked);
-        });
+      // Generate poster
+      const video = document.createElement('video');
+      video.src = url;
+      video.addEventListener('loadedmetadata', async () => {
+        const poster = await generateThumbnail(video);
+        setVideoPoster(poster);
+        setDuration(video.duration);
         
-        const thumbnail = await generateVideoThumbnail(videoRef.current);
-        setVideoPoster(thumbnail);
-      } catch (error) {
-        console.error('Failed to generate video thumbnail:', error);
-      }
+        // Automatically enter fullscreen mode
+        setFullscreenMode(true);
+      });
       
-      // Clear loading state when video is ready
+      toast({
+        title: "Video loaded",
+        description: "Video loaded successfully. Opening in fullscreen mode.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error loading video",
+        description: "Failed to load the selected video file",
+        variant: "destructive"
+      });
+    } finally {
       setUploading(false);
     }
   };
 
-  // Handle video time update with smooth frame-rate syncing
-  const handleTimeUpdate = useCallback(() => {
-    if (videoRef.current) {
-      setCurrentTime(videoRef.current.currentTime);
-    }
-  }, []);
-
-  // Smooth animation loop for precise timer updates
-  useEffect(() => {
-    let animationFrame: number;
-    
-    const updateTime = () => {
-      if (videoRef.current && isPlaying) {
-        setCurrentTime(videoRef.current.currentTime);
-      }
-      animationFrame = requestAnimationFrame(updateTime);
-    };
-    
-    if (isPlaying) {
-      animationFrame = requestAnimationFrame(updateTime);
-    }
-    
-    return () => {
-      if (animationFrame) {
-        cancelAnimationFrame(animationFrame);
-      }
-    };
-  }, [isPlaying]);
-
-  // Toggle play/pause
-  const togglePlayback = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
+  // Handle file input change
+  const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      handleFileSelect(file);
     }
   };
 
-  // Handle video scrubbing with frame-rate precision
-  const handleScrub = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const time = parseFloat(event.target.value);
-    if (videoRef.current) {
-      videoRef.current.currentTime = time;
-      setCurrentTime(time);
-      
-      // Force immediate time update for smooth scrubbing
-      requestAnimationFrame(() => {
-        if (videoRef.current) {
-          setCurrentTime(videoRef.current.currentTime);
-        }
-      });
-    }
-  };
-
-  // State for tracking drag
-  const [isDragging, setIsDragging] = useState(false);
-  
-  // Video zoom and pan state
-  const [videoScale, setVideoScale] = useState(1);
-  const [videoTranslate, setVideoTranslate] = useState({ x: 0, y: 0 });
-  const [isPanning, setIsPanning] = useState(false);
-  const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 });
-
-  // Handle slider interaction - smart play/pause behavior
-  const handleSliderInteraction = (clientX: number, element: HTMLDivElement) => {
-    const rect = element.getBoundingClientRect();
-    const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
-    const percentage = x / rect.width;
-    const time = percentage * (duration || 0);
-    
-    if (videoRef.current && time >= 0 && time <= (duration || 0)) {
-      // Set the video time
-      videoRef.current.currentTime = time;
-      setCurrentTime(time);
-    }
-  };
-
-  // State for tracking if user has started video once
-  const [hasStartedVideo, setHasStartedVideo] = useState(false);
-
-  // Mouse handlers - allow scrubbing without play button requirement
-  const handleMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
+  // Handle drag and drop
+  const handleDragOver = (event: React.DragEvent) => {
     event.preventDefault();
     setIsDragging(true);
-    handleSliderInteraction(event.clientX, event.currentTarget);
   };
 
-  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (isDragging) {
-      handleSliderInteraction(event.clientX, event.currentTarget);
-    }
-  };
-
-  const handleMouseUp = () => {
+  const handleDragLeave = (event: React.DragEvent) => {
+    event.preventDefault();
     setIsDragging(false);
   };
 
-  // Touch handlers - allow scrubbing without play button requirement
-  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+  const handleDrop = (event: React.DragEvent) => {
     event.preventDefault();
-    setIsDragging(true);
-    
-    const touch = event.touches[0];
-    handleSliderInteraction(touch.clientX, event.currentTarget);
-  };
-
-  const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    if (isDragging && event.touches[0]) {
-      const touch = event.touches[0];
-      handleSliderInteraction(touch.clientX, event.currentTarget);
-    }
-  };
-
-  const handleTouchEnd = () => {
     setIsDragging(false);
-  };
-
-  // Global mouse up handler
-  useEffect(() => {
-    const handleGlobalMouseUp = () => {
-      if (isDragging) {
-        setIsDragging(false);
-        // Resume video if it was playing
-        if (videoRef.current && isPlaying) {
-          videoRef.current.play();
-        }
-      }
-    };
     
-    if (isDragging) {
-      document.addEventListener('mouseup', handleGlobalMouseUp);
-      document.addEventListener('mouseleave', handleGlobalMouseUp);
-      document.addEventListener('touchend', handleGlobalMouseUp);
-    }
+    const files = Array.from(event.dataTransfer.files);
+    const videoFile = files.find(file => file.type.startsWith('video/'));
     
-    return () => {
-      document.removeEventListener('mouseup', handleGlobalMouseUp);
-      document.removeEventListener('mouseleave', handleGlobalMouseUp);  
-      document.removeEventListener('touchend', handleGlobalMouseUp);
-    };
-  }, [isDragging, isPlaying]);
-
-  // Video zoom and pan handlers
-  const handleVideoWheel = (event: React.WheelEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    const delta = event.deltaY > 0 ? -0.1 : 0.1;
-    const newScale = Math.max(0.5, Math.min(3, videoScale + delta));
-    setVideoScale(newScale);
-  };
-
-  const handleVideoPanStart = (clientX: number, clientY: number) => {
-    setIsPanning(true);
-    setLastPanPoint({ x: clientX, y: clientY });
-  };
-
-  const handleVideoPanMove = (clientX: number, clientY: number) => {
-    if (!isPanning) return;
-    
-    const deltaX = clientX - lastPanPoint.x;
-    const deltaY = clientY - lastPanPoint.y;
-    
-    setVideoTranslate(prev => ({
-      x: prev.x + deltaX,
-      y: prev.y + deltaY
-    }));
-    
-    setLastPanPoint({ x: clientX, y: clientY });
-  };
-
-  const handleVideoPanEnd = () => {
-    setIsPanning(false);
-  };
-
-  // Touch gesture handlers for video
-  const handleVideoTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
-    if (event.touches.length === 1) {
-      const touch = event.touches[0];
-      handleVideoPanStart(touch.clientX, touch.clientY);
-    }
-  };
-
-  const handleVideoTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    
-    if (event.touches.length === 1 && isPanning) {
-      const touch = event.touches[0];
-      handleVideoPanMove(touch.clientX, touch.clientY);
-    } else if (event.touches.length === 2) {
-      // Pinch to zoom
-      const touch1 = event.touches[0];
-      const touch2 = event.touches[1];
-      const distance = Math.sqrt(
-        Math.pow(touch2.clientX - touch1.clientX, 2) +
-        Math.pow(touch2.clientY - touch1.clientY, 2)
-      );
-      
-      if (lastPanPoint.x !== 0) {
-        const lastDistance = lastPanPoint.x;
-        const scale = distance / lastDistance;
-        const newScale = Math.max(0.5, Math.min(3, videoScale * scale));
-        setVideoScale(newScale);
-      }
-      setLastPanPoint({ x: distance, y: 0 });
-    }
-  };
-
-  const handleVideoTouchEnd = () => {
-    handleVideoPanEnd();
-    setLastPanPoint({ x: 0, y: 0 });
-  };
-
-  // State for node dragging
-  const [isDraggingNode, setIsDraggingNode] = useState(false);
-  const [draggedNodeInfo, setDraggedNodeInfo] = useState<{ lineId: string; nodeId: string } | null>(null);
-
-  // Handle canvas click for adding overlays
-  const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!canvasRef.current || isDraggingNode) return;
-
-    const rect = canvasRef.current.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * 100; // Convert to percentage
-    const y = ((event.clientY - rect.top) / rect.height) * 100;
-
-    // Check if clicking on existing node for dragging
-    for (const line of finishLines) {
-      for (const node of line.nodes) {
-        const nodeX = (node.x / 100) * rect.width;
-        const nodeY = (node.y / 100) * rect.height;
-        const clickX = event.clientX - rect.left;
-        const clickY = event.clientY - rect.top;
-        const distance = Math.sqrt((clickX - nodeX) ** 2 + (clickY - nodeY) ** 2);
-        
-        if (distance <= 15) { // 15px hit area
-          setIsDraggingNode(true);
-          setDraggedNodeInfo({ lineId: line.id, nodeId: node.id });
-          return;
-        }
-      }
-    }
-
-    if (selectedTool === 'timer') {
-      const newTimer: TimerOverlay = {
-        id: `timer-${Date.now()}`,
-        x,
-        y,
-        startTime: currentTime,
-        visible: true
-      };
-      setTimers(prev => [...prev, newTimer]);
-      setSelectedTool('none');
-      
+    if (videoFile) {
+      handleFileSelect(videoFile);
+    } else {
       toast({
-        title: "Timer added",
-        description: `Race timer placed at ${formatTime(currentTime)}`,
-      });
-    }
-  };
-
-
-
-  // Clear all overlays
-  const clearOverlays = () => {
-    setTimers([]);
-    setSelectedTool('none');
-    
-    toast({
-      title: "Overlays cleared",
-      description: "All timers have been removed",
-    });
-  };
-
-  // Save current video
-  const saveVideo = async () => {
-    if (!currentVideo) return;
-
-    const videoLimit = getVideoLimit();
-    if (videoLimit > 0 && savedVideos.length >= videoLimit) {
-      toast({
-        title: "Cannot save video",
-        description: `Storage limit reached. Upgrade to save more videos.`,
+        title: "Invalid file type",
+        description: "Please drop a video file (MP4, MOV, AVI)",
         variant: "destructive"
       });
-      return;
-    }
-
-    // Generate thumbnail
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (videoRef.current && ctx) {
-      canvas.width = 160;
-      canvas.height = 90;
-      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-      const thumbnail = canvas.toDataURL('image/jpeg', 0.8);
-
-      const savedVideo: SavedVideo = {
-        id: `video-${Date.now()}`,
-        name: currentVideo.name,
-        file: currentVideo,
-        thumbnail,
-        duration,
-        createdAt: new Date()
-      };
-
-      setSavedVideos(prev => [savedVideo, ...prev]);
-      
-      toast({
-        title: "Video saved",
-        description: `${currentVideo.name} has been saved to your library`,
-      });
     }
   };
-
-  // Load saved video
-  const loadSavedVideo = (savedVideo: SavedVideo) => {
-    setCurrentVideo(savedVideo.file);
-    const url = URL.createObjectURL(savedVideo.file);
-    setVideoUrl(url);
-    setFullscreenMode(true); // Automatically enable fullscreen mode
-    setShowVideoLibrary(false);
-    
-    // Reset overlays
-    setTimers([]);
-    setFinishLines([]);
-    setSelectedTool('none');
-  };
-
-  // Draw overlays on canvas
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const video = videoRef.current;
-    if (!canvas || !video) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Set canvas size to match video
-    canvas.width = video.videoWidth || 1920;
-    canvas.height = video.videoHeight || 1080;
-
-    // Draw timers
-    timers.forEach(timer => {
-      if (!timer.visible) return;
-
-      const timerTime = currentTime - timer.startTime;
-      const x = (timer.x / 100) * canvas.width;
-      const y = (timer.y / 100) * canvas.height;
-
-      // Format time in MM•SS•TH format (minutes, seconds, tenths+hundredths)
-      const sign = timerTime < 0 ? '-' : '';
-      const absSeconds = Math.abs(timerTime);
-      const mins = Math.floor(absSeconds / 60);
-      const secs = Math.floor(absSeconds % 60);
-      const hundredths = Math.floor((absSeconds % 1) * 100);
-      const text = `${sign}${mins.toString().padStart(2, '0')}•${secs.toString().padStart(2, '0')}•${hundredths.toString().padStart(2, '0')}`;
-
-      // Sleek timer design matching the provided image
-      const fontSize = 48; // Large, bold numbers
-      
-      // Setup bold, clean font
-      ctx.font = `900 ${fontSize}px 'Inter', 'SF Pro Display', 'Segoe UI', system-ui, sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      
-      const metrics = ctx.measureText(text);
-      const textWidth = metrics.width;
-      const textHeight = fontSize * 0.8; // Better text height calculation
-      
-      // Generous padding for sleek look
-      const paddingX = 40;
-      const paddingY = 24;
-      const bgWidth = textWidth + (paddingX * 2);
-      const bgHeight = textHeight + (paddingY * 2);
-      const cornerRadius = 24; // More rounded corners for modern look
-      
-      // Draw 50% transparent black rounded background
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-      ctx.beginPath();
-      ctx.roundRect(
-        x - bgWidth / 2,
-        y - bgHeight / 2,
-        bgWidth,
-        bgHeight,
-        cornerRadius
-      );
-      ctx.fill();
-      
-      // Add subtle shadow effect
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-      ctx.shadowBlur = 8;
-      ctx.shadowOffsetY = 4;
-      
-      // Redraw background with shadow
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-      ctx.beginPath();
-      ctx.roundRect(
-        x - bgWidth / 2,
-        y - bgHeight / 2,
-        bgWidth,
-        bgHeight,
-        cornerRadius
-      );
-      ctx.fill();
-      
-      // Reset shadow for text
-      ctx.shadowColor = 'transparent';
-      ctx.shadowBlur = 0;
-      ctx.shadowOffsetY = 0;
-      
-      // Draw crisp white text
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillText(text, x, y);
-    });
-
-  }, [currentTime, timers]);
 
   // Always use fullscreen mode for video analysis
   if (videoUrl) {
     return (
-      <div className="fixed inset-0 bg-black text-white overflow-hidden z-50">
-        {/* Top Controls Bar */}
-        <div className="absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/80 to-transparent p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setFullscreenMode(false);
-                  setVideoUrl("");
-                  setCurrentVideo(null);
-                  setTimers([]);
-                  setFinishLines([]);
-                }}
-                className="text-white hover:bg-white/20"
-              >
-                <X className="w-5 h-5" />
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowVideoLibrary(!showVideoLibrary)}
-                className="text-white hover:bg-white/20"
-              >
-                <FolderOpen className="w-5 h-5" />
-              </Button>
-            </div>
-
-            <div className="text-white font-medium">
-              {currentVideo?.name || 'Race Analysis'}
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={saveVideo}
-                className="text-white hover:bg-white/20"
-              >
-                <Save className="w-5 h-5" />
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Video Library Sidebar */}
-        {showVideoLibrary && (
-          <div className="absolute top-0 left-0 w-80 h-full bg-black/90 backdrop-blur-sm z-40 border-r border-gray-800">
-            <div className="p-4 pt-20">
-              <h3 className="text-lg font-medium mb-4">Video Library</h3>
-              <div className="space-y-3 max-h-[calc(100vh-120px)] overflow-y-auto">
-                {savedVideos.map((video, index) => (
-                  <div
-                    key={index}
-                    className="p-3 rounded-lg border cursor-pointer transition-colors border-gray-600 hover:border-gray-500"
-                    onClick={() => {
-                      // Load saved video functionality would go here
-                      setShowVideoLibrary(false);
-                    }}
-                  >
-                    <div className="text-sm font-medium text-white truncate">
-                      Saved Video {index + 1}
-                    </div>
-                    <div className="text-xs text-gray-400 mt-1">
-                      {new Date().toLocaleDateString()}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Main Video Container */}
-        <div 
-          ref={containerRef} 
-          className="w-full h-full relative cursor-grab active:cursor-grabbing"
-          style={{ touchAction: 'none' }}
-          onWheel={handleVideoWheel}
-          onMouseDown={(e) => handleVideoPanStart(e.clientX, e.clientY)}
-          onMouseMove={(e) => handleVideoPanMove(e.clientX, e.clientY)}
-          onMouseUp={handleVideoPanEnd}
-          onTouchStart={handleVideoTouchStart}
-          onTouchMove={handleVideoTouchMove}
-          onTouchEnd={handleVideoTouchEnd}
-        >
-          <video
-            ref={videoRef}
-            src={videoUrl}
-            poster={videoPoster}
-            className="w-full h-full object-contain"
-            style={{
-              transform: `scale(${videoScale}) translate(${videoTranslate.x}px, ${videoTranslate.y}px)`,
-            }}
-            onTimeUpdate={handleTimeUpdate}
-            onLoadedMetadata={handleVideoLoad}
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
-            controls={false}
-            disablePictureInPicture
-            controlsList="nodownload nofullscreen noremoteplayback"
-            playsInline
-            webkit-playsinline="true"
-            preload="metadata"
-          />
-          
-          <canvas
-            ref={canvasRef}
-            className="absolute inset-0 w-full h-full pointer-events-auto cursor-crosshair"
-            width={1920}
-            height={1080}
-            onClick={(e) => {
-              if (mode === 'timer') {
-                const rect = canvasRef.current?.getBoundingClientRect();
-                if (rect) {
-                  const x = ((e.clientX - rect.left) / rect.width) * 100;
-                  const y = ((e.clientY - rect.top) / rect.height) * 100;
-                  
-                  const newTimer: TimerOverlay = {
-                    id: Date.now().toString(),
-                    x,
-                    y,
-                    startTime: currentTime,
-                    visible: true
-                  };
-                  
-                  setTimers(prev => [...prev, newTimer]);
-                  setActiveTimer(newTimer.id);
-                  setMode(null);
-                }
-              } else if (mode === 'finishline') {
-                const rect = canvasRef.current?.getBoundingClientRect();
-                if (rect) {
-                  const x = ((e.clientX - rect.left) / rect.width) * 100;
-                  const y = ((e.clientY - rect.top) / rect.height) * 100;
-                  
-                  const newFinishLine: FinishLine = {
-                    id: Date.now().toString(),
-                    nodes: [
-                      { id: `node-${Date.now()}-1`, x: x - 2, y: y - 25 },
-                      { id: `node-${Date.now()}-2`, x: x + 2, y: y + 25 }
-                    ],
-                    visible: true
-                  };
-                  
-                  setFinishLines(prev => [...prev, newFinishLine]);
-                  setActiveFinishLine(newFinishLine.id);
-                  setMode(null);
-                }
-              }
-            }}
-          />
-        </div>
-
-        {/* Bottom Controls */}
-        <div className="absolute bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black/80 to-transparent p-4">
-          {/* Tools Bar */}
-          <div className="flex items-center justify-center gap-4 mb-4">
-            <Button
-              variant={mode === 'timer' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setMode(mode === 'timer' ? null : 'timer')}
-              className="text-white hover:bg-white/20"
-            >
-              <Clock className="w-4 h-4 mr-2" />
-              Add Timer
-            </Button>
-            
-            <Button
-              variant={mode === 'finishline' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setMode(mode === 'finishline' ? null : 'finishline')}
-              className="text-white hover:bg-white/20"
-            >
-              <Target className="w-4 h-4 mr-2" />
-              Finish Line
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setTimers([]);
-                setFinishLines([]);
-                setActiveTimer(null);
-                setActiveFinishLine(null);
-              }}
-              className="text-white hover:bg-white/20"
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Clear
-            </Button>
-          </div>
-
-          {/* Video Controls */}
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={togglePlayPause}
-              className="text-white hover:bg-white/20"
-            >
-              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-            </Button>
-            
-            <div className="text-sm text-white font-mono">
-              {formatTime(currentTime)}
-            </div>
-            
-            {/* Scrubber */}
-            <div className="flex-1 relative">
-              <div
-                className="h-2 bg-gray-600 rounded-full cursor-pointer"
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-              >
-                <div
-                  className="h-full bg-white rounded-full relative"
-                  style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
-                >
-                  <div className="absolute right-0 top-1/2 transform translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full border-2 border-black" />
-                </div>
-              </div>
-            </div>
-            
-            <div className="text-sm text-white font-mono">
-              {formatTime(duration)}
-            </div>
-          </div>
-        </div>
-      </div>
+      <PhotoFinishFullscreen 
+        videoUrl={videoUrl}
+        currentVideo={currentVideo}
+        onClose={() => {
+          setFullscreenMode(false);
+          setVideoUrl("");
+          setCurrentVideo(null);
+          setTimers([]);
+        }}
+      />
     );
   }
 
   return (
-    <div className="container mx-auto px-4 pb-16">
-      <BackNavigation />
-      
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <Video className="h-6 w-6" />
-            Photo Finish
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Analyze race videos with precision timing and finish line overlay tools.
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
+      <div className="container mx-auto p-4 space-y-6">
+        <BackNavigation />
         
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setShowVideoLibrary(!showVideoLibrary)}
-            className="flex items-center gap-2"
-          >
-            <FolderOpen className="h-4 w-4" />
-            Video Library ({savedVideos.length})
-          </Button>
-          {currentVideo && (
-            <Button
-              onClick={saveVideo}
-              className="flex items-center gap-2"
-            >
-              <Save className="h-4 w-4" />
-              Save Video
-            </Button>
-          )}
-        </div>
-      </div>
+        <div className="max-w-2xl mx-auto">
+          {/* Header Card */}
+          <Card className="bg-gradient-to-r from-blue-600 to-purple-600 text-white border-none mb-6">
+            <CardHeader className="text-center">
+              <div className="flex items-center justify-center gap-3 mb-2">
+                <Video className="h-8 w-8" />
+                <CardTitle className="text-2xl font-bold">Photo Finish Analysis</CardTitle>
+              </div>
+              <p className="text-blue-100">
+                Upload race videos and add precise timing overlays for professional analysis
+              </p>
+            </CardHeader>
+          </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Video Library Sidebar - Only show when no video is loaded */}
-        {showVideoLibrary && !currentVideo && (
-          <div className="lg:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Video Library</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  {`${savedVideos.length}/${getVideoLimit()}`} videos saved
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {savedVideos.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Video className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p>No saved videos</p>
-                  </div>
-                ) : (
-                  savedVideos.map(video => (
-                    <div
-                      key={video.id}
-                      className="border rounded-lg p-3 cursor-pointer hover:bg-accent transition-colors"
-                      onClick={() => loadSavedVideo(video)}
-                    >
-                      <img
-                        src={video.thumbnail}
-                        alt={video.name}
-                        className="w-full h-20 object-cover rounded mb-2"
-                      />
-                      <p className="font-medium text-sm truncate">{video.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatTime(video.duration)}
-                      </p>
+          {/* Upload Area */}
+          <Card className="bg-white border-none shadow-lg">
+            <CardContent className="p-8">
+              <div
+                className={`
+                  border-2 border-dashed rounded-lg p-12 text-center transition-all duration-200
+                  ${isDragging 
+                    ? 'border-blue-500 bg-blue-50' 
+                    : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
+                  }
+                `}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
+                <div className="space-y-4">
+                  <div className="flex justify-center">
+                    <div className="p-4 bg-gray-100 rounded-full">
+                      <Upload className="h-12 w-12 text-gray-400" />
                     </div>
-                  ))
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* Main Video Area */}
-        <div className={showVideoLibrary && !currentVideo ? "lg:col-span-3" : "lg:col-span-4"}>
-          <Card>
-            <CardContent className="p-6">
-              {!currentVideo ? (
-                <div className="h-96 flex flex-col overflow-hidden">
-                  {/* Header Image - Top Half */}
-                  <div 
-                    className="h-1/2 bg-cover bg-center bg-no-repeat relative"
-                    style={{ backgroundImage: `url(${trackImagePath})` }}
-                  >
-                    <div className="absolute inset-0 bg-black/40" />
                   </div>
                   
-                  {/* Content - Bottom Half */}
-                  <div className="h-1/2 flex flex-col justify-center items-center text-center p-6 bg-background">
-                    <h3 className="text-lg font-medium mb-2">Upload a race video</h3>
-                    <p className="text-muted-foreground mb-4 text-sm">
-                      Add timing overlays and finish line analysis to your race footage
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                      Upload Race Video
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      Click to select a video file<br />
+                      or drag and drop
                     </p>
-                    
-                    <div className="flex flex-col items-center gap-3">
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="video/*"
-                        onChange={handleVideoUpload}
-                        className="hidden"
-                      />
-                      <Button
-                        onClick={() => fileInputRef.current?.click()}
-                        size="lg"
-                        className="flex items-center gap-2"
-                        disabled={uploading}
-                      >
-                        {uploading ? (
-                          <>
-                            <div className="animate-spin w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full" />
-                            Uploading...
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="h-5 w-5" />
-                            Upload Video
-                          </>
-                        )}
-                      </Button>
-                      
+                    <p className="text-sm text-gray-500">
+                      Supports MP4, MOV, AVI formats
+                    </p>
+                  </div>
+
+                  <div className="flex justify-center">
+                    <Button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2"
+                    >
+                      {uploading ? 'Loading...' : 'Choose File'}
+                    </Button>
+                  </div>
+
+                  <Input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="video/*"
+                    onChange={handleFileInputChange}
+                    className="hidden"
+                  />
+                </div>
+              </div>
+
+              {/* Video Library */}
+              {savedVideos.length > 0 && (
+                <div className="mt-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Recent Videos</h3>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-500">
+                        {savedVideos.length} / {getVideoLimit()}
+                      </span>
                       <VideoLimitsInfo />
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {/* Video Player Container */}
-                  <div 
-                    ref={containerRef} 
-                    className="relative bg-black rounded-lg overflow-hidden cursor-grab active:cursor-grabbing w-full"
-                    style={{ 
-                      aspectRatio: '16/9',
-                      touchAction: 'none',
-                      height: 'auto',
-                      maxHeight: '80vh'
-                    }}
-                    onWheel={handleVideoWheel}
-                    onMouseDown={(e) => handleVideoPanStart(e.clientX, e.clientY)}
-                    onMouseMove={(e) => handleVideoPanMove(e.clientX, e.clientY)}
-                    onMouseUp={handleVideoPanEnd}
-                    onTouchStart={handleVideoTouchStart}
-                    onTouchMove={handleVideoTouchMove}
-                    onTouchEnd={handleVideoTouchEnd}
-                  >
-                    <video
-                      ref={videoRef}
-                      src={videoUrl}
-                      className="w-full h-full object-cover"
-                      onLoadedMetadata={handleVideoLoad}
-                      onTimeUpdate={handleTimeUpdate}
-                      onPlay={() => setIsPlaying(true)}
-                      onPause={() => setIsPlaying(false)}
-                      playsInline
-                      disablePictureInPicture
-                      controlsList="nodownload nofullscreen noremoteplayback"
-                      webkit-playsinline="true"
-                      style={{
-                        transform: `scale(${videoScale}) translate(${videoTranslate.x}px, ${videoTranslate.y}px)`,
-                        transformOrigin: 'center center',
-                        transition: isPanning ? 'none' : 'transform 0.2s ease-out',
-                        pointerEvents: 'none'
-                      }}
-                    />
-                    
-                    {/* Loading Spinner */}
-                    {uploading && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                        <div className="flex flex-col items-center gap-3">
-                          <div className="animate-spin w-8 h-8 border-3 border-white border-t-transparent rounded-full"></div>
-                          <div className="text-white text-sm font-medium">Loading video...</div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Overlay Canvas */}
-                    <canvas
-                      ref={canvasRef}
-                      className={`absolute inset-0 w-full h-full ${isDraggingNode ? 'cursor-move' : 'cursor-crosshair'}`}
-                      onClick={handleCanvasClick}
-                      onMouseMove={handleCanvasMouseMove}
-                      onMouseUp={handleCanvasMouseUp}
-                      style={{ pointerEvents: selectedTool !== 'none' || finishLines.length > 0 ? 'auto' : 'none' }}
-                    />
-                    
-                    {/* Finish line drawing indicator */}
-                    {isDrawingLine && (
-                      <div className="absolute top-4 left-4 bg-blue-500 text-white px-3 py-1 rounded-full text-sm">
-                        Click to place second node
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Video Controls */}
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={togglePlayback}
-                        className="flex items-center gap-2"
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {savedVideos.slice(0, 6).map((video) => (
+                      <div
+                        key={video.id}
+                        className="group relative bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+                        onClick={() => handleFileSelect(video.file)}
                       >
-                        {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                        {isPlaying ? 'Pause' : 'Play'}
-                      </Button>
-                      
-                      <div className="text-sm font-mono min-w-[140px] text-center">
-                        {formatTime(currentTime)} / {formatTime(duration)}
-                      </div>
-                    </div>
-
-                    {/* Custom Mobile-Friendly Video Scrub Slider */}
-                    <div className="px-2">
-                      <div className="relative py-2">
-                        <div 
-                          className="w-full h-6 bg-gray-200 dark:bg-gray-700 rounded-lg cursor-pointer relative overflow-hidden select-none"
-                          onMouseDown={handleMouseDown}
-                          onMouseMove={handleMouseMove}
-                          onMouseUp={handleMouseUp}
-                          onTouchStart={handleTouchStart}
-                          onTouchMove={handleTouchMove}
-                          onTouchEnd={handleTouchEnd}
-                          style={{ touchAction: 'none' }}
-                        >
-                          {/* Progress bar */}
-                          <div 
-                            className="h-full bg-blue-500 rounded-lg transition-all duration-75"
-                            style={{ width: `${(currentTime / (duration || 1)) * 100}%` }}
-                          />
-                          
-                          {/* Slider thumb */}
-                          <div 
-                            className="absolute top-1/2 transform -translate-y-1/2 w-6 h-6 bg-blue-500 border-3 border-white rounded-full shadow-lg"
-                            style={{ 
-                              left: `calc(${(currentTime / (duration || 1)) * 100}% - 12px)`,
-                              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.2)'
+                        <div className="aspect-video bg-gray-200 flex items-center justify-center">
+                          {video.thumbnail ? (
+                            <img 
+                              src={video.thumbnail} 
+                              alt={video.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <Video className="h-8 w-8 text-gray-400" />
+                          )}
+                        </div>
+                        <div className="p-3">
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {video.name}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {formatTime(video.duration)}
+                          </p>
+                        </div>
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const updated = savedVideos.filter(v => v.id !== video.id);
+                              setSavedVideos(updated);
+                              saveVideosToStorage(updated);
                             }}
-                          />
-                        </div>
-                        
-                        {/* Time markers */}
-                        <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                          <span>0:00.00</span>
-                          <span>{formatTime(duration)}</span>
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
                         </div>
                       </div>
-                    </div>
-
-                    {/* Overlay Tools */}
-                    <div className="flex flex-wrap items-center gap-2 p-4 bg-muted rounded-lg">
-                      <Label className="font-medium">Overlay Tools:</Label>
-                      
-                      <Button
-                        variant={selectedTool === 'timer' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setSelectedTool(selectedTool === 'timer' ? 'none' : 'timer')}
-                        className="flex items-center gap-2"
-                      >
-                        <Clock className="h-4 w-4" />
-                        Race Timer
-                      </Button>
-                      
-                      <Button
-                        variant={selectedTool === 'finish-line' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setSelectedTool(selectedTool === 'finish-line' ? 'none' : 'finish-line')}
-                        className="flex items-center gap-2"
-                      >
-                        <Target className="h-4 w-4" />
-                        Finish Line
-                      </Button>
-                      
-                      {isDrawingLine && (
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={finishDrawingLine}
-                          className="flex items-center gap-2"
-                        >
-                          <RotateCcw className="h-4 w-4" />
-                          Finish Line
-                        </Button>
-                      )}
-                      
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={clearOverlays}
-                        className="flex items-center gap-2 ml-auto"
-                        disabled={timers.length === 0 && finishLines.length === 0}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Clear All
-                      </Button>
-                    </div>
-
-                    {/* Active Overlays Info */}
-                    {(timers.length > 0 || finishLines.length > 0) && (
-                      <div className="text-sm text-muted-foreground">
-                        Active overlays: {timers.length} timer{timers.length !== 1 ? 's' : ''}, {finishLines.length} finish line{finishLines.length !== 1 ? 's' : ''}
-                      </div>
-                    )}
+                    ))}
                   </div>
                 </div>
               )}
