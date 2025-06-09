@@ -16,6 +16,7 @@ import { Link } from "wouter";
 import { BackNavigation } from "@/components/back-navigation";
 import startGunImagePath from "@assets/startgun.png";
 import stopwatchImagePath from "@assets/IMG_4081.jpeg";
+import videoAnalysisCardImage from "@assets/video-analysis-card.jpeg";
 
 export default function WorkoutToolsPage() {
   // Tool cards with links to individual pages
@@ -132,7 +133,7 @@ export default function WorkoutToolsPage() {
                       style={{ 
                         backgroundImage: card.title === "Start Gun" ? `url(${startGunImagePath})` :
                                        card.title === "Stopwatch" ? `url(${stopwatchImagePath})` :
-                                       card.title === "Video Analysis" ? `url(/sprinthia-avatar-fresh.jpeg)` : 'none',
+                                       card.title === "Video Analysis" ? `url(${videoAnalysisCardImage})` : 'none',
                         backgroundPosition: card.title === "Video Analysis" ? 'center -85px' : 'center'
                       }}
                     >
