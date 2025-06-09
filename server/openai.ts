@@ -1,11 +1,61 @@
 import OpenAI from "openai";
 import fs from "fs";
 import path from "path";
+import ffmpeg from "fluent-ffmpeg";
+import ffmpegStatic from "ffmpeg-static";
+
+// Set FFmpeg path
+if (ffmpegStatic) {
+  ffmpeg.setFfmpegPath(ffmpegStatic);
+}
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
   apiKey: process.env.OPENAI_API_KEY 
 });
+
+// Helper function to extract frames from video
+async function extractVideoFrames(videoPath: string, outputDir: string, numFrames: number = 3): Promise<string[]> {
+  return new Promise((resolve, reject) => {
+    // Create output directory if it doesn't exist
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    // Clear any existing frames
+    const files = fs.readdirSync(outputDir);
+    files.forEach(file => {
+      if (file.endsWith('.jpg')) {
+        fs.unlinkSync(path.join(outputDir, file));
+      }
+    });
+
+    const frameFiles: string[] = [];
+    
+    ffmpeg(videoPath)
+      .on('end', () => {
+        // Get the extracted frame files
+        const files = fs.readdirSync(outputDir)
+          .filter(file => file.endsWith('.jpg'))
+          .sort()
+          .slice(0, numFrames)
+          .map(file => path.join(outputDir, file));
+        
+        resolve(files);
+      })
+      .on('error', (err) => {
+        console.error('FFmpeg error:', err);
+        reject(err);
+      })
+      .output(path.join(outputDir, 'frame-%03d.jpg'))
+      .outputOptions([
+        '-vframes', numFrames.toString(),
+        '-q:v', '2', // High quality
+        '-vf', `select=not(mod(n\\,${Math.floor(100/numFrames)}))` // Select frames evenly distributed
+      ])
+      .run();
+  });
+}
 
 export async function getChatCompletion(prompt: string): Promise<string> {
   try {
@@ -54,39 +104,65 @@ export async function analyzeVideoWithPrompt(
 
   try {
     if (videoPath && fs.existsSync(videoPath)) {
-      // Read video file and convert to base64
-      const videoBuffer = fs.readFileSync(videoPath);
-      const base64Video = videoBuffer.toString('base64');
+      console.log(`Analyzing video: ${videoPath}`);
       
-      // Use OpenAI's vision model to analyze the video
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content: "You are Sprinthia, an expert AI sprint coach specializing in track and field performance analysis. Analyze the provided video and provide detailed, technical, and actionable feedback on sprint technique and biomechanics. Always structure your responses with clear sections and use bullet points for easy reading."
-          },
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: `${basePrompt}
+      // Create temporary directory for frames
+      const tempDir = path.join(path.dirname(videoPath), 'temp_frames');
+      
+      try {
+        // Extract frames from video
+        const frameFiles = await extractVideoFrames(videoPath, tempDir, 4);
+        console.log(`Extracted ${frameFiles.length} frames from video`);
+        
+        if (frameFiles.length === 0) {
+          throw new Error("No frames could be extracted from video");
+        }
+        
+        // Convert frames to base64
+        const frameImages = frameFiles.map(framePath => {
+          const frameBuffer = fs.readFileSync(framePath);
+          return frameBuffer.toString('base64');
+        });
+        
+        // Create image content for OpenAI API
+        const imageContent = frameImages.map((base64Image, index) => ({
+          type: "image_url" as const,
+          image_url: {
+            url: `data:image/jpeg;base64,${base64Image}`
+          }
+        }));
+        
+        // Use OpenAI's vision model to analyze the video frames
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content: "You are Sprinthia, an expert AI sprint coach specializing in track and field performance analysis. Analyze the provided video frames showing a sprint sequence and provide detailed, technical, and actionable feedback on sprint technique and biomechanics. Always structure your responses with clear sections and use bullet points for easy reading."
+            },
+            {
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text: `${basePrompt}
 
 Video Information:
 - Video Name: ${videoName}
 - Description: ${videoDescription || "No description provided"}
 
-Please provide a comprehensive analysis based on what you observe in the video. Structure your response with the following sections:
+I'm providing you with ${frameImages.length} frames extracted from a sprint video showing different phases of the athlete's technique. Please analyze these frames to provide a comprehensive assessment of the sprint technique.
+
+Structure your response with the following sections:
 
 ## Overall Assessment
-[Provide a brief summary of the athlete's performance]
+[Provide a brief summary of the athlete's performance based on the frames]
 
 ## Key Strengths
-[List what the athlete is doing well]
+[List what the athlete is doing well in their technique]
 
 ## Areas for Improvement
-[Identify specific technical issues]
+[Identify specific technical issues visible in the frames]
 
 ## Recommendations
 [Provide actionable coaching tips and drills]
@@ -95,21 +171,47 @@ Please provide a comprehensive analysis based on what you observe in the video. 
 [Suggest what to focus on in training]
 
 Use bullet points within each section for clarity and easy reading.`
-              },
-              {
-                type: "image_url",
-                image_url: {
-                  url: `data:video/mp4;base64,${base64Video}`
-                }
-              }
-            ]
+                },
+                ...imageContent
+              ]
+            }
+          ],
+          max_tokens: 1200,
+          temperature: 0.7,
+        });
+        
+        // Clean up temporary frames
+        frameFiles.forEach(framePath => {
+          try {
+            fs.unlinkSync(framePath);
+          } catch (err) {
+            console.warn(`Could not delete frame: ${framePath}`);
           }
-        ],
-        max_tokens: 1000,
-        temperature: 0.7,
-      });
+        });
+        
+        // Remove temp directory if empty
+        try {
+          fs.rmdirSync(tempDir);
+        } catch (err) {
+          console.warn(`Could not remove temp directory: ${tempDir}`);
+        }
 
-      return response.choices[0].message.content || "Analysis could not be completed at this time.";
+        return response.choices[0].message.content || "Analysis could not be completed at this time.";
+        
+      } catch (frameError) {
+        console.error("Error extracting frames:", frameError);
+        // Clean up temp directory on error
+        try {
+          if (fs.existsSync(tempDir)) {
+            const files = fs.readdirSync(tempDir);
+            files.forEach(file => fs.unlinkSync(path.join(tempDir, file)));
+            fs.rmdirSync(tempDir);
+          }
+        } catch (cleanupError) {
+          console.warn("Error cleaning up temp directory:", cleanupError);
+        }
+        throw frameError;
+      }
     } else {
       // Fallback to text-only analysis if video file not found
       const fullPrompt = `${basePrompt}
