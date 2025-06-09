@@ -105,8 +105,11 @@ export default function VideoAnalysisPage() {
 
   const analysisMutation = useMutation({
     mutationFn: async ({ videoId, promptId }: { videoId: number; promptId: string }) => {
-      const response = await apiRequest(`/api/video-analysis/${videoId}/analyze`, "POST", { promptId });
-      return response;
+      const response = await apiRequest("POST", `/api/video-analysis/${videoId}/analyze`, { promptId });
+      if (!response.ok) {
+        throw new Error("Analysis failed");
+      }
+      return response.json();
     },
     onSuccess: (data: any) => {
       setAnalysisResponse(data.analysis);
