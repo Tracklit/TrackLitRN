@@ -43,17 +43,17 @@ export default function WorkoutToolsPage() {
       disabled: false
     },
     {
-      title: "Journal",
-      description: "View and search your workout notes",
-      icon: <BookOpen className="h-6 w-6 text-primary" />,
-      href: "/tools/journal",
-      disabled: false
-    },
-    {
       title: "Photo Finish",
       description: "Analyze race videos with timing overlays",
       icon: <Video className="h-6 w-6 text-primary" />,
       href: "/tools/photo-finish",
+      disabled: false
+    },
+    {
+      title: "Journal",
+      description: "View and search your workout notes",
+      icon: <BookOpen className="h-6 w-6 text-primary" />,
+      href: "/tools/journal",
       disabled: false
     },
     {
