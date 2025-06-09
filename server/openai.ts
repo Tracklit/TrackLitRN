@@ -201,21 +201,44 @@ Use bullet points for clarity.`
           temperature: 0.7,
         });
         
-        // Clean up temp directory
+        // Clean up temp directory and original video file
         frameFiles.forEach(file => {
           try { fs.unlinkSync(file); } catch (e) {}
         });
         try { fs.rmdirSync(tempDir); } catch (e) {}
         
+        // Delete the original video file after successful analysis
+        try { 
+          fs.unlinkSync(videoPath);
+          console.log(`Deleted original video file: ${videoPath}`);
+        } catch (e) {
+          console.warn(`Could not delete video file: ${videoPath}`, e);
+        }
+        
         console.log("Video analysis with frames completed successfully");
         return response.choices[0].message.content || "Analysis could not be completed.";
       } else {
-        // No frames extracted - return specific message about video processing
+        // No frames extracted - clean up video file and return specific message
         console.log("No frames extracted from video");
+        try { 
+          fs.unlinkSync(videoPath);
+          console.log(`Deleted video file after no frames extracted: ${videoPath}`);
+        } catch (e) {
+          console.warn(`Could not delete video file after no frames: ${videoPath}`, e);
+        }
         throw new Error("Unable to extract frames from the video. Please ensure the video file is valid and contains visual content.");
       }
     } catch (error) {
       console.error("Frame extraction failed:", error);
+      
+      // Clean up video file even on failure
+      try { 
+        fs.unlinkSync(videoPath);
+        console.log(`Deleted video file after analysis failure: ${videoPath}`);
+      } catch (e) {
+        console.warn(`Could not delete video file after failure: ${videoPath}`, e);
+      }
+      
       // Return the specific error message instead of fallback
       const errorMessage = error instanceof Error ? error.message : "Unable to process video file";
       throw new Error(`Video analysis failed: ${errorMessage}`);
