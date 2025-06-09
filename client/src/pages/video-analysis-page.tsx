@@ -131,7 +131,7 @@ export default function VideoAnalysisPage() {
   const getPromptLimits = () => {
     if (!user) return { total: 0, remaining: 0 };
     
-    const tier = user.subscriptionTier || "free";
+    const tier = (user as any).subscriptionTier || "free";
     const limits = {
       free: { total: 1, period: "month" },
       pro: { total: 5, period: "week" },

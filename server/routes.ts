@@ -6969,19 +6969,18 @@ Keep the response professional, evidence-based, and specific to track and field 
         return res.status(400).json({ error: "Invalid analysis type" });
       }
 
-      // Generate AI analysis using OpenAI
-      const { getChatCompletion } = await import('./openai');
+      // Generate AI analysis using OpenAI with actual video content
+      const { analyzeVideoWithPrompt } = await import('./openai');
       
-      const analysisPrompt = `${prompt}
-
-Video details:
-- Video name: ${video.name}
-- Description: ${video.description || "No description provided"}
-- File type: ${video.mimeType}
-
-Please provide a comprehensive analysis as Sprinthia, the AI sprint coach. Be specific, technical, and actionable in your feedback. Structure your response with clear sections and bullet points for easy reading.`;
-
-      const analysis = await getChatCompletion(analysisPrompt);
+      // Construct the full video file path
+      const videoPath = `./uploads/${video.filename}`;
+      
+      const analysis = await analyzeVideoWithPrompt(
+        video.name,
+        video.description || "",
+        promptId,
+        videoPath
+      );
 
       // Update user's prompt usage
       if (subscriptionTier !== "star") {
