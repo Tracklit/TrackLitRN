@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Camera, Upload, FileVideo, Play, Sparkles, Zap, Crown, ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { Camera, Upload, FileVideo, Play, Sparkles, Zap, Crown, ArrowLeft, ArrowRight, Check, Copy, ThumbsUp, ThumbsDown } from "lucide-react";
 
 export default function VideoAnalysisPage() {
   const [currentStep, setCurrentStep] = useState<"upload" | "analyze" | "results">("upload");
@@ -26,6 +26,7 @@ export default function VideoAnalysisPage() {
   const [selectedPrompts, setSelectedPrompts] = useState<string[]>([]);
   const [customPrompt, setCustomPrompt] = useState("");
   const [useCustomPrompt, setUseCustomPrompt] = useState(false);
+  const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -183,9 +184,34 @@ export default function VideoAnalysisPage() {
     setSelectedPrompts([]);
     setCustomPrompt("");
     setUseCustomPrompt(false);
+    setFeedback(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+  };
+
+  const handleCopyText = async () => {
+    try {
+      await navigator.clipboard.writeText(cleanAnalysisText(analysisResponse));
+      toast({
+        title: "Copied to clipboard",
+        description: "Analysis text has been copied",
+      });
+    } catch (err) {
+      toast({
+        title: "Copy failed",
+        description: "Unable to copy text to clipboard",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleFeedback = (type: "up" | "down") => {
+    setFeedback(type);
+    toast({
+      title: "Feedback recorded",
+      description: `Thank you for your ${type === "up" ? "positive" : "negative"} feedback`,
+    });
   };
 
   const handlePromptToggle = (promptId: string) => {
@@ -595,6 +621,51 @@ export default function VideoAnalysisPage() {
                 <div className="prose max-w-none">
                   <div className="whitespace-pre-wrap text-white leading-relaxed font-medium text-sm text-justify">
                     {cleanAnalysisText(analysisResponse)}
+                  </div>
+                </div>
+                
+                {/* Feedback and Copy Section */}
+                <div className="mt-6">
+                  <div className="border-t border-slate-600 pt-4 mb-4">
+                    <div className="flex items-center justify-center gap-4">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleCopyText}
+                        className="flex items-center gap-2 text-slate-300 hover:text-white"
+                      >
+                        <Copy className="h-4 w-4" />
+                        Copy
+                      </Button>
+                      
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleFeedback("up")}
+                          className={`flex items-center gap-2 ${
+                            feedback === "up" 
+                              ? "text-green-400 bg-green-400/10" 
+                              : "text-slate-300 hover:text-green-400"
+                          }`}
+                        >
+                          <ThumbsUp className="h-4 w-4" />
+                        </Button>
+                        
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleFeedback("down")}
+                          className={`flex items-center gap-2 ${
+                            feedback === "down" 
+                              ? "text-red-400 bg-red-400/10" 
+                              : "text-slate-300 hover:text-red-400"
+                          }`}
+                        >
+                          <ThumbsDown className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 
