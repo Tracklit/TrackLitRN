@@ -503,11 +503,7 @@ export default function VideoAnalysisPage() {
                     {analysisPrompts.map((prompt) => (
                       <div
                         key={prompt.id}
-                        className={`p-3 border rounded-lg cursor-pointer transition-all ${
-                          selectedPrompts.includes(prompt.id)
-                            ? "border-primary bg-primary/10 border-2"
-                            : "border-slate-300 bg-slate-100"
-                        }`}
+                        className="p-3 border border-slate-300 bg-slate-100 rounded-lg cursor-pointer"
                         onClick={() => !useCustomPrompt && handlePromptToggle(prompt.id)}
                       >
                         <div className="flex items-start gap-2">
