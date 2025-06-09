@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Camera, Upload, FileVideo, Play, Sparkles, Zap, Crown, ArrowLeft, ArrowRight, Check, Copy, ThumbsUp, ThumbsDown } from "lucide-react";
+import videoAnalysisCardImage from "@assets/video-analysis-card.jpeg";
 
 export default function VideoAnalysisPage() {
   const [currentStep, setCurrentStep] = useState<"upload" | "analyze" | "results">("upload");
@@ -355,14 +356,24 @@ export default function VideoAnalysisPage() {
       
       <div className="space-y-6">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 text-white">
-          <div className="flex items-center gap-3 mb-4">
-            <Camera className="h-8 w-8" />
-            <h1 className="text-2xl font-bold">Video Analysis</h1>
+        <div 
+          className="relative rounded-lg p-6 text-white overflow-hidden"
+          style={{
+            backgroundImage: `linear-gradient(rgba(37, 99, 235, 0.8), rgba(147, 51, 234, 0.8)), url(${videoAnalysisCardImage})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat'
+          }}
+        >
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-4">
+              <Camera className="h-8 w-8" />
+              <h1 className="text-2xl font-bold">Video Analysis</h1>
+            </div>
+            <p className="text-blue-100">
+              Upload race videos and get AI-powered analysis from Sprinthia
+            </p>
           </div>
-          <p className="text-blue-100">
-            Upload race videos and get AI-powered analysis from Sprinthia
-          </p>
         </div>
 
         {/* Step Progress Indicator */}
