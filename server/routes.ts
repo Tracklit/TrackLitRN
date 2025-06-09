@@ -6973,7 +6973,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       const { analyzeVideoWithPrompt } = await import('./openai');
       
       // Construct the full video file path
-      const videoPath = `./uploads/${video.filename}`;
+      const videoPath = `./uploads/${video.fileName}`;
       
       const analysis = await analyzeVideoWithPrompt(
         video.name,
