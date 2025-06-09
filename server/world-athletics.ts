@@ -68,42 +68,66 @@ class WorldAthleticsService {
 
   async searchCompetitions(name?: string, startDate?: string, endDate?: string): Promise<WorldAthleticsCompetition[]> {
     try {
-      const url = new URL(`${this.baseUrl}/competitions`);
-      
-      // Add query parameters if provided
-      if (name && name !== 'all') {
-        url.searchParams.append('name', name);
-      }
-      if (startDate) {
-        url.searchParams.append('startDate', startDate);
-      }
-      if (endDate) {
-        url.searchParams.append('endDate', endDate);
-      }
+      // Try multiple API endpoints for comprehensive data coverage
+      const apiEndpoints = [
+        `${this.baseUrl}/competitions`,
+        'https://worldathletics.org/api/competitions',
+        'https://api.worldathletics.org/competitions'
+      ];
 
-      console.log('Fetching from World Athletics API:', url.toString());
-      
-      const response = await fetch(url.toString(), {
-        headers: {
-          'User-Agent': 'TrackFieldApp/1.0',
-          'Accept': 'application/json'
+      for (const baseEndpoint of apiEndpoints) {
+        try {
+          const url = new URL(baseEndpoint);
+          
+          // Add query parameters if provided
+          if (name && name !== 'all') {
+            url.searchParams.append('name', name);
+          }
+          if (startDate) {
+            url.searchParams.append('startDate', startDate);
+          }
+          if (endDate) {
+            url.searchParams.append('endDate', endDate);
+          }
+
+          console.log('Fetching from World Athletics API:', url.toString());
+          
+          const response = await fetch(url.toString(), {
+            headers: {
+              'User-Agent': 'TrackFieldApp/1.0',
+              'Accept': 'application/json',
+              'Cache-Control': 'no-cache'
+            }
+          });
+          
+          if (!response.ok) {
+            console.log(`API endpoint ${baseEndpoint} returned ${response.status}, trying next endpoint...`);
+            continue;
+          }
+
+          const data = await response.json() as unknown;
+          
+          if (!Array.isArray(data)) {
+            console.log(`API endpoint ${baseEndpoint} returned non-array data, trying next endpoint...`);
+            continue;
+          }
+          
+          const competitions = z.array(CompetitionSchema).parse(data);
+          const deduplicated = this.deduplicateCompetitions(competitions);
+          
+          if (deduplicated.length > 0) {
+            console.log(`Successfully fetched ${deduplicated.length} competitions from ${baseEndpoint}`);
+            return deduplicated;
+          }
+          
+        } catch (endpointError) {
+          console.log(`API endpoint ${baseEndpoint} failed:`, endpointError);
+          continue;
         }
-      });
-      
-      if (!response.ok) {
-        console.error(`World Athletics API returned ${response.status}: ${response.statusText}`);
-        return [];
-      }
-
-      const data = await response.json() as unknown;
-      
-      if (!Array.isArray(data)) {
-        console.error('World Athletics API returned non-array data');
-        return [];
       }
       
-      const competitions = z.array(CompetitionSchema).parse(data);
-      return this.deduplicateCompetitions(competitions);
+      console.log('All World Athletics API endpoints failed or returned no data');
+      return [];
       
     } catch (error) {
       console.error('World Athletics API error:', error);

@@ -578,12 +578,24 @@ export default function CompetitionCalendarPage() {
             <h3 className="text-lg font-medium text-gray-600 mb-2">
               {activeTab === 'favorites' ? 'No favorite competitions yet' : 'No competitions found'}
             </h3>
-            <p className="text-gray-500">
+            <p className="text-gray-500 mb-4">
               {activeTab === 'favorites' 
                 ? 'Start adding competitions to your favorites to see them here.'
-                : 'Try adjusting your search or check back later for new competitions.'
+                : dateFilter.start && dateFilter.end 
+                  ? `No competitions found for ${dateFilter.start} to ${dateFilter.end}.`
+                  : 'Try adjusting your search or check back later for new competitions.'
               }
             </p>
+            {activeTab !== 'favorites' && dateFilter.start && dateFilter.end && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
+                <p className="text-sm text-blue-800 mb-2">
+                  <strong>Tip:</strong> Currently showing authentic World Athletics data only.
+                </p>
+                <p className="text-xs text-blue-600">
+                  Try setting the date range to June 9-16, 2025 where competitions are available, or check back later for additional scheduled events.
+                </p>
+              </div>
+            )}
           </div>
         ) : (
           <>
