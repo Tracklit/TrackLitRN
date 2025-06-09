@@ -98,6 +98,8 @@ export default function CompetitionCalendarPage() {
     setCurrentPage(1);
     // Clear all competition queries to prevent stale data
     queryClient.removeQueries({ queryKey: ['/api/competitions'] });
+    // Also invalidate to force refetch
+    queryClient.invalidateQueries({ queryKey: ['/api/competitions'] });
   }, [dateFilter.start, dateFilter.end, searchTerm, activeTab, sortOrder, queryClient]);
 
   // Fetch competitions based on active tab
@@ -113,21 +115,24 @@ export default function CompetitionCalendarPage() {
     }],
     enabled: activeTab !== 'favorites',
     staleTime: 0,
-    cacheTime: 0, // Disable caching to prevent stale data
-    queryFn: async () => {
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+    queryFn: async ({ queryKey }) => {
+      // Extract current values from queryKey to ensure we use latest dates
+      const [, queryParams] = queryKey as [string, any];
       const params = new URLSearchParams({
-        name: searchTerm || 'all',
+        name: queryParams.name || 'all',
         [activeTab]: activeTab,
-        startDate: dateFilter.start || 'no-start',
-        endDate: dateFilter.end || 'no-end',
-        page: currentPage.toString(),
-        limit: pageSize.toString(),
-        sort: sortOrder
+        startDate: queryParams.startDate || 'no-start',
+        endDate: queryParams.endDate || 'no-end',
+        page: queryParams.page?.toString() || currentPage.toString(),
+        limit: queryParams.limit?.toString() || pageSize.toString(),
+        sort: queryParams.sort || sortOrder
       });
       
       console.log('Frontend sending date filter:', { 
-        start: dateFilter.start, 
-        end: dateFilter.end,
+        start: queryParams.startDate, 
+        end: queryParams.endDate,
         fullParams: params.toString()
       });
       
