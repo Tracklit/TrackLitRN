@@ -68,11 +68,12 @@ class WorldAthleticsService {
 
   async searchCompetitions(name?: string, startDate?: string, endDate?: string): Promise<WorldAthleticsCompetition[]> {
     try {
-      // Try multiple API endpoints for comprehensive data coverage
+      // Try multiple official World Athletics API endpoints
       const apiEndpoints = [
-        `${this.baseUrl}/competitions`,
+        'https://worldathletics.org/competitions/calendar-results',
+        'https://api.worldathletics.org/competitions',
         'https://worldathletics.org/api/competitions',
-        'https://api.worldathletics.org/competitions'
+        `${this.baseUrl}/competitions`
       ];
 
       for (const baseEndpoint of apiEndpoints) {
@@ -127,6 +128,10 @@ class WorldAthleticsService {
       }
       
       console.log('All World Athletics API endpoints failed or returned no data');
+      console.log(`Date range requested: ${startDate} to ${endDate}`);
+      console.log('To access comprehensive World Athletics data, official API credentials may be required.');
+      
+      // Return empty array to trigger proper error handling in frontend
       return [];
       
     } catch (error) {

@@ -587,12 +587,15 @@ export default function CompetitionCalendarPage() {
               }
             </p>
             {activeTab !== 'favorites' && dateFilter.start && dateFilter.end && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
-                <p className="text-sm text-blue-800 mb-2">
-                  <strong>Tip:</strong> Currently showing authentic World Athletics data only.
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 max-w-md mx-auto">
+                <p className="text-sm text-orange-800 mb-2">
+                  <strong>Limited Data Coverage</strong>
                 </p>
-                <p className="text-xs text-blue-600">
-                  Try setting the date range to June 9-16, 2025 where competitions are available, or check back later for additional scheduled events.
+                <p className="text-xs text-orange-600 mb-3">
+                  Currently displaying competitions from available World Athletics data sources. Some date ranges may have limited or no competition data.
+                </p>
+                <p className="text-xs text-orange-600">
+                  For comprehensive competition listings, official World Athletics API access may be required.
                 </p>
               </div>
             )}
