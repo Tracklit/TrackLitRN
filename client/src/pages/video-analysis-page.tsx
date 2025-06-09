@@ -94,10 +94,6 @@ export default function VideoAnalysisPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/video-analysis"] });
       setSelectedVideoId(data.id);
       setCurrentStep("analyze");
-      toast({
-        title: "Success",
-        description: "Video uploaded successfully for analysis",
-      });
     },
     onError: (error) => {
       toast({
@@ -345,29 +341,29 @@ export default function VideoAnalysisPage() {
         {/* Step Progress Indicator */}
         <div className="flex items-center justify-center mb-6">
           <div className="flex items-center space-x-4">
-            <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
-              currentStep === "upload" ? "bg-primary text-white" : "bg-green-500 text-white"
+            <div className={`flex items-center justify-center w-6 h-6 rounded-full text-sm ${
+              currentStep === "upload" ? "bg-blue-600 text-white" : "bg-green-500 text-white"
             }`}>
-              {currentStep !== "upload" ? <Check className="w-4 h-4" /> : "1"}
+              {currentStep !== "upload" ? <Check className="w-3 h-3" /> : "1"}
             </div>
-            <div className="w-16 h-1 bg-gray-300 rounded">
-              <div className={`h-full bg-primary rounded transition-all duration-300 ${
+            <div className="w-12 h-0.5 bg-gray-300 rounded">
+              <div className={`h-full bg-blue-600 rounded transition-all duration-300 ${
                 currentStep === "analyze" || currentStep === "results" ? "w-full" : "w-0"
               }`} />
             </div>
-            <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
-              currentStep === "analyze" ? "bg-primary text-white" : 
-              currentStep === "results" ? "bg-green-500 text-white" : "bg-gray-300 text-gray-600"
+            <div className={`flex items-center justify-center w-6 h-6 rounded-full text-sm ${
+              currentStep === "analyze" ? "bg-blue-600 text-white" : 
+              currentStep === "results" ? "bg-green-500 text-white" : "bg-gray-400 text-gray-600"
             }`}>
-              {currentStep === "results" ? <Check className="w-4 h-4" /> : "2"}
+              {currentStep === "results" ? <Check className="w-3 h-3" /> : "2"}
             </div>
-            <div className="w-16 h-1 bg-gray-300 rounded">
-              <div className={`h-full bg-primary rounded transition-all duration-300 ${
+            <div className="w-12 h-0.5 bg-gray-300 rounded">
+              <div className={`h-full bg-blue-600 rounded transition-all duration-300 ${
                 currentStep === "results" ? "w-full" : "w-0"
               }`} />
             </div>
-            <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
-              currentStep === "results" ? "bg-primary text-white" : "bg-gray-300 text-gray-600"
+            <div className={`flex items-center justify-center w-6 h-6 rounded-full text-sm ${
+              currentStep === "results" ? "bg-blue-600 text-white" : "bg-gray-400 text-gray-600"
             }`}>
               3
             </div>
@@ -405,7 +401,7 @@ export default function VideoAnalysisPage() {
                     <div className="space-y-4">
                       {uploadMutation.isPending ? (
                         <>
-                          <Upload className="h-16 w-16 text-blue-600 mx-auto animate-spin" />
+                          <div className="h-16 w-16 mx-auto rounded-full border-4 border-gray-200 border-t-blue-600 border-r-purple-600 animate-spin"></div>
                           <div>
                             <h3 className="text-lg font-semibold text-blue-700">
                               Uploading {selectedFile.name}...
@@ -503,7 +499,7 @@ export default function VideoAnalysisPage() {
                     {analysisPrompts.map((prompt) => (
                       <div
                         key={prompt.id}
-                        className="p-3 border-2 border-primary bg-primary/10 rounded-lg cursor-pointer"
+                        className="p-3 border border-slate-400 bg-slate-200 rounded-lg cursor-pointer"
                         onClick={() => !useCustomPrompt && handlePromptToggle(prompt.id)}
                       >
                         <div className="flex items-start gap-2">
