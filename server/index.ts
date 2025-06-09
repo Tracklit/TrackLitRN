@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { VideoCleanupService } from "./video-cleanup";
 import path from "path";
 import { createServer } from "http";
 
@@ -72,6 +73,10 @@ app.use((req, res, next) => {
   refreshAllGoogleSheetPrograms()
     .then(() => console.log('Initial Google Sheets data refresh completed'))
     .catch(error => console.error('Error during initial Google Sheets refresh:', error));
+
+  // Initialize video cleanup service
+  console.log('Initializing video cleanup service...');
+  VideoCleanupService.schedulePeriodicCleanup();
 
   const server = await registerRoutes(app);
 

@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { dbStorage } from './storage';
+import { storage } from './storage';
 
 const UPLOADS_DIR = './uploads/video-analysis';
 
@@ -27,12 +27,12 @@ export class VideoCleanupService {
       console.log(`Found ${files.length} files in uploads directory`);
 
       // Get all video analysis records from database
-      const videoRecords = await dbStorage.getAllVideoAnalysis();
+      const videoRecords = await storage.getAllVideoAnalysis();
       const activeFileUrls = new Set(
         videoRecords
-          .map(record => record.fileUrl)
-          .filter(url => url && url.startsWith('/uploads/video-analysis/'))
-          .map(url => path.basename(url))
+          .map((record: any) => record.fileUrl)
+          .filter((url: any) => url && url.startsWith('/uploads/video-analysis/'))
+          .map((url: any) => path.basename(url))
       );
 
       console.log(`Found ${activeFileUrls.size} active video references in database`);

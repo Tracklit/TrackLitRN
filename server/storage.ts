@@ -339,6 +339,7 @@ export interface IStorage {
   // Video Analysis operations
   getVideoAnalysis(id: number): Promise<VideoAnalysis | undefined>;
   getVideoAnalysisByUserId(userId: number): Promise<VideoAnalysis[]>;
+  getAllVideoAnalysis(): Promise<VideoAnalysis[]>;
   createVideoAnalysis(video: InsertVideoAnalysis): Promise<VideoAnalysis>;
   updateVideoAnalysis(id: number, videoData: Partial<VideoAnalysis>): Promise<VideoAnalysis | undefined>;
   deleteVideoAnalysis(id: number): Promise<boolean>;
@@ -3079,6 +3080,13 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(videoAnalysis)
       .where(eq(videoAnalysis.userId, userId))
+      .orderBy(desc(videoAnalysis.createdAt));
+  }
+
+  async getAllVideoAnalysis(): Promise<VideoAnalysis[]> {
+    return db
+      .select()
+      .from(videoAnalysis)
       .orderBy(desc(videoAnalysis.createdAt));
   }
 
