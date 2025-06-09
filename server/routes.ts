@@ -6855,58 +6855,7 @@ Keep the response professional, evidence-based, and specific to track and field 
     }
   });
 
-  // Upload video for analysis
-  app.post("/api/video-analysis/upload", async (req: Request, res: Response) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    
-    try {
-      const upload = multer({
-        dest: 'uploads/video-analysis/',
-        limits: { fileSize: 100 * 1024 * 1024 }, // 100MB limit
-        fileFilter: (req, file, cb) => {
-          const allowedTypes = ['video/mp4', 'video/mov', 'video/avi', 'video/quicktime'];
-          if (allowedTypes.includes(file.mimetype)) {
-            cb(null, true);
-          } else {
-            cb(new Error('Invalid file type'));
-          }
-        }
-      }).single('file');
 
-      upload(req, res, async (err) => {
-        if (err) {
-          return res.status(400).json({ error: err.message });
-        }
-
-        if (!req.file) {
-          return res.status(400).json({ error: "No file uploaded" });
-        }
-
-        const { name, description } = req.body;
-        
-        if (!name || !name.trim()) {
-          return res.status(400).json({ error: "Video name is required" });
-        }
-
-        // Create video record in database
-        const video = await dbStorage.createVideoAnalysis({
-          userId: req.user.id,
-          name: name.trim(),
-          description: description || null,
-          fileUrl: req.file.path,
-          fileName: req.file.originalname,
-          fileSize: req.file.size,
-          mimeType: req.file.mimetype,
-          status: 'completed'
-        });
-
-        res.json(video);
-      });
-    } catch (error) {
-      console.error("Error uploading video:", error);
-      res.status(500).json({ error: "Failed to upload video" });
-    }
-  });
 
   // Analyze video with Sprinthia AI
   app.post("/api/video-analysis/:videoId/analyze", async (req: Request, res: Response) => {
@@ -7338,12 +7287,14 @@ Keep the response professional, evidence-based, and specific to track and field 
       fileSize: 100 * 1024 * 1024, // 100MB limit
     },
     fileFilter: (req, file, cb) => {
-      // Allow video files only
-      const allowedTypes = /mp4|mov|avi|webm|quicktime/;
-      const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-      const mimetype = allowedTypes.test(file.mimetype);
+      // Allow video files only - check both extension and MIME type
+      const allowedExtensions = /\.(mp4|mov|avi|webm)$/i;
+      const allowedMimeTypes = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm', 'video/avi'];
       
-      if (mimetype && extname) {
+      const extname = allowedExtensions.test(file.originalname);
+      const mimetype = allowedMimeTypes.includes(file.mimetype) || file.mimetype.startsWith('video/');
+      
+      if (extname || mimetype) {
         return cb(null, true);
       } else {
         cb(new Error('Only video files are allowed'));
