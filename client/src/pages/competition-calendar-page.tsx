@@ -96,8 +96,8 @@ export default function CompetitionCalendarPage() {
   // Reset page and invalidate cache when filters change
   useEffect(() => {
     setCurrentPage(1);
-    // Force fresh data when date filters change
-    queryClient.invalidateQueries({ queryKey: ['/api/competitions'] });
+    // Clear all competition queries to prevent stale data
+    queryClient.removeQueries({ queryKey: ['/api/competitions'] });
   }, [dateFilter.start, dateFilter.end, searchTerm, activeTab, sortOrder, queryClient]);
 
   // Fetch competitions based on active tab
@@ -113,6 +113,7 @@ export default function CompetitionCalendarPage() {
     }],
     enabled: activeTab !== 'favorites',
     staleTime: 0,
+    cacheTime: 0, // Disable caching to prevent stale data
     queryFn: async () => {
       const params = new URLSearchParams({
         name: searchTerm || 'all',
