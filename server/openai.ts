@@ -57,12 +57,13 @@ async function extractVideoFrames(videoPath: string, outputDir: string, numFrame
         console.error('FFmpeg error:', err);
         reject(err);
       })
-      .screenshots({
-        count: numFrames,
-        folder: outputDir,
-        filename: 'frame-%03i.jpg',
-        size: '640x480'
-      });
+      .output(path.join(outputDir, 'frame-%03d.jpg'))
+      .outputOptions([
+        '-vf', `fps=1/${Math.ceil(10/numFrames)}`, // Extract 1 frame every N seconds
+        '-frames:v', numFrames.toString(),
+        '-q:v', '2' // High quality
+      ])
+      .run();
   });
 }
 
@@ -97,6 +98,8 @@ export async function analyzeVideoWithPrompt(
   analysisType: string,
   videoPath?: string
 ): Promise<string> {
+  console.log(`Starting video analysis for: ${videoName}, type: ${analysisType}`);
+  
   const analysisPrompts: Record<string, string> = {
     "sprint-form": "Analyze the sprint form and running technique. Focus on body posture, arm swing, leg drive, and overall biomechanics. Provide detailed feedback on what the athlete is doing well and specific areas for improvement.",
     "block-start": "Analyze the starting blocks technique. Examine the setup position, reaction time, first few steps, and acceleration phase. Provide technical feedback on starting mechanics and suggestions for improvement.",
@@ -111,36 +114,56 @@ export async function analyzeVideoWithPrompt(
     throw new Error("Invalid analysis type");
   }
 
-  try {
-    if (videoPath && fs.existsSync(videoPath)) {
-      console.log(`Analyzing video: ${videoPath}`);
+  if (videoPath && fs.existsSync(videoPath)) {
+    console.log(`Video file found: ${videoPath}`);
+    
+    try {
+      // Use simple shell command to extract frames directly
+      const tempDir = path.join(path.dirname(videoPath), `temp_frames_${Date.now()}`);
+      fs.mkdirSync(tempDir, { recursive: true });
       
-      // Create temporary directory for frames
-      const tempDir = path.join(path.dirname(videoPath), 'temp_frames');
+      console.log(`Created temp directory: ${tempDir}`);
       
-      try {
-        // Extract frames from video using FFmpeg
-        const frameFiles = await extractVideoFrames(videoPath, tempDir, 5);
-        console.log(`Extracted ${frameFiles.length} frames from video`);
-        
-        if (frameFiles.length === 0) {
-          console.log("No frames extracted, falling back to text-only analysis");
-          throw new Error("No frames could be extracted from video");
-        }
-        
+      // Use direct ffmpeg command to extract 3 frames
+      const { exec } = require('child_process');
+      const extractCommand = `ffmpeg -i "${videoPath}" -vf "fps=1/3" -frames:v 3 -q:v 2 "${tempDir}/frame-%03d.jpg" 2>/dev/null`;
+      
+      console.log(`Executing: ${extractCommand}`);
+      
+      await new Promise((resolve, reject) => {
+        exec(extractCommand, (error: any, stdout: any, stderr: any) => {
+          if (error) {
+            console.error('FFmpeg extraction error:', error);
+            reject(error);
+          } else {
+            console.log('FFmpeg extraction completed');
+            resolve(stdout);
+          }
+        });
+      });
+      
+      // Check for extracted frames
+      const frameFiles = fs.readdirSync(tempDir)
+        .filter(file => file.endsWith('.jpg'))
+        .map(file => path.join(tempDir, file))
+        .sort();
+      
+      console.log(`Found ${frameFiles.length} extracted frames:`, frameFiles);
+      
+      if (frameFiles.length > 0) {
         // Convert frames to base64
-        const frameImages = frameFiles.map(framePath => {
+        const imageContent = frameFiles.map(framePath => {
           const frameBuffer = fs.readFileSync(framePath);
-          return frameBuffer.toString('base64');
+          const base64Image = frameBuffer.toString('base64');
+          return {
+            type: "image_url" as const,
+            image_url: {
+              url: `data:image/jpeg;base64,${base64Image}`
+            }
+          };
         });
         
-        // Create image content for OpenAI API
-        const imageContent = frameImages.map((base64Image, index) => ({
-          type: "image_url" as const,
-          image_url: {
-            url: `data:image/jpeg;base64,${base64Image}`
-          }
-        }));
+        console.log(`Sending ${imageContent.length} frames to OpenAI for analysis`);
         
         // Use OpenAI's vision model to analyze the video frames
         const response = await openai.chat.completions.create({
@@ -148,7 +171,7 @@ export async function analyzeVideoWithPrompt(
           messages: [
             {
               role: "system",
-              content: "You are Sprinthia, an expert AI sprint coach specializing in track and field performance analysis. Analyze the provided sequence of video frames showing sprint technique and provide detailed, technical, and actionable feedback on sprint biomechanics. Always structure your responses with clear sections and use bullet points for easy reading."
+              content: "You are Sprinthia, an expert AI sprint coach. Analyze the video frames showing sprint technique and provide detailed technical feedback. Structure your responses with clear sections and bullet points."
             },
             {
               role: "user",
@@ -157,30 +180,18 @@ export async function analyzeVideoWithPrompt(
                   type: "text",
                   text: `${basePrompt}
 
-Video Information:
-- Video Name: ${videoName}
-- Description: ${videoDescription || "No description provided"}
+Video: ${videoName}
+Description: ${videoDescription || "No description provided"}
 
-I'm providing you with ${frameImages.length} sequential frames extracted from a sprint video. Please analyze these frames to assess the athlete's running technique, focusing on movement patterns, biomechanics, and technical execution.
-
-Structure your response with the following sections:
+Analyze these ${imageContent.length} frames from the sprint video and provide technical feedback.
 
 ## Overall Assessment
-[Provide a brief summary of the athlete's performance based on the frame sequence]
-
-## Key Strengths
-[List what the athlete is doing well in their technique]
-
+## Key Strengths  
 ## Areas for Improvement
-[Identify specific technical issues visible across the frames]
-
 ## Recommendations
-[Provide actionable coaching tips and drills]
-
 ## Next Steps
-[Suggest what to focus on in training]
 
-Use bullet points within each section for clarity and easy reading.`
+Use bullet points for clarity.`
                 },
                 ...imageContent
               ]
@@ -190,65 +201,28 @@ Use bullet points within each section for clarity and easy reading.`
           temperature: 0.7,
         });
         
-        // Clean up temporary frames
-        frameFiles.forEach(framePath => {
-          try {
-            fs.unlinkSync(framePath);
-          } catch (err) {
-            console.warn(`Could not delete frame: ${framePath}`);
-          }
+        // Clean up temp directory
+        frameFiles.forEach(file => {
+          try { fs.unlinkSync(file); } catch (e) {}
         });
+        try { fs.rmdirSync(tempDir); } catch (e) {}
         
-        // Remove temp directory if empty
-        try {
-          fs.rmdirSync(tempDir);
-        } catch (err) {
-          console.warn(`Could not remove temp directory: ${tempDir}`);
-        }
-
-        console.log("OpenAI frame sequence analysis completed successfully");
-        return response.choices[0].message.content || "Analysis could not be completed at this time.";
-        
-      } catch (frameError) {
-        console.error("Error extracting frames:", frameError);
-        // Clean up temp directory on error
-        try {
-          if (fs.existsSync(tempDir)) {
-            const files = fs.readdirSync(tempDir);
-            files.forEach(file => fs.unlinkSync(path.join(tempDir, file)));
-            fs.rmdirSync(tempDir);
-          }
-        } catch (cleanupError) {
-          console.warn("Error cleaning up temp directory:", cleanupError);
-        }
-        // Fall through to text-only analysis
-        console.log("Falling back to text-only analysis due to frame extraction failure");
+        console.log("Video analysis with frames completed successfully");
+        return response.choices[0].message.content || "Analysis could not be completed.";
       }
-    } else {
-      // Fallback to text-only analysis if video file not found
-      const fullPrompt = `${basePrompt}
-
-Video Information:
-- Video Name: ${videoName}
-- Description: ${videoDescription || "No description provided"}
-
-Note: Video file analysis is currently unavailable. Providing general technical guidance based on the analysis type requested.
-
-Please provide comprehensive technical guidance as Sprinthia, the AI sprint coach. Structure your response with clear sections and bullet points for easy reading.`;
-
-      return await getChatCompletion(fullPrompt);
+    } catch (error) {
+      console.error("Frame extraction failed:", error);
     }
-  } catch (error) {
-    console.error("Video analysis error:", error);
-    // Fallback to text-only analysis
-    const fullPrompt = `${basePrompt}
-
-Video Information:
-- Video Name: ${videoName}
-- Description: ${videoDescription || "No description provided"}
-
-Please provide comprehensive technical guidance as Sprinthia, the AI sprint coach. Structure your response with clear sections and bullet points for easy reading.`;
-
-    return await getChatCompletion(fullPrompt);
   }
+  
+  // Fallback to text-only analysis
+  console.log("Using text-only analysis fallback");
+  const fullPrompt = `${basePrompt}
+
+Video: ${videoName}
+Description: ${videoDescription || "No description provided"}
+
+Provide technical guidance as Sprinthia, the AI sprint coach. Structure with clear sections and bullet points.`;
+
+  return await getChatCompletion(fullPrompt);
 }
