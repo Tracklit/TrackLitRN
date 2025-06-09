@@ -75,7 +75,7 @@ function Router() {
       
       {/* Training */}
       <ProtectedRoute path="/practice" component={PracticePage} />
-      <ProtectedRoute path="/tools" component={WorkoutToolsPage} />
+      <ProtectedRoute path="/training-tools" component={WorkoutToolsPage} />
       <ProtectedRoute path="/tools/stopwatch" component={StopwatchPage} />
       <ProtectedRoute path="/tools/start-gun" component={StartGunPage} />
       <ProtectedRoute path="/tools/journal" component={JournalPage} />
