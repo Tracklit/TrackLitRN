@@ -125,7 +125,7 @@ export async function analyzeVideoWithPrompt(
       console.log(`Created temp directory: ${tempDir}`);
       
       // Use direct ffmpeg command to extract 3 frames
-      const { exec } = require('child_process');
+      const { exec } = await import('child_process');
       const extractCommand = `ffmpeg -i "${videoPath}" -vf "fps=1/3" -frames:v 3 -q:v 2 "${tempDir}/frame-%03d.jpg" 2>/dev/null`;
       
       console.log(`Executing: ${extractCommand}`);
