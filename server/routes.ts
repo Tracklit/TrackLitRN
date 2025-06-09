@@ -6924,29 +6924,39 @@ Keep the response professional, evidence-based, and specific to track and field 
       // Construct the full video file path
       const videoPath = video.fileUrl.startsWith('/') ? `.${video.fileUrl}` : video.fileUrl;
       
-      const analysis = await analyzeVideoWithPrompt(
-        video.name,
-        video.description || "",
-        promptId,
-        videoPath
-      );
+      try {
+        const analysis = await analyzeVideoWithPrompt(
+          video.name,
+          video.description || "",
+          promptId,
+          videoPath
+        );
 
-      // Update user's prompt usage
-      if (subscriptionTier !== "star") {
-        await dbStorage.updateUser(user.id, { 
-          sprinthiaPrompts: currentPrompts + 1
+        // Update user's prompt usage
+        if (subscriptionTier !== "star") {
+          await dbStorage.updateUser(user.id, { 
+            sprinthiaPrompts: currentPrompts + 1
+          });
+        }
+
+        // Save analysis to video record
+        await dbStorage.updateVideoAnalysis(videoId, { 
+          analysisData: analysis
+        });
+
+        res.json({ 
+          analysis,
+          promptsUsed: subscriptionTier !== "star" ? currentPrompts + 1 : "unlimited"
+        });
+      } catch (error) {
+        // Return OpenAI's specific error message about video issues
+        const errorMessage = error instanceof Error ? error.message : "Video analysis failed";
+        console.error("Video analysis error:", errorMessage);
+        res.json({ 
+          analysis: errorMessage,
+          promptsUsed: subscriptionTier !== "star" ? currentPrompts : currentPrompts
         });
       }
-
-      // Save analysis to video record
-      await dbStorage.updateVideoAnalysis(videoId, { 
-        analysisData: analysis
-      });
-
-      res.json({ 
-        analysis,
-        promptsUsed: subscriptionTier !== "star" ? currentPrompts + 1 : "unlimited"
-      });
 
     } catch (error) {
       console.error("Error analyzing video:", error);

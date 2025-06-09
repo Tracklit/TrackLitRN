@@ -209,20 +209,19 @@ Use bullet points for clarity.`
         
         console.log("Video analysis with frames completed successfully");
         return response.choices[0].message.content || "Analysis could not be completed.";
+      } else {
+        // No frames extracted - return specific message about video processing
+        console.log("No frames extracted from video");
+        throw new Error("Unable to extract frames from the video. Please ensure the video file is valid and contains visual content.");
       }
     } catch (error) {
       console.error("Frame extraction failed:", error);
+      // Return the specific error message instead of fallback
+      const errorMessage = error instanceof Error ? error.message : "Unable to process video file";
+      throw new Error(`Video analysis failed: ${errorMessage}`);
     }
   }
   
-  // Fallback to text-only analysis
-  console.log("Using text-only analysis fallback");
-  const fullPrompt = `${basePrompt}
-
-Video: ${videoName}
-Description: ${videoDescription || "No description provided"}
-
-Provide technical guidance as Sprinthia, the AI sprint coach. Structure with clear sections and bullet points.`;
-
-  return await getChatCompletion(fullPrompt);
+  // This should never be reached, but adding for TypeScript compliance
+  throw new Error("Video analysis could not be completed - no valid processing path available");
 }
