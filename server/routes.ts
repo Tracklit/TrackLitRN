@@ -7022,13 +7022,9 @@ Keep the response professional, evidence-based, and specific to track and field 
       
       console.log('Competition API request:', { name, upcoming, major, startDate, endDate, page, limit, sort });
       
-      // Set default date range to ensure we get all future competitions
-      const now = new Date();
-      const defaultStartDate = startDate as string || now.toISOString().split('T')[0];
-      const defaultEndDate = endDate as string || new Date(now.getTime() + 2 * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]; // 2 years ahead
-      
-      // Try to fetch from World Athletics API first
-      let competitions = await worldAthleticsService.searchCompetitions(name as string, defaultStartDate, defaultEndDate);
+      // Fetch all available competitions from World Athletics API without date restrictions
+      // We'll filter by date after getting the data to ensure we don't miss competitions
+      let competitions = await worldAthleticsService.searchCompetitions();
       
       // Handle empty results gracefully
       if (competitions.length === 0) {
@@ -7041,6 +7037,23 @@ Keep the response professional, evidence-based, and specific to track and field 
         });
       }
       
+      // Apply date filtering first (if custom dates provided)
+      const now = new Date();
+      
+      if (startDate && startDate !== 'no-start') {
+        competitions = competitions.filter(comp => {
+          const compStart = new Date(comp.start);
+          return compStart >= new Date(startDate as string);
+        });
+      }
+      
+      if (endDate && endDate !== 'no-end') {
+        competitions = competitions.filter(comp => {
+          const compStart = new Date(comp.start);
+          return compStart <= new Date(endDate as string);
+        });
+      }
+      
       // Apply tab-specific filtering
       if (upcoming === 'upcoming') {
         // For upcoming tab, show only future competitions
@@ -7048,11 +7061,15 @@ Keep the response professional, evidence-based, and specific to track and field 
       } else if (major === 'major') {
         // For major tab, show major competitions (past and future)
         competitions = competitions.filter(comp => 
-          comp.rankingCategory?.toLowerCase().includes('world') || 
-          comp.rankingCategory?.toLowerCase().includes('diamond') ||
+          comp.rankingCategory?.toLowerCase().includes('a') || 
+          comp.rankingCategory?.toLowerCase().includes('b') ||
+          comp.competitionGroup?.toLowerCase().includes('world athletics') ||
+          comp.competitionGroup?.toLowerCase().includes('diamond league') ||
+          comp.competitionGroup?.toLowerCase().includes('continental tour') ||
           comp.name.toLowerCase().includes('championship') ||
           comp.name.toLowerCase().includes('games') ||
-          comp.name.toLowerCase().includes('diamond league')
+          comp.name.toLowerCase().includes('diamond league') ||
+          comp.name.toLowerCase().includes('world athletics')
         );
       }
       // For "all" tab, show all competitions without additional filtering
@@ -7064,18 +7081,6 @@ Keep the response professional, evidence-based, and specific to track and field 
           comp.location.city?.toLowerCase().includes((name as string).toLowerCase()) ||
           comp.location.country.toLowerCase().includes((name as string).toLowerCase())
         );
-      }
-      
-      // Apply date filtering if custom dates provided
-      if ((startDate && startDate !== 'no-start') || (endDate && endDate !== 'no-end')) {
-        competitions = competitions.filter(comp => {
-          const compStart = new Date(comp.start);
-          
-          if (startDate && startDate !== 'no-start' && compStart < new Date(startDate as string)) return false;
-          if (endDate && endDate !== 'no-end' && compStart > new Date(endDate as string)) return false;
-          
-          return true;
-        });
       }
       
       // Store new competitions in our database
