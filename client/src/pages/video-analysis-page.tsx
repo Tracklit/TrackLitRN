@@ -495,7 +495,7 @@ export default function VideoAnalysisPage() {
                     {analysisPrompts.map((prompt) => (
                       <div
                         key={prompt.id}
-                        className="p-3 border border-slate-600 bg-slate-400 rounded-lg cursor-pointer"
+                        className="p-3 border border-slate-700 bg-slate-700 rounded-lg cursor-pointer"
                         onClick={() => !useCustomPrompt && handlePromptToggle(prompt.id)}
                       >
                         <div className="flex items-start gap-2">
@@ -588,7 +588,7 @@ export default function VideoAnalysisPage() {
               </CardHeader>
               <CardContent>
                 <div className="prose max-w-none">
-                  <div className="whitespace-pre-wrap text-white leading-relaxed font-medium">
+                  <div className="whitespace-pre-wrap text-white leading-relaxed font-medium text-sm text-justify">
                     {cleanAnalysisText(analysisResponse)}
                   </div>
                 </div>
