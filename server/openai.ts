@@ -32,8 +32,17 @@ async function extractVideoFrames(videoPath: string, outputDir: string, numFrame
 
     const frameFiles: string[] = [];
     
+    console.log(`Extracting ${numFrames} frames from: ${videoPath}`);
+    
     ffmpeg(videoPath)
+      .on('start', (commandLine) => {
+        console.log('FFmpeg command:', commandLine);
+      })
+      .on('progress', (progress) => {
+        console.log('FFmpeg progress:', progress.percent || 'unknown', '%');
+      })
       .on('end', () => {
+        console.log('FFmpeg extraction completed');
         // Get the extracted frame files
         const files = fs.readdirSync(outputDir)
           .filter(file => file.endsWith('.jpg'))
@@ -41,19 +50,19 @@ async function extractVideoFrames(videoPath: string, outputDir: string, numFrame
           .slice(0, numFrames)
           .map(file => path.join(outputDir, file));
         
+        console.log(`Successfully extracted ${files.length} frames:`, files);
         resolve(files);
       })
       .on('error', (err) => {
         console.error('FFmpeg error:', err);
         reject(err);
       })
-      .output(path.join(outputDir, 'frame-%03d.jpg'))
-      .outputOptions([
-        '-vframes', numFrames.toString(),
-        '-q:v', '2', // High quality
-        '-vf', `select=not(mod(n\\,${Math.floor(100/numFrames)}))` // Select frames evenly distributed
-      ])
-      .run();
+      .screenshots({
+        count: numFrames,
+        folder: outputDir,
+        filename: 'frame-%03i.jpg',
+        size: '640x480'
+      });
   });
 }
 
@@ -110,11 +119,12 @@ export async function analyzeVideoWithPrompt(
       const tempDir = path.join(path.dirname(videoPath), 'temp_frames');
       
       try {
-        // Extract frames from video
-        const frameFiles = await extractVideoFrames(videoPath, tempDir, 4);
+        // Extract frames from video using FFmpeg
+        const frameFiles = await extractVideoFrames(videoPath, tempDir, 5);
         console.log(`Extracted ${frameFiles.length} frames from video`);
         
         if (frameFiles.length === 0) {
+          console.log("No frames extracted, falling back to text-only analysis");
           throw new Error("No frames could be extracted from video");
         }
         
@@ -138,7 +148,7 @@ export async function analyzeVideoWithPrompt(
           messages: [
             {
               role: "system",
-              content: "You are Sprinthia, an expert AI sprint coach specializing in track and field performance analysis. Analyze the provided video frames showing a sprint sequence and provide detailed, technical, and actionable feedback on sprint technique and biomechanics. Always structure your responses with clear sections and use bullet points for easy reading."
+              content: "You are Sprinthia, an expert AI sprint coach specializing in track and field performance analysis. Analyze the provided sequence of video frames showing sprint technique and provide detailed, technical, and actionable feedback on sprint biomechanics. Always structure your responses with clear sections and use bullet points for easy reading."
             },
             {
               role: "user",
@@ -151,18 +161,18 @@ Video Information:
 - Video Name: ${videoName}
 - Description: ${videoDescription || "No description provided"}
 
-I'm providing you with ${frameImages.length} frames extracted from a sprint video showing different phases of the athlete's technique. Please analyze these frames to provide a comprehensive assessment of the sprint technique.
+I'm providing you with ${frameImages.length} sequential frames extracted from a sprint video. Please analyze these frames to assess the athlete's running technique, focusing on movement patterns, biomechanics, and technical execution.
 
 Structure your response with the following sections:
 
 ## Overall Assessment
-[Provide a brief summary of the athlete's performance based on the frames]
+[Provide a brief summary of the athlete's performance based on the frame sequence]
 
 ## Key Strengths
 [List what the athlete is doing well in their technique]
 
 ## Areas for Improvement
-[Identify specific technical issues visible in the frames]
+[Identify specific technical issues visible across the frames]
 
 ## Recommendations
 [Provide actionable coaching tips and drills]
@@ -196,6 +206,7 @@ Use bullet points within each section for clarity and easy reading.`
           console.warn(`Could not remove temp directory: ${tempDir}`);
         }
 
+        console.log("OpenAI frame sequence analysis completed successfully");
         return response.choices[0].message.content || "Analysis could not be completed at this time.";
         
       } catch (frameError) {
@@ -210,7 +221,8 @@ Use bullet points within each section for clarity and easy reading.`
         } catch (cleanupError) {
           console.warn("Error cleaning up temp directory:", cleanupError);
         }
-        throw frameError;
+        // Fall through to text-only analysis
+        console.log("Falling back to text-only analysis due to frame extraction failure");
       }
     } else {
       // Fallback to text-only analysis if video file not found
