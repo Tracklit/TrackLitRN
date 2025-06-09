@@ -14,7 +14,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Camera, Upload, FileVideo, Play, Sparkles, Zap, Crown, ArrowLeft, ArrowRight, Check } from "lucide-react";
 
 export default function VideoAnalysisPage() {
-  const [currentStep, setCurrentStep] = useState<"upload" | "analyze">("upload");
+  const [currentStep, setCurrentStep] = useState<"upload" | "analyze" | "results">("upload");
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [videoName, setVideoName] = useState("");
@@ -119,6 +119,7 @@ export default function VideoAnalysisPage() {
     onSuccess: (data: any) => {
       setAnalysisResponse(data.analysis);
       setIsAnalyzing(false);
+      setCurrentStep("results");
       toast({
         title: "Analysis Complete",
         description: "Sprinthia has analyzed your video",
@@ -336,17 +337,28 @@ export default function VideoAnalysisPage() {
             <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
               currentStep === "upload" ? "bg-primary text-white" : "bg-green-500 text-white"
             }`}>
-              {currentStep === "analyze" ? <Check className="w-4 h-4" /> : "1"}
+              {currentStep !== "upload" ? <Check className="w-4 h-4" /> : "1"}
             </div>
             <div className="w-16 h-1 bg-gray-300 rounded">
               <div className={`h-full bg-primary rounded transition-all duration-300 ${
-                currentStep === "analyze" ? "w-full" : "w-0"
+                currentStep === "analyze" || currentStep === "results" ? "w-full" : "w-0"
               }`} />
             </div>
             <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
-              currentStep === "analyze" ? "bg-primary text-white" : "bg-gray-300 text-gray-600"
+              currentStep === "analyze" ? "bg-primary text-white" : 
+              currentStep === "results" ? "bg-green-500 text-white" : "bg-gray-300 text-gray-600"
             }`}>
-              2
+              {currentStep === "results" ? <Check className="w-4 h-4" /> : "2"}
+            </div>
+            <div className="w-16 h-1 bg-gray-300 rounded">
+              <div className={`h-full bg-primary rounded transition-all duration-300 ${
+                currentStep === "results" ? "w-full" : "w-0"
+              }`} />
+            </div>
+            <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
+              currentStep === "results" ? "bg-primary text-white" : "bg-gray-300 text-gray-600"
+            }`}>
+              3
             </div>
           </div>
         </div>
@@ -495,36 +507,6 @@ export default function VideoAnalysisPage() {
         {/* Analysis Step */}
         {currentStep === "analyze" && (
           <div className="space-y-6">
-            {/* Subscription Status */}
-            {user && (
-              <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-blue-50">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {user.subscriptionTier === "star" && <Crown className="h-5 w-5 text-yellow-500" />}
-                      <div>
-                        <h3 className="font-semibold">
-                          {user.subscriptionTier === "star" ? "Star Member" : 
-                           user.subscriptionTier === "pro" ? "Pro Member" : "Free Account"}
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          {(() => {
-                            const limits = getPromptLimits();
-                            if (limits.total === "unlimited") {
-                              return "Unlimited AI analysis prompts";
-                            }
-                            return `${limits.remaining}/${limits.total} prompts remaining this ${
-                              user.subscriptionTier === "pro" ? "week" : "month"
-                            }`;
-                          })()}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
             {/* Analysis Options */}
             <Card>
               <CardHeader>
@@ -614,7 +596,7 @@ export default function VideoAnalysisPage() {
                     ) : (
                       <>
                         <Sparkles className="h-4 w-4" />
-                        Start Analysis
+                        Analyze
                       </>
                     )}
                   </Button>
@@ -622,30 +604,43 @@ export default function VideoAnalysisPage() {
               </CardContent>
             </Card>
 
+          </div>
+        )}
+
+        {/* Results Step */}
+        {currentStep === "results" && (
+          <div className="space-y-6">
             {/* Analysis Results */}
-            {analysisResponse && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5" />
-                    Sprinthia Analysis Results
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="prose max-w-none">
-                    <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
-                      {cleanAnalysisText(analysisResponse)}
-                    </div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5" />
+                  Sprinthia Analysis Results
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="prose max-w-none">
+                  <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
+                    {cleanAnalysisText(analysisResponse)}
                   </div>
+                </div>
+                
+                <div className="flex justify-between mt-6">
+                  <Button 
+                    variant="outline"
+                    onClick={() => setCurrentStep("analyze")}
+                    className="flex items-center gap-2"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back to Analysis
+                  </Button>
                   
-                  <div className="flex justify-end mt-6">
-                    <Button onClick={resetForm} variant="outline">
-                      Analyze Another Video
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                  <Button onClick={resetForm} variant="outline">
+                    Analyze Another Video
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
       </div>
