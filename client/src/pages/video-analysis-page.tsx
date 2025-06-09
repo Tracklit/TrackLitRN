@@ -116,10 +116,6 @@ export default function VideoAnalysisPage() {
       setAnalysisResponse(data.analysis);
       setIsAnalyzing(false);
       setCurrentStep("results");
-      toast({
-        title: "Analysis Complete",
-        description: "Sprinthia has analyzed your video",
-      });
     },
     onError: (error: any) => {
       setIsAnalyzing(false);
@@ -499,7 +495,7 @@ export default function VideoAnalysisPage() {
                     {analysisPrompts.map((prompt) => (
                       <div
                         key={prompt.id}
-                        className="p-3 border border-slate-400 bg-slate-200 rounded-lg cursor-pointer"
+                        className="p-3 border border-slate-600 bg-slate-400 rounded-lg cursor-pointer"
                         onClick={() => !useCustomPrompt && handlePromptToggle(prompt.id)}
                       >
                         <div className="flex items-start gap-2">
