@@ -7114,10 +7114,11 @@ Keep the response professional, evidence-based, and specific to track and field 
         return sortOrder === 'asc' ? dateA.getTime() - dateB.getTime() : dateB.getTime() - dateA.getTime();
       });
       
-      // Apply pagination
+      // Apply pagination with increased limit for better user experience
       const total = competitions.length;
-      const startIndex = (pageNum - 1) * limitNum;
-      const endIndex = startIndex + limitNum;
+      const effectiveLimit = Math.max(limitNum, 50); // Minimum 50 results per page
+      const startIndex = (pageNum - 1) * effectiveLimit;
+      const endIndex = startIndex + effectiveLimit;
       const paginatedCompetitions = competitions.slice(startIndex, endIndex);
       
       // Prevent caching to ensure fresh data for date filtering
@@ -7129,7 +7130,7 @@ Keep the response professional, evidence-based, and specific to track and field 
         competitions: paginatedCompetitions,
         total,
         page: pageNum,
-        totalPages: Math.ceil(total / limitNum)
+        totalPages: Math.ceil(total / effectiveLimit)
       });
     } catch (error) {
       console.error("Error fetching competitions:", error);

@@ -93,7 +93,7 @@ export default function CompetitionCalendarPage() {
 
   const [dateFilter, setDateFilter] = useState<{ start?: string; end?: string }>(getDefaultDateRange());
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(20);
+  const [pageSize] = useState(50);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const queryClient = useQueryClient();
 
