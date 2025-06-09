@@ -201,7 +201,12 @@ export default function VideoAnalysisPage() {
       .replace(/\*\*/g, '')  // Remove ** markdown bold
       .replace(/\*/g, '')    // Remove * markdown
       .replace(/#{1,6}\s/g, '') // Remove # headers
-      .replace(/\n{3,}/g, '\n\n') // Replace multiple newlines with double
+      .replace(/^- /gm, '• ')   // Replace dashes with bullet points
+      .replace(/\n- /g, '\n• ') // Replace dashes after newlines with bullet points
+      .replace(/\n{3,}/g, '\n\n\n') // Larger breaks between sections
+      .replace(/\n([A-Z][^:\n]*:)/g, '\n\n$1') // Add extra space before headers
+      .replace(/([.!?])\n(?=[A-Z])/g, '$1\n\n') // Add space after sentences before new paragraphs
+      .replace(/([.!?])\n(?=[•])/g, '$1\n') // Smaller break before bullet points
       .trim();
   };
 
