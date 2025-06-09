@@ -7026,6 +7026,8 @@ Keep the response professional, evidence-based, and specific to track and field 
       // We'll filter by date after getting the data to ensure we don't miss competitions
       let competitions = await worldAthleticsService.searchCompetitions();
       
+      console.log(`Fetched ${competitions.length} competitions from World Athletics API`);
+      
       // Handle empty results gracefully
       if (competitions.length === 0) {
         console.log('No competitions found for the specified criteria');
@@ -7037,21 +7039,26 @@ Keep the response professional, evidence-based, and specific to track and field 
         });
       }
       
-      // Apply date filtering first (if custom dates provided)
+      // Apply date filtering first (always apply user-specified date range)
       const now = new Date();
       
+      // Always apply date filtering based on user input or defaults
       if (startDate && startDate !== 'no-start') {
+        const filterStartDate = new Date(startDate as string);
         competitions = competitions.filter(comp => {
           const compStart = new Date(comp.start);
-          return compStart >= new Date(startDate as string);
+          return compStart >= filterStartDate;
         });
+        console.log(`Filtered to ${competitions.length} competitions after start date filter (${startDate})`);
       }
       
       if (endDate && endDate !== 'no-end') {
+        const filterEndDate = new Date(endDate as string);
         competitions = competitions.filter(comp => {
           const compStart = new Date(comp.start);
-          return compStart <= new Date(endDate as string);
+          return compStart <= filterEndDate;
         });
+        console.log(`Filtered to ${competitions.length} competitions after end date filter (${endDate})`);
       }
       
       // Apply tab-specific filtering

@@ -75,19 +75,15 @@ export default function CompetitionCalendarPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCompetition, setSelectedCompetition] = useState<Competition | null>(null);
   const [activeTab, setActiveTab] = useState("all");
-  // Set default date range: current date to 2 years from now
+  // Set default date range: today to 7 days ahead
   const getDefaultDateRange = () => {
     const today = new Date();
-    // Start from current date for better data capture
-    const startDate = new Date();
-    startDate.setDate(today.getDate() - 30); // Start 30 days ago to capture recent competitions
-    
-    const twoYearsLater = new Date();
-    twoYearsLater.setFullYear(today.getFullYear() + 2);
+    const sevenDaysLater = new Date();
+    sevenDaysLater.setDate(today.getDate() + 7);
     
     return {
-      start: startDate.toISOString().split('T')[0],
-      end: twoYearsLater.toISOString().split('T')[0]
+      start: today.toISOString().split('T')[0],
+      end: sevenDaysLater.toISOString().split('T')[0]
     };
   };
 
