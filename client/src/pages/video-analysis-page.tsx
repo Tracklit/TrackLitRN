@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Camera, Upload, FileVideo, Play, Sparkles, Zap, Crown, ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { Camera, Upload, FileVideo, Play, Sparkles, Zap, Crown, ArrowLeft, ArrowRight, Check, Copy, ThumbsUp, ThumbsDown } from "lucide-react";
 
 export default function VideoAnalysisPage() {
   const [currentStep, setCurrentStep] = useState<"upload" | "analyze" | "results">("upload");
@@ -28,6 +28,30 @@ export default function VideoAnalysisPage() {
   const [useCustomPrompt, setUseCustomPrompt] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  const handleCopyText = async () => {
+    try {
+      await navigator.clipboard.writeText(cleanAnalysisText(analysisResponse));
+      toast({
+        title: "Copied",
+        description: "Analysis text copied to clipboard",
+      });
+    } catch (err) {
+      toast({
+        title: "Copy failed",
+        description: "Could not copy to clipboard",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleFeedback = (isPositive: boolean) => {
+    // TODO: Implement feedback tracking
+    toast({
+      title: isPositive ? "Feedback Received" : "Feedback Received",
+      description: isPositive ? "Thanks for the positive feedback!" : "Thanks for the feedback, we'll improve!",
+    });
+  };
 
   // Pre-made analysis prompts
   const analysisPrompts = [
@@ -198,13 +222,13 @@ export default function VideoAnalysisPage() {
 
   const cleanAnalysisText = (text: string) => {
     return text
-      .replace(/\*\*/g, '')  // Remove ** markdown bold
-      .replace(/\*/g, '')    // Remove * markdown
-      .replace(/#{1,6}\s/g, '') // Remove # headers
-      .replace(/^- /gm, '• ')   // Replace dashes with bullet points
-      .replace(/\n- /g, '\n• ') // Replace dashes after newlines with bullet points
+      .replace(/#{1,6}\s/g, '') // Remove # headers first
+      .replace(/^-\s/gm, '• ')   // Replace dashes with bullet points at start of line
+      .replace(/\n-\s/g, '\n• ') // Replace dashes after newlines with bullet points
+      .replace(/-\s/g, '• ')     // Replace all remaining dashes with bullet points
       .replace(/\n{3,}/g, '\n\n\n') // Larger breaks between sections
-      .replace(/\n([A-Z][^:\n]*:)/g, '\n\n$1') // Add extra space before headers
+      .replace(/\n([A-Z][^:\n]*:)/g, '\n\n**$1**') // Bold headers and add extra space
+      .replace(/^([A-Z][^:\n]*:)/gm, '**$1**') // Bold headers at start of text
       .replace(/([.!?])\n(?=[A-Z])/g, '$1\n\n') // Add space after sentences before new paragraphs
       .replace(/([.!?])\n(?=[•])/g, '$1\n') // Smaller break before bullet points
       .trim();
@@ -586,16 +610,51 @@ export default function VideoAnalysisPage() {
             {/* Analysis Results */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5" />
-                  Sprinthia Analysis Results
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5" />
+                    Sprinthia Analysis Results
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleCopyText}
+                      className="flex items-center gap-1"
+                    >
+                      <Copy className="h-4 w-4" />
+                      Copy
+                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleFeedback(true)}
+                        className="p-2"
+                      >
+                        <ThumbsUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleFeedback(false)}
+                        className="p-2"
+                      >
+                        <ThumbsDown className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="prose max-w-none">
-                  <div className="whitespace-pre-wrap text-white leading-relaxed font-medium text-sm text-justify">
-                    {cleanAnalysisText(analysisResponse)}
-                  </div>
+                  <div 
+                    className="whitespace-pre-wrap text-white leading-relaxed font-medium text-sm text-justify"
+                    dangerouslySetInnerHTML={{
+                      __html: cleanAnalysisText(analysisResponse)
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    }}
+                  />
                 </div>
                 
                 <div className="flex justify-between mt-6">
