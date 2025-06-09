@@ -124,6 +124,12 @@ export default function CompetitionCalendarPage() {
         sort: sortOrder
       });
       
+      console.log('Frontend sending date filter:', { 
+        start: dateFilter.start, 
+        end: dateFilter.end,
+        fullParams: params.toString()
+      });
+      
       const response = await fetch(`/api/competitions?${params}`);
       if (!response.ok) {
         throw new Error('Failed to fetch competitions');
