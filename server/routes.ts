@@ -7027,8 +7027,19 @@ Keep the response professional, evidence-based, and specific to track and field 
       const defaultStartDate = startDate as string || now.toISOString().split('T')[0];
       const defaultEndDate = endDate as string || new Date(now.getTime() + 2 * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]; // 2 years ahead
       
-      // Fetch competitions with proper date range
+      // Try to fetch from World Athletics API first
       let competitions = await worldAthleticsService.searchCompetitions(name as string, defaultStartDate, defaultEndDate);
+      
+      // Handle empty results gracefully
+      if (competitions.length === 0) {
+        console.log('No competitions found for the specified criteria');
+        return res.json({
+          competitions: [],
+          total: 0,
+          page: pageNum,
+          totalPages: 0
+        });
+      }
       
       // Apply tab-specific filtering
       if (upcoming === 'upcoming') {

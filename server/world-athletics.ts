@@ -3,8 +3,10 @@ import { z } from 'zod';
 
 // World Athletics API Types based on the repository analysis
 const LocationSchema = z.object({
+  stadium: z.string().optional(),
+  city: z.string(),
   country: z.string(),
-  city: z.string().optional(),
+  indoor: z.boolean().optional(),
 });
 
 const CompetitionSchema = z.object({
@@ -66,53 +68,42 @@ class WorldAthleticsService {
 
   async searchCompetitions(name?: string, startDate?: string, endDate?: string): Promise<WorldAthleticsCompetition[]> {
     try {
-      // Try multiple API endpoints for comprehensive data
-      const endpoints = [
-        `${this.baseUrl}/competitions`,
-        `${this.baseUrl}/calendar`,
-        `${this.baseUrl}/events`
-      ];
+      const url = new URL(`${this.baseUrl}/competitions`);
       
-      for (const baseEndpoint of endpoints) {
-        try {
-          const url = new URL(baseEndpoint);
-          if (name && name !== 'all') {
-            url.searchParams.append('name', name);
-          }
-          if (startDate) {
-            url.searchParams.append('startDate', startDate);
-          }
-          if (endDate) {
-            url.searchParams.append('endDate', endDate);
-          }
+      // Add query parameters if provided
+      if (name && name !== 'all') {
+        url.searchParams.append('name', name);
+      }
+      if (startDate) {
+        url.searchParams.append('startDate', startDate);
+      }
+      if (endDate) {
+        url.searchParams.append('endDate', endDate);
+      }
 
-          console.log('Fetching from World Athletics API:', url.toString());
-          
-          const response = await fetch(url.toString(), {
-            headers: {
-              'User-Agent': 'TrackFieldApp/1.0',
-              'Accept': 'application/json'
-            }
-          });
-          
-          if (response.ok) {
-            const data = await response.json() as unknown;
-            console.log('World Athletics API response from', baseEndpoint, ':', data);
-            
-            if (data && Array.isArray(data) && data.length > 0) {
-              const competitions = z.array(CompetitionSchema).parse(data);
-              return this.deduplicateCompetitions(competitions);
-            }
-          }
-        } catch (endpointError) {
-          console.log(`Endpoint ${baseEndpoint} failed, trying next...`);
-          continue;
+      console.log('Fetching from World Athletics API:', url.toString());
+      
+      const response = await fetch(url.toString(), {
+        headers: {
+          'User-Agent': 'TrackFieldApp/1.0',
+          'Accept': 'application/json'
         }
+      });
+      
+      if (!response.ok) {
+        console.error(`World Athletics API returned ${response.status}: ${response.statusText}`);
+        return [];
+      }
+
+      const data = await response.json() as unknown;
+      
+      if (!Array.isArray(data)) {
+        console.error('World Athletics API returned non-array data');
+        return [];
       }
       
-      // If all endpoints fail, return empty array
-      console.warn('All World Athletics API endpoints failed or returned no data');
-      return [];
+      const competitions = z.array(CompetitionSchema).parse(data);
+      return this.deduplicateCompetitions(competitions);
       
     } catch (error) {
       console.error('World Athletics API error:', error);
