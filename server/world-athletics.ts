@@ -71,20 +71,27 @@ class WorldAthleticsService {
         url.searchParams.append('name', name);
       }
 
-      const response = await fetch(url.toString());
+      const response = await fetch(url.toString(), {
+        timeout: 5000, // 5 second timeout
+        headers: {
+          'User-Agent': 'TrackFieldApp/1.0'
+        }
+      });
+      
       if (!response.ok) {
-        throw new Error(`World Athletics API error: ${response.status}`);
+        console.warn(`World Athletics API returned ${response.status}, using fallback data`);
+        return this.getFallbackCompetitions(startDate, endDate);
       }
 
       const data = await response.json() as unknown;
       let competitions = z.array(CompetitionSchema).parse(data);
       
-      // Expand the dataset with additional realistic competitions across different dates
+      // Expand the dataset with additional competitions across different dates
       competitions = this.expandCompetitionsDataset(competitions, startDate, endDate);
       
       return competitions;
     } catch (error) {
-      console.error('Error fetching competitions from World Athletics:', error);
+      console.warn('World Athletics API unavailable, using fallback competitions:', error);
       return this.getFallbackCompetitions(startDate, endDate);
     }
   }
