@@ -262,6 +262,17 @@ export default function VideoAnalysisPage() {
     // Create preview URL
     const previewUrl = URL.createObjectURL(file);
     setVideoPreview(previewUrl);
+
+    // Auto-upload after file selection
+    setTimeout(() => {
+      if (file.name.replace(/\.[^/.]+$/, "").trim()) {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("name", file.name.replace(/\.[^/.]+$/, ""));
+        formData.append("description", "");
+        uploadMutation.mutate(formData);
+      }
+    }, 500); // Small delay to show the preview
   };
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -367,7 +378,7 @@ export default function VideoAnalysisPage() {
         {currentStep === "upload" && (
           <Card className="border-2">
             <CardContent className="p-8">
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-6">
                 {/* File Upload Area */}
                 <div
                   className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
@@ -392,36 +403,55 @@ export default function VideoAnalysisPage() {
                   
                   {selectedFile ? (
                     <div className="space-y-4">
-                      <FileVideo className="h-16 w-16 text-green-600 mx-auto" />
-                      <div>
-                        <h3 className="text-lg font-semibold text-green-700">
-                          {selectedFile.name}
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
-                        </p>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="bg-yellow-400 hover:bg-yellow-500 text-black border-yellow-400"
-                      >
-                        Change Video
-                      </Button>
+                      {uploadMutation.isPending ? (
+                        <>
+                          <Upload className="h-16 w-16 text-blue-600 mx-auto animate-spin" />
+                          <div>
+                            <h3 className="text-lg font-semibold text-blue-700">
+                              Uploading {selectedFile.name}...
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                              {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                            </p>
+                            <p className="text-xs text-blue-600 mt-2">
+                              Will automatically proceed to analysis when complete
+                            </p>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <FileVideo className="h-16 w-16 text-green-600 mx-auto" />
+                          <div>
+                            <h3 className="text-lg font-semibold text-green-700">
+                              Ready for Analysis
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                              {selectedFile.name} ({(selectedFile.size / (1024 * 1024)).toFixed(2)} MB)
+                            </p>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="bg-yellow-400 hover:bg-yellow-500 text-black border-yellow-400"
+                          >
+                            Change Video
+                          </Button>
+                        </>
+                      )}
                     </div>
                   ) : (
                     <div className="space-y-4">
                       <Upload className="h-16 w-16 text-gray-400 mx-auto" />
                       <div>
                         <h3 className="text-lg font-semibold text-gray-700">
-                          Upload Race Video
+                          Select Race Video
                         </h3>
                         <p className="text-gray-500 mb-4">
-                          Click to select a video file or drag and drop
+                          Click to select or drag and drop your video
                         </p>
                         <p className="text-sm text-gray-400">
-                          Supports MP4, MOV, AVI formats
+                          Supports MP4, MOV, AVI formats • Auto-uploads when selected
                         </p>
                       </div>
                       <Button
@@ -437,7 +467,7 @@ export default function VideoAnalysisPage() {
                 </div>
 
                 {/* Video Preview */}
-                {videoPreview && (
+                {videoPreview && !uploadMutation.isPending && (
                   <div className="space-y-2">
                     <Label>Preview</Label>
                     <div className="relative bg-black rounded-lg overflow-hidden">
@@ -449,57 +479,7 @@ export default function VideoAnalysisPage() {
                     </div>
                   </div>
                 )}
-
-                {/* Video Details */}
-                {selectedFile && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="video-name">Video Name *</Label>
-                      <Input
-                        id="video-name"
-                        value={videoName}
-                        onChange={(e) => setVideoName(e.target.value)}
-                        placeholder="Enter video name"
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-2 md:col-span-2">
-                      <Label htmlFor="video-description">Description</Label>
-                      <Textarea
-                        id="video-description"
-                        value={videoDescription}
-                        onChange={(e) => setVideoDescription(e.target.value)}
-                        placeholder="Optional: Add notes about this race video"
-                        rows={3}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Submit Button */}
-                {selectedFile && (
-                  <div className="flex justify-end">
-                    <Button
-                      type="submit"
-                      disabled={uploadMutation.isPending || !videoName.trim()}
-                      className="px-8"
-                    >
-                      {uploadMutation.isPending ? (
-                        <>
-                          <Upload className="h-4 w-4 mr-2 animate-spin" />
-                          Uploading...
-                        </>
-                      ) : (
-                        <>
-                          <ArrowRight className="h-4 w-4 mr-2" />
-                          Continue to Analysis
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                )}
-              </form>
+              </div>
             </CardContent>
           </Card>
         )}
@@ -525,8 +505,8 @@ export default function VideoAnalysisPage() {
                         key={prompt.id}
                         className={`p-3 border rounded-lg cursor-pointer transition-all ${
                           selectedPrompts.includes(prompt.id)
-                            ? "border-primary bg-primary/5"
-                            : "border-gray-200 hover:border-gray-300"
+                            ? "border-primary bg-primary/10 border-2"
+                            : "border-slate-300 bg-slate-100 hover:bg-slate-200"
                         }`}
                         onClick={() => !useCustomPrompt && handlePromptToggle(prompt.id)}
                       >
@@ -620,7 +600,7 @@ export default function VideoAnalysisPage() {
               </CardHeader>
               <CardContent>
                 <div className="prose max-w-none">
-                  <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
+                  <div className="whitespace-pre-wrap text-gray-900 leading-relaxed font-medium">
                     {cleanAnalysisText(analysisResponse)}
                   </div>
                 </div>
