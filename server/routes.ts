@@ -7028,6 +7028,13 @@ Keep the response professional, evidence-based, and specific to track and field 
       
       console.log(`Fetched ${competitions.length} competitions from World Athletics API`);
       
+      // Log available date range for debugging
+      if (competitions.length > 0) {
+        const dates = competitions.map(c => c.start).sort();
+        console.log(`Available competition dates range from ${dates[0]} to ${dates[dates.length - 1]}`);
+        console.log(`Sample competitions:`, competitions.slice(0, 3).map(c => ({ name: c.name, start: c.start })));
+      }
+      
       // Handle empty results gracefully
       if (competitions.length === 0) {
         console.log('No competitions found for the specified criteria');
