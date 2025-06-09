@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Camera, Upload, FileVideo, Play, Sparkles, Zap, Crown } from "lucide-react";
 
 export default function VideoAnalysisPage() {
@@ -87,6 +87,7 @@ export default function VideoAnalysisPage() {
       return response.json();
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/video-analysis"] });
       toast({
         title: "Success",
         description: "Video uploaded successfully for analysis",
