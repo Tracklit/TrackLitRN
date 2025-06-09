@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Camera, Upload, FileVideo, Play, Sparkles, Zap, Crown, ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { Camera, Upload, FileVideo, Play, Sparkles, Zap, Crown, ArrowLeft, ArrowRight, Check, Copy, ThumbsUp, ThumbsDown } from "lucide-react";
 
 export default function VideoAnalysisPage() {
   const [currentStep, setCurrentStep] = useState<"upload" | "analyze" | "results">("upload");
@@ -28,6 +28,21 @@ export default function VideoAnalysisPage() {
   const [useCustomPrompt, setUseCustomPrompt] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  const handleCopyText = () => {
+    navigator.clipboard.writeText(cleanAnalysisText(analysisResponse));
+    toast({
+      title: "Copied to clipboard",
+      description: "Analysis text has been copied",
+    });
+  };
+
+  const handleFeedback = (type: 'positive' | 'negative') => {
+    toast({
+      title: "Feedback received",
+      description: `Thank you for your ${type} feedback`,
+    });
+  };
 
   // Pre-made analysis prompts
   const analysisPrompts = [
@@ -201,8 +216,7 @@ export default function VideoAnalysisPage() {
       .replace(/\*\*/g, '')  // Remove ** markdown bold
       .replace(/\*/g, '')    // Remove * markdown
       .replace(/#{1,6}\s/g, '') // Remove # headers
-      .replace(/^- /gm, '• ')   // Replace dashes with bullet points
-      .replace(/\n- /g, '\n• ') // Replace dashes after newlines with bullet points
+      .replace(/-\s/g, '• ')    // Replace all dashes with bullet points
       .replace(/\n{3,}/g, '\n\n\n') // Larger breaks between sections
       .replace(/\n([A-Z][^:\n]*:)/g, '\n\n$1') // Add extra space before headers
       .replace(/([.!?])\n(?=[A-Z])/g, '$1\n\n') // Add space after sentences before new paragraphs
@@ -596,6 +610,37 @@ export default function VideoAnalysisPage() {
                   <div className="whitespace-pre-wrap text-white leading-relaxed font-medium text-sm text-justify">
                     {cleanAnalysisText(analysisResponse)}
                   </div>
+                </div>
+                
+                {/* Feedback Actions */}
+                <div className="flex justify-center gap-3 mt-4 mb-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopyText}
+                    className="flex items-center gap-2"
+                  >
+                    <Copy className="h-4 w-4" />
+                    Copy
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleFeedback('positive')}
+                    className="flex items-center gap-2"
+                  >
+                    <ThumbsUp className="h-4 w-4" />
+                    Good
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleFeedback('negative')}
+                    className="flex items-center gap-2"
+                  >
+                    <ThumbsDown className="h-4 w-4" />
+                    Poor
+                  </Button>
                 </div>
                 
                 <div className="flex justify-between mt-6">
