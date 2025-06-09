@@ -57,7 +57,7 @@ export default function WorkoutToolsPage() {
     },
     {
       title: "Video Analysis",
-      description: "Upload race videos and add precise timing overlays",
+      description: "AI-powered race video analysis with Sprinthia",
       icon: <Camera className="h-6 w-6 text-primary" />,
       href: "/tools/video-analysis",
       disabled: false
@@ -125,12 +125,14 @@ export default function WorkoutToolsPage() {
                 <Card 
                   className="cursor-pointer border border-muted h-[140px] mx-auto mb-2 overflow-hidden relative"
                 >
-                  {/* Header Image - For Start Gun and Stopwatch */}
-                  {(card.title === "Start Gun" || card.title === "Stopwatch") && (
+                  {/* Header Image - For Start Gun, Stopwatch, and Video Analysis */}
+                  {(card.title === "Start Gun" || card.title === "Stopwatch" || card.title === "Video Analysis") && (
                     <div 
                       className="h-1/2 bg-cover bg-center bg-no-repeat relative"
                       style={{ 
-                        backgroundImage: `url(${card.title === "Start Gun" ? startGunImagePath : stopwatchImagePath})` 
+                        backgroundImage: card.title === "Start Gun" ? `url(${startGunImagePath})` :
+                                       card.title === "Stopwatch" ? `url(${stopwatchImagePath})` :
+                                       card.title === "Video Analysis" ? `url(/sprinthia-avatar-fresh.jpeg)` : 'none'
                       }}
                     >
                       <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-all duration-300" />
@@ -139,9 +141,9 @@ export default function WorkoutToolsPage() {
                   )}
                   
                   {/* Content Area */}
-                  <CardContent className={`p-2.5 relative flex flex-col justify-center ${(card.title === "Start Gun" || card.title === "Stopwatch") ? "h-1/2" : "h-full"}`}>
+                  <CardContent className={`p-2.5 relative flex flex-col justify-center ${(card.title === "Start Gun" || card.title === "Stopwatch" || card.title === "Video Analysis") ? "h-1/2" : "h-full"}`}>
                     <div className="flex flex-col items-center text-center gap-2">
-                      {(card.title !== "Start Gun" && card.title !== "Stopwatch") && (
+                      {(card.title !== "Start Gun" && card.title !== "Stopwatch" && card.title !== "Video Analysis") && (
                         <div className="p-1.5 rounded-full bg-primary/15 border border-primary/20">
                           <div className="h-4 w-4 flex items-center justify-center text-primary">
                             {card.icon}
