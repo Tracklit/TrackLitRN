@@ -21,6 +21,13 @@ export default function WorkoutToolsPage() {
   // Tool cards with links to individual pages
   const toolCards = [
     {
+      title: "Video Analysis",
+      description: "AI-powered race video analysis with Sprinthia",
+      icon: <Camera className="h-6 w-6 text-primary" />,
+      href: "/tools/video-analysis",
+      disabled: false
+    },
+    {
       title: "Stopwatch",
       description: "Track your time with precision",
       icon: <Timer className="h-6 w-6 text-primary" />,
@@ -53,13 +60,6 @@ export default function WorkoutToolsPage() {
       description: "Store and organize your training videos",
       icon: <Video className="h-6 w-6 text-primary" />,
       href: "/tools/exercise-library",
-      disabled: false
-    },
-    {
-      title: "Video Analysis",
-      description: "AI-powered race video analysis with Sprinthia",
-      icon: <Camera className="h-6 w-6 text-primary" />,
-      href: "/tools/video-analysis",
       disabled: false
     },
     {
