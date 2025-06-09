@@ -75,15 +75,15 @@ export default function CompetitionCalendarPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCompetition, setSelectedCompetition] = useState<Competition | null>(null);
   const [activeTab, setActiveTab] = useState("upcoming");
-  // Set default date range: current date to 6 months from now (upcoming only)
+  // Set default date range: current date to 2 years from now
   const getDefaultDateRange = () => {
     const today = new Date();
-    const sixMonthsLater = new Date();
-    sixMonthsLater.setMonth(today.getMonth() + 6);
+    const twoYearsLater = new Date();
+    twoYearsLater.setFullYear(today.getFullYear() + 2);
     
     return {
       start: today.toISOString().split('T')[0],
-      end: sixMonthsLater.toISOString().split('T')[0]
+      end: twoYearsLater.toISOString().split('T')[0]
     };
   };
 
@@ -102,17 +102,34 @@ export default function CompetitionCalendarPage() {
 
   // Fetch competitions based on active tab
   const { data: competitionsResponse, isLoading } = useQuery({
-    queryKey: ['/api/competitions', 
-      searchTerm || 'all',
-      activeTab === 'upcoming' ? 'upcoming' : (activeTab === 'major' ? 'major' : 'all'),
-      dateFilter.start || 'no-start',
-      dateFilter.end || 'no-end',
-      currentPage,
-      pageSize,
-      sortOrder
-    ],
+    queryKey: ['/api/competitions', {
+      name: searchTerm || 'all',
+      [activeTab]: activeTab, // This sends upcoming=upcoming, major=major, etc.
+      startDate: dateFilter.start || 'no-start',
+      endDate: dateFilter.end || 'no-end',
+      page: currentPage,
+      limit: pageSize,
+      sort: sortOrder
+    }],
     enabled: activeTab !== 'favorites',
-    staleTime: 0 // Always consider data stale
+    staleTime: 0,
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        name: searchTerm || 'all',
+        [activeTab]: activeTab,
+        startDate: dateFilter.start || 'no-start',
+        endDate: dateFilter.end || 'no-end',
+        page: currentPage.toString(),
+        limit: pageSize.toString(),
+        sort: sortOrder
+      });
+      
+      const response = await fetch(`/api/competitions?${params}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch competitions');
+      }
+      return response.json();
+    }
   });
 
   const competitions = Array.isArray(competitionsResponse) ? competitionsResponse : (competitionsResponse as any)?.competitions || [];

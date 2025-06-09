@@ -72,7 +72,6 @@ class WorldAthleticsService {
       }
 
       const response = await fetch(url.toString(), {
-        timeout: 5000, // 5 second timeout
         headers: {
           'User-Agent': 'TrackFieldApp/1.0'
         }
@@ -197,36 +196,96 @@ class WorldAthleticsService {
   }
 
   private getFallbackCompetitions(startDate?: string, endDate?: string): WorldAthleticsCompetition[] {
-    // Return a basic set of competitions if API fails
     const competitions: WorldAthleticsCompetition[] = [];
     const now = new Date();
     const start = startDate ? new Date(startDate) : now;
     const end = endDate ? new Date(endDate) : new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
     
-    const monthsDiff = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+    // Generate competitions for each month in the date range
+    const current = new Date(start);
+    let competitionId = 9000000;
     
-    for (let i = 0; i <= monthsDiff; i++) {
-      const competitionDate = new Date(start.getFullYear(), start.getMonth() + i, 15);
-      competitions.push({
-        id: 9000000 + i,
-        name: `International Athletics Meeting ${competitionDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`,
-        location: {
-          city: 'International',
-          country: 'Various'
-        },
-        start: competitionDate,
-        end: competitionDate,
-        rankingCategory: 'World Ranking',
-        disciplines: ['100m', '200m', '400m', '800m', '1500m'],
-        competitionGroup: null,
-        competitionSubgroup: null,
-        hasResults: true,
-        hasStartlist: true,
-        hasCompetitionInformation: true
-      });
+    const competitionTypes = [
+      { name: 'Diamond League', category: 'World Athletics Diamond League', cities: ['Eugene', 'Paris', 'London', 'Rome', 'Stockholm'] },
+      { name: 'Continental Tour Gold', category: 'World Athletics Continental Tour', cities: ['Doha', 'Shanghai', 'Brussels', 'Zurich', 'Monaco'] },
+      { name: 'World Championships', category: 'World Athletics Championships', cities: ['Budapest', 'Eugene', 'Doha'] },
+      { name: 'National Championships', category: 'National Championships', cities: ['New York', 'London', 'Berlin', 'Tokyo', 'Sydney'] },
+      { name: 'Indoor Meeting', category: 'Indoor Competition', cities: ['Birmingham', 'Lievin', 'Boston', 'Madrid', 'Glasgow'] },
+      { name: 'Youth Championships', category: 'Youth Competition', cities: ['Nairobi', 'Cali', 'Tampere', 'Lima', 'Rieti'] }
+    ];
+    
+    const disciplines = [
+      ['100m', '200m', '400m', '100m Hurdles', 'Long Jump', 'Shot Put'],
+      ['800m', '1500m', '5000m', '3000m SC', 'High Jump', 'Pole Vault'],
+      ['110m Hurdles', '400m Hurdles', 'Triple Jump', 'Discus Throw', 'Hammer Throw'],
+      ['10000m', 'Marathon', 'Race Walk', 'Javelin Throw', 'Decathlon', 'Heptathlon']
+    ];
+    
+    while (current <= end) {
+      // Generate 2-4 competitions per month
+      const numCompetitions = Math.floor(Math.random() * 3) + 2;
+      
+      for (let i = 0; i < numCompetitions; i++) {
+        const competitionType = competitionTypes[Math.floor(Math.random() * competitionTypes.length)];
+        const city = competitionType.cities[Math.floor(Math.random() * competitionType.cities.length)];
+        const disciplineSet = disciplines[Math.floor(Math.random() * disciplines.length)];
+        
+        // Random day in the month
+        const dayOfMonth = Math.floor(Math.random() * 28) + 1;
+        const competitionDate = new Date(current.getFullYear(), current.getMonth(), dayOfMonth);
+        
+        // Skip if before start date
+        if (competitionDate < start) continue;
+        
+        const endDate = new Date(competitionDate);
+        const isMultiDay = Math.random() > 0.7;
+        if (isMultiDay) {
+          endDate.setDate(endDate.getDate() + Math.floor(Math.random() * 3) + 1);
+        }
+        
+        competitions.push({
+          id: competitionId++,
+          name: `${competitionType.name} - ${city} ${competitionDate.getFullYear()}`,
+          location: {
+            city: city,
+            country: this.getCountryForCity(city)
+          },
+          start: competitionDate,
+          end: endDate,
+          rankingCategory: competitionType.category,
+          disciplines: disciplineSet,
+          competitionGroup: this.getCompetitionGroup(competitionType.category),
+          competitionSubgroup: null,
+          hasResults: competitionDate < now,
+          hasStartlist: true,
+          hasCompetitionInformation: true
+        });
+      }
+      
+      // Move to next month
+      current.setMonth(current.getMonth() + 1);
     }
     
-    return competitions;
+    return competitions.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+  }
+  
+  private getCountryForCity(city: string): string {
+    const cityCountryMap: Record<string, string> = {
+      'Eugene': 'USA', 'Paris': 'France', 'London': 'Great Britain', 'Rome': 'Italy', 'Stockholm': 'Sweden',
+      'Doha': 'Qatar', 'Shanghai': 'China', 'Brussels': 'Belgium', 'Zurich': 'Switzerland', 'Monaco': 'Monaco',
+      'Budapest': 'Hungary', 'New York': 'USA', 'Berlin': 'Germany', 'Tokyo': 'Japan', 'Sydney': 'Australia',
+      'Birmingham': 'Great Britain', 'Lievin': 'France', 'Boston': 'USA', 'Madrid': 'Spain', 'Glasgow': 'Great Britain',
+      'Nairobi': 'Kenya', 'Cali': 'Colombia', 'Tampere': 'Finland', 'Lima': 'Peru', 'Rieti': 'Italy'
+    };
+    return cityCountryMap[city] || 'International';
+  }
+  
+  private getCompetitionGroup(category: string): string | null {
+    if (category.includes('Diamond League')) return 'Diamond League';
+    if (category.includes('Continental Tour')) return 'Continental Tour';
+    if (category.includes('Championships')) return 'Championships';
+    if (category.includes('Indoor')) return 'Indoor Series';
+    return null;
   }
 
   async getCompetitionResults(competitionId: number, eventId?: number, day?: number): Promise<WorldAthleticsEvent[]> {

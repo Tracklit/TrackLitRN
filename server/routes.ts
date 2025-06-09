@@ -7022,29 +7022,46 @@ Keep the response professional, evidence-based, and specific to track and field 
       
       console.log('Competition API request:', { name, upcoming, major, startDate, endDate, page, limit, sort });
       
-      // Always use the enhanced search with date parameters to get expanded dataset
-      let competitions = await worldAthleticsService.searchCompetitions(name as string, startDate as string, endDate as string);
+      // Set default date range to ensure we get all future competitions
+      const now = new Date();
+      const defaultStartDate = startDate as string || now.toISOString().split('T')[0];
+      const defaultEndDate = endDate as string || new Date(now.getTime() + 2 * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]; // 2 years ahead
       
-      // Apply tab-specific filtering after getting the expanded dataset
-      if (upcoming === 'true') {
-        const now = new Date();
-        competitions = competitions.filter(comp => new Date(comp.start) > now);
-      } else if (major === 'true') {
+      // Fetch competitions with proper date range
+      let competitions = await worldAthleticsService.searchCompetitions(name as string, defaultStartDate, defaultEndDate);
+      
+      // Apply tab-specific filtering
+      if (upcoming === 'upcoming') {
+        // For upcoming tab, show only future competitions
+        competitions = competitions.filter(comp => new Date(comp.start) >= now);
+      } else if (major === 'major') {
+        // For major tab, show major competitions (past and future)
         competitions = competitions.filter(comp => 
           comp.rankingCategory?.toLowerCase().includes('world') || 
+          comp.rankingCategory?.toLowerCase().includes('diamond') ||
           comp.name.toLowerCase().includes('championship') ||
-          comp.name.toLowerCase().includes('games')
+          comp.name.toLowerCase().includes('games') ||
+          comp.name.toLowerCase().includes('diamond league')
+        );
+      }
+      // For "all" tab, show all competitions without additional filtering
+      
+      // Apply search filter
+      if (name && name !== 'all') {
+        competitions = competitions.filter(comp => 
+          comp.name.toLowerCase().includes((name as string).toLowerCase()) ||
+          comp.location.city?.toLowerCase().includes((name as string).toLowerCase()) ||
+          comp.location.country.toLowerCase().includes((name as string).toLowerCase())
         );
       }
       
-      // Apply date filtering - filter competitions by their start date
-      if (startDate || endDate) {
+      // Apply date filtering if custom dates provided
+      if ((startDate && startDate !== 'no-start') || (endDate && endDate !== 'no-end')) {
         competitions = competitions.filter(comp => {
           const compStart = new Date(comp.start);
           
-          // Filter by start date range
-          if (startDate && compStart < new Date(startDate as string)) return false;
-          if (endDate && compStart > new Date(endDate as string)) return false;
+          if (startDate && startDate !== 'no-start' && compStart < new Date(startDate as string)) return false;
+          if (endDate && endDate !== 'no-end' && compStart > new Date(endDate as string)) return false;
           
           return true;
         });
