@@ -506,7 +506,7 @@ export default function VideoAnalysisPage() {
                         className={`p-3 border rounded-lg cursor-pointer transition-all ${
                           selectedPrompts.includes(prompt.id)
                             ? "border-primary bg-primary/10 border-2"
-                            : "border-slate-300 bg-slate-100 hover:bg-slate-200"
+                            : "border-slate-300 bg-slate-100"
                         }`}
                         onClick={() => !useCustomPrompt && handlePromptToggle(prompt.id)}
                       >
@@ -600,7 +600,7 @@ export default function VideoAnalysisPage() {
               </CardHeader>
               <CardContent>
                 <div className="prose max-w-none">
-                  <div className="whitespace-pre-wrap text-gray-900 leading-relaxed font-medium">
+                  <div className="whitespace-pre-wrap text-white leading-relaxed font-medium">
                     {cleanAnalysisText(analysisResponse)}
                   </div>
                 </div>
