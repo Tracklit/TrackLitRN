@@ -134,7 +134,7 @@ export default function WorkoutToolsPage() {
                         backgroundImage: card.title === "Start Gun" ? `url(${startGunImagePath})` :
                                        card.title === "Stopwatch" ? `url(${stopwatchImagePath})` :
                                        card.title === "Video Analysis" ? `url(${videoAnalysisCardImage})` : 'none',
-                        backgroundPosition: card.title === "Video Analysis" ? 'center -85px' : 'center'
+                        backgroundPosition: card.title === "Video Analysis" ? 'center bottom' : 'center'
                       }}
                     >
                       <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-all duration-300" />
