@@ -97,7 +97,7 @@ function Router() {
       <ProtectedRoute path="/meets" component={MeetsPage} />
       <ProtectedRoute path="/meets/create" component={CreateMeetPage} />
       <ProtectedRoute path="/results" component={ResultsPage} />
-      <ProtectedRoute path="/competitions" component={CompetitionCalendarPage} />
+      {/* <ProtectedRoute path="/competitions" component={CompetitionCalendarPage} /> */}
       
       {/* Social */}
       <ProtectedRoute path="/connections" component={ConnectionsPage} />
