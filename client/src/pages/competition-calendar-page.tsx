@@ -74,15 +74,19 @@ interface CompetitionEvent {
 export default function CompetitionCalendarPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCompetition, setSelectedCompetition] = useState<Competition | null>(null);
-  const [activeTab, setActiveTab] = useState("upcoming");
+  const [activeTab, setActiveTab] = useState("all");
   // Set default date range: current date to 2 years from now
   const getDefaultDateRange = () => {
     const today = new Date();
+    // Start from current date for better data capture
+    const startDate = new Date();
+    startDate.setDate(today.getDate() - 30); // Start 30 days ago to capture recent competitions
+    
     const twoYearsLater = new Date();
     twoYearsLater.setFullYear(today.getFullYear() + 2);
     
     return {
-      start: today.toISOString().split('T')[0],
+      start: startDate.toISOString().split('T')[0],
       end: twoYearsLater.toISOString().split('T')[0]
     };
   };
@@ -494,9 +498,9 @@ export default function CompetitionCalendarPage() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="all" className="text-xs px-2">All</TabsTrigger>
             <TabsTrigger value="upcoming" className="text-xs px-2">Upcoming</TabsTrigger>
             <TabsTrigger value="major" className="text-xs px-2">Major</TabsTrigger>
-            <TabsTrigger value="all" className="text-xs px-2">All</TabsTrigger>
             <TabsTrigger value="favorites" className="text-xs px-2">Favorites</TabsTrigger>
           </TabsList>
         </Tabs>
