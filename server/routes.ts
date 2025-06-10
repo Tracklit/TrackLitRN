@@ -3845,7 +3845,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const programData = {
         ...req.body,
-        userId: req.user!.id
+        userId: req.user!.id,
+        category: req.body.category || 'general',
+        level: req.body.level || 'intermediate'
       };
       
       const program = await dbStorage.createProgram(programData);
@@ -3877,8 +3879,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.user!.id,
         title: req.body.title,
         description: req.body.description || '',
-        category: req.body.category,
-        level: req.body.level,
+        category: req.body.category || 'general',
+        level: req.body.level || 'intermediate',
         duration: parseInt(req.body.duration),
         visibility: req.body.visibility,
         price: req.body.price ? parseFloat(req.body.price) : 0,

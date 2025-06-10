@@ -1371,8 +1371,8 @@ export const trainingPrograms = pgTable("training_programs", {
   stripeProductId: text("stripe_product_id"), // Stripe product ID for monetized programs
   stripePriceId: text("stripe_price_id"), // Stripe price ID for monetized programs
   coverImageUrl: text("cover_image_url"),
-  category: text("category").notNull(), // sprint, distance, jumps, throws, etc.
-  level: text("level"), // beginner, intermediate, advanced
+  category: text("category").default('general'), // sprint, distance, jumps, throws, etc.
+  level: text("level").default('intermediate'), // beginner, intermediate, advanced
   duration: integer("duration").notNull(), // In days
   totalSessions: integer("total_sessions").default(0),
   isUploadedProgram: boolean("is_uploaded_program").default(false),
