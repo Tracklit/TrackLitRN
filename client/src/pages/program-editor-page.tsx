@@ -213,6 +213,10 @@ function ProgramEditorPage() {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  
+  // Text-based program state
+  const [textContent, setTextContent] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   // Zoom and pan state for pinch-to-zoom functionality
   const [scale, setScale] = useState(1);
@@ -687,6 +691,42 @@ function ProgramEditorPage() {
   // Maintain a local cache of session content
   const [savedSessions, setSavedSessions] = useState<Record<string, string>>({});
   
+  // Initialize text content when program data loads
+  useEffect(() => {
+    if (program.textContent !== undefined) {
+      setTextContent(program.textContent || '');
+    }
+  }, [program.textContent]);
+  
+  // Text-based program save handler
+  const handleSaveTextContent = async () => {
+    setIsSaving(true);
+    try {
+      const response = await apiRequest('PUT', `/api/programs/${programId}`, {
+        textContent: textContent
+      });
+      
+      if (response.ok) {
+        toast({
+          title: "Program updated",
+          description: "Your text content has been saved successfully.",
+        });
+        // Invalidate queries to refresh data
+        queryClient.invalidateQueries({ queryKey: ['/api/programs', programId] });
+      } else {
+        throw new Error('Failed to save');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save text content. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  
   // Session content update handler with persistent local storage
   const handleCellUpdate = (weekNumber: number, dayNumber: number, content: string, isRestDay: boolean) => {
     const date = getDateForWeekDay(weekNumber, dayNumber);
@@ -910,35 +950,6 @@ function ProgramEditorPage() {
 
   // Special handling for text-based programs
   if (program.isTextBased) {
-    const [textContent, setTextContent] = useState(program.textContent || '');
-    const [isSaving, setIsSaving] = useState(false);
-
-    const handleSaveTextContent = async () => {
-      setIsSaving(true);
-      try {
-        const response = await apiRequest('PUT', `/api/programs/${programId}`, {
-          textContent: textContent
-        });
-        
-        if (response.ok) {
-          toast({
-            title: "Program updated",
-            description: "Your text content has been saved successfully.",
-          });
-        } else {
-          throw new Error('Failed to save');
-        }
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to save text content. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsSaving(false);
-      }
-    };
-
     return (
       <div className="container max-w-4xl mx-auto p-4">
         <div className="flex justify-between items-center mb-6">
