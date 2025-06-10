@@ -51,7 +51,8 @@ function ProgramCreatePage() {
     visibility: "public",
     price: 0,
     priceType: "spikes",
-    duration: 4
+    duration: 4,
+    textContent: ""
   });
 
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -59,7 +60,11 @@ function ProgramCreatePage() {
 
   const createProgramMutation = useMutation({
     mutationFn: async (data: CreateProgramForm) => {
-      const response = await apiRequest("POST", "/api/programs", data);
+      const programData = {
+        ...data,
+        isTextBased: selectedMethod === 'text',
+      };
+      const response = await apiRequest("POST", "/api/programs", programData);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || "Failed to create program");
@@ -68,8 +73,16 @@ function ProgramCreatePage() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/programs'] });
-      setIsNavigatingToEdit(true);
-      setLocation(`/programs/${data.id}/edit`);
+      if (selectedMethod === 'text') {
+        toast({
+          title: "Success",
+          description: "Text-based program created successfully!",
+        });
+        setLocation('/programs');
+      } else {
+        setIsNavigatingToEdit(true);
+        setLocation(`/programs/${data.id}/edit`);
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -159,6 +172,30 @@ function ProgramCreatePage() {
     uploadProgramMutation.mutate(formDataToSend);
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.title.trim()) {
+      toast({
+        title: "Error",
+        description: "Program title is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.textContent?.trim()) {
+      toast({
+        title: "Error",
+        description: "Program content is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createProgramMutation.mutate(formData);
+  };
+
   const updateFormData = (field: keyof CreateProgramForm, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -209,7 +246,7 @@ function ProgramCreatePage() {
 
       <div className="max-w-4xl mx-auto mt-8">
         {!selectedMethod ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card 
               className="cursor-pointer border-2 hover:border-primary/50 transition-all hover:shadow-md relative"
               onClick={() => setSelectedMethod('upload')}
@@ -239,6 +276,21 @@ function ProgramCreatePage() {
                 <CardTitle className="text-xl mb-2">Program Builder</CardTitle>
                 <CardDescription>
                   Create a structured training program with custom sessions and exercises
+                </CardDescription>
+              </CardHeader>
+            </Card>
+            
+            <Card 
+              className="cursor-pointer border-2 hover:border-primary/50 transition-all hover:shadow-md"
+              onClick={() => setSelectedMethod('text')}
+            >
+              <CardHeader className="text-center pb-6">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+                  <BookOpen className="h-8 w-8 text-primary" />
+                </div>
+                <CardTitle className="text-xl mb-2">Text Based</CardTitle>
+                <CardDescription>
+                  Create a simple text-based program that displays as a scrollable list
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -546,6 +598,116 @@ function ProgramCreatePage() {
                       className="min-w-[200px]"
                     />
                   </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {selectedMethod === 'text' && (
+              <Card className="border-2">
+                <CardHeader className="bg-muted/30">
+                  <CardTitle className="flex items-center">
+                    <BookOpen className="h-5 w-5 mr-2 text-primary" />
+                    Text Based Program
+                  </CardTitle>
+                  <CardDescription>
+                    Create a simple text-based program that displays as a scrollable list in practice view
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="text-title">Program Title *</Label>
+                        <Input
+                          id="text-title"
+                          placeholder="Enter program title"
+                          value={formData.title}
+                          onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                          required
+                          className="mt-1"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="text-description">Description</Label>
+                        <Textarea
+                          id="text-description"
+                          placeholder="Brief description of your program"
+                          value={formData.description}
+                          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                          className="mt-1"
+                          rows={3}
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="text-content">Program Content *</Label>
+                        <Textarea
+                          id="text-content"
+                          placeholder="Enter your complete training program here. Users will see this as a scrollable list in practice view. Include dates, exercises, instructions, and any other details you want to share."
+                          value={formData.textContent}
+                          onChange={(e) => setFormData(prev => ({ ...prev, textContent: e.target.value }))}
+                          required
+                          className="mt-1 min-h-[300px] font-mono text-sm"
+                        />
+                        <p className="text-sm text-muted-foreground mt-2">
+                          This text will be displayed exactly as you type it. Use line breaks and formatting to organize your content.
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="text-visibility">Visibility</Label>
+                          <Select 
+                            value={formData.visibility} 
+                            onValueChange={(value: 'public' | 'premium' | 'private') => 
+                              setFormData(prev => ({ ...prev, visibility: value }))
+                            }
+                          >
+                            <SelectTrigger className="mt-1">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="public">Public</SelectItem>
+                              <SelectItem value="premium">Premium</SelectItem>
+                              <SelectItem value="private">Private</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="text-duration">Duration (days)</Label>
+                          <Input
+                            id="text-duration"
+                            type="number"
+                            min="1"
+                            placeholder="7"
+                            value={formData.duration}
+                            onChange={(e) => setFormData(prev => ({ ...prev, duration: parseInt(e.target.value) || 1 }))}
+                            className="mt-1"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <Button 
+                      type="submit" 
+                      className="w-full" 
+                      disabled={createProgramMutation.isPending || !formData.title || !formData.textContent}
+                    >
+                      {createProgramMutation.isPending ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Creating Program...
+                        </>
+                      ) : (
+                        <>
+                          <BookOpen className="h-4 w-4 mr-2" />
+                          Create Text Program
+                        </>
+                      )}
+                    </Button>
+                  </form>
                 </CardContent>
               </Card>
             )}
