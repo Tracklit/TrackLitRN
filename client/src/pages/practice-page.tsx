@@ -373,7 +373,9 @@ function PracticePage() {
                         </div>
                       </div>
                     </div>
-                  ) : activeSessionData ? (
+                  ) : (
+                    // Show active session or empty state
+                    activeSessionData ? (
                     <div className="space-y-3">
                       <div className="p-3 bg-background/80 rounded-md border border-border/50">
                         <div className="space-y-3">
@@ -585,13 +587,25 @@ function PracticePage() {
                     )}
                   </div>
                 </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="p-6 bg-background/50 rounded border border-border/50 text-center">
+                        <div className="flex flex-col items-center gap-3 py-4">
+                          <CalendarRange className="h-10 w-10 text-muted-foreground opacity-70" />
+                          <p className="text-sm text-muted-foreground">No training session available</p>
+                          <p className="text-xs text-muted-foreground mt-1">This day has no scheduled training</p>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                )
               ) : (
                 <div className="space-y-2">
                   <div className="p-6 bg-background/50 rounded border border-border/50 text-center">
                     <div className="flex flex-col items-center gap-3 py-4">
                       <CalendarRange className="h-10 w-10 text-muted-foreground opacity-70" />
-                      <p className="text-sm text-muted-foreground">No training session selected</p>
-                      <p className="text-xs text-muted-foreground mt-1">Select a program from below to view your workouts</p>
+                      <p className="text-sm text-muted-foreground">No program selected</p>
+                      <p className="text-xs text-muted-foreground mt-1">Select a program from below to start training</p>
                     </div>
                   </div>
                 </div>
