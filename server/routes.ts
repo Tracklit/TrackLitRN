@@ -3754,6 +3754,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Program not found" });
       }
       
+      // Debug logging for program 22
+      if (programId === 22) {
+        console.log(`Program ${programId} debug - isTextBased:`, program.isTextBased);
+        console.log(`Program ${programId} debug - textContent:`, program.textContent);
+      }
+      
       // Check if user has access to this program
       if (program.userId !== req.user!.id && program.visibility !== 'public') {
         // For private or premium programs, check if user has purchased or has been assigned access
