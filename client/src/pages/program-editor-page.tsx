@@ -129,7 +129,11 @@ function EditableCell({
   return (
     <TableCell 
       className={`border p-0 relative min-h-[80px] ${(value || content) ? 'bg-gray-950' : 'bg-gray-700'}`}
-      onClick={() => !isEditing && setIsEditing(true)}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!isEditing) setIsEditing(true);
+      }}
     >
       {isEditing ? (
         <div className="p-2 h-full">
@@ -142,10 +146,27 @@ function EditableCell({
             className="min-h-[64px] font-sans text-sm p-2 border-0 focus:ring-0"
           />
           <div className="flex justify-end gap-2 mt-2">
-            <Button variant="outline" size="sm" className="h-7 px-3" onClick={() => setIsEditing(false)}>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="h-7 px-3" 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsEditing(false);
+              }}
+            >
               Cancel
             </Button>
-            <Button size="sm" className="h-7 px-3" onClick={handleSave}>
+            <Button 
+              size="sm" 
+              className="h-7 px-3" 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleSave();
+              }}
+            >
               Save
             </Button>
           </div>

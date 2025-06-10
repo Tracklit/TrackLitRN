@@ -43,6 +43,7 @@ function ProgramCreatePage() {
   const [, setLocation] = useLocation();
   
   const [selectedMethod, setSelectedMethod] = useState<'builder' | 'upload' | 'import' | null>(null);
+  const [isNavigatingToEdit, setIsNavigatingToEdit] = useState(false);
   const [formData, setFormData] = useState<CreateProgramForm>({
     title: "",
     description: "",
@@ -65,11 +66,8 @@ function ProgramCreatePage() {
       return response.json();
     },
     onSuccess: (data) => {
-      toast({
-        title: "Success",
-        description: "Program created successfully!",
-      });
       queryClient.invalidateQueries({ queryKey: ['/api/programs'] });
+      setIsNavigatingToEdit(true);
       setLocation(`/programs/${data.id}/edit`);
     },
     onError: (error: Error) => {
@@ -164,13 +162,29 @@ function ProgramCreatePage() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  if (uploadSuccess) {
+  if (uploadSuccess || isNavigatingToEdit) {
     return (
       <div className="container max-w-screen-xl mx-auto p-4 pt-20 md:pt-24 md:pl-72 pb-20">
         <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
           <CheckCircle2 className="h-16 w-16 text-green-500 mb-4" />
-          <h2 className="text-2xl font-bold mb-2">Program Uploaded Successfully!</h2>
-          <p className="text-muted-foreground mb-4">Redirecting to program details...</p>
+          <h2 className="text-2xl font-bold mb-2">
+            {uploadSuccess ? "Program Uploaded Successfully!" : "Program Created Successfully!"}
+          </h2>
+          <p className="text-muted-foreground mb-4">Redirecting to program editor...</p>
+          
+          {/* Loading skeleton for edit page */}
+          <div className="w-full max-w-2xl mt-8 space-y-4">
+            <div className="animate-pulse">
+              <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto mb-6"></div>
+              
+              <div className="grid grid-cols-7 gap-2">
+                {Array.from({ length: 14 }).map((_, i) => (
+                  <div key={i} className="h-12 bg-gray-200 rounded"></div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
