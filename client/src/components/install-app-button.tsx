@@ -142,8 +142,8 @@ export function InstallAppButton() {
               ) : (
                 <>
                   <span className="relative flex h-2 w-2">
-                    <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+                    <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-primary/75 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
                   </span>
                   <Download className="h-4 w-4" />
                   <span className="text-xs">Install App</span>
@@ -158,8 +158,8 @@ export function InstallAppButton() {
                 className="flex items-center gap-2 text-muted-foreground hover:text-foreground relative"
               >
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+                  <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-primary/75 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
                 </span>
                 <Download className="h-4 w-4" />
                 <span className="text-xs">Install App</span>

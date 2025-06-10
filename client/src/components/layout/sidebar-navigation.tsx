@@ -38,7 +38,7 @@ function NavItem({ href, icon, children, isActive, badge }: NavItemProps) {
         className={cn(
           "flex items-center space-x-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors",
           isActive 
-            ? "bg-[#ff8c00] text-white" 
+            ? "bg-primary text-primary-foreground" 
             : "text-gray-300 hover:bg-gray-800 hover:text-white"
         )}
       >

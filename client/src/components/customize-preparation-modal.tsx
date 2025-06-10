@@ -31,7 +31,7 @@ const CATEGORIES = [
   { value: 'nutrition', label: 'Nutrition', color: 'bg-green-900/30 text-green-200' },
   { value: 'exercise', label: 'Exercise', color: 'bg-blue-900/30 text-blue-200' },
   { value: 'rest', label: 'Rest', color: 'bg-purple-900/30 text-purple-200' },
-  { value: 'warmup', label: 'Warm-up', color: 'bg-orange-900/30 text-orange-200' },
+  { value: 'warmup', label: 'Warm-up', color: 'bg-yellow-900/30 text-yellow-200' },
   { value: 'hydration', label: 'Hydration', color: 'bg-cyan-900/30 text-cyan-200' },
   { value: 'mental', label: 'Mental Prep', color: 'bg-pink-900/30 text-pink-200' },
   { value: 'equipment', label: 'Equipment', color: 'bg-gray-700/30 text-gray-200' },
