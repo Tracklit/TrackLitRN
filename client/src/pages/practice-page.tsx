@@ -69,6 +69,8 @@ function PracticePage() {
   const [adjustForTrackType, setAdjustForTrackType] = useState(false);
   const [currentTrackType, setCurrentTrackType] = useState<"indoor" | "outdoor">("outdoor");
   
+
+  
   // Fetch program sessions if we have a selected program
   const { 
     programSessions, 
@@ -106,14 +108,16 @@ function PracticePage() {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [transcription, setTranscription] = useState<string>("");
   const [isTranscribing, setIsTranscribing] = useState(false);
+  
+  // Modal states
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [showMediaPremiumModal, setShowMediaPremiumModal] = useState(false);
+  const [sessionCompleteOpen, setSessionCompleteOpen] = useState(false);
   
   // Journal states
-  const [diaryNotes, setDiaryNotes] = useState<string>("");
-  const [moodValue, setMoodValue] = useState<number>(7);
+  const [moodValue, setMoodValue] = useState(5);
+  const [diaryNotes, setDiaryNotes] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-  const [sessionCompleteOpen, setSessionCompleteOpen] = useState(false);
   
   // Fade transition state
   const [fadeTransition, setFadeTransition] = useState(true);
@@ -216,7 +220,7 @@ function PracticePage() {
       console.error('Error saving workout:', error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to save workout. Please try again.",
+        description: "Failed to save workout. Please try again.",
         variant: "destructive",
       });
     } finally {
