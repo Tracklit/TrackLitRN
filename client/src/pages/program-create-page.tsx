@@ -35,6 +35,7 @@ interface CreateProgramForm {
   price: number;
   priceType: 'spikes' | 'money';
   duration: number;
+  textContent?: string;
 }
 
 function ProgramCreatePage() {
@@ -42,7 +43,7 @@ function ProgramCreatePage() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   
-  const [selectedMethod, setSelectedMethod] = useState<'builder' | 'upload' | 'import' | null>(null);
+  const [selectedMethod, setSelectedMethod] = useState<'builder' | 'upload' | 'import' | 'text' | null>(null);
   const [isNavigatingToEdit, setIsNavigatingToEdit] = useState(false);
   const [formData, setFormData] = useState<CreateProgramForm>({
     title: "",

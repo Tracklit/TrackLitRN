@@ -1381,6 +1381,8 @@ export const trainingPrograms = pgTable("training_programs", {
   importedFromSheet: boolean("imported_from_sheet").default(false),
   googleSheetUrl: text("google_sheet_url"), // URL to the Google Sheet
   googleSheetId: text("google_sheet_id"), // Google Sheet ID
+  isTextBased: boolean("is_text_based").default(false),
+  textContent: text("text_content"), // Free-form text content for text-based programs
   createdAt: timestamp("created_at").defaultNow(),
 });
 
