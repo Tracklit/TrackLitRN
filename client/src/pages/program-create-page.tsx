@@ -205,7 +205,7 @@ function ProgramCreatePage() {
               className="cursor-pointer border-2 hover:border-primary/50 transition-all hover:shadow-md relative"
               onClick={() => setSelectedMethod('upload')}
             >
-              <div className="absolute -top-2 -right-2 bg-[#ff8c00] text-white text-xs px-2 py-1 rounded-full font-medium">
+              <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full font-medium">
                 Recommended
               </div>
               <CardHeader className="text-center pb-6">
