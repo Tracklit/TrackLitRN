@@ -37,6 +37,7 @@ const programEditorSchema = z.object({
   category: z.string().optional(),
   level: z.string().optional(),
   startDate: z.string().min(1, { message: "Start date is required" }),
+  duration: z.number().min(1, { message: "Duration must be at least 1 day" }),
 });
 
 // Session schema - each cell in the spreadsheet is a session
@@ -228,6 +229,7 @@ function ProgramEditorPage() {
       category: "",
       level: "",
       startDate: format(new Date(), "yyyy-MM-dd"),
+      duration: 7,
     },
   });
 
@@ -269,6 +271,7 @@ function ProgramEditorPage() {
             category: data.category || "",
             level: data.level || "",
             startDate: data.startDate ? format(new Date(data.startDate), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
+            duration: data.duration || 7,
           });
           
           return data.sessions;
@@ -502,6 +505,7 @@ function ProgramEditorPage() {
         category: program.category || "",
         level: program.level || "",
         startDate: program.startDate ? format(new Date(program.startDate), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
+        duration: program.duration || 7,
       });
     }
   }, [program, form]);
@@ -568,9 +572,10 @@ function ProgramEditorPage() {
         weeksArray.sort((a, b) => a.weekNumber - b.weekNumber);
         setWeeks(weeksArray);
       } else {
-        // Create default 5 weeks if no sessions exist
+        // Create weeks based on program duration (convert days to weeks, minimum 1 week)
+        const programWeeks = Math.max(1, Math.ceil((program.duration || 7) / 7));
         const newWeeks: WeekData[] = [];
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < programWeeks; i++) {
           newWeeks.push({
             weekNumber: i,
             startDate: getWeekStartDate(baseDate, i),
