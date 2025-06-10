@@ -373,9 +373,7 @@ function PracticePage() {
                         </div>
                       </div>
                     </div>
-                  ) : (
-                    // Show active session or empty state
-                    activeSessionData ? (
+                  ) : activeSessionData ? (
                     <div className="space-y-3">
                       <div className="p-3 bg-background/80 rounded-md border border-border/50">
                         <div className="space-y-3">
@@ -560,45 +558,8 @@ function PracticePage() {
                         </div>
                       </div>
                     </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <div className="p-6 bg-background/50 rounded border border-border/50 text-center">
-                        <div className="flex flex-col items-center gap-3 py-4">
-                          <CalendarRange className="h-10 w-10 text-muted-foreground opacity-70" />
-                          <p className="text-sm text-muted-foreground">No training session for this day</p>
-                          <p className="text-xs text-muted-foreground mt-1">Navigate to other days to find your workouts</p>
-                        </div>
-                      </div>
-                    </div>
                   )}
-                  
-                  <div className="flex items-center justify-between mt-2">
-                    <Link href={`/programs/${selectedProgram.programId}`} className="text-sm text-primary hover:underline">
-                      View Program
-                    </Link>
-                    
-                    {/* Workout Reactions - Like/Dislike functionality */}
-                    {activeSessionData && (
-                      <WorkoutReactions 
-                        sessionId={activeSessionData.programSessionId || activeSessionData.dayNumber || 1} 
-                        isOwnWorkout={true}
-                        className="ml-auto"
-                      />
-                    )}
-                  </div>
                 </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <div className="p-6 bg-background/50 rounded border border-border/50 text-center">
-                        <div className="flex flex-col items-center gap-3 py-4">
-                          <CalendarRange className="h-10 w-10 text-muted-foreground opacity-70" />
-                          <p className="text-sm text-muted-foreground">No training session available</p>
-                          <p className="text-xs text-muted-foreground mt-1">This day has no scheduled training</p>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                )
               ) : (
                 <div className="space-y-2">
                   <div className="p-6 bg-background/50 rounded border border-border/50 text-center">
