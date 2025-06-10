@@ -908,6 +908,87 @@ function ProgramEditorPage() {
     return dayNumber === 0 || dayNumber === 6; // Sunday or Saturday
   };
 
+  // Special handling for text-based programs
+  if (program.isTextBased) {
+    const [textContent, setTextContent] = useState(program.textContent || '');
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleSaveTextContent = async () => {
+      setIsSaving(true);
+      try {
+        const response = await apiRequest('PUT', `/api/programs/${programId}`, {
+          textContent: textContent
+        });
+        
+        if (response.ok) {
+          toast({
+            title: "Program updated",
+            description: "Your text content has been saved successfully.",
+          });
+        } else {
+          throw new Error('Failed to save');
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to save text content. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsSaving(false);
+      }
+    };
+
+    return (
+      <div className="container max-w-4xl mx-auto p-4">
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/programs")}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold">{program.title}</h1>
+              <p className="text-muted-foreground">Text-based program</p>
+            </div>
+          </div>
+          
+          <Button
+            onClick={handleSaveTextContent}
+            disabled={isSaving}
+            className="gap-2"
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                Save Changes
+              </>
+            )}
+          </Button>
+        </div>
+        
+        <Card>
+          <CardContent className="p-6">
+            <Textarea
+              value={textContent}
+              onChange={(e) => setTextContent(e.target.value)}
+              placeholder="Enter your program content here..."
+              className="min-h-[600px] font-mono text-sm resize-none border-0 focus:ring-0 p-0"
+            />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   // Special handling for uploaded document programs
   if (isUploadedDocumentProgram) {
     const fileType = program.programFileType || '';

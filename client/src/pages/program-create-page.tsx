@@ -655,38 +655,23 @@ function ProgramCreatePage() {
                         </p>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="text-visibility">Visibility</Label>
-                          <Select 
-                            value={formData.visibility} 
-                            onValueChange={(value: 'public' | 'premium' | 'private') => 
-                              setFormData(prev => ({ ...prev, visibility: value }))
-                            }
-                          >
-                            <SelectTrigger className="mt-1">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="public">Public</SelectItem>
-                              <SelectItem value="premium">Premium</SelectItem>
-                              <SelectItem value="private">Private</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div>
-                          <Label htmlFor="text-duration">Duration (days)</Label>
-                          <Input
-                            id="text-duration"
-                            type="number"
-                            min="1"
-                            placeholder="7"
-                            value={formData.duration}
-                            onChange={(e) => setFormData(prev => ({ ...prev, duration: parseInt(e.target.value) || 1 }))}
-                            className="mt-1"
-                          />
-                        </div>
+                      <div>
+                        <Label htmlFor="text-visibility">Visibility</Label>
+                        <Select 
+                          value={formData.visibility} 
+                          onValueChange={(value: 'public' | 'premium' | 'private') => 
+                            setFormData(prev => ({ ...prev, visibility: value }))
+                          }
+                        >
+                          <SelectTrigger className="mt-1">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="public">Public</SelectItem>
+                            <SelectItem value="premium">Premium</SelectItem>
+                            <SelectItem value="private">Private</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
 
