@@ -34,8 +34,6 @@ interface CreateProgramForm {
   visibility: 'public' | 'premium' | 'private';
   price: number;
   priceType: 'spikes' | 'money';
-  category: string;
-  level: string;
   duration: number;
 }
 
@@ -51,8 +49,6 @@ function ProgramCreatePage() {
     visibility: "public",
     price: 0,
     priceType: "spikes",
-    category: "sprint",
-    level: "beginner",
     duration: 4
   });
 
@@ -160,8 +156,6 @@ function ProgramCreatePage() {
     formDataToSend.append("visibility", formData.visibility);
     formDataToSend.append("price", formData.price.toString());
     formDataToSend.append("priceType", formData.priceType);
-    formDataToSend.append("category", formData.category);
-    formDataToSend.append("level", formData.level);
 
     uploadProgramMutation.mutate(formDataToSend);
   };
@@ -299,45 +293,6 @@ function ProgramCreatePage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="category">Category</Label>
-                        <Select
-                          value={formData.category}
-                          onValueChange={(value) => updateFormData("category", value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="sprint">Sprint</SelectItem>
-                            <SelectItem value="middle_distance">Middle Distance</SelectItem>
-                            <SelectItem value="long_distance">Long Distance</SelectItem>
-                            <SelectItem value="jumping">Jumping</SelectItem>
-                            <SelectItem value="throwing">Throwing</SelectItem>
-                            <SelectItem value="combined">Combined Events</SelectItem>
-                            <SelectItem value="general">General</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="level">Level</Label>
-                        <Select
-                          value={formData.level}
-                          onValueChange={(value) => updateFormData("level", value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="beginner">Beginner</SelectItem>
-                            <SelectItem value="intermediate">Intermediate</SelectItem>
-                            <SelectItem value="advanced">Advanced</SelectItem>
-                            <SelectItem value="elite">Elite</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
                         <Label htmlFor="duration">Duration (weeks)</Label>
                         <Input
                           id="duration"
@@ -474,46 +429,7 @@ function ProgramCreatePage() {
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="upload-category">Category</Label>
-                        <Select
-                          value={formData.category}
-                          onValueChange={(value) => updateFormData("category", value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="sprint">Sprint</SelectItem>
-                            <SelectItem value="middle_distance">Middle Distance</SelectItem>
-                            <SelectItem value="long_distance">Long Distance</SelectItem>
-                            <SelectItem value="jumping">Jumping</SelectItem>
-                            <SelectItem value="throwing">Throwing</SelectItem>
-                            <SelectItem value="combined">Combined Events</SelectItem>
-                            <SelectItem value="general">General</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="upload-level">Level</Label>
-                        <Select
-                          value={formData.level}
-                          onValueChange={(value) => updateFormData("level", value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="beginner">Beginner</SelectItem>
-                            <SelectItem value="intermediate">Intermediate</SelectItem>
-                            <SelectItem value="advanced">Advanced</SelectItem>
-                            <SelectItem value="elite">Elite</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
+                    <div className="grid grid-cols-1 gap-4">
                       <div>
                         <Label htmlFor="upload-visibility">Visibility</Label>
                         <Select
