@@ -210,7 +210,7 @@ export default function FootRehabPage() {
             Back to Rehab
           </Button>
           <div className="h-6 w-px bg-gray-600" />
-          <Badge variant="secondary" className="bg-orange-500/20 text-orange-300">
+          <Badge variant="secondary" className="bg-primary/20 text-primary">
             Chronic Injury
           </Badge>
         </div>
@@ -290,7 +290,7 @@ export default function FootRehabPage() {
               key={index} 
               className={`bg-gray-800/30 border-2 transition-all duration-200 ${
                 index === currentPhase 
-                  ? 'border-orange-500/50 bg-orange-900/20' 
+                  ? 'border-primary/50 bg-primary/20' 
                   : 'border-gray-700 hover:border-gray-600'
               }`}
             >
@@ -300,7 +300,7 @@ export default function FootRehabPage() {
                     <CardTitle className="text-xl text-white flex items-center gap-3">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
                         index === currentPhase 
-                          ? 'bg-orange-500 text-white' 
+                          ? 'bg-primary text-primary-foreground' 
                           : 'bg-gray-600 text-gray-300'
                       }`}>
                         {index + 1}

@@ -436,7 +436,7 @@ export default function HamstringRehabPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleSkipAhead(index)}
-                        className="text-orange-400 border-orange-500/30 hover:bg-orange-900/20 text-xs"
+                        className="text-primary border-primary/30 hover:bg-primary/20 text-xs"
                       >
                         <SkipForward className="h-3 w-3 mr-1" />
                         Skip Ahead

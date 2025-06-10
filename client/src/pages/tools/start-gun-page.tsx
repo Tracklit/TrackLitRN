@@ -698,7 +698,7 @@ export default function StartGunPage() {
       case 'on-your-marks':
         return 'bg-yellow-500';
       case 'set':
-        return 'bg-orange-500';
+        return 'bg-primary';
       case 'gun':
         return 'bg-red-500';
       default:

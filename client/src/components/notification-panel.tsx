@@ -51,7 +51,7 @@ function getNotificationIcon(type: string) {
     case 'friend_accepted':
       return <Check className="h-4 w-4 text-green-500" />;
     case 'meet_invitation':
-      return <Trophy className="h-4 w-4 text-orange-500" />;
+      return <Trophy className="h-4 w-4 text-primary" />;
     case 'connection_request':
       return <UserPlus className="h-4 w-4 text-blue-500" />;
     default:

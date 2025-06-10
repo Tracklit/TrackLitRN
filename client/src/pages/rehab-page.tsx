@@ -38,8 +38,8 @@ const rehabCategories = [
     id: "chronic-injuries",
     title: "Chronic Injuries",
     description: "Long-term management for persistent and overuse injuries",
-    icon: <Zap className="h-8 w-8 text-orange-500" />,
-    color: "border-orange-200 hover:border-orange-300",
+    icon: <Zap className="h-8 w-8 text-primary" />,
+    color: "border-primary/30 hover:border-primary/50",
     subpages: [
       { id: "foot", name: "Foot" },
       { id: "hamstring", name: "Hamstring" },

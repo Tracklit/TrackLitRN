@@ -151,7 +151,7 @@ export default function AthleteProfile() {
                   {(user?.subscriptionTier || 'free').toUpperCase()}
                 </Badge>
                 {user?.isPremium && (
-                  <Badge className="bg-orange-500/20 text-orange-300 border-orange-500/30">
+                  <Badge className="bg-primary/20 text-primary border-primary/30">
                     PREMIUM
                   </Badge>
                 )}
@@ -208,7 +208,7 @@ export default function AthleteProfile() {
               {user?.isPrivate && (
                 <div className="bg-[#0f1419] p-3 rounded-lg border border-gray-700">
                   <div className="flex items-center gap-2 text-sm text-gray-300">
-                    <EyeOff className="w-4 h-4 text-orange-400" />
+                    <EyeOff className="w-4 h-4 text-primary" />
                     Your account is private. Only admins and users you request connections to can see your profile.
                   </div>
                 </div>
@@ -230,7 +230,7 @@ export default function AthleteProfile() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-[#0f1419] p-4 rounded-lg border border-gray-700">
                   <div className="flex items-center gap-2 mb-2">
-                    <Target className="w-4 h-4 text-orange-400" />
+                    <Target className="w-4 h-4 text-primary" />
                     <span className="text-sm font-medium text-gray-300">Your Athletes</span>
                   </div>
                   <div className="text-2xl font-bold text-white">{athletes.length}</div>
