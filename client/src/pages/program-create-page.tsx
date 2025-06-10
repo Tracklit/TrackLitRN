@@ -202,6 +202,24 @@ function ProgramCreatePage() {
         {!selectedMethod ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card 
+              className="cursor-pointer border-2 hover:border-primary/50 transition-all hover:shadow-md relative"
+              onClick={() => setSelectedMethod('upload')}
+            >
+              <div className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                Recommended
+              </div>
+              <CardHeader className="text-center pb-6">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+                  <FileUp className="h-8 w-8 text-primary" />
+                </div>
+                <CardTitle className="text-xl mb-2">Upload Document</CardTitle>
+                <CardDescription>
+                  Share existing training documents in PDF, DOC, or DOCX format
+                </CardDescription>
+              </CardHeader>
+            </Card>
+            
+            <Card 
               className="cursor-pointer border-2 hover:border-primary/50 transition-all hover:shadow-md"
               onClick={() => setSelectedMethod('builder')}
             >
@@ -212,21 +230,6 @@ function ProgramCreatePage() {
                 <CardTitle className="text-xl mb-2">Program Builder</CardTitle>
                 <CardDescription>
                   Create a structured training program with custom sessions and exercises
-                </CardDescription>
-              </CardHeader>
-            </Card>
-            
-            <Card 
-              className="cursor-pointer border-2 hover:border-primary/50 transition-all hover:shadow-md"
-              onClick={() => setSelectedMethod('upload')}
-            >
-              <CardHeader className="text-center pb-6">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-                  <FileUp className="h-8 w-8 text-primary" />
-                </div>
-                <CardTitle className="text-xl mb-2">Upload Document</CardTitle>
-                <CardDescription>
-                  Share existing training documents in PDF, DOC, or DOCX format
                 </CardDescription>
               </CardHeader>
             </Card>
