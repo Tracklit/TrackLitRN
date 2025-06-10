@@ -795,7 +795,7 @@ export default function PracticePage() {
                 {todaysMeets.map(meet => (
                   <div 
                     key={meet.id} 
-                    className="bg-gradient-to-r from-amber-600/20 to-orange-600/20 border border-amber-500/30 rounded-lg p-4 mb-3 cursor-pointer hover:from-amber-600/30 hover:to-orange-600/30 transition-all duration-200"
+                    className="bg-gradient-to-r from-amber-600/20 to-yellow-600/20 border border-amber-500/30 rounded-lg p-4 mb-3 cursor-pointer hover:from-amber-600/30 hover:to-yellow-600/30 transition-all duration-200"
                     onClick={() => navigate('/meets')}
                   >
                     <div className="flex items-center justify-between">

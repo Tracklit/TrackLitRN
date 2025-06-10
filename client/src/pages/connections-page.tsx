@@ -407,7 +407,7 @@ export default function ConnectionsPage() {
                         </Badge>
                       )}
                       {connection.subscriptionTier === 'pro' && (
-                        <Badge className="text-xs px-1.5 py-0.5 bg-orange-500">
+                        <Badge className="text-xs px-1.5 py-0.5 bg-primary">
                           PRO
                         </Badge>
                       )}

@@ -512,7 +512,7 @@ export default function ProfilePage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="bg-[#0f1419] p-4 rounded-lg border border-gray-700">
                         <div className="flex items-center gap-2 mb-2">
-                          <Target className="w-4 h-4 text-orange-400" />
+                          <Target className="w-4 h-4 text-primary" />
                           <span className="text-sm font-medium text-gray-300">Your Athletes</span>
                         </div>
                         <div className="text-2xl font-bold text-white">{athletes.length}</div>

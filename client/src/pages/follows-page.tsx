@@ -97,7 +97,7 @@ function NotificationPanel({ isOpen, onClose, requests, onAccept, onDecline }: N
                   <Button
                     size="sm"
                     onClick={() => onAccept(request.id)}
-                    className="bg-orange-500 hover:bg-orange-600"
+                    className="bg-primary hover:bg-primary/80"
                   >
                     <Check className="h-3 w-3" />
                   </Button>
@@ -208,7 +208,7 @@ export default function ConnectionsPage() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center space-x-2">
               <Link href={`/user/${followUser.id}`}>
-                <span className="text-sm font-medium text-gray-900 hover:text-orange-600 cursor-pointer truncate">
+                <span className="text-sm font-medium text-gray-900 hover:text-primary cursor-pointer truncate">
                   {followUser.name}
                 </span>
               </Link>

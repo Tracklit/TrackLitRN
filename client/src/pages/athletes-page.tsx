@@ -347,7 +347,7 @@ export default function AthletesPage() {
                         {athlete.name || athlete.username}
                       </Link>
                       {isCoach(athlete) && (
-                        <span className="px-2 py-1 text-xs font-bold bg-[#ff8c00] text-black rounded-full">
+                        <span className="px-2 py-1 text-xs font-bold bg-primary text-primary-foreground rounded-full">
                           COACH
                         </span>
                       )}

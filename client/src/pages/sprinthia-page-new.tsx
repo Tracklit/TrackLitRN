@@ -122,7 +122,7 @@ export default function SprinthiaPage() {
                     <h3 className="font-semibold mb-2">Your Current Plan</h3>
                     <div className="flex items-center gap-2">
                       {user?.subscriptionTier === 'free' && <Badge variant="secondary">Free</Badge>}
-                      {user?.subscriptionTier === 'pro' && <Badge className="bg-orange-500"><Crown className="h-3 w-3 mr-1" />Pro</Badge>}
+                      {user?.subscriptionTier === 'pro' && <Badge className="bg-primary"><Crown className="h-3 w-3 mr-1" />Pro</Badge>}
                       {user?.subscriptionTier === 'star' && <Badge className="bg-purple-500"><Star className="h-3 w-3 mr-1" />Star</Badge>}
                     </div>
                   </div>
