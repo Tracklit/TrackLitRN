@@ -703,14 +703,16 @@ function ProgramEditorPage() {
   
   // Initialize text content when program data loads
   useEffect(() => {
-    console.log("Content prop changed:", program.textContent);
-    if (program.textContent !== undefined && program.textContent !== null) {
-      setTextContent(program.textContent);
-    } else if (program.isTextBased && program.textContent === null) {
-      // For text-based programs with null content, start with empty string
-      setTextContent('');
+    if (program && program.isTextBased) {
+      console.log("Content prop changed:", program.textContent);
+      if (program.textContent !== undefined && program.textContent !== null) {
+        setTextContent(program.textContent);
+      } else {
+        // For text-based programs with null content, start with empty string
+        setTextContent('');
+      }
     }
-  }, [program.textContent, program.isTextBased]);
+  }, [program?.textContent, program?.isTextBased]);
   
   // Text-based program save handler
   const handleSaveTextContent = async () => {
@@ -971,7 +973,7 @@ function ProgramEditorPage() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate("/programs")}
+              onClick={() => navigate("/")}
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
