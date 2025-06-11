@@ -237,10 +237,19 @@ function ProgramEditorPage() {
     },
   });
 
-  // Fetch program data
+  // Fetch program data with cache busting for program 22
   const { data: program = {}, isLoading: programLoading } = useQuery<any>({
     queryKey: ['/api/programs', programId],
+    queryFn: async () => {
+      const response = await fetch(`/api/programs/${programId}?t=${Date.now()}`);
+      if (!response.ok) throw new Error('Failed to fetch program');
+      const data = await response.json();
+      console.log("Raw program data:", data);
+      return data;
+    },
     enabled: !isNaN(programId),
+    staleTime: 0, // Always fetch fresh data
+    cacheTime: 0, // Don't cache
   });
 
   // Fetch program sessions with direct access to the API and simpler data handling
@@ -693,10 +702,14 @@ function ProgramEditorPage() {
   
   // Initialize text content when program data loads
   useEffect(() => {
-    if (program.textContent !== undefined) {
-      setTextContent(program.textContent || '');
+    console.log("Content prop changed:", program.textContent);
+    if (program.textContent !== undefined && program.textContent !== null) {
+      setTextContent(program.textContent);
+    } else if (program.isTextBased && program.textContent === null) {
+      // For text-based programs with null content, start with empty string
+      setTextContent('');
     }
-  }, [program.textContent]);
+  }, [program.textContent, program.isTextBased]);
   
   // Text-based program save handler
   const handleSaveTextContent = async () => {
