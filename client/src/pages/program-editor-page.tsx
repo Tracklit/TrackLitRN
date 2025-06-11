@@ -201,6 +201,7 @@ function EditableCell({
 function ProgramEditorPage() {
   const params = useParams<{ id: string }>();
   const programId = parseInt(params.id);
+  console.log("Program Editor - URL params:", params, "Parsed ID:", programId);
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
@@ -249,7 +250,7 @@ function ProgramEditorPage() {
     },
     enabled: !isNaN(programId),
     staleTime: 0, // Always fetch fresh data
-    cacheTime: 0, // Don't cache
+    gcTime: 0, // Don't cache (v5 uses gcTime instead of cacheTime)
   });
 
   // Fetch program sessions with direct access to the API and simpler data handling

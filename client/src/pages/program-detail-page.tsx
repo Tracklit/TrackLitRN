@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
-import { Link, useParams } from "wouter";
+import { Link, useParams, useLocation } from "wouter";
 import { 
   ArrowLeft, 
   Calendar, 
@@ -441,6 +441,7 @@ function ProgramDetail() {
   const { id } = useParams();
   const { toast } = useToast();
   const { user } = useAuth();
+  const [, navigate] = useLocation();
   
   // Fetch program details
   const { data: program, isLoading, error } = useQuery({
@@ -453,6 +454,13 @@ function ProgramDetail() {
       return response.json();
     }
   });
+
+  // Redirect text-based programs to editor automatically
+  useEffect(() => {
+    if (program && program.isTextBased) {
+      navigate(`/programs/${id}/edit`);
+    }
+  }, [program, id, navigate]);
   
   if (isLoading) {
     return (
