@@ -3758,6 +3758,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (programId === 22) {
         console.log(`Program ${programId} debug - isTextBased:`, program.isTextBased);
         console.log(`Program ${programId} debug - textContent:`, program.textContent);
+        
+        // Force cache busting for program 22
+        res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.set('Pragma', 'no-cache');
+        res.set('Expires', '0');
       }
       
       // Check if user has access to this program
