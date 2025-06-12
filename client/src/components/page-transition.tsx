@@ -106,14 +106,16 @@ export function PageTransition({ children }: PageTransitionProps) {
     }
   }, [location]);
 
-  // iOS-style animation variants with more noticeable effects
+  // iOS-style animation variants with correct back navigation
   const pageVariants = {
     initial: (direction: string) => {
       console.log(`Initial animation for direction: ${direction}`);
       if (direction === 'forward') {
+        // New page slides in from right
         return { x: '100%', scale: 0.95, opacity: 0.9 };
       } else if (direction === 'back') {
-        return { x: '-30%', scale: 0.9, opacity: 0.7 };
+        // Previous page was underneath, appears at normal position
+        return { x: 0, scale: 1, opacity: 1 };
       }
       return { x: 0, scale: 1, opacity: 1 };
     },
@@ -125,9 +127,11 @@ export function PageTransition({ children }: PageTransitionProps) {
     out: (direction: string) => {
       console.log(`Exit animation for direction: ${direction}`);
       if (direction === 'forward') {
+        // Current page slides behind new page (to the left)
         return { x: '-30%', scale: 0.9, opacity: 0.5 };
       } else if (direction === 'back') {
-        return { x: '100%', scale: 0.95, opacity: 0 };
+        // Current page slides out to the right (reverse of forward entry)
+        return { x: '100%', scale: 1, opacity: 0 };
       }
       return { x: 0, scale: 1, opacity: 1 };
     },
