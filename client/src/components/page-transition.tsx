@@ -106,34 +106,55 @@ export function PageTransition({ children }: PageTransitionProps) {
     }
   }, [location]);
 
-  // iOS-style animation variants with correct back navigation
+  // Enhanced iOS-style animation variants with visible transitions
   const pageVariants = {
     initial: (direction: string) => {
       console.log(`Initial animation for direction: ${direction}`);
       if (direction === 'forward') {
-        // New page slides in from right
-        return { x: '100%', scale: 0.95, opacity: 0.9 };
+        // New page slides in from right with slight scale and shadow
+        return { 
+          x: '100%', 
+          scale: 0.95, 
+          opacity: 0.9,
+          boxShadow: '-20px 0 50px rgba(0,0,0,0.3)'
+        };
       } else if (direction === 'back') {
-        // Previous page was underneath, appears at normal position
-        return { x: 0, scale: 1, opacity: 1 };
+        // Previous page starts slightly to the left (was pushed back)
+        return { 
+          x: '-20%', 
+          scale: 0.95, 
+          opacity: 0.8,
+          boxShadow: 'none'
+        };
       }
-      return { x: 0, scale: 1, opacity: 1 };
+      return { x: 0, scale: 1, opacity: 1, boxShadow: 'none' };
     },
     in: {
       x: 0,
       scale: 1,
       opacity: 1,
+      boxShadow: 'none'
     },
     out: (direction: string) => {
       console.log(`Exit animation for direction: ${direction}`);
       if (direction === 'forward') {
-        // Current page slides behind new page (to the left)
-        return { x: '-30%', scale: 0.9, opacity: 0.5 };
+        // Current page slides behind new page and scales down
+        return { 
+          x: '-20%', 
+          scale: 0.95, 
+          opacity: 0.8,
+          boxShadow: 'none'
+        };
       } else if (direction === 'back') {
-        // Current page slides out to the right (reverse of forward entry)
-        return { x: '100%', scale: 1, opacity: 0 };
+        // Current page slides completely out to the right
+        return { 
+          x: '100%', 
+          scale: 0.95, 
+          opacity: 0,
+          boxShadow: '20px 0 50px rgba(0,0,0,0.3)'
+        };
       }
-      return { x: 0, scale: 1, opacity: 1 };
+      return { x: 0, scale: 1, opacity: 1, boxShadow: 'none' };
     },
   };
 
@@ -147,7 +168,7 @@ export function PageTransition({ children }: PageTransitionProps) {
   return (
     <div className="relative w-full h-full overflow-hidden">
       <AnimatePresence
-        mode="wait"
+        mode="popLayout"
         custom={direction}
         onExitComplete={() => {
           console.log('Animation exit complete');
@@ -161,7 +182,8 @@ export function PageTransition({ children }: PageTransitionProps) {
           animate="in"
           exit="out"
           transition={pageTransition}
-          className="w-full h-full bg-background"
+          className="absolute inset-0 w-full h-full bg-background"
+          style={{ zIndex: direction === 'forward' ? 10 : 5 }}
           onAnimationStart={(definition) => {
             console.log('Animation started:', definition);
           }}
