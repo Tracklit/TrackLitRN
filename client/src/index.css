@@ -535,6 +535,24 @@ article::-webkit-scrollbar,
   background-color: hsl(var(--background)) !important;
 }
 
+/* iOS-style navigation transitions */
+.page-transition-container {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+/* Smooth hardware acceleration for transitions */
+.motion-page {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* Prevent content shift during animations */
+.motion-safe {
+  transform: translateZ(0);
+}
+
 
 
 
