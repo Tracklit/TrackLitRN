@@ -79,6 +79,7 @@ interface PageTransitionProps {
 export function PageTransition({ children }: PageTransitionProps) {
   const [location] = useLocation();
   const [direction, setDirection] = useState<'forward' | 'back' | 'none'>('none');
+  const [isNavigating, setIsNavigating] = useState(false);
   
   const previousLocation = useRef<string>(location);
   const previousLevel = useRef<number>(getPageLevel(location));
@@ -86,62 +87,83 @@ export function PageTransition({ children }: PageTransitionProps) {
   useEffect(() => {
     if (previousLocation.current !== location) {
       const currentLevel = getPageLevel(location);
-      const navDirection = getNavigationDirection(previousLevel.current, currentLevel);
+      const prevLevel = previousLevel.current;
+      const navDirection = getNavigationDirection(prevLevel, currentLevel);
+      
+      console.log(`Navigation: ${previousLocation.current} (level ${prevLevel}) → ${location} (level ${currentLevel}) = ${navDirection}`);
       
       setDirection(navDirection);
+      setIsNavigating(true);
+      
+      // Reset navigation state after animation
+      setTimeout(() => {
+        setIsNavigating(false);
+        setDirection('none');
+      }, 400);
       
       previousLocation.current = location;
       previousLevel.current = currentLevel;
     }
   }, [location]);
 
-  // Simplified iOS-style animation variants
+  // iOS-style animation variants with more noticeable effects
   const pageVariants = {
     initial: (direction: string) => {
+      console.log(`Initial animation for direction: ${direction}`);
       if (direction === 'forward') {
-        return { x: '100%', opacity: 0.8 };
+        return { x: '100%', scale: 0.95, opacity: 0.9 };
       } else if (direction === 'back') {
-        return { x: '-20%', opacity: 0.8 };
+        return { x: '-30%', scale: 0.9, opacity: 0.7 };
       }
-      return { x: 0, opacity: 1 };
+      return { x: 0, scale: 1, opacity: 1 };
     },
     in: {
       x: 0,
+      scale: 1,
       opacity: 1,
     },
     out: (direction: string) => {
+      console.log(`Exit animation for direction: ${direction}`);
       if (direction === 'forward') {
-        return { x: '-20%', opacity: 0.6 };
+        return { x: '-30%', scale: 0.9, opacity: 0.5 };
       } else if (direction === 'back') {
-        return { x: '100%', opacity: 0 };
+        return { x: '100%', scale: 0.95, opacity: 0 };
       }
-      return { x: 0, opacity: 1 };
+      return { x: 0, scale: 1, opacity: 1 };
     },
   };
 
-  // Transition configuration
+  // Transition configuration with longer duration for visibility
   const pageTransition = {
     type: "tween",
     ease: [0.25, 0.46, 0.45, 0.94], // iOS-like easing
-    duration: 0.35,
+    duration: 0.5, // Increased duration to make transition more visible
   };
 
   return (
     <div className="relative w-full h-full overflow-hidden">
       <AnimatePresence
-        mode="wait"
+        mode={direction !== 'none' ? 'popLayout' : 'wait'}
         custom={direction}
-        onExitComplete={() => setDirection('none')}
+        onExitComplete={() => {
+          console.log('Animation exit complete');
+        }}
       >
         <motion.div
           key={location}
           custom={direction}
           variants={pageVariants}
-          initial="initial"
+          initial={direction !== 'none' ? 'initial' : false}
           animate="in"
-          exit="out"
+          exit={direction !== 'none' ? 'out' : false}
           transition={pageTransition}
           className="w-full h-full bg-background"
+          onAnimationStart={(definition) => {
+            console.log('Animation started:', definition);
+          }}
+          onAnimationComplete={(definition) => {
+            console.log('Animation completed:', definition);
+          }}
         >
           {children}
         </motion.div>
