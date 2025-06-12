@@ -232,8 +232,11 @@ function PracticePage() {
   useEffect(() => {
     if (assignedPrograms && assignedPrograms.length > 0 && !selectedProgram) {
       setSelectedProgram(assignedPrograms[0]);
+    } else if (assignedPrograms && assignedPrograms.length === 0) {
+      // Clear selected program if no programs are assigned
+      setSelectedProgram(null);
     }
-  }, [assignedPrograms]);
+  }, [assignedPrograms, selectedProgram]);
 
   useEffect(() => {
     if (programSessions && programSessions.length > 0) {
@@ -353,7 +356,7 @@ function PracticePage() {
           {/* Daily Session Content */}
           <div className={`space-y-4 transition-opacity duration-200 ${fadeTransition ? 'opacity-100' : 'opacity-0'}`}>
             <div className="bg-muted/40 p-3 rounded-md">
-              {selectedProgram ? (
+              {selectedProgram && assignedPrograms && assignedPrograms.length > 0 ? (
                 <div className="space-y-4">
                   {/* Text-based program display */}
                   {selectedProgram.program?.isTextBased ? (
@@ -569,8 +572,12 @@ function PracticePage() {
                   <div className="p-6 bg-background/50 rounded border border-border/50 text-center">
                     <div className="flex flex-col items-center gap-3 py-4">
                       <CalendarRange className="h-10 w-10 text-muted-foreground opacity-70" />
-                      <p className="text-sm text-muted-foreground">No program selected</p>
-                      <p className="text-xs text-muted-foreground mt-1">Select a program from below to start training</p>
+                      <p className="text-sm text-muted-foreground">No program assigned, tap to assign one</p>
+                      <Button asChild variant="outline" size="sm" className="mt-2">
+                        <Link href="/programs">
+                          Browse Programs
+                        </Link>
+                      </Button>
                     </div>
                   </div>
                 </div>
