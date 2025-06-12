@@ -95,58 +95,27 @@ export function PageTransition({ children }: PageTransitionProps) {
     }
   }, [location]);
 
-  // Animation variants for iOS/Facebook-style transitions
+  // Simplified iOS-style animation variants
   const pageVariants = {
     initial: (direction: string) => {
       if (direction === 'forward') {
-        // New page sliding in from right
-        return {
-          x: '100%',
-          scale: 0.95,
-          opacity: 0.9,
-          zIndex: 20,
-          rotateY: -5, // Slight 3D effect
-        };
+        return { x: '100%', opacity: 0.8 };
       } else if (direction === 'back') {
-        // Previous page was underneath, needs to slide back into view
-        return {
-          x: '-30%',
-          scale: 0.9,
-          opacity: 0.8,
-          zIndex: 5,
-          rotateY: 5,
-        };
+        return { x: '-20%', opacity: 0.8 };
       }
-      return { x: 0, scale: 1, opacity: 1, zIndex: 10, rotateY: 0 };
+      return { x: 0, opacity: 1 };
     },
     in: {
       x: 0,
-      scale: 1,
       opacity: 1,
-      zIndex: 10,
-      rotateY: 0,
     },
     out: (direction: string) => {
       if (direction === 'forward') {
-        // Current page sliding behind new page
-        return {
-          x: '-30%',
-          scale: 0.9,
-          opacity: 0.7,
-          zIndex: 5,
-          rotateY: 5,
-        };
+        return { x: '-20%', opacity: 0.6 };
       } else if (direction === 'back') {
-        // Current page sliding out to the right
-        return {
-          x: '100%',
-          scale: 0.95,
-          opacity: 0,
-          zIndex: 15,
-          rotateY: -5,
-        };
+        return { x: '100%', opacity: 0 };
       }
-      return { x: 0, scale: 1, opacity: 1, zIndex: 10, rotateY: 0 };
+      return { x: 0, opacity: 1 };
     },
   };
 
@@ -158,9 +127,9 @@ export function PageTransition({ children }: PageTransitionProps) {
   };
 
   return (
-    <div className="relative w-full h-full overflow-hidden page-transition-container">
+    <div className="relative w-full h-full overflow-hidden">
       <AnimatePresence
-        mode="popLayout"
+        mode="wait"
         custom={direction}
         onExitComplete={() => setDirection('none')}
       >
@@ -172,16 +141,9 @@ export function PageTransition({ children }: PageTransitionProps) {
           animate="in"
           exit="out"
           transition={pageTransition}
-          className="absolute inset-0 w-full h-full bg-background motion-page"
-          style={{
-            backfaceVisibility: 'hidden',
-            transformStyle: 'preserve-3d',
-            boxShadow: direction === 'forward' ? '0 0 50px rgba(0,0,0,0.3)' : 'none',
-          }}
+          className="w-full h-full bg-background"
         >
-          <div className="w-full h-full motion-safe">
-            {children}
-          </div>
+          {children}
         </motion.div>
       </AnimatePresence>
     </div>
