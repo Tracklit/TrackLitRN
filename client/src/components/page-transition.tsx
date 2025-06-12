@@ -33,6 +33,7 @@ const PAGE_HIERARCHY: Record<string, number> = {
   "/tools/exercise-library": 2,
   "/tools/rehabilitation": 2,
   "/tools/sprinthia": 2,
+  "/tools/video-analysis": 2,
   
   // Level 3 - Sub-pages
   "/tools/exercise-library/add": 3,
@@ -77,9 +78,14 @@ interface PageTransitionProps {
 
 export function PageTransition({ children }: PageTransitionProps) {
   const [location] = useLocation();
-  const [isNewPage, setIsNewPage] = useState(false);
+  const [currentContent, setCurrentContent] = useState(children);
+  const [previousContent, setPreviousContent] = useState<React.ReactNode>(null);
+  const [animationState, setAnimationState] = useState<'idle' | 'exiting' | 'entering'>('idle');
+  const [transitionDirection, setTransitionDirection] = useState<'left' | 'right' | 'none'>('none');
+  
   const previousLocation = useRef<string>(location);
   const previousLevel = useRef<number>(getPageLevel(location));
+  const animationTimeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     if (previousLocation.current !== location) {
@@ -87,35 +93,89 @@ export function PageTransition({ children }: PageTransitionProps) {
       const direction = getAnimationDirection(previousLevel.current, currentLevel);
       
       if (direction !== 'none') {
-        setIsNewPage(true);
+        // Clear any existing timeout
+        if (animationTimeoutRef.current) {
+          clearTimeout(animationTimeoutRef.current);
+        }
         
-        // Reset animation state after animation completes
-        const timer = setTimeout(() => {
-          setIsNewPage(false);
-        }, 400);
+        // Store the previous content for exit animation
+        setPreviousContent(currentContent);
+        setTransitionDirection(direction);
         
-        return () => clearTimeout(timer);
+        // Start exit animation
+        setAnimationState('exiting');
+        
+        // After exit animation, start enter animation with new content
+        animationTimeoutRef.current = setTimeout(() => {
+          setCurrentContent(children);
+          setPreviousContent(null);
+          setAnimationState('entering');
+          
+          // Complete the animation cycle
+          animationTimeoutRef.current = setTimeout(() => {
+            setAnimationState('idle');
+            setTransitionDirection('none');
+          }, 300);
+        }, 150); // Half the animation duration for exit
+        
+      } else {
+        // No animation needed, update content immediately
+        setCurrentContent(children);
+        setAnimationState('idle');
       }
       
       previousLocation.current = location;
       previousLevel.current = currentLevel;
+    } else if (animationState === 'idle') {
+      // Same location and not animating, update content
+      setCurrentContent(children);
     }
-  }, [location]);
 
-  const currentLevel = getPageLevel(location);
-  const direction = getAnimationDirection(previousLevel.current, currentLevel);
+    return () => {
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
+      }
+    };
+  }, [location, children, currentContent, animationState]);
+
+  const getExitClasses = () => {
+    if (animationState !== 'exiting') return 'hidden';
+    
+    if (transitionDirection === 'right') {
+      return 'absolute inset-0 animate-out slide-out-to-left-full duration-150 ease-in';
+    } else if (transitionDirection === 'left') {
+      return 'absolute inset-0 animate-out slide-out-to-right-full duration-150 ease-in';
+    }
+    
+    return '';
+  };
+
+  const getEnterClasses = () => {
+    if (animationState === 'exiting') return 'hidden';
+    if (animationState === 'idle') return '';
+    
+    if (transitionDirection === 'right') {
+      return 'animate-in slide-in-from-right-full duration-300 ease-out';
+    } else if (transitionDirection === 'left') {
+      return 'animate-in slide-in-from-left-full duration-300 ease-out';
+    }
+    
+    return '';
+  };
   
   return (
-    <div 
-      className={`${
-        isNewPage && direction === 'right' 
-          ? 'animate-in slide-in-from-right-1 duration-300' 
-          : isNewPage && direction === 'left'
-          ? 'animate-in slide-in-from-left-1 duration-300'
-          : ''
-      }`}
-    >
-      {children}
+    <div className="relative w-full h-full">
+      {/* Previous content - exits first */}
+      {previousContent && animationState === 'exiting' && (
+        <div className={getExitClasses()}>
+          {previousContent}
+        </div>
+      )}
+      
+      {/* Current content - enters after exit */}
+      <div className={getEnterClasses()}>
+        {currentContent}
+      </div>
     </div>
   );
 }

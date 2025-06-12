@@ -537,25 +537,36 @@ article::-webkit-scrollbar,
 
 /* Page transition animations */
 @keyframes slideOutLeft {
-  from { transform: translateX(0); }
-  to { transform: translateX(-100%); }
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(-100%); opacity: 0; }
 }
 
 @keyframes slideOutRight {
-  from { transform: translateX(0); }
-  to { transform: translateX(100%); }
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(100%); opacity: 0; }
 }
 
 @keyframes slideInRight {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
 
 @keyframes slideInLeft {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(0); }
+  from { transform: translateX(-100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Enhanced page transition container */
 .page-transition-container {
   position: relative;
   width: 100%;
@@ -579,8 +590,33 @@ article::-webkit-scrollbar,
   animation: slideOutRight 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
+.page-fade-in {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+.page-fade-out {
+  animation: fadeOut 0.2s ease-out forwards;
+}
+
 .page-transition-container.animating {
   overflow: hidden;
+}
+
+/* Smooth transitions for better UX */
+.slide-in-from-right-full {
+  animation: slideInRight 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.slide-in-from-left-full {
+  animation: slideInLeft 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.slide-out-to-left-full {
+  animation: slideOutLeft 0.15s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards;
+}
+
+.slide-out-to-right-full {
+  animation: slideOutRight 0.15s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards;
 }
 
 
