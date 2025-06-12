@@ -147,7 +147,7 @@ export function PageTransition({ children }: PageTransitionProps) {
   return (
     <div className="relative w-full h-full overflow-hidden">
       <AnimatePresence
-        mode={direction !== 'none' ? 'popLayout' : 'wait'}
+        mode="wait"
         custom={direction}
         onExitComplete={() => {
           console.log('Animation exit complete');
@@ -157,9 +157,9 @@ export function PageTransition({ children }: PageTransitionProps) {
           key={location}
           custom={direction}
           variants={pageVariants}
-          initial={direction !== 'none' ? 'initial' : false}
+          initial="initial"
           animate="in"
-          exit={direction !== 'none' ? 'out' : false}
+          exit="out"
           transition={pageTransition}
           className="w-full h-full bg-background"
           onAnimationStart={(definition) => {
