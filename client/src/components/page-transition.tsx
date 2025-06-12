@@ -168,7 +168,7 @@ export function PageTransition({ children }: PageTransitionProps) {
   return (
     <div className="relative w-full h-full overflow-hidden">
       <AnimatePresence
-        mode="popLayout"
+        mode="wait"
         custom={direction}
         onExitComplete={() => {
           console.log('Animation exit complete');
@@ -182,8 +182,7 @@ export function PageTransition({ children }: PageTransitionProps) {
           animate="in"
           exit="out"
           transition={pageTransition}
-          className="absolute inset-0 w-full h-full bg-background"
-          style={{ zIndex: direction === 'forward' ? 10 : 5 }}
+          className="w-full h-full bg-background"
           onAnimationStart={(definition) => {
             console.log('Animation started:', definition);
           }}
