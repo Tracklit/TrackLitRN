@@ -2,7 +2,7 @@ import { useSwipeNavigation } from '@/hooks/use-swipe-navigation';
 
 interface SwipeContainerProps {
   children: React.ReactNode;
-  navItems: Array<{ href: string; title: string }>;
+  navItems: Array<{ href: string; title: string; component?: React.ReactNode }>;
   currentIndex: number;
   className?: string;
 }
@@ -16,13 +16,13 @@ export function SwipeContainer({ children, navItems, currentIndex, className = "
     nextPageDirection
   } = useSwipeNavigation(navItems, currentIndex);
 
-  const getNextPageTitle = () => {
+  const getNextPageComponent = () => {
     if (nextPageDirection === 'left' && currentIndex < navItems.length - 1) {
-      return navItems[currentIndex + 1].title;
+      return navItems[currentIndex + 1].component || null;
     } else if (nextPageDirection === 'right' && currentIndex > 0) {
-      return navItems[currentIndex - 1].title;
+      return navItems[currentIndex - 1].component || null;
     }
-    return '';
+    return null;
   };
 
   return (
@@ -42,23 +42,18 @@ export function SwipeContainer({ children, navItems, currentIndex, className = "
         {children}
       </div>
 
-      {/* Next page preview */}
+      {/* Next page preview - actual page content */}
       {nextPageDirection && swipeProgress > 0 && (
         <div
-          className="absolute top-0 w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center"
+          className="absolute top-0 w-full h-full bg-background"
           style={{
             left: nextPageDirection === 'left' ? '100%' : '-100%',
             transform: `translateX(${nextPageDirection === 'left' ? -swipeProgress * 100 : swipeProgress * 100}%)`,
             transition: isTransitioning ? 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none'
           }}
         >
-          <div className="text-center">
-            <div className="text-2xl font-bold text-gray-600 dark:text-gray-300 mb-2">
-              {getNextPageTitle()}
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              {nextPageDirection === 'left' ? 'Continue swiping left' : 'Continue swiping right'}
-            </div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+            {getNextPageComponent()}
           </div>
         </div>
       )}

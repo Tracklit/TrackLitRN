@@ -160,12 +160,12 @@ function MainApp() {
   const [location] = useLocation();
 
   const navItems = [
-    { href: "/", title: "Dashboard" },
-    { href: "/practice", title: "Practice" },
-    { href: "/programs", title: "Programs" },
-    { href: "/meets", title: "Race" },
-    { href: "/training-tools", title: "Tools" },
-    { href: "/sprinthia", title: "Sprinthia" }
+    { href: "/", title: "Dashboard", component: <HomePage /> },
+    { href: "/practice", title: "Practice", component: <PracticePage /> },
+    { href: "/programs", title: "Programs", component: <ProgramsPage /> },
+    { href: "/meets", title: "Race", component: <MeetsPage /> },
+    { href: "/training-tools", title: "Tools", component: <WorkoutToolsPage /> },
+    { href: "/sprinthia", title: "Sprinthia", component: <SprinthiaPage /> }
   ];
 
   // Calculate current index based on location

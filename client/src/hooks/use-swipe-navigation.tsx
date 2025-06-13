@@ -10,7 +10,7 @@ interface SwipeNavigationHook {
 }
 
 export function useSwipeNavigation(
-  navItems: Array<{ href: string; title: string }>,
+  navItems: Array<{ href: string; title: string; component?: React.ReactNode }>,
   currentIndex: number
 ): SwipeNavigationHook {
   const [, setLocation] = useLocation();
