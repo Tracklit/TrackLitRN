@@ -392,15 +392,7 @@ article::-webkit-scrollbar,
   body {
     @apply font-sans antialiased text-foreground;
     min-height: 100vh;
-    /* High saturation gradient with vibrant blues and purples */
-    background: linear-gradient(135deg, 
-      #243447 0%, 
-      #1e4a8c 15%, 
-      #2563eb 30%, 
-      #1e4a8c 45%, 
-      #4c1d95 65%, 
-      #6b21a8 80%, 
-      #3b1470 100%) !important;
+    background: linear-gradient(135deg, #080e1a 0%, #1a2e6b 20%, #1e3a8a 40%, #1a2e6b 60%, #1a2e6b 80%, #080e1a 100%) !important;
     background-size: 400% 400% !important;
     animation: gradientShift 15s ease infinite !important;
     background-attachment: fixed !important;
