@@ -2,90 +2,152 @@ import { Link, useLocation } from "wouter";
 import { 
   Home, 
   Calendar, 
-  LineChart, 
-  User, 
-  Plus, 
-  Award, 
-  Dumbbell, 
-  Users,
-  Trophy
+  BookOpen, 
+  Trophy, 
+  Clock, 
+  MessageCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
-import { CreateMeetModal } from "@/components/create-meet-modal";
+import { useState, useEffect } from "react";
+
+// Navigation items based on dashboard card order
+const navItems = [
+  { 
+    title: "Dashboard", 
+    href: "/", 
+    icon: <Home className="h-5 w-5" />,
+    key: "dashboard"
+  },
+  { 
+    title: "Practice", 
+    href: "/practice", 
+    icon: <Calendar className="h-5 w-5" />,
+    key: "practice"
+  },
+  { 
+    title: "Programs", 
+    href: "/programs", 
+    icon: <BookOpen className="h-5 w-5" />,
+    key: "programs"
+  },
+  { 
+    title: "Race", 
+    href: "/meets", 
+    icon: <Trophy className="h-5 w-5" />,
+    key: "race"
+  },
+  { 
+    title: "Tools", 
+    href: "/training-tools", 
+    icon: <Clock className="h-5 w-5" />,
+    key: "tools"
+  },
+  { 
+    title: "Sprinthia", 
+    href: "/sprinthia", 
+    icon: <MessageCircle className="h-5 w-5" />,
+    key: "sprinthia"
+  }
+];
 
 interface NavItemProps {
   href: string;
   icon: React.ReactNode;
-  children: React.ReactNode;
+  title: string;
   isActive: boolean;
+  onClick?: () => void;
 }
 
-function NavItem({ href, icon, children, isActive }: NavItemProps) {
+function NavItem({ href, icon, title, isActive, onClick }: NavItemProps) {
   return (
-    <Link href={href} className="flex flex-col items-center justify-center">
-      <div className={cn("text-xl", isActive ? "text-primary" : "text-darkGray")}>
-        {icon}
+    <Link href={href}>
+      <div 
+        className="flex flex-col items-center justify-center h-full px-2 cursor-pointer transition-colors"
+        onClick={onClick}
+      >
+        <div className={cn(
+          "transition-colors duration-200",
+          isActive ? "text-primary" : "text-gray-500"
+        )}>
+          {icon}
+        </div>
+        <span className={cn(
+          "text-xs mt-1 transition-colors duration-200 font-medium",
+          isActive ? "text-primary" : "text-gray-500"
+        )}>
+          {title}
+        </span>
       </div>
-      <span className={cn("text-xs mt-1", isActive ? "text-primary font-medium" : "text-darkGray")}>
-        {children}
-      </span>
     </Link>
   );
 }
 
 export function BottomNavigation() {
-  const [location] = useLocation();
-  const [isCreateMeetOpen, setIsCreateMeetOpen] = useState(false);
+  const [location, setLocation] = useLocation();
+  const [startX, setStartX] = useState<number | null>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Update current index based on location
+  useEffect(() => {
+    const index = navItems.findIndex(item => {
+      if (item.href === "/") {
+        return location === "/";
+      }
+      return location.startsWith(item.href);
+    });
+    setCurrentIndex(index >= 0 ? index : 0);
+  }, [location]);
+
+  const handleTouchStart = (e: TouchEvent) => {
+    setStartX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e: TouchEvent) => {
+    if (startX === null) return;
+    
+    const endX = e.changedTouches[0].clientX;
+    const diff = startX - endX;
+    const threshold = 50; // Minimum swipe distance
+    
+    if (Math.abs(diff) > threshold) {
+      if (diff > 0 && currentIndex < navItems.length - 1) {
+        // Swipe left - go to next page
+        setLocation(navItems[currentIndex + 1].href);
+      } else if (diff < 0 && currentIndex > 0) {
+        // Swipe right - go to previous page
+        setLocation(navItems[currentIndex - 1].href);
+      }
+    }
+    
+    setStartX(null);
+  };
+
+  useEffect(() => {
+    const handleTouchStartEvent = (e: TouchEvent) => handleTouchStart(e);
+    const handleTouchEndEvent = (e: TouchEvent) => handleTouchEnd(e);
+
+    document.addEventListener('touchstart', handleTouchStartEvent);
+    document.addEventListener('touchend', handleTouchEndEvent);
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStartEvent);
+      document.removeEventListener('touchend', handleTouchEndEvent);
+    };
+  }, [startX, currentIndex]);
 
   return (
-    <>
-      <nav className="fixed bottom-0 left-0 right-0 bg-white shadow-md border-t border-lightGray h-16 md:hidden z-30">
-        <div className="grid grid-cols-5 h-full">
-          <NavItem 
-            href="/" 
-            icon={<Home className="h-5 w-5" />} 
-            isActive={location === '/'}
-          >
-            Home
-          </NavItem>
-          <NavItem 
-            href="/practice" 
-            icon={<Dumbbell className="h-5 w-5" />} 
-            isActive={location.startsWith('/practice')}
-          >
-            Practice
-          </NavItem>
-          <div className="flex items-center justify-center">
-            <button 
-              className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center shadow-lg"
-              onClick={() => setIsCreateMeetOpen(true)}
-              aria-label="Create new meet"
-            >
-              <Plus className="h-6 w-6" />
-            </button>
-          </div>
-          <NavItem 
-            href="/meets" 
-            icon={<Trophy className="h-5 w-5" />} 
-            isActive={location === '/meets'}
-          >
-            Meets
-          </NavItem>
-          <NavItem 
-            href="/clubs" 
-            icon={<Users className="h-5 w-5" />} 
-            isActive={location.startsWith('/clubs')}
-          >
-            Clubs
-          </NavItem>
-        </div>
-      </nav>
-
-      <CreateMeetModal
-        isOpen={isCreateMeetOpen}
-        onClose={() => setIsCreateMeetOpen(false)}
-      />
-    </>
+    <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 shadow-lg border-t border-gray-200 dark:border-gray-700 h-16 md:hidden z-30">
+      <div className="grid grid-cols-6 h-full">
+        {navItems.map((item, index) => (
+          <NavItem
+            key={item.key}
+            href={item.href}
+            icon={item.icon}
+            title={item.title}
+            isActive={index === currentIndex}
+          />
+        ))}
+      </div>
+    </nav>
   );
 }
