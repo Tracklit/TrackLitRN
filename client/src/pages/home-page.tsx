@@ -191,7 +191,7 @@ export default function HomePage() {
       href: "/practice",
       disabled: false,
       isSpecial: true,
-      backgroundImage: "/practice-background-optimized.webp"
+      backgroundImage: "/practice-background.jpeg"
     },
     {
       title: "Programs",
@@ -200,7 +200,7 @@ export default function HomePage() {
       href: "/programs",
       disabled: false,
       headerImage: "/programs-card-extreme.webp",
-      backgroundImage: "/programs-background-optimized.webp"
+      backgroundImage: "/programs-background.jpeg"
     },
     {
       title: "Race",
@@ -209,7 +209,7 @@ export default function HomePage() {
       href: "/meets",
       disabled: false,
       headerImage: "/track-image-2-extreme.webp",
-      backgroundImage: "/race-background-optimized.webp"
+      backgroundImage: "/race-background.jpeg"
     },
     {
       title: "Tools",
@@ -218,7 +218,7 @@ export default function HomePage() {
       href: "/training-tools",
       disabled: false,
       headerImage: "/tools-card-extreme.webp",
-      backgroundImage: "/tools-background-optimized.webp"
+      backgroundImage: "/tools-background.jpeg"
     },
     {
       title: "Sprinthia",
@@ -227,7 +227,7 @@ export default function HomePage() {
       href: "/sprinthia",
       disabled: false,
       headerImage: "/sprinthia-avatar-extreme.webp",
-      backgroundImage: "/sprinthia-background-optimized.webp"
+      backgroundImage: "/sprinthia-background.jpeg"
     }
   ];
 
