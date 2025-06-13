@@ -67,13 +67,13 @@ function NavItem({ href, icon, title, isActive, onClick }: NavItemProps) {
       >
         <div className={cn(
           "transition-colors duration-200",
-          isActive ? "text-primary" : "text-gray-500"
+          isActive ? "text-accent" : "text-gray-300"
         )}>
           {icon}
         </div>
         <span className={cn(
           "text-xs mt-1 transition-colors duration-200 font-medium",
-          isActive ? "text-primary" : "text-gray-500"
+          isActive ? "text-accent" : "text-gray-300"
         )}>
           {title}
         </span>
@@ -104,6 +104,7 @@ export function BottomNavigation() {
     const handleTouchStart = (e: TouchEvent) => {
       setStartX(e.touches[0].clientX);
       setStartY(e.touches[0].clientY);
+      console.log('Touch start:', e.touches[0].clientX, e.touches[0].clientY);
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
@@ -114,18 +115,25 @@ export function BottomNavigation() {
       const diffX = startX - endX;
       const diffY = startY - endY;
       
-      const threshold = 75; // Minimum swipe distance
-      const verticalThreshold = 100; // Maximum vertical movement allowed
+      console.log('Touch end:', endX, endY, 'Diff:', diffX, diffY, 'Current index:', currentIndex);
+      
+      const threshold = 50; // Reduced minimum swipe distance
+      const verticalThreshold = 150; // Increased maximum vertical movement allowed
       
       // Only trigger horizontal swipes if vertical movement is minimal
       if (Math.abs(diffX) > threshold && Math.abs(diffY) < verticalThreshold) {
+        console.log('Swipe detected!', diffX > 0 ? 'left' : 'right');
         if (diffX > 0 && currentIndex < navItems.length - 1) {
           // Swipe left - go to next page
+          console.log('Navigating to:', navItems[currentIndex + 1].href);
           setLocation(navItems[currentIndex + 1].href);
         } else if (diffX < 0 && currentIndex > 0) {
           // Swipe right - go to previous page
+          console.log('Navigating to:', navItems[currentIndex - 1].href);
           setLocation(navItems[currentIndex - 1].href);
         }
+      } else {
+        console.log('Swipe rejected - not enough horizontal movement or too much vertical');
       }
       
       setStartX(null);
@@ -144,7 +152,7 @@ export function BottomNavigation() {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-30 md:hidden">
-      <nav className="bg-white dark:bg-gray-900 shadow-lg border-t border-gray-200 dark:border-gray-700 h-16">
+      <nav className="bg-darkBlue shadow-lg border-t border-gray-600 h-16">
         <div className="grid grid-cols-6 h-full">
           {navItems.map((item, index) => (
             <NavItem
