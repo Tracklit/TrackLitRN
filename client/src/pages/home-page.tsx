@@ -327,7 +327,7 @@ export default function HomePage() {
         
         {/* Main Category Cards - Single Column Full Width */}
         <section className="mb-4">
-          <div className="space-y-4 max-w-2xl mx-auto">
+          <div className="space-y-8 max-w-2xl mx-auto">
             {categoryCards.map((card, index) => (
               card.disabled ? (
                 <Card key={index} className="h-[140px] overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 border-muted/50">
