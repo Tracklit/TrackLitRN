@@ -190,6 +190,7 @@ export default function HomePage() {
       icon: <Dumbbell className="h-6 w-6 text-primary" />,
       href: "/practice",
       disabled: false,
+      headerImage: "/track-image-1-extreme.webp"
     },
     {
       title: "Programs",
@@ -205,6 +206,7 @@ export default function HomePage() {
       icon: <Trophy className="h-6 w-6 text-primary" />,
       href: "/meets",
       disabled: false,
+      headerImage: "/track-image-2-extreme.webp"
     },
     {
       title: "Tools",
@@ -389,10 +391,8 @@ export default function HomePage() {
                         <div 
                           className="h-1/2 bg-cover bg-center bg-no-repeat relative"
                           style={{ 
-                            backgroundImage: `url(${card.headerImage || trackImages[index % 4]})`,
-                            backgroundPosition: card.headerImage 
-                              ? (card.title === 'Programs' || card.title === 'Tools' ? 'center' : 'center -85px')
-                              : 'center'
+                            backgroundImage: `url(${card.headerImage})`,
+                            backgroundPosition: 'center'
                           }}
                         >
                           <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-all duration-300" />
