@@ -96,13 +96,13 @@ export function PageTransition({ children }: PageTransitionProps) {
         setPendingContent(children); // Store the new content without displaying it yet
         
         if (navDirection === 'forward') {
-          // For forward navigation, new page overlays from right
+          // For forward navigation, new page overlays from right showing about 15% initially
           setOverlayContent(children);
           
-          // Start overlay from right
+          // Start overlay from 85% right (showing 15% of new page)
           setTimeout(() => {
             if (overlayPageRef.current) {
-              overlayPageRef.current.style.transform = 'translateX(100%)';
+              overlayPageRef.current.style.transform = 'translateX(85%)';
               
               requestAnimationFrame(() => {
                 if (overlayPageRef.current) {
@@ -122,7 +122,7 @@ export function PageTransition({ children }: PageTransitionProps) {
               
               requestAnimationFrame(() => {
                 if (overlayPageRef.current) {
-                  overlayPageRef.current.style.transform = 'translateX(100%)';
+                  overlayPageRef.current.style.transform = 'translateX(85%)';
                 }
               });
             }
@@ -162,7 +162,7 @@ export function PageTransition({ children }: PageTransitionProps) {
           className="fixed inset-0 z-[50] w-full h-full"
           style={{
             transition: 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-            transform: direction === 'forward' ? 'translateX(100%)' : 'translateX(0%)',
+            transform: direction === 'forward' ? 'translateX(85%)' : 'translateX(0%)',
             backgroundColor: 'hsl(var(--background))', // Solid background color
           }}
         >
