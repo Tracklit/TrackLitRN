@@ -217,7 +217,8 @@ export default function HomePage() {
       icon: <Clock className="h-6 w-6 text-primary" />,
       href: "/training-tools",
       disabled: false,
-      headerImage: "/tools-card-extreme.webp"
+      headerImage: "/tools-card-extreme.webp",
+      backgroundImage: "/tools-background.jpeg"
     },
     {
       title: "Sprinthia",
