@@ -78,7 +78,7 @@ export function PageTransition({ children }: PageTransitionProps) {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [overlayContent, setOverlayContent] = useState<React.ReactNode>(null);
   const [baseContent, setBaseContent] = useState<React.ReactNode>(children);
-  const [pendingContent, setPendingContent] = useState<React.ReactNode>(null);
+  const [displayedContent, setDisplayedContent] = useState<React.ReactNode>(children);
   
   const previousLocation = useRef<string>(location);
   const previousLevel = useRef<number>(getPageLevel(location));
@@ -93,10 +93,9 @@ export function PageTransition({ children }: PageTransitionProps) {
       if (navDirection !== 'none') {
         setDirection(navDirection);
         setIsTransitioning(true);
-        setPendingContent(children); // Store the new content without displaying it yet
         
         if (navDirection === 'forward') {
-          // For forward navigation, new page overlays from right showing about 15% initially
+          // For forward navigation, keep showing old content in base, new content in overlay
           setOverlayContent(children);
           
           // Start overlay from 85% right (showing 15% of new page)
@@ -104,27 +103,29 @@ export function PageTransition({ children }: PageTransitionProps) {
             if (overlayPageRef.current) {
               overlayPageRef.current.style.transform = 'translateX(85%)';
               
-              requestAnimationFrame(() => {
+              // Wait a moment before starting the slide-in animation
+              setTimeout(() => {
                 if (overlayPageRef.current) {
                   overlayPageRef.current.style.transform = 'translateX(0%)';
                 }
-              });
+              }, 50);
             }
           }, 10);
           
         } else if (navDirection === 'back') {
-          // For back navigation, current page slides out to right
-          setOverlayContent(baseContent);
+          // For back navigation, show new content in base, old content slides out in overlay
+          setDisplayedContent(children);
+          setOverlayContent(displayedContent);
           
           setTimeout(() => {
             if (overlayPageRef.current) {
               overlayPageRef.current.style.transform = 'translateX(0%)';
               
-              requestAnimationFrame(() => {
+              setTimeout(() => {
                 if (overlayPageRef.current) {
                   overlayPageRef.current.style.transform = 'translateX(85%)';
                 }
-              });
+              }, 50);
             }
           }, 10);
         }
@@ -134,12 +135,12 @@ export function PageTransition({ children }: PageTransitionProps) {
           setIsTransitioning(false);
           setDirection('none');
           setOverlayContent(null);
-          // Update base content after transition is complete
-          setBaseContent(pendingContent || children);
-          setPendingContent(null);
-        }, 320);
+          setDisplayedContent(children);
+          setBaseContent(children);
+        }, 370);
       } else {
         // No transition needed, update immediately
+        setDisplayedContent(children);
         setBaseContent(children);
       }
       
@@ -150,9 +151,9 @@ export function PageTransition({ children }: PageTransitionProps) {
 
   return (
     <div className="relative w-full h-full overflow-hidden">
-      {/* Base page - keeps old content during forward transitions */}
+      {/* Base page - shows displayed content */}
       <div className="w-full h-full bg-background">
-        {baseContent}
+        {displayedContent}
       </div>
       
       {/* Overlay page - completely opaque during transitions */}
