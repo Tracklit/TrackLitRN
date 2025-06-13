@@ -93,8 +93,6 @@ export function useSwipeNavigation(
           // Navigate after animation completes
           setTimeout(() => {
             setLocation(navItems[currentIndex - 1].href);
-            // Scroll to top of new page
-            window.scrollTo(0, 0);
             // Reset immediately after navigation to prevent flash
             setCurrentTransform(0);
             setSwipeProgress(0);
@@ -107,8 +105,6 @@ export function useSwipeNavigation(
           // Navigate after animation completes
           setTimeout(() => {
             setLocation(navItems[currentIndex + 1].href);
-            // Scroll to top of new page
-            window.scrollTo(0, 0);
             // Reset immediately after navigation to prevent flash
             setCurrentTransform(0);
             setSwipeProgress(0);

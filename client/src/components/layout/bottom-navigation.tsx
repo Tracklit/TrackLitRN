@@ -68,8 +68,6 @@ interface NavItemProps {
 
 function NavItem({ href, icon, title, isActive, onClick }: NavItemProps) {
   const handleClick = () => {
-    // Scroll to top when navigating
-    window.scrollTo(0, 0);
     if (onClick) onClick();
   };
 

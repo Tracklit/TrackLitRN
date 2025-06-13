@@ -74,8 +74,32 @@ function ScrollRestoration() {
   const [location] = useLocation();
   
   useEffect(() => {
-    // Scroll to top whenever the route changes
+    // Disable browser's automatic scroll restoration
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+    
+    // Immediately scroll to top
     window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    
+    // Force scroll to top with a slight delay to ensure it overrides any other scroll behavior
+    const timer = setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      
+      // Force all scrollable containers to reset
+      const scrollableElements = document.querySelectorAll('[style*="overflow"]');
+      scrollableElements.forEach(el => {
+        if (el instanceof HTMLElement) {
+          el.scrollTop = 0;
+        }
+      });
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, [location]);
   
   return null;
