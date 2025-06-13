@@ -95,25 +95,24 @@ export function PageTransition({ children }: PageTransitionProps) {
         setIsTransitioning(true);
         
         if (navDirection === 'forward') {
-          // For forward navigation, keep showing old content in base, new content in overlay
-          setOverlayContent(children);
-          
-          // Start overlay from 85% right (showing 15% of new page)
+          // For forward navigation, new content appears in overlay after delay
           setTimeout(() => {
+            setOverlayContent(children);
+            
             if (overlayPageRef.current) {
               overlayPageRef.current.style.transform = 'translateX(85%)';
               
-              // Wait a moment before starting the slide-in animation
+              // Start slide-in animation
               setTimeout(() => {
                 if (overlayPageRef.current) {
                   overlayPageRef.current.style.transform = 'translateX(0%)';
                 }
               }, 50);
             }
-          }, 10);
+          }, 100); // Delay content loading to allow tap to trigger visual only
           
         } else if (navDirection === 'back') {
-          // For back navigation, show new content in base, old content slides out in overlay
+          // For back navigation, show new content in base, old content slides out
           setDisplayedContent(children);
           setOverlayContent(displayedContent);
           
@@ -137,7 +136,7 @@ export function PageTransition({ children }: PageTransitionProps) {
           setOverlayContent(null);
           setDisplayedContent(children);
           setBaseContent(children);
-        }, 370);
+        }, 470);
       } else {
         // No transition needed, update immediately
         setDisplayedContent(children);
