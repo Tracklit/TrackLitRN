@@ -125,7 +125,7 @@ export default function WorkoutToolsPage() {
               // Enabled card
               <Link key={index} href={card.href}>
                 <Card 
-                  className="cursor-pointer border border-muted h-[140px] mx-auto mb-2 overflow-hidden relative"
+                  className="cursor-pointer h-[140px] mx-auto mb-2 overflow-hidden relative"
                 >
                   {/* Header Image - For Start Gun, Stopwatch, and Video Analysis */}
                   {(card.title === "Start Gun" || card.title === "Stopwatch" || card.title === "Video Analysis") && (
