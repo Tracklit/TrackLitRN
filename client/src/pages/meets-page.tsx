@@ -279,23 +279,38 @@ export default function MeetsPage() {
           <div className="max-w-3xl mx-auto px-4">
 
             {/* Ticker Messages - Dashboard Style */}
-            {tickerMessages.length > 0 && isTickerVisible && (
+            {isTickerVisible && (
               <div className="mb-6 flex items-center justify-between">
                 <div className="flex-1 overflow-hidden">
-                  <div 
-                    className="whitespace-nowrap text-white text-sm transition-transform duration-1000 ease-in-out"
-                    style={{ 
-                      transform: `translateX(-${currentTickerIndex * 100}%)`,
-                      width: `${tickerMessages.length * 100}%`,
-                      display: 'flex'
-                    }}
-                  >
-                    {tickerMessages.map((message, index) => (
-                      <span key={index} className="w-full flex-shrink-0">
-                        {message}
-                      </span>
-                    ))}
-                  </div>
+                  {isLoading ? (
+                    // Skeleton loader for ticker
+                    <div className="flex items-center space-x-3">
+                      <div className="animate-pulse">
+                        <div className="h-4 bg-blue-800/40 rounded w-80"></div>
+                      </div>
+                    </div>
+                  ) : tickerMessages.length > 0 ? (
+                    // Actual ticker messages
+                    <div 
+                      className="whitespace-nowrap text-white text-sm transition-transform duration-1000 ease-in-out"
+                      style={{ 
+                        transform: `translateX(-${currentTickerIndex * 100}%)`,
+                        width: `${tickerMessages.length * 100}%`,
+                        display: 'flex'
+                      }}
+                    >
+                      {tickerMessages.map((message, index) => (
+                        <span key={index} className="w-full flex-shrink-0">
+                          {message}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    // Fallback message when no data
+                    <div className="text-gray-400 text-sm">
+                      🏁 No races today
+                    </div>
+                  )}
                 </div>
                 <Button
                   variant="ghost"
