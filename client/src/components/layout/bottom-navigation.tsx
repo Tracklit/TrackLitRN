@@ -69,10 +69,12 @@ function NavItem({ href, icon, title, isActive, onClick }: NavItemProps) {
           "transition-colors duration-200",
           isActive ? "text-accent" : "text-gray-300"
         )}>
-          {icon}
+          <div className="w-3 h-3">
+            {icon}
+          </div>
         </div>
         <span className={cn(
-          "text-xs mt-1 transition-colors duration-200 font-medium",
+          "text-[8px] mt-0.5 transition-colors duration-200 font-medium leading-tight",
           isActive ? "text-accent" : "text-gray-300"
         )}>
           {title}
@@ -85,6 +87,8 @@ function NavItem({ href, icon, title, isActive, onClick }: NavItemProps) {
 export function BottomNavigation() {
   const [location] = useLocation();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
 
   // Update current index based on location
   useEffect(() => {
@@ -97,9 +101,34 @@ export function BottomNavigation() {
     setCurrentIndex(index >= 0 ? index : 0);
   }, [location]);
 
+  // Handle scroll to show/hide navigation
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY < lastScrollY || currentScrollY < 10) {
+        // Scrolling up or at top - show navigation
+        setIsVisible(true);
+      } else if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        // Scrolling down and past threshold - hide navigation
+        setIsVisible(false);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
+
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-30 md:hidden">
-      <nav className="bg-slate-800 shadow-lg border-t border-gray-600 h-16">
+    <div 
+      className={cn(
+        "fixed bottom-0 left-0 right-0 z-30 md:hidden transition-transform duration-300 ease-in-out",
+        isVisible ? "translate-y-0" : "translate-y-full"
+      )}
+    >
+      <nav className="bg-gray-900 shadow-lg border-t border-gray-700 h-12">
         <div className="grid grid-cols-6 h-full">
           {navItems.map((item, index) => (
             <NavItem
