@@ -7,9 +7,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { HamburgerMenu } from "@/components/ui/hamburger-menu";
 import { Header } from "@/components/layout/header";
 import { BottomNavigation } from "@/components/layout/bottom-navigation";
-import { SwipeContainer } from "@/components/layout/swipe-container";
-
-
 // Import tool components
 import { 
   StopwatchPage,
@@ -20,7 +17,6 @@ import {
 } from "@/pages/routes";
 
 import { OnboardingFlow } from "@/components/onboarding-flow";
-import { PageTransition } from "@/components/page-transition";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
@@ -181,24 +177,6 @@ function Router() {
 function MainApp() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const { user, loginMutation, registerMutation } = useAuth();
-  const [location] = useLocation();
-
-  const navItems = [
-    { href: "/", title: "Dashboard", component: <HomePage /> },
-    { href: "/practice", title: "Practice", component: <PracticePage /> },
-    { href: "/programs", title: "Programs", component: <ProgramsPage /> },
-    { href: "/meets", title: "Race", component: <MeetsPage /> },
-    { href: "/training-tools", title: "Tools", component: <WorkoutToolsPage /> },
-    { href: "/sprinthia", title: "Sprinthia", component: <SprinthiaPage /> }
-  ];
-
-  // Calculate current index based on location
-  const currentIndex = navItems.findIndex(item => {
-    if (item.href === "/") {
-      return location === "/";
-    }
-    return location.startsWith(item.href);
-  });
   
   // Only show onboarding for new user registrations (not logins)
   useEffect(() => {
@@ -234,17 +212,9 @@ function MainApp() {
       
       {/* Main Content */}
       <main className="pt-20 pb-16 md:pb-0">
-        <SwipeContainer 
-          navItems={navItems}
-          currentIndex={Math.max(0, currentIndex)}
-          className="min-h-[calc(100vh-10rem)]"
-        >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <PageTransition>
-              <Router />
-            </PageTransition>
-          </div>
-        </SwipeContainer>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Router />
+        </div>
       </main>
       
       {/* Bottom Navigation */}
