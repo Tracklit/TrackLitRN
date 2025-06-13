@@ -223,7 +223,7 @@ export default function HomePage() {
     },
     {
       title: "Sprinthia",
-      description: "AI training companion",
+      description: "World's First AI Track Coach & Companion",
       icon: <MessageCircle className="h-6 w-6 text-primary" />,
       href: "/sprinthia",
       disabled: false,
@@ -405,7 +405,7 @@ export default function HomePage() {
                             style={{ 
                               backgroundImage: `url(${card.backgroundImage})`,
                               backgroundPosition: card.title === 'Sprinthia' ? 'center -100px' : 'center 50%',
-                              opacity: 0.5
+                              opacity: 0.65
                             }}
                           />
                         )}
