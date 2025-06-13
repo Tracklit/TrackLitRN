@@ -88,32 +88,40 @@ export function useSwipeNavigation(
       if (Math.abs(deltaX) > threshold) {
         // Complete the navigation - animate to full position
         if (deltaX > 0 && currentIndex > 0) {
-          // Navigate to previous page
+          // Navigate to previous page - complete slide right
           setCurrentTransform(window.innerWidth);
-          // Navigate after animation starts
+          // Navigate after animation completes
           setTimeout(() => {
             setLocation(navItems[currentIndex - 1].href);
-          }, 150); // Mid-animation
+            // Reset immediately after navigation to prevent flash
+            setCurrentTransform(0);
+            setSwipeProgress(0);
+            setNextPageDirection(null);
+            setIsTransitioning(false);
+          }, 300); // After animation completes
         } else if (deltaX < 0 && currentIndex < navItems.length - 1) {
-          // Navigate to next page  
+          // Navigate to next page - complete slide left
           setCurrentTransform(-window.innerWidth);
-          // Navigate after animation starts
+          // Navigate after animation completes
           setTimeout(() => {
             setLocation(navItems[currentIndex + 1].href);
-          }, 150); // Mid-animation
+            // Reset immediately after navigation to prevent flash
+            setCurrentTransform(0);
+            setSwipeProgress(0);
+            setNextPageDirection(null);
+            setIsTransitioning(false);
+          }, 300); // After animation completes
         }
       } else {
         // Snap back to current page
         setCurrentTransform(0);
+        // Reset after snap back animation
+        setTimeout(() => {
+          setSwipeProgress(0);
+          setNextPageDirection(null);
+          setIsTransitioning(false);
+        }, 300);
       }
-      
-      // Reset after animation completes
-      setTimeout(() => {
-        setCurrentTransform(0);
-        setSwipeProgress(0);
-        setNextPageDirection(null);
-        setIsTransitioning(false);
-      }, 300);
       
       touchStartX.current = null;
       touchStartY.current = null;

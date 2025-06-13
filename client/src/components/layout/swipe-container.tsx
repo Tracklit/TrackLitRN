@@ -43,12 +43,14 @@ export function SwipeContainer({ children, navItems, currentIndex, className = "
       </div>
 
       {/* Next page preview - actual page content */}
-      {nextPageDirection && swipeProgress > 0 && (
+      {nextPageDirection && (swipeProgress > 0 || isTransitioning) && (
         <div
           className="absolute top-0 w-full h-full bg-background"
           style={{
             left: nextPageDirection === 'left' ? '100%' : '-100%',
-            transform: `translateX(${nextPageDirection === 'left' ? -swipeProgress * 100 : swipeProgress * 100}%)`,
+            transform: isTransitioning 
+              ? `translateX(${nextPageDirection === 'left' ? '-100%' : '100%'})` 
+              : `translateX(${nextPageDirection === 'left' ? -swipeProgress * 100 : swipeProgress * 100}%)`,
             transition: isTransitioning ? 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none'
           }}
         >
