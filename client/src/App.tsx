@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { HamburgerMenu } from "@/components/ui/hamburger-menu";
 import { Header } from "@/components/layout/header";
+import { BottomNavigation } from "@/components/layout/bottom-navigation";
 
 
 // Import tool components
@@ -189,13 +190,16 @@ function MainApp() {
       </div>
       
       {/* Main Content */}
-      <main className="pt-20">
+      <main className="pt-20 pb-20 md:pb-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <PageTransition>
             <Router />
           </PageTransition>
         </div>
       </main>
+      
+      {/* Bottom Navigation */}
+      <BottomNavigation />
       
       {/* Onboarding flow - Only show for logged in users who haven't seen it */}
       {user && showOnboarding && (

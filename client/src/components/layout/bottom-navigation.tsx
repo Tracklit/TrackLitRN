@@ -85,6 +85,7 @@ function NavItem({ href, icon, title, isActive, onClick }: NavItemProps) {
 export function BottomNavigation() {
   const [location, setLocation] = useLocation();
   const [startX, setStartX] = useState<number | null>(null);
+  const [startY, setStartY] = useState<number | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // Update current index based on location
@@ -98,56 +99,64 @@ export function BottomNavigation() {
     setCurrentIndex(index >= 0 ? index : 0);
   }, [location]);
 
-  const handleTouchStart = (e: TouchEvent) => {
-    setStartX(e.touches[0].clientX);
-  };
-
-  const handleTouchEnd = (e: TouchEvent) => {
-    if (startX === null) return;
-    
-    const endX = e.changedTouches[0].clientX;
-    const diff = startX - endX;
-    const threshold = 50; // Minimum swipe distance
-    
-    if (Math.abs(diff) > threshold) {
-      if (diff > 0 && currentIndex < navItems.length - 1) {
-        // Swipe left - go to next page
-        setLocation(navItems[currentIndex + 1].href);
-      } else if (diff < 0 && currentIndex > 0) {
-        // Swipe right - go to previous page
-        setLocation(navItems[currentIndex - 1].href);
-      }
-    }
-    
-    setStartX(null);
-  };
-
+  // Global touch event handlers
   useEffect(() => {
-    const handleTouchStartEvent = (e: TouchEvent) => handleTouchStart(e);
-    const handleTouchEndEvent = (e: TouchEvent) => handleTouchEnd(e);
+    const handleTouchStart = (e: TouchEvent) => {
+      setStartX(e.touches[0].clientX);
+      setStartY(e.touches[0].clientY);
+    };
 
-    document.addEventListener('touchstart', handleTouchStartEvent);
-    document.addEventListener('touchend', handleTouchEndEvent);
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (startX === null || startY === null) return;
+      
+      const endX = e.changedTouches[0].clientX;
+      const endY = e.changedTouches[0].clientY;
+      const diffX = startX - endX;
+      const diffY = startY - endY;
+      
+      const threshold = 75; // Minimum swipe distance
+      const verticalThreshold = 100; // Maximum vertical movement allowed
+      
+      // Only trigger horizontal swipes if vertical movement is minimal
+      if (Math.abs(diffX) > threshold && Math.abs(diffY) < verticalThreshold) {
+        if (diffX > 0 && currentIndex < navItems.length - 1) {
+          // Swipe left - go to next page
+          setLocation(navItems[currentIndex + 1].href);
+        } else if (diffX < 0 && currentIndex > 0) {
+          // Swipe right - go to previous page
+          setLocation(navItems[currentIndex - 1].href);
+        }
+      }
+      
+      setStartX(null);
+      setStartY(null);
+    };
+
+    // Add passive listeners for better performance
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchend', handleTouchEnd, { passive: true });
 
     return () => {
-      document.removeEventListener('touchstart', handleTouchStartEvent);
-      document.removeEventListener('touchend', handleTouchEndEvent);
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [startX, currentIndex]);
+  }, [currentIndex, setLocation]);
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 shadow-lg border-t border-gray-200 dark:border-gray-700 h-16 md:hidden z-30">
-      <div className="grid grid-cols-6 h-full">
-        {navItems.map((item, index) => (
-          <NavItem
-            key={item.key}
-            href={item.href}
-            icon={item.icon}
-            title={item.title}
-            isActive={index === currentIndex}
-          />
-        ))}
-      </div>
-    </nav>
+    <div className="fixed bottom-0 left-0 right-0 z-30 md:hidden">
+      <nav className="bg-white dark:bg-gray-900 shadow-lg border-t border-gray-200 dark:border-gray-700 h-16">
+        <div className="grid grid-cols-6 h-full">
+          {navItems.map((item, index) => (
+            <NavItem
+              key={item.key}
+              href={item.href}
+              icon={item.icon}
+              title={item.title}
+              isActive={index === currentIndex}
+            />
+          ))}
+        </div>
+      </nav>
+    </div>
   );
 }
