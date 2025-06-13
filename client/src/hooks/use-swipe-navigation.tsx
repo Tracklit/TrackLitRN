@@ -3,10 +3,9 @@ import { useLocation } from 'wouter';
 
 interface SwipeNavigationHook {
   containerRef: React.RefObject<HTMLDivElement>;
-  currentTransform: number;
-  isTransitioning: boolean;
-  swipeProgress: number;
-  nextPageDirection: 'left' | 'right' | null;
+  deltaX: number;
+  isDragging: boolean;
+  currentIndex: number;
 }
 
 export function useSwipeNavigation(
@@ -14,118 +13,91 @@ export function useSwipeNavigation(
   currentIndex: number
 ): SwipeNavigationHook {
   const [, setLocation] = useLocation();
-  const [currentTransform, setCurrentTransform] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [swipeProgress, setSwipeProgress] = useState(0);
-  const [nextPageDirection, setNextPageDirection] = useState<'left' | 'right' | null>(null);
+  const [deltaX, setDeltaX] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState<number | null>(null);
+  const [startY, setStartY] = useState<number | null>(null);
+  const [startTime, setStartTime] = useState<number>(0);
   
   const containerRef = useRef<HTMLDivElement>(null);
-  const touchStartX = useRef<number | null>(null);
-  const touchStartY = useRef<number | null>(null);
-  const isDragging = useRef(false);
 
   useEffect(() => {
     const handleTouchStart = (e: TouchEvent) => {
-      if (isTransitioning) return;
-      
-      touchStartX.current = e.touches[0].clientX;
-      touchStartY.current = e.touches[0].clientY;
-      isDragging.current = false;
+      setStartX(e.touches[0].clientX);
+      setStartY(e.touches[0].clientY);
+      setStartTime(Date.now());
+      setIsDragging(false);
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (!touchStartX.current || !touchStartY.current || isTransitioning) return;
+      if (startX === null || startY === null) return;
       
       const currentX = e.touches[0].clientX;
       const currentY = e.touches[0].clientY;
-      const deltaX = currentX - touchStartX.current;
-      const deltaY = currentY - touchStartY.current;
+      const deltaXMove = currentX - startX;
+      const deltaYMove = currentY - startY;
       
       // Check if this is a horizontal swipe
-      if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
-        isDragging.current = true;
+      if (Math.abs(deltaXMove) > Math.abs(deltaYMove) && Math.abs(deltaXMove) > 10) {
+        if (!isDragging) {
+          setIsDragging(true);
+        }
         e.preventDefault();
         
-        const progress = Math.abs(deltaX) / window.innerWidth;
-        const clampedProgress = Math.min(progress, 1);
-        
-        // Determine swipe direction and check boundaries
-        if (deltaX > 0 && currentIndex > 0) {
-          // Swiping right (previous page) - only if not at first page
-          setNextPageDirection('right');
-          setSwipeProgress(clampedProgress);
-          setCurrentTransform(deltaX);
-        } else if (deltaX < 0 && currentIndex < navItems.length - 1) {
-          // Swiping left (next page) - only if not at last page
-          setNextPageDirection('left');
-          setSwipeProgress(clampedProgress);
-          setCurrentTransform(deltaX);
-        } else {
-          // At boundary - don't allow swipe
-          return;
+        // Apply boundary resistance
+        let adjustedDelta = deltaXMove;
+        if ((deltaXMove > 0 && currentIndex === 0) || 
+            (deltaXMove < 0 && currentIndex === navItems.length - 1)) {
+          // Add resistance when at boundaries
+          adjustedDelta = deltaXMove * 0.3;
         }
+        
+        setDeltaX(adjustedDelta);
       }
     };
 
-    const handleTouchEnd = (e: TouchEvent) => {
-      if (!touchStartX.current || !isDragging.current || isTransitioning) {
-        // Reset states
-        setCurrentTransform(0);
-        setSwipeProgress(0);
-        setNextPageDirection(null);
-        touchStartX.current = null;
-        touchStartY.current = null;
-        isDragging.current = false;
+    const handleTouchEnd = () => {
+      if (!isDragging || startX === null) {
+        setDeltaX(0);
+        setIsDragging(false);
         return;
       }
       
-      const endX = e.changedTouches[0].clientX;
-      const deltaX = endX - touchStartX.current;
-      const threshold = window.innerWidth * 0.5; // 50% of screen width
+      const elapsed = Date.now() - startTime;
+      const velocity = deltaX / elapsed; // pixels per millisecond
       
-      setIsTransitioning(true);
+      // Velocity-based thresholds
+      const threshold = window.innerWidth / 3;
+      const absDelta = Math.abs(deltaX);
+      let targetIndex = currentIndex;
       
-      if (Math.abs(deltaX) > threshold) {
-        // Complete the navigation - animate to full position
-        if (deltaX > 0 && currentIndex > 0) {
-          // Navigate to previous page - complete slide right
-          setCurrentTransform(window.innerWidth);
-          // Navigate after animation completes
-          setTimeout(() => {
-            setLocation(navItems[currentIndex - 1].href);
-            // Reset immediately after navigation to prevent flash
-            setCurrentTransform(0);
-            setSwipeProgress(0);
-            setNextPageDirection(null);
-            setIsTransitioning(false);
-          }, 300); // After animation completes
-        } else if (deltaX < 0 && currentIndex < navItems.length - 1) {
-          // Navigate to next page - complete slide left
-          setCurrentTransform(-window.innerWidth);
-          // Navigate after animation completes
-          setTimeout(() => {
-            setLocation(navItems[currentIndex + 1].href);
-            // Reset immediately after navigation to prevent flash
-            setCurrentTransform(0);
-            setSwipeProgress(0);
-            setNextPageDirection(null);
-            setIsTransitioning(false);
-          }, 300); // After animation completes
-        }
-      } else {
-        // Snap back to current page
-        setCurrentTransform(0);
-        // Reset after snap back animation
-        setTimeout(() => {
-          setSwipeProgress(0);
-          setNextPageDirection(null);
-          setIsTransitioning(false);
-        }, 300);
+      // Check velocity-based navigation (faster swipes with lower distance threshold)
+      if ((deltaX < -threshold || velocity < -0.3) && currentIndex < navItems.length - 1) {
+        targetIndex = currentIndex + 1;
+      } else if ((deltaX > threshold || velocity > 0.3) && currentIndex > 0) {
+        targetIndex = currentIndex - 1;
       }
       
-      touchStartX.current = null;
-      touchStartY.current = null;
-      isDragging.current = false;
+      setIsDragging(false);
+      
+      if (targetIndex !== currentIndex) {
+        // Use transitionend handler instead of setTimeout
+        const handleTransitionEnd = () => {
+          setLocation(navItems[targetIndex].href);
+          containerRef.current?.removeEventListener('transitionend', handleTransitionEnd);
+          setDeltaX(0);
+        };
+        containerRef.current?.addEventListener('transitionend', handleTransitionEnd);
+        
+        // Set target position for CSS transition
+        const targetDelta = targetIndex > currentIndex 
+          ? -window.innerWidth 
+          : window.innerWidth;
+        setDeltaX(targetDelta);
+      } else {
+        // Snap back to original position
+        setDeltaX(0);
+      }
     };
 
     document.addEventListener('touchstart', handleTouchStart, { passive: true });
@@ -137,13 +109,17 @@ export function useSwipeNavigation(
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [currentIndex, navItems, setLocation, isTransitioning]);
+  }, [currentIndex, navItems, setLocation, isDragging, deltaX, startTime]);
+
+  // Reset deltaX when currentIndex changes (from external navigation)
+  useEffect(() => {
+    setDeltaX(0);
+  }, [currentIndex]);
 
   return {
     containerRef,
-    currentTransform,
-    isTransitioning,
-    swipeProgress,
-    nextPageDirection
+    deltaX,
+    isDragging,
+    currentIndex
   };
 }
