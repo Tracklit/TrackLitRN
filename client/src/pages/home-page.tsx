@@ -346,7 +346,7 @@ export default function HomePage() {
                 </Card>
               ) : (
                 <Link href={card.href} key={index}>
-                  <Card className={`cursor-pointer hover:shadow-lg transition-all duration-300 border border-gray-600 hover:border-primary h-[140px] overflow-hidden group relative ${card.isSpecial ? 'bg-primary/5' : ''} ${index > 0 ? 'mt-8' : ''}`}>
+                  <Card className={`cursor-pointer hover:shadow-lg transition-all duration-300 border border-gray-600 hover:border-primary h-[140px] overflow-hidden group relative ${card.isSpecial ? 'bg-primary/5' : 'bg-gray-800'} ${index > 0 ? 'mt-8' : ''}`}>
                     {/* Special Practice Session - Full Width */}
                     {card.isSpecial ? (
                       <>
