@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { useState, useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -67,9 +67,23 @@ import FootRehabPage from "@/pages/rehab/chronic-injuries/foot";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 
+// Component to handle scroll restoration
+function ScrollRestoration() {
+  const [location] = useLocation();
+  
+  useEffect(() => {
+    // Scroll to top whenever the route changes
+    window.scrollTo(0, 0);
+  }, [location]);
+  
+  return null;
+}
+
 function Router() {
   return (
-    <Switch>
+    <>
+      <ScrollRestoration />
+      <Switch>
       {/* Dashboard */}
       <ProtectedRoute path="/" component={HomePage} />
       
@@ -133,7 +147,8 @@ function Router() {
       {/* Auth */}
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
-    </Switch>
+      </Switch>
+    </>
   );
 }
 
