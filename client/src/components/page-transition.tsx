@@ -78,17 +78,11 @@ export function PageTransition({ children }: PageTransitionProps) {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [overlayContent, setOverlayContent] = useState<React.ReactNode>(null);
   const [baseContent, setBaseContent] = useState<React.ReactNode>(children);
+  const [pendingContent, setPendingContent] = useState<React.ReactNode>(null);
   
   const previousLocation = useRef<string>(location);
   const previousLevel = useRef<number>(getPageLevel(location));
   const overlayPageRef = useRef<HTMLDivElement>(null);
-
-  // Update base content when not transitioning
-  useEffect(() => {
-    if (!isTransitioning) {
-      setBaseContent(children);
-    }
-  }, [children, isTransitioning]);
 
   useEffect(() => {
     if (previousLocation.current !== location) {
@@ -99,6 +93,7 @@ export function PageTransition({ children }: PageTransitionProps) {
       if (navDirection !== 'none') {
         setDirection(navDirection);
         setIsTransitioning(true);
+        setPendingContent(children); // Store the new content without displaying it yet
         
         if (navDirection === 'forward') {
           // For forward navigation, new page overlays from right
@@ -139,20 +134,27 @@ export function PageTransition({ children }: PageTransitionProps) {
           setIsTransitioning(false);
           setDirection('none');
           setOverlayContent(null);
-          setBaseContent(children);
+          // Only update base content after transition is complete
+          if (pendingContent) {
+            setBaseContent(pendingContent);
+            setPendingContent(null);
+          }
         }, 320);
+      } else {
+        // No transition needed, update immediately
+        setBaseContent(children);
       }
       
       previousLocation.current = location;
       previousLevel.current = currentLevel;
     }
-  }, [location]);
+  }, [location, children]);
 
   return (
     <div className="relative w-full h-full overflow-hidden">
-      {/* Base page - always visible */}
+      {/* Base page - shows old content during transition, new content after */}
       <div className="w-full h-full bg-background">
-        {direction === 'back' && isTransitioning ? children : baseContent}
+        {isTransitioning && direction === 'back' ? pendingContent : baseContent}
       </div>
       
       {/* Overlay page - for transitions */}
