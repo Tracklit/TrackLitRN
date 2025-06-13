@@ -3,7 +3,7 @@ import { ProtectedRoute } from "@/lib/protected-route";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Gauge } from "lucide-react";
-import { BackNavigation } from "@/components/back-navigation";
+
 import { PageHeader } from "@/components/page-header";
 
 export default function PaceCalculatorPage() {

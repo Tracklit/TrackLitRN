@@ -3,7 +3,7 @@ import { ProtectedRoute } from "@/lib/protected-route";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Play, Pause, RotateCcw, Flag, Volume2, VolumeX } from "lucide-react";
-import { BackNavigation } from "@/components/back-navigation";
+
 import { PageHeader } from "@/components/page-header";
 import { StopwatchBackground } from "@/components/stopwatch-background";
 import { useToast } from "@/hooks/use-toast";

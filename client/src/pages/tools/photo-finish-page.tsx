@@ -19,7 +19,7 @@ import {
   Info
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { BackNavigation } from "@/components/back-navigation";
+
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import PhotoFinishFullscreen from './photo-finish-fullscreen';

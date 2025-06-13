@@ -68,19 +68,6 @@ function getBackNavigation(currentPath: string): { href: string; label: string }
 }
 
 export function BackNavigation({ href, className = "", text }: BackNavigationProps) {
-  const [location] = useLocation();
-  const backNavigation = getBackNavigation(location);
-  const backPath = href || backNavigation.href;
-  const backText = text || backNavigation.label;
-
-  return (
-    <Button
-      variant="ghost" 
-      className={`mb-4 text-gray-300 hover:text-white flex items-center gap-2 px-3 py-2 h-auto min-w-fit ${className}`}
-      onClick={() => window.history.back()}
-    >
-      <ArrowLeft className="h-4 w-4" />
-      <span className="whitespace-nowrap">{backText}</span>
-    </Button>
-  );
+  // Component disabled - no back navigation buttons
+  return null;
 }

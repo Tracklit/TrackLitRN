@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
-import { BackNavigation } from '@/components/back-navigation';
+
 
 import { Meet } from '@shared/schema';
 import { Button } from '@/components/ui/button';

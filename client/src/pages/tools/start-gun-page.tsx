@@ -15,7 +15,7 @@ import {
   Play, 
   StopCircle
 } from "lucide-react";
-import { BackNavigation } from "@/components/back-navigation";
+
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
