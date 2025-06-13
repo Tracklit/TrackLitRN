@@ -361,7 +361,7 @@ export default function HomePage() {
                             }}
                           />
                         )}
-                        <CardContent className="h-full p-4 relative flex flex-col bg-muted/80 dark:bg-muted/80 z-10">
+                        <CardContent className="h-full p-4 relative flex flex-col bg-black z-10">
                             <div className="flex flex-col h-full">
                               <div className="mb-3">
                                 <h2 className="text-lg font-bold text-center">{card.title}</h2>
