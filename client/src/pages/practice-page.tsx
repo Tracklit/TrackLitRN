@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Collapsible,
   CollapsibleContent,
@@ -375,6 +376,51 @@ function PracticePage() {
                           
                           <div className="text-xs text-muted-foreground mt-2 p-2 bg-muted/20 rounded">
                             <p>This is a text-based program. Scroll through the content above to find your training sessions and instructions.</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : isLoadingProgramSessions ? (
+                    <div className="space-y-3">
+                      <div className="p-3 bg-background/80 rounded-md border border-border/50">
+                        <div className="space-y-3">
+                          {/* Skeleton loader for daily workout data */}
+                          <div className="p-2 bg-background/50 rounded border border-border/50">
+                            <div className="flex items-start">
+                              <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
+                                <Dumbbell className="h-4 w-4 text-primary" />
+                              </div>
+                              <div className="flex-1">
+                                <Skeleton className="h-4 w-16 mb-2" />
+                                <Skeleton className="h-3 w-full mb-1" />
+                                <Skeleton className="h-3 w-4/5" />
+                              </div>
+                            </div>
+                          </div>
+                          <div className="p-2 bg-background/50 rounded border border-border/50">
+                            <div className="flex items-start">
+                              <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
+                                <Dumbbell className="h-4 w-4 text-primary" />
+                              </div>
+                              <div className="flex-1">
+                                <Skeleton className="h-4 w-12 mb-2" />
+                                <Skeleton className="h-3 w-full mb-1" />
+                                <Skeleton className="h-3 w-3/4 mb-1" />
+                                <Skeleton className="h-3 w-5/6" />
+                              </div>
+                            </div>
+                          </div>
+                          <div className="p-2 bg-background/50 rounded border border-border/50">
+                            <div className="flex items-start">
+                              <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
+                                <Dumbbell className="h-4 w-4 text-primary" />
+                              </div>
+                              <div className="flex-1">
+                                <Skeleton className="h-4 w-14 mb-2" />
+                                <Skeleton className="h-3 w-full mb-1" />
+                                <Skeleton className="h-3 w-2/3" />
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
