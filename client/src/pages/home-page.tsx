@@ -185,20 +185,13 @@ export default function HomePage() {
   // Category cards for main navigation
   const categoryCards = [
     {
-      title: "Today's Session",
+      title: "Practice",
       description: getTodaySessionDescription(),
       icon: <Calendar className="h-6 w-6 text-primary" />,
       href: "/practice",
       disabled: false,
-      isSpecial: true
-    },
-    {
-      title: "Practice",
-      description: "Training sessions and programs",
-      icon: <Dumbbell className="h-6 w-6 text-primary" />,
-      href: "/practice",
-      disabled: false,
-      headerImage: "/track-image-1-extreme.webp"
+      isSpecial: true,
+      backgroundImage: "/practice-background.jpeg"
     },
     {
       title: "Programs",
@@ -341,42 +334,54 @@ export default function HomePage() {
               ) : (
                 <Link href={card.href} key={index}>
                   <Card className={`cursor-pointer hover:shadow-md transition-all duration-300 border border-muted hover:border-primary h-[140px] overflow-hidden group relative ${card.isSpecial ? 'border-primary/30 bg-primary/5' : ''} ${index > 0 ? 'mt-8' : ''}`}>
-                    {/* Special Today's Session - Full Width */}
+                    {/* Special Practice Session - Full Width */}
                     {card.isSpecial ? (
-                      <CardContent className="h-full p-4 relative flex flex-col bg-muted/80 dark:bg-muted/80">
-                        <div className="flex flex-col h-full">
-                          <div className="mb-3">
-                            <h2 className="text-lg font-bold text-center">{card.title}</h2>
-                          </div>
-                          <div className="flex-1 space-y-2">
-                            {/* Show workout details for Google Sheets programs with today's session */}
-                            {primaryProgram?.program?.importedFromSheet && todaySession ? (
-                              <>
-                                {todaySession.shortDistanceWorkout && (
-                                  <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
-                                    <span className="font-medium text-primary">60m/100m:</span> {todaySession.shortDistanceWorkout.slice(0, 35)}...
-                                  </div>
-                                )}
-                                {todaySession.mediumDistanceWorkout && (
-                                  <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
-                                    <span className="font-medium text-primary">200m:</span> {todaySession.mediumDistanceWorkout.slice(0, 35)}...
-                                  </div>
-                                )}
-                                {todaySession.longDistanceWorkout && (
-                                  <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
-                                    <span className="font-medium text-primary">400m:</span> {todaySession.longDistanceWorkout.slice(0, 35)}...
-                                  </div>
-                                )}
-                              </>
-                            ) : (
-                              /* Show fallback message for other program types or no program */
-                              <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
-                                <p className="text-muted-foreground text-center">{getTodaySessionDescription()}</p>
+                      <>
+                        {/* Background Image */}
+                        {card.backgroundImage && (
+                          <div 
+                            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                            style={{ 
+                              backgroundImage: `url(${card.backgroundImage})`,
+                              opacity: 0.3
+                            }}
+                          />
+                        )}
+                        <CardContent className="h-full p-4 relative flex flex-col bg-muted/80 dark:bg-muted/80 z-10">
+                            <div className="flex flex-col h-full">
+                              <div className="mb-3">
+                                <h2 className="text-lg font-bold text-center">{card.title}</h2>
                               </div>
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
+                              <div className="flex-1 space-y-2">
+                                {/* Show workout details for Google Sheets programs with today's session */}
+                                {primaryProgram?.program?.importedFromSheet && todaySession ? (
+                                  <>
+                                    {todaySession.shortDistanceWorkout && (
+                                      <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
+                                        <span className="font-medium text-primary">60m/100m:</span> {todaySession.shortDistanceWorkout.slice(0, 35)}...
+                                      </div>
+                                    )}
+                                    {todaySession.mediumDistanceWorkout && (
+                                      <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
+                                        <span className="font-medium text-primary">200m:</span> {todaySession.mediumDistanceWorkout.slice(0, 35)}...
+                                      </div>
+                                    )}
+                                    {todaySession.longDistanceWorkout && (
+                                      <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
+                                        <span className="font-medium text-primary">400m:</span> {todaySession.longDistanceWorkout.slice(0, 35)}...
+                                      </div>
+                                    )}
+                                  </>
+                                ) : (
+                                  /* Show fallback message for other program types or no program */
+                                  <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
+                                    <p className="text-muted-foreground text-center">{getTodaySessionDescription()}</p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                      </>
                     ) : (
                       <CardContent className="p-4 relative h-full flex flex-col justify-center bg-background">
                         <div className="text-center">
