@@ -208,7 +208,8 @@ export default function HomePage() {
       icon: <Trophy className="h-6 w-6 text-primary" />,
       href: "/meets",
       disabled: false,
-      headerImage: "/track-image-2-extreme.webp"
+      headerImage: "/track-image-2-extreme.webp",
+      backgroundImage: "/race-background.jpeg"
     },
     {
       title: "Tools",
@@ -345,7 +346,7 @@ export default function HomePage() {
                             style={{ 
                               backgroundImage: `url(${card.backgroundImage})`,
                               backgroundPosition: 'center 50%',
-                              opacity: 0.3
+                              opacity: 0.5
                             }}
                           />
                         )}
@@ -393,7 +394,7 @@ export default function HomePage() {
                             style={{ 
                               backgroundImage: `url(${card.backgroundImage})`,
                               backgroundPosition: 'center 50%',
-                              opacity: 0.3
+                              opacity: 0.5
                             }}
                           />
                         )}
