@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, ArrowLeft, Users, UserCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { BackNavigation } from "@/components/back-navigation";
+
 import { apiRequest } from "@/lib/queryClient";
 // Temporary removal of types to fix import issues
 

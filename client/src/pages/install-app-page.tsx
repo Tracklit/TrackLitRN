@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { ProtectedRoute } from "@/lib/protected-route";
-import { BackNavigation } from "@/components/back-navigation";
+
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

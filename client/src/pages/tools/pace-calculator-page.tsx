@@ -33,7 +33,7 @@ export default function PaceCalculatorPage() {
 
   return (
     <div className="container max-w-screen-xl mx-auto p-4 pt-20 pb-20">
-      <BackNavigation />
+
       
       <PageHeader
         title="Pace Calculator"

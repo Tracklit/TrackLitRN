@@ -722,7 +722,7 @@ export default function StartGunPage() {
   
   return (
     <div className="container mx-auto px-4 pb-16">
-      <BackNavigation />
+
       
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>

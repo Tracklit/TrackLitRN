@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { BackNavigation } from '@/components/back-navigation';
+
 import { PageTransition } from '@/components/page-transition';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

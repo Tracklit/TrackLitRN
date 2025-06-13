@@ -253,7 +253,7 @@ export default function StopwatchPage() {
 
   return (
     <div className="container max-w-screen-xl mx-auto p-4 pt-16 pb-20">
-      <BackNavigation />
+
       
       <PageHeader
         title="Stopwatch"
