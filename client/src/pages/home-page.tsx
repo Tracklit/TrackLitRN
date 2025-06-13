@@ -70,15 +70,54 @@ export default function HomePage() {
   // Fetch assigned programs
   const { assignedPrograms, isLoading: isLoadingPrograms } = useAssignedPrograms();
   
-  // Get the first assigned program's ID (Beast Mode program)
-  const primaryProgramId = assignedPrograms?.[0]?.programId || null;
+  // Get the first assigned program's ID and details
+  const primaryProgram = assignedPrograms?.[0] || null;
+  const primaryProgramId = primaryProgram?.programId || null;
   
   // Fetch program sessions for the primary program
   const { programSessions, isLoading: isLoadingSessions } = useProgramSessions(primaryProgramId);
   
-  // Find today's workout session (Jun-5, 2025)
-  const todayDate = "Jun-5";
+  // Find today's workout session using actual current date
+  const getTodayDateString = () => {
+    const today = new Date();
+    const month = today.toLocaleDateString('en-US', { month: 'short' });
+    const day = today.getDate();
+    return `${month}-${day}`;
+  };
+  
+  const todayDate = getTodayDateString();
   const todaySession = programSessions?.find(session => session.date === todayDate) || null;
+  
+  // Determine Today's Session description based on program type
+  const getTodaySessionDescription = () => {
+    if (!primaryProgram) {
+      return "No program assigned, tap to assign one";
+    }
+    
+    // Check if it's a Google Sheets program
+    if (primaryProgram.program?.importedFromSheet && primaryProgram.program?.googleSheetId) {
+      if (todaySession) {
+        return todaySession.shortDistanceWorkout?.slice(0, 50) + "..." || 
+               todaySession.mediumDistanceWorkout?.slice(0, 50) + "..." || 
+               todaySession.longDistanceWorkout?.slice(0, 50) + "..." || 
+               "View your workout";
+      } else {
+        return "No workout scheduled for today";
+      }
+    }
+    
+    // For text-based programs
+    if (primaryProgram.program?.isTextBased) {
+      return "View your text-based program";
+    }
+    
+    // For uploaded PDF programs
+    if (primaryProgram.program?.isUploadedProgram) {
+      return "View your uploaded program";
+    }
+    
+    return "View your workout";
+  };
   
   // Temporary type for session previews with user data
   type SessionPreviewWithUser = {
@@ -185,12 +224,7 @@ export default function HomePage() {
     },
     {
       title: "Today's Session",
-      description: todaySession ? 
-        `${todaySession.shortDistanceWorkout?.slice(0, 50)}...` || 
-        `${todaySession.mediumDistanceWorkout?.slice(0, 50)}...` || 
-        `${todaySession.longDistanceWorkout?.slice(0, 50)}...` || 
-        "View your workout" 
-        : "View your workout",
+      description: getTodaySessionDescription(),
       icon: <Calendar className="h-6 w-6 text-primary" />,
       href: "/practice",
       disabled: false,
@@ -321,23 +355,30 @@ export default function HomePage() {
                             <h2 className="text-sm font-bold">{card.title}</h2>
                           </div>
                           <div className="flex-1 space-y-1">
-                            {todaySession?.shortDistanceWorkout && (
+                            {/* Show workout details for Google Sheets programs with today's session */}
+                            {primaryProgram?.program?.importedFromSheet && todaySession ? (
+                              <>
+                                {todaySession.shortDistanceWorkout && (
+                                  <div className="p-1.5 bg-background/80 dark:bg-background/40 rounded text-xs">
+                                    <span className="font-medium text-primary">60m/100m:</span> {todaySession.shortDistanceWorkout.slice(0, 30)}...
+                                  </div>
+                                )}
+                                {todaySession.mediumDistanceWorkout && (
+                                  <div className="p-1.5 bg-background/80 dark:bg-background/40 rounded text-xs">
+                                    <span className="font-medium text-primary">200m:</span> {todaySession.mediumDistanceWorkout.slice(0, 30)}...
+                                  </div>
+                                )}
+                                {todaySession.longDistanceWorkout && (
+                                  <div className="p-1.5 bg-background/80 dark:bg-background/40 rounded text-xs">
+                                    <span className="font-medium text-primary">400m:</span> {todaySession.longDistanceWorkout.slice(0, 30)}...
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              /* Show fallback message for other program types or no program */
                               <div className="p-1.5 bg-background/80 dark:bg-background/40 rounded text-xs">
-                                <span className="font-medium text-primary">60m/100m:</span> {todaySession.shortDistanceWorkout.slice(0, 30)}...
+                                <p className="text-muted-foreground text-center">{getTodaySessionDescription()}</p>
                               </div>
-                            )}
-                            {todaySession?.mediumDistanceWorkout && (
-                              <div className="p-1.5 bg-background/80 dark:bg-background/40 rounded text-xs">
-                                <span className="font-medium text-primary">200m:</span> {todaySession.mediumDistanceWorkout.slice(0, 30)}...
-                              </div>
-                            )}
-                            {todaySession?.longDistanceWorkout && (
-                              <div className="p-1.5 bg-background/80 dark:bg-background/40 rounded text-xs">
-                                <span className="font-medium text-primary">400m:</span> {todaySession.longDistanceWorkout.slice(0, 30)}...
-                              </div>
-                            )}
-                            {!todaySession && (
-                              <p className="text-muted-foreground text-xs">View your workout</p>
                             )}
                           </div>
                         </div>
