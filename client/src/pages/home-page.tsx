@@ -199,7 +199,8 @@ export default function HomePage() {
       icon: <BookOpen className="h-6 w-6 text-primary" />,
       href: "/programs",
       disabled: false,
-      headerImage: "/programs-card-extreme.webp"
+      headerImage: "/programs-card-extreme.webp",
+      backgroundImage: "/programs-background.jpeg"
     },
     {
       title: "Race",
@@ -383,12 +384,24 @@ export default function HomePage() {
                           </CardContent>
                       </>
                     ) : (
-                      <CardContent className="p-4 relative h-full flex flex-col justify-center bg-background">
-                        <div className="text-center">
-                          <h2 className="text-lg font-bold mb-2">{card.title}</h2>
-                          <p className="text-muted-foreground text-sm">{card.description}</p>
-                        </div>
-                      </CardContent>
+                      <>
+                        {/* Background Image for regular cards */}
+                        {card.backgroundImage && (
+                          <div 
+                            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                            style={{ 
+                              backgroundImage: `url(${card.backgroundImage})`,
+                              opacity: 0.3
+                            }}
+                          />
+                        )}
+                        <CardContent className="p-4 relative h-full flex flex-col justify-center bg-background z-10">
+                          <div className="text-center">
+                            <h2 className="text-lg font-bold mb-2">{card.title}</h2>
+                            <p className="text-muted-foreground text-sm">{card.description}</p>
+                          </div>
+                        </CardContent>
+                      </>
                     )}
                   </Card>
                 </Link>
