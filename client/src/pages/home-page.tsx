@@ -225,7 +225,8 @@ export default function HomePage() {
       icon: <MessageCircle className="h-6 w-6 text-primary" />,
       href: "/sprinthia",
       disabled: false,
-      headerImage: "/sprinthia-avatar-extreme.webp"
+      headerImage: "/sprinthia-avatar-extreme.webp",
+      backgroundImage: "/sprinthia-background.jpeg"
     }
   ];
 
@@ -393,7 +394,7 @@ export default function HomePage() {
                             className="absolute inset-0 bg-cover bg-no-repeat"
                             style={{ 
                               backgroundImage: `url(${card.backgroundImage})`,
-                              backgroundPosition: 'center 50%',
+                              backgroundPosition: card.title === 'Sprinthia' ? 'center top' : 'center 50%',
                               opacity: 0.5
                             }}
                           />
