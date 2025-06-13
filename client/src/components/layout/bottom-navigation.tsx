@@ -5,7 +5,7 @@ import {
   BookOpen, 
   Trophy, 
   Clock, 
-  MessageCircle
+  Star
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
@@ -45,7 +45,7 @@ const navItems = [
   { 
     title: "Sprinthia", 
     href: "/sprinthia", 
-    icon: <MessageCircle className="h-5 w-5" />,
+    icon: <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />,
     key: "sprinthia"
   }
 ];
@@ -69,16 +69,10 @@ function NavItem({ href, icon, title, isActive, onClick }: NavItemProps) {
           "transition-colors duration-200",
           isActive ? "text-accent" : "text-gray-300"
         )}>
-          <div className="w-3 h-3">
+          <div className="w-5 h-5">
             {icon}
           </div>
         </div>
-        <span className={cn(
-          "text-[8px] mt-0.5 transition-colors duration-200 font-medium leading-tight",
-          isActive ? "text-accent" : "text-gray-300"
-        )}>
-          {title}
-        </span>
       </div>
     </Link>
   );
@@ -128,7 +122,7 @@ export function BottomNavigation() {
         isVisible ? "translate-y-0" : "translate-y-full"
       )}
     >
-      <nav className="bg-gray-900 shadow-lg border-t border-gray-700 h-12">
+      <nav className="bg-gray-900 shadow-lg border-t border-gray-700 h-14">
         <div className="grid grid-cols-6 h-full">
           {navItems.map((item, index) => (
             <NavItem

@@ -209,7 +209,7 @@ function MainApp() {
       </div>
       
       {/* Main Content */}
-      <main className="pt-20 pb-14 md:pb-0">
+      <main className="pt-20 pb-16 md:pb-0">
         <SwipeContainer 
           navItems={navItems}
           currentIndex={Math.max(0, currentIndex)}
