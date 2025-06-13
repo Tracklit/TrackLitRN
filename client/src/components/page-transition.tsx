@@ -106,55 +106,33 @@ export function PageTransition({ children }: PageTransitionProps) {
     }
   }, [location]);
 
-  // Enhanced iOS-style animation variants with visible transitions
+  // Simplified iOS-style animation variants for smooth transitions
   const pageVariants = {
     initial: (direction: string) => {
       console.log(`Initial animation for direction: ${direction}`);
       if (direction === 'forward') {
-        // New page slides in from right with slight scale and shadow
-        return { 
-          x: '100%', 
-          scale: 0.95, 
-          opacity: 0.9,
-          boxShadow: '-20px 0 50px rgba(0,0,0,0.3)'
-        };
+        // New page slides in from right
+        return { x: '100%', opacity: 0.8 };
       } else if (direction === 'back') {
-        // Previous page starts slightly to the left (was pushed back)
-        return { 
-          x: '-20%', 
-          scale: 0.95, 
-          opacity: 0.8,
-          boxShadow: 'none'
-        };
+        // Page coming back from left
+        return { x: '-20%', opacity: 0.8 };
       }
-      return { x: 0, scale: 1, opacity: 1, boxShadow: 'none' };
+      return { x: 0, opacity: 1 };
     },
     in: {
       x: 0,
-      scale: 1,
       opacity: 1,
-      boxShadow: 'none'
     },
     out: (direction: string) => {
       console.log(`Exit animation for direction: ${direction}`);
       if (direction === 'forward') {
-        // Current page slides behind new page and scales down
-        return { 
-          x: '-20%', 
-          scale: 0.95, 
-          opacity: 0.8,
-          boxShadow: 'none'
-        };
+        // Current page slides left
+        return { x: '-20%', opacity: 0.6 };
       } else if (direction === 'back') {
-        // Current page slides completely out to the right
-        return { 
-          x: '100%', 
-          scale: 0.95, 
-          opacity: 0,
-          boxShadow: '20px 0 50px rgba(0,0,0,0.3)'
-        };
+        // Current page slides right (exit to right)
+        return { x: '100%', opacity: 0 };
       }
-      return { x: 0, scale: 1, opacity: 1, boxShadow: 'none' };
+      return { x: 0, opacity: 1 };
     },
   };
 
