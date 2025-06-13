@@ -327,10 +327,10 @@ export default function HomePage() {
         
         {/* Main Category Cards - Single Column Full Width */}
         <section className="mb-4">
-          <div className="space-y-8 max-w-2xl mx-auto">
+          <div className="max-w-2xl mx-auto">
             {categoryCards.map((card, index) => (
               card.disabled ? (
-                <Card key={index} className="h-[140px] overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 border-muted/50">
+                <Card key={index} className={`h-[140px] overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 border-muted/50 ${index > 0 ? 'mt-8' : ''}`}>
                   <CardContent className="p-4 relative h-full flex flex-col justify-center opacity-50">
                     <div className="text-center">
                       <h2 className="text-lg font-bold mb-2 text-muted-foreground/70">{card.title}</h2>
@@ -340,7 +340,7 @@ export default function HomePage() {
                 </Card>
               ) : (
                 <Link href={card.href} key={index}>
-                  <Card className={`cursor-pointer hover:shadow-md transition-all duration-300 border border-muted hover:border-primary h-[140px] overflow-hidden group relative ${card.isSpecial ? 'border-primary/30 bg-primary/5' : ''}`}>
+                  <Card className={`cursor-pointer hover:shadow-md transition-all duration-300 border border-muted hover:border-primary h-[140px] overflow-hidden group relative ${card.isSpecial ? 'border-primary/30 bg-primary/5' : ''} ${index > 0 ? 'mt-8' : ''}`}>
                     {/* Special Today's Session - Full Width */}
                     {card.isSpecial ? (
                       <CardContent className="h-full p-4 relative flex flex-col bg-muted/80 dark:bg-muted/80">
