@@ -780,7 +780,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         title: "Race Prep",
         previewText: "Final tuneup before Saturday's meet - 4x150m at race pace with 3min rest",
         createdAt: new Date(Date.now() - 1000 * 60 * 210).toISOString(),
-        user: { username: "medal_hunter", name: "James W." }
+        user: { username: "medal_hunter", name: "James W.", profileImageUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=face" }
       }
     ];
     
