@@ -186,7 +186,7 @@ export default function HomePage() {
   const categoryCards = [
     {
       title: "Practice",
-      description: getTodaySessionDescription(),
+      description: "Your daily workout",
       icon: <Calendar className="h-6 w-6 text-primary" />,
       href: "/practice",
       disabled: false,
@@ -327,7 +327,7 @@ export default function HomePage() {
           <div className="max-w-2xl mx-auto">
             {categoryCards.map((card, index) => (
               card.disabled ? (
-                <Card key={index} className={`h-[140px] overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 border-muted/50 ${index > 0 ? 'mt-8' : ''}`}>
+                <Card key={index} className={`h-[140px] overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 border border-gray-600 ${index > 0 ? 'mt-8' : ''}`}>
                   <CardContent className="p-4 relative h-full flex flex-col justify-center opacity-50">
                     <div className="text-center">
                       <h2 className="text-lg font-bold mb-2 text-muted-foreground/70">{card.title}</h2>
@@ -337,7 +337,7 @@ export default function HomePage() {
                 </Card>
               ) : (
                 <Link href={card.href} key={index}>
-                  <Card className={`cursor-pointer hover:shadow-md transition-all duration-300 border border-muted hover:border-primary h-[140px] overflow-hidden group relative ${card.isSpecial ? 'border-primary/30 bg-primary/5' : ''} ${index > 0 ? 'mt-8' : ''}`}>
+                  <Card className={`cursor-pointer hover:shadow-lg transition-all duration-300 border border-gray-600 hover:border-primary h-[140px] overflow-hidden group relative ${card.isSpecial ? 'bg-primary/5' : ''} ${index > 0 ? 'mt-8' : ''}`}>
                     {/* Special Practice Session - Full Width */}
                     {card.isSpecial ? (
                       <>
