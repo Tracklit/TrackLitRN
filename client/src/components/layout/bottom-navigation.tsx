@@ -99,60 +99,85 @@ export function BottomNavigation() {
     setCurrentIndex(index >= 0 ? index : 0);
   }, [location]);
 
-  // Global touch event handlers
+  // Global touch event handlers with better detection
   useEffect(() => {
+    let touchStartX: number | null = null;
+    let touchStartY: number | null = null;
+    
     const handleTouchStart = (e: TouchEvent) => {
-      setStartX(e.touches[0].clientX);
-      setStartY(e.touches[0].clientY);
-      console.log('Touch start:', e.touches[0].clientX, e.touches[0].clientY);
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      console.log('🔵 Touch start:', touchStartX, touchStartY, 'Current page:', navItems[currentIndex].title);
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      // Prevent scrolling during horizontal swipes
+      if (touchStartX !== null && touchStartY !== null) {
+        const currentX = e.touches[0].clientX;
+        const currentY = e.touches[0].clientY;
+        const diffX = Math.abs(currentX - touchStartX);
+        const diffY = Math.abs(currentY - touchStartY);
+        
+        // If horizontal movement is greater than vertical, prevent default scrolling
+        if (diffX > diffY && diffX > 10) {
+          e.preventDefault();
+        }
+      }
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
-      if (startX === null || startY === null) return;
+      if (touchStartX === null || touchStartY === null) return;
       
       const endX = e.changedTouches[0].clientX;
       const endY = e.changedTouches[0].clientY;
-      const diffX = startX - endX;
-      const diffY = startY - endY;
+      const diffX = touchStartX - endX;
+      const diffY = touchStartY - endY;
       
-      console.log('Touch end:', endX, endY, 'Diff:', diffX, diffY, 'Current index:', currentIndex);
+      console.log('🔴 Touch end:', endX, endY, 'Diff X:', diffX, 'Diff Y:', diffY, 'Current index:', currentIndex);
       
-      const threshold = 50; // Reduced minimum swipe distance
-      const verticalThreshold = 150; // Increased maximum vertical movement allowed
+      const threshold = 30; // Lower threshold for easier swiping
+      const verticalThreshold = 100; // Maximum vertical movement allowed
       
       // Only trigger horizontal swipes if vertical movement is minimal
       if (Math.abs(diffX) > threshold && Math.abs(diffY) < verticalThreshold) {
-        console.log('Swipe detected!', diffX > 0 ? 'left' : 'right');
+        console.log('✅ Swipe detected!', diffX > 0 ? 'left (next)' : 'right (prev)');
+        
         if (diffX > 0 && currentIndex < navItems.length - 1) {
           // Swipe left - go to next page
-          console.log('Navigating to:', navItems[currentIndex + 1].href);
-          setLocation(navItems[currentIndex + 1].href);
+          const nextPage = navItems[currentIndex + 1];
+          console.log('➡️ Navigating to:', nextPage.title, nextPage.href);
+          setLocation(nextPage.href);
         } else if (diffX < 0 && currentIndex > 0) {
           // Swipe right - go to previous page
-          console.log('Navigating to:', navItems[currentIndex - 1].href);
-          setLocation(navItems[currentIndex - 1].href);
+          const prevPage = navItems[currentIndex - 1];
+          console.log('⬅️ Navigating to:', prevPage.title, prevPage.href);
+          setLocation(prevPage.href);
+        } else {
+          console.log('🚫 At boundary - cannot swipe further');
         }
       } else {
-        console.log('Swipe rejected - not enough horizontal movement or too much vertical');
+        console.log('❌ Swipe rejected - diffX:', Math.abs(diffX), 'diffY:', Math.abs(diffY));
       }
       
-      setStartX(null);
-      setStartY(null);
+      touchStartX = null;
+      touchStartY = null;
     };
 
-    // Add passive listeners for better performance
+    // Add listeners with different options
     document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: false }); // Not passive to allow preventDefault
     document.addEventListener('touchend', handleTouchEnd, { passive: true });
 
     return () => {
       document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [currentIndex, setLocation]);
+  }, [currentIndex, setLocation, navItems]);
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-30 md:hidden">
-      <nav className="bg-darkBlue shadow-lg border-t border-gray-600 h-16">
+      <nav className="bg-slate-800 shadow-lg border-t border-gray-600 h-16">
         <div className="grid grid-cols-6 h-full">
           {navItems.map((item, index) => (
             <NavItem
