@@ -325,88 +325,73 @@ export default function HomePage() {
         )}
 
         
-        {/* Main Category Cards - 2x3 grid layout */}
+        {/* Main Category Cards - Single Column Full Width */}
         <section className="mb-4">
-          <div className="grid grid-cols-2 gap-2 mx-auto" style={{ maxWidth: "540px", margin: "0 auto 8px" }}>
+          <div className="space-y-3 max-w-2xl mx-auto">
             {categoryCards.map((card, index) => (
               card.disabled ? (
-                <Card key={index} className="h-[140px] overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 border-muted/50">
-                  <CardContent className="p-2.5 relative h-full flex flex-col justify-center opacity-50">
-                    <div className="flex flex-col items-center text-center gap-2">
-                      <div className="p-1.5 rounded-full bg-muted/50 border border-muted/50">
-                        <div className="h-4 w-4 flex items-center justify-center text-muted-foreground/70">
+                <Card key={index} className="h-16 overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 border-muted/50">
+                  <CardContent className="p-4 relative h-full flex items-center opacity-50">
+                    <div className="flex items-center gap-3 w-full">
+                      <div className="p-2 rounded-full bg-muted/50 border border-muted/50">
+                        <div className="h-5 w-5 flex items-center justify-center text-muted-foreground/70">
                           {card.icon}
                         </div>
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <h2 className="text-base font-bold mb-0.5 text-muted-foreground/70">{card.title}</h2>
-                        <p className="text-muted-foreground/70 text-xs px-1 line-clamp-2 overflow-hidden">{card.description}</p>
+                        <p className="text-muted-foreground/70 text-sm">{card.description}</p>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               ) : (
                 <Link href={card.href} key={index}>
-                  <Card className={`cursor-pointer hover:shadow-md transition-all duration-300 border border-muted hover:border-primary h-[140px] overflow-hidden group relative ${card.isSpecial ? 'border-primary/30 bg-primary/5' : ''}`}>
-                    {/* Special Today's Session - Full Canvas */}
+                  <Card className={`cursor-pointer hover:shadow-md transition-all duration-300 border border-muted hover:border-primary h-16 overflow-hidden group relative ${card.isSpecial ? 'border-primary/30 bg-primary/5' : ''}`}>
+                    {/* Special Today's Session - Full Width */}
                     {card.isSpecial ? (
-                      <CardContent className="h-full p-3 relative flex flex-col bg-muted/80 dark:bg-muted/80">
-                        <div className="flex flex-col h-full">
-                          <div className="flex items-center gap-2 mb-2">
+                      <CardContent className="h-full p-4 relative flex items-center bg-muted/80 dark:bg-muted/80">
+                        <div className="flex items-center gap-3 w-full">
+                          <div className="p-2 rounded-full bg-primary/15">
                             {card.icon}
-                            <h2 className="text-sm font-bold">{card.title}</h2>
                           </div>
-                          <div className="flex-1 space-y-1">
-                            {/* Show workout details for Google Sheets programs with today's session */}
-                            {primaryProgram?.program?.importedFromSheet && todaySession ? (
-                              <>
-                                {todaySession.shortDistanceWorkout && (
-                                  <div className="p-1.5 bg-background/80 dark:bg-background/40 rounded text-xs">
-                                    <span className="font-medium text-primary">60m/100m:</span> {todaySession.shortDistanceWorkout.slice(0, 30)}...
-                                  </div>
-                                )}
-                                {todaySession.mediumDistanceWorkout && (
-                                  <div className="p-1.5 bg-background/80 dark:bg-background/40 rounded text-xs">
-                                    <span className="font-medium text-primary">200m:</span> {todaySession.mediumDistanceWorkout.slice(0, 30)}...
-                                  </div>
-                                )}
-                                {todaySession.longDistanceWorkout && (
-                                  <div className="p-1.5 bg-background/80 dark:bg-background/40 rounded text-xs">
-                                    <span className="font-medium text-primary">400m:</span> {todaySession.longDistanceWorkout.slice(0, 30)}...
-                                  </div>
-                                )}
-                              </>
-                            ) : (
-                              /* Show fallback message for other program types or no program */
-                              <div className="p-1.5 bg-background/80 dark:bg-background/40 rounded text-xs">
-                                <p className="text-muted-foreground text-center">{getTodaySessionDescription()}</p>
-                              </div>
-                            )}
+                          <div className="flex-1">
+                            <h2 className="text-base font-bold mb-1">{card.title}</h2>
+                            <div className="text-sm text-muted-foreground">
+                              {/* Show workout details for Google Sheets programs with today's session */}
+                              {primaryProgram?.program?.importedFromSheet && todaySession ? (
+                                <div className="space-y-1">
+                                  {todaySession.shortDistanceWorkout && (
+                                    <div>
+                                      <span className="font-medium text-primary">60m/100m:</span> {todaySession.shortDistanceWorkout.slice(0, 40)}...
+                                    </div>
+                                  )}
+                                  {todaySession.mediumDistanceWorkout && (
+                                    <div>
+                                      <span className="font-medium text-primary">200m:</span> {todaySession.mediumDistanceWorkout.slice(0, 40)}...
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                /* Show fallback message for other program types or no program */
+                                <p>{getTodaySessionDescription()}</p>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </CardContent>
                     ) : (
-                      <>
-                        {/* Header Image - Top Half */}
-                        <div 
-                          className="h-1/2 bg-cover bg-center bg-no-repeat relative"
-                          style={{ 
-                            backgroundImage: `url(${card.headerImage})`,
-                            backgroundPosition: 'center'
-                          }}
-                        >
-                          <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-all duration-300" />
-                          <div className="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                        </div>
-                        
-                        {/* Content - Bottom Half */}
-                        <CardContent className="h-1/2 p-2.5 relative flex flex-col justify-center bg-background">
-                          <div className="flex flex-col items-center text-center">
-                            <h2 className="text-sm font-bold mb-1">{card.title}</h2>
-                            <p className="text-muted-foreground text-xs px-1 line-clamp-2 overflow-hidden">{card.description}</p>
+                      <CardContent className="h-full p-4 relative flex items-center bg-background">
+                        <div className="flex items-center gap-3 w-full">
+                          <div className="p-2 rounded-full bg-primary/15">
+                            {card.icon}
                           </div>
-                        </CardContent>
-                      </>
+                          <div className="flex-1">
+                            <h2 className="text-base font-bold mb-0.5">{card.title}</h2>
+                            <p className="text-muted-foreground text-sm">{card.description}</p>
+                          </div>
+                        </div>
+                      </CardContent>
                     )}
                   </Card>
                 </Link>
