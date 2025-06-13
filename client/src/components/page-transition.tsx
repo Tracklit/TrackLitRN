@@ -76,10 +76,19 @@ export function PageTransition({ children }: PageTransitionProps) {
   const [location] = useLocation();
   const [direction, setDirection] = useState<'forward' | 'back' | 'none'>('none');
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [overlayContent, setOverlayContent] = useState<React.ReactNode>(null);
+  const [baseContent, setBaseContent] = useState<React.ReactNode>(children);
   
   const previousLocation = useRef<string>(location);
   const previousLevel = useRef<number>(getPageLevel(location));
-  const currentPageRef = useRef<HTMLDivElement>(null);
+  const overlayPageRef = useRef<HTMLDivElement>(null);
+
+  // Update base content when not transitioning
+  useEffect(() => {
+    if (!isTransitioning) {
+      setBaseContent(children);
+    }
+  }, [children, isTransitioning]);
 
   useEffect(() => {
     if (previousLocation.current !== location) {
@@ -91,24 +100,47 @@ export function PageTransition({ children }: PageTransitionProps) {
         setDirection(navDirection);
         setIsTransitioning(true);
         
-        // Start transition immediately with initial position
-        if (currentPageRef.current) {
-          const startTransform = navDirection === 'forward' ? 'translateX(100%)' : 'translateX(-100%)';
-          currentPageRef.current.style.transform = startTransform;
+        if (navDirection === 'forward') {
+          // For forward navigation, new page overlays from right
+          setOverlayContent(children);
           
-          // Trigger transition to final position
-          requestAnimationFrame(() => {
-            if (currentPageRef.current) {
-              currentPageRef.current.style.transform = 'translateX(0%)';
+          // Start overlay from right
+          setTimeout(() => {
+            if (overlayPageRef.current) {
+              overlayPageRef.current.style.transform = 'translateX(100%)';
+              
+              requestAnimationFrame(() => {
+                if (overlayPageRef.current) {
+                  overlayPageRef.current.style.transform = 'translateX(0%)';
+                }
+              });
             }
-          });
+          }, 10);
+          
+        } else if (navDirection === 'back') {
+          // For back navigation, current page slides out to right
+          setOverlayContent(baseContent);
+          
+          setTimeout(() => {
+            if (overlayPageRef.current) {
+              overlayPageRef.current.style.transform = 'translateX(0%)';
+              
+              requestAnimationFrame(() => {
+                if (overlayPageRef.current) {
+                  overlayPageRef.current.style.transform = 'translateX(100%)';
+                }
+              });
+            }
+          }, 10);
         }
         
         // Complete transition after animation duration
         setTimeout(() => {
           setIsTransitioning(false);
           setDirection('none');
-        }, 300);
+          setOverlayContent(null);
+          setBaseContent(children);
+        }, 320);
       }
       
       previousLocation.current = location;
@@ -118,16 +150,24 @@ export function PageTransition({ children }: PageTransitionProps) {
 
   return (
     <div className="relative w-full h-full overflow-hidden">
-      <div 
-        ref={currentPageRef}
-        className="w-full h-full bg-background"
-        style={{
-          transition: isTransitioning ? 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
-          transform: 'translateX(0%)',
-        }}
-      >
-        {children}
+      {/* Base page - always visible */}
+      <div className="w-full h-full bg-background">
+        {direction === 'back' && isTransitioning ? children : baseContent}
       </div>
+      
+      {/* Overlay page - for transitions */}
+      {isTransitioning && overlayContent && (
+        <div 
+          ref={overlayPageRef}
+          className="fixed inset-0 z-[50] w-full h-full bg-background"
+          style={{
+            transition: 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+            transform: direction === 'forward' ? 'translateX(100%)' : 'translateX(0%)',
+          }}
+        >
+          {overlayContent}
+        </div>
+      )}
     </div>
   );
 }
