@@ -76,13 +76,10 @@ export function PageTransition({ children }: PageTransitionProps) {
   const [location] = useLocation();
   const [direction, setDirection] = useState<'forward' | 'back' | 'none'>('none');
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [overlayContent, setOverlayContent] = useState<React.ReactNode>(null);
-  const [baseContent, setBaseContent] = useState<React.ReactNode>(children);
-  const [displayedContent, setDisplayedContent] = useState<React.ReactNode>(children);
   
   const previousLocation = useRef<string>(location);
   const previousLevel = useRef<number>(getPageLevel(location));
-  const overlayPageRef = useRef<HTMLDivElement>(null);
+  const currentPageRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (previousLocation.current !== location) {
@@ -94,81 +91,43 @@ export function PageTransition({ children }: PageTransitionProps) {
         setDirection(navDirection);
         setIsTransitioning(true);
         
-        if (navDirection === 'forward') {
-          // For forward navigation, new content appears in overlay after delay
-          setTimeout(() => {
-            setOverlayContent(children);
-            
-            if (overlayPageRef.current) {
-              overlayPageRef.current.style.transform = 'translateX(85%)';
-              
-              // Start slide-in animation
-              setTimeout(() => {
-                if (overlayPageRef.current) {
-                  overlayPageRef.current.style.transform = 'translateX(0%)';
-                }
-              }, 50);
-            }
-          }, 100); // Delay content loading to allow tap to trigger visual only
+        // Start transition immediately with initial position
+        if (currentPageRef.current) {
+          const startTransform = navDirection === 'forward' ? 'translateX(100%)' : 'translateX(-100%)';
+          currentPageRef.current.style.transform = startTransform;
           
-        } else if (navDirection === 'back') {
-          // For back navigation, show new content in base, old content slides out
-          setDisplayedContent(children);
-          setOverlayContent(displayedContent);
-          
-          setTimeout(() => {
-            if (overlayPageRef.current) {
-              overlayPageRef.current.style.transform = 'translateX(0%)';
-              
-              setTimeout(() => {
-                if (overlayPageRef.current) {
-                  overlayPageRef.current.style.transform = 'translateX(85%)';
-                }
-              }, 50);
+          // Trigger transition to final position
+          requestAnimationFrame(() => {
+            if (currentPageRef.current) {
+              currentPageRef.current.style.transform = 'translateX(0%)';
             }
-          }, 10);
+          });
         }
         
         // Complete transition after animation duration
         setTimeout(() => {
           setIsTransitioning(false);
           setDirection('none');
-          setOverlayContent(null);
-          setDisplayedContent(children);
-          setBaseContent(children);
-        }, 470);
-      } else {
-        // No transition needed, update immediately
-        setDisplayedContent(children);
-        setBaseContent(children);
+        }, 300);
       }
       
       previousLocation.current = location;
       previousLevel.current = currentLevel;
     }
-  }, [location, children]);
+  }, [location]);
 
   return (
     <div className="relative w-full h-full overflow-hidden">
-      {/* Base page - shows displayed content */}
-      <div className="w-full h-full bg-background">
-        {displayedContent}
+      <div 
+        ref={currentPageRef}
+        className="w-full h-full bg-background"
+        style={{
+          transition: isTransitioning ? 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
+          transform: 'translateX(0%)',
+        }}
+      >
+        {children}
       </div>
-      
-      {/* Overlay page - completely opaque during transitions */}
-      {isTransitioning && overlayContent && (
-        <div 
-          ref={overlayPageRef}
-          className="fixed inset-0 z-[50] w-full h-full"
-          style={{
-            transition: 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-            transform: direction === 'forward' ? 'translateX(85%)' : 'translateX(0%)',
-            backgroundColor: 'hsl(var(--background))', // Solid background color
-          }}
-        >
-          {overlayContent}
-        </div>
-      )}
     </div>
   );
 }
