@@ -51,15 +51,18 @@ export function useSwipeNavigation(
         
         // Determine swipe direction and check boundaries
         if (deltaX > 0 && currentIndex > 0) {
-          // Swiping right (previous page)
+          // Swiping right (previous page) - only if not at first page
           setNextPageDirection('right');
           setSwipeProgress(clampedProgress);
           setCurrentTransform(deltaX);
         } else if (deltaX < 0 && currentIndex < navItems.length - 1) {
-          // Swiping left (next page)
+          // Swiping left (next page) - only if not at last page
           setNextPageDirection('left');
           setSwipeProgress(clampedProgress);
           setCurrentTransform(deltaX);
+        } else {
+          // At boundary - don't allow swipe
+          return;
         }
       }
     };
@@ -78,28 +81,33 @@ export function useSwipeNavigation(
       
       const endX = e.changedTouches[0].clientX;
       const deltaX = endX - touchStartX.current;
-      const threshold = window.innerWidth * 0.3; // 30% of screen width
+      const threshold = window.innerWidth * 0.5; // 50% of screen width
       
       setIsTransitioning(true);
       
       if (Math.abs(deltaX) > threshold) {
-        // Complete the navigation
+        // Complete the navigation - animate to full position
         if (deltaX > 0 && currentIndex > 0) {
           // Navigate to previous page
-          setLocation(navItems[currentIndex - 1].href);
+          setCurrentTransform(window.innerWidth);
+          // Navigate after animation starts
+          setTimeout(() => {
+            setLocation(navItems[currentIndex - 1].href);
+          }, 150); // Mid-animation
         } else if (deltaX < 0 && currentIndex < navItems.length - 1) {
-          // Navigate to next page
-          setLocation(navItems[currentIndex + 1].href);
+          // Navigate to next page  
+          setCurrentTransform(-window.innerWidth);
+          // Navigate after animation starts
+          setTimeout(() => {
+            setLocation(navItems[currentIndex + 1].href);
+          }, 150); // Mid-animation
         }
-        
-        // Animate to complete position
-        setCurrentTransform(deltaX > 0 ? window.innerWidth : -window.innerWidth);
       } else {
         // Snap back to current page
         setCurrentTransform(0);
       }
       
-      // Reset after animation
+      // Reset after animation completes
       setTimeout(() => {
         setCurrentTransform(0);
         setSwipeProgress(0);
