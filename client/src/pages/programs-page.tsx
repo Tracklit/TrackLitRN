@@ -128,7 +128,7 @@ export default function ProgramsPage() {
     : [];
   
   return (
-    <div className="container max-w-screen-xl mx-auto p-4 pt-16 md:pt-18 md:pl-72 pb-20 h-screen overflow-y-auto">
+    <div className="container max-w-screen-xl mx-auto p-4 md:pl-72 pb-20 h-screen overflow-y-auto">
       <BackNavigation />
       <div className="mb-4">
         <h1 className="text-lg font-semibold mb-1">Training Programs</h1>

@@ -275,7 +275,7 @@ export default function MeetsPage() {
   return (
     <>
       <div className="min-h-screen bg-background text-foreground">
-        <main className="pt-16 pb-6">
+        <main className="pb-6">
           <div className="max-w-3xl mx-auto px-4">
             <BackNavigation />
             {/* Ticker Messages - Dashboard Style */}
