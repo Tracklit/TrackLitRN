@@ -1,10 +1,10 @@
-import trackImage1 from "@assets/IMG_4075.JPG?url";
-import trackImage2 from "@assets/IMG_4076.JPG?url";
-import trackImage3 from "@assets/IMG_4077.JPG?url";
-import trackImage4 from "@assets/IMG_4078.JPG?url";
-
-// Preload track images and cache them
-export const trackImages = [trackImage1, trackImage2, trackImage3, trackImage4];
+// Use compressed WebP versions for much faster loading
+export const trackImages = [
+  "/track-image-1-compressed.webp",
+  "/track-image-2-compressed.webp", 
+  "/track-image-3-compressed.webp",
+  "/track-image-4-compressed.webp"
+];
 
 // Image preloader with caching
 class ImagePreloader {

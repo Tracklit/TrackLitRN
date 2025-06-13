@@ -203,27 +203,27 @@ async function generateImageSizes(inputPath: string, baseFilename: string, outpu
   };
   
   try {
-    // Generate original compressed version
+    // Generate original compressed version with doubled compression
     await sharp(inputPath)
-      .jpeg({ quality: 85, progressive: true })
-      .png({ quality: 85, progressive: true })
-      .webp({ quality: 85 })
+      .jpeg({ quality: 40, progressive: true })
+      .png({ quality: 40, progressive: true })
+      .webp({ quality: 40 })
       .toFile(path.join(outputDir, results.original));
     
-    // Generate different sizes
+    // Generate different sizes with doubled compression
     await sharp(inputPath)
       .resize(sizes.thumb.width, sizes.thumb.height, { fit: 'cover', position: 'center' })
-      .webp({ quality: 85 })
+      .webp({ quality: 40 })
       .toFile(path.join(outputDir, results.thumb));
       
     await sharp(inputPath)
       .resize(sizes.medium.width, sizes.medium.height, { fit: 'cover', position: 'center' })
-      .webp({ quality: 85 })
+      .webp({ quality: 40 })
       .toFile(path.join(outputDir, results.medium));
       
     await sharp(inputPath)
       .resize(sizes.large.width, sizes.large.height, { fit: 'cover', position: 'center' })
-      .webp({ quality: 85 })
+      .webp({ quality: 45 })
       .toFile(path.join(outputDir, results.large));
     
     // Remove original after processing
