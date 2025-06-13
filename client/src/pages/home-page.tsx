@@ -357,11 +357,11 @@ export default function HomePage() {
                             style={{ 
                               backgroundImage: `url(${card.backgroundImage})`,
                               backgroundPosition: 'center 50%',
-                              opacity: 0.5
+                              opacity: 0.65
                             }}
                           />
                         )}
-                        <CardContent className="h-full p-4 relative flex flex-col bg-black z-10">
+                        <CardContent className="h-full p-4 relative flex flex-col bg-black/40 z-10">
                             <div className="flex flex-col h-full">
                               <div className="mb-3">
                                 <h2 className="text-lg font-bold text-center">{card.title}</h2>
