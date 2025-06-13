@@ -192,7 +192,7 @@ export default function HomePage() {
       href: "/practice",
       disabled: false,
       isSpecial: true,
-      backgroundImage: "/practice-card-optimized.jpeg"
+      backgroundImage: "/practice-card-final-compressed.jpeg"
     },
     {
       title: "Programs",
