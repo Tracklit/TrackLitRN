@@ -185,6 +185,14 @@ export default function HomePage() {
   // Category cards for main navigation
   const categoryCards = [
     {
+      title: "Today's Session",
+      description: getTodaySessionDescription(),
+      icon: <Calendar className="h-6 w-6 text-primary" />,
+      href: "/practice",
+      disabled: false,
+      isSpecial: true
+    },
+    {
       title: "Practice",
       description: "Training sessions and programs",
       icon: <Dumbbell className="h-6 w-6 text-primary" />,
@@ -223,14 +231,6 @@ export default function HomePage() {
       href: "/sprinthia",
       disabled: false,
       headerImage: "/sprinthia-avatar-extreme.webp"
-    },
-    {
-      title: "Today's Session",
-      description: getTodaySessionDescription(),
-      icon: <Calendar className="h-6 w-6 text-primary" />,
-      href: "/practice",
-      disabled: false,
-      isSpecial: true
     }
   ];
 
