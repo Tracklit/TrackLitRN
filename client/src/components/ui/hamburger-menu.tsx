@@ -17,7 +17,8 @@ import {
   Coins,
   BookOpen,
   Target,
-  Shield
+  Shield,
+  Heart
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -152,6 +153,18 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               >
                 <Clock className="h-4 w-4 mr-3" />
                 Training Tools
+              </div>
+            </Link>
+            <Link href="/rehab">
+              <div
+                className={cn(
+                  "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
+                  location.startsWith("/rehab") ? "bg-primary text-primary-foreground" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                )}
+                onClick={() => setIsOpen(false)}
+              >
+                <Heart className="h-4 w-4 mr-3" />
+                Rehabilitation
               </div>
             </Link>
             
