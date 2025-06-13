@@ -249,11 +249,11 @@ export default function HomePage() {
             <div className="grid grid-cols-2 gap-2" style={{ margin: "0 auto" }}>
               <div className="col-span-2">
                 {isTickerVisible ? (
-                  <div className="bg-card rounded-lg border relative overflow-hidden">
+                  <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg border relative overflow-hidden">
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-6 w-6 p-0 absolute right-2 top-2 z-10 text-muted-foreground hover:text-foreground"
+                      className="h-6 w-6 p-0 absolute right-2 top-2 z-10 text-white/70 hover:text-white"
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleTickerVisibility(!isTickerVisible);
@@ -280,21 +280,21 @@ export default function HomePage() {
                           key={activeSessionIndex}
                         >
                           <div className="flex items-center gap-2 pr-8">
-                            <div className="rounded-full bg-primary/15 h-8 w-8 flex items-center justify-center flex-shrink-0">
-                              <UserCircle className="h-4 w-4 text-primary" />
+                            <div className="rounded-full bg-white/20 h-8 w-8 flex items-center justify-center flex-shrink-0">
+                              <UserCircle className="h-4 w-4 text-white" />
                             </div>
                             <div className="flex-1 overflow-hidden">
                               <div className="flex items-center gap-1 mb-0.5">
-                                <span className="text-xs font-medium">{sessionPreviews[activeSessionIndex].title}</span>
-                                <span className="text-xs text-muted-foreground">· {sessionPreviews[activeSessionIndex].user?.username}</span>
+                                <span className="text-xs font-medium text-white">{sessionPreviews[activeSessionIndex].title}</span>
+                                <span className="text-xs text-white/70">· {sessionPreviews[activeSessionIndex].user?.username}</span>
                               </div>
-                              <p className="text-xs text-muted-foreground line-clamp-1">{sessionPreviews[activeSessionIndex].previewText}</p>
+                              <p className="text-xs text-white/80 line-clamp-1">{sessionPreviews[activeSessionIndex].previewText}</p>
                             </div>
                           </div>
                         </div>
                       ) : (
                         <div className="p-3 h-12 flex items-center">
-                          <span className="text-xs text-muted-foreground">No recent workouts</span>
+                          <span className="text-xs text-white/70">No recent workouts</span>
                         </div>
                       )}
                     </div>
