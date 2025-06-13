@@ -412,7 +412,7 @@ export default function HomePage() {
                         <CardContent className="p-4 relative h-full flex flex-col justify-center bg-background z-10">
                           <div className="text-center">
                             <h2 className="text-lg font-bold mb-2">{card.title}</h2>
-                            <p className="text-muted-foreground text-sm">{card.description}</p>
+                            <p className="text-white text-sm">{card.description}</p>
                           </div>
                         </CardContent>
                       </>
