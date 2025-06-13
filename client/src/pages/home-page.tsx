@@ -197,7 +197,7 @@ export default function HomePage() {
       icon: <BookOpen className="h-6 w-6 text-primary" />,
       href: "/programs",
       disabled: false,
-      headerImage: "/programs-card-compressed.jpeg"
+      headerImage: "/programs-card-ultra-compressed.webp"
     },
     {
       title: "Race",
@@ -212,7 +212,7 @@ export default function HomePage() {
       icon: <Clock className="h-6 w-6 text-primary" />,
       href: "/training-tools",
       disabled: false,
-      headerImage: "/tools-card-compressed.jpeg"
+      headerImage: "/tools-card-ultra-compressed.webp"
     },
     {
       title: "Sprinthia",
@@ -220,7 +220,7 @@ export default function HomePage() {
       icon: <MessageCircle className="h-6 w-6 text-primary" />,
       href: "/sprinthia",
       disabled: false,
-      headerImage: "/sprinthia-avatar-compressed.jpeg"
+      headerImage: "/sprinthia-avatar-ultra-compressed.webp"
     },
     {
       title: "Today's Session",

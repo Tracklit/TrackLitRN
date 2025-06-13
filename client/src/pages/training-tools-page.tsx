@@ -14,9 +14,10 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { BackNavigation } from "@/components/back-navigation";
-import startGunImagePath from "@assets/startgun.png";
-import stopwatchImagePath from "@assets/IMG_4081.jpeg";
-import videoAnalysisCardImage from "@assets/video-analysis-card.jpeg";
+// Use compressed WebP versions for faster loading
+const startGunImagePath = "/startgun-compressed.webp";
+const stopwatchImagePath = "/stopwatch-compressed.webp";
+const videoAnalysisCardImage = "/video-analysis-card-compressed.webp";
 
 export default function WorkoutToolsPage() {
   // Tool cards with links to individual pages
