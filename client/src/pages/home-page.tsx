@@ -341,9 +341,10 @@ export default function HomePage() {
                         {/* Background Image */}
                         {card.backgroundImage && (
                           <div 
-                            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                            className="absolute inset-0 bg-cover bg-no-repeat"
                             style={{ 
                               backgroundImage: `url(${card.backgroundImage})`,
+                              backgroundPosition: 'center 50%',
                               opacity: 0.3
                             }}
                           />
@@ -388,9 +389,10 @@ export default function HomePage() {
                         {/* Background Image for regular cards */}
                         {card.backgroundImage && (
                           <div 
-                            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                            className="absolute inset-0 bg-cover bg-no-repeat"
                             style={{ 
                               backgroundImage: `url(${card.backgroundImage})`,
+                              backgroundPosition: 'center 50%',
                               opacity: 0.3
                             }}
                           />
