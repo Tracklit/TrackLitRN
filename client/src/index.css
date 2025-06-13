@@ -392,14 +392,14 @@ article::-webkit-scrollbar,
   body {
     @apply font-sans antialiased text-foreground;
     min-height: 100vh;
-    /* Updated gradient with lighter blues and purple accent */
+    /* Updated gradient with much lighter blues and earlier purple */
     background: linear-gradient(135deg, 
-      #0f1828 0%, 
-      #1a2e6b 20%, 
-      #1e3a8a 40%, 
-      #1a2e6b 60%, 
-      #1a2e6b 75%, 
-      #2d1b69 90%, 
+      #1a2332 0%, 
+      #1a2e6b 15%, 
+      #1e3a8a 30%, 
+      #1a2e6b 45%, 
+      #2d1b69 65%, 
+      #3b1f7a 80%, 
       #1e1a4a 100%) !important;
     background-size: 400% 400% !important;
     animation: gradientShift 15s ease infinite !important;
