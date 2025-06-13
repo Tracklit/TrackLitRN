@@ -394,7 +394,7 @@ export default function HomePage() {
                             className="absolute inset-0 bg-cover bg-no-repeat"
                             style={{ 
                               backgroundImage: `url(${card.backgroundImage})`,
-                              backgroundPosition: card.title === 'Sprinthia' ? 'center top' : 'center 50%',
+                              backgroundPosition: card.title === 'Sprinthia' ? 'center -100px' : 'center 50%',
                               opacity: 0.5
                             }}
                           />
