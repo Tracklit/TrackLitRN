@@ -81,7 +81,7 @@ export default function CreateMeetPage() {
       <div className="min-h-screen bg-background text-foreground">
       <main className="pt-16 pb-6">
         <div className="max-w-2xl mx-auto px-4">
-          <BackNavigation />
+
           
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-foreground mb-2">Create New Meet</h1>

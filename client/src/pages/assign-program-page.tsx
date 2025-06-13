@@ -127,7 +127,7 @@ export function AssignProgramPage() {
   if (!program) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-slate-950 to-slate-900 text-white">
-        <BackNavigation />
+
         <div className="container mx-auto px-4 pt-20">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Program Not Found</h1>
@@ -140,7 +140,7 @@ export function AssignProgramPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 to-slate-900 text-white">
-      <BackNavigation />
+
       
       <div className="container mx-auto px-4 pt-20 pb-8">
         <div className="max-w-2xl mx-auto">
