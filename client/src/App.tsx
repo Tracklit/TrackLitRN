@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { HamburgerMenu } from "@/components/ui/hamburger-menu";
 import { Header } from "@/components/layout/header";
 import { BottomNavigation } from "@/components/layout/bottom-navigation";
+import { SwipeContainer } from "@/components/layout/swipe-container";
 
 
 // Import tool components
@@ -156,6 +157,24 @@ function Router() {
 function MainApp() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const { user, loginMutation, registerMutation } = useAuth();
+  const [location] = useLocation();
+
+  const navItems = [
+    { href: "/", title: "Dashboard" },
+    { href: "/practice", title: "Practice" },
+    { href: "/programs", title: "Programs" },
+    { href: "/meets", title: "Race" },
+    { href: "/training-tools", title: "Tools" },
+    { href: "/sprinthia", title: "Sprinthia" }
+  ];
+
+  // Calculate current index based on location
+  const currentIndex = navItems.findIndex(item => {
+    if (item.href === "/") {
+      return location === "/";
+    }
+    return location.startsWith(item.href);
+  });
   
   // Only show onboarding for new user registrations (not logins)
   useEffect(() => {
@@ -191,11 +210,17 @@ function MainApp() {
       
       {/* Main Content */}
       <main className="pt-20 pb-20 md:pb-0">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <PageTransition>
-            <Router />
-          </PageTransition>
-        </div>
+        <SwipeContainer 
+          navItems={navItems}
+          currentIndex={Math.max(0, currentIndex)}
+          className="min-h-[calc(100vh-10rem)]"
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <PageTransition>
+              <Router />
+            </PageTransition>
+          </div>
+        </SwipeContainer>
       </main>
       
       {/* Bottom Navigation */}
