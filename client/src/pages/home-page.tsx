@@ -201,7 +201,7 @@ export default function HomePage() {
       href: "/programs",
       disabled: false,
       headerImage: "/programs-card-extreme.webp",
-      backgroundImage: "/programs-background-optimized.jpeg"
+      backgroundImage: "/programs-background-final-compressed.jpeg"
     },
     {
       title: "Race",
