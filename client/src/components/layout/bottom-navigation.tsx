@@ -67,11 +67,17 @@ interface NavItemProps {
 }
 
 function NavItem({ href, icon, title, isActive, onClick }: NavItemProps) {
+  const handleClick = () => {
+    // Scroll to top when navigating
+    window.scrollTo(0, 0);
+    if (onClick) onClick();
+  };
+
   return (
     <Link href={href}>
       <div 
         className="flex flex-col items-center justify-center h-full px-2 cursor-pointer transition-colors"
-        onClick={onClick}
+        onClick={handleClick}
       >
         <div className={cn(
           "transition-colors duration-200",
