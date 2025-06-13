@@ -405,7 +405,7 @@ export default function HomePage() {
                             style={{ 
                               backgroundImage: `url(${card.backgroundImage})`,
                               backgroundPosition: card.title === 'Sprinthia' ? 'center -100px' : 'center 50%',
-                              opacity: 0.3
+                              opacity: 0.5
                             }}
                           />
                         )}
