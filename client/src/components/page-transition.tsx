@@ -134,11 +134,9 @@ export function PageTransition({ children }: PageTransitionProps) {
           setIsTransitioning(false);
           setDirection('none');
           setOverlayContent(null);
-          // Only update base content after transition is complete
-          if (pendingContent) {
-            setBaseContent(pendingContent);
-            setPendingContent(null);
-          }
+          // Update base content after transition is complete
+          setBaseContent(pendingContent || children);
+          setPendingContent(null);
         }, 320);
       } else {
         // No transition needed, update immediately
@@ -152,19 +150,20 @@ export function PageTransition({ children }: PageTransitionProps) {
 
   return (
     <div className="relative w-full h-full overflow-hidden">
-      {/* Base page - shows old content during transition, new content after */}
+      {/* Base page - keeps old content during forward transitions */}
       <div className="w-full h-full bg-background">
-        {isTransitioning && direction === 'back' ? pendingContent : baseContent}
+        {baseContent}
       </div>
       
-      {/* Overlay page - for transitions */}
+      {/* Overlay page - completely opaque during transitions */}
       {isTransitioning && overlayContent && (
         <div 
           ref={overlayPageRef}
-          className="fixed inset-0 z-[50] w-full h-full bg-background"
+          className="fixed inset-0 z-[50] w-full h-full"
           style={{
             transition: 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
             transform: direction === 'forward' ? 'translateX(100%)' : 'translateX(0%)',
+            backgroundColor: 'hsl(var(--background))', // Solid background color
           }}
         >
           {overlayContent}
