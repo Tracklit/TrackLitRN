@@ -130,6 +130,7 @@ export default function HomePage() {
     user?: {
       username: string;
       name: string;
+      profileImageUrl?: string;
     };
   };
   
@@ -280,8 +281,16 @@ export default function HomePage() {
                           key={activeSessionIndex}
                         >
                           <div className="flex items-center gap-2 pr-8">
-                            <div className="rounded-full bg-white/20 h-8 w-8 flex items-center justify-center flex-shrink-0">
-                              <UserCircle className="h-4 w-4 text-white" />
+                            <div className="rounded-full bg-white/20 h-8 w-8 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                              {sessionPreviews[activeSessionIndex].user?.profileImageUrl ? (
+                                <img 
+                                  src={sessionPreviews[activeSessionIndex].user.profileImageUrl} 
+                                  alt={sessionPreviews[activeSessionIndex].user?.username}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <UserCircle className="h-4 w-4 text-white" />
+                              )}
                             </div>
                             <div className="flex-1 overflow-hidden">
                               <div className="flex items-center gap-1 mb-0.5">

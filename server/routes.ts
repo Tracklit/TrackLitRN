@@ -726,7 +726,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         title: "Speed Intervals",
         previewText: "Completed a great sprint session with 6x200m at 30s each!",
         createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-        user: { username: "sarah_runner", name: "Sarah T." }
+        user: { username: "sarah_runner", name: "Sarah T.", profileImageUrl: "https://images.unsplash.com/photo-1494790108755-2616b612b647?w=150&h=150&fit=crop&crop=face" }
       },
       {
         id: 2,
@@ -735,7 +735,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         title: "Long Run Day",
         previewText: "10km easy run completed in 45mins. Feeling great!",
         createdAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-        user: { username: "track_star", name: "Michael J." }
+        user: { username: "track_star", name: "Michael J.", profileImageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face" }
       },
       {
         id: 3,
@@ -744,7 +744,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         title: "Tempo Run",
         previewText: "5x400m ladder workout complete. New personal best!",
         createdAt: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
-        user: { username: "coach_k", name: "Coach Kevin" }
+        user: { username: "coach_k", name: "Coach Kevin", profileImageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face" }
       },
       {
         id: 4,
@@ -753,7 +753,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         title: "Hill Sprints",
         previewText: "Just finished 10x hill sprints. My legs are on fire but worth it!",
         createdAt: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-        user: { username: "sprint_queen", name: "Lisa M." }
+        user: { username: "sprint_queen", name: "Lisa M.", profileImageUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face" }
       },
       {
         id: 5,
@@ -762,7 +762,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         title: "Morning Endurance",
         previewText: "Early morning 800m repeats - 6 sets at 2:15 pace. New week, new goals!",
         createdAt: new Date(Date.now() - 1000 * 60 * 150).toISOString(),
-        user: { username: "distance_king", name: "Alex P." }
+        user: { username: "distance_king", name: "Alex P.", profileImageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face" }
       },
       {
         id: 6,
@@ -771,7 +771,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         title: "Track Workout",
         previewText: "400m, 300m, 200m, 100m ladder with full recovery. Felt strong today!",
         createdAt: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
-        user: { username: "track_coach", name: "Coach Smith" }
+        user: { username: "track_coach", name: "Coach Smith", profileImageUrl: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&crop=face" }
       },
       {
         id: 7,
