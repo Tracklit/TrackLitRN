@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { PageHeader } from "@/components/page-header";
-import { BackNavigation } from "@/components/back-navigation";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -129,7 +129,7 @@ export default function ProgramsPage() {
   
   return (
     <div className="container max-w-screen-xl mx-auto p-4 md:pl-72 pb-20 h-screen overflow-y-auto">
-      <BackNavigation />
+
       <div className="mb-4">
         <h1 className="text-lg font-semibold mb-1">Training Programs</h1>
         <p className="text-xs text-muted-foreground">Create, discover, and follow training programs</p>

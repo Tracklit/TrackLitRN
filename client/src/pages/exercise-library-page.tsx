@@ -235,7 +235,7 @@ export default function ExerciseLibraryPage() {
 
   return (
     <PageContainer>
-      <BackNavigation />
+
       <div className="space-y-6">
         {/* Header with Upload Button and View Toggle */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

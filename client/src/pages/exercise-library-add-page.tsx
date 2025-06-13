@@ -131,7 +131,7 @@ export default function ExerciseLibraryAddPage() {
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="space-y-4">
-          <BackNavigation />
+
           <div>
             <h1 className="text-2xl font-bold">Add Video to Library</h1>
             <p className="text-muted-foreground">

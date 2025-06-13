@@ -13,7 +13,7 @@ import {
   Camera
 } from "lucide-react";
 import { Link } from "wouter";
-import { BackNavigation } from "@/components/back-navigation";
+
 // Use extreme compressed WebP versions for ultra-fast loading
 const startGunImagePath = "/startgun-extreme.webp";
 const stopwatchImagePath = "/stopwatch-extreme.webp";
@@ -82,7 +82,7 @@ export default function WorkoutToolsPage() {
   
   return (
     <div className="container max-w-screen-xl mx-auto p-4 pt-5 pb-10">
-      <BackNavigation />
+
       
       <PageHeader
         title="Workout Tools"

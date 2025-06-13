@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { BackNavigation } from "@/components/back-navigation";
+
 import { PageContainer } from "@/components/page-container";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -352,7 +352,7 @@ export default function VideoAnalysisPage() {
 
   return (
     <PageContainer>
-      <BackNavigation />
+
       
       <div className="space-y-6">
         {/* Header */}
