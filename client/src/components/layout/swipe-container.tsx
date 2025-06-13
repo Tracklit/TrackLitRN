@@ -11,7 +11,8 @@ export function SwipeContainer({ children, navItems, currentIndex, className = "
   const {
     containerRef,
     deltaX,
-    isDragging
+    isDragging,
+    isNavigating
   } = useSwipeNavigation(navItems, currentIndex);
 
   // Calculate transform for the three-page carousel
@@ -32,7 +33,7 @@ export function SwipeContainer({ children, navItems, currentIndex, className = "
         style={{ 
           transform: getTransform(),
           width: '300vw', // Three pages: previous, current, next
-          transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+          transition: (isDragging || isNavigating) ? 'none' : 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
         }}
       >
         {/* Previous page */}

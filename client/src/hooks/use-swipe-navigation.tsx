@@ -5,6 +5,7 @@ interface SwipeNavigationHook {
   containerRef: React.RefObject<HTMLDivElement>;
   deltaX: number;
   isDragging: boolean;
+  isNavigating: boolean;
   currentIndex: number;
 }
 
@@ -15,14 +16,18 @@ export function useSwipeNavigation(
   const [, setLocation] = useLocation();
   const [deltaX, setDeltaX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
   const [startX, setStartX] = useState<number | null>(null);
   const [startY, setStartY] = useState<number | null>(null);
   const [startTime, setStartTime] = useState<number>(0);
   
   const containerRef = useRef<HTMLDivElement>(null);
+  const navigatingRef = useRef(false);
 
   useEffect(() => {
     const handleTouchStart = (e: TouchEvent) => {
+      if (navigatingRef.current) return;
+      
       setStartX(e.touches[0].clientX);
       setStartY(e.touches[0].clientY);
       setStartTime(Date.now());
@@ -30,7 +35,7 @@ export function useSwipeNavigation(
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (startX === null || startY === null) return;
+      if (startX === null || startY === null || navigatingRef.current) return;
       
       const currentX = e.touches[0].clientX;
       const currentY = e.touches[0].clientY;
@@ -57,7 +62,7 @@ export function useSwipeNavigation(
     };
 
     const handleTouchEnd = () => {
-      if (!isDragging || startX === null) {
+      if (!isDragging || startX === null || navigatingRef.current) {
         setDeltaX(0);
         setIsDragging(false);
         return;
@@ -68,7 +73,6 @@ export function useSwipeNavigation(
       
       // Velocity-based thresholds
       const threshold = window.innerWidth / 3;
-      const absDelta = Math.abs(deltaX);
       let targetIndex = currentIndex;
       
       // Check velocity-based navigation (faster swipes with lower distance threshold)
@@ -81,19 +85,19 @@ export function useSwipeNavigation(
       setIsDragging(false);
       
       if (targetIndex !== currentIndex) {
-        // Use transitionend handler instead of setTimeout
-        const handleTransitionEnd = () => {
-          setLocation(navItems[targetIndex].href);
-          containerRef.current?.removeEventListener('transitionend', handleTransitionEnd);
-          setDeltaX(0);
-        };
-        containerRef.current?.addEventListener('transitionend', handleTransitionEnd);
+        // Set navigation flag to prevent interference
+        navigatingRef.current = true;
+        setIsNavigating(true);
         
-        // Set target position for CSS transition
-        const targetDelta = targetIndex > currentIndex 
-          ? -window.innerWidth 
-          : window.innerWidth;
-        setDeltaX(targetDelta);
+        // Navigate immediately without any transition
+        setDeltaX(0);
+        setLocation(navItems[targetIndex].href);
+        
+        // Clear navigation flag after a short delay
+        requestAnimationFrame(() => {
+          navigatingRef.current = false;
+          setIsNavigating(false);
+        });
       } else {
         // Snap back to original position
         setDeltaX(0);
@@ -113,13 +117,16 @@ export function useSwipeNavigation(
 
   // Reset deltaX when currentIndex changes (from external navigation)
   useEffect(() => {
-    setDeltaX(0);
+    if (!navigatingRef.current) {
+      setDeltaX(0);
+    }
   }, [currentIndex]);
 
   return {
     containerRef,
     deltaX,
     isDragging,
+    isNavigating,
     currentIndex
   };
 }
