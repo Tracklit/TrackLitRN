@@ -3,9 +3,8 @@ import { useLocation } from 'wouter';
 
 interface SwipeNavigationHook {
   containerRef: React.RefObject<HTMLDivElement>;
-  deltaX: number;
-  isDragging: boolean;
   isNavigating: boolean;
+  navigationDirection: 'left' | 'right' | null;
   currentIndex: number;
 }
 
@@ -14,9 +13,8 @@ export function useSwipeNavigation(
   currentIndex: number
 ): SwipeNavigationHook {
   const [, setLocation] = useLocation();
-  const [deltaX, setDeltaX] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [navigationDirection, setNavigationDirection] = useState<'left' | 'right' | null>(null);
   const [startX, setStartX] = useState<number | null>(null);
   const [startY, setStartY] = useState<number | null>(null);
   const [startTime, setStartTime] = useState<number>(0);
@@ -31,7 +29,6 @@ export function useSwipeNavigation(
       setStartX(e.touches[0].clientX);
       setStartY(e.touches[0].clientY);
       setStartTime(Date.now());
-      setIsDragging(false);
     };
 
     const handleTouchMove = (e: TouchEvent) => {
@@ -43,90 +40,106 @@ export function useSwipeNavigation(
       const deltaYMove = currentY - startY;
       
       // Check if this is a horizontal swipe
-      if (Math.abs(deltaXMove) > Math.abs(deltaYMove) && Math.abs(deltaXMove) > 10) {
-        if (!isDragging) {
-          setIsDragging(true);
-        }
+      if (Math.abs(deltaXMove) > Math.abs(deltaYMove) && Math.abs(deltaXMove) > 30) {
         e.preventDefault();
-        
-        // Apply boundary resistance
-        let adjustedDelta = deltaXMove;
-        if ((deltaXMove > 0 && currentIndex === 0) || 
-            (deltaXMove < 0 && currentIndex === navItems.length - 1)) {
-          // Add resistance when at boundaries
-          adjustedDelta = deltaXMove * 0.3;
-        }
-        
-        setDeltaX(adjustedDelta);
       }
     };
 
     const handleTouchEnd = () => {
-      if (!isDragging || startX === null || navigatingRef.current) {
-        setDeltaX(0);
-        setIsDragging(false);
+      if (startX === null || navigatingRef.current) {
+        setStartX(null);
+        setStartY(null);
         return;
       }
       
+      const endX = startX; // We stored the start position
+      const currentX = startX; // This would be the end position in a real scenario
+      // Since we're not tracking during move, we need to get the end position differently
+      // Let's use a different approach - detect swipe on touchend
+      
+      const touchEndTime = Date.now();
+      const elapsed = touchEndTime - startTime;
+      
+      // For Instagram-like behavior, we need to detect quick swipes
+      // Let's use a simpler approach: detect direction and minimum distance
+      
+      setStartX(null);
+      setStartY(null);
+    };
+
+    const handleSwipeDetection = (e: TouchEvent) => {
+      if (navigatingRef.current) return;
+      
+      const touch = e.changedTouches[0];
+      if (!startX || !startY) return;
+      
+      const deltaX = touch.clientX - startX;
+      const deltaY = touch.clientY - startY;
       const elapsed = Date.now() - startTime;
-      const velocity = deltaX / elapsed; // pixels per millisecond
       
-      // Velocity-based thresholds
-      const threshold = window.innerWidth / 3;
-      let targetIndex = currentIndex;
-      
-      // Check velocity-based navigation (faster swipes with lower distance threshold)
-      if ((deltaX < -threshold || velocity < -0.3) && currentIndex < navItems.length - 1) {
-        targetIndex = currentIndex + 1;
-      } else if ((deltaX > threshold || velocity > 0.3) && currentIndex > 0) {
-        targetIndex = currentIndex - 1;
+      // Check if this is a horizontal swipe with sufficient velocity and distance
+      if (Math.abs(deltaX) > Math.abs(deltaY) && 
+          Math.abs(deltaX) > 50 && // Minimum swipe distance
+          elapsed < 300) { // Maximum swipe time for quick gesture
+        
+        let targetIndex = currentIndex;
+        
+        if (deltaX < 0 && currentIndex < navItems.length - 1) {
+          // Swipe left - next page
+          targetIndex = currentIndex + 1;
+          setNavigationDirection('left');
+        } else if (deltaX > 0 && currentIndex > 0) {
+          // Swipe right - previous page
+          targetIndex = currentIndex - 1;
+          setNavigationDirection('right');
+        }
+        
+        if (targetIndex !== currentIndex) {
+          // Set navigation flag to prevent interference
+          navigatingRef.current = true;
+          setIsNavigating(true);
+          
+          // Navigate with animation
+          setTimeout(() => {
+            setLocation(navItems[targetIndex].href);
+            
+            // Clear navigation state after animation
+            setTimeout(() => {
+              navigatingRef.current = false;
+              setIsNavigating(false);
+              setNavigationDirection(null);
+            }, 350); // Match animation duration
+          }, 50); // Small delay to ensure animation starts
+        }
       }
       
-      setIsDragging(false);
-      
-      if (targetIndex !== currentIndex) {
-        // Set navigation flag to prevent interference
-        navigatingRef.current = true;
-        setIsNavigating(true);
-        
-        // Navigate immediately without any transition
-        setDeltaX(0);
-        setLocation(navItems[targetIndex].href);
-        
-        // Clear navigation flag after a short delay
-        requestAnimationFrame(() => {
-          navigatingRef.current = false;
-          setIsNavigating(false);
-        });
-      } else {
-        // Snap back to original position
-        setDeltaX(0);
-      }
+      setStartX(null);
+      setStartY(null);
     };
 
     document.addEventListener('touchstart', handleTouchStart, { passive: true });
     document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    document.addEventListener('touchend', handleTouchEnd, { passive: true });
+    document.addEventListener('touchend', handleSwipeDetection, { passive: true });
 
     return () => {
       document.removeEventListener('touchstart', handleTouchStart);
       document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleTouchEnd);
+      document.removeEventListener('touchend', handleSwipeDetection);
     };
-  }, [currentIndex, navItems, setLocation, isDragging, deltaX, startTime]);
+  }, [currentIndex, navItems, setLocation, startTime]);
 
-  // Reset deltaX when currentIndex changes (from external navigation)
+  // Reset navigation state when currentIndex changes (from external navigation)
   useEffect(() => {
     if (!navigatingRef.current) {
-      setDeltaX(0);
+      setIsNavigating(false);
+      setNavigationDirection(null);
     }
   }, [currentIndex]);
 
   return {
     containerRef,
-    deltaX,
-    isDragging,
     isNavigating,
+    navigationDirection,
     currentIndex
   };
 }
