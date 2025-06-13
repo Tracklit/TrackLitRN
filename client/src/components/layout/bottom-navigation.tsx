@@ -45,7 +45,15 @@ const navItems = [
   { 
     title: "Sprinthia", 
     href: "/sprinthia", 
-    icon: <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />,
+    icon: (
+      <svg 
+        className="h-5 w-5 text-yellow-400 fill-yellow-400" 
+        viewBox="0 0 24 24" 
+        fill="currentColor"
+      >
+        <path d="M12 2L15 9L22 12L15 15L12 22L9 15L2 12L9 9Z" />
+      </svg>
+    ),
     key: "sprinthia"
   }
 ];
