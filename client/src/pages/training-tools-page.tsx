@@ -14,10 +14,10 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { BackNavigation } from "@/components/back-navigation";
-// Use compressed WebP versions for faster loading
-const startGunImagePath = "/startgun-compressed.webp";
-const stopwatchImagePath = "/stopwatch-compressed.webp";
-const videoAnalysisCardImage = "/video-analysis-card-compressed.webp";
+// Use extreme compressed WebP versions for ultra-fast loading
+const startGunImagePath = "/startgun-extreme.webp";
+const stopwatchImagePath = "/stopwatch-extreme.webp";
+const videoAnalysisCardImage = "/video-analysis-card-extreme.webp";
 
 export default function WorkoutToolsPage() {
   // Tool cards with links to individual pages

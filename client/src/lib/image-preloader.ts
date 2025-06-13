@@ -1,9 +1,9 @@
-// Use compressed WebP versions for much faster loading
+// Use extreme compressed WebP versions for ultra-fast loading
 export const trackImages = [
-  "/track-image-1-compressed.webp",
-  "/track-image-2-compressed.webp", 
-  "/track-image-3-compressed.webp",
-  "/track-image-4-compressed.webp"
+  "/track-image-1-extreme.webp",
+  "/track-image-2-extreme.webp", 
+  "/track-image-3-extreme.webp",
+  "/track-image-4-extreme.webp"
 ];
 
 // Image preloader with caching
