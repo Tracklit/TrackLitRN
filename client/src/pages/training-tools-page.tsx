@@ -33,7 +33,7 @@ export default function WorkoutToolsPage() {
       icon: <Timer className="h-6 w-6 text-white" />,
       href: "/tools/stopwatch",
       disabled: false,
-      gradient: "bg-gradient-to-r from-green-600 to-blue-600"
+      gradient: "bg-gradient-to-r from-purple-700 to-blue-500"
     },
     {
       title: "Start Gun",
@@ -41,7 +41,7 @@ export default function WorkoutToolsPage() {
       icon: <Volume2 className="h-6 w-6 text-white" />,
       href: "/tools/start-gun",
       disabled: false,
-      gradient: "bg-gradient-to-r from-orange-600 to-red-600"
+      gradient: "bg-gradient-to-r from-blue-700 to-purple-500"
     },
     {
       title: "Photo Finish",
@@ -49,7 +49,7 @@ export default function WorkoutToolsPage() {
       icon: <Video className="h-6 w-6 text-white" />,
       href: "/tools/photo-finish",
       disabled: false,
-      gradient: "bg-gradient-to-r from-purple-600 to-pink-600"
+      gradient: "bg-gradient-to-r from-purple-600 to-blue-600"
     },
     {
       title: "Journal",
@@ -57,7 +57,7 @@ export default function WorkoutToolsPage() {
       icon: <BookOpen className="h-6 w-6 text-white" />,
       href: "/tools/journal",
       disabled: false,
-      gradient: "bg-gradient-to-r from-indigo-600 to-blue-600"
+      gradient: "bg-gradient-to-r from-blue-500 to-purple-700"
     },
     {
       title: "Exercise Library",
@@ -65,7 +65,7 @@ export default function WorkoutToolsPage() {
       icon: <Video className="h-6 w-6 text-white" />,
       href: "/tools/exercise-library",
       disabled: false,
-      gradient: "bg-gradient-to-r from-cyan-600 to-teal-600"
+      gradient: "bg-gradient-to-r from-purple-500 to-blue-700"
     },
     {
       title: "Rep Starter",
