@@ -1,28 +1,23 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
 import { 
   Video, 
-  Clock, 
-  Target, 
-  Trash2, 
   Upload, 
   Play, 
   Pause,
-  RotateCcw,
   Save,
   FolderOpen,
-  Maximize,
-  X,
+  ArrowRight,
   Info
 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import PhotoFinishFullscreen from './photo-finish-fullscreen';
 import trackImagePath from "@assets/IMG_4075.JPG?url";
 
 interface TimerOverlay {
@@ -57,6 +52,7 @@ interface SavedVideo {
 export default function PhotoFinishPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [location, navigate] = useLocation();
 
   // Video state
   const [currentVideo, setCurrentVideo] = useState<File | null>(null);
@@ -65,24 +61,17 @@ export default function PhotoFinishPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [videoScale, setVideoScale] = useState(1);
-  const [videoTranslate, setVideoTranslate] = useState({ x: 0, y: 0 });
 
-  // Tool state
-  const [mode, setMode] = useState<'timer' | 'finishline' | null>(null);
-  const [timers, setTimers] = useState<TimerOverlay[]>([]);
-  const [finishLines, setFinishLines] = useState<FinishLine[]>([]);
-  const [activeTimer, setActiveTimer] = useState<string | null>(null);
-  const [activeFinishLine, setActiveFinishLine] = useState<string | null>(null);
+  // Upload state
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState<string>("");
 
   // UI state
-  const [showVideoLibrary, setShowVideoLibrary] = useState(false);
   const [savedVideos, setSavedVideos] = useState<SavedVideo[]>([]);
-  const [showFullscreen, setShowFullscreen] = useState(false);
 
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const generateVideoThumbnail = (video: HTMLVideoElement): Promise<string> => {
@@ -117,17 +106,79 @@ export default function PhotoFinishPage() {
       return;
     }
 
-    setCurrentVideo(file);
-    const url = URL.createObjectURL(file);
-    setVideoUrl(url);
+    // Start upload process with native loading
+    setIsUploading(true);
+    setUploadProgress(0);
+    setUploadStatus("Processing video...");
 
-    // Generate thumbnail when video loads
-    const video = document.createElement('video');
-    video.src = url;
-    video.addEventListener('loadedmetadata', async () => {
-      const thumbnail = await generateVideoThumbnail(video);
-      setVideoPoster(thumbnail);
-    });
+    try {
+      // Simulate upload progress stages
+      setUploadProgress(20);
+      setUploadStatus("Validating video format...");
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      setUploadProgress(40);
+      setUploadStatus("Generating thumbnail...");
+      
+      // Generate thumbnail
+      const url = URL.createObjectURL(file);
+      const video = document.createElement('video');
+      video.src = url;
+      
+      const thumbnail = await new Promise<string>((resolve) => {
+        video.addEventListener('loadedmetadata', async () => {
+          const thumb = await generateVideoThumbnail(video);
+          resolve(thumb);
+        });
+      });
+      
+      setUploadProgress(70);
+      setUploadStatus("Preparing analysis tools...");
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      setUploadProgress(90);
+      setUploadStatus("Launching fullscreen analysis...");
+      
+      // Store video data for fullscreen analysis
+      const videoData = {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        thumbnail
+      };
+      
+      // Convert file to base64 for storage
+      const fileReader = new FileReader();
+      fileReader.onload = () => {
+        const fileDataWithMeta = {
+          ...videoData,
+          fileData: fileReader.result
+        };
+        
+        sessionStorage.setItem('photoFinishVideo', JSON.stringify(fileDataWithMeta));
+        
+        setUploadProgress(100);
+        setUploadStatus("Complete!");
+        
+        // Navigate to fullscreen analysis after short delay
+        setTimeout(() => {
+          navigate('/tools/photo-finish/analysis');
+        }, 500);
+      };
+      
+      fileReader.readAsArrayBuffer(file);
+      
+    } catch (error) {
+      console.error('Error processing video:', error);
+      setIsUploading(false);
+      toast({
+        title: "Upload failed",
+        description: "There was an error processing your video. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleVideoLoad = () => {
@@ -205,30 +256,11 @@ export default function PhotoFinishPage() {
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
-            onClick={() => setShowVideoLibrary(!showVideoLibrary)}
             className="flex items-center gap-2"
           >
             <FolderOpen className="h-4 w-4" />
             Video Library ({savedVideos.length})
           </Button>
-          {currentVideo && (
-            <>
-              <Button
-                onClick={saveVideo}
-                className="flex items-center gap-2"
-              >
-                <Save className="h-4 w-4" />
-                Save Video
-              </Button>
-              <Button
-                onClick={() => setShowFullscreen(true)}
-                className="flex items-center gap-2"
-              >
-                <Maximize className="h-4 w-4" />
-                Fullscreen Analysis
-              </Button>
-            </>
-          )}
         </div>
       </div>
 
@@ -243,7 +275,19 @@ export default function PhotoFinishPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {!currentVideo ? (
+              {isUploading ? (
+                <div className="p-8 text-center space-y-4">
+                  <div className="flex items-center justify-center mb-4">
+                    <Video className="h-12 w-12 text-primary animate-pulse" />
+                  </div>
+                  <h3 className="text-lg font-medium">Processing Video</h3>
+                  <p className="text-muted-foreground">{uploadStatus}</p>
+                  <div className="w-full max-w-md mx-auto space-y-2">
+                    <Progress value={uploadProgress} className="w-full" />
+                    <p className="text-sm text-muted-foreground">{uploadProgress}% complete</p>
+                  </div>
+                </div>
+              ) : !currentVideo ? (
                 <div
                   className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center cursor-pointer hover:border-muted-foreground/50 transition-colors"
                   onClick={() => fileInputRef.current?.click()}
@@ -251,6 +295,9 @@ export default function PhotoFinishPage() {
                   <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                   <p className="text-lg font-medium mb-2">Upload Race Video</p>
                   <p className="text-muted-foreground">Click to select a video file or drag and drop</p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Video will automatically open in fullscreen analysis mode
+                  </p>
                   <Input
                     ref={fileInputRef}
                     type="file"
@@ -271,11 +318,16 @@ export default function PhotoFinishPage() {
                         onClick={() => {
                           setCurrentVideo(null);
                           setVideoUrl("");
-                          setTimers([]);
-                          setFinishLines([]);
                         }}
                       >
                         Upload Different Video
+                      </Button>
+                      <Button
+                        onClick={() => navigate('/tools/photo-finish/analysis')}
+                        className="flex items-center gap-2"
+                      >
+                        <ArrowRight className="h-4 w-4" />
+                        Open Analysis
                       </Button>
                     </div>
                   </div>
@@ -316,7 +368,7 @@ export default function PhotoFinishPage() {
                   </div>
 
                   <div className="text-center text-sm text-muted-foreground">
-                    Click "Fullscreen Analysis" for advanced video analysis tools
+                    Video uploaded successfully! Click "Open Analysis" above to start analyzing.
                   </div>
                 </div>
               )}
@@ -373,18 +425,6 @@ export default function PhotoFinishPage() {
           </Card>
         </div>
       </div>
-
-      {/* Fullscreen Analysis Dialog */}
-      {showFullscreen && currentVideo && (
-        <Dialog open={showFullscreen} onOpenChange={setShowFullscreen}>
-          <DialogContent className="max-w-screen-2xl w-full h-[90vh] p-0 overflow-hidden">
-            <PhotoFinishFullscreen
-              videoFile={currentVideo}
-              onClose={() => setShowFullscreen(false)}
-            />
-          </DialogContent>
-        </Dialog>
-      )}
     </div>
   );
 }

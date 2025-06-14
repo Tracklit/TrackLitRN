@@ -42,8 +42,7 @@ interface PhotoFinishFullscreenProps {
   onClose: () => void;
 }
 export default function PhotoFinishFullscreen({ 
-  videoUrl, 
-  currentVideo, 
+  videoFile, 
   onClose 
 }: PhotoFinishFullscreenProps) {
   const { toast } = useToast();
@@ -55,6 +54,7 @@ export default function PhotoFinishFullscreen({
   const containerRef = useRef<HTMLDivElement>(null);
   
   // Video state
+  const [videoUrl, setVideoUrl] = useState<string>("");
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
