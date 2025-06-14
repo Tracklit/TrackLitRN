@@ -106,40 +106,38 @@ export default function PhotoFinishPage() {
       return;
     }
 
-    // Start upload process with native loading
+    // Start processing after file selection
     setIsUploading(true);
     setUploadProgress(0);
     setUploadStatus("Processing video...");
 
     try {
-      // Simulate upload progress stages
-      setUploadProgress(20);
-      setUploadStatus("Validating video format...");
-      
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      setUploadProgress(40);
-      setUploadStatus("Generating thumbnail...");
+      // Real processing stages
+      setUploadProgress(25);
+      setUploadStatus("Reading video file...");
       
       // Generate thumbnail
       const url = URL.createObjectURL(file);
       const video = document.createElement('video');
       video.src = url;
       
-      const thumbnail = await new Promise<string>((resolve) => {
+      setUploadProgress(50);
+      setUploadStatus("Generating thumbnail...");
+      
+      const thumbnail = await new Promise<string>((resolve, reject) => {
         video.addEventListener('loadedmetadata', async () => {
-          const thumb = await generateVideoThumbnail(video);
-          resolve(thumb);
+          try {
+            const thumb = await generateVideoThumbnail(video);
+            resolve(thumb);
+          } catch (error) {
+            reject(error);
+          }
         });
+        video.addEventListener('error', reject);
       });
       
-      setUploadProgress(70);
-      setUploadStatus("Preparing analysis tools...");
-      
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      setUploadProgress(90);
-      setUploadStatus("Launching fullscreen analysis...");
+      setUploadProgress(75);
+      setUploadStatus("Preparing analysis...");
       
       // Store video data for fullscreen analysis
       const videoData = {
@@ -149,30 +147,32 @@ export default function PhotoFinishPage() {
         thumbnail
       };
       
-      // Convert file to base64 for storage
-      const fileReader = new FileReader();
-      fileReader.onload = () => {
-        const fileDataWithMeta = {
-          ...videoData,
-          fileData: fileReader.result
-        };
-        
-        sessionStorage.setItem('photoFinishVideo', JSON.stringify(fileDataWithMeta));
-        
-        setUploadProgress(100);
-        setUploadStatus("Complete!");
-        
-        // Navigate to fullscreen analysis after short delay
-        setTimeout(() => {
-          navigate('/tools/photo-finish/analysis');
-        }, 500);
+      // Convert file to ArrayBuffer for storage
+      const arrayBuffer = await file.arrayBuffer();
+      const fileDataWithMeta = {
+        ...videoData,
+        fileData: Array.from(new Uint8Array(arrayBuffer))
       };
       
-      fileReader.readAsArrayBuffer(file);
+      sessionStorage.setItem('photoFinishVideo', JSON.stringify(fileDataWithMeta));
+      
+      setUploadProgress(90);
+      setUploadStatus("Launching analysis...");
+      
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      setUploadProgress(100);
+      setUploadStatus("Complete!");
+      
+      // Navigate to fullscreen analysis
+      setTimeout(() => {
+        navigate('/tools/photo-finish/analysis');
+      }, 200);
       
     } catch (error) {
       console.error('Error processing video:', error);
       setIsUploading(false);
+      setUploadProgress(0);
       toast({
         title: "Upload failed",
         description: "There was an error processing your video. Please try again.",

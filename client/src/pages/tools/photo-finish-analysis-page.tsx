@@ -18,8 +18,10 @@ export default function PhotoFinishAnalysisPage() {
     if (storedVideoData) {
       try {
         const parsedData = JSON.parse(storedVideoData);
-        // Reconstruct File object from stored data
-        const file = new File([parsedData.fileData], parsedData.name, { type: parsedData.type });
+        
+        // Reconstruct File object from stored array buffer data
+        const uint8Array = new Uint8Array(parsedData.fileData);
+        const file = new File([uint8Array], parsedData.name, { type: parsedData.type });
         const url = URL.createObjectURL(file);
         
         setVideoData({
