@@ -384,8 +384,8 @@ export default function HomePage() {
                                   // Check for race day first, regardless of session availability
                                   isTodayMeetDay ? (
                                     <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
-                                      <p className="text-center font-semibold text-red-600">
-                                        🏃 Race Day!
+                                      <p className="text-center font-semibold text-white">
+                                        Race Day!
                                       </p>
                                     </div>
                                   ) : todaySession ? (
