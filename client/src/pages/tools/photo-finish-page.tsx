@@ -112,54 +112,37 @@ export default function PhotoFinishPage() {
     setUploadStatus("Processing video...");
 
     try {
-      // Real processing stages
       setUploadProgress(25);
       setUploadStatus("Reading video file...");
       
-      // Generate thumbnail
-      const url = URL.createObjectURL(file);
-      const video = document.createElement('video');
-      video.src = url;
+      // Convert file to ArrayBuffer for storage
+      const arrayBuffer = await file.arrayBuffer();
       
-      setUploadProgress(50);
-      setUploadStatus("Generating thumbnail...");
-      
-      const thumbnail = await new Promise<string>((resolve, reject) => {
-        video.addEventListener('loadedmetadata', async () => {
-          try {
-            const thumb = await generateVideoThumbnail(video);
-            resolve(thumb);
-          } catch (error) {
-            reject(error);
-          }
-        });
-        video.addEventListener('error', reject);
-      });
-      
-      setUploadProgress(75);
-      setUploadStatus("Preparing analysis...");
+      setUploadProgress(60);
+      setUploadStatus("Preparing video data...");
       
       // Store video data for fullscreen analysis
       const videoData = {
         name: file.name,
         type: file.type,
         size: file.size,
-        thumbnail
+        thumbnail: '' // Skip thumbnail for now to avoid hanging
       };
       
-      // Convert file to ArrayBuffer for storage
-      const arrayBuffer = await file.arrayBuffer();
       const fileDataWithMeta = {
         ...videoData,
         fileData: Array.from(new Uint8Array(arrayBuffer))
       };
       
+      setUploadProgress(80);
+      setUploadStatus("Saving video...");
+      
       sessionStorage.setItem('photoFinishVideo', JSON.stringify(fileDataWithMeta));
       
-      setUploadProgress(90);
+      setUploadProgress(95);
       setUploadStatus("Launching analysis...");
       
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise(resolve => setTimeout(resolve, 200));
       
       setUploadProgress(100);
       setUploadStatus("Complete!");
@@ -167,7 +150,7 @@ export default function PhotoFinishPage() {
       // Navigate to fullscreen analysis
       setTimeout(() => {
         navigate('/tools/photo-finish/analysis');
-      }, 200);
+      }, 300);
       
     } catch (error) {
       console.error('Error processing video:', error);
