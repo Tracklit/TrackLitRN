@@ -174,12 +174,23 @@ export default function PhotoFinishFullscreen({
     }
   };
 
-  const togglePlayPause = () => {
+  const togglePlayPause = async () => {
     if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play();
+      try {
+        if (isPlaying) {
+          videoRef.current.pause();
+        } else {
+          await videoRef.current.play();
+          setHasStartedVideo(true);
+        }
+      } catch (error) {
+        console.error('Error toggling video playback:', error);
+        // Show toast if play fails
+        toast({
+          title: "Playback Error",
+          description: "Unable to play video. Please try again.",
+          variant: "destructive",
+        });
       }
     }
   };
@@ -520,24 +531,28 @@ export default function PhotoFinishFullscreen({
   // Handle video metadata load and generate thumbnail
   const handleVideoLoad = async () => {
     if (videoRef.current) {
-      setDuration(videoRef.current.duration);
+      const video = videoRef.current;
+      setDuration(video.duration);
       setCurrentTime(0);
       
-      // Generate thumbnail from first frame
+      // Ensure video is seeked to first frame for display
       try {
-        videoRef.current.currentTime = 0;
-        await new Promise<void>(resolve => {
+        video.currentTime = 0.1; // Seek to just after start to ensure frame loads
+        
+        await new Promise<void>((resolve) => {
           const onSeeked = () => {
-            videoRef.current?.removeEventListener('seeked', onSeeked);
+            video.removeEventListener('seeked', onSeeked);
+            video.currentTime = 0; // Reset to actual start
             resolve();
           };
-          videoRef.current?.addEventListener('seeked', onSeeked);
+          video.addEventListener('seeked', onSeeked);
         });
         
-        const thumbnail = await generateVideoThumbnail(videoRef.current);
+        // Generate thumbnail from first frame
+        const thumbnail = await generateVideoThumbnail(video);
         setVideoPoster(thumbnail);
       } catch (error) {
-        console.error('Failed to generate video thumbnail:', error);
+        console.error('Failed to load video first frame:', error);
       }
     }
   };
@@ -635,15 +650,22 @@ export default function PhotoFinishFullscreen({
         <video
           ref={videoRef}
           src={videoUrl || ''}
-          poster={videoPoster}
           className="w-full h-full object-contain"
           style={{
             transform: `scale(${Math.max(videoScale, 1)}) translate(${videoTranslate.x}px, ${videoTranslate.y}px)`,
             minWidth: '100%',
             minHeight: '100%'
           }}
-          preload="metadata"
+          preload="auto"
+          muted
+          playsInline
           onLoadedMetadata={handleVideoLoad}
+          onLoadedData={() => {
+            // Ensure first frame is visible once data is loaded
+            if (videoRef.current && !hasStartedVideo) {
+              videoRef.current.currentTime = 0;
+            }
+          }}
           onTimeUpdate={() => {
             if (videoRef.current) {
               setCurrentTime(videoRef.current.currentTime);
@@ -651,6 +673,12 @@ export default function PhotoFinishFullscreen({
           }}
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
+          onCanPlay={() => {
+            // Force seek to first frame when video is ready
+            if (videoRef.current && !hasStartedVideo) {
+              videoRef.current.currentTime = 0;
+            }
+          }}
           controls={false}
         />
         
