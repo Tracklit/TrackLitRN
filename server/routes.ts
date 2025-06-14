@@ -13,6 +13,7 @@ import sharp from "sharp";
 import Stripe from "stripe";
 import { transcribeAudioHandler, upload as audioUpload } from "./routes/transcribe";
 import { getUserJournalEntries, createJournalEntry, updateJournalEntry, deleteJournalEntry } from "./routes/journal";
+import { getCoachAthletes, getAthleteMoodStats, getAthleteJournalEntries, getJournalComments, addJournalComment, recordMoodEntry } from "./routes/coaches";
 import { getWeatherForecast } from "./weather";
 import { GoogleSpreadsheet } from "google-spreadsheet";
 import { notificationSystem } from "./notification-system";
@@ -7468,6 +7469,14 @@ Keep the response professional, evidence-based, and specific to track and field 
       res.status(500).json({ error: "Failed to fetch video analysis" });
     }
   });
+
+  // Coaches API Routes
+  app.get("/api/coaches/athletes", getCoachAthletes);
+  app.get("/api/coaches/mood-stats", getAthleteMoodStats);
+  app.get("/api/coaches/journal-entries", getAthleteJournalEntries);
+  app.get("/api/journal/:journalId/comments", getJournalComments);
+  app.post("/api/journal/:journalId/comments", addJournalComment);
+  app.post("/api/mood-entries", recordMoodEntry);
 
   return httpServer;
 }
