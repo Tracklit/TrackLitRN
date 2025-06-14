@@ -203,25 +203,14 @@ export default function RosterStatsPage() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Roster Statistics</h1>
-          <p className="text-muted-foreground">Monitor your athletes' progress and provide guidance</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Users className="h-5 w-5 text-muted-foreground" />
-          <span className="font-medium">{athletes.length} Athletes</span>
-        </div>
-      </div>
 
       {/* Mood Statistics Section */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Mood Tracking Overview
+            <CardTitle className="flex items-center gap-2 text-base">
+              <TrendingUp className="h-4 w-4" />
+              Mood Tracking
             </CardTitle>
             <Select value={timeRange} onValueChange={setTimeRange}>
               <SelectTrigger className="w-40">
@@ -307,9 +296,9 @@ export default function RosterStatsPage() {
       {/* Recent Diary Entries */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Recent Training Diary Entries
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Calendar className="h-4 w-4" />
+            Training Diary
           </CardTitle>
         </CardHeader>
         <CardContent>
