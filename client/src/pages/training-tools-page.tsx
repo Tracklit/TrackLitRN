@@ -137,7 +137,7 @@ export default function WorkoutToolsPage() {
                         opacity: 0.65
                       }}
                     >
-                      <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-all duration-300" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-60 group-hover:opacity-50 transition-all duration-300" />
                       <div className="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
                   )}
