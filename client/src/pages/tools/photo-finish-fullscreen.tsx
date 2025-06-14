@@ -10,7 +10,10 @@ import {
   Upload,
   Timer,
   MapPin,
-  Trash2
+  Trash2,
+  Zap,
+  SkipBack,
+  SkipForward
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -59,6 +62,10 @@ export default function PhotoFinishFullscreen({
   const [isDragging, setIsDragging] = useState(false);
   const [hasStartedVideo, setHasStartedVideo] = useState(false);
   const [videoPoster, setVideoPoster] = useState<string>("");
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [isSlowmo, setIsSlowmo] = useState(false);
+  const [scrubberHovered, setScrubberHovered] = useState(false);
+  const [scrubberDragging, setScrubberDragging] = useState(false);
   
   // UI state
   const [showVideoLibrary, setShowVideoLibrary] = useState(false);
@@ -103,6 +110,10 @@ export default function PhotoFinishFullscreen({
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
+    
+    // Set playback rate
+    video.playbackRate = playbackSpeed;
+    
     const handleTimeUpdate = () => setCurrentTime(video.currentTime);
     const handleDurationChange = () => setDuration(video.duration);
     const handlePlay = () => setIsPlaying(true);
@@ -117,7 +128,41 @@ export default function PhotoFinishFullscreen({
       video.removeEventListener('play', handlePlay);
       video.removeEventListener('pause', handlePause);
     };
-  }, [videoUrl]);
+  }, [videoUrl, playbackSpeed]);
+
+  // Slowmo toggle function
+  const toggleSlowmo = () => {
+    if (isSlowmo) {
+      setPlaybackSpeed(1);
+      setIsSlowmo(false);
+    } else {
+      setPlaybackSpeed(0.25);
+      setIsSlowmo(true);
+    }
+  };
+
+  // Video control functions
+  const skipForward = () => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = Math.min(videoRef.current.currentTime + 1, duration);
+    }
+  };
+
+  const skipBackward = () => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = Math.max(videoRef.current.currentTime - 1, 0);
+    }
+  };
+
+  const togglePlayPause = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+    }
+  };
   // Draw overlays on canvas
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -389,6 +434,7 @@ export default function PhotoFinishFullscreen({
   const handleMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
     event.preventDefault();
     setIsDragging(true);
+    setScrubberDragging(true);
     handleSliderInteraction(event.clientX, event.currentTarget);
   };
   const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -398,16 +444,29 @@ export default function PhotoFinishFullscreen({
   };
   const handleMouseUp = () => {
     setIsDragging(false);
+    setScrubberDragging(false);
   };
-  // Play/pause toggle
-  const togglePlayPause = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play();
-      }
+
+  // Touch handlers for scrubber
+  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(true);
+    setScrubberDragging(true);
+    const touch = event.touches[0];
+    handleSliderInteraction(touch.clientX, event.currentTarget);
+  };
+
+  const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (isDragging && event.touches.length === 1) {
+      event.preventDefault();
+      const touch = event.touches[0];
+      handleSliderInteraction(touch.clientX, event.currentTarget);
     }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    setScrubberDragging(false);
   };
   // Save video
   const handleSaveVideo = () => {
