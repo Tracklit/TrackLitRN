@@ -59,7 +59,8 @@ export default function PhotoFinishAnalysisPage() {
 
   return (
     <PhotoFinishFullscreen
-      videoFile={videoData.file}
+      videoUrl={videoData.url}
+      videoName={videoData.name}
       onClose={handleClose}
     />
   );

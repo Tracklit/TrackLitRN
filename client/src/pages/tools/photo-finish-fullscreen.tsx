@@ -38,11 +38,13 @@ interface FinishLine {
   height: number;
 }
 interface PhotoFinishFullscreenProps {
-  videoFile: File;
+  videoUrl: string;
+  videoName: string;
   onClose: () => void;
 }
 export default function PhotoFinishFullscreen({ 
-  videoFile, 
+  videoUrl: propVideoUrl, 
+  videoName,
   onClose 
 }: PhotoFinishFullscreenProps) {
   const { toast } = useToast();
@@ -63,25 +65,20 @@ export default function PhotoFinishFullscreen({
   const [hasStartedVideo, setHasStartedVideo] = useState(false);
   const [videoPoster, setVideoPoster] = useState<string>("");
 
-  // Initialize video URL from file
+  // Initialize video URL from props
   useEffect(() => {
-    if (videoFile) {
-      const url = URL.createObjectURL(videoFile);
-      setVideoUrl(url);
+    if (propVideoUrl) {
+      setVideoUrl(propVideoUrl);
       
       // Create currentVideo object for compatibility
       setCurrentVideo({
         id: Date.now(),
-        title: videoFile.name,
-        videoUrl: url,
+        title: videoName,
+        videoUrl: propVideoUrl,
         createdAt: new Date().toISOString()
       });
-
-      return () => {
-        URL.revokeObjectURL(url);
-      };
     }
-  }, [videoFile]);
+  }, [propVideoUrl, videoName]);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [isSlowmo, setIsSlowmo] = useState(false);
   const [scrubberHovered, setScrubberHovered] = useState(false);
@@ -175,20 +172,29 @@ export default function PhotoFinishFullscreen({
   };
 
   const togglePlayPause = async () => {
-    if (videoRef.current) {
+    if (videoRef.current && videoUrl) {
       try {
+        const video = videoRef.current;
         if (isPlaying) {
-          videoRef.current.pause();
+          video.pause();
         } else {
-          await videoRef.current.play();
-          setHasStartedVideo(true);
+          // Ensure video is loaded before playing
+          if (video.readyState >= 2) {
+            await video.play();
+            setHasStartedVideo(true);
+          } else {
+            toast({
+              title: "Video Loading",
+              description: "Please wait for the video to load completely.",
+              variant: "default",
+            });
+          }
         }
       } catch (error) {
         console.error('Error toggling video playback:', error);
-        // Show toast if play fails
         toast({
-          title: "Playback Error",
-          description: "Unable to play video. Please try again.",
+          title: "Playback Error", 
+          description: "Unable to play video. The video file may be corrupted or unsupported.",
           variant: "destructive",
         });
       }
@@ -656,9 +662,8 @@ export default function PhotoFinishFullscreen({
             minWidth: '100%',
             minHeight: '100%'
           }}
-          preload="auto"
-          muted
-          playsInline
+          preload="metadata"
+          crossOrigin="anonymous"
           onLoadedMetadata={handleVideoLoad}
           onLoadedData={() => {
             // Ensure first frame is visible once data is loaded
@@ -678,6 +683,14 @@ export default function PhotoFinishFullscreen({
             if (videoRef.current && !hasStartedVideo) {
               videoRef.current.currentTime = 0;
             }
+          }}
+          onError={(e) => {
+            console.error('Video error:', e);
+            toast({
+              title: "Video Error",
+              description: "Failed to load the video file.",
+              variant: "destructive",
+            });
           }}
           controls={false}
         />
