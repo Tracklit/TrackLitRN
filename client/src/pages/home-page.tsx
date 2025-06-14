@@ -389,7 +389,16 @@ export default function HomePage() {
                                   });
                                   
                                   if (primaryProgram?.program?.importedFromSheet) {
-                                    if (todaySession) {
+                                    // Check for race day first, regardless of session availability
+                                    if (isTodayMeetDay) {
+                                      return (
+                                        <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
+                                          <p className="text-muted-foreground text-center font-semibold text-red-600">
+                                            Race Day!
+                                          </p>
+                                        </div>
+                                      );
+                                    } else if (todaySession) {
                                       return (
                                         <>
                                           {todaySession.shortDistanceWorkout && (
@@ -413,7 +422,7 @@ export default function HomePage() {
                                       return (
                                         <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
                                           <p className="text-muted-foreground text-center">
-                                            {isTodayMeetDay ? "Race Day!" : "No workout scheduled for today"}
+                                            No workout scheduled for today
                                           </p>
                                         </div>
                                       );

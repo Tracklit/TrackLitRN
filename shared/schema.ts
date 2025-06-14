@@ -698,6 +698,8 @@ export const clubMessages = pgTable("club_messages", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+
+
 export const clubMessagesRelations = relations(clubMessages, ({ one }) => ({
   club: one(clubs, {
     fields: [clubMessages.clubId],
