@@ -38,8 +38,7 @@ interface FinishLine {
   height: number;
 }
 interface PhotoFinishFullscreenProps {
-  videoUrl: string | null;
-  currentVideo: PhotoFinishVideo | null;
+  videoFile: File;
   onClose: () => void;
 }
 export default function PhotoFinishFullscreen({ 

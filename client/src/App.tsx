@@ -15,6 +15,7 @@ import {
   PaceCalculatorPage,
   PhotoFinishPage
 } from "@/pages/routes";
+import PhotoFinishAnalysisPage from "@/pages/tools/photo-finish-analysis-page";
 
 import { OnboardingFlow } from "@/components/onboarding-flow";
 import NotFound from "@/pages/not-found";
@@ -118,6 +119,7 @@ function Router() {
       <ProtectedRoute path="/tools/start-gun" component={StartGunPage} />
       <ProtectedRoute path="/tools/journal" component={JournalPage} />
       <ProtectedRoute path="/tools/photo-finish" component={PhotoFinishPage} />
+      <ProtectedRoute path="/tools/photo-finish/analysis" component={PhotoFinishAnalysisPage} />
       <ProtectedRoute path="/tools/exercise-library" component={ExerciseLibraryPage} />
       <ProtectedRoute path="/tools/exercise-library/add" component={ExerciseLibraryAddPage} />
       <ProtectedRoute path="/tools/video-analysis" component={VideoAnalysisPage} />
