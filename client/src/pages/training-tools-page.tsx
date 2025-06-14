@@ -130,20 +130,22 @@ export default function WorkoutToolsPage() {
                   {/* Background Image - Only for Video Analysis */}
                   {card.title === "Video Analysis" && (
                     <div 
-                      className="h-1/2 bg-cover bg-center bg-no-repeat relative"
+                      className="absolute inset-0 bg-cover bg-center bg-no-repeat"
                       style={{ 
                         backgroundImage: `url(${videoAnalysisCardImage})`,
-                        backgroundPosition: 'center bottom',
-                        opacity: 0.65
+                        backgroundPosition: 'center',
+                        opacity: 0.05
                       }}
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-60 group-hover:opacity-50 transition-all duration-300" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    </div>
+                    />
+                  )}
+                  
+                  {/* Gradient Overlay - Only for Video Analysis */}
+                  {card.title === "Video Analysis" && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-60 group-hover:opacity-50 transition-all duration-300" />
                   )}
                   
                   {/* Content Area */}
-                  <CardContent className={`p-2.5 relative flex flex-col justify-center ${card.title === "Video Analysis" ? "h-1/2" : "h-full"}`}>
+                  <CardContent className="p-2.5 relative h-full flex flex-col justify-center">
                     <div className="flex flex-col items-center text-center gap-2">
                       {card.title !== "Video Analysis" && (
                         <div className="p-1.5 rounded-full bg-primary/15 border border-primary/20">
