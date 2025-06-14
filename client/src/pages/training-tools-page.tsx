@@ -134,7 +134,7 @@ export default function WorkoutToolsPage() {
                       style={{ 
                         backgroundImage: `url(${videoAnalysisCardImage})`,
                         backgroundPosition: 'center',
-                        opacity: 0.10
+                        opacity: 0.20
                       }}
                     />
                   )}
