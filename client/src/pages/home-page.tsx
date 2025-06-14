@@ -88,6 +88,13 @@ export default function HomePage() {
   const todayDate = getTodayDateString();
   const todaySession = programSessions?.find(session => session.date === todayDate) || null;
   
+  // Check if there's a meet scheduled for today
+  const isTodayMeetDay = meets?.some(meet => {
+    const meetDate = new Date(meet.date);
+    const today = new Date();
+    return meetDate.toDateString() === today.toDateString();
+  }) || false;
+  
   // Determine Today's Session description based on program type
   const getTodaySessionDescription = () => {
     if (!primaryProgram) {
@@ -388,9 +395,11 @@ export default function HomePage() {
                                       )}
                                     </>
                                   ) : (
-                                    /* Show rest day message for Google Sheets programs */
+                                    /* Show rest day or race day message for Google Sheets programs */
                                     <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
-                                      <p className="text-muted-foreground text-center">No workout scheduled for today</p>
+                                      <p className="text-muted-foreground text-center">
+                                        {isTodayMeetDay ? "Race Day!" : "No workout scheduled for today"}
+                                      </p>
                                     </div>
                                   )
                                 ) : (
