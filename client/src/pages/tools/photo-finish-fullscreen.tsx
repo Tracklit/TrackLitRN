@@ -6,9 +6,17 @@ import {
   Pause, 
   SkipBack,
   SkipForward,
-  Volume2
+  Volume2,
+  Timer
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+
+interface VideoTimer {
+  id: string;
+  x: number;
+  y: number;
+  startTime: number;
+}
 
 interface PhotoFinishFullscreenProps {
   videoUrl: string;
@@ -31,6 +39,12 @@ export default function PhotoFinishFullscreen({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [timers, setTimers] = useState<VideoTimer[]>([]);
+  const [isTimerMode, setIsTimerMode] = useState(false);
+
+  // Timeline refs
+  const timelineRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Format time display
   const formatTime = (seconds: number) => {
@@ -80,8 +94,8 @@ export default function PhotoFinishFullscreen({
     }
   };
 
-  // Scrubber handlers
-  const handleSliderInteraction = (clientX: number, element: HTMLDivElement) => {
+  // Timeline handlers  
+  const handleTimelineInteraction = (clientX: number, element: HTMLDivElement) => {
     const rect = element.getBoundingClientRect();
     const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
     const percentage = x / rect.width;
@@ -93,38 +107,60 @@ export default function PhotoFinishFullscreen({
     }
   };
 
-  const handleMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setIsDragging(true);
-    handleSliderInteraction(event.clientX, event.currentTarget);
+  // Video canvas click handler for timer placement
+  const handleVideoClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isTimerMode) return;
+    
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width) * 100;
+    const y = ((event.clientY - rect.top) / rect.height) * 100;
+    
+    const newTimer: VideoTimer = {
+      id: Date.now().toString(),
+      x,
+      y,
+      startTime: currentTime
+    };
+    
+    setTimers(prev => [...prev, newTimer]);
+    setIsTimerMode(false);
   };
 
-  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleTimelineMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(true);
+    handleTimelineInteraction(event.clientX, event.currentTarget);
+  };
+
+  const handleTimelineMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
     if (isDragging) {
-      handleSliderInteraction(event.clientX, event.currentTarget);
+      handleTimelineInteraction(event.clientX, event.currentTarget);
     }
   };
 
-  const handleMouseUp = () => {
+  const handleTimelineMouseUp = () => {
     setIsDragging(false);
   };
 
-  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+  const handleTimelineTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
     event.preventDefault();
     setIsDragging(true);
     const touch = event.touches[0];
-    handleSliderInteraction(touch.clientX, event.currentTarget);
+    handleTimelineInteraction(touch.clientX, event.currentTarget);
   };
 
-  const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+  const handleTimelineTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
     if (isDragging && event.touches.length === 1) {
       event.preventDefault();
       const touch = event.touches[0];
-      handleSliderInteraction(touch.clientX, event.currentTarget);
+      handleTimelineInteraction(touch.clientX, event.currentTarget);
     }
   };
 
-  const handleTouchEnd = () => {
+  const handleTimelineTouchEnd = () => {
     setIsDragging(false);
   };
 
@@ -159,6 +195,52 @@ export default function PhotoFinishFullscreen({
     }
   };
 
+  // Draw timer overlays on canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const video = videoRef.current;
+    if (!canvas || !video) return;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw timers
+    timers.forEach(timer => {
+      const elapsedTime = currentTime - timer.startTime;
+      const posX = (timer.x / 100) * canvas.width;
+      const posY = (timer.y / 100) * canvas.height;
+      
+      // Format time
+      const sign = elapsedTime < 0 ? '-' : '';
+      const absSeconds = Math.abs(elapsedTime);
+      const mins = Math.floor(absSeconds / 60);
+      const secs = Math.floor(absSeconds % 60);
+      const hundredths = Math.floor((absSeconds % 1) * 100);
+      const text = `${sign}${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${hundredths.toString().padStart(2, '0')}`;
+      
+      // Draw timer background
+      ctx.font = '16px monospace';
+      ctx.textAlign = 'center';
+      const metrics = ctx.measureText(text);
+      const padding = 8;
+      
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+      ctx.fillRect(
+        posX - metrics.width/2 - padding,
+        posY - 10 - padding,
+        metrics.width + padding * 2,
+        20 + padding * 2
+      );
+      
+      // Draw timer text
+      ctx.fillStyle = 'white';
+      ctx.fillText(text, posX, posY);
+    });
+  }, [timers, currentTime]);
+
   return (
     <div className="fixed inset-0 bg-black text-white flex flex-col">
       {/* Header */}
@@ -174,10 +256,22 @@ export default function PhotoFinishFullscreen({
           </Button>
           <h1 className="text-lg font-semibold">{videoName}</h1>
         </div>
+        
+        <div className="flex items-center gap-2">
+          <Button
+            variant={isTimerMode ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setIsTimerMode(!isTimerMode)}
+            className="text-white hover:bg-white/20"
+          >
+            <Timer className="w-5 h-5 mr-2" />
+            Timer
+          </Button>
+        </div>
       </div>
 
-      {/* Video Container */}
-      <div className="flex-1 relative bg-black flex items-center justify-center">
+      {/* Video Container - 85% of screen height */}
+      <div className="relative bg-black flex items-center justify-center" style={{ height: '85vh' }}>
         <video
           ref={videoRef}
           src={videoUrl || ''}
@@ -208,14 +302,24 @@ export default function PhotoFinishFullscreen({
           controls={false}
         />
         
+        {/* Canvas overlay for timers */}
+        <canvas
+          ref={canvasRef}
+          className="absolute inset-0 w-full h-full pointer-events-auto"
+          width={1920}
+          height={1080}
+          onClick={handleVideoClick}
+          style={{ cursor: isTimerMode ? 'crosshair' : 'default' }}
+        />
+        
         {/* Play/Pause Overlay */}
         {!isPlaying && (
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <Button
               variant="ghost"
               size="lg"
               onClick={togglePlayPause}
-              className="bg-black/50 hover:bg-black/70 text-white rounded-full p-4"
+              className="bg-black/50 hover:bg-black/70 text-white rounded-full p-4 pointer-events-auto"
             >
               <Play className="w-12 h-12" />
             </Button>
@@ -223,71 +327,86 @@ export default function PhotoFinishFullscreen({
         )}
       </div>
 
-      {/* Controls */}
-      <div className="bg-black p-4 space-y-4">
-        {/* Progress Bar */}
-        <div className="relative">
-          <div
-            className="h-1 bg-gray-600 rounded-full cursor-pointer relative"
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-          >
-            <div
-              className="h-full bg-white rounded-full relative"
-              style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
-            >
-              <div className="absolute right-0 top-1/2 transform translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full" />
+      {/* Timeline Scrubber - 15% of screen height */}
+      <div className="bg-gray-900 border-t border-gray-700" style={{ height: '15vh' }}>
+        <div className="p-4 h-full flex flex-col">
+          {/* Control Buttons */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={skipBackward}
+                className="text-white hover:bg-white/20"
+              >
+                <SkipBack className="w-5 h-5" />
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={togglePlayPause}
+                className="text-white hover:bg-white/20"
+              >
+                {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={skipForward}
+                className="text-white hover:bg-white/20"
+              >
+                <SkipForward className="w-5 h-5" />
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-white hover:bg-white/20"
+              >
+                <Volume2 className="w-5 h-5" />
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-2 text-sm font-mono">
+              <span>{formatTime(currentTime)}</span>
+              <span>/</span>
+              <span>{formatTime(duration)}</span>
             </div>
           </div>
-        </div>
-
-        {/* Control Buttons and Time */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={skipBackward}
-              className="text-white hover:bg-white/20"
+          
+          {/* Timeline with vertical markers */}
+          <div className="flex-1 relative">
+            <div
+              ref={timelineRef}
+              className="h-full bg-gray-800 rounded cursor-pointer relative overflow-hidden"
+              onMouseDown={handleTimelineMouseDown}
+              onMouseMove={handleTimelineMouseMove}
+              onMouseUp={handleTimelineMouseUp}
+              onTouchStart={handleTimelineTouchStart}
+              onTouchMove={handleTimelineTouchMove}
+              onTouchEnd={handleTimelineTouchEnd}
             >
-              <SkipBack className="w-5 h-5" />
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={togglePlayPause}
-              className="text-white hover:bg-white/20"
-            >
-              {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={skipForward}
-              className="text-white hover:bg-white/20"
-            >
-              <SkipForward className="w-5 h-5" />
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-white hover:bg-white/20"
-            >
-              <Volume2 className="w-5 h-5" />
-            </Button>
-          </div>
-
-          <div className="flex items-center gap-2 text-sm font-mono">
-            <span>{formatTime(currentTime)}</span>
-            <span>/</span>
-            <span>{formatTime(duration)}</span>
+              {/* Vertical time markers (every 0.5 seconds) */}
+              {duration && Array.from({ length: Math.floor(duration * 2) }, (_, i) => {
+                const timePosition = (i * 0.5) / duration * 100;
+                const isSecondMark = i % 2 === 0;
+                return (
+                  <div
+                    key={i}
+                    className={`absolute top-0 ${isSecondMark ? 'h-full bg-gray-600' : 'h-1/2 bg-gray-700'} w-px`}
+                    style={{ left: `${timePosition}%` }}
+                  />
+                );
+              })}
+              
+              {/* Progress indicator */}
+              <div
+                className="absolute top-0 h-full bg-red-500 w-1 transform -translate-x-1/2"
+                style={{ left: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+              />
+            </div>
           </div>
         </div>
       </div>
