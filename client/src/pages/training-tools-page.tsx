@@ -94,7 +94,7 @@ export default function WorkoutToolsPage() {
 
       {/* Tool Cards - 2 column layout matching the home page style */}
       <section className="mb-6">
-        <div className="grid grid-cols-2 gap-2 mx-auto" style={{ maxWidth: "540px", margin: "0 auto 8px" }}>
+        <div className="grid grid-cols-2 gap-4 mx-auto" style={{ maxWidth: "540px", margin: "0 auto 8px" }}>
           {toolCards.map((card, index) => (
             card.disabled ? (
               // Disabled card
