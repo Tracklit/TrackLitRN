@@ -367,25 +367,32 @@ export default function HomePage() {
                                 <h2 className="text-lg font-bold text-center">{card.title}</h2>
                               </div>
                               <div className="flex-1 space-y-2">
-                                {/* Show workout details for Google Sheets programs with today's session */}
-                                {primaryProgram?.program?.importedFromSheet && todaySession ? (
-                                  <>
-                                    {todaySession.shortDistanceWorkout && (
-                                      <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
-                                        <span className="font-medium text-primary">60m/100m:</span> {todaySession.shortDistanceWorkout.slice(0, 35)}...
-                                      </div>
-                                    )}
-                                    {todaySession.mediumDistanceWorkout && (
-                                      <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
-                                        <span className="font-medium text-primary">200m:</span> {todaySession.mediumDistanceWorkout.slice(0, 35)}...
-                                      </div>
-                                    )}
-                                    {todaySession.longDistanceWorkout && (
-                                      <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
-                                        <span className="font-medium text-primary">400m:</span> {todaySession.longDistanceWorkout.slice(0, 35)}...
-                                      </div>
-                                    )}
-                                  </>
+                                {/* Show workout details for Google Sheets programs */}
+                                {primaryProgram?.program?.importedFromSheet ? (
+                                  todaySession ? (
+                                    <>
+                                      {todaySession.shortDistanceWorkout && (
+                                        <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
+                                          <span className="font-medium text-primary">60m/100m:</span> {todaySession.shortDistanceWorkout.slice(0, 35)}...
+                                        </div>
+                                      )}
+                                      {todaySession.mediumDistanceWorkout && (
+                                        <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
+                                          <span className="font-medium text-primary">200m:</span> {todaySession.mediumDistanceWorkout.slice(0, 35)}...
+                                        </div>
+                                      )}
+                                      {todaySession.longDistanceWorkout && (
+                                        <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
+                                          <span className="font-medium text-primary">400m:</span> {todaySession.longDistanceWorkout.slice(0, 35)}...
+                                        </div>
+                                      )}
+                                    </>
+                                  ) : (
+                                    /* Show rest day message for Google Sheets programs */
+                                    <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
+                                      <p className="text-muted-foreground text-center">No workout scheduled for today</p>
+                                    </div>
+                                  )
                                 ) : (
                                   /* Show fallback message for other program types or no program */
                                   <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
