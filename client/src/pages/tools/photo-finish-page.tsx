@@ -792,156 +792,166 @@ export default function PhotoFinishPage() {
   // Always use fullscreen mode for video analysis
   if (videoUrl) {
     return (
-      <div className="fixed inset-0 bg-black text-white overflow-hidden z-50">
-        {/* Top Controls Bar */}
-        <div className="absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/80 to-transparent p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setFullscreenMode(false);
-                  setVideoUrl("");
-                  setCurrentVideo(null);
-                  setTimers([]);
-                  setFinishLines([]);
-                }}
-                className="text-white hover:bg-white/20"
-              >
-                <X className="w-5 h-5" />
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowVideoLibrary(!showVideoLibrary)}
-                className="text-white hover:bg-white/20"
-              >
-                <FolderOpen className="w-5 h-5" />
-              </Button>
-            </div>
+      <PhotoFinishFullscreen 
+        videoUrl={videoUrl}
+        currentVideo={currentVideo ? { 
+          id: Date.now(), 
+          title: currentVideo.name, 
+          videoUrl: videoUrl, 
+          createdAt: new Date().toISOString() 
+        } : null}
+        onClose={() => {
+          setVideoUrl("");
+          setCurrentVideo(null);
+          setTimers([]);
+          setFinishLines([]);
+        }}
+      />
+    );
+  }
 
-            <div className="text-white font-medium">
-              {currentVideo?.name || 'Race Analysis'}
-            </div>
+  return (
+    <div className="container mx-auto px-4 pb-16">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            <Video className="h-6 w-6" />
+            Photo Finish
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Analyze race videos with precision timing and finish line overlay tools.
+          </p>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowVideoLibrary(!showVideoLibrary)}
+            className="flex items-center gap-2"
+          >
+            <FolderOpen className="h-4 w-4" />
+            Video Library ({savedVideos.length})
+          </Button>
+          {currentVideo && (
+            <Button
+              onClick={saveVideo}
+              className="flex items-center gap-2"
+            >
+              <Save className="h-4 w-4" />
+              Save Video
+            </Button>
+          )}
+        </div>
+      </div>
 
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={saveVideo}
-                className="text-white hover:bg-white/20"
-              >
-                <Save className="w-5 h-5" />
-              </Button>
-            </div>
-          </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Video Upload/Analysis Area */}
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Upload className="h-5 w-5" />
+                Video Upload & Analysis
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {!currentVideo ? (
+                <div
+                  className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center cursor-pointer hover:border-muted-foreground/50 transition-colors"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-lg font-medium mb-2">Upload Race Video</p>
+                  <p className="text-muted-foreground">Click to select a video file or drag and drop</p>
+                  <Input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="video/*"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                </div>
+              ) : (
+                <div className="text-center space-y-4">
+                  <div className="text-lg font-medium">
+                    Ready to analyze: {currentVideo.name}
+                  </div>
+                  <div className="flex justify-center gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setCurrentVideo(null);
+                        setVideoUrl("");
+                        setTimers([]);
+                        setFinishLines([]);
+                      }}
+                    >
+                      Upload Different Video
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* Video Library Sidebar */}
-        {showVideoLibrary && (
-          <div className="absolute top-0 left-0 w-80 h-full bg-black/90 backdrop-blur-sm z-40 border-r border-gray-800">
-            <div className="p-4 pt-20">
-              <h3 className="text-lg font-medium mb-4">Video Library</h3>
-              <div className="space-y-3 max-h-[calc(100vh-120px)] overflow-y-auto">
-                {savedVideos.map((video, index) => (
-                  <div
-                    key={index}
-                    className="p-3 rounded-lg border cursor-pointer transition-colors border-gray-600 hover:border-gray-500"
-                    onClick={() => {
-                      // Load saved video functionality would go here
-                      setShowVideoLibrary(false);
-                    }}
-                  >
-                    <div className="text-sm font-medium text-white truncate">
-                      Saved Video {index + 1}
+        <div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FolderOpen className="h-5 w-5" />
+                Video Library
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {savedVideos.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Video className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No saved videos yet</p>
+                  <p className="text-sm">Upload and save videos to build your library</p>
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {savedVideos.map((video, index) => (
+                    <div
+                      key={index}
+                      className="p-3 rounded-lg border cursor-pointer transition-colors hover:bg-muted/50"
+                      onClick={() => loadSavedVideo(video)}
+                    >
+                      <div className="flex items-center gap-3">
+                        {video.thumbnail && (
+                          <img
+                            src={video.thumbnail}
+                            alt="Video thumbnail"
+                            className="w-12 h-8 object-cover rounded"
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium truncate">
+                            {video.name}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {video.createdAt.toLocaleDateString()}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-400 mt-1">
-                      {new Date().toLocaleDateString()}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-        {/* Main Video Container */}
-        <div 
-          ref={containerRef} 
-          className="w-full h-full relative cursor-grab active:cursor-grabbing"
-          style={{ touchAction: 'none' }}
-          onWheel={handleVideoWheel}
-          onMouseDown={(e) => handleVideoPanStart(e.clientX, e.clientY)}
-          onMouseMove={(e) => handleVideoPanMove(e.clientX, e.clientY)}
-          onMouseUp={handleVideoPanEnd}
-          onTouchStart={handleVideoTouchStart}
-          onTouchMove={handleVideoTouchMove}
-          onTouchEnd={handleVideoTouchEnd}
-        >
-          <video
-            ref={videoRef}
-            src={videoUrl}
-            poster={videoPoster}
-            className="w-full h-full object-contain"
-            style={{
-              transform: `scale(${videoScale}) translate(${videoTranslate.x}px, ${videoTranslate.y}px)`,
-            }}
-            onTimeUpdate={handleTimeUpdate}
-            onLoadedMetadata={handleVideoLoad}
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
-            controls={false}
-            disablePictureInPicture
-            controlsList="nodownload nofullscreen noremoteplayback"
-            playsInline
-            webkit-playsinline="true"
-            preload="metadata"
-          />
-          
-          <canvas
-            ref={canvasRef}
-            className="absolute inset-0 w-full h-full pointer-events-auto cursor-crosshair"
-            width={1920}
-            height={1080}
-            onClick={(e) => {
-              if (mode === 'timer') {
-                const rect = canvasRef.current?.getBoundingClientRect();
-                if (rect) {
-                  const x = ((e.clientX - rect.left) / rect.width) * 100;
-                  const y = ((e.clientY - rect.top) / rect.height) * 100;
-                  
-                  const newTimer: TimerOverlay = {
-                    id: Date.now().toString(),
-                    x,
-                    y,
-                    startTime: currentTime,
-                    visible: true
-                  };
-                  
-                  setTimers(prev => [...prev, newTimer]);
-                  setActiveTimer(newTimer.id);
-                  setMode(null);
-                }
-              } else if (mode === 'finishline') {
-                const rect = canvasRef.current?.getBoundingClientRect();
-                if (rect) {
-                  const x = ((e.clientX - rect.left) / rect.width) * 100;
-                  const y = ((e.clientY - rect.top) / rect.height) * 100;
-                  
-                  const newFinishLine: FinishLine = {
-                    id: Date.now().toString(),
-                    nodes: [
-                      { id: `node-${Date.now()}-1`, x: x - 2, y: y - 25 },
-                      { id: `node-${Date.now()}-2`, x: x + 2, y: y + 25 }
-                    ],
-                    visible: true
-                  };
-                  
-                  setFinishLines(prev => [...prev, newFinishLine]);
-                  setActiveFinishLine(newFinishLine.id);
-                  setMode(null);
+// Export also as a component for dynamic routes
+export function Component() {
+  return <PhotoFinishPage />;
+}
                 }
               }
             }}
