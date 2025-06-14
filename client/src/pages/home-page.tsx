@@ -92,17 +92,18 @@ export default function HomePage() {
   const isTodayMeetDay = meets?.some(meet => {
     const meetDate = new Date(meet.date);
     const today = new Date();
-    const isSameDay = meetDate.toDateString() === today.toDateString();
-    console.log('Checking meet:', meet.name, 'Meet date:', meetDate.toDateString(), 'Today:', today.toDateString(), 'Same day:', isSameDay);
-    return isSameDay;
+    return meetDate.toDateString() === today.toDateString();
   }) || false;
-  
-  console.log('isTodayMeetDay:', isTodayMeetDay, 'Meets:', meets?.length);
   
   // Determine Today's Session description based on program type
   const getTodaySessionDescription = () => {
     if (!primaryProgram) {
       return "No program assigned, tap to assign one";
+    }
+    
+    // Check if it's a race day first (applies to all program types)
+    if (isTodayMeetDay) {
+      return "Race Day!";
     }
     
     // Check if it's a Google Sheets program
