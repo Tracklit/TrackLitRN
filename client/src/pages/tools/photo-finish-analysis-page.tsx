@@ -14,19 +14,19 @@ export default function PhotoFinishAnalysisPage() {
 
   useEffect(() => {
     // Get video data from sessionStorage (set during upload)
-    const storedVideoData = sessionStorage.getItem('photoFinishVideo');
-    if (storedVideoData) {
+    const storedVideoData = sessionStorage.getItem('photoFinishVideoData');
+    const storedVideoUrl = sessionStorage.getItem('photoFinishVideoUrl');
+    
+    if (storedVideoData && storedVideoUrl) {
       try {
         const parsedData = JSON.parse(storedVideoData);
         
-        // Reconstruct File object from stored array buffer data
-        const uint8Array = new Uint8Array(parsedData.fileData);
-        const file = new File([uint8Array], parsedData.name, { type: parsedData.type });
-        const url = URL.createObjectURL(file);
+        // Create a dummy file object for compatibility
+        const file = new File([], parsedData.name, { type: parsedData.type });
         
         setVideoData({
           file,
-          url,
+          url: storedVideoUrl,
           name: parsedData.name
         });
       } catch (error) {
@@ -44,7 +44,8 @@ export default function PhotoFinishAnalysisPage() {
     if (videoData?.url) {
       URL.revokeObjectURL(videoData.url);
     }
-    sessionStorage.removeItem('photoFinishVideo');
+    sessionStorage.removeItem('photoFinishVideoData');
+    sessionStorage.removeItem('photoFinishVideoUrl');
     navigate('/tools/photo-finish');
   };
 

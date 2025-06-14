@@ -115,31 +115,32 @@ export default function PhotoFinishPage() {
       setUploadProgress(25);
       setUploadStatus("Reading video file...");
       
-      // Convert file to ArrayBuffer for storage
-      const arrayBuffer = await file.arrayBuffer();
+      // Validate file size (limit to 500MB)
+      if (file.size > 500 * 1024 * 1024) {
+        throw new Error('File too large. Please select a video under 500MB.');
+      }
       
-      setUploadProgress(60);
-      setUploadStatus("Preparing video data...");
+      setUploadProgress(40);
+      setUploadStatus("Processing video data...");
       
-      // Store video data for fullscreen analysis
+      // Store minimal video data without converting to buffer to avoid memory issues
       const videoData = {
         name: file.name,
         type: file.type,
         size: file.size,
-        thumbnail: '' // Skip thumbnail for now to avoid hanging
+        lastModified: file.lastModified,
+        thumbnail: ''
       };
       
-      const fileDataWithMeta = {
-        ...videoData,
-        fileData: Array.from(new Uint8Array(arrayBuffer))
-      };
+      setUploadProgress(70);
+      setUploadStatus("Preparing analysis...");
       
-      setUploadProgress(80);
-      setUploadStatus("Saving video...");
+      // Store file reference temporarily and create object URL
+      const tempUrl = URL.createObjectURL(file);
+      sessionStorage.setItem('photoFinishVideoData', JSON.stringify(videoData));
+      sessionStorage.setItem('photoFinishVideoUrl', tempUrl);
       
-      sessionStorage.setItem('photoFinishVideo', JSON.stringify(fileDataWithMeta));
-      
-      setUploadProgress(95);
+      setUploadProgress(90);
       setUploadStatus("Launching analysis...");
       
       await new Promise(resolve => setTimeout(resolve, 200));
@@ -156,9 +157,15 @@ export default function PhotoFinishPage() {
       console.error('Error processing video:', error);
       setIsUploading(false);
       setUploadProgress(0);
+      
+      let errorMessage = "There was an error processing your video. Please try again.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Upload failed",
-        description: "There was an error processing your video. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     }
