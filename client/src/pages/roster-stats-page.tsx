@@ -205,10 +205,10 @@ export default function RosterStatsPage() {
     <div className="container mx-auto p-6 space-y-6">
 
       {/* Mood Statistics Section */}
-      <Card>
+      <Card className="bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800 text-white border-0">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-base">
+            <CardTitle className="flex items-center gap-2 text-base text-white">
               <TrendingUp className="h-4 w-4" />
               Mood Tracking
             </CardTitle>
@@ -294,9 +294,9 @@ export default function RosterStatsPage() {
       </Card>
 
       {/* Recent Diary Entries */}
-      <Card>
+      <Card className="bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800 text-white border-0">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
+          <CardTitle className="flex items-center gap-2 text-base text-white">
             <Calendar className="h-4 w-4" />
             Training Diary
           </CardTitle>
