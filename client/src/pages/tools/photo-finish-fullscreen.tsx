@@ -55,12 +55,33 @@ export default function PhotoFinishFullscreen({
   
   // Video state
   const [videoUrl, setVideoUrl] = useState<string>("");
+  const [currentVideo, setCurrentVideo] = useState<PhotoFinishVideo | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [hasStartedVideo, setHasStartedVideo] = useState(false);
   const [videoPoster, setVideoPoster] = useState<string>("");
+
+  // Initialize video URL from file
+  useEffect(() => {
+    if (videoFile) {
+      const url = URL.createObjectURL(videoFile);
+      setVideoUrl(url);
+      
+      // Create currentVideo object for compatibility
+      setCurrentVideo({
+        id: Date.now(),
+        title: videoFile.name,
+        videoUrl: url,
+        createdAt: new Date().toISOString()
+      });
+
+      return () => {
+        URL.revokeObjectURL(url);
+      };
+    }
+  }, [videoFile]);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [isSlowmo, setIsSlowmo] = useState(false);
   const [scrubberHovered, setScrubberHovered] = useState(false);
