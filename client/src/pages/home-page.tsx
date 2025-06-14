@@ -380,39 +380,52 @@ export default function HomePage() {
                               </div>
                               <div className="flex-1 space-y-2">
                                 {/* Show workout details for Google Sheets programs */}
-                                {primaryProgram?.program?.importedFromSheet ? (
-                                  todaySession ? (
-                                    <>
-                                      {todaySession.shortDistanceWorkout && (
+                                {(() => {
+                                  console.log('Rendering Practice card:', {
+                                    isGoogleSheets: primaryProgram?.program?.importedFromSheet,
+                                    hasToday: !!todaySession,
+                                    isMeetDay: isTodayMeetDay,
+                                    programType: primaryProgram?.program?.isTextBased ? 'text' : primaryProgram?.program?.isUploadedProgram ? 'pdf' : 'sheets'
+                                  });
+                                  
+                                  if (primaryProgram?.program?.importedFromSheet) {
+                                    if (todaySession) {
+                                      return (
+                                        <>
+                                          {todaySession.shortDistanceWorkout && (
+                                            <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
+                                              <span className="font-medium text-primary">60m/100m:</span> {todaySession.shortDistanceWorkout.slice(0, 35)}...
+                                            </div>
+                                          )}
+                                          {todaySession.mediumDistanceWorkout && (
+                                            <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
+                                              <span className="font-medium text-primary">200m:</span> {todaySession.mediumDistanceWorkout.slice(0, 35)}...
+                                            </div>
+                                          )}
+                                          {todaySession.longDistanceWorkout && (
+                                            <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
+                                              <span className="font-medium text-primary">400m:</span> {todaySession.longDistanceWorkout.slice(0, 35)}...
+                                            </div>
+                                          )}
+                                        </>
+                                      );
+                                    } else {
+                                      return (
                                         <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
-                                          <span className="font-medium text-primary">60m/100m:</span> {todaySession.shortDistanceWorkout.slice(0, 35)}...
+                                          <p className="text-muted-foreground text-center">
+                                            {isTodayMeetDay ? "Race Day!" : "No workout scheduled for today"}
+                                          </p>
                                         </div>
-                                      )}
-                                      {todaySession.mediumDistanceWorkout && (
-                                        <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
-                                          <span className="font-medium text-primary">200m:</span> {todaySession.mediumDistanceWorkout.slice(0, 35)}...
-                                        </div>
-                                      )}
-                                      {todaySession.longDistanceWorkout && (
-                                        <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
-                                          <span className="font-medium text-primary">400m:</span> {todaySession.longDistanceWorkout.slice(0, 35)}...
-                                        </div>
-                                      )}
-                                    </>
-                                  ) : (
-                                    /* Show rest day or race day message for Google Sheets programs */
-                                    <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
-                                      <p className="text-muted-foreground text-center">
-                                        {isTodayMeetDay ? "Race Day!" : "No workout scheduled for today"}
-                                      </p>
-                                    </div>
-                                  )
-                                ) : (
-                                  /* Show fallback message for other program types or no program */
-                                  <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
-                                    <p className="text-muted-foreground text-center">{getTodaySessionDescription()}</p>
-                                  </div>
-                                )}
+                                      );
+                                    }
+                                  } else {
+                                    return (
+                                      <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
+                                        <p className="text-muted-foreground text-center">{getTodaySessionDescription()}</p>
+                                      </div>
+                                    );
+                                  }
+                                })()}
                               </div>
                             </div>
                           </CardContent>
