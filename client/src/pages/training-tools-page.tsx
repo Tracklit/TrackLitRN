@@ -14,9 +14,6 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 
-// Compressed video analysis card image
-const videoAnalysisCardImage = "/video-analysis-card-5percent.jpeg";
-
 
 
 export default function WorkoutToolsPage() {
@@ -25,44 +22,50 @@ export default function WorkoutToolsPage() {
     {
       title: "Video Analysis",
       description: "AI-powered race video analysis with Sprinthia",
-      icon: <Camera className="h-6 w-6 text-primary" />,
+      icon: <Camera className="h-6 w-6 text-white" />,
       href: "/tools/video-analysis",
-      disabled: false
+      disabled: false,
+      gradient: "bg-gradient-to-r from-blue-600 to-purple-600"
     },
     {
       title: "Stopwatch",
       description: "Track your time with precision",
-      icon: <Timer className="h-6 w-6 text-primary" />,
+      icon: <Timer className="h-6 w-6 text-white" />,
       href: "/tools/stopwatch",
-      disabled: false
+      disabled: false,
+      gradient: "bg-gradient-to-r from-green-600 to-blue-600"
     },
     {
       title: "Start Gun",
       description: "Simulate a race start signal",
-      icon: <Volume2 className="h-6 w-6 text-primary" />,
+      icon: <Volume2 className="h-6 w-6 text-white" />,
       href: "/tools/start-gun",
-      disabled: false
+      disabled: false,
+      gradient: "bg-gradient-to-r from-orange-600 to-red-600"
     },
     {
       title: "Photo Finish",
       description: "Analyze race videos with timing overlays",
-      icon: <Video className="h-6 w-6 text-primary" />,
+      icon: <Video className="h-6 w-6 text-white" />,
       href: "/tools/photo-finish",
-      disabled: false
+      disabled: false,
+      gradient: "bg-gradient-to-r from-purple-600 to-pink-600"
     },
     {
       title: "Journal",
       description: "View and search your workout notes",
-      icon: <BookOpen className="h-6 w-6 text-primary" />,
+      icon: <BookOpen className="h-6 w-6 text-white" />,
       href: "/tools/journal",
-      disabled: false
+      disabled: false,
+      gradient: "bg-gradient-to-r from-indigo-600 to-blue-600"
     },
     {
       title: "Exercise Library",
       description: "Store and organize your training videos",
-      icon: <Video className="h-6 w-6 text-primary" />,
+      icon: <Video className="h-6 w-6 text-white" />,
       href: "/tools/exercise-library",
-      disabled: false
+      disabled: false,
+      gradient: "bg-gradient-to-r from-cyan-600 to-teal-600"
     },
     {
       title: "Rep Starter",
@@ -125,38 +128,19 @@ export default function WorkoutToolsPage() {
               // Enabled card
               <Link key={index} href={card.href}>
                 <Card 
-                  className="cursor-pointer h-[140px] mx-auto mb-2 overflow-hidden relative"
+                  className={`cursor-pointer h-[140px] mx-auto mb-2 overflow-hidden relative ${card.gradient} group hover:scale-105 transition-all duration-300`}
                 >
-                  {/* Background Image - Only for Video Analysis */}
-                  {card.title === "Video Analysis" && (
-                    <div 
-                      className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                      style={{ 
-                        backgroundImage: `url(${videoAnalysisCardImage})`,
-                        backgroundPosition: 'center',
-                        opacity: 0.20
-                      }}
-                    />
-                  )}
-                  
-                  {/* Gradient Overlay - Only for Video Analysis */}
-                  {card.title === "Video Analysis" && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-60 group-hover:opacity-50 transition-all duration-300" />
-                  )}
-                  
                   {/* Content Area */}
                   <CardContent className="p-2.5 relative h-full flex flex-col justify-center">
                     <div className="flex flex-col items-center text-center gap-2">
-                      {card.title !== "Video Analysis" && (
-                        <div className="p-1.5 rounded-full bg-primary/15 border border-primary/20">
-                          <div className="h-4 w-4 flex items-center justify-center text-primary">
-                            {card.icon}
-                          </div>
+                      <div className="p-1.5 rounded-full bg-white/20 border border-white/30">
+                        <div className="h-4 w-4 flex items-center justify-center">
+                          {card.icon}
                         </div>
-                      )}
+                      </div>
                       <div>
-                        <h2 className="text-base font-bold mb-0.5">{card.title}</h2>
-                        <p className="text-muted-foreground text-xs px-1 line-clamp-2 overflow-hidden">{card.description}</p>
+                        <h2 className="text-base font-bold mb-0.5 text-white">{card.title}</h2>
+                        <p className="text-white/80 text-xs px-1 line-clamp-2 overflow-hidden">{card.description}</p>
                       </div>
                     </div>
                   </CardContent>
