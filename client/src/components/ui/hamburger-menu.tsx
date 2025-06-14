@@ -228,6 +228,20 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                 </div>
               </Link>
             )}
+            {(currentUser as any)?.isCoach && (
+              <Link href="/roster-stats">
+                <div
+                  className={cn(
+                    "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
+                    location === "/roster-stats" ? "bg-primary text-primary-foreground" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                  )}
+                  onClick={() => setIsOpen(false)}
+                >
+                  <LineChart className="h-4 w-4 mr-3" />
+                  Roster Stats
+                </div>
+              </Link>
+            )}
             <Link href="/athletes">
               <div
                 className={cn(

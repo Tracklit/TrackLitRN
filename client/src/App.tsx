@@ -26,6 +26,7 @@ import ResultsPage from "@/pages/results-page";
 
 import ProfilePage from "@/pages/profile-page-new";
 import CoachesPage from "@/pages/coaches-page";
+import RosterStatsPage from "@/pages/roster-stats-page";
 import PracticePage from "@/pages/practice-page";
 import { Component as WorkoutToolsPage } from "@/pages/training-tools-page";
 import ClubsPage from "@/pages/clubs-page";
@@ -140,6 +141,7 @@ function Router() {
       <ProtectedRoute path="/my-athletes" component={MyAthletesPage} />
       <ProtectedRoute path="/athletes" component={AthletesPage} />
       <ProtectedRoute path="/coaches" component={CoachesPage} />
+      <ProtectedRoute path="/roster-stats" component={RosterStatsPage} />
       <ProtectedRoute path="/clubs" component={ClubsPage} />
       <ProtectedRoute path="/club/:id" component={ClubDetailPage} />
       <ProtectedRoute path="/club-management/:id" component={ClubManagementPage} />
