@@ -92,8 +92,12 @@ export default function HomePage() {
   const isTodayMeetDay = meets?.some(meet => {
     const meetDate = new Date(meet.date);
     const today = new Date();
-    return meetDate.toDateString() === today.toDateString();
+    const isSameDay = meetDate.toDateString() === today.toDateString();
+    console.log('Checking meet:', meet.name, 'Meet date:', meetDate.toDateString(), 'Today:', today.toDateString(), 'Same day:', isSameDay);
+    return isSameDay;
   }) || false;
+  
+  console.log('isTodayMeetDay:', isTodayMeetDay, 'Meets:', meets?.length);
   
   // Determine Today's Session description based on program type
   const getTodaySessionDescription = () => {
