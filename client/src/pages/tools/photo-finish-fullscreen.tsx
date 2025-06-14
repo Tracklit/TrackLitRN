@@ -313,10 +313,13 @@ export default function PhotoFinishFullscreen({
       const centerY = (touch1.clientY + touch2.clientY) / 2;
       const distance = getDistance(touch1, touch2);
       
-      // Handle pinch-to-zoom
+      // Handle pinch-to-zoom with container width constraint
       if (lastDistance > 0) {
         const scale = distance / lastDistance;
-        const newScale = Math.max(0.5, Math.min(3, videoScale * scale));
+        // Ensure video never zooms smaller than container width
+        const minScale = containerRef.current ? 
+          Math.min(1, containerRef.current.clientWidth / (videoRef.current?.videoWidth || 1)) : 1;
+        const newScale = Math.max(minScale, Math.min(3, videoScale * scale));
         setVideoScale(newScale);
       }
       
@@ -615,8 +618,11 @@ export default function PhotoFinishFullscreen({
           poster={videoPoster}
           className="w-full h-full object-contain"
           style={{
-            transform: `scale(${videoScale}) translate(${videoTranslate.x}px, ${videoTranslate.y}px)`,
+            transform: `scale(${Math.max(videoScale, 1)}) translate(${videoTranslate.x}px, ${videoTranslate.y}px)`,
+            minWidth: '100%',
+            minHeight: '100%'
           }}
+          preload="metadata"
           onLoadedMetadata={handleVideoLoad}
           onTimeUpdate={() => {
             if (videoRef.current) {
@@ -626,7 +632,6 @@ export default function PhotoFinishFullscreen({
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
           controls={false}
-          preload="metadata"
         />
         
         <canvas
@@ -670,7 +675,7 @@ export default function PhotoFinishFullscreen({
             className="text-white hover:bg-white/20"
           >
             <Timer className="w-4 h-4 mr-2" />
-            Add Timer
+            Add Timer ({timers.length})
           </Button>
           
           <Button
@@ -693,13 +698,29 @@ export default function PhotoFinishFullscreen({
               setActiveFinishLine(null);
             }}
             className="text-white hover:bg-white/20"
+            disabled={timers.length === 0 && finishLines.length === 0}
           >
             <Trash2 className="w-4 h-4 mr-2" />
             Clear All
           </Button>
+          
+          {timers.length > 0 && (
+            <div className="text-sm text-white/70">
+              Click on video to place timer at current time: {formatTime(currentTime)}
+            </div>
+          )}
         </div>
         {/* Scrubber and Controls */}
         <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={skipBackward}
+            className="text-white hover:bg-white/20"
+          >
+            <SkipBack className="w-5 h-5" />
+          </Button>
+          
           <Button
             variant="ghost"
             size="sm"
@@ -709,29 +730,57 @@ export default function PhotoFinishFullscreen({
             {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
           </Button>
           
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={skipForward}
+            className="text-white hover:bg-white/20"
+          >
+            <SkipForward className="w-5 h-5" />
+          </Button>
+          
+          <Button
+            variant={isSlowmo ? "default" : "ghost"}
+            size="sm"
+            onClick={toggleSlowmo}
+            className="text-white hover:bg-white/20"
+          >
+            <Zap className="w-5 h-5 mr-1" />
+            {isSlowmo ? "0.25x" : "1x"}
+          </Button>
+          
           <div className="text-sm text-white font-mono">
-            {`${Math.floor(currentTime / 60)}:${(currentTime % 60).toFixed(2).padStart(5, '0')}`}
+            {formatTime(currentTime)}
           </div>
           
-          {/* Scrubber */}
-          <div className="flex-1 relative">
+          {/* Enhanced Scrubber */}
+          <div className="flex-1 relative py-2">
             <div
-              className="h-2 bg-gray-600 rounded-full cursor-pointer"
+              className="h-3 bg-gray-600 rounded-full cursor-pointer relative"
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onMouseEnter={() => setScrubberHovered(true)}
+              onMouseLeave={() => setScrubberHovered(false)}
             >
               <div
-                className="h-full bg-white rounded-full relative"
+                className="h-full bg-white rounded-full relative transition-all duration-200"
                 style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
               >
-                <div className="absolute right-0 top-1/2 transform translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full border-2 border-black" />
+                <div 
+                  className={`absolute right-0 top-1/2 transform translate-x-1/2 -translate-y-1/2 bg-white rounded-full border-2 border-black transition-all duration-200 ${
+                    scrubberDragging || scrubberHovered ? 'w-8 h-8' : 'w-5 h-5'
+                  }`} 
+                />
               </div>
             </div>
           </div>
           
           <div className="text-sm text-white font-mono">
-            {`${Math.floor(duration / 60)}:${(duration % 60).toFixed(2).padStart(5, '0')}`}
+            {formatTime(duration)}
           </div>
         </div>
       </div>
