@@ -562,22 +562,17 @@ export default function PhotoFinishFullscreen({
       }
     }
   };
-  // Auto-hide controls
+  // Keep controls always visible for analysis
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowControls(false);
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, [showControls]);
+    setShowControls(true);
+  }, []);
   return (
     <div 
       className="fixed inset-0 bg-black text-white overflow-hidden"
       onMouseMove={() => setShowControls(true)}
     >
       {/* Top Controls Bar */}
-      <div className={`absolute top-0 left-0 right-0 z-50 transition-opacity duration-300 ${
-        showControls ? 'opacity-100' : 'opacity-0'
-      } bg-gradient-to-b from-black/80 to-transparent p-4`}>
+      <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/90 to-transparent p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button
@@ -652,18 +647,20 @@ export default function PhotoFinishFullscreen({
         </div>
       )}
       {/* Main Video Container */}
-      <div className="w-full h-full relative" ref={containerRef}>
+      <div className="w-full h-full relative overflow-hidden" ref={containerRef} style={{ height: 'calc(100vh - 200px)', marginTop: '80px', marginBottom: '120px' }}>
         <video
           ref={videoRef}
           src={videoUrl || ''}
-          className="w-full h-full object-contain"
+          className="w-full h-full object-contain pointer-events-none"
           style={{
             transform: `scale(${Math.max(videoScale, 1)}) translate(${videoTranslate.x}px, ${videoTranslate.y}px)`,
-            minWidth: '100%',
-            minHeight: '100%'
+            maxWidth: '100%',
+            maxHeight: '100%'
           }}
           preload="metadata"
-          crossOrigin="anonymous"
+          disablePictureInPicture
+          webkit-playsinline="true"
+          playsInline
           onLoadedMetadata={handleVideoLoad}
           onLoadedData={() => {
             // Ensure first frame is visible once data is loaded
@@ -692,6 +689,8 @@ export default function PhotoFinishFullscreen({
               variant: "destructive",
             });
           }}
+          onDoubleClick={(e) => e.preventDefault()}
+          onContextMenu={(e) => e.preventDefault()}
           controls={false}
         />
         
@@ -723,9 +722,7 @@ export default function PhotoFinishFullscreen({
         </div>
       </div>
       {/* Bottom Controls Bar */}
-      <div className={`absolute bottom-0 left-0 right-0 z-50 transition-opacity duration-300 ${
-        showControls ? 'opacity-100' : 'opacity-0'
-      } bg-gradient-to-t from-black/80 to-transparent p-4`}>
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black/90 to-transparent p-4">
         
         {/* Tools Bar */}
         <div className="flex items-center justify-center gap-4 mb-4">
