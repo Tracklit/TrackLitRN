@@ -13,7 +13,9 @@ import {
   Save,
   FolderOpen,
   ArrowRight,
-  Info
+  Info,
+  X,
+  Square
 } from "lucide-react";
 
 import { useToast } from "@/hooks/use-toast";
@@ -69,11 +71,15 @@ export default function PhotoFinishPage() {
 
   // UI state
   const [savedVideos, setSavedVideos] = useState<SavedVideo[]>([]);
+  const [isRecording, setIsRecording] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
 
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const cameraPreviewRef = useRef<HTMLVideoElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const generateVideoThumbnail = (video: HTMLVideoElement): Promise<string> => {
     return new Promise((resolve) => {
@@ -230,6 +236,84 @@ export default function PhotoFinishPage() {
     setVideoPoster(savedVideo.thumbnail);
   };
 
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { 
+          facingMode: 'environment',
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        },
+        audio: true
+      });
+      
+      if (cameraPreviewRef.current) {
+        cameraPreviewRef.current.srcObject = stream;
+        streamRef.current = stream;
+        setShowCamera(true);
+      }
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      toast({
+        title: "Camera Access Error",
+        description: "Please allow camera access to record video",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    setShowCamera(false);
+    setIsRecording(false);
+  };
+
+  const startRecording = () => {
+    if (!streamRef.current) return;
+
+    const mediaRecorder = new MediaRecorder(streamRef.current);
+    const chunks: BlobPart[] = [];
+
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        chunks.push(event.data);
+      }
+    };
+
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      const file = new File([blob], `recording-${Date.now()}.webm`, { type: 'video/webm' });
+      
+      setCurrentVideo(file);
+      const url = URL.createObjectURL(file);
+      setVideoUrl(url);
+      stopCamera();
+      
+      // Auto-open fullscreen analysis
+      navigate('/tools/photo-finish/fullscreen', { 
+        state: { 
+          videoUrl: url, 
+          videoFile: file,
+          fromRecording: true 
+        } 
+      });
+    };
+
+    mediaRecorderRef.current = mediaRecorder;
+    mediaRecorder.start();
+    setIsRecording(true);
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 pb-16">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
@@ -277,6 +361,56 @@ export default function PhotoFinishPage() {
                     <p className="text-sm text-muted-foreground">{uploadProgress}% complete</p>
                   </div>
                 </div>
+              ) : showCamera ? (
+                <div className="space-y-4">
+                  <div className="relative bg-black rounded-lg overflow-hidden">
+                    <video
+                      ref={cameraPreviewRef}
+                      autoPlay
+                      muted
+                      playsInline
+                      className="w-full aspect-video"
+                    />
+                    
+                    {isRecording && (
+                      <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2">
+                        <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                        Recording
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex justify-center gap-4">
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      onClick={stopCamera}
+                    >
+                      <span className="text-lg">✕</span>
+                      Cancel
+                    </Button>
+                    
+                    {!isRecording ? (
+                      <Button
+                        size="lg"
+                        onClick={startRecording}
+                        className="bg-red-500 hover:bg-red-600 text-white"
+                      >
+                        <Video className="h-5 w-5 mr-2" />
+                        Start Recording
+                      </Button>
+                    ) : (
+                      <Button
+                        size="lg"
+                        onClick={stopRecording}
+                        variant="destructive"
+                      >
+                        <Square className="h-5 w-5 mr-2" />
+                        Stop Recording
+                      </Button>
+                    )}
+                  </div>
+                </div>
               ) : !currentVideo ? (
                 <div className="space-y-6">
                   <div className="text-center">
@@ -285,26 +419,37 @@ export default function PhotoFinishPage() {
                     <p className="text-muted-foreground mb-4">Choose how to add your video</p>
                   </div>
                   
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="w-full h-20 flex flex-col gap-2"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Upload className="h-8 w-8" />
-                    <span className="text-lg">Choose Video</span>
-                    <span className="text-xs text-muted-foreground">From camera roll or record new</span>
-                  </Button>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="h-20 flex flex-col gap-2"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <FolderOpen className="h-6 w-6" />
+                      <span>Photo Library</span>
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="h-20 flex flex-col gap-2"
+                      onClick={startCamera}
+                    >
+                      <Video className="h-6 w-6" />
+                      <span>Record Video</span>
+                    </Button>
+                  </div>
                   
                   <p className="text-sm text-muted-foreground text-center">
                     Video will automatically open in fullscreen analysis mode
                   </p>
                   
-                  {/* Optimized video input for mobile */}
+                  {/* Simplified file input for photo library */}
                   <Input
                     ref={fileInputRef}
                     type="file"
-                    accept="video/*"
+                    accept="video/mp4,video/quicktime,video/x-msvideo,video/webm"
                     onChange={handleFileUpload}
                     className="hidden"
                   />
