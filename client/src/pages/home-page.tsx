@@ -203,44 +203,35 @@ export default function HomePage() {
       icon: <Calendar className="h-6 w-6 text-primary" />,
       href: "/practice",
       disabled: false,
-      isSpecial: true,
-      backgroundImage: "/practice-card-final-compressed.jpeg"
+      isSpecial: true
     },
     {
       title: "Programs",
       description: "Training plans and schedules",
       icon: <BookOpen className="h-6 w-6 text-primary" />,
       href: "/programs",
-      disabled: false,
-      headerImage: "/programs-card-extreme.webp",
-      backgroundImage: "/programs-background-final-compressed.jpeg"
+      disabled: false
     },
     {
       title: "Race",
       description: "Meets, results and analytics",
       icon: <Trophy className="h-6 w-6 text-primary" />,
       href: "/meets",
-      disabled: false,
-      headerImage: "/track-image-2-extreme.webp",
-      backgroundImage: "/race-background-optimized.jpeg"
+      disabled: false
     },
     {
       title: "Tools",
       description: "Training and performance tools",
       icon: <Clock className="h-6 w-6 text-primary" />,
       href: "/training-tools",
-      disabled: false,
-      headerImage: "/tools-card-extreme.webp",
-      backgroundImage: "/tools-background-optimized.jpeg"
+      disabled: false
     },
     {
       title: "Sprinthia",
       description: "World's First AI Track Coach & Companion",
       icon: <MessageCircle className="h-6 w-6 text-primary" />,
       href: "/sprinthia",
-      disabled: false,
-      headerImage: "/sprinthia-avatar-extreme.webp",
-      backgroundImage: "/sprinthia-background-optimized.jpeg"
+      disabled: false
     }
   ];
 
