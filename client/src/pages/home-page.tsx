@@ -58,6 +58,17 @@ export default function HomePage() {
   const { user } = useAuth();
   const [isCreateMeetOpen, setIsCreateMeetOpen] = useState(false);
   const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
+
+  // Critical dashboard images for preloading with 80% compression
+  const criticalImages = [
+    practiceBackground,
+    programsBackground,
+    raceBackground,
+    toolsBackground
+  ];
+
+  // Preload critical images with compression
+  const { imagesLoaded } = useImageOptimization(criticalImages);
   const [currentSession, setCurrentSession] = useState<any>(null);
   const [isSavingSession, setIsSavingSession] = useState(false);
   const [isTickerVisible, setIsTickerVisible] = useState(() => {
@@ -66,9 +77,7 @@ export default function HomePage() {
   });
   const [activeSessionIndex, setActiveSessionIndex] = useState(0);
 
-  // Preload critical images for performance
-  const criticalImages = [programsBackground];
-  const { imagesLoaded, loadingProgress } = useImageOptimization(criticalImages);
+
 
   const toggleTickerVisibility = (visible: boolean) => {
     setIsTickerVisible(visible);
@@ -388,14 +397,16 @@ export default function HomePage() {
               ) : (
                 <Link href={card.href} key={index}>
                   <Card className={`cursor-pointer shadow-2xl border-0 h-[140px] overflow-hidden group relative bg-primary/5 ${index > 0 ? 'mt-8' : ''}`}>
-                    {/* Background image for cards that have it */}
+                    {/* Optimized background image for cards that have it */}
                     {card.hasBackground && (
-                      <div 
-                        className="absolute inset-0 bg-cover bg-bottom bg-no-repeat opacity-95"
-                        style={{
-                          backgroundImage: `url(${card.backgroundImage})`,
-                          zIndex: 0
-                        }}
+                      <OptimizedBackgroundImage
+                        src={card.backgroundImage}
+                        alt={`${card.title} background`}
+                        className="absolute inset-0"
+                        priority={index < 2} // Preload first two cards
+                        quality={20} // 80% compression
+                        lazy={index >= 2} // Lazy load cards below the fold
+                        opacity={0.95}
                       />
                     )}
                     

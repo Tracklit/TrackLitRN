@@ -1,15 +1,79 @@
 import React from 'react';
 
+// Image quality and compression settings
+export interface ImageOptions {
+  quality?: number;
+  format?: 'webp' | 'avif' | 'jpeg' | 'png' | 'auto';
+  width?: number;
+  height?: number;
+  blur?: boolean;
+  lazy?: boolean;
+}
+
 // Image optimization utilities
 export class ImageOptimizer {
   private static preloadedImages = new Set<string>();
   private static imageCache = new Map<string, HTMLImageElement>();
+  private static formatSupport = {
+    webp: null as boolean | null,
+    avif: null as boolean | null
+  };
+
+  /**
+   * Generate compressed image URL with specified quality
+   */
+  static getCompressedImageUrl(src: string, quality: number = 20): string {
+    // For static images, we'll create a compressed version identifier
+    // In production, this would integrate with your image processing service
+    const baseUrl = src.replace(/\.(jpg|jpeg|png)$/i, '');
+    const extension = src.match(/\.(jpg|jpeg|png)$/i)?.[1] || 'png';
+    return `${baseUrl}_q${quality}.${extension}`;
+  }
+
+  /**
+   * Generate LQIP (Low Quality Image Placeholder)
+   */
+  static generateLQIP(src: string, quality: number = 10): string {
+    return this.getCompressedImageUrl(src, quality);
+  }
+
+  /**
+   * Get optimal image format and quality based on browser support
+   */
+  static async getOptimalImageSrc(src: string, options: ImageOptions = {}): Promise<string> {
+    const { quality = 80, format = 'auto' } = options;
+    
+    if (format === 'auto') {
+      // Check for modern format support
+      if (await this.supportsAVIF()) {
+        return this.convertToFormat(src, 'avif', quality);
+      } else if (await this.supportsWebP()) {
+        return this.convertToFormat(src, 'webp', quality);
+      }
+    } else if (format !== 'jpeg' && format !== 'png') {
+      return this.convertToFormat(src, format, quality);
+    }
+    
+    // Return compressed version of original format
+    return this.getCompressedImageUrl(src, quality);
+  }
+
+  /**
+   * Convert image to specified format with quality
+   */
+  private static convertToFormat(src: string, format: string, quality: number): string {
+    const baseUrl = src.replace(/\.(jpg|jpeg|png)$/i, '');
+    return `${baseUrl}_q${quality}.${format}`;
+  }
 
   /**
    * Preload critical images that appear above the fold
    */
-  static preloadCriticalImages(imageSources: string[]): Promise<void[]> {
-    const preloadPromises = imageSources.map(src => this.preloadImage(src));
+  static async preloadCriticalImages(imageSources: string[], options: ImageOptions = {}): Promise<void[]> {
+    const optimizedSources = await Promise.all(
+      imageSources.map(src => this.getOptimalImageSrc(src, options))
+    );
+    const preloadPromises = optimizedSources.map(src => this.preloadImage(src));
     return Promise.all(preloadPromises);
   }
 
@@ -38,16 +102,6 @@ export class ImageOptimizer {
   }
 
   /**
-   * Generate a low-quality image placeholder (LQIP)
-   * In a real implementation, this would be generated at build time
-   */
-  static generateLQIP(src: string, quality: number = 10): string {
-    // For now, return the original image with CSS blur effect
-    // In production, you'd generate actual low-res versions
-    return src;
-  }
-
-  /**
    * Check if an image is already cached
    */
   static isImageCached(src: string): boolean {
@@ -55,44 +109,51 @@ export class ImageOptimizer {
   }
 
   /**
-   * Get optimal image format based on browser support
+   * Check WebP support with caching
    */
-  static getOptimalFormat(src: string): string {
-    // Check for WebP support
-    if (this.supportsWebP()) {
-      return src.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+  static async supportsWebP(): Promise<boolean> {
+    if (this.formatSupport.webp !== null) {
+      return this.formatSupport.webp;
     }
-    
-    // Check for AVIF support
-    if (this.supportsAVIF()) {
-      return src.replace(/\.(jpg|jpeg|png)$/i, '.avif');
-    }
-    
-    return src;
+
+    return new Promise((resolve) => {
+      const webp = new Image();
+      webp.onload = webp.onerror = () => {
+        this.formatSupport.webp = webp.height === 2;
+        resolve(this.formatSupport.webp);
+      };
+      webp.src = 'data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA';
+    });
   }
 
   /**
-   * Check WebP support
+   * Check AVIF support with caching
    */
-  private static supportsWebP(): boolean {
-    const canvas = document.createElement('canvas');
-    canvas.width = 1;
-    canvas.height = 1;
-    return canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0;
+  static async supportsAVIF(): Promise<boolean> {
+    if (this.formatSupport.avif !== null) {
+      return this.formatSupport.avif;
+    }
+
+    return new Promise((resolve) => {
+      const avif = new Image();
+      avif.onload = avif.onerror = () => {
+        this.formatSupport.avif = avif.height === 2;
+        resolve(this.formatSupport.avif);
+      };
+      avif.src = 'data:image/avif;base64,AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAADybWV0YQAAAAAAAAAoaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAAAAAAGxpYmF2aWYAAAAADnBpdG0AAAAAAAEAAAAeaWxvYwAAAABEAAABAAEAAAABAAABGgAAABcAAAAoaWluZgAAAAAAAQAAABppbmZlAgAAAAABAABhdjAxQ29sb3IAAAAAamlwcnAAAABLaXBjbwAAABRpc3BlAAAAAAAAAAEAAAABAAAAEHBpeGkAAAAAAwgICAAAAAxhdjFDgQAMAAAAABNjb2xybmNseAACAAIABoAAAAAXaXBtYQAAAAAAAAABAAEEAQKDBAAAAB9tZGF0EgAKCBgABogQEDQgMgkQAAAAB8dSLfI=';
+    });
   }
 
   /**
-   * Check AVIF support
+   * Create responsive image srcSet for different screen sizes
    */
-  private static supportsAVIF(): boolean {
-    const canvas = document.createElement('canvas');
-    canvas.width = 1;
-    canvas.height = 1;
-    try {
-      return canvas.toDataURL('image/avif').indexOf('data:image/avif') === 0;
-    } catch {
-      return false;
-    }
+  static generateSrcSet(src: string, options: ImageOptions = {}): string {
+    const { quality = 80 } = options;
+    const sizes = [480, 768, 1024, 1200];
+    
+    return sizes
+      .map(size => `${this.getCompressedImageUrl(src, quality)} ${size}w`)
+      .join(', ');
   }
 }
 
