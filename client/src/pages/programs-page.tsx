@@ -360,7 +360,7 @@ function CompactProgramCard({ program, type, creator, viewMode }: {
   });
   
   return (
-    <Card className="overflow-hidden transition-all hover:shadow-md h-24 bg-gray-900/95 border-gray-800/50 relative cursor-pointer hover:bg-gray-900"
+    <Card className="overflow-hidden transition-all hover:shadow-md h-24 bg-black/95 border-gray-800/50 relative cursor-pointer hover:bg-black"
           onClick={() => window.location.href = `/programs/${program.programId || program.id}`}>
       
       <CardHeader className="p-3 pb-2">
@@ -846,7 +846,7 @@ function EmptyState({ title, description, action }: {
 
 function CompactProgramCardSkeleton() {
   return (
-    <Card className="overflow-hidden h-24 bg-gray-900/95 border-gray-800/50 relative">
+    <Card className="overflow-hidden h-24 bg-black/95 border-gray-800/50 relative">
       <CardHeader className="p-3 pb-2">
         <div className="flex justify-between items-start">
           <div className="flex-1 pr-2 text-center">
