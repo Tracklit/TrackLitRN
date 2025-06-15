@@ -434,7 +434,7 @@ export default function HomePage() {
                                     </>
                                   ) : (
                                     <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
-                                      <p className="text-muted-foreground text-center">
+                                      <p className="text-yellow-400 text-center font-bold text-lg">
                                         Rest Day
                                       </p>
                                     </div>
@@ -442,7 +442,7 @@ export default function HomePage() {
                                 ) : (
                                   /* Show fallback message for other program types or no program */
                                   <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
-                                    <p className="text-muted-foreground text-center">{getTodaySessionDescription()}</p>
+                                    <p className="text-yellow-400 text-center font-bold text-lg">{getTodaySessionDescription()}</p>
                                   </div>
                                 )}
                               </div>
