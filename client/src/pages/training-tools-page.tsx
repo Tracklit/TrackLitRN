@@ -128,7 +128,7 @@ export default function WorkoutToolsPage() {
               // Enabled card
               <Link key={index} href={card.href}>
                 <Card 
-                  className={`cursor-pointer h-[140px] mx-auto mb-2 overflow-hidden relative ${card.gradient} group hover:scale-105 transition-all duration-300 border-0`}
+                  className={`cursor-pointer h-[140px] mx-auto mb-2 overflow-hidden relative ${card.gradient} group hover:scale-105 transition-all duration-300 border border-gray-400/20`}
                 >
                   {/* Content Area */}
                   <CardContent className="p-2.5 relative h-full flex flex-col justify-center">
