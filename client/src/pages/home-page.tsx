@@ -369,7 +369,7 @@ export default function HomePage() {
         {/* Main Category Cards - Single Column Full Width */}
         <section className="mb-4">
           <div className="max-w-2xl mx-auto">
-            {categoryCards.map((card, index) => (
+            {categoryCards.map((card, index) => 
               card.disabled ? (
                 <Card key={index} className={`h-[140px] overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 border border-gray-600 ${index > 0 ? 'mt-8' : ''}`}>
                   <CardContent className="p-4 relative h-full flex flex-col justify-center opacity-50">
@@ -385,7 +385,6 @@ export default function HomePage() {
                     {/* Special Practice Session - Full Width */}
                     {card.isSpecial ? (
                       <>
-
                         <CardContent className="h-full p-4 relative flex flex-col z-10">
                             <div className="flex flex-col h-full">
                               <div className="mb-3">
@@ -460,7 +459,7 @@ export default function HomePage() {
                   </Card>
                 </Link>
               )
-            ))}
+            )}
           </div>
         </section>
 
