@@ -114,38 +114,38 @@ export default function HomePage() {
   
   // Determine Today's Session description based on program type
   const getTodaySessionDescription = () => {
-    if (!primaryProgram) {
-      return "No program assigned, tap to assign one";
-    }
-    
     // Check if it's a race day first (applies to all program types)
     if (isTodayMeetDay) {
-      return "Race Day!";
+      return "Race Day";
+    }
+    
+    if (!primaryProgram) {
+      return "Assign Program";
     }
     
     // Check if it's a Google Sheets program
     if (primaryProgram.program?.importedFromSheet && primaryProgram.program?.googleSheetId) {
-      if (todaySession) {
+      if (todaySession && (todaySession.shortDistanceWorkout || todaySession.mediumDistanceWorkout || todaySession.longDistanceWorkout)) {
         return todaySession.shortDistanceWorkout?.slice(0, 50) + "..." || 
                todaySession.mediumDistanceWorkout?.slice(0, 50) + "..." || 
                todaySession.longDistanceWorkout?.slice(0, 50) + "..." || 
-               "View your workout";
+               "Practice";
       } else {
-        return "No workout scheduled for today";
+        return "Rest Day";
       }
     }
     
     // For text-based programs
     if (primaryProgram.program?.isTextBased) {
-      return "View your text-based program";
+      return "Practice";
     }
     
     // For uploaded PDF programs
     if (primaryProgram.program?.isUploadedProgram) {
-      return "View your uploaded program";
+      return "Practice";
     }
     
-    return "View your workout";
+    return "Practice";
   };
   
   // Temporary type for session previews with user data
@@ -377,7 +377,7 @@ export default function HomePage() {
           <div className="max-w-2xl mx-auto">
             {categoryCards.map((card, index) => 
               card.disabled ? (
-                <Card key={index} className={`h-[140px] overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 shadow-sm ${index > 0 ? 'mt-8' : ''}`}>
+                <Card key={index} className={`h-[140px] overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 shadow-sm border-0 ${index > 0 ? 'mt-8' : ''}`}>
                   <CardContent className="p-4 relative h-full flex flex-col justify-center opacity-50">
                     <div className="text-center">
                       <h2 className="text-lg font-bold mb-2 text-muted-foreground/70">{card.title}</h2>
@@ -387,7 +387,7 @@ export default function HomePage() {
                 </Card>
               ) : (
                 <Link href={card.href} key={index}>
-                  <Card className={`cursor-pointer hover:shadow-md transition-all duration-300 shadow-sm h-[140px] overflow-hidden group relative bg-primary/5 ${index > 0 ? 'mt-8' : ''}`}>
+                  <Card className={`cursor-pointer hover:shadow-md transition-all duration-300 shadow-sm border-0 h-[140px] overflow-hidden group relative bg-primary/5 ${index > 0 ? 'mt-8' : ''}`}>
                     {/* Background image for cards that have it */}
                     {card.hasBackground && (
                       <div 
