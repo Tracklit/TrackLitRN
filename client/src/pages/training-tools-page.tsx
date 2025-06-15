@@ -86,12 +86,6 @@ export default function WorkoutToolsPage() {
   return (
     <div className="container max-w-screen-xl mx-auto p-4 pt-5 pb-10">
 
-      
-      <PageHeader
-        title="Workout Tools"
-        description="Tools to help you during workout sessions"
-      />
-
       {/* Tool Cards - 2 column layout matching the home page style */}
       <section className="mb-6">
         <div className="grid grid-cols-2 gap-4 mx-auto" style={{ maxWidth: "540px", margin: "0 auto 8px" }}>
