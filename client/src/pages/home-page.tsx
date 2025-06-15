@@ -54,6 +54,7 @@ import programsBackground from '@assets/image_1750012192490.png';
 import practiceBackground from '@assets/Screenshot 2025-06-15 205621_1750013855167.png';
 import raceBackground from '@assets/Screenshot 2025-06-15 205651_1750013855167.png';
 import toolsBackground from '@assets/Screenshot 2025-06-15 205721_1750013855168.png';
+import sprinthiaBackground from '@assets/image_1750018531674.png';
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -65,7 +66,8 @@ export default function HomePage() {
     practiceBackground,
     programsBackground,
     raceBackground,
-    toolsBackground
+    toolsBackground,
+    sprinthiaBackground
   ];
 
   // Preload critical images with compression
@@ -276,7 +278,8 @@ export default function HomePage() {
       icon: <MessageCircle className="h-6 w-6 text-primary" />,
       href: "/sprinthia",
       disabled: false,
-      backgroundImage: backgroundImages[4]
+      backgroundImage: sprinthiaBackground,
+      hasBackground: true
     }
   ];
 
