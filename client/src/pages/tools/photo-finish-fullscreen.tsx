@@ -73,10 +73,7 @@ export default function PhotoFinishFullscreen({
 
   // Format timeline markers to show XX.XX format (seconds.tenths hundredths)
   const formatTimelineTime = (seconds: number) => {
-    const wholeSeconds = Math.floor(seconds);
-    const decimal = seconds - wholeSeconds;
-    const tenthsHundredths = Math.floor(decimal * 100);
-    return `${wholeSeconds.toString().padStart(2, '0')}.${tenthsHundredths.toString().padStart(2, '0')}`;
+    return seconds.toFixed(2);
   };
 
   // Video control functions
@@ -239,10 +236,22 @@ export default function PhotoFinishFullscreen({
       const deltaX = event.clientX - lastPanPoint.x;
       const deltaY = event.clientY - lastPanPoint.y;
       
-      setVideoPosition(prev => ({
-        x: prev.x + deltaX,
-        y: prev.y + deltaY
-      }));
+      // Calculate boundaries to keep video within container
+      const container = videoContainerRef.current;
+      if (container) {
+        const containerWidth = container.clientWidth;
+        const containerHeight = container.clientHeight;
+        const scaledWidth = containerWidth * videoScale;
+        const scaledHeight = containerHeight * videoScale;
+        
+        const maxX = (scaledWidth - containerWidth) / 2;
+        const maxY = (scaledHeight - containerHeight) / 2;
+        
+        setVideoPosition(prev => ({
+          x: Math.max(-maxX, Math.min(maxX, prev.x + deltaX)),
+          y: Math.max(-maxY, Math.min(maxY, prev.y + deltaY))
+        }));
+      }
       
       setLastPanPoint({ x: event.clientX, y: event.clientY });
     }
@@ -297,10 +306,22 @@ export default function PhotoFinishFullscreen({
         const deltaX = midX - lastPanPoint.x;
         const deltaY = midY - lastPanPoint.y;
         
-        setVideoPosition(prev => ({
-          x: prev.x + deltaX,
-          y: prev.y + deltaY
-        }));
+        // Calculate boundaries to keep video within container
+        const container = videoContainerRef.current;
+        if (container) {
+          const containerWidth = container.clientWidth;
+          const containerHeight = container.clientHeight;
+          const scaledWidth = containerWidth * videoScale;
+          const scaledHeight = containerHeight * videoScale;
+          
+          const maxX = (scaledWidth - containerWidth) / 2;
+          const maxY = (scaledHeight - containerHeight) / 2;
+          
+          setVideoPosition(prev => ({
+            x: Math.max(-maxX, Math.min(maxX, prev.x + deltaX)),
+            y: Math.max(-maxY, Math.min(maxY, prev.y + deltaY))
+          }));
+        }
         
         setLastPanPoint({ x: midX, y: midY });
       }
