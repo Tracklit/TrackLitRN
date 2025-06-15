@@ -443,13 +443,15 @@ export default function PhotoFinishPage() {
                     Video will automatically open in fullscreen analysis mode
                   </p>
                   
-                  {/* Simplified file input for photo library */}
+                  {/* Optimized file input for immediate upload (Expo-like behavior) */}
                   <Input
                     ref={fileInputRef}
                     type="file"
-                    accept="video/mp4,video/quicktime,video/x-msvideo,video/webm"
+                    accept="video/*"
+                    capture="environment"
                     onChange={handleFileUpload}
                     className="hidden"
+                    onClick={(e) => e.currentTarget.value = ''}
                   />
                 </div>
               ) : (
