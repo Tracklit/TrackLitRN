@@ -377,7 +377,7 @@ export default function HomePage() {
           <div className="max-w-2xl mx-auto">
             {categoryCards.map((card, index) => 
               card.disabled ? (
-                <Card key={index} className={`h-[140px] overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 shadow-lg border-0 ${index > 0 ? 'mt-8' : ''}`}>
+                <Card key={index} className={`h-[140px] overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 shadow-2xl border-0 ${index > 0 ? 'mt-8' : ''}`}>
                   <CardContent className="p-4 relative h-full flex flex-col justify-center opacity-50">
                     <div className="text-center">
                       <h2 className="text-lg font-bold mb-2 text-muted-foreground/70">{card.title}</h2>
@@ -387,7 +387,7 @@ export default function HomePage() {
                 </Card>
               ) : (
                 <Link href={card.href} key={index}>
-                  <Card className={`cursor-pointer hover:shadow-md transition-all duration-300 shadow-lg border-0 h-[140px] overflow-hidden group relative bg-primary/5 ${index > 0 ? 'mt-8' : ''}`}>
+                  <Card className={`cursor-pointer shadow-2xl border-0 h-[140px] overflow-hidden group relative bg-primary/5 ${index > 0 ? 'mt-8' : ''}`}>
                     {/* Background image for cards that have it */}
                     {card.hasBackground && (
                       <div 
@@ -410,7 +410,7 @@ export default function HomePage() {
                                   // Check for race day first, regardless of session availability
                                   isTodayMeetDay ? (
                                     <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
-                                      <p className="text-center font-semibold text-white">
+                                      <p className="text-center font-bold text-lg text-purple-400">
                                         Race Day!
                                       </p>
                                     </div>
