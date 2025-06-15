@@ -479,19 +479,18 @@ export default function PhotoFinishFullscreen({
 
   return (
     <div className="fixed inset-0 bg-black text-white flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-black/80 backdrop-blur-sm relative z-50">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="lg"
-            onClick={onClose}
-            className="text-white hover:bg-white/20 border border-white/20"
-          >
-            <X className="w-6 h-6" />
-          </Button>
-          <h1 className="text-lg font-semibold">{videoName}</h1>
-        </div>
+      {/* Close Button - Fixed Position */}
+      <Button
+        onClick={onClose}
+        className="fixed top-4 left-4 z-[60] bg-black/80 hover:bg-black/60 text-white border border-white/40 backdrop-blur-sm"
+        size="lg"
+      >
+        <X className="w-6 h-6" />
+      </Button>
+      
+      {/* Video Title */}
+      <div className="fixed top-4 left-20 z-50 bg-black/60 backdrop-blur-sm px-4 py-2 rounded">
+        <h1 className="text-lg font-semibold text-white">{videoName}</h1>
       </div>
 
       {/* Video Container - takes remaining space */}
