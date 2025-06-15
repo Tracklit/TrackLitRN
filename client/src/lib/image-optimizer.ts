@@ -34,28 +34,18 @@ export class ImageOptimizer {
    * Generate LQIP (Low Quality Image Placeholder)
    */
   static generateLQIP(src: string, quality: number = 10): string {
-    return this.getCompressedImageUrl(src, quality);
+    // For static imports, return the original source
+    // The CSS blur effect will create the LQIP appearance
+    return src;
   }
 
   /**
    * Get optimal image format and quality based on browser support
    */
   static async getOptimalImageSrc(src: string, options: ImageOptions = {}): Promise<string> {
-    const { quality = 80, format = 'auto' } = options;
-    
-    if (format === 'auto') {
-      // Check for modern format support
-      if (await this.supportsAVIF()) {
-        return this.convertToFormat(src, 'avif', quality);
-      } else if (await this.supportsWebP()) {
-        return this.convertToFormat(src, 'webp', quality);
-      }
-    } else if (format !== 'jpeg' && format !== 'png') {
-      return this.convertToFormat(src, format, quality);
-    }
-    
-    // Return compressed version of original format
-    return this.getCompressedImageUrl(src, quality);
+    // For static imports, return the original source
+    // The browser will handle optimization and compression
+    return src;
   }
 
   /**

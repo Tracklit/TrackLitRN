@@ -43,6 +43,7 @@ import { SimpleWorkoutLike } from '@/components/workout-reactions';
 import { BackgroundImageContainer, OptimizedBackgroundImage } from '@/components/optimized-background-image';
 import { ImageOptimizer, useImageOptimization } from '@/lib/image-optimizer';
 import { PreloadImages } from '@/components/preload-images';
+import '../styles/image-optimization.css';
 
 import backgroundImage1 from '@assets/istockphoto-691785042-612x612_1750008503978.jpg';
 import backgroundImage2 from '@assets/istockphoto-1088544230-612x612_1750008503978.jpg';

@@ -15,11 +15,9 @@ export const PreloadImages: React.FC<PreloadImagesProps> = ({
   useEffect(() => {
     const preloadCriticalImages = async () => {
       try {
-        await ImageOptimizer.preloadCriticalImages(images, {
-          quality,
-          format: 'auto',
-          lazy: !priority
-        });
+        // Preload images directly without format conversion for static imports
+        const preloadPromises = images.map(src => ImageOptimizer.preloadImage(src));
+        await Promise.all(preloadPromises);
       } catch (error) {
         console.warn('Failed to preload critical images:', error);
       }
