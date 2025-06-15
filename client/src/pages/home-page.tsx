@@ -398,23 +398,21 @@ export default function HomePage() {
               ) : (
                 <Link href={card.href} key={index}>
                   <Card className={`cursor-pointer shadow-2xl border-0 h-[140px] overflow-hidden group relative bg-primary/5 ${index > 0 ? 'mt-8' : ''}`}>
-                    {/* Optimized background image for cards that have it */}
+                    {/* Background image for cards that have it */}
                     {card.hasBackground && (
-                      <OptimizedBackgroundImage
-                        src={card.backgroundImage}
-                        alt={`${card.title} background`}
-                        className="absolute inset-0"
-                        priority={index < 2} // Preload first two cards
-                        quality={20} // 80% compression
-                        lazy={index >= 2} // Lazy load cards below the fold
-                        opacity={0.95}
+                      <div 
+                        className="absolute inset-0 bg-cover bg-bottom bg-no-repeat opacity-95"
+                        style={{
+                          backgroundImage: `url(${card.backgroundImage})`,
+                          zIndex: 0
+                        }}
                       />
                     )}
                     
                     {/* Special Practice Session - Full Width */}
                     {card.isSpecial ? (
                       <>
-                        <CardContent className="h-full p-4 relative flex flex-col z-20">
+                        <CardContent className="h-full p-4 relative flex flex-col z-10">
                             <div className="flex flex-col h-full">
                               <div className="flex-1 space-y-2">
                                 {/* Show workout details for Google Sheets programs */}
@@ -462,7 +460,7 @@ export default function HomePage() {
                           </CardContent>
                       </>
                     ) : (
-                      <CardContent className="p-4 relative h-full flex flex-col justify-center z-20">
+                      <CardContent className="p-4 relative h-full flex flex-col justify-center z-10">
                         <div className="text-center">
                           <h2 className="text-lg font-bold mb-2">{card.title}</h2>
                           <p className="text-muted-foreground text-sm">{card.description}</p>
