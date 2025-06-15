@@ -71,9 +71,12 @@ export default function PhotoFinishFullscreen({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Format timeline markers to show XX.XX format
+  // Format timeline markers to show XX.XX format (seconds.tenths hundredths)
   const formatTimelineTime = (seconds: number) => {
-    return seconds.toFixed(2);
+    const wholeSeconds = Math.floor(seconds);
+    const decimal = seconds - wholeSeconds;
+    const tenthsHundredths = Math.floor(decimal * 100);
+    return `${wholeSeconds.toString().padStart(2, '0')}.${tenthsHundredths.toString().padStart(2, '0')}`;
   };
 
   // Video control functions
@@ -217,6 +220,11 @@ export default function PhotoFinishFullscreen({
     const delta = event.deltaY * -0.01;
     const newScale = Math.max(1, Math.min(5, videoScale + delta));
     setVideoScale(newScale);
+    
+    // Reset position if zooming back to 100%
+    if (newScale === 1) {
+      setVideoPosition({ x: 0, y: 0 });
+    }
   };
 
   const handleVideoMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -276,6 +284,11 @@ export default function PhotoFinishFullscreen({
       const scale = (currentDistance / initialPinchDistance) * initialScale;
       const newScale = Math.max(1, Math.min(5, scale));
       setVideoScale(newScale);
+      
+      // Reset position if zooming back to 100%
+      if (newScale === 1) {
+        setVideoPosition({ x: 0, y: 0 });
+      }
       
       // Two-finger pan when zoomed
       if (videoScale > 1) {
