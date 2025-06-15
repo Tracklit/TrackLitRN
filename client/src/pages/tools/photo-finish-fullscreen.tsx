@@ -270,8 +270,8 @@ export default function PhotoFinishFullscreen({
         </div>
       </div>
 
-      {/* Video Container - 85% of screen height */}
-      <div className="relative bg-black flex items-center justify-center" style={{ height: '85vh' }}>
+      {/* Video Container - takes remaining space */}
+      <div className="flex-1 relative bg-black flex items-center justify-center">
         <video
           ref={videoRef}
           src={videoUrl || ''}
@@ -327,8 +327,8 @@ export default function PhotoFinishFullscreen({
         )}
       </div>
 
-      {/* Timeline Scrubber - 15% of screen height */}
-      <div className="bg-gray-900 border-t border-gray-700" style={{ height: '15vh' }}>
+      {/* Timeline Scrubber - Fixed height at bottom */}
+      <div className="bg-gray-900 border-t border-gray-700 h-32 flex-shrink-0">
         <div className="p-4 h-full flex flex-col">
           {/* Control Buttons */}
           <div className="flex items-center justify-between mb-4">
@@ -377,10 +377,10 @@ export default function PhotoFinishFullscreen({
           </div>
           
           {/* Timeline with vertical markers */}
-          <div className="flex-1 relative">
+          <div className="flex-1 relative min-h-16">
             <div
               ref={timelineRef}
-              className="h-full bg-gray-800 rounded cursor-pointer relative overflow-hidden"
+              className="h-full bg-gray-800 rounded cursor-pointer relative overflow-hidden min-h-16"
               onMouseDown={handleTimelineMouseDown}
               onMouseMove={handleTimelineMouseMove}
               onMouseUp={handleTimelineMouseUp}
@@ -388,6 +388,9 @@ export default function PhotoFinishFullscreen({
               onTouchMove={handleTimelineTouchMove}
               onTouchEnd={handleTimelineTouchEnd}
             >
+              {/* Background gradient for better visibility */}
+              <div className="absolute inset-0 bg-gradient-to-r from-gray-800 via-gray-700 to-gray-800 opacity-50" />
+              
               {/* Vertical time markers (every 0.5 seconds) */}
               {duration && Array.from({ length: Math.floor(duration * 2) }, (_, i) => {
                 const timePosition = (i * 0.5) / duration * 100;
@@ -395,17 +398,40 @@ export default function PhotoFinishFullscreen({
                 return (
                   <div
                     key={i}
-                    className={`absolute top-0 ${isSecondMark ? 'h-full bg-gray-600' : 'h-1/2 bg-gray-700'} w-px`}
+                    className={`absolute top-0 z-10 ${isSecondMark ? 'h-full bg-gray-400' : 'h-3/4 bg-gray-500'} w-px`}
                     style={{ left: `${timePosition}%` }}
                   />
                 );
               })}
               
+              {/* Time labels every 5 seconds */}
+              {duration && Array.from({ length: Math.floor(duration / 5) + 1 }, (_, i) => {
+                const timePosition = (i * 5) / duration * 100;
+                const timeLabel = formatTime(i * 5);
+                return (
+                  <div
+                    key={`label-${i}`}
+                    className="absolute bottom-1 text-xs text-gray-300 transform -translate-x-1/2 z-20"
+                    style={{ left: `${timePosition}%` }}
+                  >
+                    {timeLabel}
+                  </div>
+                );
+              })}
+              
               {/* Progress indicator */}
               <div
-                className="absolute top-0 h-full bg-red-500 w-1 transform -translate-x-1/2"
+                className="absolute top-0 h-full bg-red-500 w-1 transform -translate-x-1/2 z-30 shadow-lg"
                 style={{ left: `${duration ? (currentTime / duration) * 100 : 0}%` }}
               />
+              
+              {/* Current time indicator */}
+              <div
+                className="absolute -top-6 transform -translate-x-1/2 bg-red-500 text-white text-xs px-2 py-1 rounded z-30"
+                style={{ left: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+              >
+                {formatTime(currentTime)}
+              </div>
             </div>
           </div>
         </div>
