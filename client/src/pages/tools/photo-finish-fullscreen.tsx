@@ -54,6 +54,10 @@ export default function PhotoFinishFullscreen({
   // Touch handling for pinch zoom
   const [initialPinchDistance, setInitialPinchDistance] = useState<number | null>(null);
   const [initialScale, setInitialScale] = useState(1);
+  
+  // Preview frame functionality
+  const [previewTime, setPreviewTime] = useState<number | null>(null);
+  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
 
   // Timeline refs
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -65,6 +69,11 @@ export default function PhotoFinishFullscreen({
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Format timeline markers to show XX.XX format
+  const formatTimelineTime = (seconds: number) => {
+    return seconds.toFixed(2);
   };
 
   // Video control functions
@@ -117,7 +126,7 @@ export default function PhotoFinishFullscreen({
   };
 
   const formatTimerTime = (seconds: number) => {
-    return seconds.toFixed(3) + 's';
+    return seconds.toFixed(2);
   };
 
   // Timeline handlers  
@@ -131,6 +140,18 @@ export default function PhotoFinishFullscreen({
       videoRef.current.currentTime = time;
       setCurrentTime(time);
     }
+  };
+
+  const handleTimelineHover = (event: React.MouseEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = Math.max(0, Math.min(event.clientX - rect.left, rect.width));
+    const percentage = x / rect.width;
+    const time = percentage * (duration || 0);
+    setPreviewTime(time);
+  };
+
+  const handleTimelineLeave = () => {
+    setPreviewTime(null);
   };
 
   // Video canvas click handler for timer placement
@@ -238,11 +259,11 @@ export default function PhotoFinishFullscreen({
       setInitialPinchDistance(distance);
       setInitialScale(videoScale);
       setIsPanning(false);
-    } else if (event.touches.length === 1 && videoScale > 1) {
-      // Single touch pan
-      setIsPanning(true);
-      const touch = event.touches[0];
-      setLastPanPoint({ x: touch.clientX, y: touch.clientY });
+      
+      // Set initial pan point for two-finger pan
+      const midX = (event.touches[0].clientX + event.touches[1].clientX) / 2;
+      const midY = (event.touches[0].clientY + event.touches[1].clientY) / 2;
+      setLastPanPoint({ x: midX, y: midY });
     }
   };
 
@@ -255,18 +276,21 @@ export default function PhotoFinishFullscreen({
       const scale = (currentDistance / initialPinchDistance) * initialScale;
       const newScale = Math.max(1, Math.min(5, scale));
       setVideoScale(newScale);
-    } else if (isPanning && event.touches.length === 1 && videoScale > 1) {
-      // Single touch pan
-      const touch = event.touches[0];
-      const deltaX = touch.clientX - lastPanPoint.x;
-      const deltaY = touch.clientY - lastPanPoint.y;
       
-      setVideoPosition(prev => ({
-        x: prev.x + deltaX,
-        y: prev.y + deltaY
-      }));
-      
-      setLastPanPoint({ x: touch.clientX, y: touch.clientY });
+      // Two-finger pan when zoomed
+      if (videoScale > 1) {
+        const midX = (event.touches[0].clientX + event.touches[1].clientX) / 2;
+        const midY = (event.touches[0].clientY + event.touches[1].clientY) / 2;
+        const deltaX = midX - lastPanPoint.x;
+        const deltaY = midY - lastPanPoint.y;
+        
+        setVideoPosition(prev => ({
+          x: prev.x + deltaX,
+          y: prev.y + deltaY
+        }));
+        
+        setLastPanPoint({ x: midX, y: midY });
+      }
     }
   };
 
@@ -443,11 +467,11 @@ export default function PhotoFinishFullscreen({
           }}
         />
         
-        {/* Timer overlays */}
-        {timers.map((timer) => (
+        {/* Timer overlays - show current time when timer mode is active */}
+        {isTimerMode && timers.map((timer) => (
           <div
             key={timer.id}
-            className="absolute bg-red-500 text-white px-2 py-1 rounded text-sm font-mono pointer-events-none"
+            className="absolute bg-black/70 text-white px-2 py-1 rounded text-sm font-mono pointer-events-none"
             style={{
               left: `${timer.x}%`,
               top: `${timer.y}%`,
@@ -455,7 +479,7 @@ export default function PhotoFinishFullscreen({
               transformOrigin: 'center center'
             }}
           >
-            {formatTimerTime(timer.startTime)}
+            {formatTimerTime(currentTime)}
           </div>
         ))}
         
@@ -483,9 +507,9 @@ export default function PhotoFinishFullscreen({
             variant="ghost"
             size="sm"
             onClick={toggleSlowMo}
-            className={`text-white ${isSlowMo ? 'bg-blue-600 hover:bg-blue-700' : 'hover:bg-gray-700'}`}
+            className={`text-white text-xs ${isSlowMo ? 'bg-blue-600 hover:bg-blue-700' : 'hover:bg-gray-700'}`}
           >
-            <Zap className="w-4 h-4" />
+            {isSlowMo ? '0.25x' : '1.0x'}
           </Button>
           
           <Button
@@ -512,8 +536,12 @@ export default function PhotoFinishFullscreen({
               ref={timelineRef}
               className="h-full cursor-pointer relative"
               onMouseDown={handleTimelineMouseDown}
-              onMouseMove={handleTimelineMouseMove}
+              onMouseMove={(e) => {
+                handleTimelineMouseMove(e);
+                handleTimelineHover(e);
+              }}
               onMouseUp={handleTimelineMouseUp}
+              onMouseLeave={handleTimelineLeave}
               onTouchStart={handleTimelineTouchStart}
               onTouchMove={handleTimelineTouchMove}
               onTouchEnd={handleTimelineTouchEnd}
@@ -531,10 +559,10 @@ export default function PhotoFinishFullscreen({
                 );
               })}
               
-              {/* Time labels every 5 seconds */}
+              {/* Time labels every 5 seconds using XX.XX format */}
               {duration && Array.from({ length: Math.floor(duration / 5) + 1 }, (_, i) => {
                 const timePosition = (i * 5) / duration * 100;
-                const timeLabel = formatTime(i * 5);
+                const timeLabel = formatTimelineTime(i * 5);
                 return (
                   <div
                     key={`label-${i}`}
@@ -545,6 +573,16 @@ export default function PhotoFinishFullscreen({
                   </div>
                 );
               })}
+              
+              {/* Preview time tooltip */}
+              {previewTime !== null && (
+                <div
+                  className="absolute -top-8 bg-black text-white px-2 py-1 rounded text-xs font-mono transform -translate-x-1/2 z-30 pointer-events-none"
+                  style={{ left: `${(previewTime / duration) * 100}%` }}
+                >
+                  {formatTimelineTime(previewTime)}
+                </div>
+              )}
               
               {/* Progress indicator */}
               <div
