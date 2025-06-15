@@ -55,6 +55,11 @@ export default function PhotoFinishFullscreen({
   const [initialPinchDistance, setInitialPinchDistance] = useState<number | null>(null);
   const [initialScale, setInitialScale] = useState(1);
   
+  // Timer dragging state
+  const [isDraggingTimer, setIsDraggingTimer] = useState(false);
+  const [draggedTimerId, setDraggedTimerId] = useState<string | null>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  
   // Preview frame functionality
   const [previewTime, setPreviewTime] = useState<number | null>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -174,6 +179,54 @@ export default function PhotoFinishFullscreen({
     
     setTimers(prev => [...prev, newTimer]);
     setIsTimerMode(false);
+  };
+
+  // Timer drag handlers
+  const handleTimerMouseDown = (event: React.MouseEvent, timerId: string) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const timer = timers.find(t => t.id === timerId);
+    if (!timer) return;
+    
+    setIsDraggingTimer(true);
+    setDraggedTimerId(timerId);
+    
+    const container = videoContainerRef.current;
+    if (!container) return;
+    
+    const rect = container.getBoundingClientRect();
+    const timerX = (timer.x / 100) * rect.width;
+    const timerY = (timer.y / 100) * rect.height;
+    
+    setDragOffset({
+      x: event.clientX - timerX,
+      y: event.clientY - timerY
+    });
+  };
+
+  const handleTimerTouchStart = (event: React.TouchEvent, timerId: string) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const timer = timers.find(t => t.id === timerId);
+    if (!timer) return;
+    
+    const touch = event.touches[0];
+    setIsDraggingTimer(true);
+    setDraggedTimerId(timerId);
+    
+    const container = videoContainerRef.current;
+    if (!container) return;
+    
+    const rect = container.getBoundingClientRect();
+    const timerX = (timer.x / 100) * rect.width;
+    const timerY = (timer.y / 100) * rect.height;
+    
+    setDragOffset({
+      x: touch.clientX - timerX,
+      y: touch.clientY - timerY
+    });
   };
 
   const handleTimelineMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -357,6 +410,76 @@ export default function PhotoFinishFullscreen({
     };
   }, [videoUrl]);
 
+  // Global mouse and touch handlers for timer dragging
+  useEffect(() => {
+    const handleGlobalMouseMove = (event: MouseEvent) => {
+      if (!isDraggingTimer || !draggedTimerId) return;
+      
+      const container = videoContainerRef.current;
+      if (!container) return;
+      
+      const rect = container.getBoundingClientRect();
+      const x = ((event.clientX - dragOffset.x) / rect.width) * 100;
+      const y = ((event.clientY - dragOffset.y) / rect.height) * 100;
+      
+      // Constrain timer within container bounds
+      const constrainedX = Math.max(0, Math.min(100, x));
+      const constrainedY = Math.max(0, Math.min(100, y));
+      
+      setTimers(prev => prev.map(timer => 
+        timer.id === draggedTimerId 
+          ? { ...timer, x: constrainedX, y: constrainedY }
+          : timer
+      ));
+    };
+
+    const handleGlobalMouseUp = () => {
+      setIsDraggingTimer(false);
+      setDraggedTimerId(null);
+    };
+
+    const handleGlobalTouchMove = (event: TouchEvent) => {
+      if (!isDraggingTimer || !draggedTimerId || event.touches.length !== 1) return;
+      
+      const touch = event.touches[0];
+      const container = videoContainerRef.current;
+      if (!container) return;
+      
+      const rect = container.getBoundingClientRect();
+      const x = ((touch.clientX - dragOffset.x) / rect.width) * 100;
+      const y = ((touch.clientY - dragOffset.y) / rect.height) * 100;
+      
+      // Constrain timer within container bounds
+      const constrainedX = Math.max(0, Math.min(100, x));
+      const constrainedY = Math.max(0, Math.min(100, y));
+      
+      setTimers(prev => prev.map(timer => 
+        timer.id === draggedTimerId 
+          ? { ...timer, x: constrainedX, y: constrainedY }
+          : timer
+      ));
+    };
+
+    const handleGlobalTouchEnd = () => {
+      setIsDraggingTimer(false);
+      setDraggedTimerId(null);
+    };
+
+    if (isDraggingTimer) {
+      document.addEventListener('mousemove', handleGlobalMouseMove);
+      document.addEventListener('mouseup', handleGlobalMouseUp);
+      document.addEventListener('touchmove', handleGlobalTouchMove);
+      document.addEventListener('touchend', handleGlobalTouchEnd);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleGlobalMouseMove);
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+      document.removeEventListener('touchmove', handleGlobalTouchMove);
+      document.removeEventListener('touchend', handleGlobalTouchEnd);
+    };
+  }, [isDraggingTimer, draggedTimerId, dragOffset]);
+
   // Handle video metadata load
   const handleVideoLoad = () => {
     if (videoRef.current) {
@@ -503,29 +626,29 @@ export default function PhotoFinishFullscreen({
           }}
         />
         
-        {/* Timer overlays - show current time when timer mode is active */}
-        {isTimerMode && timers.map((timer) => {
-          // Calculate the actual pixel position based on container size
-          const container = videoContainerRef.current;
-          if (!container) return null;
-          
-          const containerRect = container.getBoundingClientRect();
-          const leftPx = (timer.x / 100) * containerRect.width;
-          const topPx = (timer.y / 100) * containerRect.height;
+        {/* Timer overlays - larger, moveable timers showing relative time */}
+        {timers.map((timer) => {
+          const relativeTime = currentTime - timer.startTime;
           
           return (
             <div
               key={timer.id}
-              className="absolute bg-black/30 text-white px-2 py-1 text-sm font-mono pointer-events-none"
+              className="absolute bg-black/70 text-white px-4 py-2 text-lg font-mono cursor-move select-none"
               style={{
-                left: `${leftPx}px`,
-                top: `${topPx}px`,
-                borderRadius: '3px',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-                transform: 'none' // Explicitly remove any transforms
+                left: `${timer.x}%`,
+                top: `${timer.y}%`,
+                borderRadius: '6px',
+                border: '2px solid rgba(255, 255, 255, 0.5)',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)',
+                fontSize: '18px',
+                fontWeight: 'bold',
+                minWidth: '80px',
+                textAlign: 'center'
               }}
+              onMouseDown={(e) => handleTimerMouseDown(e, timer.id)}
+              onTouchStart={(e) => handleTimerTouchStart(e, timer.id)}
             >
-              {formatTimerTime(currentTime)}
+              {relativeTime >= 0 ? '+' : ''}{formatTimerTime(relativeTime)}
             </div>
           );
         })}
