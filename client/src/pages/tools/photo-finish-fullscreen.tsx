@@ -475,51 +475,7 @@ export default function PhotoFinishFullscreen({
     }
   };
 
-  // Draw timer overlays on canvas
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const video = videoRef.current;
-    if (!canvas || !video) return;
-    
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Draw timers
-    timers.forEach(timer => {
-      const elapsedTime = currentTime - timer.startTime;
-      const posX = (timer.x / 100) * canvas.width;
-      const posY = (timer.y / 100) * canvas.height;
-      
-      // Format time
-      const sign = elapsedTime < 0 ? '-' : '';
-      const absSeconds = Math.abs(elapsedTime);
-      const mins = Math.floor(absSeconds / 60);
-      const secs = Math.floor(absSeconds % 60);
-      const hundredths = Math.floor((absSeconds % 1) * 100);
-      const text = `${sign}${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${hundredths.toString().padStart(2, '0')}`;
-      
-      // Draw timer background
-      ctx.font = '16px monospace';
-      ctx.textAlign = 'center';
-      const metrics = ctx.measureText(text);
-      const padding = 8;
-      
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-      ctx.fillRect(
-        posX - metrics.width/2 - padding,
-        posY - 10 - padding,
-        metrics.width + padding * 2,
-        20 + padding * 2
-      );
-      
-      // Draw timer text
-      ctx.fillStyle = 'white';
-      ctx.fillText(text, posX, posY);
-    });
-  }, [timers, currentTime]);
+
 
   return (
     <div className="fixed inset-0 bg-black text-white flex flex-col">
