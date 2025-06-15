@@ -374,11 +374,12 @@ export default function HomePage() {
                       <>
                         {/* Background image */}
                         <div 
-                          className="absolute inset-0 opacity-50 bg-cover bg-center"
+                          className="absolute inset-0 bg-cover bg-center"
                           style={{
                             backgroundImage: `url(${card.backgroundImage})`,
                             backgroundSize: 'cover',
-                            backgroundPosition: 'center'
+                            backgroundPosition: 'center',
+                            filter: 'contrast(0.85) brightness(0.85)'
                           }}
                         />
                         <CardContent className="h-full p-4 relative flex flex-col z-10">
@@ -435,11 +436,12 @@ export default function HomePage() {
                       <>
                         {/* Background image for regular cards */}
                         <div 
-                          className="absolute inset-0 opacity-50 bg-cover bg-center"
+                          className="absolute inset-0 bg-cover bg-center"
                           style={{
                             backgroundImage: `url(${card.backgroundImage})`,
                             backgroundSize: 'cover',
-                            backgroundPosition: 'center'
+                            backgroundPosition: 'center',
+                            filter: 'contrast(0.85) brightness(0.85)'
                           }}
                         />
                         <CardContent className="p-4 relative h-full flex flex-col justify-center z-10">
