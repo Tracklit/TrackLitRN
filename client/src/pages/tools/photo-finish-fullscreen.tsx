@@ -362,6 +362,8 @@ export default function PhotoFinishFullscreen({
     if (videoRef.current) {
       setDuration(videoRef.current.duration);
       setCurrentTime(0);
+      // Show first frame immediately
+      videoRef.current.currentTime = 0;
     }
   };
 
@@ -502,20 +504,31 @@ export default function PhotoFinishFullscreen({
         />
         
         {/* Timer overlays - show current time when timer mode is active */}
-        {isTimerMode && timers.map((timer) => (
-          <div
-            key={timer.id}
-            className="absolute bg-black/30 text-white px-2 py-1 text-sm font-mono pointer-events-none"
-            style={{
-              left: `${timer.x}%`,
-              top: `${timer.y}%`,
-              borderRadius: '3px',
-              border: '1px solid rgba(255, 255, 255, 0.3)'
-            }}
-          >
-            {formatTimerTime(currentTime)}
-          </div>
-        ))}
+        {isTimerMode && timers.map((timer) => {
+          // Calculate the actual pixel position based on container size
+          const container = videoContainerRef.current;
+          if (!container) return null;
+          
+          const containerRect = container.getBoundingClientRect();
+          const leftPx = (timer.x / 100) * containerRect.width;
+          const topPx = (timer.y / 100) * containerRect.height;
+          
+          return (
+            <div
+              key={timer.id}
+              className="absolute bg-black/30 text-white px-2 py-1 text-sm font-mono pointer-events-none"
+              style={{
+                left: `${leftPx}px`,
+                top: `${topPx}px`,
+                borderRadius: '3px',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                transform: 'none' // Explicitly remove any transforms
+              }}
+            >
+              {formatTimerTime(currentTime)}
+            </div>
+          );
+        })}
         
         {/* Zoom indicator */}
         {videoScale > 1 && (
@@ -629,12 +642,12 @@ export default function PhotoFinishFullscreen({
                 style={{ left: `${duration ? (currentTime / duration) * 100 : 0}%` }}
               />
               
-              {/* Current time indicator */}
+              {/* Current time indicator with hundredths */}
               <div
                 className="absolute -top-6 transform -translate-x-1/2 bg-red-500 text-white text-xs px-2 py-1 rounded z-30"
                 style={{ left: `${duration ? (currentTime / duration) * 100 : 0}%` }}
               >
-                {formatTime(currentTime)}
+                {formatTimelineTime(currentTime)}
               </div>
             </div>
           </div>
