@@ -372,16 +372,7 @@ export default function HomePage() {
                     {/* Special Practice Session - Full Width */}
                     {card.isSpecial ? (
                       <>
-                        {/* Background image */}
-                        <div 
-                          className="absolute inset-0 bg-cover bg-center"
-                          style={{
-                            backgroundImage: `url(${card.backgroundImage})`,
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                            filter: 'contrast(0.85) brightness(0.85)'
-                          }}
-                        />
+
                         <CardContent className="h-full p-4 relative flex flex-col z-10">
                             <div className="flex flex-col h-full">
                               <div className="mb-3">
@@ -434,16 +425,7 @@ export default function HomePage() {
                       </>
                     ) : (
                       <>
-                        {/* Background image for regular cards */}
-                        <div 
-                          className="absolute inset-0 bg-cover bg-center"
-                          style={{
-                            backgroundImage: `url(${card.backgroundImage})`,
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                            filter: 'contrast(0.85) brightness(0.85)'
-                          }}
-                        />
+
                         <CardContent className="p-4 relative h-full flex flex-col justify-center z-10">
                           <div className="text-center">
                             <h2 className="text-lg font-bold mb-2">{card.title}</h2>
