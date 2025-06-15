@@ -43,7 +43,6 @@ export default function PhotoFinishFullscreen({
   const [duration, setDuration] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [timers, setTimers] = useState<VideoTimer[]>([]);
-  const [isTimerMode, setIsTimerMode] = useState(false);
 
   // Video pan and zoom state
   const [videoScale, setVideoScale] = useState(1);
@@ -160,27 +159,7 @@ export default function PhotoFinishFullscreen({
     setPreviewTime(null);
   };
 
-  // Video canvas click handler for timer placement
-  const handleVideoClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isTimerMode) return;
-    
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    const rect = canvas.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * 100;
-    const y = ((event.clientY - rect.top) / rect.height) * 100;
-    
-    const newTimer: VideoTimer = {
-      id: Date.now().toString(),
-      x,
-      y,
-      startTime: currentTime
-    };
-    
-    setTimers(prev => [...prev, newTimer]);
-    setIsTimerMode(false);
-  };
+
 
   // Timer drag handlers
   const handleTimerMouseDown = (event: React.MouseEvent, timerId: string) => {
@@ -558,17 +537,7 @@ export default function PhotoFinishFullscreen({
           <h1 className="text-lg font-semibold">{videoName}</h1>
         </div>
         
-        <div className="flex items-center gap-2">
-          <Button
-            variant={isTimerMode ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setIsTimerMode(!isTimerMode)}
-            className="text-white hover:bg-white/20"
-          >
-            <Timer className="w-5 h-5 mr-2" />
-            Timer
-          </Button>
-        </div>
+
       </div>
 
       {/* Video Container - takes remaining space */}
@@ -621,12 +590,10 @@ export default function PhotoFinishFullscreen({
         {/* Canvas overlay for timers */}
         <canvas
           ref={canvasRef}
-          className="absolute inset-0 w-full h-full pointer-events-auto"
+          className="absolute inset-0 w-full h-full pointer-events-none"
           width={1920}
           height={1080}
-          onClick={handleVideoClick}
           style={{ 
-            cursor: isTimerMode ? 'crosshair' : 'inherit',
             transform: `scale(${videoScale}) translate(${videoPosition.x / videoScale}px, ${videoPosition.y / videoScale}px)`,
             transformOrigin: 'center center'
           }}
@@ -705,16 +672,23 @@ export default function PhotoFinishFullscreen({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setIsTimerMode(!isTimerMode)}
-            className={`text-white ${isTimerMode ? 'bg-red-600 hover:bg-red-700' : 'hover:bg-gray-700'}`}
+            onClick={() => {
+              // Automatically place timer at center of video when button is tapped
+              const newTimer: VideoTimer = {
+                id: Date.now().toString(),
+                x: 50, // Center position
+                y: 50,
+                startTime: currentTime // Start from current video position
+              };
+              setTimers(prev => [...prev, newTimer]);
+            }}
+            className="text-white hover:bg-gray-700"
           >
             <Clock className="w-4 h-4" />
           </Button>
         </div>
         
-        <div className="text-white text-sm font-mono">
-          {formatTime(currentTime)} / {formatTime(duration)}
-        </div>
+
       </div>
 
       {/* Timeline Scrubber - No background bar */}
