@@ -239,7 +239,7 @@ export default function HomePage() {
       icon: <BookOpen className="h-6 w-6 text-primary" />,
       href: "/programs",
       disabled: false,
-      backgroundImage: practiceBackground,
+      backgroundImage: programsBackground,
       hasBackground: true
     },
     {
@@ -248,7 +248,7 @@ export default function HomePage() {
       icon: <Trophy className="h-6 w-6 text-primary" />,
       href: "/meets",
       disabled: false,
-      backgroundImage: raceBackground,
+      backgroundImage: programsBackground,
       hasBackground: true
     },
     {
@@ -257,7 +257,7 @@ export default function HomePage() {
       icon: <Clock className="h-6 w-6 text-primary" />,
       href: "/training-tools",
       disabled: false,
-      backgroundImage: toolsBackground,
+      backgroundImage: programsBackground,
       hasBackground: true
     },
     {
