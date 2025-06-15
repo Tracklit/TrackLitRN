@@ -327,22 +327,22 @@ export default function MeetsPage() {
             
             <Tabs defaultValue="upcoming" className="mt-4">
               <div className="flex justify-between items-center mb-6">
-                <TabsList className="bg-muted border border-border">
+                <TabsList className="bg-gray-900 border-gray-800">
                   <TabsTrigger 
                     value="upcoming" 
-                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                    className="data-[state=active]:bg-gray-800 data-[state=active]:text-white"
                   >
                     Upcoming
                   </TabsTrigger>
                   <TabsTrigger 
                     value="past"
-                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                    className="data-[state=active]:bg-gray-800 data-[state=active]:text-white"
                   >
                     Past
                   </TabsTrigger>
                   <TabsTrigger 
                     value="calendar"
-                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                    className="data-[state=active]:bg-gray-800 data-[state=active]:text-white"
                   >
                     Calendar
                   </TabsTrigger>

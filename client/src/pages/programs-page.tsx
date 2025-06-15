@@ -158,10 +158,10 @@ export default function ProgramsPage() {
       </div>
       
       <Tabs defaultValue="my-programs" onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full md:w-auto grid grid-cols-3 mb-6">
-          <TabsTrigger value="my-programs">My Programs</TabsTrigger>
-          <TabsTrigger value="purchased">Purchased</TabsTrigger>
-          <TabsTrigger value="workout-library">Workout Library</TabsTrigger>
+        <TabsList className="w-full md:w-auto grid grid-cols-3 mb-6 bg-gray-900 border-gray-800">
+          <TabsTrigger value="my-programs" className="data-[state=active]:bg-gray-800 data-[state=active]:text-white">My Programs</TabsTrigger>
+          <TabsTrigger value="purchased" className="data-[state=active]:bg-gray-800 data-[state=active]:text-white">Purchased</TabsTrigger>
+          <TabsTrigger value="workout-library" className="data-[state=active]:bg-gray-800 data-[state=active]:text-white">Workout Library</TabsTrigger>
         </TabsList>
         
         {/* My Programs Tab */}
