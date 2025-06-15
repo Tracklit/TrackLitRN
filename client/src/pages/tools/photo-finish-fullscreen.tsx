@@ -9,7 +9,8 @@ import {
   Volume2,
   Timer,
   Zap,
-  Clock
+  Clock,
+  Trash2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -227,6 +228,11 @@ export default function PhotoFinishFullscreen({
       x: touch.clientX - timerX,
       y: touch.clientY - timerY
     });
+  };
+
+  // Delete timer function
+  const deleteTimer = (timerId: string) => {
+    setTimers(prev => prev.filter(timer => timer.id !== timerId));
   };
 
   const handleTimelineMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -633,7 +639,7 @@ export default function PhotoFinishFullscreen({
           return (
             <div
               key={timer.id}
-              className="absolute bg-black/70 text-white px-4 py-2 text-lg font-mono cursor-move select-none"
+              className="absolute bg-black/70 text-white px-4 py-2 text-lg font-mono cursor-move select-none group"
               style={{
                 left: `${timer.x}%`,
                 top: `${timer.y}%`,
@@ -643,12 +649,26 @@ export default function PhotoFinishFullscreen({
                 fontSize: '18px',
                 fontWeight: 'bold',
                 minWidth: '80px',
-                textAlign: 'center'
+                textAlign: 'center',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
               }}
               onMouseDown={(e) => handleTimerMouseDown(e, timer.id)}
               onTouchStart={(e) => handleTimerTouchStart(e, timer.id)}
             >
-              {relativeTime >= 0 ? '+' : ''}{formatTimerTime(relativeTime)}
+              <span>{relativeTime >= 0 ? '+' : ''}{formatTimerTime(relativeTime)}</span>
+              <button
+                className="opacity-70 hover:opacity-100 transition-opacity text-red-400 hover:text-red-300"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  deleteTimer(timer.id);
+                }}
+                style={{ pointerEvents: 'auto' }}
+              >
+                <Trash2 size={14} />
+              </button>
             </div>
           );
         })}
@@ -765,13 +785,7 @@ export default function PhotoFinishFullscreen({
                 style={{ left: `${duration ? (currentTime / duration) * 100 : 0}%` }}
               />
               
-              {/* Current time indicator with hundredths */}
-              <div
-                className="absolute -top-6 transform -translate-x-1/2 bg-red-500 text-white text-xs px-2 py-1 rounded z-30"
-                style={{ left: `${duration ? (currentTime / duration) * 100 : 0}%` }}
-              >
-                {formatTimelineTime(currentTime)}
-              </div>
+
             </div>
           </div>
         </div>
