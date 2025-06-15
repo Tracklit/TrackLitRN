@@ -195,6 +195,31 @@ export default function HomePage() {
   
 
 
+  // Generate unique halftone patterns for each card
+  const generateHalftonePattern = (seed: number) => {
+    const colors = ['#a855f7', '#f97316', '#ffffff']; // purple, orange, white
+    const patterns = [];
+    const positions = [];
+    const sizes = [];
+    
+    for (let i = 0; i < 6; i++) {
+      const x = ((seed * 37 + i * 23) % 100);
+      const y = ((seed * 47 + i * 31) % 100);
+      const size = 0.8 + ((seed * 13 + i * 17) % 20) / 10; // 0.8 - 2.8px
+      const colorIndex = (seed + i * 7) % colors.length;
+      
+      patterns.push(`radial-gradient(circle at ${x}% ${y}%, ${colors[colorIndex]} ${size}px, transparent ${size}px)`);
+      positions.push(`${(i * 15) % 60}px ${(i * 20) % 50}px`);
+      sizes.push(`${30 + (i * 10)}px ${25 + (i * 8)}px`);
+    }
+    
+    return {
+      backgroundImage: patterns.join(', '),
+      backgroundSize: sizes.join(', '),
+      backgroundPosition: positions.join(', ')
+    };
+  };
+
   // Category cards for main navigation
   const categoryCards = [
     {
@@ -203,35 +228,40 @@ export default function HomePage() {
       icon: <Calendar className="h-6 w-6 text-primary" />,
       href: "/practice",
       disabled: false,
-      isSpecial: true
+      isSpecial: true,
+      pattern: generateHalftonePattern(1)
     },
     {
       title: "Programs",
       description: "Training plans and schedules",
       icon: <BookOpen className="h-6 w-6 text-primary" />,
       href: "/programs",
-      disabled: false
+      disabled: false,
+      pattern: generateHalftonePattern(2)
     },
     {
       title: "Race",
       description: "Meets, results and analytics",
       icon: <Trophy className="h-6 w-6 text-primary" />,
       href: "/meets",
-      disabled: false
+      disabled: false,
+      pattern: generateHalftonePattern(3)
     },
     {
       title: "Tools",
       description: "Training and performance tools",
       icon: <Clock className="h-6 w-6 text-primary" />,
       href: "/training-tools",
-      disabled: false
+      disabled: false,
+      pattern: generateHalftonePattern(4)
     },
     {
       title: "Sprinthia",
       description: "World's First AI Track Coach & Companion",
       icon: <MessageCircle className="h-6 w-6 text-primary" />,
       href: "/sprinthia",
-      disabled: false
+      disabled: false,
+      pattern: generateHalftonePattern(5)
     }
   ];
 
@@ -353,8 +383,11 @@ export default function HomePage() {
                     {/* Special Practice Session - Full Width */}
                     {card.isSpecial ? (
                       <>
-                        {/* Gradient background */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-primary/20" />
+                        {/* Halftone dot pattern background */}
+                        <div 
+                          className="absolute inset-0 opacity-50"
+                          style={card.pattern}
+                        />
                         <CardContent className="h-full p-4 relative flex flex-col z-10">
                             <div className="flex flex-col h-full">
                               <div className="mb-3">
@@ -407,8 +440,11 @@ export default function HomePage() {
                       </>
                     ) : (
                       <>
-                        {/* Gradient background for regular cards */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-secondary/30 via-secondary/20 to-primary/30" />
+                        {/* Halftone dot pattern background for regular cards */}
+                        <div 
+                          className="absolute inset-0 opacity-50"
+                          style={card.pattern}
+                        />
                         <CardContent className="p-4 relative h-full flex flex-col justify-center z-10">
                           <div className="text-center">
                             <h2 className="text-lg font-bold mb-2">{card.title}</h2>
