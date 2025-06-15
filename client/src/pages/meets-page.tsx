@@ -40,6 +40,7 @@ export default function MeetsPage() {
   const [selectedMeet, setSelectedMeet] = useState<Meet | null>(null);
   const [tickerMessages, setTickerMessages] = useState<string[]>([]);
   const [currentTickerIndex, setCurrentTickerIndex] = useState(0);
+  const [isTickerFading, setIsTickerFading] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [meetToShare, setMeetToShare] = useState<Meet | null>(null);
   const [isProUser, setIsProUser] = useState(false); // TODO: Get from user context
@@ -144,11 +145,15 @@ export default function MeetsPage() {
     }
   }, [upcomingMeets.length]);
 
-  // Rotate ticker messages
+  // Rotate ticker messages with fade transition
   useEffect(() => {
     if (tickerMessages.length > 1) {
       const interval = setInterval(() => {
-        setCurrentTickerIndex((prev) => (prev + 1) % tickerMessages.length);
+        setIsTickerFading(true);
+        setTimeout(() => {
+          setCurrentTickerIndex((prev) => (prev + 1) % tickerMessages.length);
+          setIsTickerFading(false);
+        }, 300); // Fade out duration
       }, 4000);
       return () => clearInterval(interval);
     }
@@ -290,20 +295,13 @@ export default function MeetsPage() {
                       </div>
                     </div>
                   ) : tickerMessages.length > 0 ? (
-                    // Actual ticker messages
+                    // Actual ticker messages with fade transition
                     <div 
-                      className="whitespace-nowrap text-white text-sm transition-transform duration-1000 ease-in-out"
-                      style={{ 
-                        transform: `translateX(-${currentTickerIndex * 100}%)`,
-                        width: `${tickerMessages.length * 100}%`,
-                        display: 'flex'
-                      }}
+                      className={`whitespace-nowrap text-white text-sm transition-opacity duration-300 ease-in-out ${
+                        isTickerFading ? 'opacity-0' : 'opacity-100'
+                      }`}
                     >
-                      {tickerMessages.map((message, index) => (
-                        <span key={index} className="w-full flex-shrink-0">
-                          {message}
-                        </span>
-                      ))}
+                      {tickerMessages[currentTickerIndex]}
                     </div>
                   ) : (
                     // Fallback message when no data

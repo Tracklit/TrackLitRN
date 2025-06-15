@@ -76,6 +76,7 @@ export default function HomePage() {
   const [currentSession, setCurrentSession] = useState<any>(null);
   const [isSavingSession, setIsSavingSession] = useState(false);
   const [activeSessionIndex, setActiveSessionIndex] = useState(0);
+  const [isSessionFading, setIsSessionFading] = useState(false);
   const { isTickerVisible, toggleTickerVisibility } = useTicker();
   
   // Fetch data for stats
@@ -171,14 +172,18 @@ export default function HomePage() {
     queryKey: ['/api/workout-previews']
   });
   
-  // Interval for rotating through sessions
+  // Interval for rotating through sessions with fade transition
   useEffect(() => {
     if (!sessionPreviews?.length) return;
     
     const interval = setInterval(() => {
-      setActiveSessionIndex(prev => 
-        prev >= (sessionPreviews.length - 1) ? 0 : prev + 1
-      );
+      setIsSessionFading(true);
+      setTimeout(() => {
+        setActiveSessionIndex(prev => 
+          prev >= (sessionPreviews.length - 1) ? 0 : prev + 1
+        );
+        setIsSessionFading(false);
+      }, 300); // Fade out duration
     }, 5000); // 5 second interval
     
     return () => clearInterval(interval);
@@ -321,7 +326,9 @@ export default function HomePage() {
                         </div>
                       ) : sessionPreviews && sessionPreviews.length > 0 ? (
                         <div 
-                          className="cursor-pointer p-3"
+                          className={`cursor-pointer p-3 transition-opacity duration-300 ease-in-out ${
+                            isSessionFading ? 'opacity-0' : 'opacity-100'
+                          }`}
                           onClick={() => openSessionDetails(sessionPreviews[activeSessionIndex])}
                           key={activeSessionIndex}
                         >
