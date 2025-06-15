@@ -391,7 +391,7 @@ export default function HomePage() {
                     {/* Background image for cards that have it */}
                     {card.hasBackground && (
                       <div 
-                        className="absolute inset-0 bg-cover bg-bottom bg-no-repeat opacity-70"
+                        className="absolute inset-0 bg-cover bg-bottom bg-no-repeat opacity-95"
                         style={{
                           backgroundImage: `url(${card.backgroundImage})`,
                           zIndex: 0
@@ -414,7 +414,7 @@ export default function HomePage() {
                                         Race Day!
                                       </p>
                                     </div>
-                                  ) : todaySession ? (
+                                  ) : todaySession && (todaySession.shortDistanceWorkout || todaySession.mediumDistanceWorkout || todaySession.longDistanceWorkout) ? (
                                     <>
                                       {todaySession.shortDistanceWorkout && (
                                         <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
@@ -435,7 +435,7 @@ export default function HomePage() {
                                   ) : (
                                     <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
                                       <p className="text-muted-foreground text-center">
-                                        No workout scheduled for today
+                                        Rest Day
                                       </p>
                                     </div>
                                   )
