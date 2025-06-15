@@ -327,14 +327,14 @@ export default function PhotoFinishFullscreen({
         )}
       </div>
 
-      {/* Timeline Scrubber - Fixed height at bottom */}
-      <div className="bg-gray-900 border-t border-gray-700 h-24 flex-shrink-0">
-        <div className="p-4 h-full">
+      {/* Timeline Scrubber - Larger height at bottom */}
+      <div className="bg-gray-900 border-t border-gray-700 h-48 flex-shrink-0">
+        <div className="p-6 h-full">
           {/* Timeline with vertical markers */}
           <div className="h-full relative">
             <div
               ref={timelineRef}
-              className="h-full bg-gray-800 rounded cursor-pointer relative overflow-hidden min-h-16"
+              className="h-full bg-gray-800 rounded cursor-pointer relative overflow-hidden"
               onMouseDown={handleTimelineMouseDown}
               onMouseMove={handleTimelineMouseMove}
               onMouseUp={handleTimelineMouseUp}
