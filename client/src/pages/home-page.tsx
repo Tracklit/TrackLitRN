@@ -372,7 +372,7 @@ export default function HomePage() {
           <div className="max-w-2xl mx-auto">
             {categoryCards.map((card, index) => 
               card.disabled ? (
-                <Card key={index} className={`h-[140px] overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 shadow-2xl ${index > 0 ? 'mt-8' : ''}`} style={{ border: '0.5px solid rgba(168, 85, 247, 0.5)' }}>
+                <Card key={index} className={`h-[140px] overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 shadow-2xl ${index > 0 ? 'mt-8' : ''}`} style={{ border: '0.5px solid rgba(168, 85, 247, 0.25)' }}>
                   <CardContent className="p-4 relative h-full flex flex-col justify-center opacity-50">
                     <div className="text-center">
                       <h2 className="text-lg font-bold mb-2 text-muted-foreground/70">{card.title}</h2>
@@ -382,7 +382,7 @@ export default function HomePage() {
                 </Card>
               ) : (
                 <Link href={card.href} key={index}>
-                  <Card className={`cursor-pointer shadow-2xl h-[140px] overflow-hidden group relative bg-primary/5 ${index > 0 ? 'mt-8' : ''}`} style={{ border: '0.5px solid rgba(168, 85, 247, 0.5)' }}>
+                  <Card className={`cursor-pointer shadow-2xl h-[140px] overflow-hidden group relative bg-primary/5 ${index > 0 ? 'mt-8' : ''}`} style={{ border: '0.5px solid rgba(168, 85, 247, 0.25)' }}>
                     {/* Background image for cards that have it */}
                     {card.hasBackground && (
                       <div 
