@@ -482,15 +482,15 @@ export default function PhotoFinishFullscreen({
       {/* Close Button - Fixed Position */}
       <button
         onClick={onClose}
-        className="fixed top-4 left-4 z-[9999] bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold text-lg border-2 border-white shadow-lg"
+        className="fixed top-16 left-4 z-[9999] bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded font-medium text-sm border border-white shadow-lg"
         style={{ zIndex: 9999 }}
       >
-        ✕ CLOSE
+        ✕ Close
       </button>
       
       {/* Video Title */}
-      <div className="fixed top-4 left-32 z-[9998] bg-black/60 backdrop-blur-sm px-4 py-2 rounded">
-        <h1 className="text-lg font-semibold text-white">{videoName}</h1>
+      <div className="fixed top-16 left-24 z-[9998] bg-black/60 backdrop-blur-sm px-3 py-1 rounded">
+        <h1 className="text-base font-semibold text-white">{videoName}</h1>
       </div>
 
       {/* Video Container - takes remaining space */}
