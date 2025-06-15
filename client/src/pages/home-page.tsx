@@ -50,6 +50,9 @@ import backgroundImage3 from '@assets/istockphoto-1224403019-612x612_17500085039
 import backgroundImage4 from '@assets/istockphoto-1253944192-612x612_1750008503979.jpg';
 import backgroundImage5 from '@assets/istockphoto-1279168476-612x612_1750008503979.jpg';
 import programsBackground from '@assets/image_1750012192490.png';
+import practiceBackground from '@assets/Screenshot 2025-06-15 205621_1750013855167.png';
+import raceBackground from '@assets/Screenshot 2025-06-15 205651_1750013855167.png';
+import toolsBackground from '@assets/Screenshot 2025-06-15 205721_1750013855168.png';
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -227,7 +230,8 @@ export default function HomePage() {
       href: "/practice",
       disabled: false,
       isSpecial: true,
-      backgroundImage: backgroundImages[0]
+      backgroundImage: practiceBackground,
+      hasBackground: true
     },
     {
       title: "Programs",
@@ -244,7 +248,8 @@ export default function HomePage() {
       icon: <Trophy className="h-6 w-6 text-primary" />,
       href: "/meets",
       disabled: false,
-      backgroundImage: backgroundImages[2]
+      backgroundImage: raceBackground,
+      hasBackground: true
     },
     {
       title: "Tools",
@@ -252,7 +257,8 @@ export default function HomePage() {
       icon: <Clock className="h-6 w-6 text-primary" />,
       href: "/training-tools",
       disabled: false,
-      backgroundImage: backgroundImages[3]
+      backgroundImage: toolsBackground,
+      hasBackground: true
     },
     {
       title: "Sprinthia",
