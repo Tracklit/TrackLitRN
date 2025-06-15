@@ -1,19 +1,22 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut } from "lucide-react";
+import { LogOut, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Link } from "wouter";
 import { NotificationBell } from "@/components/notification-bell";
 import { MessageButton } from "@/components/message-button";
 import { InstallAppButton } from "@/components/install-app-button";
+import { Button } from "@/components/ui/button";
 
 interface HeaderProps {
   title?: string;
   className?: string;
+  isTickerVisible?: boolean;
+  onToggleTicker?: (visible: boolean) => void;
 }
 
-export function Header({ title = "TrackLit", className }: HeaderProps) {
+export function Header({ title = "TrackLit", className, isTickerVisible, onToggleTicker }: HeaderProps) {
   const { user, logoutMutation } = useAuth();
 
   const handleLogout = () => {
@@ -41,6 +44,19 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
               
               {/* Direct Messages Panel */}
               <MessageButton />
+              
+              {/* Ticker Toggle */}
+              {onToggleTicker && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-gray-400 hover:text-white"
+                  onClick={() => onToggleTicker(!isTickerVisible)}
+                  title={isTickerVisible ? "Hide ticker" : "Show ticker"}
+                >
+                  <Globe className="h-4 w-4" />
+                </Button>
+              )}
             </div>
             
             <DropdownMenu>

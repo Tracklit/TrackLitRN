@@ -469,7 +469,7 @@ export default function MeetsPage() {
                     ))}
                   </div>
                 ) : (
-                  <Card className="overflow-hidden bg-card border border-border text-center p-8">
+                  <Card className="overflow-hidden bg-black/95 border border-gray-800/50 text-center p-8">
                     <p className="text-muted-foreground mb-4">No upcoming meets</p>
                     <Button
                       onClick={() => setLocation('/meets/create')}
