@@ -362,8 +362,7 @@ export default function HomePage() {
                       )}
                     </div>
                   </div>
-                ) : null
-                }
+                ) : null}
               </div>
             </div>
           </section>
