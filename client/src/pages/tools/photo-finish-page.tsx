@@ -405,7 +405,7 @@ export default function PhotoFinishPage() {
                         onClick={stopRecording}
                         variant="destructive"
                       >
-                        <Square className="h-5 w-5 mr-2" />
+                        <span className="text-lg">⏹</span>
                         Stop Recording
                       </Button>
                     )}
