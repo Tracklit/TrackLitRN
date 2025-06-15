@@ -327,22 +327,22 @@ export default function MeetsPage() {
             
             <Tabs defaultValue="upcoming" className="mt-4">
               <div className="flex justify-between items-center mb-6">
-                <TabsList className="bg-gray-900 border-gray-800">
+                <TabsList className="bg-black border-gray-800">
                   <TabsTrigger 
                     value="upcoming" 
-                    className="data-[state=active]:bg-gray-800 data-[state=active]:text-white"
+                    className="data-[state=active]:bg-black data-[state=active]:text-white"
                   >
                     Upcoming
                   </TabsTrigger>
                   <TabsTrigger 
                     value="past"
-                    className="data-[state=active]:bg-gray-800 data-[state=active]:text-white"
+                    className="data-[state=active]:bg-black data-[state=active]:text-white"
                   >
                     Past
                   </TabsTrigger>
                   <TabsTrigger 
                     value="calendar"
-                    className="data-[state=active]:bg-gray-800 data-[state=active]:text-white"
+                    className="data-[state=active]:bg-black data-[state=active]:text-white"
                   >
                     Calendar
                   </TabsTrigger>
@@ -369,7 +369,7 @@ export default function MeetsPage() {
                     {upcomingMeets
                       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                       .map(meet => (
-                      <Card key={meet.id} className="overflow-hidden bg-[#010a18] border border-blue-800/60 shadow-md">
+                      <Card key={meet.id} className="overflow-hidden bg-black/95 border border-gray-800/50 shadow-md">
                         <CardContent className="p-4">
                           <div className="flex flex-col">
                             <h3 className="font-medium text-xl text-white mb-2">{meet.name}</h3>
@@ -454,7 +454,7 @@ export default function MeetsPage() {
                             </div>
                             
                             {selectedMeet?.id === meet.id && (
-                              <div className="mt-4 border-t border-blue-800/60 pt-4">
+                              <div className="mt-4 border-t border-gray-700/40 pt-4">
                                 <PreparationTimeline 
                                   meet={meet}
                                   onCustomize={() => {
@@ -491,7 +491,7 @@ export default function MeetsPage() {
                     {pastMeets
                       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                       .map(meet => (
-                      <Card key={meet.id} className="overflow-hidden bg-[#010a18] border border-blue-800/60 shadow-md">
+                      <Card key={meet.id} className="overflow-hidden bg-black/95 border border-gray-800/50 shadow-md">
                         <CardContent className="p-4">
                           <div className="flex flex-col">
                             <h3 className="font-medium text-xl text-white mb-2">{meet.name}</h3>
@@ -575,8 +575,8 @@ export default function MeetsPage() {
 
                             {/* Results Logging Interface */}
                             {selectedPastMeet?.id === meet.id && (
-                              <div className="mt-4 border-t border-blue-800/60 pt-4">
-                                <div className="bg-blue-900/20 rounded-lg p-4">
+                              <div className="mt-4 border-t border-gray-700/40 pt-4">
+                                <div className="bg-gray-800/20 rounded-lg p-4">
                                   <h4 className="text-white font-semibold mb-4 flex items-center">
                                     <Trophy className="h-5 w-5 mr-2 text-amber-400" />
                                     Meet Results & Notes
