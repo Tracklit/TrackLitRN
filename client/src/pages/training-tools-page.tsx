@@ -154,9 +154,10 @@ export default function WorkoutToolsPage() {
                   {/* Background Image */}
                   {card.hasBackground && card.backgroundImage && (
                     <div
-                      className="absolute inset-0 bg-cover bg-bottom-right bg-no-repeat transition-opacity duration-500"
+                      className="absolute inset-0 bg-cover bg-no-repeat transition-opacity duration-500"
                       style={{
                         backgroundImage: `url(${card.backgroundImage})`,
+                        backgroundPosition: 'bottom right',
                         opacity: 0.95,
                         zIndex: 0
                       }}
