@@ -13,10 +13,29 @@ import {
   Camera
 } from "lucide-react";
 import { Link } from "wouter";
+import { OptimizedBackgroundImage } from '@/components/optimized-background-image';
+import { PreloadImages } from '@/components/preload-images';
+
+// Import dashboard card images
+import sprinthiaBackground from '@assets/image_1750019864190.png';
+import practiceBackground from '@assets/Screenshot 2025-06-15 205621_1750013855167.png';
+import programsBackground from '@assets/image_1750012192490.png';
+import raceBackground from '@assets/Screenshot 2025-06-15 205651_1750013855167.png';
+import toolsBackground from '@assets/Screenshot 2025-06-15 205721_1750013855168.png';
 
 
 
 export default function WorkoutToolsPage() {
+  // Background images for tool cards (in dashboard order)
+  const toolBackgrounds = [
+    sprinthiaBackground,    // Video Analysis - Sprinthia image
+    practiceBackground,     // Photo Finish - Practice image
+    programsBackground,     // Start Gun - Programs image  
+    raceBackground,         // Stopwatch - Race image
+    toolsBackground,        // Journal - Tools image
+    toolsBackground         // Exercise Library - Tools image (repeat)
+  ];
+
   // Tool cards with links to individual pages
   const toolCards = [
     {
@@ -25,7 +44,8 @@ export default function WorkoutToolsPage() {
       icon: <Camera className="h-6 w-6 text-white" />,
       href: "/tools/video-analysis",
       disabled: false,
-      gradient: "bg-slate-900"
+      backgroundImage: toolBackgrounds[0],
+      hasBackground: true
     },
     {
       title: "Photo Finish",
@@ -33,7 +53,8 @@ export default function WorkoutToolsPage() {
       icon: <Video className="h-6 w-6 text-white" />,
       href: "/tools/photo-finish",
       disabled: false,
-      gradient: "bg-slate-900"
+      backgroundImage: toolBackgrounds[1],
+      hasBackground: true
     },
     {
       title: "Start Gun",
@@ -41,7 +62,8 @@ export default function WorkoutToolsPage() {
       icon: <Volume2 className="h-6 w-6 text-white" />,
       href: "/tools/start-gun",
       disabled: false,
-      gradient: "bg-slate-900"
+      backgroundImage: toolBackgrounds[2],
+      hasBackground: true
     },
     {
       title: "Stopwatch",
@@ -49,7 +71,8 @@ export default function WorkoutToolsPage() {
       icon: <Timer className="h-6 w-6 text-white" />,
       href: "/tools/stopwatch",
       disabled: false,
-      gradient: "bg-slate-900"
+      backgroundImage: toolBackgrounds[3],
+      hasBackground: true
     },
     {
       title: "Journal",
@@ -57,7 +80,8 @@ export default function WorkoutToolsPage() {
       icon: <BookOpen className="h-6 w-6 text-white" />,
       href: "/tools/journal",
       disabled: false,
-      gradient: "bg-slate-900"
+      backgroundImage: toolBackgrounds[4],
+      hasBackground: true
     },
     {
       title: "Exercise Library",
@@ -65,7 +89,8 @@ export default function WorkoutToolsPage() {
       icon: <Video className="h-6 w-6 text-white" />,
       href: "/tools/exercise-library",
       disabled: false,
-      gradient: "bg-slate-900"
+      backgroundImage: toolBackgrounds[5],
+      hasBackground: true
     },
     {
       title: "Rep Starter",
@@ -85,6 +110,8 @@ export default function WorkoutToolsPage() {
   
   return (
     <div className="container max-w-screen-xl mx-auto p-4 pt-5 pb-10">
+      {/* Preload tool card images */}
+      <PreloadImages images={toolBackgrounds} quality={20} priority={true} />
 
       {/* Tool Cards - 2 column layout matching the home page style */}
       <section className="mb-6">
@@ -122,10 +149,22 @@ export default function WorkoutToolsPage() {
               // Enabled card
               <Link key={index} href={card.href}>
                 <Card 
-                  className={`cursor-pointer h-[140px] mx-auto mb-2 overflow-hidden relative ${card.gradient} group hover:scale-105 transition-all duration-300 border border-gray-400/20`}
+                  className="cursor-pointer h-[140px] mx-auto mb-2 overflow-hidden relative group hover:scale-105 transition-all duration-300 border border-gray-400/20"
                 >
+                  {/* Background Image */}
+                  {card.hasBackground && card.backgroundImage && (
+                    <OptimizedBackgroundImage
+                      src={card.backgroundImage}
+                      alt={`${card.title} background`}
+                      className="absolute inset-0"
+                      quality={20}
+                      opacity={0.95}
+                      fallbackColor="bg-slate-900"
+                    />
+                  )}
+                  
                   {/* Content Area */}
-                  <CardContent className="p-2.5 relative h-full flex flex-col justify-center">
+                  <CardContent className="p-2.5 relative h-full flex flex-col justify-center z-10">
                     <div className="flex flex-col items-center text-center gap-2">
                       <div className="p-1.5 rounded-full bg-white/20 border border-white/30">
                         <div className="h-4 w-4 flex items-center justify-center">
