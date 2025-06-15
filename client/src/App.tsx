@@ -181,6 +181,10 @@ function Router() {
 function MainApp() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const { user, loginMutation, registerMutation } = useAuth();
+  const [isTickerVisible, setIsTickerVisible] = useState(() => {
+    const saved = localStorage.getItem('tickerVisible');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
   
   // Only show onboarding for new user registrations (not logins)
   useEffect(() => {
@@ -203,11 +207,19 @@ function MainApp() {
     // Mark onboarding as completed in localStorage
     localStorage.setItem('onboardingCompleted', 'true');
   };
+
+  const toggleTickerVisibility = (visible: boolean) => {
+    setIsTickerVisible(visible);
+    localStorage.setItem('tickerVisible', JSON.stringify(visible));
+  };
   
   return (
     <div className="min-h-screen text-foreground">
       {/* Top Header Bar */}
-      <Header />
+      <Header 
+        isTickerVisible={isTickerVisible}
+        onToggleTicker={toggleTickerVisibility}
+      />
       
       {/* Hamburger Menu for all screens */}
       <div className="fixed top-4 left-4 z-50">

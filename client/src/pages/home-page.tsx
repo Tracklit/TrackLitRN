@@ -362,23 +362,8 @@ export default function HomePage() {
                       )}
                     </div>
                   </div>
-                ) : (
-                  <div className="flex justify-end mb-2">
-                    <div className="bg-card rounded-lg border">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleTickerVisibility(!isTickerVisible);
-                        }}
-                      >
-                        <Globe className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                ) : null
+                }
               </div>
             </div>
           </section>
