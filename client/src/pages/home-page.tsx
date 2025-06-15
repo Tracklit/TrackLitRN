@@ -385,7 +385,7 @@ export default function HomePage() {
                     {/* Background image for cards that have it */}
                     {card.hasBackground && (
                       <div 
-                        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-70"
+                        className="absolute inset-0 bg-cover bg-bottom bg-no-repeat opacity-70"
                         style={{
                           backgroundImage: `url(${card.backgroundImage})`,
                           zIndex: 0
