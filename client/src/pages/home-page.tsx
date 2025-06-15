@@ -54,7 +54,7 @@ import programsBackground from '@assets/image_1750012192490.png';
 import practiceBackground from '@assets/Screenshot 2025-06-15 205621_1750013855167.png';
 import raceBackground from '@assets/Screenshot 2025-06-15 205651_1750013855167.png';
 import toolsBackground from '@assets/Screenshot 2025-06-15 205721_1750013855168.png';
-import sprinthiaBackground from '@assets/image_1750018531674.png';
+import sprinthiaBackground from '@assets/image_1750019864190.png';
 
 export default function HomePage() {
   const { user } = useAuth();
