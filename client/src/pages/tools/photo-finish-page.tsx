@@ -77,6 +77,7 @@ export default function PhotoFinishPage() {
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const cameraPreviewRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -432,7 +433,7 @@ export default function PhotoFinishPage() {
                       variant="outline"
                       size="lg"
                       className="h-20 flex flex-col gap-2"
-                      onClick={startCamera}
+                      onClick={() => cameraInputRef.current?.click()}
                     >
                       <Video className="h-6 w-6" />
                       <span>Record Video</span>
@@ -443,9 +444,19 @@ export default function PhotoFinishPage() {
                     Video will automatically open in fullscreen analysis mode
                   </p>
                   
-                  {/* Optimized file input for immediate upload (Expo-like behavior) */}
+                  {/* Photo library input */}
                   <Input
                     ref={fileInputRef}
+                    type="file"
+                    accept="video/mp4,video/quicktime,video/mov,video/avi,video/webm"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    onClick={(e) => e.currentTarget.value = ''}
+                  />
+                  
+                  {/* Camera recording input */}
+                  <Input
+                    ref={cameraInputRef}
                     type="file"
                     accept="video/*"
                     capture="environment"
