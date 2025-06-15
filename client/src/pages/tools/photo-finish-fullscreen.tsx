@@ -47,6 +47,11 @@ export default function PhotoFinishFullscreen({
   const [videoPosition, setVideoPosition] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 });
+  const [isSlowMo, setIsSlowMo] = useState(false);
+  
+  // Touch handling for pinch zoom
+  const [initialPinchDistance, setInitialPinchDistance] = useState<number | null>(null);
+  const [initialScale, setInitialScale] = useState(1);
 
   // Timeline refs
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -99,6 +104,18 @@ export default function PhotoFinishFullscreen({
     if (videoRef.current) {
       videoRef.current.currentTime = Math.max(videoRef.current.currentTime - 10, 0);
     }
+  };
+
+  const toggleSlowMo = () => {
+    if (videoRef.current) {
+      const newSlowMo = !isSlowMo;
+      setIsSlowMo(newSlowMo);
+      videoRef.current.playbackRate = newSlowMo ? 0.25 : 1.0;
+    }
+  };
+
+  const formatTimerTime = (seconds: number) => {
+    return seconds.toFixed(3) + 's';
   };
 
   // Timeline handlers  
@@ -204,9 +221,23 @@ export default function PhotoFinishFullscreen({
     setIsPanning(false);
   };
 
+  // Helper function to get distance between two touches
+  const getTouchDistance = (touch1: React.Touch, touch2: React.Touch) => {
+    const dx = touch1.clientX - touch2.clientX;
+    const dy = touch1.clientY - touch2.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
   // Touch handlers for mobile zoom and pan
   const handleVideoTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
-    if (event.touches.length === 1 && videoScale > 1) {
+    if (event.touches.length === 2) {
+      // Pinch zoom start
+      const distance = getTouchDistance(event.touches[0], event.touches[1]);
+      setInitialPinchDistance(distance);
+      setInitialScale(videoScale);
+      setIsPanning(false);
+    } else if (event.touches.length === 1 && videoScale > 1) {
+      // Single touch pan
       setIsPanning(true);
       const touch = event.touches[0];
       setLastPanPoint({ x: touch.clientX, y: touch.clientY });
@@ -214,8 +245,16 @@ export default function PhotoFinishFullscreen({
   };
 
   const handleVideoTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
-    if (isPanning && event.touches.length === 1 && videoScale > 1) {
-      event.preventDefault();
+    event.preventDefault();
+    
+    if (event.touches.length === 2 && initialPinchDistance !== null) {
+      // Pinch zoom
+      const currentDistance = getTouchDistance(event.touches[0], event.touches[1]);
+      const scale = (currentDistance / initialPinchDistance) * initialScale;
+      const newScale = Math.max(1, Math.min(5, scale));
+      setVideoScale(newScale);
+    } else if (isPanning && event.touches.length === 1 && videoScale > 1) {
+      // Single touch pan
       const touch = event.touches[0];
       const deltaX = touch.clientX - lastPanPoint.x;
       const deltaY = touch.clientY - lastPanPoint.y;
@@ -231,6 +270,8 @@ export default function PhotoFinishFullscreen({
 
   const handleVideoTouchEnd = () => {
     setIsPanning(false);
+    setInitialPinchDistance(null);
+    setInitialScale(1);
   };
 
   // Video event handlers
@@ -400,19 +441,21 @@ export default function PhotoFinishFullscreen({
           }}
         />
         
-        {/* Play/Pause Overlay */}
-        {!isPlaying && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <Button
-              variant="ghost"
-              size="lg"
-              onClick={togglePlayPause}
-              className="bg-black/50 hover:bg-black/70 text-white rounded-full p-4 pointer-events-auto"
-            >
-              <Play className="w-12 h-12" />
-            </Button>
+        {/* Timer overlays */}
+        {timers.map((timer) => (
+          <div
+            key={timer.id}
+            className="absolute bg-red-500 text-white px-2 py-1 rounded text-sm font-mono pointer-events-none"
+            style={{
+              left: `${timer.x}%`,
+              top: `${timer.y}%`,
+              transform: `scale(${videoScale}) translate(${videoPosition.x / videoScale}px, ${videoPosition.y / videoScale}px)`,
+              transformOrigin: 'center center'
+            }}
+          >
+            {formatTimerTime(timer.startTime)}
           </div>
-        )}
+        ))}
         
         {/* Zoom indicator */}
         {videoScale > 1 && (
@@ -422,14 +465,50 @@ export default function PhotoFinishFullscreen({
         )}
       </div>
 
-      {/* Timeline Scrubber - Reduced height (33% shorter) */}
-      <div className="bg-gray-900 border-t border-gray-700 h-32 flex-shrink-0">
+      {/* Controls above timeline */}
+      <div className="bg-gray-900 border-t border-gray-700 px-6 py-2 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={togglePlayPause}
+            className="text-white hover:bg-gray-700"
+          >
+            {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleSlowMo}
+            className={`text-white ${isSlowMo ? 'bg-blue-600 hover:bg-blue-700' : 'hover:bg-gray-700'}`}
+          >
+            <Zap className="w-4 h-4" />
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsTimerMode(!isTimerMode)}
+            className={`text-white ${isTimerMode ? 'bg-red-600 hover:bg-red-700' : 'hover:bg-gray-700'}`}
+          >
+            <Clock className="w-4 h-4" />
+          </Button>
+        </div>
+        
+        <div className="text-white text-sm font-mono">
+          {formatTime(currentTime)} / {formatTime(duration)}
+        </div>
+      </div>
+
+      {/* Timeline Scrubber - No background bar */}
+      <div className="bg-gray-900 h-32 flex-shrink-0">
         <div className="p-6 h-full">
           {/* Timeline with vertical markers */}
           <div className="h-full relative">
             <div
               ref={timelineRef}
-              className="h-full bg-gray-800 rounded cursor-pointer relative overflow-hidden"
+              className="h-full cursor-pointer relative"
               onMouseDown={handleTimelineMouseDown}
               onMouseMove={handleTimelineMouseMove}
               onMouseUp={handleTimelineMouseUp}
