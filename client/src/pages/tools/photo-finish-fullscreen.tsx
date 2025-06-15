@@ -328,56 +328,10 @@ export default function PhotoFinishFullscreen({
       </div>
 
       {/* Timeline Scrubber - Fixed height at bottom */}
-      <div className="bg-gray-900 border-t border-gray-700 h-32 flex-shrink-0">
-        <div className="p-4 h-full flex flex-col">
-          {/* Control Buttons */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={skipBackward}
-                className="text-white hover:bg-white/20"
-              >
-                <SkipBack className="w-5 h-5" />
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={togglePlayPause}
-                className="text-white hover:bg-white/20"
-              >
-                {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={skipForward}
-                className="text-white hover:bg-white/20"
-              >
-                <SkipForward className="w-5 h-5" />
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-white hover:bg-white/20"
-              >
-                <Volume2 className="w-5 h-5" />
-              </Button>
-            </div>
-
-            <div className="flex items-center gap-2 text-sm font-mono">
-              <span>{formatTime(currentTime)}</span>
-              <span>/</span>
-              <span>{formatTime(duration)}</span>
-            </div>
-          </div>
-          
+      <div className="bg-gray-900 border-t border-gray-700 h-24 flex-shrink-0">
+        <div className="p-4 h-full">
           {/* Timeline with vertical markers */}
-          <div className="flex-1 relative min-h-16">
+          <div className="h-full relative">
             <div
               ref={timelineRef}
               className="h-full bg-gray-800 rounded cursor-pointer relative overflow-hidden min-h-16"
