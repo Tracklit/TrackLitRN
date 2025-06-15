@@ -1,0 +1,1 @@
+// Backup of photo-finish-page.tsx before implementing streamlined upload

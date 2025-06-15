@@ -100,9 +100,57 @@ export default function PhotoFinishPage() {
     });
   };
 
+  const uploadVideo = async (uri: string, file: File) => {
+    setIsUploading(true);
+    setUploadProgress(0);
+    setUploadStatus("Uploading video...");
+
+    try {
+      // Simulate upload progress (replace with actual upload logic)
+      const progressSteps = [20, 40, 60, 80, 95];
+      for (let i = 0; i < progressSteps.length; i++) {
+        await new Promise(resolve => setTimeout(resolve, 200));
+        setUploadProgress(progressSteps[i]);
+        setUploadStatus(i === progressSteps.length - 1 ? "Finalizing..." : "Uploading...");
+      }
+      
+      setUploadProgress(100);
+      setUploadStatus("Upload complete!");
+      
+      // Store video data
+      const videoData = {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        lastModified: file.lastModified,
+        thumbnail: ''
+      };
+      
+      sessionStorage.setItem('photoFinishVideoData', JSON.stringify(videoData));
+      sessionStorage.setItem('photoFinishVideoUrl', uri);
+      
+      // Navigate to fullscreen analysis immediately
+      setTimeout(() => {
+        navigate('/tools/photo-finish/analysis');
+      }, 300);
+      
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Upload Error",
+        description: "Failed to upload video. Please try again.",
+        variant: "destructive",
+      });
+      setIsUploading(false);
+    }
+  };
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    // Reset input to allow selecting same file again
+    event.target.value = '';
 
     if (!file.type.startsWith('video/')) {
       toast({
@@ -113,69 +161,19 @@ export default function PhotoFinishPage() {
       return;
     }
 
-    // Start processing after file selection
-    setIsUploading(true);
-    setUploadProgress(0);
-    setUploadStatus("Processing video...");
-
-    try {
-      setUploadProgress(25);
-      setUploadStatus("Reading video file...");
-      
-      // Validate file size (limit to 500MB)
-      if (file.size > 500 * 1024 * 1024) {
-        throw new Error('File too large. Please select a video under 500MB.');
-      }
-      
-      setUploadProgress(40);
-      setUploadStatus("Processing video data...");
-      
-      // Store minimal video data without converting to buffer to avoid memory issues
-      const videoData = {
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        lastModified: file.lastModified,
-        thumbnail: ''
-      };
-      
-      setUploadProgress(70);
-      setUploadStatus("Preparing analysis...");
-      
-      // Store file reference temporarily and create object URL
-      const tempUrl = URL.createObjectURL(file);
-      sessionStorage.setItem('photoFinishVideoData', JSON.stringify(videoData));
-      sessionStorage.setItem('photoFinishVideoUrl', tempUrl);
-      
-      setUploadProgress(90);
-      setUploadStatus("Launching analysis...");
-      
-      await new Promise(resolve => setTimeout(resolve, 200));
-      
-      setUploadProgress(100);
-      setUploadStatus("Complete!");
-      
-      // Navigate to fullscreen analysis
-      setTimeout(() => {
-        navigate('/tools/photo-finish/analysis');
-      }, 300);
-      
-    } catch (error) {
-      console.error('Error processing video:', error);
-      setIsUploading(false);
-      setUploadProgress(0);
-      
-      let errorMessage = "There was an error processing your video. Please try again.";
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      
+    // Validate file size (limit to 500MB)
+    if (file.size > 500 * 1024 * 1024) {
       toast({
-        title: "Upload failed",
-        description: errorMessage,
+        title: "File too large",
+        description: "Please select a video under 500MB.",
         variant: "destructive",
       });
+      return;
     }
+
+    // Create object URL and immediately start upload
+    const uri = URL.createObjectURL(file);
+    await uploadVideo(uri, file);
   };
 
   const handleVideoLoad = () => {
