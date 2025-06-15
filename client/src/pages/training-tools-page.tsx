@@ -25,7 +25,7 @@ export default function WorkoutToolsPage() {
       icon: <Camera className="h-6 w-6 text-white" />,
       href: "/tools/video-analysis",
       disabled: false,
-      gradient: "bg-gradient-to-br from-blue-600 to-purple-600"
+      gradient: "bg-gradient-to-br from-black to-purple-900"
     },
     {
       title: "Stopwatch",
@@ -33,7 +33,7 @@ export default function WorkoutToolsPage() {
       icon: <Timer className="h-6 w-6 text-white" />,
       href: "/tools/stopwatch",
       disabled: false,
-      gradient: "bg-gradient-to-bl from-purple-700 to-blue-500"
+      gradient: "bg-gradient-to-bl from-black to-purple-800"
     },
     {
       title: "Start Gun",
@@ -41,7 +41,7 @@ export default function WorkoutToolsPage() {
       icon: <Volume2 className="h-6 w-6 text-white" />,
       href: "/tools/start-gun",
       disabled: false,
-      gradient: "bg-gradient-to-tr from-blue-700 to-purple-500"
+      gradient: "bg-gradient-to-tr from-black to-purple-700"
     },
     {
       title: "Photo Finish",
@@ -49,7 +49,7 @@ export default function WorkoutToolsPage() {
       icon: <Video className="h-6 w-6 text-white" />,
       href: "/tools/photo-finish",
       disabled: false,
-      gradient: "bg-gradient-to-tl from-purple-600 to-blue-600"
+      gradient: "bg-gradient-to-tl from-black to-purple-600"
     },
     {
       title: "Journal",
@@ -57,7 +57,7 @@ export default function WorkoutToolsPage() {
       icon: <BookOpen className="h-6 w-6 text-white" />,
       href: "/tools/journal",
       disabled: false,
-      gradient: "bg-gradient-to-br from-blue-500 to-purple-700"
+      gradient: "bg-gradient-to-br from-black to-purple-600"
     },
     {
       title: "Exercise Library",
@@ -65,7 +65,7 @@ export default function WorkoutToolsPage() {
       icon: <Video className="h-6 w-6 text-white" />,
       href: "/tools/exercise-library",
       disabled: false,
-      gradient: "bg-gradient-to-bl from-purple-500 to-blue-700"
+      gradient: "bg-gradient-to-bl from-black to-purple-500"
     },
     {
       title: "Rep Starter",
