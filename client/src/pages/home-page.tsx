@@ -353,17 +353,8 @@ export default function HomePage() {
                     {/* Special Practice Session - Full Width */}
                     {card.isSpecial ? (
                       <>
-                        {/* Background Image */}
-                        {card.backgroundImage && (
-                          <div 
-                            className="absolute inset-0 bg-cover bg-no-repeat"
-                            style={{ 
-                              backgroundImage: `url(${card.backgroundImage})`,
-                              backgroundPosition: 'center 50%',
-                              opacity: 0.65
-                            }}
-                          />
-                        )}
+                        {/* Gradient background */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-primary/20" />
                         <CardContent className="h-full p-4 relative flex flex-col z-10">
                             <div className="flex flex-col h-full">
                               <div className="mb-3">
@@ -416,21 +407,12 @@ export default function HomePage() {
                       </>
                     ) : (
                       <>
-                        {/* Background Image for regular cards */}
-                        {card.backgroundImage && (
-                          <div 
-                            className="absolute inset-0 bg-cover bg-no-repeat"
-                            style={{ 
-                              backgroundImage: `url(${card.backgroundImage})`,
-                              backgroundPosition: 'center 50%',
-                              opacity: 0.65
-                            }}
-                          />
-                        )}
-                        <CardContent className="p-4 relative h-full flex flex-col justify-center bg-background z-10">
+                        {/* Gradient background for regular cards */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-secondary/30 via-secondary/20 to-primary/30" />
+                        <CardContent className="p-4 relative h-full flex flex-col justify-center z-10">
                           <div className="text-center">
                             <h2 className="text-lg font-bold mb-2">{card.title}</h2>
-                            <p className="text-white text-sm">{card.description}</p>
+                            <p className="text-muted-foreground text-sm">{card.description}</p>
                           </div>
                         </CardContent>
                       </>
