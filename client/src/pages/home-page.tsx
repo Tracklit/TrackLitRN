@@ -39,6 +39,7 @@ import { cn } from '@/lib/utils';
 import { useAssignedPrograms } from '@/hooks/use-assigned-programs';
 import { useProgramSessions } from '@/hooks/use-program-sessions';
 import { SimpleWorkoutLike } from '@/components/workout-reactions';
+import { useTicker } from '@/contexts/ticker-context';
 
 import { BackgroundImageContainer, OptimizedBackgroundImage } from '@/components/optimized-background-image';
 import { ImageOptimizer, useImageOptimization } from '@/lib/image-optimizer';
@@ -74,18 +75,8 @@ export default function HomePage() {
   const { imagesLoaded } = useImageOptimization(dashboardImages);
   const [currentSession, setCurrentSession] = useState<any>(null);
   const [isSavingSession, setIsSavingSession] = useState(false);
-  const [isTickerVisible, setIsTickerVisible] = useState(() => {
-    const saved = localStorage.getItem('tickerVisible');
-    return saved !== null ? JSON.parse(saved) : true;
-  });
   const [activeSessionIndex, setActiveSessionIndex] = useState(0);
-
-
-
-  const toggleTickerVisibility = (visible: boolean) => {
-    setIsTickerVisible(visible);
-    localStorage.setItem('tickerVisible', JSON.stringify(visible));
-  };
+  const { isTickerVisible, toggleTickerVisibility } = useTicker();
   
   // Fetch data for stats
   const { data: meets } = useQuery<Meet[]>({

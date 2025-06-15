@@ -13,12 +13,11 @@ import { useTicker } from "@/contexts/ticker-context";
 interface HeaderProps {
   title?: string;
   className?: string;
-  isTickerVisible?: boolean;
-  onToggleTicker?: (visible: boolean) => void;
 }
 
-export function Header({ title = "TrackLit", className, isTickerVisible, onToggleTicker }: HeaderProps) {
+export function Header({ title = "TrackLit", className }: HeaderProps) {
   const { user, logoutMutation } = useAuth();
+  const { isTickerVisible, toggleTickerVisibility } = useTicker();
 
   const handleLogout = () => {
     logoutMutation.mutate();
@@ -47,17 +46,15 @@ export function Header({ title = "TrackLit", className, isTickerVisible, onToggl
               <MessageButton />
               
               {/* Ticker Toggle */}
-              {onToggleTicker && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 text-gray-400 hover:text-white"
-                  onClick={() => onToggleTicker(!isTickerVisible)}
-                  title={isTickerVisible ? "Hide ticker" : "Show ticker"}
-                >
-                  <Globe className="h-4 w-4" />
-                </Button>
-              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 text-gray-400 hover:text-white"
+                onClick={() => toggleTickerVisibility(!isTickerVisible)}
+                title={isTickerVisible ? "Hide ticker" : "Show ticker"}
+              >
+                <Globe className="h-4 w-4" />
+              </Button>
             </div>
             
             <DropdownMenu>
