@@ -505,12 +505,12 @@ export default function PhotoFinishFullscreen({
         {isTimerMode && timers.map((timer) => (
           <div
             key={timer.id}
-            className="absolute bg-black/70 text-white px-2 py-1 rounded text-sm font-mono pointer-events-none"
+            className="absolute bg-black/30 text-white px-2 py-1 text-sm font-mono pointer-events-none"
             style={{
               left: `${timer.x}%`,
               top: `${timer.y}%`,
-              transform: `scale(${videoScale}) translate(${videoPosition.x / videoScale}px, ${videoPosition.y / videoScale}px)`,
-              transformOrigin: 'center center'
+              borderRadius: '3px',
+              border: '1px solid rgba(255, 255, 255, 0.3)'
             }}
           >
             {formatTimerTime(currentTime)}
@@ -593,20 +593,25 @@ export default function PhotoFinishFullscreen({
                 );
               })}
               
-              {/* Time labels every 5 seconds using XX.XX format */}
-              {duration && Array.from({ length: Math.floor(duration / 5) + 1 }, (_, i) => {
-                const timePosition = (i * 5) / duration * 100;
-                const timeLabel = formatTimelineTime(i * 5);
-                return (
-                  <div
-                    key={`label-${i}`}
-                    className="absolute bottom-1 text-xs text-gray-300 transform -translate-x-1/2 z-20"
-                    style={{ left: `${timePosition}%` }}
-                  >
-                    {timeLabel}
-                  </div>
-                );
-              })}
+              {/* Time labels every 0.5 seconds using XX.XX format */}
+              {duration && Array.from({ length: Math.floor(duration * 2) + 1 }, (_, i) => {
+                const timeValue = i * 0.5;
+                const timePosition = (timeValue / duration) * 100;
+                const timeLabel = formatTimelineTime(timeValue);
+                // Only show labels for whole seconds and half seconds
+                if (i % 2 === 0 || timeValue % 1 === 0.5) {
+                  return (
+                    <div
+                      key={`label-${i}`}
+                      className="absolute bottom-1 text-xs text-gray-300 transform -translate-x-1/2 z-20"
+                      style={{ left: `${timePosition}%` }}
+                    >
+                      {timeLabel}
+                    </div>
+                  );
+                }
+                return null;
+              }).filter(Boolean)}
               
               {/* Preview time tooltip */}
               {previewTime !== null && (
