@@ -28,10 +28,10 @@ export default function WorkoutToolsPage() {
       gradient: "bg-slate-900"
     },
     {
-      title: "Stopwatch",
-      description: "Track your time with precision",
-      icon: <Timer className="h-6 w-6 text-white" />,
-      href: "/tools/stopwatch",
+      title: "Photo Finish",
+      description: "Analyze race videos with timing overlays",
+      icon: <Video className="h-6 w-6 text-white" />,
+      href: "/tools/photo-finish",
       disabled: false,
       gradient: "bg-slate-900"
     },
@@ -44,10 +44,10 @@ export default function WorkoutToolsPage() {
       gradient: "bg-slate-900"
     },
     {
-      title: "Photo Finish",
-      description: "Analyze race videos with timing overlays",
-      icon: <Video className="h-6 w-6 text-white" />,
-      href: "/tools/photo-finish",
+      title: "Stopwatch",
+      description: "Track your time with precision",
+      icon: <Timer className="h-6 w-6 text-white" />,
+      href: "/tools/stopwatch",
       disabled: false,
       gradient: "bg-slate-900"
     },
