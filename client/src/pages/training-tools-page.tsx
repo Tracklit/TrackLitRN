@@ -25,7 +25,7 @@ export default function WorkoutToolsPage() {
       icon: <Camera className="h-6 w-6 text-white" />,
       href: "/tools/video-analysis",
       disabled: false,
-      gradient: "bg-gradient-to-br from-black to-purple-900"
+      gradient: "bg-gradient-to-br from-black via-gray-900 to-purple-950"
     },
     {
       title: "Stopwatch",
@@ -33,7 +33,7 @@ export default function WorkoutToolsPage() {
       icon: <Timer className="h-6 w-6 text-white" />,
       href: "/tools/stopwatch",
       disabled: false,
-      gradient: "bg-gradient-to-bl from-black to-purple-800"
+      gradient: "bg-gradient-to-bl from-black via-gray-900 to-purple-950"
     },
     {
       title: "Start Gun",
@@ -41,7 +41,7 @@ export default function WorkoutToolsPage() {
       icon: <Volume2 className="h-6 w-6 text-white" />,
       href: "/tools/start-gun",
       disabled: false,
-      gradient: "bg-gradient-to-tr from-black to-purple-700"
+      gradient: "bg-gradient-to-tr from-black via-gray-900 to-purple-950"
     },
     {
       title: "Photo Finish",
@@ -49,7 +49,7 @@ export default function WorkoutToolsPage() {
       icon: <Video className="h-6 w-6 text-white" />,
       href: "/tools/photo-finish",
       disabled: false,
-      gradient: "bg-gradient-to-tl from-black to-purple-600"
+      gradient: "bg-gradient-to-tl from-black via-gray-900 to-purple-950"
     },
     {
       title: "Journal",
@@ -57,7 +57,7 @@ export default function WorkoutToolsPage() {
       icon: <BookOpen className="h-6 w-6 text-white" />,
       href: "/tools/journal",
       disabled: false,
-      gradient: "bg-gradient-to-br from-black to-purple-600"
+      gradient: "bg-gradient-to-br from-black via-gray-900 to-purple-950"
     },
     {
       title: "Exercise Library",
@@ -65,7 +65,7 @@ export default function WorkoutToolsPage() {
       icon: <Video className="h-6 w-6 text-white" />,
       href: "/tools/exercise-library",
       disabled: false,
-      gradient: "bg-gradient-to-bl from-black to-purple-500"
+      gradient: "bg-gradient-to-bl from-black via-gray-900 to-purple-950"
     },
     {
       title: "Rep Starter",
@@ -128,7 +128,7 @@ export default function WorkoutToolsPage() {
               // Enabled card
               <Link key={index} href={card.href}>
                 <Card 
-                  className={`cursor-pointer h-[140px] mx-auto mb-2 overflow-hidden relative ${card.gradient} group hover:scale-105 transition-all duration-300 border border-gray-300/50`}
+                  className={`cursor-pointer h-[140px] mx-auto mb-2 overflow-hidden relative ${card.gradient} group hover:scale-105 transition-all duration-300 border-0`}
                 >
                   {/* Content Area */}
                   <CardContent className="p-2.5 relative h-full flex flex-col justify-center">
