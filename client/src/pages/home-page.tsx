@@ -42,7 +42,8 @@ import { SimpleWorkoutLike } from '@/components/workout-reactions';
 import { trackImages } from '@/lib/image-preloader';
 import { BackgroundImageContainer } from '@/components/optimized-background-image';
 import { ImageOptimizer, useImageOptimization } from '@/lib/image-optimizer';
-import '@/styles/image-optimization.css';
+import { ImagePreload, AspectRatioContainer } from '@/components/image-preload';
+import '../styles/image-optimization.css';
 import backgroundImage1 from '@assets/istockphoto-691785042-612x612_1750008503978.jpg';
 import backgroundImage2 from '@assets/istockphoto-1088544230-612x612_1750008503978.jpg';
 import backgroundImage3 from '@assets/istockphoto-1224403019-612x612_1750008503978.jpg';
@@ -267,6 +268,9 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen text-foreground pb-16 bg-background">
+      {/* Preload critical images */}
+      <ImagePreload images={criticalImages} />
+      
       <main className="pt-2 px-4 container mx-auto max-w-7xl">
         {/* Logo will be placed here in the future */}
         <div className="h-1 mx-auto" style={{ maxWidth: "540px" }}>
@@ -367,17 +371,20 @@ export default function HomePage() {
           <div className="max-w-2xl mx-auto">
             {categoryCards.map((card, index) => (
               card.disabled ? (
-                <Card key={index} className={`h-[140px] overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 border border-gray-600 ${index > 0 ? 'mt-8' : ''}`}>
-                  <CardContent className="p-4 relative h-full flex flex-col justify-center opacity-50">
-                    <div className="text-center">
-                      <h2 className="text-lg font-bold mb-2 text-muted-foreground/70">{card.title}</h2>
-                      <p className="text-muted-foreground/70 text-sm">{card.description}</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                <AspectRatioContainer key={index} aspectRatio="5/2" className={index > 0 ? 'mt-8' : ''}>
+                  <Card className="h-full overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 border border-gray-600">
+                    <CardContent className="p-4 relative h-full flex flex-col justify-center opacity-50">
+                      <div className="text-center">
+                        <h2 className="text-lg font-bold mb-2 text-muted-foreground/70">{card.title}</h2>
+                        <p className="text-muted-foreground/70 text-sm">{card.description}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </AspectRatioContainer>
               ) : (
                 <Link href={card.href} key={index}>
-                  <Card className={`cursor-pointer hover:shadow-lg transition-all duration-300 border border-gray-600 hover:border-primary h-[140px] overflow-hidden group relative ${card.isSpecial ? 'bg-primary/5' : 'bg-gray-600'} ${index > 0 ? 'mt-8' : ''}`}>
+                  <AspectRatioContainer aspectRatio="5/2" className={index > 0 ? 'mt-8' : ''}>
+                    <Card className={`cursor-pointer hover:shadow-lg transition-all duration-300 border border-gray-600 hover:border-primary h-full overflow-hidden group relative ${card.isSpecial ? 'bg-primary/5' : 'bg-gray-600'}`}>
                     {/* Special Practice Session - Full Width */}
                     {card.isSpecial ? (
                       <>
@@ -453,7 +460,8 @@ export default function HomePage() {
                         </CardContent>
                       </>
                     )}
-                  </Card>
+                    </Card>
+                  </AspectRatioContainer>
                 </Link>
               )
             ))}

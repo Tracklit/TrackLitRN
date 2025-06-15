@@ -75,16 +75,46 @@ export const BackgroundImageContainer: React.FC<{
   opacity = 0.7, 
   filter 
 }) => {
+  const [imageLoaded, setImageLoaded] = React.useState(false);
+  const [imageError, setImageError] = React.useState(false);
+
   return (
-    <div className={`relative overflow-hidden ${className}`}>
-      <OptimizedBackgroundImage
-        src={src}
-        alt={alt}
-        style={{
-          opacity,
-          filter,
-        }}
-      />
+    <div className={`relative overflow-hidden ${className}`} style={{ aspectRatio: '16/9' }}>
+      {/* Loading skeleton */}
+      {!imageLoaded && !imageError && (
+        <div className="absolute inset-0 image-skeleton" />
+      )}
+      
+      {/* Optimized background image */}
+      {!imageError && (
+        <LazyLoadImage
+          src={src}
+          alt={alt}
+          effect="blur"
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{
+            opacity: imageLoaded ? opacity : 0,
+            filter,
+            transition: 'opacity 0.3s ease-in-out',
+          }}
+          onLoad={() => setImageLoaded(true)}
+          onError={() => {
+            setImageError(true);
+            console.warn('Failed to load background image:', src);
+          }}
+          loading="lazy"
+          threshold={100}
+        />
+      )}
+      
+      {/* Fallback for failed images */}
+      {imageError && (
+        <div 
+          className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900"
+          style={{ opacity }}
+        />
+      )}
+      
       <div className="relative z-10">
         {children}
       </div>
