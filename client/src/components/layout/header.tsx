@@ -39,7 +39,7 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
               <InstallAppButton />
             </div>
             
-            <div className="flex items-center space-x-1 ml-auto">
+            <div className="flex items-center space-x-0.5 ml-auto">
               <NotificationBell />
               
               {/* Direct Messages Panel */}
