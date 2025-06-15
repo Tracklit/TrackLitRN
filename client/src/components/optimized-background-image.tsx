@@ -79,10 +79,10 @@ export const BackgroundImageContainer: React.FC<{
   const [imageError, setImageError] = React.useState(false);
 
   return (
-    <div className={`relative overflow-hidden ${className}`} style={{ aspectRatio: '16/9' }}>
+    <div className={`absolute inset-0 overflow-hidden ${className}`}>
       {/* Loading skeleton */}
       {!imageLoaded && !imageError && (
-        <div className="absolute inset-0 image-skeleton" />
+        <div className="absolute inset-0 image-skeleton z-0" />
       )}
       
       {/* Optimized background image */}
@@ -91,7 +91,7 @@ export const BackgroundImageContainer: React.FC<{
           src={src}
           alt={alt}
           effect="blur"
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover z-0"
           style={{
             opacity: imageLoaded ? opacity : 0,
             filter,
@@ -110,14 +110,10 @@ export const BackgroundImageContainer: React.FC<{
       {/* Fallback for failed images */}
       {imageError && (
         <div 
-          className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900"
+          className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900 z-0"
           style={{ opacity }}
         />
       )}
-      
-      <div className="relative z-10">
-        {children}
-      </div>
     </div>
   );
 };

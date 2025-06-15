@@ -49,7 +49,7 @@ import backgroundImage2 from '@assets/istockphoto-1088544230-612x612_17500085039
 import backgroundImage3 from '@assets/istockphoto-1224403019-612x612_1750008503978.jpg';
 import backgroundImage4 from '@assets/istockphoto-1253944192-612x612_1750008503979.jpg';
 import backgroundImage5 from '@assets/istockphoto-1279168476-612x612_1750008503979.jpg';
-import programsBackground from '@assets/Screenshot 2025-06-15 194542_1750009558857.png';
+import programsBackground from '@assets/image_1750012192490.png';
 
 export default function HomePage() {
   const { user } = useAuth();
