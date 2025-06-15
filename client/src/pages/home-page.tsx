@@ -371,20 +371,17 @@ export default function HomePage() {
           <div className="max-w-2xl mx-auto">
             {categoryCards.map((card, index) => (
               card.disabled ? (
-                <AspectRatioContainer key={index} aspectRatio="5/2" className={index > 0 ? 'mt-8' : ''}>
-                  <Card className="h-full overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 border border-gray-600">
-                    <CardContent className="p-4 relative h-full flex flex-col justify-center opacity-50">
-                      <div className="text-center">
-                        <h2 className="text-lg font-bold mb-2 text-muted-foreground/70">{card.title}</h2>
-                        <p className="text-muted-foreground/70 text-sm">{card.description}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </AspectRatioContainer>
+                <Card key={index} className={`h-[140px] overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 border border-gray-600 ${index > 0 ? 'mt-8' : ''}`}>
+                  <CardContent className="p-4 relative h-full flex flex-col justify-center opacity-50">
+                    <div className="text-center">
+                      <h2 className="text-lg font-bold mb-2 text-muted-foreground/70">{card.title}</h2>
+                      <p className="text-muted-foreground/70 text-sm">{card.description}</p>
+                    </div>
+                  </CardContent>
+                </Card>
               ) : (
                 <Link href={card.href} key={index}>
-                  <AspectRatioContainer aspectRatio="5/2" className={index > 0 ? 'mt-8' : ''}>
-                    <Card className={`cursor-pointer hover:shadow-lg transition-all duration-300 border border-gray-600 hover:border-primary h-full overflow-hidden group relative ${card.isSpecial ? 'bg-primary/5' : 'bg-gray-600'}`}>
+                  <Card className={`cursor-pointer hover:shadow-lg transition-all duration-300 border border-gray-600 hover:border-primary h-[140px] overflow-hidden group relative ${card.isSpecial ? 'bg-primary/5' : 'bg-gray-600'} ${index > 0 ? 'mt-8' : ''}`}>
                     {/* Special Practice Session - Full Width */}
                     {card.isSpecial ? (
                       <>
@@ -460,8 +457,7 @@ export default function HomePage() {
                         </CardContent>
                       </>
                     )}
-                    </Card>
-                  </AspectRatioContainer>
+                  </Card>
                 </Link>
               )
             ))}
