@@ -759,7 +759,13 @@ export default function PhotoFinishFullscreen({
                 style={{ left: `${duration ? (currentTime / duration) * 100 : 0}%` }}
               />
               
-
+              {/* Current time indicator on scrubber */}
+              <div
+                className="absolute -top-6 transform -translate-x-1/2 bg-red-500 text-white text-xs px-2 py-1 rounded z-30"
+                style={{ left: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+              >
+                {formatTimelineTime(currentTime)}
+              </div>
             </div>
           </div>
         </div>
