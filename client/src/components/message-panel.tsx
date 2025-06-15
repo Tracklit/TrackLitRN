@@ -327,7 +327,7 @@ export function MessagePanel({ isOpen, onClose, targetUserId }: MessagePanelProp
         style={{
           transition: 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
           transform: isOpen ? 'translateX(0%)' : 'translateX(100%)',
-          backgroundColor: 'hsl(220, 40%, 12%)'
+          backgroundColor: '#010a18'
         }}
       >
         {/* Header */}
