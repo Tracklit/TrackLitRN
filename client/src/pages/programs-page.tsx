@@ -360,14 +360,14 @@ function CompactProgramCard({ program, type, creator, viewMode }: {
   });
   
   return (
-    <Card className="overflow-hidden transition-all hover:shadow-md h-24 bg-slate-800/95 border-slate-700/50 relative cursor-pointer hover:bg-slate-800"
+    <Card className="overflow-hidden transition-all hover:shadow-md h-24 bg-gray-900/95 border-gray-800/50 relative cursor-pointer hover:bg-gray-900"
           onClick={() => window.location.href = `/programs/${program.programId || program.id}`}>
       
       <CardHeader className="p-3 pb-2">
         <div className="flex justify-between items-start">
           <div className="flex-1 pr-2 text-center">
             <CardTitle className="text-sm leading-tight line-clamp-2 font-medium">{program.title}</CardTitle>
-            <div className="h-px bg-slate-600/30 w-full mt-2 mb-1"></div>
+            <div className="h-px bg-gray-700/40 w-full mt-2 mb-1"></div>
           </div>
           {viewMode === "creator" && (
             <DropdownMenu>
@@ -846,12 +846,12 @@ function EmptyState({ title, description, action }: {
 
 function CompactProgramCardSkeleton() {
   return (
-    <Card className="overflow-hidden h-24 bg-slate-800/95 border-slate-700/50 relative">
+    <Card className="overflow-hidden h-24 bg-gray-900/95 border-gray-800/50 relative">
       <CardHeader className="p-3 pb-2">
         <div className="flex justify-between items-start">
           <div className="flex-1 pr-2 text-center">
             <Skeleton className="h-4 w-3/4 mb-1 mx-auto" />
-            <div className="h-px bg-slate-600/30 w-full mt-2 mb-1"></div>
+            <div className="h-px bg-gray-700/40 w-full mt-2 mb-1"></div>
           </div>
           <Skeleton className="h-5 w-5" />
         </div>
