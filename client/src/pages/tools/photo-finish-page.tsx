@@ -73,6 +73,7 @@ export default function PhotoFinishPage() {
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const generateVideoThumbnail = (video: HTMLVideoElement): Promise<string> => {
     return new Promise((resolve) => {
@@ -227,7 +228,6 @@ export default function PhotoFinishPage() {
     const url = URL.createObjectURL(savedVideo.file);
     setVideoUrl(url);
     setVideoPoster(savedVideo.thumbnail);
-    setShowVideoLibrary(false);
   };
 
   return (
@@ -278,16 +278,29 @@ export default function PhotoFinishPage() {
                   </div>
                 </div>
               ) : !currentVideo ? (
-                <div
-                  className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center cursor-pointer hover:border-muted-foreground/50 transition-colors"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-lg font-medium mb-2">Upload Race Video</p>
-                  <p className="text-muted-foreground">Click to select a video file or drag and drop</p>
-                  <p className="text-sm text-muted-foreground mt-2">
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <p className="text-lg font-medium mb-2">Upload Race Video</p>
+                    <p className="text-muted-foreground mb-4">Choose how to add your video</p>
+                  </div>
+                  
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="w-full h-20 flex flex-col gap-2"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="h-8 w-8" />
+                    <span className="text-lg">Choose Video</span>
+                    <span className="text-xs text-muted-foreground">From camera roll or record new</span>
+                  </Button>
+                  
+                  <p className="text-sm text-muted-foreground text-center">
                     Video will automatically open in fullscreen analysis mode
                   </p>
+                  
+                  {/* Optimized video input for mobile */}
                   <Input
                     ref={fileInputRef}
                     type="file"
