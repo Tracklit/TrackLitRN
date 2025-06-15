@@ -40,6 +40,9 @@ import { useAssignedPrograms } from '@/hooks/use-assigned-programs';
 import { useProgramSessions } from '@/hooks/use-program-sessions';
 import { SimpleWorkoutLike } from '@/components/workout-reactions';
 import { trackImages } from '@/lib/image-preloader';
+import { BackgroundImageContainer } from '@/components/optimized-background-image';
+import { ImageOptimizer, useImageOptimization } from '@/lib/image-optimizer';
+import '@/styles/image-optimization.css';
 import backgroundImage1 from '@assets/istockphoto-691785042-612x612_1750008503978.jpg';
 import backgroundImage2 from '@assets/istockphoto-1088544230-612x612_1750008503978.jpg';
 import backgroundImage3 from '@assets/istockphoto-1224403019-612x612_1750008503978.jpg';
@@ -58,6 +61,10 @@ export default function HomePage() {
     return saved !== null ? JSON.parse(saved) : true;
   });
   const [activeSessionIndex, setActiveSessionIndex] = useState(0);
+
+  // Preload critical images for performance
+  const criticalImages = [programsBackground];
+  const { imagesLoaded, loadingProgress } = useImageOptimization(criticalImages);
 
   const toggleTickerVisibility = (visible: boolean) => {
     setIsTickerVisible(visible);
@@ -427,16 +434,16 @@ export default function HomePage() {
                       </>
                     ) : (
                       <>
-                        {/* Background image for cards that have it */}
+                        {/* Optimized background image for cards that have it */}
                         {card.hasBackground && (
-                          <div 
-                            className="absolute inset-0 bg-cover bg-center opacity-70"
-                            style={{
-                              backgroundImage: `url(${card.backgroundImage})`,
-                              backgroundSize: 'cover',
-                              backgroundPosition: 'center'
-                            }}
-                          />
+                          <BackgroundImageContainer
+                            src={card.backgroundImage}
+                            alt={`${card.title} background pattern`}
+                            opacity={0.7}
+                            className="absolute inset-0"
+                          >
+                            <div />
+                          </BackgroundImageContainer>
                         )}
                         <CardContent className="p-4 relative h-full flex flex-col justify-center z-10">
                           <div className="text-center">
