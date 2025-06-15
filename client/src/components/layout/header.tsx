@@ -49,11 +49,11 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 w-8 p-0 text-gray-400 hover:text-white"
+                className="h-9 w-9 p-0 text-gray-400 hover:text-white"
                 onClick={() => toggleTickerVisibility(!isTickerVisible)}
                 title={isTickerVisible ? "Hide ticker" : "Show ticker"}
               >
-                <Globe className="h-4 w-4" />
+                <Globe className="h-5 w-5" />
               </Button>
             </div>
             
