@@ -230,7 +230,7 @@ export default function HomePage() {
       href: "/practice",
       disabled: false,
       isSpecial: true,
-      backgroundImage: practiceBackground,
+      backgroundImage: programsBackground,
       hasBackground: true
     },
     {
@@ -239,7 +239,7 @@ export default function HomePage() {
       icon: <BookOpen className="h-6 w-6 text-primary" />,
       href: "/programs",
       disabled: false,
-      backgroundImage: programsBackground,
+      backgroundImage: practiceBackground,
       hasBackground: true
     },
     {
