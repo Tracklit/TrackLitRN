@@ -195,23 +195,33 @@ export default function HomePage() {
   
 
 
-  // Generate unique halftone patterns for each card
-  const generateHalftonePattern = (seed: number) => {
+  // Generate flowing halftone patterns similar to the example image
+  const generateFlowingHalftonePattern = (seed: number) => {
     const colors = ['#a855f7', '#f97316', '#ffffff']; // purple, orange, white
     const patterns = [];
     const positions = [];
     const sizes = [];
     
-    for (let i = 0; i < 6; i++) {
-      const x = ((seed * 37 + i * 23) % 100);
-      const y = ((seed * 47 + i * 31) % 100);
-      const size = 0.8 + ((seed * 13 + i * 17) % 20) / 10; // 0.8 - 2.8px
-      const colorIndex = (seed + i * 7) % colors.length;
+    // Create flowing wave-like distribution of dots
+    for (let i = 0; i < 12; i++) {
+      // Create wave-like x positioning
+      const waveX = 20 + (Math.sin((seed + i) * 0.8) * 30) + ((i * 7) % 60);
+      const waveY = 15 + (Math.cos((seed + i) * 0.6) * 25) + ((i * 11) % 70);
       
-      patterns.push(`radial-gradient(circle at ${x}% ${y}%, ${colors[colorIndex]} ${size}px, transparent ${size}px)`);
-      positions.push(`${(i * 15) % 60}px ${(i * 20) % 50}px`);
-      sizes.push(`${30 + (i * 10)}px ${25 + (i * 8)}px`);
+      // Vary dot sizes for halftone effect
+      const dotSize = 0.5 + ((seed * 7 + i * 13) % 15) / 10; // 0.5 - 2.0px
+      const colorIndex = (seed * 3 + i * 5) % colors.length;
+      
+      patterns.push(`radial-gradient(circle at ${waveX}% ${waveY}%, ${colors[colorIndex]} ${dotSize}px, transparent ${dotSize}px)`);
+      positions.push(`${(i * 8) % 40}px ${(i * 12) % 30}px`);
+      sizes.push(`${15 + (i * 3)}px ${12 + (i * 2)}px`);
     }
+    
+    // Add flowing lines effect
+    const lineColor = colors[(seed * 2) % colors.length];
+    patterns.push(`linear-gradient(${45 + (seed * 10) % 90}deg, transparent 0%, ${lineColor}22 30%, transparent 35%, ${lineColor}15 65%, transparent 100%)`);
+    positions.push('0 0');
+    sizes.push('100% 100%');
     
     return {
       backgroundImage: patterns.join(', '),
@@ -229,7 +239,7 @@ export default function HomePage() {
       href: "/practice",
       disabled: false,
       isSpecial: true,
-      pattern: generateHalftonePattern(1)
+      pattern: generateFlowingHalftonePattern(1)
     },
     {
       title: "Programs",
@@ -237,7 +247,7 @@ export default function HomePage() {
       icon: <BookOpen className="h-6 w-6 text-primary" />,
       href: "/programs",
       disabled: false,
-      pattern: generateHalftonePattern(2)
+      pattern: generateFlowingHalftonePattern(2)
     },
     {
       title: "Race",
@@ -245,7 +255,7 @@ export default function HomePage() {
       icon: <Trophy className="h-6 w-6 text-primary" />,
       href: "/meets",
       disabled: false,
-      pattern: generateHalftonePattern(3)
+      pattern: generateFlowingHalftonePattern(3)
     },
     {
       title: "Tools",
@@ -253,7 +263,7 @@ export default function HomePage() {
       icon: <Clock className="h-6 w-6 text-primary" />,
       href: "/training-tools",
       disabled: false,
-      pattern: generateHalftonePattern(4)
+      pattern: generateFlowingHalftonePattern(4)
     },
     {
       title: "Sprinthia",
@@ -261,7 +271,7 @@ export default function HomePage() {
       icon: <MessageCircle className="h-6 w-6 text-primary" />,
       href: "/sprinthia",
       disabled: false,
-      pattern: generateHalftonePattern(5)
+      pattern: generateFlowingHalftonePattern(5)
     }
   ];
 
