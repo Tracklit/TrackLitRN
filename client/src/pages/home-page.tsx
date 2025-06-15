@@ -39,11 +39,11 @@ import { cn } from '@/lib/utils';
 import { useAssignedPrograms } from '@/hooks/use-assigned-programs';
 import { useProgramSessions } from '@/hooks/use-program-sessions';
 import { SimpleWorkoutLike } from '@/components/workout-reactions';
-import { trackImages } from '@/lib/image-preloader';
-import { BackgroundImageContainer } from '@/components/optimized-background-image';
+
+import { BackgroundImageContainer, OptimizedBackgroundImage } from '@/components/optimized-background-image';
 import { ImageOptimizer, useImageOptimization } from '@/lib/image-optimizer';
-import { ImagePreload, AspectRatioContainer } from '@/components/image-preload';
-import '../styles/image-optimization.css';
+import { PreloadImages } from '@/components/preload-images';
+
 import backgroundImage1 from '@assets/istockphoto-691785042-612x612_1750008503978.jpg';
 import backgroundImage2 from '@assets/istockphoto-1088544230-612x612_1750008503978.jpg';
 import backgroundImage3 from '@assets/istockphoto-1224403019-612x612_1750008503978.jpg';
@@ -60,7 +60,7 @@ export default function HomePage() {
   const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
 
   // Critical dashboard images for preloading with 80% compression
-  const criticalImages = [
+  const dashboardImages = [
     practiceBackground,
     programsBackground,
     raceBackground,
@@ -68,7 +68,7 @@ export default function HomePage() {
   ];
 
   // Preload critical images with compression
-  const { imagesLoaded } = useImageOptimization(criticalImages);
+  const { imagesLoaded } = useImageOptimization(dashboardImages);
   const [currentSession, setCurrentSession] = useState<any>(null);
   const [isSavingSession, setIsSavingSession] = useState(false);
   const [isTickerVisible, setIsTickerVisible] = useState(() => {
@@ -284,7 +284,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen text-foreground pb-16 bg-background">
       {/* Preload critical images */}
-      <ImagePreload images={criticalImages} />
+      <PreloadImages images={dashboardImages} quality={20} priority={true} />
       
       <main className="pt-2 px-4 container mx-auto max-w-7xl">
         {/* Logo will be placed here in the future */}
