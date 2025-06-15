@@ -45,6 +45,7 @@ import backgroundImage2 from '@assets/istockphoto-1088544230-612x612_17500085039
 import backgroundImage3 from '@assets/istockphoto-1224403019-612x612_1750008503978.jpg';
 import backgroundImage4 from '@assets/istockphoto-1253944192-612x612_1750008503979.jpg';
 import backgroundImage5 from '@assets/istockphoto-1279168476-612x612_1750008503979.jpg';
+import programsBackground from '@assets/Screenshot 2025-06-15 194542_1750009558857.png';
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -226,7 +227,8 @@ export default function HomePage() {
       icon: <BookOpen className="h-6 w-6 text-primary" />,
       href: "/programs",
       disabled: false,
-      backgroundImage: backgroundImages[1]
+      backgroundImage: programsBackground,
+      hasBackground: true
     },
     {
       title: "Race",
@@ -425,7 +427,17 @@ export default function HomePage() {
                       </>
                     ) : (
                       <>
-
+                        {/* Background image for cards that have it */}
+                        {card.hasBackground && (
+                          <div 
+                            className="absolute inset-0 bg-cover bg-center opacity-70"
+                            style={{
+                              backgroundImage: `url(${card.backgroundImage})`,
+                              backgroundSize: 'cover',
+                              backgroundPosition: 'center'
+                            }}
+                          />
+                        )}
                         <CardContent className="p-4 relative h-full flex flex-col justify-center z-10">
                           <div className="text-center">
                             <h2 className="text-lg font-bold mb-2">{card.title}</h2>
