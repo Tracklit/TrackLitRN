@@ -301,7 +301,7 @@ export default function HomePage() {
             <div className="grid grid-cols-2 gap-2" style={{ margin: "0 auto" }}>
               <div className="col-span-2">
                 {isTickerVisible ? (
-                  <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg border relative overflow-hidden">
+                  <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-lg border border-gray-700 relative overflow-hidden">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -318,10 +318,10 @@ export default function HomePage() {
                       {isLoadingPreviews ? (
                         <div className="p-3">
                           <div className="flex items-center gap-2">
-                            <Skeleton className="h-6 w-6 rounded-full" />
+                            <Skeleton className="h-6 w-6 rounded-full bg-gray-700" />
                             <div className="flex-1">
-                              <Skeleton className="h-3 w-24 mb-1" />
-                              <Skeleton className="h-3 w-32" />
+                              <Skeleton className="h-3 w-24 mb-1 bg-gray-700" />
+                              <Skeleton className="h-3 w-32 bg-gray-700" />
                             </div>
                           </div>
                         </div>
@@ -332,7 +332,7 @@ export default function HomePage() {
                           key={activeSessionIndex}
                         >
                           <div className="flex items-center gap-2 pr-8">
-                            <div className="rounded-full bg-white/20 h-8 w-8 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                            <div className="rounded-full bg-gray-700/50 h-8 w-8 flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-600">
                               {sessionPreviews[activeSessionIndex].user?.profileImageUrl ? (
                                 <img 
                                   src={sessionPreviews[activeSessionIndex].user.profileImageUrl} 
@@ -340,21 +340,21 @@ export default function HomePage() {
                                   className="w-full h-full object-cover"
                                 />
                               ) : (
-                                <UserCircle className="h-4 w-4 text-white" />
+                                <UserCircle className="h-4 w-4 text-gray-400" />
                               )}
                             </div>
                             <div className="flex-1 overflow-hidden">
                               <div className="flex items-center gap-1 mb-0.5">
-                                <span className="text-xs font-medium text-white">{sessionPreviews[activeSessionIndex].title}</span>
-                                <span className="text-xs text-white/70">· {sessionPreviews[activeSessionIndex].user?.username}</span>
+                                <span className="text-xs font-medium text-yellow-400">{sessionPreviews[activeSessionIndex].title}</span>
+                                <span className="text-xs text-gray-300">· {sessionPreviews[activeSessionIndex].user?.username}</span>
                               </div>
-                              <p className="text-xs text-white/80 line-clamp-1">{sessionPreviews[activeSessionIndex].previewText}</p>
+                              <p className="text-xs text-gray-400 line-clamp-1">{sessionPreviews[activeSessionIndex].previewText}</p>
                             </div>
                           </div>
                         </div>
                       ) : (
                         <div className="p-3 h-12 flex items-center">
-                          <span className="text-xs text-white/70">No recent workouts</span>
+                          <span className="text-xs text-gray-400">No recent workouts</span>
                         </div>
                       )}
                     </div>
