@@ -8,6 +8,7 @@ import { NotificationBell } from "@/components/notification-bell";
 import { MessageButton } from "@/components/message-button";
 import { InstallAppButton } from "@/components/install-app-button";
 import { Button } from "@/components/ui/button";
+import { useTicker } from "@/contexts/ticker-context";
 
 interface HeaderProps {
   title?: string;
