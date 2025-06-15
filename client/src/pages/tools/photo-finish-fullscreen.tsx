@@ -480,20 +480,18 @@ export default function PhotoFinishFullscreen({
   return (
     <div className="fixed inset-0 bg-black text-white flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-black">
+      <div className="flex items-center justify-between p-4 bg-black/80 backdrop-blur-sm relative z-50">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
-            size="sm"
+            size="lg"
             onClick={onClose}
-            className="text-white hover:bg-white/20"
+            className="text-white hover:bg-white/20 border border-white/20"
           >
-            <X className="w-5 h-5" />
+            <X className="w-6 h-6" />
           </Button>
           <h1 className="text-lg font-semibold">{videoName}</h1>
         </div>
-        
-
       </div>
 
       {/* Video Container - takes remaining space */}

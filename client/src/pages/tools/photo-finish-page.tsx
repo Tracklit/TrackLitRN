@@ -411,36 +411,14 @@ export default function PhotoFinishPage() {
                   </div>
                 </div>
               ) : !currentVideo ? (
-                <div className="space-y-6">
-                  <div className="text-center">
-                    <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-lg font-medium mb-2">Upload Race Video</p>
-                    <p className="text-muted-foreground mb-4">Choose how to add your video</p>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      className="h-20 flex flex-col gap-2"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <FolderOpen className="h-6 w-6" />
-                      <span>Photo Library</span>
-                    </Button>
-                    
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      className="h-20 flex flex-col gap-2"
-                      onClick={() => cameraInputRef.current?.click()}
-                    >
-                      <Video className="h-6 w-6" />
-                      <span>Record Video</span>
-                    </Button>
-                  </div>
-                  
-                  <p className="text-sm text-muted-foreground text-center">
+                <div 
+                  className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center cursor-pointer hover:border-muted-foreground/50 transition-colors min-h-[200px] flex flex-col justify-center"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-xl font-medium mb-2">Upload Race Video</p>
+                  <p className="text-muted-foreground mb-4">Tap to select a video from your photo library</p>
+                  <p className="text-sm text-muted-foreground">
                     Video will automatically open in fullscreen analysis mode
                   </p>
                   
@@ -449,17 +427,6 @@ export default function PhotoFinishPage() {
                     ref={fileInputRef}
                     type="file"
                     accept="video/mp4,video/quicktime,video/mov,video/avi,video/webm"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                    onClick={(e) => e.currentTarget.value = ''}
-                  />
-                  
-                  {/* Camera recording input */}
-                  <Input
-                    ref={cameraInputRef}
-                    type="file"
-                    accept="video/*"
-                    capture="environment"
                     onChange={handleFileUpload}
                     className="hidden"
                     onClick={(e) => e.currentTarget.value = ''}
