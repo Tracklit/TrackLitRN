@@ -153,13 +153,13 @@ export default function WorkoutToolsPage() {
                 >
                   {/* Background Image */}
                   {card.hasBackground && card.backgroundImage && (
-                    <OptimizedBackgroundImage
-                      src={card.backgroundImage}
-                      alt={`${card.title} background`}
-                      className="absolute inset-0"
-                      quality={20}
-                      opacity={0.95}
-                      fallbackColor="bg-slate-900"
+                    <div
+                      className="absolute inset-0 bg-cover bg-bottom-right bg-no-repeat transition-opacity duration-500"
+                      style={{
+                        backgroundImage: `url(${card.backgroundImage})`,
+                        opacity: 0.95,
+                        zIndex: 0
+                      }}
                     />
                   )}
                   
@@ -169,13 +169,6 @@ export default function WorkoutToolsPage() {
                       <div>
                         <h2 className="text-base font-bold mb-0.5 text-white">{card.title}</h2>
                         <p className="text-white/80 text-xs px-1 line-clamp-2 overflow-hidden">{card.description}</p>
-                      </div>
-                    </div>
-                    
-                    {/* Icon positioned in bottom right */}
-                    <div className="absolute bottom-2 right-2 p-1.5 rounded-full bg-white/20 border border-white/30">
-                      <div className="h-4 w-4 flex items-center justify-center">
-                        {card.icon}
                       </div>
                     </div>
                   </CardContent>
