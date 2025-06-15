@@ -266,7 +266,8 @@ export default function HomePage() {
       icon: <MessageCircle className="h-6 w-6 text-primary" />,
       href: "/sprinthia",
       disabled: false,
-      backgroundImage: backgroundImages[4]
+      backgroundImage: backgroundImages[4],
+      hasBackground: true
     }
   ];
 
@@ -403,8 +404,8 @@ export default function HomePage() {
                     {card.isSpecial ? (
                       <>
                         <CardContent className="h-full p-4 relative flex flex-col z-20">
-                            <div className="flex flex-col h-full">
-                              <div className="flex-1 space-y-2">
+                            <div className="flex flex-col h-full justify-center">
+                              <div className="space-y-2">
                                 {/* Show workout details for Google Sheets programs */}
                                 {primaryProgram?.program?.importedFromSheet ? (
                                   // Check for race day first, regardless of session availability
