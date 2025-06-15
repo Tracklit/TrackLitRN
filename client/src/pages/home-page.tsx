@@ -402,7 +402,7 @@ export default function HomePage() {
                     {/* Special Practice Session - Full Width */}
                     {card.isSpecial ? (
                       <>
-                        <CardContent className="h-full p-4 relative flex flex-col z-10">
+                        <CardContent className="h-full p-4 relative flex flex-col z-20">
                             <div className="flex flex-col h-full">
                               <div className="flex-1 space-y-2">
                                 {/* Show workout details for Google Sheets programs */}
@@ -450,7 +450,7 @@ export default function HomePage() {
                           </CardContent>
                       </>
                     ) : (
-                      <CardContent className="p-4 relative h-full flex flex-col justify-center z-10">
+                      <CardContent className="p-4 relative h-full flex flex-col justify-center z-20">
                         <div className="text-center">
                           <h2 className="text-lg font-bold mb-2">{card.title}</h2>
                           <p className="text-muted-foreground text-sm">{card.description}</p>
