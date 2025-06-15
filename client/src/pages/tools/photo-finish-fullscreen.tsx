@@ -42,9 +42,16 @@ export default function PhotoFinishFullscreen({
   const [timers, setTimers] = useState<VideoTimer[]>([]);
   const [isTimerMode, setIsTimerMode] = useState(false);
 
+  // Video pan and zoom state
+  const [videoScale, setVideoScale] = useState(1);
+  const [videoPosition, setVideoPosition] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 });
+
   // Timeline refs
   const timelineRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const videoContainerRef = useRef<HTMLDivElement>(null);
 
   // Format time display
   const formatTime = (seconds: number) => {
@@ -164,6 +171,68 @@ export default function PhotoFinishFullscreen({
     setIsDragging(false);
   };
 
+  // Video zoom and pan handlers
+  const handleVideoWheel = (event: React.WheelEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const delta = event.deltaY * -0.01;
+    const newScale = Math.max(1, Math.min(5, videoScale + delta));
+    setVideoScale(newScale);
+  };
+
+  const handleVideoMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (videoScale > 1) {
+      setIsPanning(true);
+      setLastPanPoint({ x: event.clientX, y: event.clientY });
+    }
+  };
+
+  const handleVideoMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (isPanning && videoScale > 1) {
+      const deltaX = event.clientX - lastPanPoint.x;
+      const deltaY = event.clientY - lastPanPoint.y;
+      
+      setVideoPosition(prev => ({
+        x: prev.x + deltaX,
+        y: prev.y + deltaY
+      }));
+      
+      setLastPanPoint({ x: event.clientX, y: event.clientY });
+    }
+  };
+
+  const handleVideoMouseUp = () => {
+    setIsPanning(false);
+  };
+
+  // Touch handlers for mobile zoom and pan
+  const handleVideoTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (event.touches.length === 1 && videoScale > 1) {
+      setIsPanning(true);
+      const touch = event.touches[0];
+      setLastPanPoint({ x: touch.clientX, y: touch.clientY });
+    }
+  };
+
+  const handleVideoTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (isPanning && event.touches.length === 1 && videoScale > 1) {
+      event.preventDefault();
+      const touch = event.touches[0];
+      const deltaX = touch.clientX - lastPanPoint.x;
+      const deltaY = touch.clientY - lastPanPoint.y;
+      
+      setVideoPosition(prev => ({
+        x: prev.x + deltaX,
+        y: prev.y + deltaY
+      }));
+      
+      setLastPanPoint({ x: touch.clientX, y: touch.clientY });
+    }
+  };
+
+  const handleVideoTouchEnd = () => {
+    setIsPanning(false);
+  };
+
   // Video event handlers
   useEffect(() => {
     const video = videoRef.current;
@@ -271,11 +340,26 @@ export default function PhotoFinishFullscreen({
       </div>
 
       {/* Video Container - takes remaining space */}
-      <div className="flex-1 relative bg-black flex items-center justify-center">
+      <div 
+        ref={videoContainerRef}
+        className="flex-1 relative bg-black flex items-center justify-center overflow-hidden"
+        onWheel={handleVideoWheel}
+        onMouseDown={handleVideoMouseDown}
+        onMouseMove={handleVideoMouseMove}
+        onMouseUp={handleVideoMouseUp}
+        onTouchStart={handleVideoTouchStart}
+        onTouchMove={handleVideoTouchMove}
+        onTouchEnd={handleVideoTouchEnd}
+        style={{ cursor: isPanning ? 'grabbing' : (videoScale > 1 ? 'grab' : 'default') }}
+      >
         <video
           ref={videoRef}
           src={videoUrl || ''}
-          className="max-w-full max-h-full object-contain"
+          className="max-w-full max-h-full object-contain pointer-events-none"
+          style={{
+            transform: `scale(${videoScale}) translate(${videoPosition.x / videoScale}px, ${videoPosition.y / videoScale}px)`,
+            transformOrigin: 'center center'
+          }}
           preload="metadata"
           playsInline
           onLoadedMetadata={handleVideoLoad}
@@ -309,7 +393,11 @@ export default function PhotoFinishFullscreen({
           width={1920}
           height={1080}
           onClick={handleVideoClick}
-          style={{ cursor: isTimerMode ? 'crosshair' : 'default' }}
+          style={{ 
+            cursor: isTimerMode ? 'crosshair' : 'inherit',
+            transform: `scale(${videoScale}) translate(${videoPosition.x / videoScale}px, ${videoPosition.y / videoScale}px)`,
+            transformOrigin: 'center center'
+          }}
         />
         
         {/* Play/Pause Overlay */}
@@ -325,10 +413,17 @@ export default function PhotoFinishFullscreen({
             </Button>
           </div>
         )}
+        
+        {/* Zoom indicator */}
+        {videoScale > 1 && (
+          <div className="absolute top-4 right-4 bg-black/70 text-white px-3 py-1 rounded text-sm">
+            {Math.round(videoScale * 100)}%
+          </div>
+        )}
       </div>
 
-      {/* Timeline Scrubber - Larger height at bottom */}
-      <div className="bg-gray-900 border-t border-gray-700 h-48 flex-shrink-0">
+      {/* Timeline Scrubber - Reduced height (33% shorter) */}
+      <div className="bg-gray-900 border-t border-gray-700 h-32 flex-shrink-0">
         <div className="p-6 h-full">
           {/* Timeline with vertical markers */}
           <div className="h-full relative">
