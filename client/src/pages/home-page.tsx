@@ -382,6 +382,17 @@ export default function HomePage() {
               ) : (
                 <Link href={card.href} key={index}>
                   <Card className={`cursor-pointer hover:shadow-lg transition-all duration-300 border border-gray-600 hover:border-primary h-[140px] overflow-hidden group relative ${card.isSpecial ? 'bg-primary/5' : 'bg-gray-600'} ${index > 0 ? 'mt-8' : ''}`}>
+                    {/* Background image for cards that have it */}
+                    {card.hasBackground && (
+                      <div 
+                        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-70"
+                        style={{
+                          backgroundImage: `url(${card.backgroundImage})`,
+                          zIndex: 0
+                        }}
+                      />
+                    )}
+                    
                     {/* Special Practice Session - Full Width */}
                     {card.isSpecial ? (
                       <>
@@ -436,25 +447,12 @@ export default function HomePage() {
                           </CardContent>
                       </>
                     ) : (
-                      <>
-                        {/* Optimized background image for cards that have it */}
-                        {card.hasBackground && (
-                          <BackgroundImageContainer
-                            src={card.backgroundImage}
-                            alt={`${card.title} background pattern`}
-                            opacity={0.7}
-                            className="absolute inset-0"
-                          >
-                            <div />
-                          </BackgroundImageContainer>
-                        )}
-                        <CardContent className="p-4 relative h-full flex flex-col justify-center z-10">
-                          <div className="text-center">
-                            <h2 className="text-lg font-bold mb-2">{card.title}</h2>
-                            <p className="text-muted-foreground text-sm">{card.description}</p>
-                          </div>
-                        </CardContent>
-                      </>
+                      <CardContent className="p-4 relative h-full flex flex-col justify-center z-10">
+                        <div className="text-center">
+                          <h2 className="text-lg font-bold mb-2">{card.title}</h2>
+                          <p className="text-muted-foreground text-sm">{card.description}</p>
+                        </div>
+                      </CardContent>
                     )}
                   </Card>
                 </Link>

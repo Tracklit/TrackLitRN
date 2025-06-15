@@ -77,6 +77,10 @@ export const BackgroundImageContainer: React.FC<{
 }) => {
   const [imageLoaded, setImageLoaded] = React.useState(false);
   const [imageError, setImageError] = React.useState(false);
+  
+  React.useEffect(() => {
+    console.log('BackgroundImageContainer mounted with src:', src);
+  }, [src]);
 
   return (
     <div className={`absolute inset-0 overflow-hidden ${className}`}>
