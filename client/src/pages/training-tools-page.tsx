@@ -29,8 +29,8 @@ export default function WorkoutToolsPage() {
   // Background images for tool cards (in dashboard order)
   const toolBackgrounds = [
     sprinthiaBackground,    // Video Analysis - Sprinthia image
-    practiceBackground,     // Photo Finish - Practice image
-    programsBackground,     // Start Gun - Programs image  
+    programsBackground,     // Photo Finish - Programs image
+    practiceBackground,     // Start Gun - Practice image  
     raceBackground,         // Stopwatch - Race image
     toolsBackground,        // Journal - Tools image
     toolsBackground         // Exercise Library - Tools image (repeat)
