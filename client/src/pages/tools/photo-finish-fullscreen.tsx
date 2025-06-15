@@ -7,7 +7,9 @@ import {
   SkipBack,
   SkipForward,
   Volume2,
-  Timer
+  Timer,
+  Zap,
+  Clock
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -516,9 +518,6 @@ export default function PhotoFinishFullscreen({
               onTouchMove={handleTimelineTouchMove}
               onTouchEnd={handleTimelineTouchEnd}
             >
-              {/* Background gradient for better visibility */}
-              <div className="absolute inset-0 bg-gradient-to-r from-gray-800 via-gray-700 to-gray-800 opacity-50" />
-              
               {/* Vertical time markers (every 0.5 seconds) */}
               {duration && Array.from({ length: Math.floor(duration * 2) }, (_, i) => {
                 const timePosition = (i * 0.5) / duration * 100;
