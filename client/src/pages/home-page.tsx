@@ -377,7 +377,7 @@ export default function HomePage() {
           <div className="max-w-2xl mx-auto">
             {categoryCards.map((card, index) => 
               card.disabled ? (
-                <Card key={index} className={`h-[140px] overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 border border-gray-600 ${index > 0 ? 'mt-8' : ''}`}>
+                <Card key={index} className={`h-[140px] overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 shadow-sm ${index > 0 ? 'mt-8' : ''}`}>
                   <CardContent className="p-4 relative h-full flex flex-col justify-center opacity-50">
                     <div className="text-center">
                       <h2 className="text-lg font-bold mb-2 text-muted-foreground/70">{card.title}</h2>
@@ -387,7 +387,7 @@ export default function HomePage() {
                 </Card>
               ) : (
                 <Link href={card.href} key={index}>
-                  <Card className={`cursor-pointer hover:shadow-lg transition-all duration-300 border border-gray-600 hover:border-primary h-[140px] overflow-hidden group relative bg-primary/5 ${index > 0 ? 'mt-8' : ''}`}>
+                  <Card className={`cursor-pointer hover:shadow-md transition-all duration-300 shadow-sm h-[140px] overflow-hidden group relative bg-primary/5 ${index > 0 ? 'mt-8' : ''}`}>
                     {/* Background image for cards that have it */}
                     {card.hasBackground && (
                       <div 
@@ -404,9 +404,6 @@ export default function HomePage() {
                       <>
                         <CardContent className="h-full p-4 relative flex flex-col z-10">
                             <div className="flex flex-col h-full">
-                              <div className="mb-3">
-                                <h2 className="text-lg font-bold text-center">{card.title}</h2>
-                              </div>
                               <div className="flex-1 space-y-2">
                                 {/* Show workout details for Google Sheets programs */}
                                 {primaryProgram?.program?.importedFromSheet ? (
