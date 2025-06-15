@@ -40,6 +40,11 @@ import { useAssignedPrograms } from '@/hooks/use-assigned-programs';
 import { useProgramSessions } from '@/hooks/use-program-sessions';
 import { SimpleWorkoutLike } from '@/components/workout-reactions';
 import { trackImages } from '@/lib/image-preloader';
+import backgroundImage1 from '@assets/istockphoto-691785042-612x612_1750008503978.jpg';
+import backgroundImage2 from '@assets/istockphoto-1088544230-612x612_1750008503978.jpg';
+import backgroundImage3 from '@assets/istockphoto-1224403019-612x612_1750008503978.jpg';
+import backgroundImage4 from '@assets/istockphoto-1253944192-612x612_1750008503979.jpg';
+import backgroundImage5 from '@assets/istockphoto-1279168476-612x612_1750008503979.jpg';
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -195,40 +200,14 @@ export default function HomePage() {
   
 
 
-  // Generate flowing halftone patterns similar to the example image
-  const generateFlowingHalftonePattern = (seed: number) => {
-    const colors = ['#a855f7', '#f97316', '#ffffff']; // purple, orange, white
-    const patterns = [];
-    const positions = [];
-    const sizes = [];
-    
-    // Create flowing wave-like distribution of dots
-    for (let i = 0; i < 12; i++) {
-      // Create wave-like x positioning
-      const waveX = 20 + (Math.sin((seed + i) * 0.8) * 30) + ((i * 7) % 60);
-      const waveY = 15 + (Math.cos((seed + i) * 0.6) * 25) + ((i * 11) % 70);
-      
-      // Vary dot sizes for halftone effect
-      const dotSize = 0.5 + ((seed * 7 + i * 13) % 15) / 10; // 0.5 - 2.0px
-      const colorIndex = (seed * 3 + i * 5) % colors.length;
-      
-      patterns.push(`radial-gradient(circle at ${waveX}% ${waveY}%, ${colors[colorIndex]} ${dotSize}px, transparent ${dotSize}px)`);
-      positions.push(`${(i * 8) % 40}px ${(i * 12) % 30}px`);
-      sizes.push(`${15 + (i * 3)}px ${12 + (i * 2)}px`);
-    }
-    
-    // Add flowing lines effect
-    const lineColor = colors[(seed * 2) % colors.length];
-    patterns.push(`linear-gradient(${45 + (seed * 10) % 90}deg, transparent 0%, ${lineColor}22 30%, transparent 35%, ${lineColor}15 65%, transparent 100%)`);
-    positions.push('0 0');
-    sizes.push('100% 100%');
-    
-    return {
-      backgroundImage: patterns.join(', '),
-      backgroundSize: sizes.join(', '),
-      backgroundPosition: positions.join(', ')
-    };
-  };
+  // Background images for cards
+  const backgroundImages = [
+    backgroundImage1,
+    backgroundImage2,
+    backgroundImage3,
+    backgroundImage4,
+    backgroundImage5
+  ];
 
   // Category cards for main navigation
   const categoryCards = [
@@ -239,7 +218,7 @@ export default function HomePage() {
       href: "/practice",
       disabled: false,
       isSpecial: true,
-      pattern: generateFlowingHalftonePattern(1)
+      backgroundImage: backgroundImages[0]
     },
     {
       title: "Programs",
@@ -247,7 +226,7 @@ export default function HomePage() {
       icon: <BookOpen className="h-6 w-6 text-primary" />,
       href: "/programs",
       disabled: false,
-      pattern: generateFlowingHalftonePattern(2)
+      backgroundImage: backgroundImages[1]
     },
     {
       title: "Race",
@@ -255,7 +234,7 @@ export default function HomePage() {
       icon: <Trophy className="h-6 w-6 text-primary" />,
       href: "/meets",
       disabled: false,
-      pattern: generateFlowingHalftonePattern(3)
+      backgroundImage: backgroundImages[2]
     },
     {
       title: "Tools",
@@ -263,7 +242,7 @@ export default function HomePage() {
       icon: <Clock className="h-6 w-6 text-primary" />,
       href: "/training-tools",
       disabled: false,
-      pattern: generateFlowingHalftonePattern(4)
+      backgroundImage: backgroundImages[3]
     },
     {
       title: "Sprinthia",
@@ -271,7 +250,7 @@ export default function HomePage() {
       icon: <MessageCircle className="h-6 w-6 text-primary" />,
       href: "/sprinthia",
       disabled: false,
-      pattern: generateFlowingHalftonePattern(5)
+      backgroundImage: backgroundImages[4]
     }
   ];
 
@@ -393,10 +372,14 @@ export default function HomePage() {
                     {/* Special Practice Session - Full Width */}
                     {card.isSpecial ? (
                       <>
-                        {/* Halftone dot pattern background */}
+                        {/* Background image */}
                         <div 
-                          className="absolute inset-0 opacity-50"
-                          style={card.pattern}
+                          className="absolute inset-0 opacity-50 bg-cover bg-center"
+                          style={{
+                            backgroundImage: `url(${card.backgroundImage})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center'
+                          }}
                         />
                         <CardContent className="h-full p-4 relative flex flex-col z-10">
                             <div className="flex flex-col h-full">
@@ -450,10 +433,14 @@ export default function HomePage() {
                       </>
                     ) : (
                       <>
-                        {/* Halftone dot pattern background for regular cards */}
+                        {/* Background image for regular cards */}
                         <div 
-                          className="absolute inset-0 opacity-50"
-                          style={card.pattern}
+                          className="absolute inset-0 opacity-50 bg-cover bg-center"
+                          style={{
+                            backgroundImage: `url(${card.backgroundImage})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center'
+                          }}
                         />
                         <CardContent className="p-4 relative h-full flex flex-col justify-center z-10">
                           <div className="text-center">
