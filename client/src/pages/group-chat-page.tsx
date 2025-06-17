@@ -253,7 +253,7 @@ export default function GroupChatPage() {
           </div>
 
           {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto" style={{ paddingBottom: '80px' }}>
+          <div className="flex-1 overflow-y-auto" style={{ paddingBottom: '100px' }}>
             {messagesLoading ? (
               <div className="p-4 text-gray-400">Loading messages...</div>
             ) : (
@@ -280,37 +280,70 @@ export default function GroupChatPage() {
             )}
           </div>
 
-          {/* Message Input - Fixed to viewport bottom */}
-          <div className="fixed bottom-0 left-0 right-0 px-4 py-3 border-t z-50" style={{ backgroundColor: '#1a1625', borderColor: '#2d2438' }}>
-            <div className="flex space-x-3">
-              <input
-                type="text"
-                value={messageInputValue}
-                onChange={(e) => setMessageInputValue(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    if (messageInputValue.trim()) {
-                      handleSendMessage(messageInputValue);
-                    }
-                  }
-                }}
-                placeholder="Type a message..."
-                className="flex-1 border rounded-full px-4 py-2 text-gray-100 placeholder-gray-400 focus:outline-none focus:border-yellow-500"
-                style={{ backgroundColor: '#2d2438', borderColor: '#3d3450' }}
-                disabled={sendMessageMutation.isPending}
-              />
-              <Button
-                onClick={() => {
-                  if (messageInputValue.trim()) {
-                    handleSendMessage(messageInputValue);
-                  }
-                }}
-                disabled={sendMessageMutation.isPending || !messageInputValue.trim()}
-                className="bg-yellow-600 hover:bg-yellow-700 text-black font-medium rounded-full px-6"
-              >
-                Send
-              </Button>
+          {/* Native Message Input - Fixed to viewport bottom */}
+          <div 
+            className="fixed bottom-0 left-0 right-0 z-50 safe-area-inset-bottom"
+            style={{ backgroundColor: '#1a1625', borderTop: '1px solid #2d2438' }}
+          >
+            <div className="px-3 py-2">
+              <div className="flex items-end space-x-2">
+                <div className="flex-1 relative">
+                  <textarea
+                    value={messageInputValue}
+                    onChange={(e) => setMessageInputValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        if (messageInputValue.trim()) {
+                          handleSendMessage(messageInputValue);
+                        }
+                      }
+                    }}
+                    placeholder="Message"
+                    rows={1}
+                    className="w-full resize-none border rounded-2xl px-4 py-3 text-gray-100 placeholder-gray-400 focus:outline-none focus:border-yellow-500 max-h-32 min-h-[44px]"
+                    style={{ 
+                      backgroundColor: '#2d2438', 
+                      borderColor: '#3d3450',
+                      fontSize: '16px', // Prevents zoom on iOS
+                      lineHeight: '1.4'
+                    }}
+                    disabled={sendMessageMutation.isPending}
+                    onInput={(e) => {
+                      const target = e.target as HTMLTextAreaElement;
+                      target.style.height = 'auto';
+                      target.style.height = Math.min(target.scrollHeight, 128) + 'px';
+                    }}
+                  />
+                </div>
+                {messageInputValue.trim() && (
+                  <button
+                    onClick={() => {
+                      if (messageInputValue.trim()) {
+                        handleSendMessage(messageInputValue);
+                      }
+                    }}
+                    disabled={sendMessageMutation.isPending}
+                    className="w-10 h-10 rounded-full bg-yellow-600 hover:bg-yellow-700 flex items-center justify-center transition-colors disabled:opacity-50"
+                    style={{ minWidth: '40px', minHeight: '40px' }}
+                  >
+                    <svg 
+                      width="20" 
+                      height="20" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="2" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                      className="text-black"
+                    >
+                      <line x1="22" y1="2" x2="11" y2="13"></line>
+                      <polygon points="22,2 15,22 11,13 2,9 22,2"></polygon>
+                    </svg>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
