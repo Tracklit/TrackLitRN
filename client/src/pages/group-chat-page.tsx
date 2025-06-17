@@ -66,7 +66,7 @@ export default function GroupChatPage() {
 
   // Fetch group messages
   const { data: messages, isLoading: messagesLoading } = useQuery({
-    queryKey: ["/api/groups", selectedGroupId, "messages"],
+    queryKey: [`/api/groups/${selectedGroupId}/messages`],
     enabled: !!selectedGroupId,
   });
 
@@ -119,7 +119,7 @@ export default function GroupChatPage() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/groups", selectedGroupId, "messages"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/groups/${selectedGroupId}/messages`] });
       setMessageInputValue("");
     },
     onError: (error: Error) => {
