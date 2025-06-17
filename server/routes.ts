@@ -2,8 +2,8 @@ import express, { type Express, type Request, type Response } from "express";
 import { createServer, type Server } from "http";
 import { storage as dbStorage } from "./storage";
 import { pool, db } from "./db";
-import { meets, notifications } from "@shared/schema";
-import { and, eq, or, sql, isNotNull } from "drizzle-orm";
+import { meets, notifications, groups, chatGroupMembers, groupMessages, users } from "@shared/schema";
+import { and, eq, or, sql, isNotNull, desc, asc } from "drizzle-orm";
 import { setupAuth } from "./auth";
 import { z } from "zod";
 import multer from "multer";
@@ -6848,6 +6848,337 @@ Keep the response professional, evidence-based, and specific to track and field 
     } catch (error) {
       console.error("Error sharing library:", error);
       res.status(500).json({ error: "Failed to share library access" });
+    }
+  });
+
+  // ============================================================
+  // Group Messaging API Routes
+  // ============================================================
+
+  // Get user's groups with last message and member count
+  app.get("/api/groups", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const userId = req.user.id;
+      
+      // Get groups where user is a member
+      const groups = await db
+        .select({
+          id: groups.id,
+          name: groups.name,
+          description: groups.description,
+          isPrivate: groups.isPrivate,
+          ownerId: groups.ownerId,
+          createdAt: groups.createdAt,
+        })
+        .from(groups)
+        .innerJoin(chatGroupMembers, eq(chatGroupMembers.groupId, groups.id))
+        .where(and(
+          eq(chatGroupMembers.userId, userId),
+          eq(chatGroupMembers.status, 'accepted')
+        ));
+
+      // Get additional data for each group
+      const groupsWithData = await Promise.all(
+        groups.map(async (group) => {
+          // Get member count
+          const memberCount = await db
+            .select({ count: sql<number>`count(*)` })
+            .from(chatGroupMembers)
+            .where(and(
+              eq(chatGroupMembers.groupId, group.id),
+              eq(chatGroupMembers.status, 'accepted')
+            ));
+
+          // Get last message
+          const lastMessage = await db
+            .select({
+              id: groupMessages.id,
+              message: groupMessages.message,
+              createdAt: groupMessages.createdAt,
+              senderId: groupMessages.senderId,
+            })
+            .from(groupMessages)
+            .where(eq(groupMessages.groupId, group.id))
+            .orderBy(desc(groupMessages.createdAt))
+            .limit(1);
+
+          // Get all members with user details
+          const members = await db
+            .select({
+              id: chatGroupMembers.id,
+              userId: chatGroupMembers.userId,
+              role: chatGroupMembers.role,
+              status: chatGroupMembers.status,
+              createdAt: chatGroupMembers.createdAt,
+              user: {
+                id: users.id,
+                username: users.username,
+                name: users.name,
+                profileImageUrl: users.profileImageUrl,
+              },
+            })
+            .from(chatGroupMembers)
+            .innerJoin(users, eq(users.id, chatGroupMembers.userId))
+            .where(and(
+              eq(chatGroupMembers.groupId, group.id),
+              eq(chatGroupMembers.status, 'accepted')
+            ));
+
+          return {
+            ...group,
+            memberCount: memberCount[0]?.count || 0,
+            lastMessage: lastMessage[0] || null,
+            members,
+          };
+        })
+      );
+
+      res.json(groupsWithData);
+    } catch (error) {
+      console.error("Error fetching groups:", error);
+      res.status(500).json({ error: "Failed to fetch groups" });
+    }
+  });
+
+  // Get messages for a specific group
+  app.get("/api/groups/:groupId/messages", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const groupId = parseInt(req.params.groupId);
+      const userId = req.user.id;
+      
+      if (isNaN(groupId)) {
+        return res.status(400).json({ error: "Invalid group ID" });
+      }
+
+      // Check if user is a member of the group
+      const membership = await db
+        .select()
+        .from(chatGroupMembers)
+        .where(and(
+          eq(chatGroupMembers.groupId, groupId),
+          eq(chatGroupMembers.userId, userId),
+          eq(chatGroupMembers.status, 'accepted')
+        ))
+        .limit(1);
+
+      if (membership.length === 0) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      // Get messages with sender details
+      const messages = await db
+        .select({
+          id: groupMessages.id,
+          groupId: groupMessages.groupId,
+          senderId: groupMessages.senderId,
+          message: groupMessages.message,
+          mediaUrl: groupMessages.mediaUrl,
+          createdAt: groupMessages.createdAt,
+          sender: {
+            id: users.id,
+            username: users.username,
+            name: users.name,
+            profileImageUrl: users.profileImageUrl,
+          },
+        })
+        .from(groupMessages)
+        .innerJoin(users, eq(users.id, groupMessages.senderId))
+        .where(eq(groupMessages.groupId, groupId))
+        .orderBy(asc(groupMessages.createdAt));
+
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching group messages:", error);
+      res.status(500).json({ error: "Failed to fetch messages" });
+    }
+  });
+
+  // Send a message to a group
+  app.post("/api/group-messages", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const { groupId, message } = req.body;
+      const userId = req.user.id;
+
+      if (!groupId || !message) {
+        return res.status(400).json({ error: "Group ID and message are required" });
+      }
+
+      // Check if user is a member of the group
+      const membership = await db
+        .select()
+        .from(chatGroupMembers)
+        .where(and(
+          eq(chatGroupMembers.groupId, groupId),
+          eq(chatGroupMembers.userId, userId),
+          eq(chatGroupMembers.status, 'accepted')
+        ))
+        .limit(1);
+
+      if (membership.length === 0) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      // Insert the message
+      const newMessage = await db
+        .insert(groupMessages)
+        .values({
+          groupId,
+          senderId: userId,
+          message,
+        })
+        .returning();
+
+      res.json(newMessage[0]);
+    } catch (error) {
+      console.error("Error sending group message:", error);
+      res.status(500).json({ error: "Failed to send message" });
+    }
+  });
+
+  // Create a new group
+  app.post("/api/groups", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const { name, description, isPrivate } = req.body;
+      const userId = req.user.id;
+      const user = req.user;
+
+      if (!name) {
+        return res.status(400).json({ error: "Group name is required" });
+      }
+
+      // Check if user can create groups (coaches and star users only)
+      if (!user.isCoach && user.subscriptionTier !== 'star') {
+        return res.status(403).json({ error: "Only coaches and Star users can create groups" });
+      }
+
+      // Check group limits
+      const existingGroups = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(groups)
+        .where(eq(groups.ownerId, userId));
+
+      const currentGroupCount = existingGroups[0]?.count || 0;
+      const maxGroups = user.subscriptionTier === 'star' ? Infinity : 10;
+
+      if (currentGroupCount >= maxGroups) {
+        return res.status(403).json({ error: "Group limit reached" });
+      }
+
+      // Create the group
+      const newGroup = await db
+        .insert(groups)
+        .values({
+          name,
+          description: description || null,
+          isPrivate: isPrivate || false,
+          ownerId: userId,
+        })
+        .returning();
+
+      // Add creator as admin member
+      await db
+        .insert(chatGroupMembers)
+        .values({
+          groupId: newGroup[0].id,
+          userId,
+          role: 'admin',
+          status: 'accepted',
+        });
+
+      res.json(newGroup[0]);
+    } catch (error) {
+      console.error("Error creating group:", error);
+      res.status(500).json({ error: "Failed to create group" });
+    }
+  });
+
+  // Add member to group
+  app.post("/api/groups/:groupId/members", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const groupId = parseInt(req.params.groupId);
+      const { userId: targetUserId } = req.body;
+      const userId = req.user.id;
+
+      if (isNaN(groupId) || !targetUserId) {
+        return res.status(400).json({ error: "Invalid group ID or user ID" });
+      }
+
+      // Check if current user is admin or owner
+      const membership = await db
+        .select()
+        .from(chatGroupMembers)
+        .where(and(
+          eq(chatGroupMembers.groupId, groupId),
+          eq(chatGroupMembers.userId, userId),
+          eq(chatGroupMembers.status, 'accepted')
+        ))
+        .limit(1);
+
+      const group = await db
+        .select()
+        .from(groups)
+        .where(eq(groups.id, groupId))
+        .limit(1);
+
+      if (membership.length === 0 || (membership[0].role !== 'admin' && group[0]?.ownerId !== userId)) {
+        return res.status(403).json({ error: "Only admins can add members" });
+      }
+
+      // Check if user is already a member
+      const existingMembership = await db
+        .select()
+        .from(chatGroupMembers)
+        .where(and(
+          eq(chatGroupMembers.groupId, groupId),
+          eq(chatGroupMembers.userId, targetUserId)
+        ))
+        .limit(1);
+
+      if (existingMembership.length > 0) {
+        return res.status(400).json({ error: "User is already a member" });
+      }
+
+      // Check member limits
+      const memberCount = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(chatGroupMembers)
+        .where(and(
+          eq(chatGroupMembers.groupId, groupId),
+          eq(chatGroupMembers.status, 'accepted')
+        ));
+
+      const currentMemberCount = memberCount[0]?.count || 0;
+      const maxMembers = req.user.subscriptionTier === 'star' ? Infinity : 50;
+
+      if (currentMemberCount >= maxMembers) {
+        return res.status(403).json({ error: "Member limit reached" });
+      }
+
+      // Add the member
+      const newMember = await db
+        .insert(chatGroupMembers)
+        .values({
+          groupId,
+          userId: targetUserId,
+          role: 'member',
+          status: 'accepted',
+        })
+        .returning();
+
+      res.json(newMember[0]);
+    } catch (error) {
+      console.error("Error adding group member:", error);
+      res.status(500).json({ error: "Failed to add member" });
     }
   });
 
