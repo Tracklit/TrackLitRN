@@ -259,22 +259,10 @@ export default function GroupChatPage() {
             ) : (
               <div className="px-4 py-2">
                 {(messages as GroupMessage[])?.map((message: GroupMessage) => (
-                  <div key={message.id} className="py-2 border-b" style={{ borderColor: '#2d2438' }}>
-                    <div className="flex space-x-3">
-                      <img
-                        src={message.user?.profileImageUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${message.user?.name || 'U'}`}
-                        alt={message.user?.name || 'User'}
-                        className="w-8 h-8 rounded-full flex-shrink-0"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <span className="font-medium text-gray-100 text-sm">{message.user?.name || 'Unknown User'}</span>
-                          <span className="text-xs text-gray-500">
-                            {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
-                        <div className="text-gray-200 text-sm break-words">{message.content}</div>
-                      </div>
+                  <div key={message.id} className="py-3 px-4">
+                    <div className="text-gray-200 text-sm break-words leading-relaxed">{message.content}</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>
                   </div>
                 ))}
