@@ -2,33 +2,27 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Plus, Users, MessageCircle, Crown, Lock } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Plus, Users, MessageCircle, Crown, Lock, Hash } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "wouter";
 import {
   MainContainer,
   ChatContainer,
   MessageList,
   Message,
   MessageInput,
+  TypingIndicator,
+  ExpansionPanel,
   Sidebar,
   ConversationList,
   Conversation,
   Avatar,
   ConversationHeader,
-  MessageSeparator,
-  TypingIndicator,
-  ExpansionPanel
+  MessageSeparator
 } from "@chatscope/chat-ui-kit-react";
-import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css";
 
+// Interface definitions
 interface Group {
   id: number;
   name: string;
@@ -68,17 +62,9 @@ interface GroupMember {
   };
 }
 
-const createGroupSchema = z.object({
-  name: z.string().min(1, "Group name is required").max(50, "Group name must be less than 50 characters"),
-  description: z.string().max(200, "Description must be less than 200 characters").optional(),
-});
-
-type CreateGroupForm = z.infer<typeof createGroupSchema>;
-
 export default function GroupChatPage() {
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const [messageInputValue, setMessageInputValue] = useState("");
-  const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -87,43 +73,40 @@ export default function GroupChatPage() {
     queryKey: ["/api/user"],
   });
 
-  // Get user's groups
-  const { data: groups = [], isLoading: groupsLoading } = useQuery({
+  // Fetch groups
+  const { data: groups, isLoading: groupsLoading } = useQuery({
     queryKey: ["/api/groups"],
   });
 
-  // Get messages for selected group
-  const { data: messages = [], isLoading: messagesLoading } = useQuery({
+  // Fetch group messages
+  const { data: messages, isLoading: messagesLoading } = useQuery({
     queryKey: ["/api/groups", selectedGroupId, "messages"],
     enabled: !!selectedGroupId,
   });
 
-  // Get members for selected group
-  const { data: members = [] } = useQuery({
+  // Fetch group members
+  const { data: members, isLoading: membersLoading } = useQuery({
     queryKey: ["/api/groups", selectedGroupId, "members"],
     enabled: !!selectedGroupId,
   });
 
-  // Create group mutation
-  const createGroupMutation = useMutation({
-    mutationFn: async (data: CreateGroupForm) => {
-      const response = await fetch("/api/groups", {
+  // Join group mutation
+  const joinGroupMutation = useMutation({
+    mutationFn: async (groupId: number) => {
+      const response = await fetch(`/api/groups/${groupId}/join`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
       });
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to create group");
+        throw new Error(error.error || "Failed to join group");
       }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/groups"] });
-      setIsCreateGroupOpen(false);
       toast({
         title: "Success",
-        description: "Group created successfully",
+        description: "Joined group successfully",
       });
     },
     onError: (error: Error) => {
@@ -162,28 +145,10 @@ export default function GroupChatPage() {
     },
   });
 
-  // Form for creating groups
-  const form = useForm<CreateGroupForm>({
-    resolver: zodResolver(createGroupSchema),
-    defaultValues: {
-      name: "",
-      description: "",
-    },
-  });
-
-  // Handle form submission
-  const onSubmit = (data: CreateGroupForm) => {
-    createGroupMutation.mutate(data);
-  };
-
-  // Handle sending messages
-  const handleSendMessage = () => {
-    if (!selectedGroupId || !messageInputValue.trim()) return;
-    
-    sendMessageMutation.mutate({
-      groupId: selectedGroupId,
-      content: messageInputValue.trim(),
-    });
+  // Handle sending message
+  const handleSendMessage = (content: string) => {
+    if (!selectedGroupId || !content.trim()) return;
+    sendMessageMutation.mutate({ groupId: selectedGroupId, content: content.trim() });
   };
 
   // Scroll to bottom when new messages arrive
@@ -191,254 +156,195 @@ export default function GroupChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Check if user can create groups
-  const canCreateGroups = (currentUser as any)?.isCoach || (currentUser as any)?.subscriptionTier === 'star';
-
-  const selectedGroup = (groups as Group[]).find((g: Group) => g.id === selectedGroupId);
-
-  if (groupsLoading) {
-    return (
-      <div className="min-h-screen bg-black text-white p-4">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg">Loading groups...</div>
-        </div>
-      </div>
-    );
-  }
+  const selectedGroup = (groups as Group[])?.find((g: Group) => g.id === selectedGroupId);
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="container mx-auto p-4 max-w-7xl">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold">Group Chat</h1>
-            <p className="text-gray-400 mt-1">Connect with your training groups</p>
-          </div>
-          
-          {canCreateGroups && (
-            <Dialog open={isCreateGroupOpen} onOpenChange={setIsCreateGroupOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-purple-600 hover:bg-purple-700">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Group
+      <div className="flex h-screen">
+        {/* Left Sidebar - Groups as Channels */}
+        <div className="w-80 bg-gray-900 border-r border-gray-700 flex flex-col">
+          <div className="p-4 border-b border-gray-700">
+            <div className="flex items-center justify-between mb-4">
+              <h1 className="text-xl font-bold flex items-center">
+                <Users className="w-5 h-5 mr-2" />
+                Training Groups
+              </h1>
+              <Link href="/groups/create">
+                <Button 
+                  size="sm" 
+                  className="bg-yellow-600 hover:bg-yellow-700 text-black font-medium"
+                >
+                  <Plus className="w-4 h-4" />
                 </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-black border border-purple-500/20">
-                <DialogHeader>
-                  <DialogTitle>Create New Group</DialogTitle>
-                </DialogHeader>
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Group Name</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="Enter group name" 
-                              {...field}
-                              className="bg-gray-900 border-gray-700"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Description (Optional)</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="Group description..."
-                              {...field}
-                              className="bg-gray-900 border-gray-700"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <div className="flex justify-end space-x-2">
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        onClick={() => setIsCreateGroupOpen(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button 
-                        type="submit" 
-                        disabled={createGroupMutation.isPending}
-                        className="bg-purple-600 hover:bg-purple-700"
-                      >
-                        {createGroupMutation.isPending ? "Creating..." : "Create Group"}
-                      </Button>
+              </Link>
+            </div>
+          </div>
+
+          {/* Groups List as Channels */}
+          <div className="flex-1 overflow-y-auto">
+            {groupsLoading ? (
+              <div className="p-4 text-gray-400">Loading groups...</div>
+            ) : (
+              <div className="p-2">
+                {(groups as Group[])?.map((group: Group) => (
+                  <button
+                    key={group.id}
+                    onClick={() => setSelectedGroupId(group.id)}
+                    className={`
+                      w-full text-left p-3 rounded-lg mb-1 transition-colors
+                      flex items-center space-x-3 hover:bg-gray-800
+                      ${selectedGroupId === group.id ? 'bg-yellow-600/20 border-l-4 border-yellow-600' : ''}
+                    `}
+                  >
+                    <Hash className="w-4 h-4 text-gray-400" />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-white truncate">
+                        {group.name}
+                      </div>
+                      <div className="text-xs text-gray-400 truncate">
+                        {group.memberCount} members • by {group.coach.name}
+                      </div>
                     </div>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
-          )}
-        </div>
-
-        {!canCreateGroups && (
-          <Card className="mb-6 bg-black border border-purple-500/20">
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-3 text-purple-400">
-                <Lock className="w-5 h-5" />
-                <div>
-                  <p className="font-medium">Group Creation Restricted</p>
-                  <p className="text-sm text-gray-400">
-                    Only coaches and Star subscribers can create groups. Join existing groups to participate in discussions.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {(groups as Group[]).length === 0 ? (
-          <Card className="bg-black border border-purple-500/20">
-            <CardContent className="p-8 text-center">
-              <MessageCircle className="w-16 h-16 mx-auto mb-4 text-gray-600" />
-              <h3 className="text-xl font-semibold mb-2">No Groups Yet</h3>
-              <p className="text-gray-400 mb-4">
-                {canCreateGroups 
-                  ? "Create your first group to start chatting with athletes and coaches"
-                  : "You haven't joined any groups yet. Ask a coach or Star subscriber to invite you to a group"
-                }
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="h-[700px] bg-black border border-purple-500/20 rounded-lg overflow-hidden">
-            <MainContainer>
-              <Sidebar position="left" scrollable>
-                <ConversationList>
-                  {(groups as Group[]).map((group: Group) => (
-                    <Conversation
-                      key={group.id}
-                      name={group.name}
-                      lastSenderName={group.coach.name}
-                      info={`${group.memberCount} members • Coach: ${group.coach.name}`}
-                      active={selectedGroupId === group.id}
-                      onClick={() => setSelectedGroupId(group.id)}
-                    >
-                      <Avatar 
-                        name={group.name}
-                        status="available"
-                      />
-                    </Conversation>
-                  ))}
-                </ConversationList>
-              </Sidebar>
-
-              <ChatContainer>
-                {selectedGroupId ? (
-                  <>
-                    <ConversationHeader>
-                      <ConversationHeader.Back />
-                      <Avatar 
-                        name={selectedGroup?.name || ""}
-                        status="available" 
-                      />
-                      <ConversationHeader.Content 
-                        userName={selectedGroup?.name || ""}
-                        info={`${selectedGroup?.memberCount || 0} members`}
-                      />
-                      <ConversationHeader.Actions>
-                        <ExpansionPanel>
-                          <div className="p-4 bg-gray-900 text-white">
-                            <h4 className="font-semibold mb-2 flex items-center">
-                              <Users className="w-4 h-4 mr-2" />
-                              Members ({(members as GroupMember[]).length})
-                            </h4>
-                            <div className="space-y-2">
-                              {(members as GroupMember[]).map((member: GroupMember) => (
-                                <div key={member.id} className="flex items-center space-x-2">
-                                  <Avatar 
-                                    name={member.user.name}
-                                    size="sm"
-                                    src={member.user.profileImageUrl}
-                                  />
-                                  <div>
-                                    <p className="text-sm font-medium">{member.user.name}</p>
-                                    <p className="text-xs text-gray-400">@{member.user.username}</p>
-                                  </div>
-                                  {selectedGroup?.coachId === member.user.id && (
-                                    <Crown className="w-3 h-3 text-yellow-500" />
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </ExpansionPanel>
-                      </ConversationHeader.Actions>
-                    </ConversationHeader>
-
-                    <MessageList 
-                      loading={messagesLoading}
-                      typingIndicator={sendMessageMutation.isPending ? <TypingIndicator content="Sending message..." /> : null}
-                    >
-                      {(messages as GroupMessage[]).map((message: GroupMessage, index: number) => {
-                        const isOwn = message.userId === (currentUser as any)?.id;
-                        const showSeparator = index === 0 || 
-                          new Date((messages as GroupMessage[])[index - 1].createdAt).toDateString() !== new Date(message.createdAt).toDateString();
-                        
-                        return (
-                          <div key={message.id}>
-                            {showSeparator && (
-                              <MessageSeparator content={new Date(message.createdAt).toLocaleDateString()} />
-                            )}
-                            <Message
-                              model={{
-                                message: message.content,
-                                sentTime: new Date(message.createdAt).toLocaleTimeString(),
-                                sender: message.user.name,
-                                direction: isOwn ? "outgoing" : "incoming",
-                                position: "single",
-                              }}
-                            >
-                              {!isOwn && (
-                                <Avatar 
-                                  name={message.user.name}
-                                  src={message.user.profileImageUrl}
-                                />
-                              )}
-                            </Message>
-                          </div>
-                        );
-                      })}
-                      <div ref={messagesEndRef} />
-                    </MessageList>
-
-                    <MessageInput
-                      placeholder="Type a message..."
-                      value={messageInputValue}
-                      onChange={(val) => setMessageInputValue(val)}
-                      onSend={handleSendMessage}
-                      sendButton={true}
-                      disabled={sendMessageMutation.isPending}
-                    />
-                  </>
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <MessageCircle className="w-16 h-16 mx-auto mb-4 text-gray-600" />
-                      <h3 className="text-xl font-semibold mb-2">Select a Group</h3>
-                      <p className="text-gray-400">Choose a group from the sidebar to start chatting</p>
-                    </div>
+                    {group.coachId === (currentUser as any)?.id && (
+                      <Crown className="w-4 h-4 text-yellow-500" />
+                    )}
+                  </button>
+                ))}
+                
+                {(!groups || (groups as Group[]).length === 0) && (
+                  <div className="p-4 text-center text-gray-400">
+                    <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No groups yet</p>
+                    <Link href="/groups/create">
+                      <Button 
+                        size="sm" 
+                        className="mt-2 bg-yellow-600 hover:bg-yellow-700 text-black font-medium"
+                      >
+                        Create First Group
+                      </Button>
+                    </Link>
                   </div>
                 )}
-              </ChatContainer>
-            </MainContainer>
+              </div>
+            )}
           </div>
-        )}
+        </div>
+
+        {/* Main Chat Area */}
+        <div className="flex-1 flex flex-col">
+          {selectedGroup ? (
+            <>
+              {/* Chat Header */}
+              <div className="bg-gray-900 border-b border-gray-700 p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold flex items-center">
+                      <Hash className="w-5 h-5 mr-2 text-yellow-500" />
+                      {selectedGroup.name}
+                    </h2>
+                    <p className="text-sm text-gray-400">
+                      {selectedGroup.description || "No description"}
+                    </p>
+                  </div>
+                  <div className="text-sm text-gray-400">
+                    {(members as GroupMember[])?.length || 0} members
+                  </div>
+                </div>
+              </div>
+
+              {/* Chat Messages */}
+              <div className="flex-1 flex">
+                <div className="flex-1 flex flex-col">
+                  <div style={{ position: "relative", height: "400px", flexGrow: 1 }}>
+                    <MainContainer responsive>
+                      <ChatContainer>
+                        <MessageList 
+                          loading={messagesLoading}
+                          typingIndicator={sendMessageMutation.isPending ? <TypingIndicator content="Sending message..." /> : null}
+                        >
+                          {(messages as GroupMessage[])?.map((message: GroupMessage, index: number) => {
+                            const isOwn = message.userId === (currentUser as any)?.id;
+                            const showSeparator = index === 0 || 
+                              new Date((messages as GroupMessage[])[index - 1].createdAt).toDateString() !== new Date(message.createdAt).toDateString();
+                            
+                            return (
+                              <div key={message.id}>
+                                {showSeparator && (
+                                  <MessageSeparator content={new Date(message.createdAt).toLocaleDateString()} />
+                                )}
+                                <Message
+                                  model={{
+                                    message: message.content,
+                                    sentTime: new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                                    sender: message.user.name,
+                                    direction: isOwn ? "outgoing" : "incoming",
+                                    position: "single"
+                                  }}
+                                >
+                                  {!isOwn && (
+                                    <Avatar 
+                                      src={message.user.profileImageUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${message.user.name}`}
+                                      name={message.user.name}
+                                    />
+                                  )}
+                                </Message>
+                              </div>
+                            );
+                          })}
+                          <div ref={messagesEndRef} />
+                        </MessageList>
+                        <MessageInput
+                          placeholder="Type a message..."
+                          value={messageInputValue}
+                          onChange={(val) => setMessageInputValue(val)}
+                          onSend={handleSendMessage}
+                          disabled={sendMessageMutation.isPending}
+                          attachButton={false}
+                        />
+                      </ChatContainer>
+                    </MainContainer>
+                  </div>
+                </div>
+
+                {/* Right Sidebar - Members */}
+                <div className="w-64 bg-gray-900 border-l border-gray-700">
+                  <div className="p-4">
+                    <h3 className="font-semibold mb-3 flex items-center">
+                      <Users className="w-4 h-4 mr-2" />
+                      Members ({(members as GroupMember[])?.length || 0})
+                    </h3>
+                    <div className="space-y-2">
+                      {(members as GroupMember[])?.map((member: GroupMember) => (
+                        <div key={member.id} className="flex items-center space-x-2">
+                          <img
+                            src={member.user.profileImageUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${member.user.name}`}
+                            alt={member.user.name}
+                            className="w-8 h-8 rounded-full"
+                          />
+                          <div>
+                            <div className="text-sm font-medium">{member.user.name}</div>
+                            <div className="text-xs text-gray-400">@{member.user.username}</div>
+                          </div>
+                          {selectedGroup.coachId === member.user.id && (
+                            <Crown className="w-4 h-4 text-yellow-500 ml-auto" />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center text-gray-400">
+                <MessageCircle className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                <h3 className="text-lg font-medium mb-2">Select a Group</h3>
+                <p className="text-sm">Choose a group from the sidebar to start chatting</p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
