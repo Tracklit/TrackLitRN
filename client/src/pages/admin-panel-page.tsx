@@ -218,8 +218,8 @@ export default function AdminPanelPage() {
   };
 
   return (
-    <div className="fixed inset-0 bg-black text-white overflow-auto">
-      <div className="container max-w-6xl mx-auto p-4 space-y-6">
+    <div className="fixed inset-0 bg-black text-white overflow-auto z-50">
+      <div className="w-full max-w-6xl mx-auto p-4 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">

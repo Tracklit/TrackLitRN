@@ -184,6 +184,7 @@ function Router() {
 function MainApp() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const { user, loginMutation, registerMutation } = useAuth();
+  const [location] = useLocation();
   
   // Only show onboarding for new user registrations (not logins)
   useEffect(() => {
@@ -207,7 +208,15 @@ function MainApp() {
     localStorage.setItem('onboardingCompleted', 'true');
   };
 
-
+  // Special handling for admin panel - render without any layout
+  if (location === '/admin-panel') {
+    return (
+      <>
+        <Router />
+        <Toaster />
+      </>
+    );
+  }
   
   return (
     <div className="min-h-screen text-foreground">
