@@ -356,7 +356,7 @@ export default function GroupChatPage() {
                           <div className="p-4 bg-gray-900 text-white">
                             <h4 className="font-semibold mb-2 flex items-center">
                               <Users className="w-4 h-4 mr-2" />
-                              Members ({members.length})
+                              Members ({(members as GroupMember[]).length})
                             </h4>
                             <div className="space-y-2">
                               {(members as GroupMember[]).map((member: GroupMember) => (
@@ -385,10 +385,10 @@ export default function GroupChatPage() {
                       loading={messagesLoading}
                       typingIndicator={sendMessageMutation.isPending ? <TypingIndicator content="Sending message..." /> : null}
                     >
-                      {messages.map((message: GroupMessage, index: number) => {
-                        const isOwn = message.userId === currentUser?.id;
+                      {(messages as GroupMessage[]).map((message: GroupMessage, index: number) => {
+                        const isOwn = message.userId === (currentUser as any)?.id;
                         const showSeparator = index === 0 || 
-                          new Date(messages[index - 1].createdAt).toDateString() !== new Date(message.createdAt).toDateString();
+                          new Date((messages as GroupMessage[])[index - 1].createdAt).toDateString() !== new Date(message.createdAt).toDateString();
                         
                         return (
                           <div key={message.id}>
