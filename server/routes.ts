@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage as dbStorage } from "./storage";
 import { pool, db } from "./db";
 import { meets, notifications, groups, chatGroupMembers, groupMessages, users, passwordResetTokens } from "@shared/schema";
-import { and, eq, or, sql, isNotNull } from "drizzle-orm";
+import { and, eq, or, sql, isNotNull, desc } from "drizzle-orm";
 import { setupAuth } from "./auth";
 import { z } from "zod";
 import multer from "multer";
@@ -6491,7 +6491,7 @@ Keep the response professional, evidence-based, and specific to track and field 
         .innerJoin(users, eq(groups.ownerId, users.id))
         .where(eq(chatGroupMembers.userId, req.user.id));
 
-      // Get member counts for each group
+      // Get member counts and latest messages for each group
       const groupsWithCounts = await Promise.all(
         userGroups.map(async (group) => {
           const memberCount = await db
@@ -6499,13 +6499,28 @@ Keep the response professional, evidence-based, and specific to track and field 
             .from(chatGroupMembers)
             .where(eq(chatGroupMembers.groupId, group.id));
 
+          // Get latest message for this group
+          const latestMessage = await db
+            .select({
+              content: groupMessages.content,
+              createdAt: groupMessages.createdAt,
+              senderName: users.name,
+              senderUsername: users.username
+            })
+            .from(groupMessages)
+            .innerJoin(users, eq(groupMessages.senderId, users.id))
+            .where(eq(groupMessages.groupId, group.id))
+            .orderBy(desc(groupMessages.createdAt))
+            .limit(1);
+
           return {
             ...group,
             memberCount: memberCount[0]?.count || 0,
             coach: {
               name: group.coachName,
               username: group.coachUsername
-            }
+            },
+            latestMessage: latestMessage[0] || null
           };
         })
       );
