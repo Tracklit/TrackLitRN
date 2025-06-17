@@ -2,7 +2,7 @@ import express, { type Express, type Request, type Response } from "express";
 import { createServer, type Server } from "http";
 import { storage as dbStorage } from "./storage";
 import { pool, db } from "./db";
-import { meets, notifications, groups, chatGroupMembers, groupMessages, users } from "@shared/schema";
+import { meets, notifications, groups as groupsTable, chatGroupMembers, groupMessages, users } from "@shared/schema";
 import { and, eq, or, sql, isNotNull, desc, asc } from "drizzle-orm";
 import { setupAuth } from "./auth";
 import { z } from "zod";
@@ -6865,15 +6865,15 @@ Keep the response professional, evidence-based, and specific to track and field 
       // Get groups where user is a member
       const userGroups = await db
         .select({
-          id: groups.id,
-          name: groups.name,
-          description: groups.description,
-          isPrivate: groups.isPrivate,
-          ownerId: groups.ownerId,
-          createdAt: groups.createdAt,
+          id: groupsTable.id,
+          name: groupsTable.name,
+          description: groupsTable.description,
+          isPrivate: groupsTable.isPrivate,
+          ownerId: groupsTable.ownerId,
+          createdAt: groupsTable.createdAt,
         })
-        .from(groups)
-        .innerJoin(chatGroupMembers, eq(chatGroupMembers.groupId, groups.id))
+        .from(groupsTable)
+        .innerJoin(chatGroupMembers, eq(chatGroupMembers.groupId, groupsTable.id))
         .where(and(
           eq(chatGroupMembers.userId, userId),
           eq(chatGroupMembers.status, 'accepted')
@@ -7062,8 +7062,8 @@ Keep the response professional, evidence-based, and specific to track and field 
       // Check group limits
       const existingGroups = await db
         .select({ count: sql<number>`count(*)` })
-        .from(groups)
-        .where(eq(groups.ownerId, userId));
+        .from(groupsTable)
+        .where(eq(groupsTable.ownerId, userId));
 
       const currentGroupCount = existingGroups[0]?.count || 0;
       const maxGroups = user.subscriptionTier === 'star' ? Infinity : 10;
@@ -7074,7 +7074,7 @@ Keep the response professional, evidence-based, and specific to track and field 
 
       // Create the group
       const newGroup = await db
-        .insert(groups)
+        .insert(groupsTable)
         .values({
           name,
           description: description || null,
@@ -7126,8 +7126,8 @@ Keep the response professional, evidence-based, and specific to track and field 
 
       const group = await db
         .select()
-        .from(groups)
-        .where(eq(groups.id, groupId))
+        .from(groupsTable)
+        .where(eq(groupsTable.id, groupId))
         .limit(1);
 
       if (membership.length === 0 || (membership[0].role !== 'admin' && group[0]?.ownerId !== userId)) {
