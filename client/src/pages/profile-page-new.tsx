@@ -286,7 +286,7 @@ export default function ProfilePage() {
           <div className="max-w-4xl mx-auto px-4">
             
             {/* Profile Header */}
-            <Card className="bg-blue-900/20 border-blue-800/60 mb-6">
+            <Card className="bg-black/95 border-purple-500/25 mb-6" style={{ borderWidth: '0.5px' }}>
               <CardContent className="p-6">
                 <div className="flex flex-col md:flex-row gap-6 items-start">
                   
@@ -510,21 +510,18 @@ export default function ProfilePage() {
             )}
 
             {/* Connections */}
-            <Card className="bg-blue-900/20 border-blue-800/60 mb-6">
-              <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <Card className="bg-black/95 border-purple-500/25 mb-6" style={{ borderWidth: '0.5px' }}>
+              <CardHeader className="pb-3">
                 <CardTitle className="text-lg">Connections</CardTitle>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                  <Edit className="h-3 w-3" />
-                </Button>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4 text-center">
-                  <div className="p-3 bg-blue-800/30 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-400">{connections.length}</div>
+                  <div className="p-3 bg-gray-800/50 rounded-lg">
+                    <div className="text-2xl font-bold text-white">{(connections as any[])?.length || 0}</div>
                     <div className="text-sm text-gray-400">Connections</div>
                   </div>
-                  <div className="p-3 bg-blue-800/30 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-400">{coaches.length}</div>
+                  <div className="p-3 bg-gray-800/50 rounded-lg">
+                    <div className="text-2xl font-bold text-white">{(coaches as any[])?.length || 0}</div>
                     <div className="text-sm text-gray-400">Coaches</div>
                   </div>
                 </div>
@@ -532,7 +529,7 @@ export default function ProfilePage() {
             </Card>
 
             {/* Account Settings */}
-            <Card className="bg-blue-900/20 border-blue-800/60 mb-6">
+            <Card className="bg-black/95 border-purple-500/25 mb-6" style={{ borderWidth: '0.5px' }}>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg">Account Settings</CardTitle>
               </CardHeader>
@@ -547,7 +544,7 @@ export default function ProfilePage() {
                           <FormItem>
                             <FormLabel>Full Name</FormLabel>
                             <FormControl>
-                              <Input {...field} className="bg-blue-900/30 border-blue-700/50" />
+                              <Input {...field} className="bg-gray-800/50 border-gray-700/50" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -561,7 +558,7 @@ export default function ProfilePage() {
                           <FormItem>
                             <FormLabel>Email</FormLabel>
                             <FormControl>
-                              <Input {...field} className="bg-blue-900/30 border-blue-700/50" />
+                              <Input {...field} className="bg-gray-800/50 border-gray-700/50" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -580,7 +577,7 @@ export default function ProfilePage() {
                             onValueChange={(value) => field.onChange(value ? parseInt(value) : null)}
                           >
                             <FormControl>
-                              <SelectTrigger className="bg-blue-900/30 border-blue-700/50">
+                              <SelectTrigger className="bg-gray-800/50 border-gray-700/50">
                                 <SelectValue placeholder="Select a club" />
                               </SelectTrigger>
                             </FormControl>
