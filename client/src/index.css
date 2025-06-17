@@ -2,30 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Mobile viewport and keyboard handling */
-html, body {
-  height: 100%;
-  height: 100vh;
-  height: 100dvh; /* Dynamic viewport height for modern browsers */
-  overflow: hidden;
-  position: fixed;
-  width: 100%;
-}
-
-#root {
-  height: 100%;
-  overflow: auto;
-  position: relative;
-}
-
-/* Prevent viewport changes on mobile keyboard */
+/* Mobile viewport and keyboard handling - preserve existing styles */
 @supports (-webkit-touch-callout: none) {
-  body {
+  /* Only apply mobile-specific fixes on iOS devices */
+  html {
     height: -webkit-fill-available;
   }
   
-  #root {
-    height: -webkit-fill-available;
+  body {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    /* Ensure background gradient is preserved */
+    background: linear-gradient(135deg, #000000 0%, #1a1a2e 50%, #16213e 70%, #4a148c 90%, #7b1fa2 100%) !important;
+    background-attachment: fixed !important;
   }
 }
 
