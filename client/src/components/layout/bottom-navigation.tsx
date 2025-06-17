@@ -129,11 +129,18 @@ export function BottomNavigation() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
+  // Hide completely in private message pages
+  const isPrivateMessagePage = location.startsWith('/messages/') && location.split('/').length > 2;
+  
+  if (isPrivateMessagePage) {
+    return null;
+  }
+
   return (
     <div 
       className={cn(
-        "fixed bottom-0 left-0 right-0 z-30 md:hidden transition-transform duration-300 ease-in-out",
-        (isVisible && !isKeyboardVisible) ? "translate-y-0" : "translate-y-full"
+        "fixed bottom-0 left-0 right-0 z-10 md:hidden transition-transform duration-300 ease-in-out",
+        isVisible ? "translate-y-0" : "translate-y-full"
       )}
     >
       <nav className="bg-gray-900 shadow-lg border-t border-gray-700 h-14">

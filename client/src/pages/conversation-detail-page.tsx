@@ -9,6 +9,7 @@ import { ArrowLeft, Send, MoreVertical, Play, ExternalLink, ImagePlus, Paperclip
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useParams, useLocation } from "wouter";
+import { useKeyboard } from "@/contexts/keyboard-context";
 import type { DirectMessage, User } from "@shared/schema";
 
 interface ExerciseData {
@@ -193,6 +194,7 @@ export default function ConversationDetailPage() {
   const [linkPreview, setLinkPreview] = useState<LinkPreview | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { setKeyboardVisible } = useKeyboard();
 
   // Extract userId from URL
   const pathParts = location.split('/');
@@ -557,6 +559,8 @@ export default function ConversationDetailPage() {
             value={newMessage}
             onChange={handleMessageChange}
             onKeyPress={handleKeyPress}
+            onFocus={() => setKeyboardVisible(true)}
+            onBlur={() => setKeyboardVisible(false)}
             className="flex-1 rounded-full bg-muted/50 border-none"
           />
 
