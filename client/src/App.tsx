@@ -223,7 +223,7 @@ function MainApp() {
   if (isGroupsRoute) {
     // Full-screen layout for groups
     return (
-      <div className="h-screen bg-black text-white overflow-hidden">
+      <div className="h-screen text-gray-100 overflow-hidden" style={{ backgroundColor: '#1a1625' }}>
         <Router />
         
         {/* Onboarding flow - Only show for logged in users who haven't seen it */}

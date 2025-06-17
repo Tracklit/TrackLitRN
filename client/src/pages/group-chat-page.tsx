@@ -148,14 +148,14 @@ export default function GroupChatPage() {
   const selectedGroup = (groups as Group[])?.find((g: Group) => g.id === selectedGroupId);
 
   return (
-    <div className="h-screen bg-black text-white">
+    <div className="h-screen bg-gray-900 text-gray-100" style={{ backgroundColor: '#1a1625' }}>
       {!selectedGroup ? (
         /* Groups List - Telegram Style */
-        <div className="h-full bg-black">
+        <div className="h-full" style={{ backgroundColor: '#1a1625' }}>
           {/* Header Bar */}
-          <div className="bg-black px-4 py-3 border-b border-gray-800">
+          <div className="px-4 py-3 border-b border-gray-700" style={{ backgroundColor: '#1a1625', borderColor: '#2d2438' }}>
             <div className="flex items-center justify-between">
-              <h1 className="text-xl font-bold text-white">Training Groups</h1>
+              <h1 className="text-xl font-bold text-gray-100">Training Groups</h1>
               <Link href="/groups/create">
                 <Button 
                   size="sm" 
@@ -177,14 +177,20 @@ export default function GroupChatPage() {
                   <button
                     key={group.id}
                     onClick={() => setSelectedGroupId(group.id)}
-                    className="w-full text-left px-4 py-4 border-b border-gray-800 hover:bg-gray-900 transition-colors flex items-center space-x-3 bg-black"
+                    className="w-full text-left px-4 py-4 border-b transition-colors flex items-center space-x-3 hover:bg-opacity-80"
+                    style={{ 
+                      backgroundColor: '#1a1625', 
+                      borderColor: '#2d2438'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#241b2f'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#1a1625'}
                   >
                     <div className="w-12 h-12 rounded-full bg-yellow-600 flex items-center justify-center flex-shrink-0">
                       <Hash className="w-6 h-6 text-black" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <div className="font-medium text-white text-lg truncate">
+                        <div className="font-medium text-gray-100 text-lg truncate">
                           {group.name}
                         </div>
                         {group.coachId === (currentUser as any)?.id && (
@@ -192,7 +198,7 @@ export default function GroupChatPage() {
                         )}
                       </div>
                       <div className="text-sm text-gray-400 truncate">
-                        {group.memberCount} members • {group.coach?.name || 'Unknown'}
+                        Coach: {group.coach?.name || 'Unknown'}
                       </div>
                       {group.description && (
                         <div className="text-xs text-gray-500 mt-1 truncate">
@@ -223,15 +229,15 @@ export default function GroupChatPage() {
         </div>
       ) : (
         /* Chat View - Telegram Style */
-        <div className="h-full bg-black flex flex-col">
+        <div className="h-full flex flex-col" style={{ backgroundColor: '#1a1625' }}>
           {/* Chat Header */}
-          <div className="bg-black border-b border-gray-800 px-4 py-3 flex-shrink-0">
+          <div className="border-b px-4 py-3 flex-shrink-0" style={{ backgroundColor: '#1a1625', borderColor: '#2d2438' }}>
             <div className="flex items-center space-x-3">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setSelectedGroupId(null)}
-                className="text-gray-400 hover:text-white p-1"
+                className="text-gray-400 hover:text-gray-100 p-1"
               >
                 ←
               </Button>
@@ -239,12 +245,9 @@ export default function GroupChatPage() {
                 <Hash className="w-5 h-5 text-black" />
               </div>
               <div className="flex-1 min-w-0">
-                <h2 className="text-lg font-semibold text-white truncate">
+                <h2 className="text-lg font-semibold text-gray-100 truncate">
                   {selectedGroup.name}
                 </h2>
-                <p className="text-sm text-gray-400 truncate">
-                  {selectedGroup.memberCount} members
-                </p>
               </div>
             </div>
           </div>
@@ -256,7 +259,7 @@ export default function GroupChatPage() {
             ) : (
               <div className="px-4 py-2">
                 {(messages as GroupMessage[])?.map((message: GroupMessage) => (
-                  <div key={message.id} className="py-2 border-b border-gray-900">
+                  <div key={message.id} className="py-2 border-b" style={{ borderColor: '#2d2438' }}>
                     <div className="flex space-x-3">
                       <img
                         src={message.user?.profileImageUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${message.user?.name || 'U'}`}
@@ -265,7 +268,7 @@ export default function GroupChatPage() {
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center space-x-2 mb-1">
-                          <span className="font-medium text-white text-sm">{message.user?.name || 'Unknown User'}</span>
+                          <span className="font-medium text-gray-100 text-sm">{message.user?.name || 'Unknown User'}</span>
                           <span className="text-xs text-gray-500">
                             {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
@@ -290,7 +293,7 @@ export default function GroupChatPage() {
           </div>
 
           {/* Message Input - Fixed to viewport bottom */}
-          <div className="fixed bottom-0 left-0 right-0 px-4 py-3 bg-black border-t border-gray-800 z-50">
+          <div className="fixed bottom-0 left-0 right-0 px-4 py-3 border-t z-50" style={{ backgroundColor: '#1a1625', borderColor: '#2d2438' }}>
             <div className="flex space-x-3">
               <input
                 type="text"
@@ -305,7 +308,8 @@ export default function GroupChatPage() {
                   }
                 }}
                 placeholder="Type a message..."
-                className="flex-1 bg-gray-900 border border-gray-700 rounded-full px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-yellow-500"
+                className="flex-1 border rounded-full px-4 py-2 text-gray-100 placeholder-gray-400 focus:outline-none focus:border-yellow-500"
+                style={{ backgroundColor: '#2d2438', borderColor: '#3d3450' }}
                 disabled={sendMessageMutation.isPending}
               />
               <Button
