@@ -96,9 +96,6 @@ export function BottomNavigation() {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
-  // Hide bottom navigation on groups pages
-  const shouldHideNavigation = location.startsWith('/groups');
-
   // Update current index based on location
   useEffect(() => {
     const index = navItems.findIndex(item => {
@@ -129,11 +126,6 @@ export function BottomNavigation() {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
-
-  // Don't render navigation on groups pages
-  if (shouldHideNavigation) {
-    return null;
-  }
 
   return (
     <div 

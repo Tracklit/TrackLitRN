@@ -33,8 +33,6 @@ import { Component as WorkoutToolsPage } from "@/pages/training-tools-page";
 import ClubsPage from "@/pages/clubs-page";
 import { Component as ClubDetailPage } from "@/pages/club-detail-page";
 import { Component as ClubManagementPage } from "@/pages/club-management-page";
-import { Component as GroupChatPage } from "@/pages/group-chat-page";
-import { Component as CreateGroupPage } from "@/pages/create-group-page";
 
 import ConversationsPage from "@/pages/conversations-page";
 import ConversationDetailPage from "@/pages/conversation-detail-page";
@@ -107,87 +105,76 @@ function ScrollRestoration() {
 }
 
 function Router() {
-  const [location] = useLocation();
-  const isGroupsRoute = location.startsWith('/groups');
-
   return (
     <>
       <ScrollRestoration />
-      {isGroupsRoute ? (
-        // Full-screen routes without container constraints
-        <Switch>
-          <ProtectedRoute path="/groups" component={GroupChatPage} />
-          <ProtectedRoute path="/groups/create" component={CreateGroupPage} />
-        </Switch>
-      ) : (
-        // Regular routes with container
-        <Switch>
-        {/* Dashboard */}
-        <ProtectedRoute path="/" component={HomePage} />
-        
-        {/* Training */}
-        <ProtectedRoute path="/practice" component={PracticePage} />
-        <ProtectedRoute path="/tools" component={WorkoutToolsPage} />
-        <ProtectedRoute path="/training-tools" component={WorkoutToolsPage} />
-        <ProtectedRoute path="/tools/stopwatch" component={StopwatchPage} />
-        <ProtectedRoute path="/tools/start-gun" component={StartGunPage} />
-        <ProtectedRoute path="/tools/journal" component={JournalPage} />
-        <ProtectedRoute path="/tools/photo-finish" component={PhotoFinishPage} />
-        <ProtectedRoute path="/tools/photo-finish/analysis" component={PhotoFinishAnalysisPage} />
-        <ProtectedRoute path="/tools/exercise-library" component={ExerciseLibraryPage} />
-        <ProtectedRoute path="/tools/exercise-library/add" component={ExerciseLibraryAddPage} />
-        <ProtectedRoute path="/tools/video-analysis" component={VideoAnalysisPage} />
-        <ProtectedRoute path="/programs" component={ProgramsPage} />
-        <ProtectedRoute path="/programs/create" component={ProgramCreatePage} />
-        <ProtectedRoute path="/programs/:id" component={ProgramDetailPage} />
-        <ProtectedRoute path="/programs/:id/checkout" component={CheckoutPage} />
-        <ProtectedRoute path="/programs/:id/document" component={DocumentProgramViewer} />
-        <ProtectedRoute path="/programs/:id/edit" component={ProgramEditorPage} />
-        <ProtectedRoute path="/assign-program/:programId" component={AssignProgramPage} />
-        <ProtectedRoute path="/assigned-programs" component={AssignedProgramsPage} />
-        
-        {/* Competition */}
-        <ProtectedRoute path="/meets" component={MeetsPage} />
-        <ProtectedRoute path="/meets/create" component={CreateMeetPage} />
-        <ProtectedRoute path="/results" component={ResultsPage} />
-        {/* <ProtectedRoute path="/competitions" component={CompetitionCalendarPage} /> */}
-        
-        {/* Social */}
-        <ProtectedRoute path="/connections" component={ConnectionsPage} />
-        <ProtectedRoute path="/my-athletes" component={MyAthletesPage} />
-        <ProtectedRoute path="/athletes" component={AthletesPage} />
-        <ProtectedRoute path="/coaches" component={CoachesPage} />
-        <ProtectedRoute path="/roster-stats" component={RosterStatsPage} />
-        <ProtectedRoute path="/clubs" component={ClubsPage} />
-        <ProtectedRoute path="/club/:id" component={ClubDetailPage} />
-        <ProtectedRoute path="/club-management/:id" component={ClubManagementPage} />
+      <Switch>
+      {/* Dashboard */}
+      <ProtectedRoute path="/" component={HomePage} />
+      
+      {/* Training */}
+      <ProtectedRoute path="/practice" component={PracticePage} />
+      <ProtectedRoute path="/tools" component={WorkoutToolsPage} />
+      <ProtectedRoute path="/training-tools" component={WorkoutToolsPage} />
+      <ProtectedRoute path="/tools/stopwatch" component={StopwatchPage} />
+      <ProtectedRoute path="/tools/start-gun" component={StartGunPage} />
+      <ProtectedRoute path="/tools/journal" component={JournalPage} />
+      <ProtectedRoute path="/tools/photo-finish" component={PhotoFinishPage} />
+      <ProtectedRoute path="/tools/photo-finish/analysis" component={PhotoFinishAnalysisPage} />
+      <ProtectedRoute path="/tools/exercise-library" component={ExerciseLibraryPage} />
+      <ProtectedRoute path="/tools/exercise-library/add" component={ExerciseLibraryAddPage} />
+      <ProtectedRoute path="/tools/video-analysis" component={VideoAnalysisPage} />
+      <ProtectedRoute path="/programs" component={ProgramsPage} />
+      <ProtectedRoute path="/programs/create" component={ProgramCreatePage} />
+      <ProtectedRoute path="/programs/:id" component={ProgramDetailPage} />
+      <ProtectedRoute path="/programs/:id/checkout" component={CheckoutPage} />
+      <ProtectedRoute path="/programs/:id/document" component={DocumentProgramViewer} />
+      <ProtectedRoute path="/programs/:id/edit" component={ProgramEditorPage} />
+      <ProtectedRoute path="/assign-program/:programId" component={AssignProgramPage} />
+      <ProtectedRoute path="/assigned-programs" component={AssignedProgramsPage} />
+      
+      {/* Competition */}
+      <ProtectedRoute path="/meets" component={MeetsPage} />
+      <ProtectedRoute path="/meets/create" component={CreateMeetPage} />
+      <ProtectedRoute path="/results" component={ResultsPage} />
+      {/* <ProtectedRoute path="/competitions" component={CompetitionCalendarPage} /> */}
+      
+      {/* Social */}
+      <ProtectedRoute path="/connections" component={ConnectionsPage} />
+      <ProtectedRoute path="/my-athletes" component={MyAthletesPage} />
+      <ProtectedRoute path="/athletes" component={AthletesPage} />
+      <ProtectedRoute path="/coaches" component={CoachesPage} />
+      <ProtectedRoute path="/roster-stats" component={RosterStatsPage} />
+      <ProtectedRoute path="/clubs" component={ClubsPage} />
+      <ProtectedRoute path="/club/:id" component={ClubDetailPage} />
+      <ProtectedRoute path="/club-management/:id" component={ClubManagementPage} />
 
-        
-        {/* Rehab */}
-        <ProtectedRoute path="/rehab" component={RehabPage} />
-        <ProtectedRoute path="/rehab/acute-muscle/hamstring" component={HamstringRehabPage} />
-        <ProtectedRoute path="/rehab/chronic-injuries/foot" component={FootRehabPage} />
-        
-        {/* AI */}
-        <ProtectedRoute path="/sprinthia" component={SprinthiaPage} />
-        
-        {/* Account */}
-        <ProtectedRoute path="/spikes" component={SpikesPage} />
-        <ProtectedRoute path="/subscription" component={SubscriptionPage} />
-        <ProtectedRoute path="/profile" component={ProfilePage} />
-        <ProtectedRoute path="/athlete-profile" component={AthleteProfilePage} />
-        <ProtectedRoute path="/install-app" component={InstallAppPage} />
-        
-        {/* Public Profiles - separate URL pattern */}
-        <Route path="/user/:userId" component={PublicProfilePage} />
-        <ProtectedRoute path="/admin" component={AdminPage} />
-        <ProtectedRoute path="/admin-panel" component={AdminPanel} />
-        
-        {/* Auth */}
-        <Route path="/auth" component={AuthPage} />
-        <Route component={NotFound} />
-        </Switch>
-      )}
+
+      
+      {/* Rehab */}
+      <ProtectedRoute path="/rehab" component={RehabPage} />
+      <ProtectedRoute path="/rehab/acute-muscle/hamstring" component={HamstringRehabPage} />
+      <ProtectedRoute path="/rehab/chronic-injuries/foot" component={FootRehabPage} />
+      
+      {/* AI */}
+      <ProtectedRoute path="/sprinthia" component={SprinthiaPage} />
+      
+      {/* Account */}
+      <ProtectedRoute path="/spikes" component={SpikesPage} />
+      <ProtectedRoute path="/subscription" component={SubscriptionPage} />
+      <ProtectedRoute path="/profile" component={ProfilePage} />
+      <ProtectedRoute path="/athlete-profile" component={AthleteProfilePage} />
+      <ProtectedRoute path="/install-app" component={InstallAppPage} />
+      
+      {/* Public Profiles - separate URL pattern */}
+      <Route path="/user/:userId" component={PublicProfilePage} />
+      <ProtectedRoute path="/admin" component={AdminPage} />
+      <ProtectedRoute path="/admin-panel" component={AdminPanel} />
+      
+      {/* Auth */}
+      <Route path="/auth" component={AuthPage} />
+      <Route component={NotFound} />
+      </Switch>
     </>
   );
 }
@@ -195,8 +182,6 @@ function Router() {
 function MainApp() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const { user, loginMutation, registerMutation } = useAuth();
-  const [location] = useLocation();
-  const isGroupsRoute = location.startsWith('/groups');
   
   // Only show onboarding for new user registrations (not logins)
   useEffect(() => {
@@ -220,37 +205,8 @@ function MainApp() {
     localStorage.setItem('onboardingCompleted', 'true');
   };
 
-  if (isGroupsRoute) {
-    // Full-screen layout for groups with header
-    return (
-      <div className="h-screen text-gray-100 overflow-hidden" style={{ backgroundColor: '#1a1625' }}>
-        {/* Top Header Bar */}
-        <Header />
-        
-        {/* Hamburger Menu for all screens */}
-        <div className="fixed top-4 left-4 z-50">
-          <HamburgerMenu />
-        </div>
-        
-        {/* Main Content - Account for header height */}
-        <div className="pt-16 h-full">
-          <Router />
-        </div>
-        
-        {/* Onboarding flow - Only show for logged in users who haven't seen it */}
-        {user && showOnboarding && (
-          <OnboardingFlow 
-            onComplete={handleOnboardingComplete}
-            isFirstTimeUser={true}
-          />
-        )}
-        
-        <Toaster />
-      </div>
-    );
-  }
 
-  // Regular layout for other routes
+  
   return (
     <div className="min-h-screen text-foreground">
       {/* Top Header Bar */}
