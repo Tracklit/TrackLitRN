@@ -6641,7 +6641,7 @@ Keep the response professional, evidence-based, and specific to track and field 
         .values({
           groupId,
           senderId: req.user.id,
-          message: content.trim()
+          content: content.trim()
         })
         .returning();
 

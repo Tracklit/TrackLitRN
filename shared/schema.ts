@@ -495,8 +495,11 @@ export const groupMessages = pgTable("group_messages", {
   id: serial("id").primaryKey(),
   groupId: integer("group_id").notNull().references(() => groups.id),
   senderId: integer("sender_id").notNull().references(() => users.id),
-  message: text("message").notNull(),
+  content: text("content").notNull(),
+  hasMedia: boolean("has_media").default(false),
   mediaUrl: text("media_url"),
+  mediaType: text("media_type"),
+  sentAt: timestamp("sent_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
