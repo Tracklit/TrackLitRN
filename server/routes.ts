@@ -6536,10 +6536,8 @@ Keep the response professional, evidence-based, and specific to track and field 
           description: groups.description,
           coachId: groups.ownerId,
           createdAt: groups.createdAt,
-          coach: {
-            name: users.name,
-            username: users.username
-          }
+          coachName: users.name,
+          coachUsername: users.username
         })
         .from(chatGroupMembers)
         .innerJoin(groups, eq(chatGroupMembers.groupId, groups.id))
@@ -6556,7 +6554,11 @@ Keep the response professional, evidence-based, and specific to track and field 
 
           return {
             ...group,
-            memberCount: memberCount[0]?.count || 0
+            memberCount: memberCount[0]?.count || 0,
+            coach: {
+              name: group.coachName,
+              username: group.coachUsername
+            }
           };
         })
       );

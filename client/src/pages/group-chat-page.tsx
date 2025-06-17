@@ -202,7 +202,7 @@ export default function GroupChatPage() {
                         {group.name}
                       </div>
                       <div className="text-xs text-gray-400 truncate">
-                        {group.memberCount} members • by {group.coach.name}
+                        {group.memberCount} members • by {group.coach?.name || 'Unknown'}
                       </div>
                     </div>
                     {group.coachId === (currentUser as any)?.id && (
