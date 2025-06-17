@@ -378,7 +378,7 @@ export default function GroupsPage() {
                     )}
                     <p className="text-sm">{message.message}</p>
                     <p className="text-xs mt-1 opacity-70">
-                      {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
+                      {message.createdAt && formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
                     </p>
                   </div>
                 </div>

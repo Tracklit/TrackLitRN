@@ -6863,7 +6863,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       const userId = req.user.id;
       
       // Get groups where user is a member
-      const groups = await db
+      const userGroups = await db
         .select({
           id: groups.id,
           name: groups.name,
@@ -6881,7 +6881,7 @@ Keep the response professional, evidence-based, and specific to track and field 
 
       // Get additional data for each group
       const groupsWithData = await Promise.all(
-        groups.map(async (group) => {
+        userGroups.map(async (group) => {
           // Get member count
           const memberCount = await db
             .select({ count: sql<number>`count(*)` })
