@@ -66,6 +66,11 @@ export default function ProfilePage() {
     queryKey: ['/api/athlete/coaches'],
   });
 
+  // Fetch connections (friends) data
+  const { data: connections = [] } = useQuery({
+    queryKey: ['/api/friends'],
+  });
+
   // Forms
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -515,11 +520,11 @@ export default function ProfilePage() {
               <CardContent>
                 <div className="grid grid-cols-2 gap-4 text-center">
                   <div className="p-3 bg-blue-800/30 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-400">0</div>
-                    <div className="text-sm text-gray-400">Friends</div>
+                    <div className="text-2xl font-bold text-blue-400">{connections.length}</div>
+                    <div className="text-sm text-gray-400">Connections</div>
                   </div>
                   <div className="p-3 bg-blue-800/30 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-400">0</div>
+                    <div className="text-2xl font-bold text-blue-400">{coaches.length}</div>
                     <div className="text-sm text-gray-400">Coaches</div>
                   </div>
                 </div>
