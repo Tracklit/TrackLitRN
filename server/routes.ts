@@ -6524,6 +6524,7 @@ Keep the response professional, evidence-based, and specific to track and field 
           };
           
           console.log(`Group ${group.id} latest message:`, latestMessage[0]);
+          console.log(`Full result for group ${group.id}:`, JSON.stringify(result, null, 2));
           return result;
         })
       );

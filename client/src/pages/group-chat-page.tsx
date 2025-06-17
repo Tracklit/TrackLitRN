@@ -72,7 +72,7 @@ export default function GroupChatPage() {
 
   // Fetch groups
   const { data: groups, isLoading: groupsLoading } = useQuery({
-    queryKey: ["/api/groups"],
+    queryKey: ["/api/groups", Date.now()], // Cache busting for testing
   });
 
   // Fetch group messages
@@ -281,7 +281,7 @@ export default function GroupChatPage() {
                       )}
                       
                       <div 
-                        className={`max-w-[70%] px-4 py-2 rounded-2xl break-words ${
+                        className={`min-w-[20vw] max-w-[70%] px-4 py-2 rounded-2xl break-words ${
                           isCurrentUser 
                             ? 'bg-yellow-600 text-black rounded-br-sm' 
                             : 'bg-gray-700 text-gray-100 rounded-bl-sm'
@@ -294,26 +294,15 @@ export default function GroupChatPage() {
                           </div>
                         )}
                         
-                        <div className="text-sm leading-relaxed">{message.content}</div>
-                        <div className={`text-xs mt-1 ${isCurrentUser ? 'text-black/70' : 'text-gray-400'}`}>
-                          {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        <div className="flex items-end justify-between">
+                          <div className="text-sm leading-relaxed flex-1 mr-2">{message.content}</div>
+                          <div className={`text-xs flex-shrink-0 ${isCurrentUser ? 'text-black/70' : 'text-gray-400'}`}>
+                            {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </div>
                         </div>
                       </div>
                       
-                      {/* Profile image for current user - right side */}
-                      {isCurrentUser && (
-                        <div className="w-8 h-8 rounded-full bg-yellow-600 flex items-center justify-center text-xs text-black ml-2 flex-shrink-0" style={{ marginTop: '35px' }}>
-                          {currentUser?.profileImageUrl ? (
-                            <img 
-                              src={currentUser.profileImageUrl} 
-                              alt={currentUser.name}
-                              className="w-8 h-8 rounded-full object-cover"
-                            />
-                          ) : (
-                            currentUser?.name?.charAt(0)?.toUpperCase() || 'M'
-                          )}
-                        </div>
-                      )}
+
                     </div>
                   );
                 })}
