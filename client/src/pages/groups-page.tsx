@@ -210,6 +210,8 @@ export default function GroupsPage() {
                         id="groupName"
                         value={newGroupName}
                         onChange={(e) => setNewGroupName(e.target.value)}
+                        onFocus={() => setKeyboardVisible(true)}
+                        onBlur={() => setKeyboardVisible(false)}
                         placeholder="Enter group name"
                         className="bg-gray-800 border-gray-600 text-white mt-1"
                       />
@@ -220,6 +222,8 @@ export default function GroupsPage() {
                         id="groupDescription"
                         value={newGroupDescription}
                         onChange={(e) => setNewGroupDescription(e.target.value)}
+                        onFocus={() => setKeyboardVisible(true)}
+                        onBlur={() => setKeyboardVisible(false)}
                         placeholder="Enter group description"
                         className="bg-gray-800 border-gray-600 text-white mt-1"
                         rows={3}
