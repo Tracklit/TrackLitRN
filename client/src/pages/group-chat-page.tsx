@@ -57,6 +57,7 @@ interface GroupMember {
 export default function GroupChatPage() {
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const [messageInputValue, setMessageInputValue] = useState("");
+  const [refreshTimestamp, setRefreshTimestamp] = useState(Date.now());
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -70,9 +71,9 @@ export default function GroupChatPage() {
     queryKey: ["/api/user"],
   });
 
-  // Fetch groups with forced refresh
+  // Fetch groups with timestamp-based cache busting
   const { data: groups, isLoading: groupsLoading, refetch: refetchGroups } = useQuery({
-    queryKey: ["/api/groups"],
+    queryKey: ["/api/groups", refreshTimestamp],
     staleTime: 0, // Always consider data stale
     gcTime: 0, // Don't cache (TanStack Query v5 syntax)
   });
@@ -133,7 +134,7 @@ export default function GroupChatPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/groups/${selectedGroupId}/messages`] });
-      queryClient.invalidateQueries({ queryKey: ["/api/groups"] }); // Refresh groups list to show latest message
+      setRefreshTimestamp(Date.now()); // Force groups list refresh with new timestamp
       setMessageInputValue("");
     },
     onError: (error: Error) => {

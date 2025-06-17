@@ -17,10 +17,14 @@
     /* Ensure background gradient is preserved */
     background: linear-gradient(135deg, #000000 0%, #1a1a2e 50%, #16213e 70%, #4a148c 90%, #7b1fa2 100%) !important;
     background-attachment: fixed !important;
-    /* Prevent viewport resize on keyboard */
+  }
+  
+  /* Prevent viewport resize when keyboard appears */
+  body.keyboard-open {
     position: fixed;
     overflow: hidden;
     width: 100%;
+    height: 100vh;
   }
   
   #root {
@@ -37,6 +41,10 @@
     
     body {
       min-height: -webkit-fill-available;
+    }
+    
+    body.keyboard-open {
+      height: -webkit-fill-available;
     }
   }
 }
