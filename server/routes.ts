@@ -6475,6 +6475,11 @@ Keep the response professional, evidence-based, and specific to track and field 
   app.get("/api/groups", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
+    // Disable caching for groups endpoint to debug latest messages
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+
     try {
       const userGroups = await db
         .select({

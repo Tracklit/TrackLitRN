@@ -72,7 +72,7 @@ export default function GroupChatPage() {
 
   // Fetch groups
   const { data: groups, isLoading: groupsLoading } = useQuery({
-    queryKey: ["/api/groups", Date.now()], // Cache busting for testing
+    queryKey: ["/api/groups"],
   });
 
   // Fetch group messages
