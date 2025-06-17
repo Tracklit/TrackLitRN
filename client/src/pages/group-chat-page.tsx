@@ -6,21 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Plus, Users, MessageCircle, Crown, Lock, Hash } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
-import {
-  MainContainer,
-  ChatContainer,
-  MessageList,
-  Message,
-  MessageInput,
-  TypingIndicator,
-  ExpansionPanel,
-  Sidebar,
-  ConversationList,
-  Conversation,
-  Avatar,
-  ConversationHeader,
-  MessageSeparator
-} from "@chatscope/chat-ui-kit-react";
+
 
 // Interface definitions
 interface Group {
@@ -155,159 +141,172 @@ export default function GroupChatPage() {
   return (
     <div className="min-h-screen bg-black text-white">
       <div className="flex h-screen">
-        {/* Left Sidebar - Groups as Channels */}
-        <div className="w-80 bg-gray-900 border-r border-gray-700 flex flex-col">
-          <div className="p-4 border-b border-gray-700">
-            <div className="flex items-center justify-between mb-4">
-              <h1 className="text-xl font-bold flex items-center">
-                <Users className="w-5 h-5 mr-2" />
-                Training Groups
-              </h1>
-              <Link href="/groups/create">
-                <Button 
-                  size="sm" 
-                  className="bg-yellow-600 hover:bg-yellow-700 text-black font-medium"
-                >
-                  <Plus className="w-4 h-4" />
-                </Button>
-              </Link>
+        {!selectedGroup ? (
+          /* Groups List - Full Width */
+          <div className="flex-1 bg-black">
+            <div className="p-4 border-b border-gray-700">
+              <div className="flex items-center justify-between mb-4">
+                <h1 className="text-xl font-bold flex items-center">
+                  <Users className="w-5 h-5 mr-2" />
+                  Training Groups
+                </h1>
+                <Link href="/groups/create">
+                  <Button 
+                    size="sm" 
+                    className="bg-yellow-600 hover:bg-yellow-700 text-black font-medium"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
+
+            <div className="p-4">
+              {groupsLoading ? (
+                <div className="text-gray-400">Loading groups...</div>
+              ) : (
+                <div className="space-y-2">
+                  {(groups as Group[])?.map((group: Group) => (
+                    <button
+                      key={group.id}
+                      onClick={() => setSelectedGroupId(group.id)}
+                      className="w-full text-left p-4 rounded-lg bg-gray-900 hover:bg-gray-800 transition-colors flex items-center space-x-3"
+                    >
+                      <Hash className="w-5 h-5 text-yellow-500" />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-white text-lg">
+                          {group.name}
+                        </div>
+                        <div className="text-sm text-gray-400">
+                          {group.memberCount} members • by {group.coach?.name || 'Unknown'}
+                        </div>
+                        {group.description && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            {group.description}
+                          </div>
+                        )}
+                      </div>
+                      {group.coachId === (currentUser as any)?.id && (
+                        <Crown className="w-5 h-5 text-yellow-500" />
+                      )}
+                    </button>
+                  ))}
+                  
+                  {(!groups || (groups as Group[]).length === 0) && (
+                    <div className="text-center py-12 text-gray-400">
+                      <Users className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                      <h3 className="text-lg font-medium mb-2">No groups yet</h3>
+                      <p className="text-sm mb-4">Create your first training group to get started</p>
+                      <Link href="/groups/create">
+                        <Button 
+                          className="bg-yellow-600 hover:bg-yellow-700 text-black font-medium"
+                        >
+                          Create First Group
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
-
-          {/* Groups List as Channels */}
-          <div className="flex-1 overflow-y-auto">
-            {groupsLoading ? (
-              <div className="p-4 text-gray-400">Loading groups...</div>
-            ) : (
-              <div className="p-2">
-                {(groups as Group[])?.map((group: Group) => (
-                  <button
-                    key={group.id}
-                    onClick={() => setSelectedGroupId(group.id)}
-                    className={`
-                      w-full text-left p-3 rounded-lg mb-1 transition-colors
-                      flex items-center space-x-3 hover:bg-gray-800
-                      ${selectedGroupId === group.id ? 'bg-yellow-600/20 border-l-4 border-yellow-600' : ''}
-                    `}
+        ) : (
+          /* Chat View - Full Width */
+          <div className="flex-1 flex flex-col bg-black">
+            {/* Chat Header */}
+            <div className="bg-gray-900 border-b border-gray-700 p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedGroupId(null)}
+                    className="mr-3 text-gray-400 hover:text-white"
                   >
-                    <Hash className="w-4 h-4 text-gray-400" />
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-white truncate">
-                        {group.name}
-                      </div>
-                      <div className="text-xs text-gray-400 truncate">
-                        {group.memberCount} members • by {group.coach?.name || 'Unknown'}
-                      </div>
-                    </div>
-                    {group.coachId === (currentUser as any)?.id && (
-                      <Crown className="w-4 h-4 text-yellow-500" />
-                    )}
-                  </button>
-                ))}
-                
-                {(!groups || (groups as Group[]).length === 0) && (
-                  <div className="p-4 text-center text-gray-400">
-                    <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">No groups yet</p>
-                    <Link href="/groups/create">
-                      <Button 
-                        size="sm" 
-                        className="mt-2 bg-yellow-600 hover:bg-yellow-700 text-black font-medium"
-                      >
-                        Create First Group
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Main Chat Area */}
-        <div className="flex-1 flex flex-col">
-          {selectedGroup ? (
-            <>
-              {/* Chat Header */}
-              <div className="bg-gray-900 border-b border-gray-700 p-4">
-                <div className="flex items-center justify-between">
+                    ←
+                  </Button>
                   <div>
                     <h2 className="text-lg font-semibold flex items-center">
                       <Hash className="w-5 h-5 mr-2 text-yellow-500" />
                       {selectedGroup.name}
                     </h2>
                     <p className="text-sm text-gray-400">
-                      {selectedGroup.description || "No description"}
+                      {selectedGroup.memberCount} members
                     </p>
                   </div>
-                  <div className="text-sm text-gray-400">
-                    {selectedGroup.memberCount} members
-                  </div>
                 </div>
-              </div>
-
-              {/* Chat Messages - Full Width */}
-              <div className="flex-1 flex flex-col">
-                <div style={{ position: "relative", height: "400px", flexGrow: 1 }}>
-                  <MainContainer responsive>
-                    <ChatContainer>
-                      <MessageList 
-                        loading={messagesLoading}
-                        typingIndicator={sendMessageMutation.isPending ? <TypingIndicator content="Sending message..." /> : null}
-                      >
-                        {(messages as GroupMessage[])?.map((message: GroupMessage, index: number) => {
-                          const isOwn = message.userId === (currentUser as any)?.id;
-                          const showSeparator = index === 0 || 
-                            new Date((messages as GroupMessage[])[index - 1].createdAt).toDateString() !== new Date(message.createdAt).toDateString();
-                          
-                          return (
-                            <div key={message.id}>
-                              {showSeparator && (
-                                <MessageSeparator content={new Date(message.createdAt).toLocaleDateString()} />
-                              )}
-                              <Message
-                                model={{
-                                  message: message.content,
-                                  sentTime: new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                                  sender: message.user?.name || 'Unknown User',
-                                  direction: isOwn ? "outgoing" : "incoming",
-                                  position: "single"
-                                }}
-                              >
-                                {!isOwn && (
-                                  <Avatar 
-                                    src={message.user?.profileImageUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${message.user?.name || 'U'}`}
-                                    name={message.user?.name || 'Unknown User'}
-                                  />
-                                )}
-                              </Message>
-                            </div>
-                          );
-                        })}
-                      </MessageList>
-                      <MessageInput
-                        placeholder="Type a message..."
-                        value={messageInputValue}
-                        onChange={(val) => setMessageInputValue(val)}
-                        onSend={handleSendMessage}
-                        disabled={sendMessageMutation.isPending}
-                        attachButton={false}
-                      />
-                    </ChatContainer>
-                  </MainContainer>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center text-gray-400">
-                <MessageCircle className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-medium mb-2">Select a Group</h3>
-                <p className="text-sm">Choose a group from the sidebar to start chatting</p>
               </div>
             </div>
-          )}
-        </div>
+
+            {/* Messages Area */}
+            <div className="flex-1 p-4 overflow-y-auto">
+              {messagesLoading ? (
+                <div className="text-gray-400">Loading messages...</div>
+              ) : (
+                <div className="space-y-4">
+                  {(messages as GroupMessage[])?.map((message: GroupMessage) => (
+                    <div key={message.id} className="flex space-x-3">
+                      <img
+                        src={message.user?.profileImageUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${message.user?.name || 'U'}`}
+                        alt={message.user?.name || 'User'}
+                        className="w-8 h-8 rounded-full"
+                      />
+                      <div>
+                        <div className="flex items-center space-x-2 mb-1">
+                          <span className="font-medium text-white">{message.user?.name || 'Unknown User'}</span>
+                          <span className="text-xs text-gray-400">
+                            {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <div className="text-gray-200">{message.content}</div>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {(!messages || (messages as GroupMessage[]).length === 0) && (
+                    <div className="text-center py-12 text-gray-400">
+                      <MessageCircle className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                      <p>No messages yet. Start the conversation!</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Message Input */}
+            <div className="p-4 border-t border-gray-700">
+              <div className="flex space-x-3">
+                <input
+                  type="text"
+                  value={messageInputValue}
+                  onChange={(e) => setMessageInputValue(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      if (messageInputValue.trim()) {
+                        handleSendMessage(messageInputValue);
+                      }
+                    }
+                  }}
+                  placeholder="Type a message..."
+                  className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-yellow-500"
+                  disabled={sendMessageMutation.isPending}
+                />
+                <Button
+                  onClick={() => {
+                    if (messageInputValue.trim()) {
+                      handleSendMessage(messageInputValue);
+                    }
+                  }}
+                  disabled={sendMessageMutation.isPending || !messageInputValue.trim()}
+                  className="bg-yellow-600 hover:bg-yellow-700 text-black font-medium"
+                >
+                  Send
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
