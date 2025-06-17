@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { HamburgerMenu } from "@/components/ui/hamburger-menu";
 import { Header } from "@/components/layout/header";
 import { BottomNavigation } from "@/components/layout/bottom-navigation";
+import { KeyboardProvider } from "@/contexts/keyboard-context";
 // Import tool components
 import { 
   StopwatchPage,
@@ -248,9 +249,11 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TickerProvider>
-          <TooltipProvider>
-            <MainApp />
-          </TooltipProvider>
+          <KeyboardProvider>
+            <TooltipProvider>
+              <MainApp />
+            </TooltipProvider>
+          </KeyboardProvider>
         </TickerProvider>
       </AuthProvider>
     </QueryClientProvider>

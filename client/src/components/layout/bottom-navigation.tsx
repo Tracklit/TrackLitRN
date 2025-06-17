@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
+import { useKeyboard } from "@/contexts/keyboard-context";
 
 // Navigation items based on dashboard card order
 const navItems = [
@@ -95,6 +96,7 @@ export function BottomNavigation() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const { isKeyboardVisible } = useKeyboard();
 
   // Update current index based on location
   useEffect(() => {

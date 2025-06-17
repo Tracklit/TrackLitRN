@@ -197,7 +197,7 @@ export default function GroupsPage() {
                     <Plus className="h-4 w-4" />
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-gray-900 border-gray-700">
+                <DialogContent className="bg-gray-900 border-gray-700 fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 shadow-2xl">
                   <DialogHeader>
                     <DialogTitle className="text-white">Create New Group</DialogTitle>
                   </DialogHeader>
