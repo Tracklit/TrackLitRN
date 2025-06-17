@@ -2847,60 +2847,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/groups/:id/messages", async (req: Request, res: Response) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    
-    try {
-      const groupId = parseInt(req.params.id);
-      const group = await dbStorage.getGroup(groupId);
-      
-      if (!group) {
-        return res.status(404).send("Group not found");
-      }
-      
-      // Check if user is a member
-      const membership = await dbStorage.getGroupMemberByUserAndGroup(req.user!.id, groupId);
-      if (!membership && group.ownerId !== req.user!.id) {
-        return res.status(403).send("Not authorized to post messages in this group");
-      }
-      
-      const messageData = {
-        groupId,
-        senderId: req.user!.id,
-        message: req.body.message,
-        mediaUrl: req.body.mediaUrl
-      };
-      
-      const newMessage = await dbStorage.createGroupMessage(messageData);
-      res.status(201).json(newMessage);
-    } catch (error) {
-      res.status(500).send("Error sending message");
-    }
-  });
 
-  app.get("/api/groups/:id/messages", async (req: Request, res: Response) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    
-    try {
-      const groupId = parseInt(req.params.id);
-      const group = await dbStorage.getGroup(groupId);
-      
-      if (!group) {
-        return res.status(404).send("Group not found");
-      }
-      
-      // Check if user is a member
-      const membership = await dbStorage.getGroupMemberByUserAndGroup(req.user!.id, groupId);
-      if (!membership && group.ownerId !== req.user!.id) {
-        return res.status(403).send("Not authorized to view messages in this group");
-      }
-      
-      const messages = await dbStorage.getGroupMessages(groupId);
-      res.json(messages);
-    } catch (error) {
-      res.status(500).send("Error fetching messages");
-    }
-  });
 
   // Premium features - just mock endpoints for now
   app.post("/api/premium/upgrade", async (req: Request, res: Response) => {

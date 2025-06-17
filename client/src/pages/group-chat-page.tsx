@@ -113,8 +113,8 @@ export default function GroupChatPage() {
         body: JSON.stringify({ content }),
       });
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to send message");
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to send message");
       }
       return response.json();
     },
@@ -152,21 +152,6 @@ export default function GroupChatPage() {
       {!selectedGroup ? (
         /* Groups List - Telegram Style */
         <div className="h-full" style={{ backgroundColor: '#1a1625' }}>
-          {/* Header Bar */}
-          <div className="px-4 py-3 border-b border-gray-700" style={{ backgroundColor: '#1a1625', borderColor: '#2d2438' }}>
-            <div className="flex items-center justify-between">
-              <h1 className="text-xl font-bold text-gray-100">Training Groups</h1>
-              <Link href="/groups/create">
-                <Button 
-                  size="sm" 
-                  className="bg-yellow-600 hover:bg-yellow-700 text-black font-medium"
-                >
-                  <Plus className="w-4 h-4" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-
           {/* Groups List - Full Width */}
           <div className="overflow-y-auto h-full">
             {groupsLoading ? (
