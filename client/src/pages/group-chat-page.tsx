@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -52,6 +52,7 @@ export default function GroupChatPage() {
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const [messageInputValue, setMessageInputValue] = useState("");
   const { toast } = useToast();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Get current user
   const { data: currentUser } = useQuery({
@@ -134,13 +135,21 @@ export default function GroupChatPage() {
   const handleSendMessage = (content: string) => {
     if (!selectedGroupId || !content.trim()) return;
     sendMessageMutation.mutate({ groupId: selectedGroupId, content: content.trim() });
+    setMessageInputValue(""); // Clear input after sending
   };
+
+  // Auto-scroll to bottom when messages change or group is selected
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, selectedGroupId]);
 
   const selectedGroup = (groups as Group[])?.find((g: Group) => g.id === selectedGroupId);
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="flex h-screen">
+    <div className="min-h-screen bg-black text-white pb-16">
+      <div className="flex min-h-screen">
         {!selectedGroup ? (
           /* Groups List - Full Width */
           <div className="flex-1 bg-black">
@@ -269,6 +278,9 @@ export default function GroupChatPage() {
                       <p>No messages yet. Start the conversation!</p>
                     </div>
                   )}
+                  
+                  {/* Auto-scroll anchor */}
+                  <div ref={messagesEndRef} />
                 </div>
               )}
             </div>
