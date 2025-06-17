@@ -60,8 +60,7 @@ import PublicProfilePage from "@/pages/public-profile-page";
 import ExerciseLibraryPage from "@/pages/exercise-library-page";
 import ExerciseLibraryAddPage from "@/pages/exercise-library-add-page";
 import VideoAnalysisPage from "@/pages/video-analysis-page";
-import AdminPage from "@/pages/admin-page";
-import AdminPanel from "@/pages/admin-panel";
+import AdminPanelPage from "@/pages/admin-panel-page";
 import SprinthiaPage from "@/pages/sprinthia-simple";
 import RehabPage from "@/pages/rehab-page";
 import HamstringRehabPage from "@/pages/rehab/acute-muscle/hamstring";
@@ -172,8 +171,7 @@ function Router() {
       
       {/* Public Profiles - separate URL pattern */}
       <Route path="/user/:userId" component={PublicProfilePage} />
-      <ProtectedRoute path="/admin" component={AdminPage} />
-      <ProtectedRoute path="/admin-panel" component={AdminPanel} />
+      <ProtectedRoute path="/admin-panel" component={AdminPanelPage} />
       
       {/* Auth */}
       <Route path="/auth" component={AuthPage} />
