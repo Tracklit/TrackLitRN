@@ -243,14 +243,25 @@ export default function GroupChatPage() {
               <div className="p-4 text-gray-400">Loading messages...</div>
             ) : (
               <div className="px-4 py-2">
-                {(messages as GroupMessage[])?.map((message: GroupMessage) => (
-                  <div key={message.id} className="py-3 px-4">
-                    <div className="text-gray-200 text-sm break-words leading-relaxed">{message.content}</div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                {(messages as GroupMessage[])?.map((message: GroupMessage) => {
+                  const isCurrentUser = message.userId === currentUser?.id;
+                  return (
+                    <div key={message.id} className={`flex mb-3 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
+                      <div 
+                        className={`max-w-[70%] px-4 py-2 rounded-2xl break-words ${
+                          isCurrentUser 
+                            ? 'bg-yellow-600 text-black rounded-br-sm' 
+                            : 'bg-gray-700 text-gray-100 rounded-bl-sm'
+                        }`}
+                      >
+                        <div className="text-sm leading-relaxed">{message.content}</div>
+                        <div className={`text-xs mt-1 ${isCurrentUser ? 'text-black/70' : 'text-gray-400'}`}>
+                          {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 
                 {(!messages || (messages as GroupMessage[]).length === 0) && (
                   <div className="text-center py-12 text-gray-400">
