@@ -70,9 +70,11 @@ export default function GroupChatPage() {
     queryKey: ["/api/user"],
   });
 
-  // Fetch groups
-  const { data: groups, isLoading: groupsLoading } = useQuery({
+  // Fetch groups with forced refresh
+  const { data: groups, isLoading: groupsLoading, refetch: refetchGroups } = useQuery({
     queryKey: ["/api/groups"],
+    staleTime: 0, // Always consider data stale
+    gcTime: 0, // Don't cache (TanStack Query v5 syntax)
   });
 
   // Fetch group messages
