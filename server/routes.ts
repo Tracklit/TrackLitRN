@@ -10,6 +10,8 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import sharp from "sharp";
+import crypto from "crypto";
+import bcrypt from "bcrypt";
 import Stripe from "stripe";
 import { transcribeAudioHandler, upload as audioUpload } from "./routes/transcribe";
 import { getUserJournalEntries, createJournalEntry, updateJournalEntry, deleteJournalEntry } from "./routes/journal";
@@ -6631,12 +6633,12 @@ Keep the response professional, evidence-based, and specific to track and field 
         return res.status(403).json({ error: "You are not a member of this group" });
       }
 
-      const groupMessages = await db
+      const messages = await db
         .select({
           id: groupMessages.id,
           groupId: groupMessages.groupId,
-          userId: groupMessages.userId,
-          content: groupMessages.content,
+          userId: groupMessages.senderId,
+          content: groupMessages.message,
           createdAt: groupMessages.createdAt,
           user: {
             name: users.name,
@@ -6645,11 +6647,11 @@ Keep the response professional, evidence-based, and specific to track and field 
           }
         })
         .from(groupMessages)
-        .innerJoin(users, eq(groupMessages.userId, users.id))
+        .innerJoin(users, eq(groupMessages.senderId, users.id))
         .where(eq(groupMessages.groupId, groupId))
         .orderBy(groupMessages.createdAt);
 
-      res.json(groupMessages);
+      res.json(messages);
     } catch (error) {
       console.error("Error fetching group messages:", error);
       res.status(500).json({ error: "Failed to fetch messages" });
@@ -6689,8 +6691,8 @@ Keep the response professional, evidence-based, and specific to track and field 
         .insert(groupMessages)
         .values({
           groupId,
-          userId: req.user.id,
-          content: content.trim()
+          senderId: req.user.id,
+          message: content.trim()
         })
         .returning();
 
@@ -6729,7 +6731,7 @@ Keep the response professional, evidence-based, and specific to track and field 
           id: chatGroupMembers.id,
           groupId: chatGroupMembers.groupId,
           userId: chatGroupMembers.userId,
-          joinedAt: chatGroupMembers.joinedAt,
+          joinedAt: chatGroupMembers.createdAt,
           user: {
             id: users.id,
             name: users.name,
