@@ -148,8 +148,8 @@ export default function GroupChatPage() {
   const selectedGroup = (groups as Group[])?.find((g: Group) => g.id === selectedGroupId);
 
   return (
-    <div className="min-h-screen bg-black text-white pb-16">
-      <div className="flex min-h-screen">
+    <div className="h-screen bg-black text-white flex flex-col">
+      <div className="flex flex-1 overflow-hidden">
         {!selectedGroup ? (
           /* Groups List - Full Width */
           <div className="flex-1 bg-black">
@@ -221,7 +221,7 @@ export default function GroupChatPage() {
           </div>
         ) : (
           /* Chat View - Full Width */
-          <div className="flex-1 flex flex-col bg-black h-screen">
+          <div className="flex-1 flex flex-col bg-black">
             {/* Chat Header */}
             <div className="bg-gray-900 border-b border-gray-700 p-4 flex-shrink-0">
               <div className="flex items-center justify-between">
@@ -248,7 +248,7 @@ export default function GroupChatPage() {
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 p-4 overflow-y-auto" style={{ paddingBottom: '80px' }}>
+            <div className="flex-1 p-4 overflow-y-auto">
               {messagesLoading ? (
                 <div className="text-gray-400">Loading messages...</div>
               ) : (
@@ -284,42 +284,44 @@ export default function GroupChatPage() {
                 </div>
               )}
             </div>
-
-            {/* Message Input - Fixed at bottom */}
-            <div className="fixed bottom-16 left-0 right-0 p-4 bg-black border-t border-gray-700">
-              <div className="flex space-x-3">
-                <input
-                  type="text"
-                  value={messageInputValue}
-                  onChange={(e) => setMessageInputValue(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      if (messageInputValue.trim()) {
-                        handleSendMessage(messageInputValue);
-                      }
-                    }
-                  }}
-                  placeholder="Type a message..."
-                  className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-yellow-500"
-                  disabled={sendMessageMutation.isPending}
-                />
-                <Button
-                  onClick={() => {
-                    if (messageInputValue.trim()) {
-                      handleSendMessage(messageInputValue);
-                    }
-                  }}
-                  disabled={sendMessageMutation.isPending || !messageInputValue.trim()}
-                  className="bg-yellow-600 hover:bg-yellow-700 text-black font-medium"
-                >
-                  Send
-                </Button>
-              </div>
-            </div>
           </div>
         )}
       </div>
+      
+      {/* Message Input - Absolute bottom when in chat */}
+      {selectedGroup && (
+        <div className="p-4 bg-black border-t border-gray-700 flex-shrink-0">
+          <div className="flex space-x-3">
+            <input
+              type="text"
+              value={messageInputValue}
+              onChange={(e) => setMessageInputValue(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  if (messageInputValue.trim()) {
+                    handleSendMessage(messageInputValue);
+                  }
+                }
+              }}
+              placeholder="Type a message..."
+              className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-yellow-500"
+              disabled={sendMessageMutation.isPending}
+            />
+            <Button
+              onClick={() => {
+                if (messageInputValue.trim()) {
+                  handleSendMessage(messageInputValue);
+                }
+              }}
+              disabled={sendMessageMutation.isPending || !messageInputValue.trim()}
+              className="bg-yellow-600 hover:bg-yellow-700 text-black font-medium"
+            >
+              Send
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
