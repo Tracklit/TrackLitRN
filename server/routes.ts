@@ -6513,7 +6513,7 @@ Keep the response professional, evidence-based, and specific to track and field 
             .orderBy(desc(groupMessages.createdAt))
             .limit(1);
 
-          return {
+          const result = {
             ...group,
             memberCount: memberCount[0]?.count || 0,
             coach: {
@@ -6522,6 +6522,9 @@ Keep the response professional, evidence-based, and specific to track and field 
             },
             latestMessage: latestMessage[0] || null
           };
+          
+          console.log(`Group ${group.id} latest message:`, latestMessage[0]);
+          return result;
         })
       );
 

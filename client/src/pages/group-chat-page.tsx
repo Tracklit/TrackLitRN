@@ -267,7 +267,7 @@ export default function GroupChatPage() {
                     <div key={message.id} className={`flex mb-3 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
                       {/* Profile image for other users - left side */}
                       {!isCurrentUser && (
-                        <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center text-xs text-gray-300 mr-2 flex-shrink-0 mt-1">
+                        <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center text-xs text-gray-300 mr-2 flex-shrink-0" style={{ marginTop: '35px' }}>
                           {message.user?.profileImageUrl ? (
                             <img 
                               src={message.user.profileImageUrl} 
@@ -302,7 +302,7 @@ export default function GroupChatPage() {
                       
                       {/* Profile image for current user - right side */}
                       {isCurrentUser && (
-                        <div className="w-8 h-8 rounded-full bg-yellow-600 flex items-center justify-center text-xs text-black ml-2 flex-shrink-0 mt-1">
+                        <div className="w-8 h-8 rounded-full bg-yellow-600 flex items-center justify-center text-xs text-black ml-2 flex-shrink-0" style={{ marginTop: '35px' }}>
                           {currentUser?.profileImageUrl ? (
                             <img 
                               src={currentUser.profileImageUrl} 
