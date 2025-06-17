@@ -131,6 +131,7 @@ export default function GroupChatPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/groups/${selectedGroupId}/messages`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/groups"] }); // Refresh groups list to show latest message
       setMessageInputValue("");
     },
     onError: (error: Error) => {

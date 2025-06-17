@@ -6528,7 +6528,7 @@ Keep the response professional, evidence-based, and specific to track and field 
             latestMessage: latestMessage[0] || null
           };
           
-          console.log(`Group ${group.id} latest message:`, latestMessage[0]);
+          console.log(`Group ${group.id} latest message query at ${new Date().toISOString()}:`, latestMessage[0]);
           console.log(`Full result for group ${group.id}:`, JSON.stringify(result, null, 2));
           return result;
         })
