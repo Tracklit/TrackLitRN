@@ -33,6 +33,7 @@ import { Component as WorkoutToolsPage } from "@/pages/training-tools-page";
 import ClubsPage from "@/pages/clubs-page";
 import { Component as ClubDetailPage } from "@/pages/club-detail-page";
 import { Component as ClubManagementPage } from "@/pages/club-management-page";
+import { Component as GroupChatPage } from "@/pages/group-chat-page";
 
 import ConversationsPage from "@/pages/conversations-page";
 import ConversationDetailPage from "@/pages/conversation-detail-page";
@@ -148,6 +149,7 @@ function Router() {
       <ProtectedRoute path="/clubs" component={ClubsPage} />
       <ProtectedRoute path="/club/:id" component={ClubDetailPage} />
       <ProtectedRoute path="/club-management/:id" component={ClubManagementPage} />
+      <ProtectedRoute path="/groups" component={GroupChatPage} />
 
 
       

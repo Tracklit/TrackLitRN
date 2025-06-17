@@ -2,7 +2,7 @@ import express, { type Express, type Request, type Response } from "express";
 import { createServer, type Server } from "http";
 import { storage as dbStorage } from "./storage";
 import { pool, db } from "./db";
-import { meets, notifications } from "@shared/schema";
+import { meets, notifications, groups, chatGroupMembers, groupMessages, users, passwordResetTokens } from "@shared/schema";
 import { and, eq, or, sql, isNotNull } from "drizzle-orm";
 import { setupAuth } from "./auth";
 import { z } from "zod";
@@ -6517,6 +6517,234 @@ Keep the response professional, evidence-based, and specific to track and field 
     } catch (error) {
       console.error("Error getting coach limits:", error);
       res.status(500).json({ error: "Failed to get coach limits" });
+    }
+  });
+
+  // Group Chat API Routes
+
+  // Get user's groups
+  app.get("/api/groups", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const userGroups = await db
+        .select({
+          id: groups.id,
+          name: groups.name,
+          description: groups.description,
+          coachId: groups.ownerId,
+          createdAt: groups.createdAt,
+          coach: {
+            name: users.name,
+            username: users.username
+          }
+        })
+        .from(chatGroupMembers)
+        .innerJoin(groups, eq(chatGroupMembers.groupId, groups.id))
+        .innerJoin(users, eq(groups.ownerId, users.id))
+        .where(eq(chatGroupMembers.userId, req.user.id));
+
+      // Get member counts for each group
+      const groupsWithCounts = await Promise.all(
+        userGroups.map(async (group) => {
+          const memberCount = await db
+            .select({ count: sql<number>`count(*)` })
+            .from(chatGroupMembers)
+            .where(eq(chatGroupMembers.groupId, group.id));
+
+          return {
+            ...group,
+            memberCount: memberCount[0]?.count || 0
+          };
+        })
+      );
+
+      res.json(groupsWithCounts);
+    } catch (error) {
+      console.error("Error fetching groups:", error);
+      res.status(500).json({ error: "Failed to fetch groups" });
+    }
+  });
+
+  // Create new group (coaches and star users only)
+  app.post("/api/groups", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const user = req.user;
+    if (!user.isCoach && user.subscriptionTier !== 'star') {
+      return res.status(403).json({ error: "Only coaches and Star subscribers can create groups" });
+    }
+
+    try {
+      const { name, description } = req.body;
+
+      if (!name?.trim()) {
+        return res.status(400).json({ error: "Group name is required" });
+      }
+
+      // Create the group
+      const [newGroup] = await db
+        .insert(groups)
+        .values({
+          name: name.trim(),
+          description: description?.trim() || '',
+          ownerId: user.id,
+          clubId: null // For now, groups are not tied to clubs
+        })
+        .returning();
+
+      // Add creator as a member
+      await db
+        .insert(chatGroupMembers)
+        .values({
+          groupId: newGroup.id,
+          userId: user.id
+        });
+
+      res.status(201).json(newGroup);
+    } catch (error) {
+      console.error("Error creating group:", error);
+      res.status(500).json({ error: "Failed to create group" });
+    }
+  });
+
+  // Get group messages
+  app.get("/api/groups/:groupId/messages", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const groupId = parseInt(req.params.groupId);
+    if (isNaN(groupId)) return res.status(400).json({ error: "Invalid group ID" });
+
+    try {
+      // Verify user is a member of the group
+      const membership = await db
+        .select()
+        .from(chatGroupMembers)
+        .where(
+          and(
+            eq(chatGroupMembers.groupId, groupId),
+            eq(chatGroupMembers.userId, req.user.id)
+          )
+        );
+
+      if (membership.length === 0) {
+        return res.status(403).json({ error: "You are not a member of this group" });
+      }
+
+      const groupMessages = await db
+        .select({
+          id: groupMessages.id,
+          groupId: groupMessages.groupId,
+          userId: groupMessages.userId,
+          content: groupMessages.content,
+          createdAt: groupMessages.createdAt,
+          user: {
+            name: users.name,
+            username: users.username,
+            profileImageUrl: users.profileImageUrl
+          }
+        })
+        .from(groupMessages)
+        .innerJoin(users, eq(groupMessages.userId, users.id))
+        .where(eq(groupMessages.groupId, groupId))
+        .orderBy(groupMessages.createdAt);
+
+      res.json(groupMessages);
+    } catch (error) {
+      console.error("Error fetching group messages:", error);
+      res.status(500).json({ error: "Failed to fetch messages" });
+    }
+  });
+
+  // Send message to group
+  app.post("/api/groups/:groupId/messages", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const groupId = parseInt(req.params.groupId);
+    if (isNaN(groupId)) return res.status(400).json({ error: "Invalid group ID" });
+
+    try {
+      const { content } = req.body;
+
+      if (!content?.trim()) {
+        return res.status(400).json({ error: "Message content is required" });
+      }
+
+      // Verify user is a member of the group
+      const membership = await db
+        .select()
+        .from(chatGroupMembers)
+        .where(
+          and(
+            eq(chatGroupMembers.groupId, groupId),
+            eq(chatGroupMembers.userId, req.user.id)
+          )
+        );
+
+      if (membership.length === 0) {
+        return res.status(403).json({ error: "You are not a member of this group" });
+      }
+
+      const [newMessage] = await db
+        .insert(groupMessages)
+        .values({
+          groupId,
+          userId: req.user.id,
+          content: content.trim()
+        })
+        .returning();
+
+      res.status(201).json(newMessage);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      res.status(500).json({ error: "Failed to send message" });
+    }
+  });
+
+  // Get group members
+  app.get("/api/groups/:groupId/members", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const groupId = parseInt(req.params.groupId);
+    if (isNaN(groupId)) return res.status(400).json({ error: "Invalid group ID" });
+
+    try {
+      // Verify user is a member of the group
+      const membership = await db
+        .select()
+        .from(chatGroupMembers)
+        .where(
+          and(
+            eq(chatGroupMembers.groupId, groupId),
+            eq(chatGroupMembers.userId, req.user.id)
+          )
+        );
+
+      if (membership.length === 0) {
+        return res.status(403).json({ error: "You are not a member of this group" });
+      }
+
+      const members = await db
+        .select({
+          id: chatGroupMembers.id,
+          groupId: chatGroupMembers.groupId,
+          userId: chatGroupMembers.userId,
+          joinedAt: chatGroupMembers.joinedAt,
+          user: {
+            id: users.id,
+            name: users.name,
+            username: users.username,
+            profileImageUrl: users.profileImageUrl
+          }
+        })
+        .from(chatGroupMembers)
+        .innerJoin(users, eq(chatGroupMembers.userId, users.id))
+        .where(eq(chatGroupMembers.groupId, groupId));
+
+      res.json(members);
+    } catch (error) {
+      console.error("Error fetching group members:", error);
+      res.status(500).json({ error: "Failed to fetch members" });
     }
   });
 
