@@ -221,9 +221,9 @@ export default function GroupChatPage() {
           </div>
         ) : (
           /* Chat View - Full Width */
-          <div className="flex-1 flex flex-col bg-black">
+          <div className="flex-1 flex flex-col bg-black h-screen">
             {/* Chat Header */}
-            <div className="bg-gray-900 border-b border-gray-700 p-4">
+            <div className="bg-gray-900 border-b border-gray-700 p-4 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <Button
@@ -248,7 +248,7 @@ export default function GroupChatPage() {
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 p-4 overflow-y-auto">
+            <div className="flex-1 p-4 overflow-y-auto" style={{ paddingBottom: '80px' }}>
               {messagesLoading ? (
                 <div className="text-gray-400">Loading messages...</div>
               ) : (
@@ -285,8 +285,8 @@ export default function GroupChatPage() {
               )}
             </div>
 
-            {/* Message Input */}
-            <div className="p-4 border-t border-gray-700">
+            {/* Message Input - Fixed at bottom */}
+            <div className="fixed bottom-16 left-0 right-0 p-4 bg-black border-t border-gray-700">
               <div className="flex space-x-3">
                 <input
                   type="text"
