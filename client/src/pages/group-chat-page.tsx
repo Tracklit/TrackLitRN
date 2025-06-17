@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -66,7 +66,6 @@ export default function GroupChatPage() {
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const [messageInputValue, setMessageInputValue] = useState("");
   const { toast } = useToast();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Get current user
   const { data: currentUser } = useQuery({
@@ -150,11 +149,6 @@ export default function GroupChatPage() {
     if (!selectedGroupId || !content.trim()) return;
     sendMessageMutation.mutate({ groupId: selectedGroupId, content: content.trim() });
   };
-
-  // Scroll to bottom when new messages arrive
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
 
   const selectedGroup = (groups as Group[])?.find((g: Group) => g.id === selectedGroupId);
 
@@ -247,91 +241,60 @@ export default function GroupChatPage() {
                     </p>
                   </div>
                   <div className="text-sm text-gray-400">
-                    {(members as GroupMember[])?.length || 0} members
+                    {selectedGroup.memberCount} members
                   </div>
                 </div>
               </div>
 
-              {/* Chat Messages */}
-              <div className="flex-1 flex">
-                <div className="flex-1 flex flex-col">
-                  <div style={{ position: "relative", height: "400px", flexGrow: 1 }}>
-                    <MainContainer responsive>
-                      <ChatContainer>
-                        <MessageList 
-                          loading={messagesLoading}
-                          typingIndicator={sendMessageMutation.isPending ? <TypingIndicator content="Sending message..." /> : null}
-                        >
-                          {(messages as GroupMessage[])?.map((message: GroupMessage, index: number) => {
-                            const isOwn = message.userId === (currentUser as any)?.id;
-                            const showSeparator = index === 0 || 
-                              new Date((messages as GroupMessage[])[index - 1].createdAt).toDateString() !== new Date(message.createdAt).toDateString();
-                            
-                            return (
-                              <div key={message.id}>
-                                {showSeparator && (
-                                  <MessageSeparator content={new Date(message.createdAt).toLocaleDateString()} />
+              {/* Chat Messages - Full Width */}
+              <div className="flex-1 flex flex-col">
+                <div style={{ position: "relative", height: "400px", flexGrow: 1 }}>
+                  <MainContainer responsive>
+                    <ChatContainer>
+                      <MessageList 
+                        loading={messagesLoading}
+                        typingIndicator={sendMessageMutation.isPending ? <TypingIndicator content="Sending message..." /> : null}
+                      >
+                        {(messages as GroupMessage[])?.map((message: GroupMessage, index: number) => {
+                          const isOwn = message.userId === (currentUser as any)?.id;
+                          const showSeparator = index === 0 || 
+                            new Date((messages as GroupMessage[])[index - 1].createdAt).toDateString() !== new Date(message.createdAt).toDateString();
+                          
+                          return (
+                            <div key={message.id}>
+                              {showSeparator && (
+                                <MessageSeparator content={new Date(message.createdAt).toLocaleDateString()} />
+                              )}
+                              <Message
+                                model={{
+                                  message: message.content,
+                                  sentTime: new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                                  sender: message.user?.name || 'Unknown User',
+                                  direction: isOwn ? "outgoing" : "incoming",
+                                  position: "single"
+                                }}
+                              >
+                                {!isOwn && (
+                                  <Avatar 
+                                    src={message.user?.profileImageUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${message.user?.name || 'U'}`}
+                                    name={message.user?.name || 'Unknown User'}
+                                  />
                                 )}
-                                <Message
-                                  model={{
-                                    message: message.content,
-                                    sentTime: new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                                    sender: message.user.name,
-                                    direction: isOwn ? "outgoing" : "incoming",
-                                    position: "single"
-                                  }}
-                                >
-                                  {!isOwn && (
-                                    <Avatar 
-                                      src={message.user.profileImageUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${message.user.name}`}
-                                      name={message.user.name}
-                                    />
-                                  )}
-                                </Message>
-                              </div>
-                            );
-                          })}
-                          <div ref={messagesEndRef} />
-                        </MessageList>
-                        <MessageInput
-                          placeholder="Type a message..."
-                          value={messageInputValue}
-                          onChange={(val) => setMessageInputValue(val)}
-                          onSend={handleSendMessage}
-                          disabled={sendMessageMutation.isPending}
-                          attachButton={false}
-                        />
-                      </ChatContainer>
-                    </MainContainer>
-                  </div>
-                </div>
-
-                {/* Right Sidebar - Members */}
-                <div className="w-64 bg-gray-900 border-l border-gray-700">
-                  <div className="p-4">
-                    <h3 className="font-semibold mb-3 flex items-center">
-                      <Users className="w-4 h-4 mr-2" />
-                      Members ({(members as GroupMember[])?.length || 0})
-                    </h3>
-                    <div className="space-y-2">
-                      {(members as GroupMember[])?.map((member: GroupMember) => (
-                        <div key={member.id} className="flex items-center space-x-2">
-                          <img
-                            src={member.user.profileImageUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${member.user.name}`}
-                            alt={member.user.name}
-                            className="w-8 h-8 rounded-full"
-                          />
-                          <div>
-                            <div className="text-sm font-medium">{member.user.name}</div>
-                            <div className="text-xs text-gray-400">@{member.user.username}</div>
-                          </div>
-                          {selectedGroup.coachId === member.user.id && (
-                            <Crown className="w-4 h-4 text-yellow-500 ml-auto" />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                              </Message>
+                            </div>
+                          );
+                        })}
+                      </MessageList>
+                      <MessageInput
+                        placeholder="Type a message..."
+                        value={messageInputValue}
+                        onChange={(val) => setMessageInputValue(val)}
+                        onSend={handleSendMessage}
+                        disabled={sendMessageMutation.isPending}
+                        attachButton={false}
+                      />
+                    </ChatContainer>
+                  </MainContainer>
                 </div>
               </div>
             </>
