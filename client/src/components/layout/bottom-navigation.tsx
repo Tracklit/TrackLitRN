@@ -133,7 +133,7 @@ export function BottomNavigation() {
     <div 
       className={cn(
         "fixed bottom-0 left-0 right-0 z-30 md:hidden transition-transform duration-300 ease-in-out",
-        isVisible ? "translate-y-0" : "translate-y-full"
+        (isVisible && !isKeyboardVisible) ? "translate-y-0" : "translate-y-full"
       )}
     >
       <nav className="bg-gray-900 shadow-lg border-t border-gray-700 h-14">

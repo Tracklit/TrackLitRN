@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useKeyboard } from "@/contexts/keyboard-context";
 
 interface GroupWithMembers extends Group {
   members: (ChatGroupMember & { user: User })[];
@@ -31,6 +32,7 @@ interface GroupMessageWithUser extends GroupMessage {
 export default function GroupsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { setKeyboardVisible } = useKeyboard();
   const [location] = useLocation();
   
   // Extract groupId from URL path
@@ -257,6 +259,8 @@ export default function GroupsPage() {
               placeholder="Search groups..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setKeyboardVisible(true)}
+              onBlur={() => setKeyboardVisible(false)}
               className="pl-10 bg-gray-800 border-gray-600 text-white placeholder-gray-400"
             />
           </div>
@@ -393,6 +397,8 @@ export default function GroupsPage() {
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
+                  onFocus={() => setKeyboardVisible(true)}
+                  onBlur={() => setKeyboardVisible(false)}
                   placeholder="Type a message..."
                   className="flex-1 bg-gray-800 border-gray-600 text-white placeholder-gray-400"
                 />
