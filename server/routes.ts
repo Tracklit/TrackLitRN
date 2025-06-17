@@ -6587,7 +6587,7 @@ Keep the response professional, evidence-based, and specific to track and field 
           id: groupMessages.id,
           groupId: groupMessages.groupId,
           userId: groupMessages.senderId,
-          content: groupMessages.message,
+          content: groupMessages.content,
           createdAt: groupMessages.createdAt,
           user: {
             name: users.name,
