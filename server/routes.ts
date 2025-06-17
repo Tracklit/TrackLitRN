@@ -6479,7 +6479,10 @@ Keep the response professional, evidence-based, and specific to track and field 
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.set('Pragma', 'no-cache');
     res.set('Expires', '0');
+    res.set('ETag', Date.now().toString()); // Change ETag to force refresh
     res.set('X-Timestamp', Date.now().toString());
+    
+    console.log(`[GROUPS API] Processing request at ${new Date().toISOString()} for user ${req.user.id}`);
 
     try {
       const userGroups = await db

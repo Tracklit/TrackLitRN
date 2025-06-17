@@ -74,6 +74,16 @@ export default function GroupChatPage() {
   // Fetch groups with timestamp-based cache busting
   const { data: groups, isLoading: groupsLoading, refetch: refetchGroups } = useQuery({
     queryKey: ["/api/groups", refreshTimestamp],
+    queryFn: async () => {
+      const response = await fetch(`/api/groups?t=${refreshTimestamp}&nocache=${Date.now()}`, {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+      });
+      if (!response.ok) throw new Error('Failed to fetch groups');
+      return response.json();
+    },
     staleTime: 0, // Always consider data stale
     gcTime: 0, // Don't cache (TanStack Query v5 syntax)
   });
@@ -159,6 +169,22 @@ export default function GroupChatPage() {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages, selectedGroupId]);
+
+  // Handle virtual keyboard on mobile
+  useEffect(() => {
+    const handleResize = () => {
+      const viewport = window.visualViewport;
+      if (viewport) {
+        const isKeyboardOpen = viewport.height < window.innerHeight * 0.75;
+        document.body.classList.toggle('keyboard-open', isKeyboardOpen);
+      }
+    };
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
+      return () => window.visualViewport.removeEventListener('resize', handleResize);
+    }
+  }, []);
 
   const selectedGroup = (groups as Group[])?.find((g: Group) => g.id === selectedGroupId);
 
