@@ -221,10 +221,21 @@ function MainApp() {
   };
 
   if (isGroupsRoute) {
-    // Full-screen layout for groups
+    // Full-screen layout for groups with header
     return (
       <div className="h-screen text-gray-100 overflow-hidden" style={{ backgroundColor: '#1a1625' }}>
-        <Router />
+        {/* Top Header Bar */}
+        <Header />
+        
+        {/* Hamburger Menu for all screens */}
+        <div className="fixed top-4 left-4 z-50">
+          <HamburgerMenu />
+        </div>
+        
+        {/* Main Content - Account for header height */}
+        <div className="pt-16 h-full">
+          <Router />
+        </div>
         
         {/* Onboarding flow - Only show for logged in users who haven't seen it */}
         {user && showOnboarding && (

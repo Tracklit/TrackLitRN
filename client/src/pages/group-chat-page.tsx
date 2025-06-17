@@ -148,7 +148,7 @@ export default function GroupChatPage() {
   const selectedGroup = (groups as Group[])?.find((g: Group) => g.id === selectedGroupId);
 
   return (
-    <div className="h-screen bg-gray-900 text-gray-100" style={{ backgroundColor: '#1a1625' }}>
+    <div className="h-full bg-gray-900 text-gray-100" style={{ backgroundColor: '#1a1625' }}>
       {!selectedGroup ? (
         /* Groups List - Telegram Style */
         <div className="h-full" style={{ backgroundColor: '#1a1625' }}>
