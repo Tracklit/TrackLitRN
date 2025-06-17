@@ -280,7 +280,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="flex h-screen bg-[#010a18] text-white">
+    <div className="flex h-screen text-white">
       <div className="flex-1 overflow-auto">
         <main className="pt-16 pb-6">
           <div className="max-w-4xl mx-auto px-4">
@@ -456,12 +456,9 @@ export default function ProfilePage() {
             </Card>
 
             {/* Latest Workout */}
-            <Card className="bg-blue-900/20 border-blue-800/60 mb-6">
-              <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <Card className="bg-black/95 border-purple-500/25 mb-6" style={{ borderWidth: '0.5px' }}>
+              <CardHeader className="pb-3">
                 <CardTitle className="text-lg">Latest Workout</CardTitle>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                  <Edit className="h-3 w-3" />
-                </Button>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-400 text-sm">No recent workouts found.</p>
@@ -469,12 +466,9 @@ export default function ProfilePage() {
             </Card>
 
             {/* Upcoming Meets */}
-            <Card className="bg-blue-900/20 border-blue-800/60 mb-6">
-              <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <Card className="bg-black/95 border-purple-500/25 mb-6" style={{ borderWidth: '0.5px' }}>
+              <CardHeader className="pb-3">
                 <CardTitle className="text-lg">Upcoming Meets</CardTitle>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                  <Edit className="h-3 w-3" />
-                </Button>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-400 text-sm">No upcoming meets.</p>
@@ -482,12 +476,9 @@ export default function ProfilePage() {
             </Card>
 
             {/* Recent Meets */}
-            <Card className="bg-blue-900/20 border-blue-800/60 mb-6">
-              <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <Card className="bg-black/95 border-purple-500/25 mb-6" style={{ borderWidth: '0.5px' }}>
+              <CardHeader className="pb-3">
                 <CardTitle className="text-lg">Recent Meets</CardTitle>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                  <Edit className="h-3 w-3" />
-                </Button>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-400 text-sm">No recent meets.</p>
@@ -496,12 +487,9 @@ export default function ProfilePage() {
 
             {/* Coach Features */}
             {user?.isCoach && (
-              <Card className="bg-blue-900/20 border-blue-800/60 mb-6">
-                <CardHeader className="flex flex-row items-center justify-between pb-3">
+              <Card className="bg-black/95 border-purple-500/25 mb-6" style={{ borderWidth: '0.5px' }}>
+                <CardHeader className="pb-3">
                   <CardTitle className="text-lg">My Programs</CardTitle>
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                    <Edit className="h-3 w-3" />
-                  </Button>
                 </CardHeader>
                 <CardContent>
                   <p className="text-gray-400 text-sm">No programs created yet.</p>
