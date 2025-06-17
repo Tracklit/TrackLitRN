@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { useQuery, useMutation, queryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -191,9 +192,9 @@ export default function GroupChatPage() {
   }, [messages]);
 
   // Check if user can create groups
-  const canCreateGroups = currentUser?.isCoach || currentUser?.subscriptionTier === 'star';
+  const canCreateGroups = (currentUser as any)?.isCoach || (currentUser as any)?.subscriptionTier === 'star';
 
-  const selectedGroup = groups.find((g: Group) => g.id === selectedGroupId);
+  const selectedGroup = (groups as Group[]).find((g: Group) => g.id === selectedGroupId);
 
   if (groupsLoading) {
     return (
@@ -301,7 +302,7 @@ export default function GroupChatPage() {
           </Card>
         )}
 
-        {groups.length === 0 ? (
+        {(groups as Group[]).length === 0 ? (
           <Card className="bg-black border border-purple-500/20">
             <CardContent className="p-8 text-center">
               <MessageCircle className="w-16 h-16 mx-auto mb-4 text-gray-600" />
@@ -319,7 +320,7 @@ export default function GroupChatPage() {
             <MainContainer>
               <Sidebar position="left" scrollable>
                 <ConversationList>
-                  {groups.map((group: Group) => (
+                  {(groups as Group[]).map((group: Group) => (
                     <Conversation
                       key={group.id}
                       name={group.name}
@@ -358,7 +359,7 @@ export default function GroupChatPage() {
                               Members ({members.length})
                             </h4>
                             <div className="space-y-2">
-                              {members.map((member: GroupMember) => (
+                              {(members as GroupMember[]).map((member: GroupMember) => (
                                 <div key={member.id} className="flex items-center space-x-2">
                                   <Avatar 
                                     name={member.user.name}
