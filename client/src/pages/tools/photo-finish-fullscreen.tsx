@@ -186,27 +186,29 @@ export default function PhotoFinishFullscreen({
   };
 
   const handleTimerTouchStart = (event: React.TouchEvent, timerId: string) => {
-    event.preventDefault();
-    event.stopPropagation();
-    
-    const timer = timers.find(t => t.id === timerId);
-    if (!timer) return;
-    
-    const touch = event.touches[0];
-    setIsDraggingTimer(true);
-    setDraggedTimerId(timerId);
-    
-    const container = videoContainerRef.current;
-    if (!container) return;
-    
-    const rect = container.getBoundingClientRect();
-    const timerX = (timer.x / 100) * rect.width;
-    const timerY = (timer.y / 100) * rect.height;
-    
-    setDragOffset({
-      x: touch.clientX - timerX,
-      y: touch.clientY - timerY
-    });
+    // Only prevent default for single touch - allow normal touch behavior for timer dragging
+    if (event.touches.length === 1) {
+      event.stopPropagation();
+      
+      const timer = timers.find(t => t.id === timerId);
+      if (!timer) return;
+      
+      const touch = event.touches[0];
+      setIsDraggingTimer(true);
+      setDraggedTimerId(timerId);
+      
+      const container = videoContainerRef.current;
+      if (!container) return;
+      
+      const rect = container.getBoundingClientRect();
+      const timerX = (timer.x / 100) * rect.width;
+      const timerY = (timer.y / 100) * rect.height;
+      
+      setDragOffset({
+        x: touch.clientX - timerX,
+        y: touch.clientY - timerY
+      });
+    }
   };
 
   // Delete timer function
@@ -308,6 +310,13 @@ export default function PhotoFinishFullscreen({
 
   // Touch handlers for mobile zoom and pan
   const handleVideoTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    // Check if touch started on a timer element
+    const target = event.target as HTMLElement;
+    if (target.closest('[data-timer-element]')) {
+      // Don't handle video touches if they started on a timer
+      return;
+    }
+    
     // Only prevent page zoom for multi-touch gestures
     if (event.touches.length > 1) {
       event.preventDefault();
@@ -329,7 +338,12 @@ export default function PhotoFinishFullscreen({
   };
 
   const handleVideoTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
-    // Prevent page zoom/scroll for all touch interactions
+    // Don't handle video touch moves if a timer is being dragged
+    if (isDraggingTimer) {
+      return;
+    }
+    
+    // Prevent page zoom/scroll for video interactions only
     event.preventDefault();
     event.stopPropagation();
     
@@ -384,56 +398,23 @@ export default function PhotoFinishFullscreen({
     setInitialScale(1);
   };
 
-  // Prevent page zoom globally when in photo finish mode
+  // Prevent page zoom only when needed
   useEffect(() => {
-    const preventPageZoom = (e: TouchEvent) => {
-      // Only prevent if touches are on the video container area and it's a multi-touch gesture
-      if (e.touches.length > 1) {
-        const videoContainer = videoContainerRef.current;
-        if (videoContainer) {
-          const rect = videoContainer.getBoundingClientRect();
-          const touch = e.touches[0];
-          // Check if touch is within video container bounds
-          if (touch.clientX >= rect.left && touch.clientX <= rect.right &&
-              touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
-            // Let our video handler manage this
-            return;
-          }
-        }
-        // Prevent page zoom for touches outside video area
-        e.preventDefault();
-      }
-    };
-
+    // Only prevent browser zoom gestures, not all touch events
     const preventPagePinch = (e: Event) => {
       e.preventDefault();
     };
 
-    // Add global touch event listeners to prevent page zoom
-    document.addEventListener('touchstart', preventPageZoom, { passive: false });
-    document.addEventListener('touchmove', preventPageZoom, { passive: false });
+    // Add minimal touch event listeners - only for webkit gestures
     document.addEventListener('gesturestart', preventPagePinch, { passive: false });
     document.addEventListener('gesturechange', preventPagePinch, { passive: false });
     document.addEventListener('gestureend', preventPagePinch, { passive: false });
 
-    // Add CSS to body to prevent zoom - preserve existing styles
-    const originalBodyTouchAction = document.body.style.touchAction;
-    const originalDocumentTouchAction = document.documentElement.style.touchAction;
-    
-    document.body.style.touchAction = 'manipulation';
-    document.documentElement.style.touchAction = 'manipulation';
-
     return () => {
       // Clean up event listeners
-      document.removeEventListener('touchstart', preventPageZoom);
-      document.removeEventListener('touchmove', preventPageZoom);
       document.removeEventListener('gesturestart', preventPagePinch);
       document.removeEventListener('gesturechange', preventPagePinch);
       document.removeEventListener('gestureend', preventPagePinch);
-
-      // Reset body styles to original values
-      document.body.style.touchAction = originalBodyTouchAction;
-      document.documentElement.style.touchAction = originalDocumentTouchAction;
     };
   }, []);
 
@@ -579,7 +560,7 @@ export default function PhotoFinishFullscreen({
         onTouchEnd={handleVideoTouchEnd}
         style={{ 
           cursor: isPanning ? 'grabbing' : (videoScale > 1 ? 'grab' : 'default'),
-          touchAction: 'pan-x pan-y pinch-zoom',
+          touchAction: 'manipulation',
           userSelect: 'none',
           WebkitUserSelect: 'none',
           WebkitTouchCallout: 'none'
@@ -638,6 +619,7 @@ export default function PhotoFinishFullscreen({
           return (
             <div
               key={timer.id}
+              data-timer-element="true"
               className="absolute bg-black/70 text-white px-4 py-2 text-lg font-mono cursor-move select-none group"
               style={{
                 left: `${timer.x}%`,
@@ -652,7 +634,7 @@ export default function PhotoFinishFullscreen({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                touchAction: 'none',
+                touchAction: 'manipulation',
                 pointerEvents: 'auto',
                 zIndex: 1000
               }}
