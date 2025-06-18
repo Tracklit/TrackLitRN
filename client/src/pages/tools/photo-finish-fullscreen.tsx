@@ -308,6 +308,10 @@ export default function PhotoFinishFullscreen({
 
   // Touch handlers for mobile zoom and pan
   const handleVideoTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    // Prevent page zoom/scroll for all touch interactions on video
+    event.preventDefault();
+    event.stopPropagation();
+    
     if (event.touches.length === 2) {
       // Pinch zoom start
       const distance = getTouchDistance(event.touches[0], event.touches[1]);
@@ -323,7 +327,9 @@ export default function PhotoFinishFullscreen({
   };
 
   const handleVideoTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    // Prevent page zoom/scroll for all touch interactions
     event.preventDefault();
+    event.stopPropagation();
     
     if (event.touches.length === 2 && initialPinchDistance !== null) {
       // Pinch zoom
@@ -366,11 +372,54 @@ export default function PhotoFinishFullscreen({
     }
   };
 
-  const handleVideoTouchEnd = () => {
+  const handleVideoTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+    // Prevent page zoom/scroll for all touch interactions
+    event.preventDefault();
+    event.stopPropagation();
+    
     setIsPanning(false);
     setInitialPinchDistance(null);
     setInitialScale(1);
   };
+
+  // Prevent page zoom globally when in photo finish mode
+  useEffect(() => {
+    const preventPageZoom = (e: TouchEvent) => {
+      if (e.touches.length > 1) {
+        e.preventDefault();
+      }
+    };
+
+    const preventPagePinch = (e: Event) => {
+      e.preventDefault();
+    };
+
+    // Add global touch event listeners to prevent page zoom
+    document.addEventListener('touchstart', preventPageZoom, { passive: false });
+    document.addEventListener('touchmove', preventPageZoom, { passive: false });
+    document.addEventListener('gesturestart', preventPagePinch, { passive: false });
+    document.addEventListener('gesturechange', preventPagePinch, { passive: false });
+    document.addEventListener('gestureend', preventPagePinch, { passive: false });
+
+    // Add CSS to body to prevent zoom
+    document.body.style.touchAction = 'pan-x pan-y';
+    document.body.style.userSelect = 'none';
+    document.documentElement.style.touchAction = 'pan-x pan-y';
+
+    return () => {
+      // Clean up event listeners
+      document.removeEventListener('touchstart', preventPageZoom);
+      document.removeEventListener('touchmove', preventPageZoom);
+      document.removeEventListener('gesturestart', preventPagePinch);
+      document.removeEventListener('gesturechange', preventPagePinch);
+      document.removeEventListener('gestureend', preventPagePinch);
+
+      // Reset body styles
+      document.body.style.touchAction = '';
+      document.body.style.userSelect = '';
+      document.documentElement.style.touchAction = '';
+    };
+  }, []);
 
   // Video event handlers
   useEffect(() => {
@@ -478,7 +527,15 @@ export default function PhotoFinishFullscreen({
 
 
   return (
-    <div className="fixed inset-0 bg-black text-white flex flex-col">
+    <div 
+      className="fixed inset-0 bg-black text-white flex flex-col"
+      style={{ 
+        touchAction: 'none',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        WebkitTouchCallout: 'none'
+      }}
+    >
       {/* Close Button - Fixed Position */}
       <button
         onClick={onClose}
@@ -504,7 +561,14 @@ export default function PhotoFinishFullscreen({
         onTouchStart={handleVideoTouchStart}
         onTouchMove={handleVideoTouchMove}
         onTouchEnd={handleVideoTouchEnd}
-        style={{ cursor: isPanning ? 'grabbing' : (videoScale > 1 ? 'grab' : 'default') }}
+        style={{ 
+          cursor: isPanning ? 'grabbing' : (videoScale > 1 ? 'grab' : 'default'),
+          touchAction: 'none',
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          WebkitTouchCallout: 'none',
+          msTouchAction: 'none'
+        }}
       >
         <video
           ref={videoRef}
