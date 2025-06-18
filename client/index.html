@@ -2,7 +2,25 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover" />
+    <style>
+      /* Prevent viewport shifts when keyboard appears */
+      html, body {
+        position: fixed;
+        overflow: hidden;
+        width: 100%;
+        height: 100%;
+      }
+      #root {
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+      }
+      /* Prevent iOS Safari from zooming on input focus */
+      input, textarea, select {
+        font-size: 16px !important;
+      }
+    </style>
     <title>TrackLit | Athlete Performance & Meet Planning</title>
     <meta name="description" content="Plan and prepare for your track and field meets with real-time weather forecasts, detailed preparation plans, and performance analytics." />
     <meta property="og:title" content="TrackLit | Athlete Performance & Meet Planning" />
