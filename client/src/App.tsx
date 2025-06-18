@@ -219,7 +219,7 @@ function MainApp() {
   }
   
   return (
-    <div className="min-h-screen text-foreground bg-gradient-to-br from-black via-darkNavy to-purple-900">
+    <div className="min-h-screen text-foreground">
       {/* Top Header Bar */}
       <Header />
       
