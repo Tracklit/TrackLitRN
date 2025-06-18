@@ -165,58 +165,103 @@ export async function analyzeVideoWithPrompt(
         
         console.log(`Sending ${imageContent.length} frames to OpenAI for analysis`);
         
-        // Use OpenAI's vision model to analyze the video frames
-        const response = await openai.chat.completions.create({
-          model: "gpt-4o",
-          messages: [
-            {
-              role: "system",
-              content: "You are Sprinthia, an expert AI sprint coach. Analyze the video frames showing sprint technique and provide detailed technical feedback. Structure your responses with clear sections and bullet points."
-            },
-            {
-              role: "user",
-              content: [
-                {
-                  type: "text",
-                  text: `${basePrompt}
+        try {
+          // Use OpenAI's vision model to analyze the video frames
+          const response = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+              {
+                role: "system",
+                content: "You are Sprinthia, an expert AI sprint coach and biomechanics analyst. You can analyze video frames showing athletic movement and running technique. Always provide specific, detailed technical feedback even if the video quality is not perfect. Focus on what you can observe and provide constructive analysis."
+              },
+              {
+                role: "user",
+                content: [
+                  {
+                    type: "text",
+                    text: `${basePrompt}
 
 Video: ${videoName}
 Description: ${videoDescription || "No description provided"}
 
-Analyze these ${imageContent.length} frames from the sprint video and provide technical feedback.
+Please analyze these ${imageContent.length} frames from the video. Even if the image quality is not perfect, provide your best technical assessment based on what you can observe. Look for:
+
+- Body positioning and posture
+- Arm and leg movement patterns  
+- Running form and technique
+- Any visible biomechanical elements
+
+Provide specific, actionable feedback in this format:
 
 ## Overall Assessment
-## Key Strengths  
-## Areas for Improvement
-## Recommendations
-## Next Steps
+[Provide your analysis of what you can see]
 
-Use bullet points for clarity.`
-                },
-                ...imageContent
-              ]
-            }
-          ],
-          max_tokens: 1200,
-          temperature: 0.7,
-        });
-        
-        // Clean up temp directory and original video file
-        frameFiles.forEach(file => {
-          try { fs.unlinkSync(file); } catch (e) {}
-        });
-        try { fs.rmdirSync(tempDir); } catch (e) {}
-        
-        // Delete the original video file after successful analysis
-        try { 
-          fs.unlinkSync(videoPath);
-          console.log(`Deleted original video file: ${videoPath}`);
-        } catch (e) {
-          console.warn(`Could not delete video file: ${videoPath}`, e);
+## Key Observations
+- [List specific technical observations]
+
+## Areas for Improvement  
+- [Suggest improvements based on visible form]
+
+## Recommendations
+- [Give specific training advice]
+
+Be specific and technical in your analysis. Do not say you cannot analyze - instead, work with what you can observe.`
+                  },
+                  ...imageContent
+                ]
+              }
+            ],
+            max_tokens: 1500,
+            temperature: 0.3,
+          });
+          
+          const analysisResult = response.choices[0].message.content || "Analysis could not be completed.";
+          console.log("Video analysis completed. Response length:", analysisResult.length);
+          console.log("Analysis preview:", analysisResult.substring(0, 200) + "...");
+          
+          // Clean up temp directory and original video file
+          frameFiles.forEach(file => {
+            try { fs.unlinkSync(file); } catch (e) {}
+          });
+          try { fs.rmdirSync(tempDir); } catch (e) {}
+          
+          // Delete the original video file after successful analysis
+          try { 
+            fs.unlinkSync(videoPath);
+            console.log(`Deleted original video file: ${videoPath}`);
+          } catch (e) {
+            console.warn(`Could not delete video file: ${videoPath}`, e);
+          }
+          
+          return analysisResult;
+          
+        } catch (apiError: any) {
+          console.error("OpenAI API Error:", {
+            message: apiError.message,
+            status: apiError.status,
+            type: apiError.type,
+            code: apiError.code
+          });
+          
+          // Clean up temp directory and original video file even on API failure
+          frameFiles.forEach(file => {
+            try { fs.unlinkSync(file); } catch (e) {}
+          });
+          try { fs.rmdirSync(tempDir); } catch (e) {}
+          try { 
+            fs.unlinkSync(videoPath);
+            console.log(`Deleted video file after API error: ${videoPath}`);
+          } catch (e) {}
+          
+          // Return specific error based on API response
+          if (apiError.message?.includes('insufficient_quota')) {
+            return "Video analysis is temporarily unavailable due to API limits. Please try again later or contact support.";
+          } else if (apiError.message?.includes('invalid_request_error')) {
+            return "The video format is not supported for analysis. Please try with a different video file.";
+          } else {
+            return `Video analysis failed: ${apiError.message || 'Unknown API error'}`;
+          }
         }
-        
-        console.log("Video analysis with frames completed successfully");
-        return response.choices[0].message.content || "Analysis could not be completed.";
       } else {
         // No frames extracted - clean up video file and return specific message
         console.log("No frames extracted from video");
