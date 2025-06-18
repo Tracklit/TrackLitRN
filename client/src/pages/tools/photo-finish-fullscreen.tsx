@@ -176,12 +176,12 @@ export default function PhotoFinishFullscreen({
     if (!container) return;
     
     const rect = container.getBoundingClientRect();
-    const timerX = (timer.x / 100) * rect.width;
-    const timerY = (timer.y / 100) * rect.height;
+    const currentAbsoluteX = rect.left + (timer.x / 100) * rect.width;
+    const currentAbsoluteY = rect.top + (timer.y / 100) * rect.height;
     
     setDragOffset({
-      x: event.clientX - timerX,
-      y: event.clientY - timerY
+      x: event.clientX - currentAbsoluteX,
+      y: event.clientY - currentAbsoluteY
     });
   };
 
@@ -201,12 +201,12 @@ export default function PhotoFinishFullscreen({
       if (!container) return;
       
       const rect = container.getBoundingClientRect();
-      const timerX = (timer.x / 100) * rect.width;
-      const timerY = (timer.y / 100) * rect.height;
+      const currentAbsoluteX = rect.left + (timer.x / 100) * rect.width;
+      const currentAbsoluteY = rect.top + (timer.y / 100) * rect.height;
       
       setDragOffset({
-        x: touch.clientX - timerX,
-        y: touch.clientY - timerY
+        x: touch.clientX - currentAbsoluteX,
+        y: touch.clientY - currentAbsoluteY
       });
     }
   };
@@ -450,16 +450,19 @@ export default function PhotoFinishFullscreen({
       if (!container) return;
       
       const rect = container.getBoundingClientRect();
-      const x = ((event.clientX - dragOffset.x) / rect.width) * 100;
-      const y = ((event.clientY - dragOffset.y) / rect.height) * 100;
       
-      // Constrain timer within container bounds
-      const constrainedX = Math.max(0, Math.min(100, x));
-      const constrainedY = Math.max(0, Math.min(100, y));
+      // Calculate new absolute position
+      const newAbsoluteX = event.clientX - dragOffset.x;
+      const newAbsoluteY = event.clientY - dragOffset.y;
       
+      // Convert back to percentage relative to video container
+      const x = ((newAbsoluteX - rect.left) / rect.width) * 100;
+      const y = ((newAbsoluteY - rect.top) / rect.height) * 100;
+      
+      // Allow timer to be positioned anywhere on screen (no constraints)
       setTimers(prev => prev.map(timer => 
         timer.id === draggedTimerId 
-          ? { ...timer, x: constrainedX, y: constrainedY }
+          ? { ...timer, x, y }
           : timer
       ));
     };
@@ -477,16 +480,19 @@ export default function PhotoFinishFullscreen({
       if (!container) return;
       
       const rect = container.getBoundingClientRect();
-      const x = ((touch.clientX - dragOffset.x) / rect.width) * 100;
-      const y = ((touch.clientY - dragOffset.y) / rect.height) * 100;
       
-      // Constrain timer within container bounds
-      const constrainedX = Math.max(0, Math.min(100, x));
-      const constrainedY = Math.max(0, Math.min(100, y));
+      // Calculate new absolute position
+      const newAbsoluteX = touch.clientX - dragOffset.x;
+      const newAbsoluteY = touch.clientY - dragOffset.y;
       
+      // Convert back to percentage relative to video container
+      const x = ((newAbsoluteX - rect.left) / rect.width) * 100;
+      const y = ((newAbsoluteY - rect.top) / rect.height) * 100;
+      
+      // Allow timer to be positioned anywhere on screen (no constraints)
       setTimers(prev => prev.map(timer => 
         timer.id === draggedTimerId 
-          ? { ...timer, x: constrainedX, y: constrainedY }
+          ? { ...timer, x, y }
           : timer
       ));
     };
@@ -611,51 +617,7 @@ export default function PhotoFinishFullscreen({
             transformOrigin: 'center center'
           }}
         />
-        
-        {/* Timer overlays - larger, moveable timers showing relative time */}
-        {timers.map((timer) => {
-          const relativeTime = currentTime - timer.startTime;
-          
-          return (
-            <div
-              key={timer.id}
-              data-timer-element="true"
-              className="absolute bg-black/70 text-white px-4 py-2 text-lg font-mono cursor-move select-none group"
-              style={{
-                left: `${timer.x}%`,
-                top: `${timer.y}%`,
-                borderRadius: '6px',
-                border: '2px solid rgba(255, 255, 255, 0.5)',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                minWidth: '80px',
-                textAlign: 'center',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                touchAction: 'manipulation',
-                pointerEvents: 'auto',
-                zIndex: 1000
-              }}
-              onMouseDown={(e) => handleTimerMouseDown(e, timer.id)}
-              onTouchStart={(e) => handleTimerTouchStart(e, timer.id)}
-            >
-              <span>{relativeTime >= 0 ? '+' : ''}{formatTimerTime(relativeTime)}</span>
-              <button
-                className="opacity-70 hover:opacity-100 transition-opacity text-red-400 hover:text-red-300"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  deleteTimer(timer.id);
-                }}
-                style={{ pointerEvents: 'auto' }}
-              >
-                <Trash2 size={14} />
-              </button>
-            </div>
-          );
-        })}
+
         
         {/* Zoom indicator */}
         {videoScale > 1 && (
@@ -664,6 +626,62 @@ export default function PhotoFinishFullscreen({
           </div>
         )}
       </div>
+
+      {/* Timer overlays - positioned relative to entire screen */}
+      {timers.map((timer) => {
+        const relativeTime = currentTime - timer.startTime;
+        const videoContainer = videoContainerRef.current;
+        
+        // Calculate absolute position based on video container bounds
+        let absoluteLeft = 0;
+        let absoluteTop = 0;
+        
+        if (videoContainer) {
+          const rect = videoContainer.getBoundingClientRect();
+          absoluteLeft = rect.left + (timer.x / 100) * rect.width;
+          absoluteTop = rect.top + (timer.y / 100) * rect.height;
+        }
+        
+        return (
+          <div
+            key={timer.id}
+            data-timer-element="true"
+            className="fixed bg-black/70 text-white px-4 py-2 text-lg font-mono cursor-move select-none group"
+            style={{
+              left: `${absoluteLeft}px`,
+              top: `${absoluteTop}px`,
+              borderRadius: '6px',
+              border: '2px solid rgba(255, 255, 255, 0.5)',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)',
+              fontSize: '18px',
+              fontWeight: 'bold',
+              minWidth: '80px',
+              textAlign: 'center',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              touchAction: 'manipulation',
+              pointerEvents: 'auto',
+              zIndex: 10000
+            }}
+            onMouseDown={(e) => handleTimerMouseDown(e, timer.id)}
+            onTouchStart={(e) => handleTimerTouchStart(e, timer.id)}
+          >
+            <span>{relativeTime >= 0 ? '+' : ''}{formatTimerTime(relativeTime)}</span>
+            <button
+              className="opacity-70 hover:opacity-100 transition-opacity text-red-400 hover:text-red-300"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                deleteTimer(timer.id);
+              }}
+              style={{ pointerEvents: 'auto' }}
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
+        );
+      })}
 
       {/* Controls above timeline */}
       <div className="bg-gray-900 border-t border-gray-700 px-6 py-2 flex items-center justify-between">
