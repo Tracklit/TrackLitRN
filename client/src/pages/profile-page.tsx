@@ -273,8 +273,8 @@ export default function ProfilePage() {
 
   return (
     <div className="flex flex-col h-screen bg-[#010a18] text-white">
-      <main className="flex-1 overflow-auto pt-16 pb-20">
-        <div className="container mx-auto px-4 py-6 max-w-6xl">
+      <main className="flex-1 overflow-auto pt-16 pb-32">
+        <div className="container mx-auto px-4 py-6 max-w-4xl min-h-full">
           <div className="mb-8">
             <h2 className="text-2xl font-bold mb-1">Your Profile</h2>
             <p className="text-darkGray">Manage your personal information and settings</p>
@@ -478,19 +478,6 @@ export default function ProfilePage() {
                   </form>
                 </Form>
                 
-                {/* Sign Out Button */}
-                <div className="mt-6 pt-6 border-t border-gray-800">
-                  <Button 
-                    onClick={handleSignOut}
-                    disabled={logoutMutation.isPending}
-                    variant="destructive" 
-                    className="w-full"
-                  >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    {logoutMutation.isPending ? 'Signing Out...' : 'Sign Out'}
-                  </Button>
-                </div>
-
                 {/* Coach Section */}
                 <Separator className="my-6" />
                 
@@ -637,6 +624,21 @@ export default function ProfilePage() {
                   </Button>
                 </div>
               </div>
+            </div>
+          </div>
+          
+          {/* Sign Out Section - Always Visible at Bottom */}
+          <div className="mt-8 mb-8">
+            <div className="bg-[#010a18] border border-blue-800/60 rounded-xl shadow-sm p-6">
+              <Button 
+                onClick={handleSignOut}
+                disabled={logoutMutation.isPending}
+                variant="destructive" 
+                className="w-full"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                {logoutMutation.isPending ? 'Signing Out...' : 'Sign Out'}
+              </Button>
             </div>
           </div>
         </div>
