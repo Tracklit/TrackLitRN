@@ -13,15 +13,17 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Camera, Upload, FileVideo, Play, Sparkles, Zap, Crown, ArrowLeft, ArrowRight, Check, Copy, ThumbsUp, ThumbsDown } from "lucide-react";
 import videoAnalysisCardImage from "@assets/video-analysis-card.jpeg";
+import { BiomechanicalVideoPlayer } from "@/components/biomechanical-video-player";
 
 export default function VideoAnalysisPage() {
-  const [currentStep, setCurrentStep] = useState<"upload" | "analyze" | "results">("upload");
+  const [currentStep, setCurrentStep] = useState<"upload" | "video" | "results">("upload");
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [videoName, setVideoName] = useState("");
   const [videoDescription, setVideoDescription] = useState("");
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [selectedVideoId, setSelectedVideoId] = useState<number | null>(null);
+  const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string | null>(null);
   const [analysisResponse, setAnalysisResponse] = useState<string>("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [selectedPrompts, setSelectedPrompts] = useState<string[]>([]);
@@ -100,7 +102,8 @@ export default function VideoAnalysisPage() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/video-analysis"] });
       setSelectedVideoId(data.id);
-      setCurrentStep("analyze");
+      setUploadedVideoUrl(data.fileUrl);
+      setCurrentStep("video");
     },
     onError: (error) => {
       toast({
@@ -400,11 +403,11 @@ export default function VideoAnalysisPage() {
             </div>
             <div className="w-12 h-0.5 bg-gray-300 rounded">
               <div className={`h-full bg-blue-600 rounded transition-all duration-300 ${
-                currentStep === "analyze" || currentStep === "results" ? "w-full" : "w-0"
+                currentStep === "video" || currentStep === "results" ? "w-full" : "w-0"
               }`} />
             </div>
             <div className={`flex items-center justify-center w-6 h-6 rounded-full text-sm ${
-              currentStep === "analyze" ? "bg-blue-600 text-white" : 
+              currentStep === "video" ? "bg-blue-600 text-white" : 
               currentStep === "results" ? "bg-green-500 text-white" : "bg-gray-400 text-gray-600"
             }`}>
               {currentStep === "results" ? <Check className="w-3 h-3" /> : "2"}
