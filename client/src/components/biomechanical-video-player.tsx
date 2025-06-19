@@ -392,9 +392,9 @@ export function BiomechanicalVideoPlayer({
   };
 
   return (
-    <div className="fixed inset-0 bg-black z-50 flex">
-      {/* Main Video Area */}
-      <div className="flex-1 relative">
+    <div className="fixed inset-0 bg-black z-50">
+      {/* Main Video Area - Full Screen */}
+      <div className="relative w-full h-full">
         <div 
           ref={containerRef}
           className="absolute inset-0 bg-black flex items-center justify-center"
@@ -422,7 +422,7 @@ export function BiomechanicalVideoPlayer({
 
           {/* Video Controls */}
           {showControls && (
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-4 z-10">
               {/* Progress Bar */}
               <div className="mb-4">
                 <Slider
@@ -439,79 +439,74 @@ export function BiomechanicalVideoPlayer({
               </div>
 
               {/* Control Buttons */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={togglePlay}
-                    className="text-white hover:bg-white/20"
-                  >
-                    {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                  </Button>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      const video = videoRef.current;
-                      if (video) {
-                        video.currentTime = 0;
-                        setCurrentTime(0);
-                      }
-                    }}
-                    className="text-white hover:bg-white/20"
-                  >
-                    <RotateCcw className="h-4 w-4" />
-                  </Button>
-
-                  <div className="flex items-center gap-2 ml-4">
-                    <Volume2 className="h-4 w-4 text-white" />
-                    <Slider
-                      value={[volume]}
-                      max={1}
-                      step={0.1}
-                      onValueChange={(value) => {
-                        setVolume(value[0]);
-                        if (videoRef.current) {
-                          videoRef.current.volume = value[0];
-                        }
-                      }}
-                      className="w-20"
-                    />
-                  </div>
-                </div>
+              <div className="flex items-center justify-center gap-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={togglePlay}
+                  className="text-white hover:bg-white/20"
+                >
+                  {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    const video = videoRef.current;
+                    if (video) {
+                      video.currentTime = 0;
+                      setCurrentTime(0);
+                    }
+                  }}
+                  className="text-white hover:bg-white/20"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
 
                 <div className="flex items-center gap-2">
-                  <select
-                    value={playbackRate}
-                    onChange={(e) => {
-                      const rate = parseFloat(e.target.value);
-                      setPlaybackRate(rate);
+                  <Volume2 className="h-4 w-4 text-white" />
+                  <Slider
+                    value={[volume]}
+                    max={1}
+                    step={0.1}
+                    onValueChange={(value) => {
+                      setVolume(value[0]);
                       if (videoRef.current) {
-                        videoRef.current.playbackRate = rate;
+                        videoRef.current.volume = value[0];
                       }
                     }}
-                    className="bg-black/50 text-white text-xs rounded px-2 py-1"
-                  >
-                    <option value={0.25}>0.25x</option>
-                    <option value={0.5}>0.5x</option>
-                    <option value={1}>1x</option>
-                    <option value={1.25}>1.25x</option>
-                    <option value={1.5}>1.5x</option>
-                    <option value={2}>2x</option>
-                  </select>
+                    className="w-20"
+                  />
                 </div>
+
+                <select
+                  value={playbackRate}
+                  onChange={(e) => {
+                    const rate = parseFloat(e.target.value);
+                    setPlaybackRate(rate);
+                    if (videoRef.current) {
+                      videoRef.current.playbackRate = rate;
+                    }
+                  }}
+                  className="bg-black/50 text-white text-sm rounded px-3 py-1 border border-gray-600"
+                >
+                  <option value={0.25}>0.25x</option>
+                  <option value={0.5}>0.5x</option>
+                  <option value={1}>1x</option>
+                  <option value={1.25}>1.25x</option>
+                  <option value={1.5}>1.5x</option>
+                  <option value={2}>2x</option>
+                </select>
               </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Side Panel for Controls */}
-      <div className="w-80 bg-gray-900 border-l border-gray-700 flex flex-col">
-        {/* Header */}
-        <div className="p-4 border-b border-gray-700 flex items-center justify-between">
+      {/* Top Control Panel */}
+      <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/90 to-transparent p-4 z-10">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Activity className="h-5 w-5 text-white" />
             <h1 className="text-white font-semibold truncate">{videoName}</h1>
@@ -527,12 +522,12 @@ export function BiomechanicalVideoPlayer({
         </div>
 
         {/* Biomechanical Overlay Controls */}
-        <div className="p-4 border-b border-gray-700">
-          <h3 className="flex items-center gap-2 text-white font-medium mb-4">
-            <Eye className="h-5 w-5" />
+        <div className="mb-4">
+          <h3 className="flex items-center gap-2 text-white font-medium mb-2">
+            <Eye className="h-4 w-4" />
             Overlays
           </h3>
-          <div className="space-y-2">
+          <div className="flex flex-wrap gap-2">
             {overlays.map((overlay) => {
               const Icon = overlay.icon;
               return (
@@ -540,7 +535,8 @@ export function BiomechanicalVideoPlayer({
                   key={overlay.id}
                   variant={overlay.enabled ? "default" : "outline"}
                   onClick={() => toggleOverlay(overlay.id)}
-                  className={`w-full p-3 flex items-center gap-3 text-left justify-start ${
+                  size="sm"
+                  className={`flex items-center gap-2 ${
                     overlay.enabled ? 'border-2' : ''
                   }`}
                   style={{
@@ -548,8 +544,8 @@ export function BiomechanicalVideoPlayer({
                     backgroundColor: overlay.enabled ? `${overlay.color}20` : undefined
                   }}
                 >
-                  <Icon className="h-4 w-4" style={{ color: overlay.color }} />
-                  <div className="text-xs font-medium">{overlay.label}</div>
+                  <Icon className="h-3 w-3" style={{ color: overlay.color }} />
+                  <span className="text-xs">{overlay.label}</span>
                 </Button>
               );
             })}
@@ -557,12 +553,12 @@ export function BiomechanicalVideoPlayer({
         </div>
 
         {/* Analysis Controls */}
-        <div className="p-4 flex-1">
-          <h3 className="flex items-center gap-2 text-white font-medium mb-4">
-            <Sparkles className="h-5 w-5" />
+        <div>
+          <h3 className="flex items-center gap-2 text-white font-medium mb-2">
+            <Sparkles className="h-4 w-4" />
             Analysis
           </h3>
-          <div className="space-y-3">
+          <div className="flex flex-wrap gap-2">
             {analysisPrompts.map((prompt) => {
               const Icon = prompt.icon;
               return (
@@ -571,24 +567,20 @@ export function BiomechanicalVideoPlayer({
                   onClick={() => onAnalyze(prompt.id)}
                   disabled={isAnalyzing}
                   variant="outline"
-                  className="w-full p-3 flex items-center gap-3 text-left justify-start text-white border-gray-600 hover:bg-gray-800"
+                  size="sm"
+                  className="flex items-center gap-2 text-white border-gray-600 hover:bg-gray-800"
                 >
-                  <Icon className="h-4 w-4" />
-                  <div>
-                    <div className="text-sm font-medium">{prompt.title}</div>
-                    <div className="text-xs text-gray-400">{prompt.description}</div>
-                  </div>
+                  <Icon className="h-3 w-3" />
+                  <span className="text-xs">{prompt.title}</span>
                 </Button>
               );
             })}
           </div>
           
           {isAnalyzing && (
-            <div className="mt-4 text-center">
-              <div className="flex items-center justify-center gap-2">
-                <Sparkles className="h-4 w-4 animate-spin text-white" />
-                <span className="text-sm text-white">Analyzing video...</span>
-              </div>
+            <div className="mt-2 flex items-center gap-2">
+              <Sparkles className="h-3 w-3 animate-spin text-white" />
+              <span className="text-xs text-white">Analyzing video...</span>
             </div>
           )}
         </div>
