@@ -55,13 +55,18 @@ export function BiomechanicalVideoPlayer({
   const [playbackRate, setPlaybackRate] = useState(1);
   const [showControls, setShowControls] = useState(true);
 
+  // Real-time pose tracking data
+  const [poseData, setPoseData] = useState<any>(null);
+  const [webSocket, setWebSocket] = useState<WebSocket | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+
   const [overlays, setOverlays] = useState<BiomechanicalOverlay[]>([
     {
       id: 'skeleton',
       label: 'Pose Skeleton',
       icon: Activity,
       color: '#8b5cf6',
-      enabled: false,
+      enabled: true,
       type: 'skeleton'
     },
     {
@@ -142,6 +147,55 @@ export function BiomechanicalVideoPlayer({
       video.removeEventListener('loadeddata', () => {});
     };
   }, []);
+
+  // WebSocket connection for real-time pose tracking
+  useEffect(() => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}`;
+    
+    const ws = new WebSocket(wsUrl);
+    
+    ws.onopen = () => {
+      console.log('WebSocket connected for pose tracking');
+      setIsConnected(true);
+      setWebSocket(ws);
+      
+      // Start pose tracking for the current video
+      ws.send(JSON.stringify({
+        type: 'start_pose_tracking',
+        videoPath: videoUrl
+      }));
+    };
+    
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        
+        if (data.type === 'pose_frame' && data.landmarks) {
+          setPoseData(data);
+        }
+      } catch (error) {
+        console.error('Error parsing pose data:', error);
+      }
+    };
+    
+    ws.onclose = () => {
+      console.log('WebSocket disconnected');
+      setIsConnected(false);
+      setWebSocket(null);
+    };
+    
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+    
+    return () => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'stop_pose_tracking' }));
+        ws.close();
+      }
+    };
+  }, [videoUrl]);
 
   // Draw biomechanical overlays on canvas
   useEffect(() => {

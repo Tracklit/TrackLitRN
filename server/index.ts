@@ -2,8 +2,11 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { VideoCleanupService } from "./video-cleanup";
+// @ts-ignore
+const RealtimePoseTracker = require("./realtime-pose-tracking");
 import path from "path";
 import { createServer } from "http";
+import { WebSocketServer } from "ws";
 
 const app = express();
 app.use(express.json());
@@ -114,6 +117,41 @@ app.use((req, res, next) => {
   });
 
   const httpServer = createServer(app);
+  
+  // Setup WebSocket server for real-time pose tracking
+  const wss = new WebSocketServer({ server: httpServer });
+  const poseTracker = new RealtimePoseTracker();
+  
+  wss.on('connection', (ws, req) => {
+    const socketId = Math.random().toString(36).substring(7);
+    log(`WebSocket connected: ${socketId}`);
+    
+    ws.on('message', (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        
+        if (data.type === 'start_pose_tracking' && data.videoPath) {
+          log(`Starting pose tracking for video: ${data.videoPath}`);
+          poseTracker.startPoseTracking(data.videoPath, socketId, ws);
+        } else if (data.type === 'stop_pose_tracking') {
+          poseTracker.stopPoseTracking(socketId);
+        }
+      } catch (error) {
+        console.error('WebSocket message error:', error);
+      }
+    });
+    
+    ws.on('close', () => {
+      log(`WebSocket disconnected: ${socketId}`);
+      poseTracker.stopPoseTracking(socketId);
+    });
+  });
+  
+  // Cleanup pose tracking processes on server shutdown
+  process.on('SIGINT', () => {
+    poseTracker.cleanup();
+    process.exit();
+  });
   
   httpServer.listen(port, '0.0.0.0', () => {
     console.log(`Server running on 0.0.0.0:${port}`);
