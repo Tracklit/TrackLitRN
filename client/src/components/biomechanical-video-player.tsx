@@ -753,32 +753,7 @@ export function BiomechanicalVideoPlayer({
     setCurrentTime(value[0]);
   };
 
-  const toggleOverlay = async (overlayId: string) => {
-    if (overlayId === 'skeleton') {
-      const currentOverlay = overlays.find(o => o.id === 'skeleton');
-      if (!currentOverlay?.enabled && !skeletonVideoUrl) {
-        // Generate skeleton overlay video when skeleton tool is first activated
-        try {
-          setProcessingOverlay(true);
-          const response = await fetch(`/api/video-analysis/${videoId}/generate-skeleton`, {
-            method: 'POST',
-            credentials: 'include'
-          });
-          
-          if (response.ok) {
-            const result = await response.json();
-            setSkeletonVideoUrl(result.skeletonVideoUrl);
-          } else {
-            console.error('Failed to generate skeleton overlay');
-          }
-        } catch (error) {
-          console.error('Error generating skeleton overlay:', error);
-        } finally {
-          setProcessingOverlay(false);
-        }
-      }
-    }
-
+  const toggleOverlay = (overlayId: string) => {
     setOverlays(prev => prev.map(overlay => 
       overlay.id === overlayId 
         ? { ...overlay, enabled: !overlay.enabled }
