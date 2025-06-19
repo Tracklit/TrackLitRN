@@ -9,6 +9,7 @@ import { z } from "zod";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { spawn } from "child_process";
 import sharp from "sharp";
 import Stripe from "stripe";
 import { transcribeAudioHandler, upload as audioUpload } from "./routes/transcribe";

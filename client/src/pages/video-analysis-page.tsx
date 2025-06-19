@@ -541,6 +541,7 @@ export default function VideoAnalysisPage() {
             <BiomechanicalVideoPlayer
               videoUrl={uploadedVideoUrl}
               videoName={videoName}
+              videoId={selectedVideoId!}
               onAnalyze={handleAnalyze}
               isAnalyzing={isAnalyzing}
               biomechanicalData={biomechanicalData}
