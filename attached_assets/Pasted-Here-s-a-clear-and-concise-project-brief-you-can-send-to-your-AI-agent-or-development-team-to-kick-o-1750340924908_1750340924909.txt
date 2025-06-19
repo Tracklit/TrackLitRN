@@ -1,0 +1,82 @@
+Here’s a clear and concise project brief you can send to your AI agent or development team to kick off the refactor:
+
+⸻
+
+📄 Refactor Brief: Video Analysis Tool with MediaPipe + OpenAI Integration
+
+🧠 Objective
+
+Refactor the current video analysis system, which currently relies only on OpenAI, to use MediaPipe for biomechanical keypoint extraction and structured motion data. OpenAI will still be used, but only for interpreting and summarizing the extracted data in natural language. The analysis should specifically target athletic performance metrics.
+
+⸻
+
+⚙️ Refactor Scope
+
+✅ 1. Replace current OpenAI-only analysis pipeline
+	•	Stop attempting to interpret raw video directly with OpenAI (not reliable).
+	•	Instead, process video through MediaPipe (Python backend) to extract:
+	•	Pose landmarks (skeleton/joint positions per frame)
+	•	Kinematic data (velocities, stride timing, joint angles)
+
+✅ 2. Build Data Extraction Layer
+	•	Implement MediaPipe in Python to:
+	•	Parse video input and track full-body pose per frame
+	•	Output a structured format (JSON/CSV) that includes:
+	•	Frame timestamps
+	•	Joint positions
+	•	Stride counts and durations
+	•	Foot contact and lift-off frames
+	•	Joint angles at key phases (e.g., knee at toe-off)
+
+✅ 3. Integrate OpenAI (GPT-4/4o) for Language Analysis
+	•	Use OpenAI only to interpret structured data, not raw video.
+	•	Generate human-readable reports from key metrics.
+	•	Example prompt format:
+
+Here is structured data from a running video:
+- Average stride rate: 182 spm
+- Peak knee angle: 155°
+- Right foot contact imbalance: 8%
+Please analyze form and give feedback in 2–3 paragraphs.
+
+
+
+✅ 4. Output Options
+	•	Return:
+	•	Structured metrics (JSON)
+	•	GPT-4 summary (natural language)
+	•	(Optional) Annotated video with overlaid skeleton
+
+⸻
+
+🎯 Focus Areas for Athletic Analysis
+
+The system should prioritize extracting metrics related to:
+
+Category	Metrics to Extract
+Stride	Stride count, stride length, stride rate, asymmetry
+Velocity	Horizontal velocity per frame, acceleration zones
+Foot Contact	Timing, contact angle, ground contact duration
+Joint Angles	Knee flexion/extension, hip angle, ankle angle
+Balance	Side-to-side asymmetry, posture deviation
+
+
+⸻
+
+📱 Frontend Integration
+	•	React Native app uploads videos via API.
+	•	Backend receives video → runs MediaPipe → calls OpenAI → returns:
+	•	JSON with metrics
+	•	Language analysis string
+
+⸻
+
+✅ Deliverables
+	•	Refactored Python backend with MediaPipe processing
+	•	OpenAI integration for feedback generation
+	•	REST API endpoint for video upload + response
+	•	Clear docs for how to call the endpoint from React Native
+
+⸻
+
+Let me know if you’d like a GitHub-ready version of this brief, or want me to create issue/task breakdowns next.
