@@ -132,7 +132,7 @@ app.use((req, res, next) => {
         if (data.type === 'start_pose_tracking' && data.videoPath) {
           log(`Starting pose tracking for video: ${data.videoPath}`);
           
-          const pythonScript = path.join(__dirname, 'realtime-mediapipe.py');
+          const pythonScript = path.join(process.cwd(), 'server', 'realtime-mediapipe.py');
           const videoPath = data.videoPath.replace('/uploads/', path.join(process.cwd(), 'uploads/'));
           
           const poseProcess = spawn('python3', [pythonScript, videoPath], {
