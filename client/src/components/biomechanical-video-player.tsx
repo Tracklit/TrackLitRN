@@ -274,121 +274,269 @@ export function BiomechanicalVideoPlayer({
     ctx.fillStyle = overlay.color;
     ctx.lineWidth = 2;
 
-    // Generate simulated pose data positioned within video bounds
-    const centerX = offsetX + width * 0.5;
-    const centerY = offsetY + height * 0.6;
-    const scale = Math.min(width, height) * 0.15;
+    // Use real MediaPipe pose data if available
+    if (!poseData || !poseData.landmarks) {
+      return; // Don't draw anything without real pose data
+    }
+
+    const landmarks = poseData.landmarks;
+    const videoWidth = poseData.frame_dimensions?.width || 1;
+    const videoHeight = poseData.frame_dimensions?.height || 1;
 
     switch (overlay.type) {
       case 'skeleton':
-        drawPoseSkeleton(ctx, centerX, centerY, scale);
+        drawRealPoseSkeleton(ctx, landmarks, width, height, offsetX, offsetY, videoWidth, videoHeight);
         break;
       case 'angles':
-        drawJointAngles(ctx, centerX, centerY, scale);
+        drawRealJointAngles(ctx, landmarks, poseData.angles, width, height, offsetX, offsetY, videoWidth, videoHeight);
         break;
       case 'velocity':
-        drawVelocityVectors(ctx, centerX, centerY, scale);
+        drawRealVelocityVectors(ctx, landmarks, poseData.velocities, width, height, offsetX, offsetY, videoWidth, videoHeight);
         break;
       case 'stride':
-        drawStrideAnalysis(ctx, width, height, offsetX, offsetY);
+        drawRealStrideAnalysis(ctx, poseData.stride_metrics, width, height, offsetX, offsetY);
         break;
       case 'contact':
-        drawGroundContact(ctx, centerX, centerY + scale * 1.5, scale);
+        drawRealGroundContact(ctx, poseData.ground_contact, landmarks, width, height, offsetX, offsetY, videoWidth, videoHeight);
         break;
     }
   };
 
-  const drawPoseSkeleton = (ctx: CanvasRenderingContext2D, x: number, y: number, scale: number) => {
-    // Head
-    ctx.beginPath();
-    ctx.arc(x, y - scale * 0.8, scale * 0.1, 0, Math.PI * 2);
-    ctx.fill();
+  const drawRealPoseSkeleton = (
+    ctx: CanvasRenderingContext2D, 
+    landmarks: any, 
+    displayWidth: number, 
+    displayHeight: number, 
+    offsetX: number, 
+    offsetY: number,
+    videoWidth: number,
+    videoHeight: number
+  ) => {
+    const scaleX = displayWidth / videoWidth;
+    const scaleY = displayHeight / videoHeight;
+    
+    // Convert normalized coordinates to display coordinates
+    const getDisplayCoords = (landmark: any) => {
+      if (!landmark) return null;
+      return {
+        x: offsetX + landmark.x * scaleX,
+        y: offsetY + landmark.y * scaleY
+      };
+    };
 
-    // Body connections
+    // Draw pose connections
     const connections = [
-      [0, -0.8, 0, -0.3], // head to torso
-      [0, -0.3, -0.3, 0], // torso to left arm
-      [0, -0.3, 0.3, 0],  // torso to right arm
-      [-0.3, 0, -0.5, 0.3], // left arm extension
-      [0.3, 0, 0.5, 0.3],   // right arm extension
-      [0, -0.3, 0, 0.5],    // torso to hips
-      [0, 0.5, -0.2, 1.2],  // hips to left leg
-      [0, 0.5, 0.2, 1.2],   // hips to right leg
-      [-0.2, 1.2, -0.1, 1.5], // left knee to ankle
-      [0.2, 1.2, 0.1, 1.5],   // right knee to ankle
+      // Torso
+      ['left_shoulder', 'right_shoulder'],
+      ['left_shoulder', 'left_hip'],
+      ['right_shoulder', 'right_hip'],
+      ['left_hip', 'right_hip'],
+      
+      // Arms
+      ['left_shoulder', 'left_elbow'],
+      ['left_elbow', 'left_wrist'],
+      ['right_shoulder', 'right_elbow'],
+      ['right_elbow', 'right_wrist'],
+      
+      // Legs
+      ['left_hip', 'left_knee'],
+      ['left_knee', 'left_ankle'],
+      ['right_hip', 'right_knee'],
+      ['right_knee', 'right_ankle']
     ];
 
-    ctx.beginPath();
-    connections.forEach(([x1, y1, x2, y2]) => {
-      ctx.moveTo(x + x1 * scale, y + y1 * scale);
-      ctx.lineTo(x + x2 * scale, y + y2 * scale);
+    ctx.lineWidth = 3;
+    connections.forEach(([start, end]) => {
+      const startCoords = getDisplayCoords(landmarks[start]);
+      const endCoords = getDisplayCoords(landmarks[end]);
+      
+      if (startCoords && endCoords) {
+        ctx.beginPath();
+        ctx.moveTo(startCoords.x, startCoords.y);
+        ctx.lineTo(endCoords.x, endCoords.y);
+        ctx.stroke();
+      }
     });
-    ctx.stroke();
 
-    // Joint points
-    const joints = [
-      [0, -0.3], [-0.3, 0], [0.3, 0], [-0.5, 0.3], [0.5, 0.3],
-      [0, 0.5], [-0.2, 1.2], [0.2, 1.2], [-0.1, 1.5], [0.1, 1.5]
+    // Draw joint points
+    const jointPoints = [
+      'nose', 'left_shoulder', 'right_shoulder', 'left_elbow', 'right_elbow',
+      'left_wrist', 'right_wrist', 'left_hip', 'right_hip', 'left_knee',
+      'right_knee', 'left_ankle', 'right_ankle'
     ];
 
-    joints.forEach(([jx, jy]) => {
+    jointPoints.forEach(jointName => {
+      const coords = getDisplayCoords(landmarks[jointName]);
+      if (coords) {
+        ctx.beginPath();
+        ctx.arc(coords.x, coords.y, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    });
+  };
+
+  const drawRealJointAngles = (
+    ctx: CanvasRenderingContext2D, 
+    landmarks: any, 
+    angles: any,
+    displayWidth: number, 
+    displayHeight: number, 
+    offsetX: number, 
+    offsetY: number,
+    videoWidth: number,
+    videoHeight: number
+  ) => {
+    if (!angles) return;
+    
+    const scaleX = displayWidth / videoWidth;
+    const scaleY = displayHeight / videoHeight;
+    
+    const getDisplayCoords = (landmark: any) => {
+      if (!landmark) return null;
+      return {
+        x: offsetX + landmark.x * scaleX,
+        y: offsetY + landmark.y * scaleY
+      };
+    };
+
+    ctx.font = '14px monospace';
+    ctx.fillStyle = '#06b6d4';
+    
+    // Display joint angles near their respective joints
+    if (angles.left_knee && landmarks.left_knee) {
+      const coords = getDisplayCoords(landmarks.left_knee);
+      if (coords) {
+        ctx.fillText(`L: ${Math.round(angles.left_knee)}°`, coords.x - 30, coords.y - 15);
+      }
+    }
+    
+    if (angles.right_knee && landmarks.right_knee) {
+      const coords = getDisplayCoords(landmarks.right_knee);
+      if (coords) {
+        ctx.fillText(`R: ${Math.round(angles.right_knee)}°`, coords.x + 10, coords.y - 15);
+      }
+    }
+    
+    if (angles.trunk && landmarks.left_shoulder && landmarks.right_shoulder) {
+      const leftShoulder = getDisplayCoords(landmarks.left_shoulder);
+      const rightShoulder = getDisplayCoords(landmarks.right_shoulder);
+      if (leftShoulder && rightShoulder) {
+        const midX = (leftShoulder.x + rightShoulder.x) / 2;
+        const midY = (leftShoulder.y + rightShoulder.y) / 2;
+        ctx.fillText(`Trunk: ${Math.round(angles.trunk)}°`, midX - 35, midY - 20);
+      }
+    }
+  };
+
+  const drawRealVelocityVectors = (
+    ctx: CanvasRenderingContext2D, 
+    landmarks: any, 
+    velocities: any,
+    displayWidth: number, 
+    displayHeight: number, 
+    offsetX: number, 
+    offsetY: number,
+    videoWidth: number,
+    videoHeight: number
+  ) => {
+    if (!velocities) return;
+    
+    const scaleX = displayWidth / videoWidth;
+    const scaleY = displayHeight / videoHeight;
+    
+    const getDisplayCoords = (landmark: any) => {
+      if (!landmark) return null;
+      return {
+        x: offsetX + landmark.x * scaleX,
+        y: offsetY + landmark.y * scaleY
+      };
+    };
+
+    ctx.strokeStyle = '#f59e0b';
+    ctx.fillStyle = '#f59e0b';
+    ctx.lineWidth = 2;
+    
+    // Draw velocity vectors for key joints
+    const keyJoints = ['left_wrist', 'right_wrist', 'left_ankle', 'right_ankle'];
+    
+    keyJoints.forEach(jointName => {
+      const landmark = landmarks[jointName];
+      const velocity = velocities[jointName];
+      
+      if (landmark && velocity) {
+        const coords = getDisplayCoords(landmark);
+        if (coords) {
+          const vectorScale = 0.1; // Scale down velocity for display
+          const vx = velocity.vx * vectorScale;
+          const vy = velocity.vy * vectorScale;
+          
+          // Draw velocity vector
+          ctx.beginPath();
+          ctx.moveTo(coords.x, coords.y);
+          ctx.lineTo(coords.x + vx, coords.y + vy);
+          ctx.stroke();
+          
+          // Draw arrow head
+          const angle = Math.atan2(vy, vx);
+          const arrowLength = 8;
+          ctx.beginPath();
+          ctx.moveTo(coords.x + vx, coords.y + vy);
+          ctx.lineTo(
+            coords.x + vx - arrowLength * Math.cos(angle - 0.5),
+            coords.y + vy - arrowLength * Math.sin(angle - 0.5)
+          );
+          ctx.moveTo(coords.x + vx, coords.y + vy);
+          ctx.lineTo(
+            coords.x + vx - arrowLength * Math.cos(angle + 0.5),
+            coords.y + vy - arrowLength * Math.sin(angle + 0.5)
+          );
+          ctx.stroke();
+          
+          // Display speed
+          ctx.font = '12px monospace';
+          ctx.fillText(`${velocity.speed.toFixed(0)}px/s`, coords.x + 10, coords.y - 10);
+        }
+      }
+    });
+  };
+
+  const drawRealStrideAnalysis = (
+    ctx: CanvasRenderingContext2D, 
+    strideMetrics: any,
+    displayWidth: number, 
+    displayHeight: number, 
+    offsetX: number, 
+    offsetY: number
+  ) => {
+    if (!strideMetrics) return;
+    
+    ctx.strokeStyle = '#10b981';
+    ctx.fillStyle = '#10b981';
+    ctx.font = '14px monospace';
+    
+    // Display stride metrics
+    const textY = offsetY + displayHeight * 0.85;
+    
+    if (strideMetrics.stride_width) {
+      ctx.fillText(`Stride Width: ${strideMetrics.stride_width.toFixed(0)}px`, offsetX + 20, textY);
+    }
+    
+    if (strideMetrics.step_length) {
+      ctx.fillText(`Step Length: ${strideMetrics.step_length.toFixed(0)}px`, offsetX + 20, textY + 20);
+    }
+    
+    // Draw stride width visualization
+    if (strideMetrics.stride_width) {
+      const baseY = offsetY + displayHeight * 0.9;
+      const stridePixels = Math.min(strideMetrics.stride_width, displayWidth * 0.6);
+      
+      ctx.setLineDash([5, 5]);
       ctx.beginPath();
-      ctx.arc(x + jx * scale, y + jy * scale, 4, 0, Math.PI * 2);
-      ctx.fill();
-    });
-  };
-
-  const drawJointAngles = (ctx: CanvasRenderingContext2D, x: number, y: number, scale: number) => {
-    const leftKnee = { x: x - scale * 0.2, y: y + scale * 1.2 };
-    const rightKnee = { x: x + scale * 0.2, y: y + scale * 1.2 };
-    
-    ctx.font = '14px monospace';
-    ctx.fillText(`L: 142°`, leftKnee.x - 25, leftKnee.y - 10);
-    ctx.fillText(`R: 138°`, rightKnee.x - 25, rightKnee.y - 10);
-    ctx.fillText(`Hip: 165°`, x - 30, y + scale * 0.3);
-    ctx.fillText(`Trunk: 85°`, x - 35, y - scale * 0.5);
-  };
-
-  const drawVelocityVectors = (ctx: CanvasRenderingContext2D, x: number, y: number, scale: number) => {
-    const velocity = biomechanicalData?.velocity || 8.5;
-    const vectorLength = Math.min(scale * 0.8, velocity * 10);
-    
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineTo(x + vectorLength, y - vectorLength * 0.3);
-    ctx.stroke();
-
-    // Arrow head
-    ctx.beginPath();
-    ctx.moveTo(x + vectorLength, y - vectorLength * 0.3);
-    ctx.lineTo(x + vectorLength - 15, y - vectorLength * 0.3 - 5);
-    ctx.moveTo(x + vectorLength, y - vectorLength * 0.3);
-    ctx.lineTo(x + vectorLength - 15, y - vectorLength * 0.3 + 5);
-    ctx.stroke();
-
-    ctx.font = '16px monospace';
-    ctx.fillText(`${velocity.toFixed(1)} m/s`, x + 10, y - 10);
-  };
-
-  const drawStrideAnalysis = (ctx: CanvasRenderingContext2D, width: number, height: number, offsetX?: number, offsetY?: number) => {
-    const oX = offsetX || 0;
-    const oY = offsetY || 0;
-    const strideLength = biomechanicalData?.stride_length || 2.1;
-    const frequency = biomechanicalData?.stride_rate || 185;
-    
-    const stridePixels = (strideLength / 3) * width * 0.6;
-    const baseY = oY + height * 0.9;
-    
-    ctx.setLineDash([5, 5]);
-    ctx.beginPath();
-    ctx.moveTo(oX + width * 0.2, baseY);
-    ctx.lineTo(oX + width * 0.2 + stridePixels, baseY);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    ctx.font = '14px monospace';
-    ctx.fillText(`Stride: ${strideLength.toFixed(1)}m`, oX + width * 0.05, oY + height * 0.85);
-    ctx.fillText(`Rate: ${frequency} spm`, oX + width * 0.05, oY + height * 0.88);
+      ctx.moveTo(offsetX + displayWidth * 0.2, baseY);
+      ctx.lineTo(offsetX + displayWidth * 0.2 + stridePixels, baseY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
   };
 
   const drawGroundContact = (ctx: CanvasRenderingContext2D, x: number, y: number, scale: number) => {
