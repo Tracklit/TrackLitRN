@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Crown, Plus, X, Users, Target, Edit, Camera, Check } from 'lucide-react';
+import { Crown, Plus, X, Users, Target, Edit, Camera, Check, LogOut } from 'lucide-react';
 import { PremiumPromotion } from '@/components/premium-promotion';
 import { Separator } from '@/components/ui/separator';
 import { insertUserSchema } from '@shared/schema';
@@ -49,7 +49,7 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>;
 type PublicProfileFormValues = z.infer<typeof publicProfileFormSchema>;
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, logoutMutation } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [clubs, setClubs] = useState<any[]>([]);
@@ -100,6 +100,10 @@ export default function ProfilePage() {
 
   const handleCoachToggle = (checked: boolean) => {
     updateCoachStatusMutation.mutate(checked);
+  };
+
+  const handleSignOut = () => {
+    logoutMutation.mutate();
   };
 
   const getSubscriptionBadgeColor = (tier: string) => {
@@ -269,8 +273,8 @@ export default function ProfilePage() {
 
   return (
     <div className="flex flex-col h-screen bg-[#010a18] text-white">
-      <main className="flex-1 overflow-auto pt-16 pb-6">
-        <div className="container mx-auto px-4 py-6">
+      <main className="flex-1 overflow-auto pt-16 pb-20">
+        <div className="container mx-auto px-4 py-6 max-w-6xl">
           <div className="mb-8">
             <h2 className="text-2xl font-bold mb-1">Your Profile</h2>
             <p className="text-darkGray">Manage your personal information and settings</p>
@@ -621,6 +625,19 @@ export default function ProfilePage() {
                 </div>
               </div>
             </div>
+          </div>
+          
+          {/* Sign Out Section */}
+          <div className="mt-8 border-t border-gray-700 pt-6">
+            <Button 
+              onClick={handleSignOut}
+              disabled={logoutMutation.isPending}
+              variant="outline" 
+              className="w-full justify-center text-red-400 border-red-400/50 hover:bg-red-400/10 hover:border-red-400"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              {logoutMutation.isPending ? 'Signing Out...' : 'Sign Out'}
+            </Button>
           </div>
         </div>
       </main>
