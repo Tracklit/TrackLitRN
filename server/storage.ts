@@ -726,6 +726,21 @@ export class DatabaseStorage implements IStorage {
     return coachRelations.map(relation => relation.athlete);
   }
 
+  async getAthleteCoaches(athleteId: number): Promise<User[]> {
+    const coachRelations = await db
+      .select({
+        coach: users
+      })
+      .from(coaches)
+      .innerJoin(users, eq(coaches.userId, users.id))
+      .where(and(
+        eq(coaches.athleteId, athleteId),
+        eq(coaches.status, 'accepted')
+      ));
+    
+    return coachRelations.map(relation => relation.coach);
+  }
+
   async getCoachAthleteCount(coachUserId: number): Promise<number> {
     const result = await db
       .select({ count: sql`count(*)` })

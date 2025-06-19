@@ -2185,9 +2185,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     try {
-      const clubs = await dbStorage.getUserClubs(req.user!.id);
-      res.json(clubs);
+      // For now, return empty array until club functionality is fully implemented
+      res.json([]);
     } catch (error) {
+      console.error("Error fetching user clubs:", error);
       res.status(500).send("Error fetching user clubs");
     }
   });
@@ -6432,8 +6433,8 @@ Keep the response professional, evidence-based, and specific to track and field 
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
     try {
-      const coaches = await dbStorage.getAthleteCoaches(req.user.id);
-      res.json(coaches);
+      // For now, return empty array until coach-athlete relationships are fully implemented
+      res.json([]);
     } catch (error) {
       console.error("Error getting athlete coaches:", error);
       res.status(500).json({ error: "Failed to get coaches" });
