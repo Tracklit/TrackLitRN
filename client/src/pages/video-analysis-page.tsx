@@ -535,8 +535,42 @@ export default function VideoAnalysisPage() {
           </Card>
         )}
 
-        {/* Analysis Step */}
-        {currentStep === "analyze" && (
+        {/* Video Player Step */}
+        {currentStep === "video" && uploadedVideoUrl && (
+          <div className="space-y-6">
+            <BiomechanicalVideoPlayer
+              videoUrl={uploadedVideoUrl}
+              videoName={videoName}
+              onAnalyze={handleAnalyze}
+              isAnalyzing={isAnalyzing}
+              biomechanicalData={biomechanicalData}
+            />
+            
+            <div className="flex justify-between">
+              <Button 
+                variant="outline"
+                onClick={() => setCurrentStep("upload")}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Upload New Video
+              </Button>
+              
+              {analysisResponse && (
+                <Button 
+                  onClick={() => setCurrentStep("results")}
+                  className="flex items-center gap-2"
+                >
+                  View Analysis Results
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Legacy Analysis Step */}
+        {currentStep === "video" && !uploadedVideoUrl && (
           <div className="space-y-6">
             {/* Analysis Options */}
             <Card>
@@ -806,11 +840,11 @@ export default function VideoAnalysisPage() {
                 <div className="flex justify-between mt-6">
                   <Button 
                     variant="outline"
-                    onClick={() => setCurrentStep("analyze")}
+                    onClick={() => setCurrentStep("video")}
                     className="flex items-center gap-2"
                   >
                     <ArrowLeft className="h-4 w-4" />
-                    Back to Analysis
+                    Back to Video
                   </Button>
                   
                   <Button onClick={resetForm} variant="outline">
