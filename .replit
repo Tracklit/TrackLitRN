@@ -4,7 +4,7 @@ hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["jq", "wget", "ffmpeg", "imagemagick", "python3"]
+packages = ["jq", "wget", "ffmpeg", "imagemagick", "python3", "opencv4", "python311Packages.opencv4", "python311Packages.numpy"]
 
 [deployment]
 deploymentTarget = "autoscale"

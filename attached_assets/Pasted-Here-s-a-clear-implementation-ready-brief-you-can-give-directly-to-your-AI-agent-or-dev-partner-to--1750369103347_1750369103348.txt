@@ -1,0 +1,106 @@
+Here’s a clear, implementation-ready brief you can give directly to your AI agent or dev partner to help refactor and correct the skeleton overlay flow using MediaPipe and OpenCV:
+
+⸻
+
+✅ Implementation Brief for Skeleton Overlay Using MediaPipe
+
+⸻
+
+🧠 Goal
+
+Fix and finalize the logic for analyzing a user-uploaded video and generating an output video with pose skeleton overlays, using MediaPipe. We already have a MediaPipe setup, but the current implementation isn’t producing or returning the overlaid video correctly. This brief focuses on correcting that pipeline.
+
+⸻
+
+📲 What the Flow Needs to Do
+	1.	Receive video file via a POST request (React Native app is already built).
+	2.	Process the video frame-by-frame using MediaPipe’s pose model.
+	3.	Draw skeletons on each frame using mp.solutions.drawing_utils.draw_landmarks().
+	4.	Write those frames into a new output video using OpenCV (VideoWriter).
+	5.	Return the final overlaid video, either as:
+	•	A downloadable file
+	•	A temporary URL from cloud storage (S3, Firebase, etc.)
+
+⸻
+
+⚙️ Key Implementation Details
+
+✅ Video Processing Logic (Python pseudocode):
+
+import cv2
+import mediapipe as mp
+
+# Set up MediaPipe Pose
+mp_pose = mp.solutions.pose
+pose = mp_pose.Pose()
+draw = mp.solutions.drawing_utils
+
+# Load input video
+cap = cv2.VideoCapture("input.mp4")
+width  = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+fps = cap.get(cv2.CAP_PROP_FPS)
+
+# Prepare output video
+out = cv2.VideoWriter("output.mp4", cv2.VideoWriter_fourcc(*'mp4v'), fps, (width, height))
+
+while cap.isOpened():
+    success, frame = cap.read()
+    if not success:
+        break
+
+    # Convert frame for MediaPipe
+    image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    result = pose.process(image_rgb)
+
+    if result.pose_landmarks:
+        draw.draw_landmarks(frame, result.pose_landmarks, mp_pose.POSE_CONNECTIONS)
+
+    out.write(frame)
+
+cap.release()
+out.release()
+
+🔄 What Must Be Working:
+	•	Input video loads correctly and maintains frame rate/resolution.
+	•	pose.process() runs without crashing (check for missing frames).
+	•	Skeletons actually draw (verify pose_landmarks is not None).
+	•	Output video is valid and playable.
+
+⸻
+
+🧪 Debugging Tips (include in the agent logic):
+	•	If result.pose_landmarks is empty → add frame logging to debug.
+	•	Add a cv2.imshow() preview when running locally to test overlay.
+	•	Log input/output file paths and ensure the filesystem has write permissions.
+
+⸻
+
+🛠️ Optional: Upload Result to Cloud (if needed)
+
+After the video is created, optionally:
+	•	Upload to S3, Firebase, or another object store.
+	•	Return a signed URL in the response to the frontend.
+
+⸻
+
+✅ Final Output from the API:
+
+{
+  "status": "success",
+  "video_url": "https://your-cdn.com/output.mp4"
+}
+
+Or return the file directly as an octet-stream if working locally.
+
+⸻
+
+🏁 What You Should Fix or Confirm
+	•	Does it draw skeletons on every frame of the video?
+	•	Does the output video play smoothly (same FPS)?
+	•	Does it save and return correctly via the API?
+	•	Add proper error handling for empty/missing frames
+
+⸻
+
+Let me know if you’d like me to generate a Flask or FastAPI version of this flow so your agent can plug it in as an API right away.

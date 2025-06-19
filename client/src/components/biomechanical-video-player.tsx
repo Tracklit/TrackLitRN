@@ -32,6 +32,7 @@ interface BiomechanicalOverlay {
 interface BiomechanicalVideoPlayerProps {
   videoUrl: string;
   videoName: string;
+  videoId: number;
   onAnalyze: (promptId: string) => void;
   isAnalyzing: boolean;
   biomechanicalData?: any;
@@ -40,6 +41,7 @@ interface BiomechanicalVideoPlayerProps {
 export function BiomechanicalVideoPlayer({ 
   videoUrl, 
   videoName, 
+  videoId,
   onAnalyze, 
   isAnalyzing,
   biomechanicalData 
@@ -59,6 +61,11 @@ export function BiomechanicalVideoPlayer({
   const [poseData, setPoseData] = useState<any>(null);
   const [webSocket, setWebSocket] = useState<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  
+  // Skeleton overlay processing
+  const [skeletonVideoUrl, setSkeletonVideoUrl] = useState<string | null>(null);
+  const [processingOverlay, setProcessingOverlay] = useState(false);
+  const [activeOverlays, setActiveOverlays] = useState<{[key: string]: any}>({});
 
   const [overlays, setOverlays] = useState<BiomechanicalOverlay[]>([
     {

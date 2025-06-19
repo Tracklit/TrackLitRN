@@ -7310,6 +7310,72 @@ Keep the response professional, evidence-based, and specific to track and field 
     }
   });
 
+  // Generate skeleton overlay video
+  app.post("/api/video-analysis/:id/generate-skeleton", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const videoId = parseInt(req.params.id);
+      
+      const video = await dbStorage.getVideoAnalysis(videoId);
+      if (!video || video.userId !== req.user!.id) {
+        return res.status(404).json({ error: 'Video not found' });
+      }
+
+      const inputPath = `.${video.fileUrl}`;
+      const outputFileName = `skeleton-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.mp4`;
+      const outputPath = `./uploads/video-analysis/${outputFileName}`;
+      
+      console.log(`Processing skeleton overlay for: ${inputPath}`);
+      
+      // Process video with skeleton overlay
+      const result = await new Promise<string>((resolve, reject) => {
+        const pythonProcess = spawn('python3', [
+          path.join(process.cwd(), 'server', 'video-skeleton-processor.py'),
+          inputPath,
+          outputPath
+        ]);
+
+        let output = '';
+        let errorOutput = '';
+
+        pythonProcess.stdout.on('data', (data) => {
+          output += data.toString();
+        });
+
+        pythonProcess.stderr.on('data', (data) => {
+          errorOutput += data.toString();
+        });
+
+        pythonProcess.on('close', (code) => {
+          if (code !== 0) {
+            reject(new Error(`Skeleton processing failed with code ${code}: ${errorOutput}`));
+          } else {
+            resolve(output);
+          }
+        });
+      });
+
+      const processingResult = JSON.parse(result);
+      
+      if (processingResult.error) {
+        return res.status(500).json({ error: processingResult.error });
+      }
+
+      // Return the skeleton video URL
+      const skeletonVideoUrl = `/uploads/video-analysis/${outputFileName}`;
+      res.json({ 
+        success: true, 
+        skeletonVideoUrl,
+        processingDetails: processingResult
+      });
+
+    } catch (error) {
+      console.error('Skeleton generation error:', error);
+      res.status(500).json({ error: 'Failed to generate skeleton overlay' });
+    }
+  });
+
   // Enhanced video analysis with MediaPipe biomechanical data
   app.post("/api/video-analysis/:videoId/analyze-enhanced", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
