@@ -206,6 +206,7 @@ export interface IStorage {
   
   // Coach-Athlete operations (for connections page)
   getCoachAthletes(coachUserId: number): Promise<User[]>;
+  getAthleteCoaches(athleteId: number): Promise<User[]>;
   getCoachAthleteCount(coachUserId: number): Promise<number>;
   addCoachAthlete(coachUserId: number, athleteId: number): Promise<Coach>;
   removeCoachAthlete(coachUserId: number, athleteId: number): Promise<boolean>;

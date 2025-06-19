@@ -279,20 +279,29 @@ export default function ProfilePage() {
         {/* Profile Header Card */}
         <Card className="bg-[#0a1529] border-blue-800/30">
           <CardContent className="p-6">
-            <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 mb-6">
-              <div className="flex items-center space-x-4">
-                <Avatar className="h-16 w-16">
-                  <AvatarImage src={user?.profileImageUrl || "/default-avatar.png"} />
-                  <AvatarFallback className="text-lg bg-blue-600 text-white">
-                    {user?.name?.charAt(0) || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h2 className="text-xl font-semibold">{user?.name}</h2>
-                  <p className="text-gray-400">@{user?.username}</p>
+            <div className="space-y-4 mb-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <Avatar className="h-16 w-16">
+                    <AvatarImage src={user?.profileImageUrl || "/default-avatar.png"} />
+                    <AvatarFallback className="text-lg bg-blue-600 text-white">
+                      {user?.name?.charAt(0) || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h2 className="text-xl font-semibold">{user?.name}</h2>
+                    <p className="text-gray-400">@{user?.username}</p>
+                  </div>
                 </div>
+                {user?.isPremium && (
+                  <Badge className="bg-yellow-500/20 text-yellow-300 border-yellow-500/30 flex-shrink-0">
+                    <Crown className="h-3 w-3 mr-1" />
+                    Premium
+                  </Badge>
+                )}
               </div>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <div className="flex justify-end">
+                <div className="flex items-center gap-3">
                 <Drawer open={isPublicProfileDialogOpen} onOpenChange={setIsPublicProfileDialogOpen}>
                   <DrawerTrigger asChild>
                     <Button variant="outline" size="sm">
@@ -388,12 +397,7 @@ export default function ProfilePage() {
                     </DrawerFooter>
                   </DrawerContent>
                 </Drawer>
-                {user?.isPremium && (
-                  <Badge className="bg-yellow-500/20 text-yellow-300 border-yellow-500/30">
-                    <Crown className="h-3 w-3 mr-1" />
-                    Premium
-                  </Badge>
-                )}
+                </div>
               </div>
             </div>
           </CardContent>
