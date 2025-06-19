@@ -113,7 +113,11 @@ export default function VideoAnalysisPage() {
 
   const analysisMutation = useMutation({
     mutationFn: async ({ videoId, promptId }: { videoId: number; promptId: string }) => {
-      const response = await apiRequest("POST", `/api/video-analysis/${videoId}/analyze`, { promptId });
+      const endpoint = analysisType === "enhanced" 
+        ? `/api/video-analysis/${videoId}/analyze-enhanced`
+        : `/api/video-analysis/${videoId}/analyze`;
+      
+      const response = await apiRequest("POST", endpoint, { promptId });
       if (!response.ok) {
         throw new Error("Analysis failed");
       }
@@ -121,6 +125,21 @@ export default function VideoAnalysisPage() {
     },
     onSuccess: (data: any) => {
       setAnalysisResponse(data.analysis);
+      
+      // Handle enhanced analysis data
+      if (data.biomechanical_metrics) {
+        setBiomechanicalData(data.biomechanical_metrics);
+      }
+      if (data.performance_score !== undefined) {
+        setPerformanceScore(data.performance_score);
+      }
+      if (data.key_insights) {
+        setKeyInsights(data.key_insights);
+      }
+      if (data.recommendations) {
+        setRecommendations(data.recommendations);
+      }
+      
       setIsAnalyzing(false);
       setCurrentStep("results");
     },
@@ -615,12 +634,118 @@ export default function VideoAnalysisPage() {
         {/* Results Step */}
         {currentStep === "results" && (
           <div className="space-y-6">
+            {/* Performance Score and Metrics */}
+            {performanceScore !== null && biomechanicalData && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-slate-300">Performance Score</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-white">{performanceScore}/100</div>
+                    <div className={`text-xs ${
+                      performanceScore >= 85 ? 'text-green-400' : 
+                      performanceScore >= 70 ? 'text-yellow-400' : 'text-red-400'
+                    }`}>
+                      {performanceScore >= 85 ? 'Excellent' : 
+                       performanceScore >= 70 ? 'Good' : 'Needs Work'}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-slate-300">Stride Rate</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-white">{biomechanicalData.stride_rate.toFixed(0)}</div>
+                    <div className="text-xs text-slate-400">steps/min</div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-slate-300">Asymmetry</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-white">{biomechanicalData.asymmetry.toFixed(1)}%</div>
+                    <div className={`text-xs ${
+                      biomechanicalData.asymmetry <= 3 ? 'text-green-400' : 
+                      biomechanicalData.asymmetry <= 5 ? 'text-yellow-400' : 'text-red-400'
+                    }`}>
+                      {biomechanicalData.asymmetry <= 3 ? 'Excellent' : 
+                       biomechanicalData.asymmetry <= 5 ? 'Good' : 'High'}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-slate-300">Knee ROM</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-white">{biomechanicalData.knee_angle_range.toFixed(0)}°</div>
+                    <div className="text-xs text-slate-400">range of motion</div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Key Insights */}
+            {keyInsights.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Check className="h-5 w-5 text-green-400" />
+                    Key Insights
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {keyInsights.map((insight, index) => (
+                      <div key={index} className="flex items-center gap-2 text-sm">
+                        <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                        <span className="text-white">{insight}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Recommendations */}
+            {recommendations.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ArrowRight className="h-5 w-5 text-yellow-400" />
+                    Recommendations
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {recommendations.map((rec, index) => (
+                      <div key={index} className="flex items-center gap-2 text-sm">
+                        <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                        <span className="text-white">{rec}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Analysis Results */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Sparkles className="h-5 w-5" />
-                  Sprinthia Analysis Results
+                  Detailed Analysis
+                  {analysisType === "enhanced" && (
+                    <Badge variant="outline" className="ml-2 text-xs">
+                      Enhanced with MediaPipe
+                    </Badge>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent>
