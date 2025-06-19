@@ -158,18 +158,17 @@ export default function ProfilePage() {
         });
         
         if (!response.ok) {
-          throw new Error(`Failed to fetch clubs: ${response.status}`);
+          // If clubs can't be fetched, just set empty array - don't show error
+          setClubs([]);
+          return;
         }
         
         const data = await response.json();
         setClubs(data);
       } catch (err: any) {
         console.error('Error fetching clubs:', err);
-        toast({
-          title: "Error loading clubs",
-          description: err?.message || 'An error occurred while fetching clubs',
-          variant: "destructive"
-        });
+        // Set empty array instead of showing error toast
+        setClubs([]);
       } finally {
         setIsLoadingClubs(false);
       }
@@ -280,7 +279,7 @@ export default function ProfilePage() {
         {/* Profile Header Card */}
         <Card className="bg-[#0a1529] border-blue-800/30">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 mb-6">
               <div className="flex items-center space-x-4">
                 <Avatar className="h-16 w-16">
                   <AvatarImage src={user?.profileImageUrl || "/default-avatar.png"} />
@@ -293,7 +292,7 @@ export default function ProfilePage() {
                   <p className="text-gray-400">@{user?.username}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                 <Drawer open={isPublicProfileDialogOpen} onOpenChange={setIsPublicProfileDialogOpen}>
                   <DrawerTrigger asChild>
                     <Button variant="outline" size="sm">
@@ -449,15 +448,27 @@ export default function ProfilePage() {
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder={isLoadingClubs ? "Loading clubs..." : "Select a club"} />
+                            <SelectValue placeholder={
+                              isLoadingClubs 
+                                ? "Loading clubs..." 
+                                : clubs.length === 0 
+                                  ? "No Club Association" 
+                                  : "Select a club"
+                            } />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {clubs.map((club) => (
-                            <SelectItem key={club.id} value={club.id.toString()}>
-                              {club.name}
+                          {clubs.length === 0 ? (
+                            <SelectItem value="" disabled>
+                              No Club Association
                             </SelectItem>
-                          ))}
+                          ) : (
+                            clubs.map((club) => (
+                              <SelectItem key={club.id} value={club.id.toString()}>
+                                {club.name}
+                              </SelectItem>
+                            ))
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />
