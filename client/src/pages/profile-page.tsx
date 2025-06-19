@@ -272,9 +272,8 @@ export default function ProfilePage() {
 
 
   return (
-    <div className="flex flex-col h-screen bg-[#010a18] text-white">
-      <main className="flex-1 overflow-auto pt-16 pb-32">
-        <div className="container mx-auto px-4 py-6 max-w-4xl min-h-full">
+    <div className="min-h-screen bg-[#010a18] text-white pt-16 pb-20">
+      <div className="container mx-auto px-4 py-6 max-w-4xl">
           <div className="mb-8">
             <h2 className="text-2xl font-bold mb-1">Your Profile</h2>
             <p className="text-darkGray">Manage your personal information and settings</p>
@@ -642,9 +641,6 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
-      </main>
-      
-
     </div>
   );
 }
