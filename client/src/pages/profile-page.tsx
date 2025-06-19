@@ -475,21 +475,19 @@ export default function ProfilePage() {
                     <Button type="submit" className="bg-primary text-white">
                       Save Changes
                     </Button>
+                    
+                    {/* Sign Out Button */}
+                    <Button 
+                      onClick={handleSignOut}
+                      disabled={logoutMutation.isPending}
+                      variant="destructive" 
+                      className="w-full mt-4"
+                    >
+                      <LogOut className="h-4 w-4 mr-2" />
+                      {logoutMutation.isPending ? 'Signing Out...' : 'Sign Out'}
+                    </Button>
                   </form>
                 </Form>
-                
-                {/* Sign Out Section */}
-                <div className="mt-6 pt-6 border-t border-gray-700">
-                  <Button 
-                    onClick={handleSignOut}
-                    disabled={logoutMutation.isPending}
-                    variant="outline" 
-                    className="w-full justify-center text-red-400 border-red-400/50 hover:bg-red-400/10 hover:border-red-400"
-                  >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    {logoutMutation.isPending ? 'Signing Out...' : 'Sign Out'}
-                  </Button>
-                </div>
 
                 {/* Coach Section */}
                 <Separator className="my-6" />
