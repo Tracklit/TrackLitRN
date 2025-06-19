@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
@@ -9,17 +8,16 @@ import {
   RotateCcw, 
   Volume2, 
   Maximize, 
-  Settings,
+  X,
   Eye,
-  EyeOff,
-  Sparkles,
-  Zap,
-  Crown,
   Activity,
   Target,
   Gauge,
   Timer,
-  Footprints
+  Footprints,
+  Sparkles,
+  Zap,
+  Crown
 } from "lucide-react";
 
 interface BiomechanicalOverlay {
@@ -55,7 +53,6 @@ export function BiomechanicalVideoPlayer({
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
   const [playbackRate, setPlaybackRate] = useState(1);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
 
   const [overlays, setOverlays] = useState<BiomechanicalOverlay[]>([
@@ -133,10 +130,16 @@ export function BiomechanicalVideoPlayer({
     video.addEventListener('loadedmetadata', updateDuration);
     video.addEventListener('ended', () => setIsPlaying(false));
 
+    // Show first frame
+    video.addEventListener('loadeddata', () => {
+      video.currentTime = 0.1;
+    });
+
     return () => {
       video.removeEventListener('timeupdate', updateTime);
       video.removeEventListener('loadedmetadata', updateDuration);
       video.removeEventListener('ended', () => setIsPlaying(false));
+      video.removeEventListener('loadeddata', () => {});
     };
   }, []);
 
@@ -149,18 +152,48 @@ export function BiomechanicalVideoPlayer({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Match canvas size to video
-    canvas.width = video.videoWidth || video.clientWidth;
-    canvas.height = video.videoHeight || video.clientHeight;
+    const updateCanvasSize = () => {
+      const container = containerRef.current;
+      if (!container) return;
+
+      canvas.width = container.clientWidth;
+      canvas.height = container.clientHeight;
+    };
+
+    updateCanvasSize();
+    window.addEventListener('resize', updateCanvasSize);
 
     const drawOverlays = () => {
+      if (!video.videoWidth || !video.videoHeight) {
+        requestAnimationFrame(drawOverlays);
+        return;
+      }
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
+      // Calculate video display dimensions and position
+      const videoAspect = video.videoWidth / video.videoHeight;
+      const containerAspect = canvas.width / canvas.height;
+      
+      let displayWidth, displayHeight, offsetX, offsetY;
+      
+      if (videoAspect > containerAspect) {
+        displayWidth = canvas.width;
+        displayHeight = canvas.width / videoAspect;
+        offsetX = 0;
+        offsetY = (canvas.height - displayHeight) / 2;
+      } else {
+        displayWidth = canvas.height * videoAspect;
+        displayHeight = canvas.height;
+        offsetX = (canvas.width - displayWidth) / 2;
+        offsetY = 0;
+      }
+
       // Only draw if video is loaded and overlays are enabled
       if (video.readyState >= 2) {
         overlays.forEach(overlay => {
           if (overlay.enabled) {
-            drawBiomechanicalOverlay(ctx, overlay, canvas.width, canvas.height);
+            drawBiomechanicalOverlay(ctx, overlay, displayWidth, displayHeight, offsetX, offsetY);
           }
         });
       }
@@ -169,22 +202,28 @@ export function BiomechanicalVideoPlayer({
     };
 
     drawOverlays();
+
+    return () => {
+      window.removeEventListener('resize', updateCanvasSize);
+    };
   }, [overlays]);
 
   const drawBiomechanicalOverlay = (
     ctx: CanvasRenderingContext2D, 
     overlay: BiomechanicalOverlay,
     width: number,
-    height: number
+    height: number,
+    offsetX: number,
+    offsetY: number
   ) => {
     ctx.strokeStyle = overlay.color;
     ctx.fillStyle = overlay.color;
     ctx.lineWidth = 2;
 
-    // Generate simulated pose data for demonstration
-    const centerX = width * 0.5;
-    const centerY = height * 0.6;
-    const scale = Math.min(width, height) * 0.2;
+    // Generate simulated pose data positioned within video bounds
+    const centerX = offsetX + width * 0.5;
+    const centerY = offsetY + height * 0.6;
+    const scale = Math.min(width, height) * 0.15;
 
     switch (overlay.type) {
       case 'skeleton':
@@ -197,7 +236,7 @@ export function BiomechanicalVideoPlayer({
         drawVelocityVectors(ctx, centerX, centerY, scale);
         break;
       case 'stride':
-        drawStrideAnalysis(ctx, width, height);
+        drawStrideAnalysis(ctx, width, height, offsetX, offsetY);
         break;
       case 'contact':
         drawGroundContact(ctx, centerX, centerY + scale * 1.5, scale);
@@ -246,24 +285,18 @@ export function BiomechanicalVideoPlayer({
   };
 
   const drawJointAngles = (ctx: CanvasRenderingContext2D, x: number, y: number, scale: number) => {
-    // Knee angles
     const leftKnee = { x: x - scale * 0.2, y: y + scale * 1.2 };
     const rightKnee = { x: x + scale * 0.2, y: y + scale * 1.2 };
     
     ctx.font = '14px monospace';
     ctx.fillText(`L: 142°`, leftKnee.x - 25, leftKnee.y - 10);
     ctx.fillText(`R: 138°`, rightKnee.x - 25, rightKnee.y - 10);
-
-    // Hip angles
     ctx.fillText(`Hip: 165°`, x - 30, y + scale * 0.3);
-    
-    // Trunk angle
     ctx.fillText(`Trunk: 85°`, x - 35, y - scale * 0.5);
   };
 
   const drawVelocityVectors = (ctx: CanvasRenderingContext2D, x: number, y: number, scale: number) => {
-    // Center of mass velocity
-    const velocity = biomechanicalData?.velocity || 8.5; // m/s
+    const velocity = biomechanicalData?.velocity || 8.5;
     const vectorLength = Math.min(scale * 0.8, velocity * 10);
     
     ctx.beginPath();
@@ -279,48 +312,41 @@ export function BiomechanicalVideoPlayer({
     ctx.lineTo(x + vectorLength - 15, y - vectorLength * 0.3 + 5);
     ctx.stroke();
 
-    // Velocity label
     ctx.font = '16px monospace';
     ctx.fillText(`${velocity.toFixed(1)} m/s`, x + 10, y - 10);
   };
 
-  const drawStrideAnalysis = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
-    const strideLength = biomechanicalData?.stride_length || 2.1; // meters
-    const frequency = biomechanicalData?.stride_rate || 185; // spm
+  const drawStrideAnalysis = (ctx: CanvasRenderingContext2D, width: number, height: number, offsetX: number, offsetY: number) => {
+    const strideLength = biomechanicalData?.stride_length || 2.1;
+    const frequency = biomechanicalData?.stride_rate || 185;
     
-    // Stride length visualization
-    const stridePixels = (strideLength / 3) * width * 0.6; // normalize to video width
-    const baseY = height * 0.9;
+    const stridePixels = (strideLength / 3) * width * 0.6;
+    const baseY = offsetY + height * 0.9;
     
     ctx.setLineDash([5, 5]);
     ctx.beginPath();
-    ctx.moveTo(width * 0.2, baseY);
-    ctx.lineTo(width * 0.2 + stridePixels, baseY);
+    ctx.moveTo(offsetX + width * 0.2, baseY);
+    ctx.lineTo(offsetX + width * 0.2 + stridePixels, baseY);
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Labels
     ctx.font = '14px monospace';
-    ctx.fillText(`Stride: ${strideLength.toFixed(1)}m`, width * 0.05, height * 0.85);
-    ctx.fillText(`Rate: ${frequency} spm`, width * 0.05, height * 0.88);
+    ctx.fillText(`Stride: ${strideLength.toFixed(1)}m`, offsetX + width * 0.05, offsetY + height * 0.85);
+    ctx.fillText(`Rate: ${frequency} spm`, offsetX + width * 0.05, offsetY + height * 0.88);
   };
 
   const drawGroundContact = (ctx: CanvasRenderingContext2D, x: number, y: number, scale: number) => {
-    // Ground contact indicators
-    const contactTime = biomechanicalData?.contact_time || 0.18; // seconds
-    const flightTime = biomechanicalData?.flight_time || 0.12; // seconds
+    const contactTime = biomechanicalData?.contact_time || 0.18;
+    const flightTime = biomechanicalData?.flight_time || 0.12;
     
-    // Left foot contact
     ctx.beginPath();
     ctx.arc(x - scale * 0.1, y, 8, 0, Math.PI * 2);
     ctx.fill();
     
-    // Right foot contact
     ctx.beginPath();
     ctx.arc(x + scale * 0.1, y, 8, 0, Math.PI * 2);
     ctx.fill();
 
-    // Contact time labels
     ctx.font = '12px monospace';
     ctx.fillText(`CT: ${(contactTime * 1000).toFixed(0)}ms`, x - 40, y + 25);
     ctx.fillText(`FT: ${(flightTime * 1000).toFixed(0)}ms`, x - 40, y + 40);
@@ -359,148 +385,152 @@ export function BiomechanicalVideoPlayer({
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  const handleClose = () => {
+    window.location.reload();
+  };
+
   return (
-    <div className="space-y-4">
-      {/* Video Player Container */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <Activity className="h-5 w-5" />
-              {videoName}
-            </span>
-            <Badge variant="outline">Biomechanical Analysis</Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div 
-            ref={containerRef}
-            className="relative bg-black rounded-lg overflow-hidden aspect-video"
-            onMouseEnter={() => setShowControls(true)}
-            onMouseLeave={() => setShowControls(false)}
-          >
-            {/* Video Element */}
-            <video
-              ref={videoRef}
-              src={videoUrl}
-              className="w-full h-full object-contain"
-              preload="metadata"
-            />
-            
-            {/* Overlay Canvas */}
-            <canvas
-              ref={canvasRef}
-              className="absolute inset-0 w-full h-full pointer-events-none"
-              style={{ mixBlendMode: 'normal' }}
-            />
+    <div className="fixed inset-0 bg-black z-50 flex">
+      {/* Main Video Area */}
+      <div className="flex-1 relative">
+        <div 
+          ref={containerRef}
+          className="absolute inset-0 bg-black flex items-center justify-center"
+          onMouseEnter={() => setShowControls(true)}
+          onMouseLeave={() => setShowControls(false)}
+        >
+          {/* Video Element */}
+          <video
+            ref={videoRef}
+            src={videoUrl}
+            className="max-w-full max-h-full object-contain"
+            preload="metadata"
+          />
+          
+          {/* Overlay Canvas */}
+          <canvas
+            ref={canvasRef}
+            className="absolute inset-0 pointer-events-none"
+            style={{ 
+              mixBlendMode: 'normal',
+              width: '100%',
+              height: '100%'
+            }}
+          />
 
-            {/* Video Controls */}
-            {showControls && (
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                {/* Progress Bar */}
-                <div className="mb-4">
-                  <Slider
-                    value={[currentTime]}
-                    max={duration}
-                    step={0.1}
-                    onValueChange={handleSeek}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-xs text-white mt-1">
-                    <span>{formatTime(currentTime)}</span>
-                    <span>{formatTime(duration)}</span>
-                  </div>
-                </div>
-
-                {/* Control Buttons */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={togglePlay}
-                      className="text-white hover:bg-white/20"
-                    >
-                      {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                    </Button>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        const video = videoRef.current;
-                        if (video) {
-                          video.currentTime = 0;
-                          setCurrentTime(0);
-                        }
-                      }}
-                      className="text-white hover:bg-white/20"
-                    >
-                      <RotateCcw className="h-4 w-4" />
-                    </Button>
-
-                    <div className="flex items-center gap-2 ml-4">
-                      <Volume2 className="h-4 w-4 text-white" />
-                      <Slider
-                        value={[volume]}
-                        max={1}
-                        step={0.1}
-                        onValueChange={(value) => {
-                          setVolume(value[0]);
-                          if (videoRef.current) {
-                            videoRef.current.volume = value[0];
-                          }
-                        }}
-                        className="w-20"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <select
-                      value={playbackRate}
-                      onChange={(e) => {
-                        const rate = parseFloat(e.target.value);
-                        setPlaybackRate(rate);
-                        if (videoRef.current) {
-                          videoRef.current.playbackRate = rate;
-                        }
-                      }}
-                      className="bg-black/50 text-white text-xs rounded px-2 py-1"
-                    >
-                      <option value={0.25}>0.25x</option>
-                      <option value={0.5}>0.5x</option>
-                      <option value={1}>1x</option>
-                      <option value={1.25}>1.25x</option>
-                      <option value={1.5}>1.5x</option>
-                      <option value={2}>2x</option>
-                    </select>
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-white hover:bg-white/20"
-                    >
-                      <Maximize className="h-4 w-4" />
-                    </Button>
-                  </div>
+          {/* Video Controls */}
+          {showControls && (
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+              {/* Progress Bar */}
+              <div className="mb-4">
+                <Slider
+                  value={[currentTime]}
+                  max={duration}
+                  step={0.1}
+                  onValueChange={handleSeek}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-white mt-1">
+                  <span>{formatTime(currentTime)}</span>
+                  <span>{formatTime(duration)}</span>
                 </div>
               </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Biomechanical Overlay Controls */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+              {/* Control Buttons */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={togglePlay}
+                    className="text-white hover:bg-white/20"
+                  >
+                    {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      const video = videoRef.current;
+                      if (video) {
+                        video.currentTime = 0;
+                        setCurrentTime(0);
+                      }
+                    }}
+                    className="text-white hover:bg-white/20"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                  </Button>
+
+                  <div className="flex items-center gap-2 ml-4">
+                    <Volume2 className="h-4 w-4 text-white" />
+                    <Slider
+                      value={[volume]}
+                      max={1}
+                      step={0.1}
+                      onValueChange={(value) => {
+                        setVolume(value[0]);
+                        if (videoRef.current) {
+                          videoRef.current.volume = value[0];
+                        }
+                      }}
+                      className="w-20"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <select
+                    value={playbackRate}
+                    onChange={(e) => {
+                      const rate = parseFloat(e.target.value);
+                      setPlaybackRate(rate);
+                      if (videoRef.current) {
+                        videoRef.current.playbackRate = rate;
+                      }
+                    }}
+                    className="bg-black/50 text-white text-xs rounded px-2 py-1"
+                  >
+                    <option value={0.25}>0.25x</option>
+                    <option value={0.5}>0.5x</option>
+                    <option value={1}>1x</option>
+                    <option value={1.25}>1.25x</option>
+                    <option value={1.5}>1.5x</option>
+                    <option value={2}>2x</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Side Panel for Controls */}
+      <div className="w-80 bg-gray-900 border-l border-gray-700 flex flex-col">
+        {/* Header */}
+        <div className="p-4 border-b border-gray-700 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Activity className="h-5 w-5 text-white" />
+            <h1 className="text-white font-semibold truncate">{videoName}</h1>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleClose}
+            className="text-white hover:bg-white/20"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Biomechanical Overlay Controls */}
+        <div className="p-4 border-b border-gray-700">
+          <h3 className="flex items-center gap-2 text-white font-medium mb-4">
             <Eye className="h-5 w-5" />
-            Biomechanical Overlays
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            Overlays
+          </h3>
+          <div className="space-y-2">
             {overlays.map((overlay) => {
               const Icon = overlay.icon;
               return (
@@ -508,7 +538,7 @@ export function BiomechanicalVideoPlayer({
                   key={overlay.id}
                   variant={overlay.enabled ? "default" : "outline"}
                   onClick={() => toggleOverlay(overlay.id)}
-                  className={`h-auto p-3 flex flex-col items-center gap-2 ${
+                  className={`w-full p-3 flex items-center gap-3 text-left justify-start ${
                     overlay.enabled ? 'border-2' : ''
                   }`}
                   style={{
@@ -516,27 +546,21 @@ export function BiomechanicalVideoPlayer({
                     backgroundColor: overlay.enabled ? `${overlay.color}20` : undefined
                   }}
                 >
-                  <Icon className="h-5 w-5" style={{ color: overlay.color }} />
-                  <div className="text-center">
-                    <div className="text-xs font-medium">{overlay.label}</div>
-                  </div>
+                  <Icon className="h-4 w-4" style={{ color: overlay.color }} />
+                  <div className="text-xs font-medium">{overlay.label}</div>
                 </Button>
               );
             })}
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Analysis Controls */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+        {/* Analysis Controls */}
+        <div className="p-4 flex-1">
+          <h3 className="flex items-center gap-2 text-white font-medium mb-4">
             <Sparkles className="h-5 w-5" />
-            Video Analysis
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            Analysis
+          </h3>
+          <div className="space-y-3">
             {analysisPrompts.map((prompt) => {
               const Icon = prompt.icon;
               return (
@@ -545,12 +569,12 @@ export function BiomechanicalVideoPlayer({
                   onClick={() => onAnalyze(prompt.id)}
                   disabled={isAnalyzing}
                   variant="outline"
-                  className="h-auto p-4 flex flex-col items-center gap-3"
+                  className="w-full p-3 flex items-center gap-3 text-left justify-start text-white border-gray-600 hover:bg-gray-800"
                 >
-                  <Icon className="h-6 w-6" />
-                  <div className="text-center">
-                    <div className="font-medium">{prompt.title}</div>
-                    <div className="text-xs text-muted-foreground">{prompt.description}</div>
+                  <Icon className="h-4 w-4" />
+                  <div>
+                    <div className="text-sm font-medium">{prompt.title}</div>
+                    <div className="text-xs text-gray-400">{prompt.description}</div>
                   </div>
                 </Button>
               );
@@ -560,13 +584,13 @@ export function BiomechanicalVideoPlayer({
           {isAnalyzing && (
             <div className="mt-4 text-center">
               <div className="flex items-center justify-center gap-2">
-                <Sparkles className="h-4 w-4 animate-spin" />
-                <span className="text-sm">Analyzing video with enhanced biomechanical data...</span>
+                <Sparkles className="h-4 w-4 animate-spin text-white" />
+                <span className="text-sm text-white">Analyzing video...</span>
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
