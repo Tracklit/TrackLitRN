@@ -316,23 +316,25 @@ export function BiomechanicalVideoPlayer({
     ctx.fillText(`${velocity.toFixed(1)} m/s`, x + 10, y - 10);
   };
 
-  const drawStrideAnalysis = (ctx: CanvasRenderingContext2D, width: number, height: number, offsetX: number, offsetY: number) => {
+  const drawStrideAnalysis = (ctx: CanvasRenderingContext2D, width: number, height: number, offsetX?: number, offsetY?: number) => {
+    const oX = offsetX || 0;
+    const oY = offsetY || 0;
     const strideLength = biomechanicalData?.stride_length || 2.1;
     const frequency = biomechanicalData?.stride_rate || 185;
     
     const stridePixels = (strideLength / 3) * width * 0.6;
-    const baseY = offsetY + height * 0.9;
+    const baseY = oY + height * 0.9;
     
     ctx.setLineDash([5, 5]);
     ctx.beginPath();
-    ctx.moveTo(offsetX + width * 0.2, baseY);
-    ctx.lineTo(offsetX + width * 0.2 + stridePixels, baseY);
+    ctx.moveTo(oX + width * 0.2, baseY);
+    ctx.lineTo(oX + width * 0.2 + stridePixels, baseY);
     ctx.stroke();
     ctx.setLineDash([]);
 
     ctx.font = '14px monospace';
-    ctx.fillText(`Stride: ${strideLength.toFixed(1)}m`, offsetX + width * 0.05, offsetY + height * 0.85);
-    ctx.fillText(`Rate: ${frequency} spm`, offsetX + width * 0.05, offsetY + height * 0.88);
+    ctx.fillText(`Stride: ${strideLength.toFixed(1)}m`, oX + width * 0.05, oY + height * 0.85);
+    ctx.fillText(`Rate: ${frequency} spm`, oX + width * 0.05, oY + height * 0.88);
   };
 
   const drawGroundContact = (ctx: CanvasRenderingContext2D, x: number, y: number, scale: number) => {
