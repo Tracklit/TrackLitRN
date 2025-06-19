@@ -28,6 +28,11 @@ export default function VideoAnalysisPage() {
   const [customPrompt, setCustomPrompt] = useState("");
   const [useCustomPrompt, setUseCustomPrompt] = useState(false);
   const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
+  const [biomechanicalData, setBiomechanicalData] = useState<any>(null);
+  const [performanceScore, setPerformanceScore] = useState<number | null>(null);
+  const [keyInsights, setKeyInsights] = useState<string[]>([]);
+  const [recommendations, setRecommendations] = useState<string[]>([]);
+  const [analysisType, setAnalysisType] = useState<"standard" | "enhanced">("enhanced");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 

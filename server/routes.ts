@@ -7310,6 +7310,99 @@ Keep the response professional, evidence-based, and specific to track and field 
     }
   });
 
+  // Enhanced video analysis with MediaPipe biomechanical data
+  app.post("/api/video-analysis/:videoId/analyze-enhanced", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const videoId = parseInt(req.params.videoId);
+      const { promptId } = req.body;
+
+      if (!promptId) {
+        return res.status(400).json({ error: "Analysis type is required" });
+      }
+
+      // Get video details
+      const video = await dbStorage.getVideoAnalysis(videoId);
+      
+      if (!video || video.userId !== req.user.id) {
+        return res.status(404).json({ error: "Video not found" });
+      }
+
+      // Check user's prompt limits
+      const user = req.user;
+      const subscriptionTier = user.subscriptionTier || "free";
+      const currentPrompts = user.sprinthiaPrompts || 0;
+
+      let canAnalyze = false;
+      let promptCost = 0;
+
+      if (subscriptionTier === "star") {
+        canAnalyze = true;
+      } else if (subscriptionTier === "pro") {
+        canAnalyze = currentPrompts < 5;
+        promptCost = 0;
+      } else { // free tier
+        canAnalyze = currentPrompts < 1;
+        promptCost = 25; // Spikes cost for additional prompt
+      }
+
+      if (!canAnalyze && (user.spikes || 0) < promptCost) {
+        return res.status(402).json({ 
+          error: "Analysis limit reached. Upgrade subscription or purchase additional prompts with Spikes.",
+          currentPrompts,
+          promptCost,
+          userSpikes: user.spikes || 0
+        });
+      }
+
+      // Construct the full video file path
+      const videoPath = video.fileUrl.startsWith('/') ? `.${video.fileUrl}` : video.fileUrl;
+      
+      try {
+        // Use simplified MediaPipe + OpenAI integration for enhanced analysis
+        const { simplifiedMediaPipeService } = await import('./mediapipe-simple');
+        console.log('Starting enhanced biomechanical analysis...');
+        
+        const completeAnalysis = await simplifiedMediaPipeService.analyzeVideoComplete(videoPath);
+
+        // Update user's prompt usage
+        if (subscriptionTier !== "star") {
+          await dbStorage.updateUser(user.id, { 
+            sprinthiaPrompts: currentPrompts + 1
+          });
+        }
+
+        // Save comprehensive analysis to video record
+        await dbStorage.updateVideoAnalysis(videoId, { 
+          analysisData: completeAnalysis.ai_analysis
+        });
+
+        res.json({ 
+          analysis: completeAnalysis.ai_analysis,
+          biomechanical_metrics: completeAnalysis.biomechanical_metrics,
+          performance_score: completeAnalysis.performance_score,
+          key_insights: completeAnalysis.key_insights,
+          recommendations: completeAnalysis.recommendations,
+          promptsUsed: subscriptionTier !== "star" ? currentPrompts + 1 : "unlimited",
+          analysis_type: "enhanced_biomechanical"
+        });
+      } catch (error) {
+        console.error("Enhanced biomechanical analysis failed:", error);
+        const errorMessage = error instanceof Error ? error.message : "Enhanced analysis failed";
+        
+        res.status(500).json({ 
+          error: `Enhanced analysis failed: ${errorMessage}`,
+          fallback_available: true
+        });
+      }
+
+    } catch (error) {
+      console.error("Error in enhanced video analysis:", error);
+      res.status(500).json({ error: "Failed to perform enhanced analysis" });
+    }
+  });
+
   // Buy additional prompts with Spikes
   app.post("/api/video-analysis/buy-prompts", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);

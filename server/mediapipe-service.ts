@@ -1,7 +1,7 @@
 import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs/promises';
-import { analyzeVideoWithOpenAI } from './openai';
+import { analyzeVideoWithPrompt } from './openai';
 
 interface BiomechanicalData {
   video_info: {
@@ -222,8 +222,13 @@ Based on the biomechanical data above, provide a comprehensive athletic performa
 Please provide practical, evidence-based feedback that an athlete and coach can implement immediately.`;
 
     try {
-      // Use existing OpenAI service but with structured biomechanical data
-      const aiResponse = await analyzeVideoWithOpenAI(analysisPrompt, null);
+      // Use OpenAI service with biomechanical data
+      const aiResponse = await analyzeVideoWithPrompt(
+        "Biomechanical Analysis",
+        "Advanced movement analysis using pose detection data",
+        "biomechanical",
+        analysisPrompt
+      );
       return aiResponse;
     } catch (error) {
       console.error('AI analysis failed:', error);
