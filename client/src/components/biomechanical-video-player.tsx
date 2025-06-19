@@ -539,21 +539,61 @@ export function BiomechanicalVideoPlayer({
     }
   };
 
-  const drawGroundContact = (ctx: CanvasRenderingContext2D, x: number, y: number, scale: number) => {
-    const contactTime = biomechanicalData?.contact_time || 0.18;
-    const flightTime = biomechanicalData?.flight_time || 0.12;
+  const drawRealGroundContact = (
+    ctx: CanvasRenderingContext2D, 
+    groundContact: any,
+    landmarks: any,
+    displayWidth: number, 
+    displayHeight: number, 
+    offsetX: number, 
+    offsetY: number,
+    videoWidth: number,
+    videoHeight: number
+  ) => {
+    if (!groundContact || !landmarks) return;
     
-    ctx.beginPath();
-    ctx.arc(x - scale * 0.1, y, 8, 0, Math.PI * 2);
-    ctx.fill();
+    const scaleX = displayWidth / videoWidth;
+    const scaleY = displayHeight / videoHeight;
     
-    ctx.beginPath();
-    ctx.arc(x + scale * 0.1, y, 8, 0, Math.PI * 2);
-    ctx.fill();
+    const getDisplayCoords = (landmark: any) => {
+      if (!landmark) return null;
+      return {
+        x: offsetX + landmark.x * scaleX,
+        y: offsetY + landmark.y * scaleY
+      };
+    };
 
-    ctx.font = '12px monospace';
-    ctx.fillText(`CT: ${(contactTime * 1000).toFixed(0)}ms`, x - 40, y + 25);
-    ctx.fillText(`FT: ${(flightTime * 1000).toFixed(0)}ms`, x - 40, y + 40);
+    ctx.strokeStyle = '#ef4444';
+    ctx.fillStyle = '#ef4444';
+    
+    // Draw ground contact indicators for feet
+    ['left', 'right'].forEach(side => {
+      const contactData = groundContact[`${side}_foot_contact`];
+      const ankle = landmarks[`${side}_ankle`];
+      
+      if (contactData && ankle) {
+        const coords = getDisplayCoords(ankle);
+        if (coords) {
+          // Draw contact indicator
+          const radius = contactData.is_contact ? 12 : 6;
+          const alpha = contactData.is_contact ? 1.0 : 0.3;
+          
+          ctx.globalAlpha = alpha;
+          ctx.beginPath();
+          ctx.arc(coords.x, coords.y + 20, radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1.0;
+          
+          // Display contact info
+          ctx.font = '11px monospace';
+          const status = contactData.is_contact ? 'CONTACT' : 'FLIGHT';
+          const velocity = contactData.velocity?.toFixed(0) || '0';
+          
+          ctx.fillText(`${side.toUpperCase()}: ${status}`, coords.x - 30, coords.y + 45);
+          ctx.fillText(`Vel: ${velocity}px/s`, coords.x - 30, coords.y + 60);
+        }
+      }
+    });
   };
 
   const togglePlay = () => {
