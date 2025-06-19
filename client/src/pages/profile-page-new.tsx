@@ -16,7 +16,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Crown, Edit, Camera, Check, X, Eye, EyeOff } from 'lucide-react';
+import { Crown, LogOut, Edit, Camera } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -25,23 +26,25 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger, Drawer
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-// Profile form schemas
+// Profile form schema
 const profileFormSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
   email: z.string().email({ message: "Invalid email address" }),
   defaultClubId: z.number().nullable().optional(),
 });
 
+// Public profile form schema
 const publicProfileFormSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
   bio: z.string().max(500, { message: "Bio must be 500 characters or less" }).optional(),
+  profileImageUrl: z.string().url().optional().or(z.literal('')),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 type PublicProfileFormValues = z.infer<typeof publicProfileFormSchema>;
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, logoutMutation } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [clubs, setClubs] = useState<any[]>([]);
@@ -49,8 +52,6 @@ export default function ProfilePage() {
   const [isPublicProfileDialogOpen, setIsPublicProfileDialogOpen] = useState(false);
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
   const [profileImagePreview, setProfileImagePreview] = useState<string>('');
-  const [isEditingBio, setIsEditingBio] = useState(false);
-  const [bioText, setBioText] = useState(user?.bio || '');
 
   // Coach functionality queries
   const { data: coachLimits } = useQuery({
@@ -60,18 +61,72 @@ export default function ProfilePage() {
 
   const { data: athletes = [] } = useQuery({
     queryKey: ['/api/coach/athletes'],
+    enabled: !!user?.isCoach,
   });
 
   const { data: coaches = [] } = useQuery({
     queryKey: ['/api/athlete/coaches'],
   });
 
-  // Fetch connections (friends) data
-  const { data: connections = [] } = useQuery({
-    queryKey: ['/api/friends'],
+  // Coach status toggle mutation
+  const updateCoachStatusMutation = useMutation({
+    mutationFn: async (isCoach: boolean) => {
+      const response = await apiRequest('PATCH', '/api/user/coach-status', { isCoach });
+      return response.json();
+    },
+    onSuccess: (updatedUser) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/coach/limits'] });
+      toast({
+        title: updatedUser.isCoach ? "Coach Status Activated" : "Coach Status Deactivated",
+        description: updatedUser.isCoach 
+          ? "You can now assign programs to athletes!" 
+          : "Coach features have been disabled.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Update Failed",
+        description: error.message || "Failed to update coach status",
+        variant: "destructive",
+      });
+    },
   });
 
-  // Forms
+  const handleCoachToggle = (checked: boolean) => {
+    updateCoachStatusMutation.mutate(checked);
+  };
+
+  const handleSignOut = () => {
+    logoutMutation.mutate();
+  };
+
+  const getSubscriptionBadgeColor = (tier: string) => {
+    switch (tier) {
+      case 'star': return 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30';
+      case 'pro': return 'bg-purple-500/20 text-purple-300 border-purple-500/30';
+      default: return 'bg-gray-500/20 text-gray-300 border-gray-500/30';
+    }
+  };
+
+  const getCoachLimitInfo = () => {
+    if (!user?.isCoach || !coachLimits) return null;
+    
+    const { currentAthletes, maxAthletes, tier } = coachLimits as any;
+    const isUnlimited = maxAthletes === 'unlimited';
+    
+    return (
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-gray-400">
+          Athletes: {currentAthletes} / {isUnlimited ? '∞' : maxAthletes}
+        </span>
+        <Badge className={getSubscriptionBadgeColor(tier)}>
+          {tier.toUpperCase()}
+        </Badge>
+      </div>
+    );
+  };
+  
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
@@ -81,11 +136,13 @@ export default function ProfilePage() {
     },
   });
 
+  // Public profile form
   const publicProfileForm = useForm<PublicProfileFormValues>({
     resolver: zodResolver(publicProfileFormSchema),
     defaultValues: {
       name: user?.name || '',
       bio: user?.bio || '',
+      profileImageUrl: user?.profileImageUrl || '',
     },
   });
 
@@ -94,19 +151,22 @@ export default function ProfilePage() {
     if (!user) return;
     
     const fetchClubs = async () => {
-      setIsLoadingClubs(true);
       try {
+        setIsLoadingClubs(true);
         const response = await fetch('/api/clubs/my', {
           credentials: 'include',
         });
         
-        if (response.ok) {
-          const clubsData = await response.json();
-          setClubs(clubsData);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch clubs: ${response.status}`);
         }
+        
+        const data = await response.json();
+        setClubs(data);
       } catch (err: any) {
+        console.error('Error fetching clubs:', err);
         toast({
-          title: "Error fetching clubs",
+          title: "Error loading clubs",
           description: err?.message || 'An error occurred while fetching clubs',
           variant: "destructive"
         });
@@ -118,35 +178,39 @@ export default function ProfilePage() {
     fetchClubs();
   }, [user, toast]);
 
-  // Handle bio save
-  const handleBioSave = async () => {
+  async function onSubmit(data: ProfileFormValues) {
     try {
-      const response = await fetch('/api/user/public-profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: user?.name, bio: bioText }),
+      const response = await fetch('/api/user', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         credentials: 'include',
-      });
-
-      if (!response.ok) throw new Error('Failed to update bio');
-
-      setIsEditingBio(false);
-      toast({
-        title: "Bio Updated",
-        description: "Your bio has been updated successfully!",
+        body: JSON.stringify(data),
       });
       
-      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
-    } catch (error: any) {
+      if (!response.ok) {
+        throw new Error('Failed to update profile');
+      }
+      
       toast({
-        title: "Update Failed",
-        description: error.message || "Failed to update bio",
-        variant: "destructive",
+        title: "Profile updated",
+        description: "Your changes have been saved",
+      });
+      
+      // Reload the page to reflect the changes
+      window.location.reload();
+    } catch (err: any) {
+      console.error('Error updating profile:', err);
+      toast({
+        title: "Error updating profile",
+        description: err?.message || 'An error occurred',
+        variant: "destructive"
       });
     }
-  };
+  }
 
-  // Handle profile image change
+  // Handle public profile image selection
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -176,452 +240,277 @@ export default function ProfilePage() {
         credentials: 'include',
       });
 
-      if (!response.ok) throw new Error('Failed to update public profile');
+      if (!response.ok) {
+        throw new Error('Failed to update public profile');
+      }
 
       setIsPublicProfileDialogOpen(false);
       setProfileImageFile(null);
       setProfileImagePreview('');
       toast({
         title: "Profile Updated",
-        description: "Your profile has been updated successfully!",
+        description: "Your public profile has been updated successfully!",
       });
       
-      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      // Reload to reflect changes
+      window.location.reload();
     } catch (err: any) {
+      console.error('Error updating public profile:', err);
       toast({
         title: "Update Failed",
-        description: err?.message || "Failed to update profile",
+        description: err?.message || "Failed to update public profile",
         variant: "destructive",
       });
     }
   }
-
-  // Account settings form submission
-  async function onSubmit(data: ProfileFormValues) {
-    try {
-      const response = await fetch('/api/user', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data),
-      });
-      
-      if (!response.ok) throw new Error('Failed to update profile');
-      
-      toast({
-        title: "Profile updated",
-        description: "Your changes have been saved",
-      });
-      
-      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
-    } catch (err: any) {
-      toast({
-        title: "Error updating profile",
-        description: err?.message || 'An error occurred',
-        variant: "destructive"
-      });
-    }
-  }
-
-  const updateCoachStatusMutation = useMutation({
-    mutationFn: async (isCoach: boolean) => {
-      const response = await apiRequest('PATCH', '/api/user/coach-status', { isCoach });
-      return response.json();
-    },
-    onSuccess: (updatedUser) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/coach/limits'] });
-      toast({
-        title: updatedUser.isCoach ? "Coach Status Activated" : "Coach Status Deactivated",
-        description: updatedUser.isCoach 
-          ? "You can now assign programs to athletes!" 
-          : "Coach features have been disabled.",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Update Failed",
-        description: error.message || "Failed to update coach status",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Mutation to update privacy status
-  const updatePrivacyStatusMutation = useMutation({
-    mutationFn: async (isPrivate: boolean) => {
-      const response = await apiRequest('PATCH', '/api/user/privacy-status', { isPrivate });
-      return response.json();
-    },
-    onSuccess: (updatedUser) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
-      toast({
-        title: updatedUser.isPrivate ? "Account Made Private" : "Account Made Public",
-        description: updatedUser.isPrivate 
-          ? "Other users cannot find you unless you connect with them first." 
-          : "Other users can now find and connect with you.",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Update Failed",
-        description: error.message || "Failed to update privacy status",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleCoachToggle = (checked: boolean) => {
-    updateCoachStatusMutation.mutate(checked);
-  };
-
-  const handlePrivacyToggle = (checked: boolean) => {
-    updatePrivacyStatusMutation.mutate(checked);
-  };
 
   return (
-    <div className="flex h-screen text-white">
-      <div className="flex-1 overflow-auto">
-        <main className="pt-16 pb-6">
-          <div className="max-w-4xl mx-auto px-4">
-            
-            {/* Profile Header */}
-            <Card className="bg-black/95 border-purple-500/25 mb-6" style={{ borderWidth: '0.5px' }}>
-              <CardContent className="p-6">
-                <div className="flex flex-col md:flex-row gap-6 items-start">
-                  
-                  {/* Profile Image */}
-                  <div className="relative">
-                    <Avatar className="w-24 h-24 border-2 border-blue-500">
-                      <AvatarImage src={user?.profileImageUrl || undefined} />
-                      <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xl">
-                        {user?.name?.charAt(0) || user?.username?.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    
-                    <Drawer open={isPublicProfileDialogOpen} onOpenChange={setIsPublicProfileDialogOpen}>
-                      <DrawerTrigger asChild>
-                        <Button
-                          size="sm"
-                          className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-blue-600 hover:bg-blue-700"
-                        >
-                          <Camera className="h-4 w-4" />
-                        </Button>
-                      </DrawerTrigger>
-                      <DrawerContent className="bg-slate-900 border-slate-700 max-h-[85vh]">
-                        <DrawerHeader className="text-left">
-                          <DrawerTitle>Edit Profile Image</DrawerTitle>
-                        </DrawerHeader>
-                        
-                        <div className="px-4 pb-4 overflow-y-auto">
-                          <Form {...publicProfileForm}>
-                            <form onSubmit={publicProfileForm.handleSubmit(onPublicProfileSubmit)} className="space-y-4">
-                              <div className="flex flex-col items-center space-y-4">
-                                <div className="relative">
-                                  <Avatar className="h-20 w-20">
-                                    <AvatarImage 
-                                      src={profileImagePreview || user?.profileImageUrl || "/default-avatar.png"} 
-                                    />
-                                    <AvatarFallback name={user?.name || ''} className="text-lg" />
-                                  </Avatar>
-                                  <label 
-                                    htmlFor="profile-image-upload" 
-                                    className="absolute -bottom-1 -right-1 bg-blue-600 rounded-full p-2 cursor-pointer hover:bg-blue-700 transition-colors"
-                                  >
-                                    <Camera className="h-3 w-3" />
-                                  </label>
-                                  <input
-                                    id="profile-image-upload"
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleImageChange}
-                                    className="hidden"
-                                  />
-                                </div>
-                                <p className="text-xs text-gray-400 text-center">
-                                  Click the camera icon to upload a new profile image
-                                </p>
-                              </div>
-                            </form>
-                          </Form>
-                        </div>
-                        
-                        <DrawerFooter>
-                          <div className="flex justify-end space-x-2">
-                            <Button 
-                              type="button" 
-                              variant="outline" 
-                              onClick={() => setIsPublicProfileDialogOpen(false)}
-                            >
-                              Cancel
-                            </Button>
-                            <Button 
-                              type="button"
-                              onClick={publicProfileForm.handleSubmit(onPublicProfileSubmit)}
-                            >
-                              Save Changes
-                            </Button>
-                          </div>
-                        </DrawerFooter>
-                      </DrawerContent>
-                    </Drawer>
-                  </div>
+    <div className="min-h-screen bg-[#010a18] text-white">
+      {/* Header */}
+      <div className="pt-20 pb-6">
+        <div className="max-w-4xl mx-auto px-4">
+          <h1 className="text-3xl font-bold mb-2">Your Profile</h1>
+          <p className="text-gray-400">Manage your personal information and settings</p>
+        </div>
+      </div>
 
-                  {/* Profile Info */}
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <div className="flex items-center gap-3 mb-2">
-                          <h1 className="text-2xl font-bold">{user?.name || user?.username}</h1>
-                          {user?.isCoach && (
-                            <Badge className="bg-amber-600 hover:bg-amber-700">Coach</Badge>
-                          )}
-                        </div>
-                        
-                        <div className="flex items-center gap-4 text-sm text-gray-400">
-                          <span>@{user?.username}</span>
-                          <span>•</span>
-                          <span>Member since {new Date(user?.createdAt || '').toLocaleDateString('en-US', { 
-                            month: 'long', 
-                            year: 'numeric' 
-                          })}</span>
-                        </div>
-                        
-                        {user?.subscriptionTier && user.subscriptionTier !== 'free' && (
-                          <Badge 
-                            className={`mt-2 ${
-                              user.subscriptionTier === 'star' 
-                                ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' 
-                                : 'bg-purple-500/20 text-purple-300 border-purple-500/30'
-                            }`}
-                          >
-                            <Crown className="h-3 w-3 mr-1" />
-                            {user.subscriptionTier.toUpperCase()}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Bio Section */}
-                    <div className="space-y-3">
-                      <h3 className="text-lg font-semibold flex items-center justify-between">
-                        About
-                        {!isEditingBio && (
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-6 w-6 p-0"
-                            onClick={() => setIsEditingBio(true)}
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                        )}
-                      </h3>
-                      
-                      {isEditingBio ? (
-                        <div className="space-y-2">
-                          <Textarea
-                            value={bioText}
-                            onChange={(e) => setBioText(e.target.value)}
-                            placeholder="Tell others about yourself..."
-                            rows={3}
-                            maxLength={500}
-                            className="bg-blue-900/30 border-blue-700/50"
-                          />
-                          <div className="flex gap-2">
-                            <Button size="sm" onClick={handleBioSave}>
-                              <Check className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              onClick={() => {
-                                setIsEditingBio(false);
-                                setBioText(user?.bio || '');
-                              }}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="text-gray-300 leading-relaxed">
-                          {user?.bio || "No bio added yet."}
-                        </p>
-                      )}
-                    </div>
-                  </div>
+      {/* Main Content */}
+      <div className="max-w-4xl mx-auto px-4 pb-8 space-y-6">
+        
+        {/* Profile Header Card */}
+        <Card className="bg-[#0a1529] border-blue-800/30">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-4">
+                <Avatar className="h-16 w-16">
+                  <AvatarImage src={user?.profileImageUrl || "/default-avatar.png"} />
+                  <AvatarFallback className="text-lg bg-blue-600 text-white">
+                    {user?.name?.charAt(0) || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h2 className="text-xl font-semibold">{user?.name}</h2>
+                  <p className="text-gray-400">@{user?.username}</p>
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Latest Workout */}
-            <Card className="bg-black/95 border-purple-500/25 mb-6" style={{ borderWidth: '0.5px' }}>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Latest Workout</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-400 text-sm">No recent workouts found.</p>
-              </CardContent>
-            </Card>
-
-            {/* Upcoming Meets */}
-            <Card className="bg-black/95 border-purple-500/25 mb-6" style={{ borderWidth: '0.5px' }}>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Upcoming Meets</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-400 text-sm">No upcoming meets.</p>
-              </CardContent>
-            </Card>
-
-            {/* Recent Meets */}
-            <Card className="bg-black/95 border-purple-500/25 mb-6" style={{ borderWidth: '0.5px' }}>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Recent Meets</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-400 text-sm">No recent meets.</p>
-              </CardContent>
-            </Card>
-
-            {/* Coach Features */}
-            {user?.isCoach && (
-              <Card className="bg-black/95 border-purple-500/25 mb-6" style={{ borderWidth: '0.5px' }}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">My Programs</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-400 text-sm">No programs created yet.</p>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Connections */}
-            <Card className="bg-black/95 border-purple-500/25 mb-6" style={{ borderWidth: '0.5px' }}>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Connections</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4 text-center">
-                  <div className="p-3 bg-gray-800/50 rounded-lg">
-                    <div className="text-2xl font-bold text-white">{(connections as any[])?.length || 0}</div>
-                    <div className="text-sm text-gray-400">Connections</div>
-                  </div>
-                  <div className="p-3 bg-gray-800/50 rounded-lg">
-                    <div className="text-2xl font-bold text-white">{(coaches as any[])?.length || 0}</div>
-                    <div className="text-sm text-gray-400">Coaches</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Account Settings */}
-            <Card className="bg-black/95 border-purple-500/25 mb-6" style={{ borderWidth: '0.5px' }}>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Account Settings</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Full Name</FormLabel>
-                            <FormControl>
-                              <Input {...field} className="bg-gray-800/50 border-gray-700/50" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email</FormLabel>
-                            <FormControl>
-                              <Input {...field} className="bg-gray-800/50 border-gray-700/50" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    <FormField
-                      control={form.control}
-                      name="defaultClubId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Default Club</FormLabel>
-                          <Select
-                            value={field.value ? field.value.toString() : ""}
-                            onValueChange={(value) => field.onChange(value ? parseInt(value) : null)}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="bg-gray-800/50 border-gray-700/50">
-                                <SelectValue placeholder="Select a club" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent className="bg-[#010a18] border-blue-800/60">
-                              <SelectItem value="null">No Default Club</SelectItem>
-                              {clubs.map((club) => (
-                                <SelectItem key={club.id} value={club.id.toString()}>
-                                  {club.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    {/* Coach Toggle */}
-                    <div className="flex items-center justify-between p-4 bg-blue-800/30 rounded-lg">
-                      <div>
-                        <p className="font-medium">Coach Mode</p>
-                        <p className="text-sm text-gray-400">Enable coaching features</p>
-                      </div>
-                      <Switch
-                        checked={user?.isCoach || false}
-                        onCheckedChange={handleCoachToggle}
-                        disabled={updateCoachStatusMutation.isPending}
-                      />
-                    </div>
-
-                    {/* Private Account Toggle */}
-                    <div className="flex items-center justify-between p-4 bg-blue-800/30 rounded-lg">
-                      <div className="flex items-center gap-2">
-                        {user?.isPrivate ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        <div>
-                          <p className="font-medium">Private Account</p>
-                          <p className="text-sm text-gray-400">Hide your profile from other users</p>
-                        </div>
-                      </div>
-                      <Switch
-                        checked={user?.isPrivate || false}
-                        onCheckedChange={handlePrivacyToggle}
-                        disabled={updatePrivacyStatusMutation.isPending}
-                      />
-                    </div>
-                    
-                    <Button type="submit" className="w-full">
-                      Save Changes
+              </div>
+              <div className="flex items-center gap-3">
+                <Drawer open={isPublicProfileDialogOpen} onOpenChange={setIsPublicProfileDialogOpen}>
+                  <DrawerTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Profile
                     </Button>
-                  </form>
-                </Form>
-              </CardContent>
-            </Card>
+                  </DrawerTrigger>
+                  <DrawerContent className="bg-slate-900 border-slate-700 max-h-[85vh]">
+                    <DrawerHeader>
+                      <DrawerTitle>Edit Public Profile</DrawerTitle>
+                    </DrawerHeader>
+                    <div className="px-4 pb-4 overflow-y-auto">
+                      <Form {...publicProfileForm}>
+                        <form onSubmit={publicProfileForm.handleSubmit(onPublicProfileSubmit)} className="space-y-4">
+                          {/* Profile Image Upload */}
+                          <div className="flex flex-col items-center space-y-4">
+                            <div className="relative">
+                              <Avatar className="h-20 w-20">
+                                <AvatarImage 
+                                  src={profileImagePreview || user?.profileImageUrl || "/default-avatar.png"} 
+                                />
+                                <AvatarFallback className="text-lg bg-blue-600 text-white">
+                                  {user?.name?.charAt(0) || 'U'}
+                                </AvatarFallback>
+                              </Avatar>
+                              <label 
+                                htmlFor="profile-image-upload" 
+                                className="absolute -bottom-1 -right-1 bg-blue-600 rounded-full p-2 cursor-pointer hover:bg-blue-700 transition-colors"
+                              >
+                                <Camera className="h-3 w-3" />
+                              </label>
+                              <input
+                                id="profile-image-upload"
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageChange}
+                                className="hidden"
+                              />
+                            </div>
+                          </div>
 
-          </div>
-        </main>
+                          <FormField
+                            control={publicProfileForm.control}
+                            name="name"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Display Name</FormLabel>
+                                <FormControl>
+                                  <Input {...field} placeholder="Your display name" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={publicProfileForm.control}
+                            name="bio"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Bio</FormLabel>
+                                <FormControl>
+                                  <Textarea 
+                                    {...field} 
+                                    placeholder="Tell others about yourself..." 
+                                    rows={3}
+                                    maxLength={500}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </form>
+                      </Form>
+                    </div>
+                    <DrawerFooter>
+                      <div className="flex justify-end space-x-2">
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={() => setIsPublicProfileDialogOpen(false)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button 
+                          type="button"
+                          onClick={publicProfileForm.handleSubmit(onPublicProfileSubmit)}
+                        >
+                          Save Changes
+                        </Button>
+                      </div>
+                    </DrawerFooter>
+                  </DrawerContent>
+                </Drawer>
+                {user?.isPremium && (
+                  <Badge className="bg-yellow-500/20 text-yellow-300 border-yellow-500/30">
+                    <Crown className="h-3 w-3 mr-1" />
+                    Premium
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Profile Settings Form */}
+        <Card className="bg-[#0a1529] border-blue-800/30">
+          <CardHeader>
+            <CardTitle>Profile Settings</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="email" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="defaultClubId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Default Club</FormLabel>
+                      <Select
+                        value={field.value?.toString() || ""}
+                        onValueChange={(value) => field.onChange(value ? parseInt(value) : null)}
+                        disabled={isLoadingClubs}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={isLoadingClubs ? "Loading clubs..." : "Select a club"} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {clubs.map((club) => (
+                            <SelectItem key={club.id} value={club.id.toString()}>
+                              {club.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Button type="submit" className="w-full">
+                  Save Changes
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+
+        {/* Coach Settings */}
+        <Card className="bg-[#0a1529] border-blue-800/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Crown className="w-5 h-5" />
+              Coach Status
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium">Enable coaching features</h3>
+                <p className="text-sm text-gray-400">Access coaching tools and athlete management</p>
+              </div>
+              <Switch
+                checked={user?.isCoach || false}
+                onCheckedChange={handleCoachToggle}
+                disabled={updateCoachStatusMutation.isPending}
+              />
+            </div>
+            {getCoachLimitInfo()}
+          </CardContent>
+        </Card>
+
+        {/* Sign Out Card */}
+        <Card className="bg-[#0a1529] border-red-800/30">
+          <CardContent className="p-6">
+            <Button 
+              onClick={handleSignOut}
+              disabled={logoutMutation.isPending}
+              variant="destructive" 
+              className="w-full"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              {logoutMutation.isPending ? 'Signing Out...' : 'Sign Out'}
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
