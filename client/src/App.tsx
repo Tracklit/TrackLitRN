@@ -79,27 +79,82 @@ function ScrollRestoration() {
       history.scrollRestoration = 'manual';
     }
     
-    // Immediately scroll to top
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-    
-    // Force scroll to top with a slight delay to ensure it overrides any other scroll behavior
-    const timer = setTimeout(() => {
-      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    // Reset scroll position immediately and comprehensively
+    const resetScroll = () => {
+      // Reset main window scroll
+      window.scrollTo(0, 0);
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
       
-      // Force all scrollable containers to reset
-      const scrollableElements = document.querySelectorAll('[style*="overflow"]');
-      scrollableElements.forEach(el => {
+      // Reset all potentially scrollable containers
+      const scrollableSelectors = [
+        '[data-scroll-container]',
+        '.overflow-auto',
+        '.overflow-y-auto',
+        '.overflow-x-auto',
+        '.overflow-scroll',
+        '.h-screen',
+        '.min-h-screen',
+        '.max-h-screen',
+        '[style*="overflow"]',
+        '[style*="height"]',
+        '.relative',
+        '.absolute',
+        '.fixed'
+      ];
+      
+      scrollableSelectors.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(el => {
+          if (el instanceof HTMLElement) {
+            el.scrollTop = 0;
+            el.scrollLeft = 0;
+          }
+        });
+      });
+      
+      // Reset React Router scroll containers
+      const routerContainers = document.querySelectorAll('[data-router], [data-testid*="router"]');
+      routerContainers.forEach(el => {
         if (el instanceof HTMLElement) {
           el.scrollTop = 0;
+          el.scrollLeft = 0;
         }
       });
-    }, 100);
+    };
     
-    return () => clearTimeout(timer);
+    // Reset immediately
+    resetScroll();
+    
+    // Force reset with multiple attempts to override any competing scroll behavior
+    const timers = [
+      setTimeout(resetScroll, 0),
+      setTimeout(resetScroll, 50),
+      setTimeout(resetScroll, 100),
+      setTimeout(resetScroll, 250)
+    ];
+    
+    // Add event listeners to catch any scroll events during navigation
+    const preventScrollDuringNavigation = (e: Event) => {
+      e.preventDefault();
+      resetScroll();
+    };
+    
+    window.addEventListener('scroll', preventScrollDuringNavigation, { passive: false });
+    document.addEventListener('scroll', preventScrollDuringNavigation, { passive: false });
+    
+    // Remove scroll event listeners after navigation is complete
+    const cleanupTimer = setTimeout(() => {
+      window.removeEventListener('scroll', preventScrollDuringNavigation);
+      document.removeEventListener('scroll', preventScrollDuringNavigation);
+    }, 500);
+    
+    return () => {
+      timers.forEach(timer => clearTimeout(timer));
+      clearTimeout(cleanupTimer);
+      window.removeEventListener('scroll', preventScrollDuringNavigation);
+      document.removeEventListener('scroll', preventScrollDuringNavigation);
+    };
   }, [location]);
   
   return null;
