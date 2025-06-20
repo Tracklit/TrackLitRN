@@ -88,15 +88,24 @@ export default function VideoAnalysisPage() {
     queryKey: ["/api/user"],
   });
 
-  // Get user videos
-  const { data: videos } = useQuery({
+  // Get user videos with polling for processing status
+  const { data: videos, refetch: refetchVideos } = useQuery({
     queryKey: ["/api/video-analysis"],
+    refetchInterval: (data) => {
+      // Poll every 2 seconds if there are processing videos
+      const hasProcessingVideos = data?.some((video: any) => video.status === 'processing');
+      return hasProcessingVideos ? 2000 : false;
+    }
   });
 
-  // Get current selected video data
-  const { data: currentVideo } = useQuery({
+  // Get current selected video data with polling for processing status
+  const { data: currentVideo, refetch: refetchCurrentVideo } = useQuery({
     queryKey: ["/api/video-analysis", selectedVideoId],
     enabled: !!selectedVideoId,
+    refetchInterval: (data) => {
+      // Poll every 2 seconds if video is still processing
+      return data?.status === 'processing' ? 2000 : false;
+    }
   });
 
   const uploadMutation = useMutation({
@@ -613,6 +622,21 @@ export default function VideoAnalysisPage() {
         {/* Video Player Step */}
         {currentStep === "video" && uploadedVideoUrl && (
           <div className="space-y-6">
+            {/* Processing Status */}
+            {currentVideo?.status === 'processing' && (
+              <Card className="border-yellow-200 bg-yellow-50">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-6 w-6 rounded-full border-2 border-yellow-600 border-t-transparent animate-spin"></div>
+                    <div>
+                      <h3 className="font-semibold text-yellow-900">Processing Video</h3>
+                      <p className="text-sm text-yellow-700">Extracting biomechanical data with MediaPipe...</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Debug Info */}
             <div className="bg-gray-900 p-4 rounded text-xs text-white font-mono">
               <div><strong>Video Debug Info:</strong></div>
