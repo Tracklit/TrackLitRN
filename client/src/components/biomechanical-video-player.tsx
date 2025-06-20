@@ -225,17 +225,36 @@ export function BiomechanicalVideoPlayer({
       if (currentFramePose) {
         ctx.fillText(`Pose: ${currentFramePose.pose_landmarks?.length || 0} landmarks`, 10, 105);
         ctx.fillText(`Timestamp: ${currentFramePose.timestamp?.toFixed(3) || 0}s`, 10, 125);
+        
+        // Debug coordinate scaling
+        if (currentFramePose.pose_landmarks && currentFramePose.pose_landmarks.length > 0) {
+          const firstLandmark = currentFramePose.pose_landmarks[0];
+          ctx.fillText(`First landmark: (${(firstLandmark.x * rect.width).toFixed(1)}, ${(firstLandmark.y * rect.height).toFixed(1)})`, 10, 145);
+          ctx.fillText(`Normalized: (${firstLandmark.x.toFixed(3)}, ${firstLandmark.y.toFixed(3)})`, 10, 165);
+        }
       } else {
         ctx.fillText('No pose data for current frame', 10, 105);
       }
       
-      // Sync indicator
+      // Sync indicator and timing debug
       const flash = Math.floor(Date.now() / 400) % 2;
       if (flash) {
         ctx.beginPath();
         ctx.arc(rect.width - 20, 20, 8, 0, Math.PI * 2);
         ctx.fillStyle = '#ff0000';
         ctx.fill();
+      }
+      
+      // Display sync timing debug info
+      if (currentFramePose && frameData.length > 0) {
+        const syncDiff = Math.abs(video.currentTime - (currentFramePose.timestamp || 0));
+        ctx.fillText(`Sync diff: ${(syncDiff * 1000).toFixed(1)}ms`, 10, 185);
+        
+        // Show sync quality indicator
+        const syncQuality = syncDiff < 0.1 ? '✓ Good' : syncDiff < 0.2 ? '⚠ Fair' : '✗ Poor';
+        ctx.fillStyle = syncDiff < 0.1 ? '#00ff00' : syncDiff < 0.2 ? '#ffff00' : '#ff0000';
+        ctx.fillText(`Sync: ${syncQuality}`, 10, 205);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; // Reset color
       }
     }
     
@@ -267,13 +286,17 @@ export function BiomechanicalVideoPlayer({
       return;
     }
     
+    // Fix: Handle both string and object data types to prevent double parsing
     let mediapipeData = null;
     try {
-      mediapipeData = JSON.parse(biomechanicalData);
-      console.log('MediaPipe data parsed successfully:', mediapipeData);
-      console.log('MediaPipe data keys:', Object.keys(mediapipeData));
+      mediapipeData = typeof biomechanicalData === 'string' 
+        ? JSON.parse(biomechanicalData) 
+        : biomechanicalData;
+      
+      console.log('✅ MediaPipe data parsed:', mediapipeData);
+      console.log('🔑 MediaPipe data keys:', Object.keys(mediapipeData));
     } catch (error) {
-      console.error('MediaPipe data parsing failed:', error);
+      console.error('❌ Failed to parse MediaPipe data:', error);
       console.error('Raw data causing parse error:', biomechanicalData);
       setMediapipeError('Failed to parse MediaPipe analysis data.');
       setFrameData([]);
@@ -309,7 +332,7 @@ export function BiomechanicalVideoPlayer({
       
       if (validFrames.length === 0) {
         console.error('No valid pose data found in MediaPipe results');
-        setMediapipeError('MediaPipe detected the video but could not extract pose data. The subject may not be clearly visible or the movement may be too fast.');
+        setMediapipeError('MediaPipe ran but didn\'t extract valid poses. The subject may not be clearly visible or the movement may be too fast.');
         setFrameData([]);
         return;
       }
@@ -333,7 +356,7 @@ export function BiomechanicalVideoPlayer({
       });
       
       // Sort frames by timestamp to ensure proper ordering
-      mediapipeFrames.sort((a, b) => a.timestamp - b.timestamp);
+      mediapipeFrames.sort((a: any, b: any) => a.timestamp - b.timestamp);
       
       setFrameData(mediapipeFrames);
       setMediapipeError(null); // Clear any previous errors on successful processing

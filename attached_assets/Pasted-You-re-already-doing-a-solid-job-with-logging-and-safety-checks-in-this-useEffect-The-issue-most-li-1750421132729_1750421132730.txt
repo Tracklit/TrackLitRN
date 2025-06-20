@@ -1,0 +1,106 @@
+You’re already doing a solid job with logging and safety checks in this useEffect. The issue most likely lies in either:
+	•	the format of biomechanicalData passed from the backend
+	•	how/when the pose overlay renders that data after setting frameData
+
+⸻
+
+✅ Step-by-Step Debug & Improvements
+
+Here’s an annotated and debugged version of your code with suggestions and what to communicate to your AI dev if the overlay visuals are not syncing with the actual subject.
+
+⸻
+
+🔎 Problem 1: biomechanicalData Might Already Be an Object
+
+You’re calling JSON.parse(biomechanicalData), but if biomechanicalData is already parsed (i.e. passed as an object), this throws. Safeguard against double parsing:
+
+🔧 Fix:
+
+let mediapipeData = null;
+try {
+  mediapipeData =
+    typeof biomechanicalData === 'string'
+      ? JSON.parse(biomechanicalData)
+      : biomechanicalData;
+
+  console.log('✅ MediaPipe data parsed:', mediapipeData);
+  console.log('🔑 MediaPipe data keys:', Object.keys(mediapipeData));
+} catch (error) {
+  console.error('❌ Failed to parse MediaPipe data:', error);
+  setMediapipeError('Failed to parse MediaPipe analysis data.');
+  setFrameData([]);
+  return;
+}
+
+
+⸻
+
+🔎 Problem 2: pose_landmarks Normalized but Misaligned in Rendering
+
+Your data is correctly normalized (0–1), but your overlay rendering might be treating them as absolute pixel positions without scaling them to the video dimensions.
+
+🧠 Action:
+
+Ensure the overlay uses:
+
+x_px = landmark.x * videoElement.clientWidth
+y_px = landmark.y * videoElement.clientHeight
+
+If it’s not being scaled to video dimensions, the overlay will appear stuck or detached (like in your screenshots).
+
+⸻
+
+🔎 Problem 3: Timing & Sync
+
+You’re setting timestamp in each frame, but unless you’re syncing playback time with this data, the overlay might not animate or follow the runner.
+
+🧠 Action:
+
+Make sure you’re aligning:
+
+video.currentTime ≈ frameData.timestamp
+
+If you’re displaying a fixed frame instead of syncing overlays to playback time, it will always show one pose in a fixed position.
+
+⸻
+
+🔎 Problem 4: No Visual Feedback if Data Load Fails
+
+You clear the overlays but the UI doesn’t notify the user why. You could update the debug overlay like this:
+
+🧠 Suggestion:
+
+if (validFrames.length === 0) {
+  setMediapipeError('MediaPipe ran but didn’t extract valid poses');
+  setDebugOverlay("MediaPipe: No poses found.");
+  return;
+}
+
+
+⸻
+
+✅ Final Summary: What to Tell the Agent
+
+Here’s a clean brief you can send your AI agent/dev:
+
+⸻
+
+Client-Side Debugging Notes for MediaPipe Overlay
+
+We’re having issues where overlays (pose skeletons, joint angles) appear fixed and not attached to the human in the video. Here’s what we’ve identified:
+	1.	biomechanicalData is sometimes already an object — check if it’s parsed before running JSON.parse again.
+	2.	pose_landmarks are normalized to [0–1], but the overlay renderer might not be scaling them to the video size. Confirm that rendering logic multiplies x and y by video.clientWidth and video.clientHeight respectively.
+	3.	Frame timestamps are available, but overlay updates may not be synced with video playback time. Make sure overlay rendering tracks video.currentTime and matches the correct frame from frameData.
+	4.	Implement clearer debug messages in the UI (e.g. “No valid poses extracted”) if no pose_landmarks are detected.
+
+Action needed:
+	•	Fix the coordinate scaling to match video resolution.
+	•	Sync overlay visuals to video playback time (using requestAnimationFrame or similar).
+	•	Validate data type of biomechanicalData before parsing.
+	•	Add user-facing or developer debug feedback on overlay failures.
+
+Let me know if you want me to test and confirm a fix once implemented.
+
+⸻
+
+Want me to help with the overlay syncing or canvas render logic too?
