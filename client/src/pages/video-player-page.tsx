@@ -18,7 +18,7 @@ export function VideoPlayerPage() {
     enabled: !!videoId
   });
 
-  const currentVideo = videos?.find((v: any) => v.id === videoId);
+  const currentVideo = Array.isArray(videos) ? videos.find((v: any) => v.id === videoId) : null;
 
   const handleAnalyze = async (promptId: string) => {
     // Handle analysis if needed

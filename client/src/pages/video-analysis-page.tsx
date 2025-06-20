@@ -505,6 +505,50 @@ export default function VideoAnalysisPage() {
           </div>
         </div>
 
+        {/* Video Library Section */}
+        {currentStep === "upload" && videosQuery.data && videosQuery.data.length > 0 && (
+          <Card className="border-blue-200 bg-blue-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileVideo className="h-5 w-5 text-blue-600" />
+                Your Video Library
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {videosQuery.data.map((video: any) => (
+                  <Card key={video.id} className="bg-white border-blue-200 hover:shadow-md transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                          <span className="text-sm font-medium">{video.name}</span>
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {new Date(video.createdAt).toLocaleDateString()}
+                        </div>
+                        {video.biomechanicalData && (
+                          <Badge variant="secondary" className="text-xs">
+                            MediaPipe Ready
+                          </Badge>
+                        )}
+                        <Button 
+                          size="sm" 
+                          className="w-full"
+                          onClick={() => setLocation(`/video-player/${video.id}`)}
+                        >
+                          <Play className="h-4 w-4 mr-2" />
+                          Open Player
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Upload Step */}
         {currentStep === "upload" && (
           <Card className="border-2">
@@ -642,7 +686,7 @@ export default function VideoAnalysisPage() {
             <Card className="border-green-200 bg-green-50">
               <CardContent className="p-6 text-center">
                 <div className="flex flex-col items-center gap-4">
-                  <CheckCircle className="h-12 w-12 text-green-600" />
+                  <Check className="h-12 w-12 text-green-600" />
                   <div>
                     <h3 className="text-lg font-semibold text-green-900">Upload Complete!</h3>
                     <p className="text-green-700 mb-4">Your video has been uploaded and is ready for analysis</p>
