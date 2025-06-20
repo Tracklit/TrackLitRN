@@ -132,29 +132,51 @@ export function BiomechanicalVideoPlayer({
     ));
   };
 
-  // Video time update handler for pose synchronization
+  // Video time update handler for precise pose synchronization
   const handleTimeUpdate = useCallback(() => {
     if (!videoRef.current) return;
     
     const video = videoRef.current;
     const currentVideoTime = video.currentTime;
     
-    // Find closest pose frame by timestamp with better precision
+    // Find closest pose frame using timestamp-based matching for precision
     if (frameData.length > 0) {
-      // Calculate frame index directly from video time and FPS
-      const fps = 24; // From database: fps: 24
-      const calculatedFrameIndex = Math.floor(currentVideoTime * fps);
-      const clampedFrameIndex = Math.min(calculatedFrameIndex, frameData.length - 1);
+      // Binary search for closest timestamp match
+      let left = 0;
+      let right = frameData.length - 1;
+      let bestMatch = 0;
+      let smallestDiff = Infinity;
       
-      setCurrentFrameIndex(Math.max(0, clampedFrameIndex));
+      while (left <= right) {
+        const mid = Math.floor((left + right) / 2);
+        const frameTimestamp = frameData[mid].timestamp;
+        const timeDiff = Math.abs(frameTimestamp - currentVideoTime);
+        
+        if (timeDiff < smallestDiff) {
+          smallestDiff = timeDiff;
+          bestMatch = mid;
+        }
+        
+        if (frameTimestamp < currentVideoTime) {
+          left = mid + 1;
+        } else {
+          right = mid - 1;
+        }
+      }
       
-      if (debugMode) {
-        console.log(`Video time: ${currentVideoTime.toFixed(3)}s -> Frame ${clampedFrameIndex}/${frameData.length}`);
+      // Only update if frame changed significantly
+      if (Math.abs(bestMatch - currentFrameIndex) >= 1) {
+        setCurrentFrameIndex(bestMatch);
+        
+        if (debugMode) {
+          const frame = frameData[bestMatch];
+          console.log(`Sync: ${currentVideoTime.toFixed(3)}s → Frame ${bestMatch} (${frame.timestamp.toFixed(3)}s, diff: ${smallestDiff.toFixed(3)}s)`);
+        }
       }
     }
     
     setCurrentTime(currentVideoTime);
-  }, [frameData, debugMode]);
+  }, [frameData, currentFrameIndex, debugMode]);
 
   // Real-time canvas drawing synchronized with video playback
   const updateCanvas = useCallback(() => {
@@ -222,7 +244,7 @@ export function BiomechanicalVideoPlayer({
     }
   }, [frameData, currentFrameIndex, poseData, debugMode]);
 
-  // MediaPipe Controller: Initialize authentic pose landmark data
+  // MediaPipe Controller: Initialize authentic pose landmark data with enhanced validation
   useEffect(() => {
     if (!biomechanicalData) return;
     
@@ -234,30 +256,59 @@ export function BiomechanicalVideoPlayer({
       return;
     }
     
-    if (mediapipeData?.frame_data) {
-      const fps = mediapipeData.fps || 24; // Use actual FPS from MediaPipe analysis
+    if (mediapipeData?.frame_data && Array.isArray(mediapipeData.frame_data)) {
+      const fps = mediapipeData.fps || 24;
+      const duration = mediapipeData.duration || 0;
       
-      // Process authentic MediaPipe landmarks
-      const mediapipeFrames = mediapipeData.frame_data.map((frameData: any) => ({
-        timestamp: frameData.timestamp,
-        frameIndex: frameData.frame,
-        pose_landmarks: frameData.pose_landmarks, // Direct MediaPipe 33-point landmarks
-        key_points: frameData.key_points,
-        joint_angles: frameData.joint_angles
-      }));
+      // Validate and process MediaPipe landmarks with quality checks
+      const validFrames = mediapipeData.frame_data.filter((frameData: any) => {
+        return frameData.pose_landmarks && 
+               Array.isArray(frameData.pose_landmarks) && 
+               frameData.pose_landmarks.length === 33 &&
+               typeof frameData.timestamp === 'number';
+      });
+      
+      const mediapipeFrames = validFrames.map((frameData: any, index: number) => {
+        // Ensure landmarks have proper structure
+        const validatedLandmarks = frameData.pose_landmarks.map((landmark: any) => ({
+          x: Math.max(0, Math.min(1, landmark.x || 0)), // Clamp to [0,1]
+          y: Math.max(0, Math.min(1, landmark.y || 0)), // Clamp to [0,1]
+          z: landmark.z || 0,
+          visibility: Math.max(0, Math.min(1, landmark.visibility || 0)) // Clamp to [0,1]
+        }));
+        
+        return {
+          timestamp: frameData.timestamp,
+          frameIndex: frameData.frame || index,
+          pose_landmarks: validatedLandmarks,
+          key_points: frameData.key_points || {},
+          joint_angles: frameData.joint_angles || {}
+        };
+      });
+      
+      // Sort frames by timestamp to ensure proper ordering
+      mediapipeFrames.sort((a, b) => a.timestamp - b.timestamp);
       
       setFrameData(mediapipeFrames);
       
-      console.log(`MediaPipe Controller Active: ${mediapipeFrames.length} frames, ${fps} FPS`);
-      console.log(`First frame landmarks:`, mediapipeFrames[0]?.pose_landmarks?.length || 0);
+      console.log(`MediaPipe Enhanced Controller: ${mediapipeFrames.length}/${mediapipeData.frame_data.length} valid frames`);
+      console.log(`Video info: ${duration.toFixed(2)}s at ${fps} FPS`);
       
-      // Verify MediaPipe landmark structure
-      if (mediapipeFrames[0]?.pose_landmarks?.[0]) {
-        const sample = mediapipeFrames[0].pose_landmarks[0];
-        console.log(`MediaPipe landmark format:`, { x: sample.x, y: sample.y, visibility: sample.visibility });
+      // Quality assessment
+      if (mediapipeFrames.length > 0) {
+        const firstFrame = mediapipeFrames[0];
+        const lastFrame = mediapipeFrames[mediapipeFrames.length - 1];
+        const avgVisibility = firstFrame.pose_landmarks.reduce((sum: number, lm: any) => sum + lm.visibility, 0) / 33;
+        
+        console.log(`Frame range: ${firstFrame.timestamp.toFixed(3)}s to ${lastFrame.timestamp.toFixed(3)}s`);
+        console.log(`Average landmark visibility: ${(avgVisibility * 100).toFixed(1)}%`);
+        
+        // Test coordinate validity
+        const nose = firstFrame.pose_landmarks[0];
+        console.log(`Sample nose landmark: x=${nose.x.toFixed(3)}, y=${nose.y.toFixed(3)}, v=${nose.visibility.toFixed(3)}`);
       }
     } else {
-      console.warn('No MediaPipe frame data available');
+      console.warn('Invalid or missing MediaPipe frame data structure');
     }
   }, [biomechanicalData]);
 
@@ -329,73 +380,126 @@ export function BiomechanicalVideoPlayer({
     });
   }, [overlays]);
 
-  // MediaPipe-controlled skeleton renderer
+  // MediaPipe-controlled skeleton renderer with precise coordinate mapping
   const drawMediaPipeSkeleton = (ctx: CanvasRenderingContext2D, landmarks: any[], width: number, height: number) => {
     if (!landmarks || landmarks.length !== 33) {
       console.warn('MediaPipe skeleton: Invalid landmark count', landmarks?.length);
       return;
     }
 
-    // MediaPipe styling
+    // Enhanced MediaPipe styling for better visibility
     ctx.strokeStyle = '#8b5cf6';
     ctx.fillStyle = '#8b5cf6';
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 4;
     ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
 
-    // MediaPipe coordinate transformation
+    // Precise coordinate transformation accounting for video aspect ratio
+    const video = videoRef.current;
+    if (!video) return;
+    
+    const videoAspect = video.videoWidth / video.videoHeight;
+    const canvasAspect = width / height;
+    
+    let scaleX = width;
+    let scaleY = height;
+    let offsetX = 0;
+    let offsetY = 0;
+    
+    // Handle aspect ratio differences to maintain pose accuracy
+    if (videoAspect > canvasAspect) {
+      // Video is wider - fit height, center horizontally
+      scaleY = height;
+      scaleX = height * videoAspect;
+      offsetX = (width - scaleX) / 2;
+    } else {
+      // Video is taller - fit width, center vertically
+      scaleX = width;
+      scaleY = width / videoAspect;
+      offsetY = (height - scaleY) / 2;
+    }
+
     const toLandmarkCoords = (landmark: any) => ({
-      x: landmark.x * width,
-      y: landmark.y * height,
-      visibility: landmark.visibility
+      x: (landmark.x * scaleX) + offsetX,
+      y: (landmark.y * scaleY) + offsetY,
+      visibility: landmark.visibility || 0
     });
 
-    // Authentic MediaPipe pose connections
+    // Complete MediaPipe pose connections for full skeleton
     const POSE_CONNECTIONS = [
-      // Core body
-      [11, 12], [12, 24], [24, 23], [23, 11],
-      // Arms
-      [11, 13], [13, 15], [15, 17], [15, 19], [15, 21],
-      [12, 14], [14, 16], [16, 18], [16, 20], [16, 22],
-      // Legs  
-      [23, 25], [25, 27], [27, 29], [29, 31],
-      [24, 26], [26, 28], [28, 30], [30, 32],
-      [27, 31], [28, 32]
+      // Face outline
+      [0, 1], [1, 2], [2, 3], [3, 7],
+      [0, 4], [4, 5], [5, 6], [6, 8],
+      // Torso
+      [9, 10], [11, 12], [11, 23], [12, 24], [23, 24],
+      // Left arm
+      [11, 13], [13, 15], [15, 17], [15, 19], [15, 21], [17, 19],
+      // Right arm  
+      [12, 14], [14, 16], [16, 18], [16, 20], [16, 22], [18, 20],
+      // Left leg
+      [23, 25], [25, 27], [27, 29], [29, 31], [27, 31],
+      // Right leg
+      [24, 26], [26, 28], [28, 30], [30, 32], [28, 32]
     ];
 
-    // Draw MediaPipe skeleton connections
-    ctx.beginPath();
+    // Draw skeleton connections with glow effect
+    ctx.shadowColor = '#8b5cf6';
+    ctx.shadowBlur = 8;
+    
     POSE_CONNECTIONS.forEach(([start, end]) => {
       const startLandmark = landmarks[start];
       const endLandmark = landmarks[end];
       
-      if (startLandmark?.visibility > 0.6 && endLandmark?.visibility > 0.6) {
+      if (startLandmark?.visibility > 0.5 && endLandmark?.visibility > 0.5) {
         const startCoords = toLandmarkCoords(startLandmark);
         const endCoords = toLandmarkCoords(endLandmark);
         
+        ctx.beginPath();
         ctx.moveTo(startCoords.x, startCoords.y);
         ctx.lineTo(endCoords.x, endCoords.y);
+        ctx.stroke();
       }
     });
-    ctx.stroke();
 
-    // Draw MediaPipe joint markers
-    const KEY_LANDMARKS = [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28];
-    KEY_LANDMARKS.forEach(index => {
+    // Reset shadow for joint markers
+    ctx.shadowBlur = 0;
+    
+    // Draw enhanced joint markers
+    const CRITICAL_JOINTS = [0, 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28];
+    CRITICAL_JOINTS.forEach(index => {
       const landmark = landmarks[index];
-      if (landmark?.visibility > 0.6) {
+      if (landmark?.visibility > 0.5) {
         const coords = toLandmarkCoords(landmark);
+        
+        // Outer ring
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(coords.x, coords.y, 8, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Inner dot
+        ctx.fillStyle = '#8b5cf6';
         ctx.beginPath();
         ctx.arc(coords.x, coords.y, 5, 0, Math.PI * 2);
         ctx.fill();
       }
     });
 
-    // Debug: Show landmark count
+    // Enhanced debug information
     if (debugMode) {
       ctx.fillStyle = '#00ff00';
       ctx.font = '12px monospace';
-      const visibleCount = landmarks.filter(l => l?.visibility > 0.6).length;
-      ctx.fillText(`MediaPipe: ${visibleCount}/33 landmarks`, 10, 140);
+      const visibleCount = landmarks.filter(l => l?.visibility > 0.5).length;
+      const highConfidenceCount = landmarks.filter(l => l?.visibility > 0.8).length;
+      
+      ctx.fillText(`MediaPipe: ${visibleCount}/33 visible, ${highConfidenceCount} high confidence`, 10, 140);
+      ctx.fillText(`Scale: ${scaleX.toFixed(0)}x${scaleY.toFixed(0)}, Offset: ${offsetX.toFixed(0)},${offsetY.toFixed(0)}`, 10, 160);
+      
+      // Show sample landmark coordinates
+      if (landmarks[0]?.visibility > 0.5) {
+        const nose = toLandmarkCoords(landmarks[0]);
+        ctx.fillText(`Nose: (${nose.x.toFixed(0)}, ${nose.y.toFixed(0)})`, 10, 180);
+      }
     }
   };
 
