@@ -93,7 +93,7 @@ export default function VideoAnalysisPage() {
     queryKey: ["/api/video-analysis"],
     refetchInterval: (data) => {
       // Poll every 2 seconds if there are processing videos
-      const hasProcessingVideos = data?.some((video: any) => video.status === 'processing');
+      const hasProcessingVideos = Array.isArray(data) && data.some((video: any) => video.status === 'processing');
       return hasProcessingVideos ? 2000 : false;
     }
   });
@@ -104,7 +104,7 @@ export default function VideoAnalysisPage() {
     enabled: !!selectedVideoId,
     refetchInterval: (data) => {
       // Poll every 2 seconds if video is still processing
-      return data?.status === 'processing' ? 2000 : false;
+      return data && data.status === 'processing' ? 2000 : false;
     }
   });
 

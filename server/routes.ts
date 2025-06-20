@@ -9,7 +9,7 @@ import { z } from "zod";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import { spawn } from "child_process";
+import { spawn, exec } from "child_process";
 import sharp from "sharp";
 import Stripe from "stripe";
 import { transcribeAudioHandler, upload as audioUpload } from "./routes/transcribe";
@@ -7897,38 +7897,30 @@ Keep the response professional, evidence-based, and specific to track and field 
       try {
         console.log(`Extracting biomechanical data for uploaded video: ${finalPath}`);
         
-        // Attempt to extract biomechanical data using our Python script
-        const pythonResult = await new Promise<string>((resolve, reject) => {
-          const pythonProcess = spawn('python3', [
-            path.join(process.cwd(), 'server', 'video-analysis-mediapipe.py'),
-            finalPath
-          ]);
+        const pythonResult = await new Promise((resolve, reject) => {
+          exec(`python3 server/video-analysis-mediapipe.py "${finalPath}"`, (error, stdout, stderr) => {
+            if (error) {
+              console.error('Python subprocess error:', error);
+              console.error('Stderr:', stderr);
+              console.error('Stdout (possibly partial data):', stdout);
+              return reject(new Error(`Biomechanical extraction failed: ${stderr || error.message}`));
+            }
 
-          let output = '';
-          let errorOutput = '';
-
-          pythonProcess.stdout.on('data', (data) => {
-            output += data.toString();
-          });
-
-          pythonProcess.stderr.on('data', (data) => {
-            errorOutput += data.toString();
-          });
-
-          pythonProcess.on('close', (code) => {
-            if (code !== 0) {
-              reject(new Error(`Biomechanical extraction failed: ${errorOutput}`));
-            } else {
-              resolve(output);
+            try {
+              const parsed = JSON.parse(stdout);
+              console.log('Biomechanical data extracted successfully');
+              resolve(parsed);
+            } catch (parseError) {
+              console.error('Failed to parse biomechanical output:', parseError);
+              console.error('Raw output:', stdout);
+              reject(new Error('Invalid JSON output from MediaPipe script'));
             }
           });
         });
 
-        biomechanicalData = JSON.parse(pythonResult);
-        console.log('Biomechanical data extracted successfully');
+        biomechanicalData = pythonResult;
       } catch (error) {
-        console.error(`MediaPipe biomechanical extraction failed: ${error}`);
-        // Set biomechanicalData to null to indicate failure - no fallback data
+        console.error(`MediaPipe biomechanical extraction failed: ${error.message}`);
         biomechanicalData = null;
       }
 
@@ -7946,19 +7938,17 @@ Keep the response professional, evidence-based, and specific to track and field 
       
       const newVideo = await dbStorage.createVideoAnalysis(videoData);
       
-      // Process biomechanical data in background and update video entry
+      // Background processing to update database
       setImmediate(async () => {
         try {
           await dbStorage.updateVideoAnalysis(newVideo.id, {
             status: 'completed',
-            analysisData: biomechanicalData ? JSON.stringify(biomechanicalData) : null
+            analysisData: biomechanicalData ? JSON.stringify(biomechanicalData) : null,
           });
-          console.log(`Video ${newVideo.id} analysis completed with biomechanical data`);
+
+          console.log(`✅ Video ${newVideo.id} analysis completed`);
         } catch (error) {
-          console.error(`Failed to update video ${newVideo.id} with analysis data:`, error);
-          await dbStorage.updateVideoAnalysis(newVideo.id, {
-            status: 'failed'
-          });
+          console.error(`❌ Failed to update video ${newVideo.id} with analysis data:`, error);
         }
       });
       
