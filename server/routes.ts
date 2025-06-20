@@ -7440,9 +7440,35 @@ Keep the response professional, evidence-based, and specific to track and field 
           });
         }
 
+        // Get existing video data to preserve MediaPipe pose landmarks
+        const existingVideo = await dbStorage.getVideoAnalysis(videoId);
+        let existingMediaPipeData = null;
+        
+        if (existingVideo?.analysisData) {
+          try {
+            const parsed = JSON.parse(existingVideo.analysisData);
+            // Check if it contains MediaPipe pose data (frame_data with pose_landmarks)
+            if (parsed.frame_data && Array.isArray(parsed.frame_data)) {
+              existingMediaPipeData = parsed;
+            }
+          } catch (e) {
+            // analysisData is text, not JSON
+          }
+        }
+        
+        // Create combined analysis preserving MediaPipe data
+        const combinedAnalysis = {
+          ai_analysis: completeAnalysis.ai_analysis,
+          biomechanical_metrics: completeAnalysis.biomechanical_metrics,
+          performance_score: completeAnalysis.performance_score,
+          key_insights: completeAnalysis.key_insights,
+          recommendations: completeAnalysis.recommendations,
+          mediapipe_data: existingMediaPipeData // Preserve pose landmarks if they exist
+        };
+        
         // Save comprehensive analysis to video record
         await dbStorage.updateVideoAnalysis(videoId, { 
-          analysisData: completeAnalysis.ai_analysis
+          analysisData: JSON.stringify(combinedAnalysis)
         });
 
         res.json({ 
