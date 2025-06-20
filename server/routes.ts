@@ -7951,7 +7951,7 @@ Keep the response professional, evidence-based, and specific to track and field 
         try {
           await dbStorage.updateVideoAnalysis(newVideo.id, {
             status: 'completed',
-            analysisData: JSON.stringify(biomechanicalData)
+            analysisData: biomechanicalData ? JSON.stringify(biomechanicalData) : null
           });
           console.log(`Video ${newVideo.id} analysis completed with biomechanical data`);
         } catch (error) {

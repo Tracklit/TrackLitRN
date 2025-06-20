@@ -253,7 +253,7 @@ export function BiomechanicalVideoPlayer({
     }
     
     // Check if biomechanicalData indicates MediaPipe failure
-    if (biomechanicalData === "null" || biomechanicalData === null) {
+    if (biomechanicalData === "null" || biomechanicalData === null || biomechanicalData === undefined) {
       console.error('MediaPipe processing failed - no pose data available');
       setMediapipeError('MediaPipe could not process this video. The video format may not be supported or the subject may not be clearly visible.');
       setFrameData([]);
@@ -263,8 +263,10 @@ export function BiomechanicalVideoPlayer({
     let mediapipeData = null;
     try {
       mediapipeData = JSON.parse(biomechanicalData);
+      console.log('MediaPipe data parsed successfully:', mediapipeData);
     } catch (error) {
       console.error('MediaPipe data parsing failed:', error);
+      setMediapipeError('Failed to parse MediaPipe analysis data.');
       setFrameData([]);
       return;
     }
