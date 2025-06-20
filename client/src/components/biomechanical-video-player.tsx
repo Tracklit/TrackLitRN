@@ -287,20 +287,34 @@ export function BiomechanicalVideoPlayer({
     }
     
     // Fix: Handle both string and object data types to prevent double parsing
-    let mediapipeData = null;
+    let analysisData = null;
     try {
-      mediapipeData = typeof biomechanicalData === 'string' 
+      analysisData = typeof biomechanicalData === 'string' 
         ? JSON.parse(biomechanicalData) 
         : biomechanicalData;
       
-      console.log('✅ MediaPipe data parsed:', mediapipeData);
-      console.log('🔑 MediaPipe data keys:', Object.keys(mediapipeData));
+      console.log('✅ Analysis data parsed:', analysisData);
+      console.log('🔑 Analysis data keys:', Object.keys(analysisData));
     } catch (error) {
-      console.error('❌ Failed to parse MediaPipe data:', error);
+      console.error('❌ Failed to parse analysis data:', error);
       console.error('Raw data causing parse error:', biomechanicalData);
-      setMediapipeError('Failed to parse MediaPipe analysis data.');
+      setMediapipeError('Failed to parse analysis data.');
       setFrameData([]);
       return;
+    }
+
+    // Extract MediaPipe pose data from the combined analysis structure
+    let mediapipeData = null;
+    if (analysisData?.mediapipe_data) {
+      // New combined format: MediaPipe data is nested under mediapipe_data
+      mediapipeData = analysisData.mediapipe_data;
+      console.log('✅ Found MediaPipe data in combined analysis');
+    } else if (analysisData?.frame_data && Array.isArray(analysisData.frame_data)) {
+      // Legacy format: Direct MediaPipe data
+      mediapipeData = analysisData;
+      console.log('✅ Found direct MediaPipe data format');
+    } else {
+      console.log('No MediaPipe pose data found in analysis');
     }
     
     // Verify we have valid MediaPipe data structure
