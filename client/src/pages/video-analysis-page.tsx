@@ -104,7 +104,7 @@ export default function VideoAnalysisPage() {
   const { data: currentVideo, refetch: refetchCurrentVideo } = useQuery({
     queryKey: ["/api/video-analysis", selectedVideoId],
     enabled: !!selectedVideoId,
-    refetchInterval: (data) => {
+    refetchInterval: (data: any) => {
       // Poll every 2 seconds if video is still processing
       return data && data.status === 'processing' ? 2000 : false;
     }
@@ -505,45 +505,35 @@ export default function VideoAnalysisPage() {
           </div>
         </div>
 
-        {/* Video Library Section */}
-        {currentStep === "upload" && videosQuery.data && videosQuery.data.length > 0 && (
-          <Card className="border-blue-200 bg-blue-50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileVideo className="h-5 w-5 text-blue-600" />
-                Your Video Library
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {videosQuery.data.map((video: any) => (
-                  <Card key={video.id} className="bg-white border-blue-200 hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                          <span className="text-sm font-medium">{video.name}</span>
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {new Date(video.createdAt).toLocaleDateString()}
-                        </div>
-                        {video.biomechanicalData && (
-                          <Badge variant="secondary" className="text-xs">
-                            MediaPipe Ready
-                          </Badge>
-                        )}
-                        <Button 
-                          size="sm" 
-                          className="w-full"
-                          onClick={() => setLocation(`/video-player/${video.id}`)}
-                        >
-                          <Play className="h-4 w-4 mr-2" />
-                          Open Player
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+
+
+        {/* Quick Access to Video Player */}
+        {currentStep === "upload" && (
+          <Card className="border-blue-200 bg-blue-50 mb-6">
+            <CardContent className="p-4">
+              <div className="text-center">
+                <h3 className="font-semibold text-blue-900 mb-2">Access Your Videos</h3>
+                <p className="text-sm text-blue-700 mb-3">
+                  If you have already uploaded videos, you can access them directly
+                </p>
+                <div className="flex gap-2 justify-center">
+                  <Button 
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setLocation('/video-player/64')}
+                    className="text-blue-600 border-blue-300"
+                  >
+                    Video #64
+                  </Button>
+                  <Button 
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setLocation('/video-player/65')}
+                    className="text-blue-600 border-blue-300"
+                  >
+                    Video #65
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
