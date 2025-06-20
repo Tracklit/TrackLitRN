@@ -139,24 +139,22 @@ export function BiomechanicalVideoPlayer({
     const video = videoRef.current;
     const currentVideoTime = video.currentTime;
     
-    // Find closest pose frame by timestamp
+    // Find closest pose frame by timestamp with better precision
     if (frameData.length > 0) {
-      let closestFrameIndex = 0;
-      let minTimeDiff = Infinity;
+      // Calculate frame index directly from video time and FPS
+      const fps = 24; // From database: fps: 24
+      const calculatedFrameIndex = Math.floor(currentVideoTime * fps);
+      const clampedFrameIndex = Math.min(calculatedFrameIndex, frameData.length - 1);
       
-      frameData.forEach((frame, index) => {
-        const timeDiff = Math.abs(frame.timestamp - currentVideoTime);
-        if (timeDiff < minTimeDiff) {
-          minTimeDiff = timeDiff;
-          closestFrameIndex = index;
-        }
-      });
+      setCurrentFrameIndex(Math.max(0, clampedFrameIndex));
       
-      setCurrentFrameIndex(closestFrameIndex);
+      if (debugMode) {
+        console.log(`Video time: ${currentVideoTime.toFixed(3)}s -> Frame ${clampedFrameIndex}/${frameData.length}`);
+      }
     }
     
     setCurrentTime(currentVideoTime);
-  }, [frameData]);
+  }, [frameData, debugMode]);
 
   // Real-time canvas drawing synchronized with video playback
   const updateCanvas = useCallback(() => {
@@ -167,78 +165,60 @@ export function BiomechanicalVideoPlayer({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Get video element's actual display size and position
+    // Ensure we have video dimensions
+    if (!video.videoWidth || !video.videoHeight) return;
+
+    // Get video container dimensions
     const rect = video.getBoundingClientRect();
-    const containerRect = video.parentElement?.getBoundingClientRect();
     
-    // Calculate actual video display dimensions accounting for aspect ratio
-    const videoAspectRatio = video.videoWidth / video.videoHeight;
-    const containerAspectRatio = rect.width / rect.height;
-    
-    let displayWidth, displayHeight, offsetX = 0, offsetY = 0;
-    
-    if (videoAspectRatio > containerAspectRatio) {
-      // Video is wider - letterboxed top/bottom
-      displayWidth = rect.width;
-      displayHeight = rect.width / videoAspectRatio;
-      offsetY = (rect.height - displayHeight) / 2;
-    } else {
-      // Video is taller - letterboxed left/right
-      displayHeight = rect.height;
-      displayWidth = rect.height * videoAspectRatio;
-      offsetX = (rect.width - displayWidth) / 2;
-    }
-    
-    // Set canvas size to match video container
-    canvas.width = rect.width;
-    canvas.height = rect.height;
+    // Set canvas to exact video display size
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
     canvas.style.width = rect.width + 'px';
     canvas.style.height = rect.height + 'px';
     
-    // Clear previous frame
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Scale context for high DPI displays
+    ctx.scale(dpr, dpr);
     
-    // Get current pose data synchronized with video time
+    // Clear canvas
+    ctx.clearRect(0, 0, rect.width, rect.height);
+    
+    // Get current pose data with precise frame synchronization
     let currentFramePose = null;
-    if (frameData.length > 0 && currentFrameIndex < frameData.length) {
+    if (frameData.length > 0 && currentFrameIndex >= 0 && currentFrameIndex < frameData.length) {
       currentFramePose = frameData[currentFrameIndex];
-    } else if (poseData) {
-      currentFramePose = poseData;
     }
     
-    // Debug mode: show synchronization info
+    // Debug mode visualization
     if (debugMode) {
       ctx.fillStyle = '#00ff00';
-      ctx.font = '12px monospace';
-      ctx.fillText(`Frame: ${currentFrameIndex}/${frameData.length}`, 10, 20);
-      ctx.fillText(`Video: ${video.currentTime.toFixed(3)}s`, 10, 35);
-      ctx.fillText(`Display: ${displayWidth.toFixed(0)}x${displayHeight.toFixed(0)}`, 10, 50);
-      ctx.fillText(`Offset: ${offsetX.toFixed(0)},${offsetY.toFixed(0)}`, 10, 65);
+      ctx.font = '14px monospace';
+      ctx.fillText(`Frame: ${currentFrameIndex}/${frameData.length}`, 10, 25);
+      ctx.fillText(`Time: ${video.currentTime.toFixed(3)}s / ${video.duration?.toFixed(3) || 0}s`, 10, 45);
+      ctx.fillText(`Video: ${video.videoWidth}x${video.videoHeight}`, 10, 65);
+      ctx.fillText(`Canvas: ${rect.width.toFixed(0)}x${rect.height.toFixed(0)}`, 10, 85);
+      
       if (currentFramePose) {
-        ctx.fillText(`Landmarks: ${currentFramePose.pose_landmarks?.length || 0}`, 10, 80);
+        ctx.fillText(`Pose: ${currentFramePose.pose_landmarks?.length || 0} landmarks`, 10, 105);
+        ctx.fillText(`Timestamp: ${currentFramePose.timestamp?.toFixed(3) || 0}s`, 10, 125);
+      } else {
+        ctx.fillText('No pose data for current frame', 10, 105);
       }
       
-      // Show video area outline
-      ctx.strokeStyle = '#ffff00';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(offsetX, offsetY, displayWidth, displayHeight);
-      
-      // Real-time sync indicator
-      const flash = Math.floor(Date.now() / 300) % 2;
+      // Sync indicator
+      const flash = Math.floor(Date.now() / 400) % 2;
       if (flash) {
         ctx.beginPath();
-        ctx.arc(canvas.width - 25, 25, 6, 0, Math.PI * 2);
+        ctx.arc(rect.width - 20, 20, 8, 0, Math.PI * 2);
         ctx.fillStyle = '#ff0000';
         ctx.fill();
       }
     }
     
-    // Draw pose overlays with proper coordinate transformation
-    if (currentFramePose && currentFramePose.pose_landmarks) {
-      ctx.save();
-      ctx.translate(offsetX, offsetY);
-      drawFrameBasedOverlays(ctx, currentFramePose, displayWidth, displayHeight);
-      ctx.restore();
+    // Draw pose overlays if we have valid pose data
+    if (currentFramePose && currentFramePose.pose_landmarks && Array.isArray(currentFramePose.pose_landmarks)) {
+      drawFrameBasedOverlays(ctx, currentFramePose, rect.width, rect.height);
     }
   }, [frameData, currentFrameIndex, poseData, debugMode]);
 
@@ -363,47 +343,73 @@ export function BiomechanicalVideoPlayer({
 
     ctx.strokeStyle = '#8b5cf6';
     ctx.fillStyle = '#8b5cf6';
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 2;
 
+    // Transform normalized coordinates (0-1) to canvas pixel coordinates
     const getDisplayCoords = (landmark: any) => ({
       x: landmark.x * width,
       y: landmark.y * height
     });
 
-    // MediaPipe pose landmark connections
+    // MediaPipe pose landmark connections for running analysis
     const connections = [
-      // Face
-      [0, 1], [1, 2], [2, 3], [3, 7], [0, 4], [4, 5], [5, 6], [6, 8],
-      // Arms
-      [9, 10], [11, 12], [11, 13], [13, 15], [15, 17], [15, 19], [15, 21],
-      [12, 14], [14, 16], [16, 18], [16, 20], [16, 22],
-      // Body
-      [11, 12], [12, 24], [24, 23], [23, 11],
-      // Legs
-      [23, 25], [25, 27], [27, 29], [29, 31], [27, 31],
-      [24, 26], [26, 28], [28, 30], [30, 32], [28, 32]
+      // Core body structure
+      [11, 12], // left shoulder to right shoulder
+      [11, 23], // left shoulder to left hip
+      [12, 24], // right shoulder to right hip
+      [23, 24], // left hip to right hip
+      
+      // Left arm
+      [11, 13], // left shoulder to left elbow
+      [13, 15], // left elbow to left wrist
+      
+      // Right arm
+      [12, 14], // right shoulder to right elbow
+      [14, 16], // right elbow to right wrist
+      
+      // Left leg
+      [23, 25], // left hip to left knee
+      [25, 27], // left knee to left ankle
+      [27, 29], // left ankle to left heel
+      [27, 31], // left ankle to left foot index
+      
+      // Right leg
+      [24, 26], // right hip to right knee
+      [26, 28], // right knee to right ankle
+      [28, 30], // right ankle to right heel
+      [28, 32], // right ankle to right foot index
     ];
 
+    // Draw skeleton connections
     ctx.beginPath();
     connections.forEach(([startIdx, endIdx]) => {
       if (landmarks[startIdx] && landmarks[endIdx] && 
           landmarks[startIdx].visibility > 0.5 && landmarks[endIdx].visibility > 0.5) {
         const start = getDisplayCoords(landmarks[startIdx]);
         const end = getDisplayCoords(landmarks[endIdx]);
-        ctx.moveTo(start.x, start.y);
-        ctx.lineTo(end.x, end.y);
+        
+        // Ensure coordinates are within canvas bounds
+        if (start.x >= 0 && start.x <= width && start.y >= 0 && start.y <= height &&
+            end.x >= 0 && end.x <= width && end.y >= 0 && end.y <= height) {
+          ctx.moveTo(start.x, start.y);
+          ctx.lineTo(end.x, end.y);
+        }
       }
     });
     ctx.stroke();
 
-    // Draw joint points for key landmarks
-    const keyPoints = [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28]; // Main body joints
+    // Draw key joint points for running analysis
+    const keyPoints = [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32];
     keyPoints.forEach((index) => {
       if (landmarks[index] && landmarks[index].visibility > 0.5) {
         const point = getDisplayCoords(landmarks[index]);
-        ctx.beginPath();
-        ctx.arc(point.x, point.y, 6, 0, Math.PI * 2);
-        ctx.fill();
+        
+        // Only draw points within canvas bounds
+        if (point.x >= 0 && point.x <= width && point.y >= 0 && point.y <= height) {
+          ctx.beginPath();
+          ctx.arc(point.x, point.y, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
       }
     });
   };
