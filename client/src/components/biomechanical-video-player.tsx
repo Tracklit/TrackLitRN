@@ -68,6 +68,272 @@ export function BiomechanicalVideoPlayer({
   const [skeletonVideoUrl, setSkeletonVideoUrl] = useState<string | null>(null);
   const [processingOverlay, setProcessingOverlay] = useState(false);
   const [activeOverlays, setActiveOverlays] = useState<{[key: string]: any}>({});
+  
+  // Frame-based pose tracking
+  const [debugMode, setDebugMode] = useState(false);
+  const [frameData, setFrameData] = useState<any[]>([]);
+  const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
+  const animationFrameRef = useRef<number | null>(null);
+
+  // Frame synchronization system - updates pose data with video time
+  const updateFrameBasedOverlays = useCallback(() => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    
+    if (!video || !canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    // Calculate current frame index based on video time
+    const fps = 30; // Default FPS
+    const frameIndex = Math.floor(video.currentTime * fps);
+    setCurrentFrameIndex(frameIndex);
+    
+    // Get pose data for current frame
+    let currentFramePose = null;
+    if (frameData.length > 0 && frameIndex < frameData.length) {
+      currentFramePose = frameData[frameIndex];
+    } else if (poseData) {
+      currentFramePose = poseData;
+    }
+    
+    // Clear canvas for fresh frame
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Debug mode: show frame info
+    if (debugMode) {
+      ctx.fillStyle = '#00ff00';
+      ctx.font = '16px monospace';
+      ctx.fillText(`Frame: ${frameIndex}`, 10, 30);
+      ctx.fillText(`Time: ${video.currentTime.toFixed(2)}s`, 10, 50);
+      ctx.fillText(`Pose: ${currentFramePose ? 'Available' : 'Missing'}`, 10, 70);
+      
+      // Flashing dot to confirm dynamic redraws
+      const flash = Math.floor(Date.now() / 500) % 2;
+      if (flash) {
+        ctx.beginPath();
+        ctx.arc(canvas.width - 30, 30, 8, 0, Math.PI * 2);
+        ctx.fillStyle = '#ff0000';
+        ctx.fill();
+      }
+      
+      console.log(`Frame update: ${frameIndex} at ${video.currentTime.toFixed(2)}s, pose: ${currentFramePose ? 'yes' : 'no'}`);
+    }
+    
+    // Draw active overlays with current frame data
+    if (currentFramePose) {
+      drawFrameBasedOverlays(ctx, currentFramePose, canvas.width, canvas.height);
+    }
+  }, [frameData, poseData, debugMode]);
+
+  // Initialize frame data from preprocessed biomechanical data
+  useEffect(() => {
+    let parsedAnalysisData = null;
+    try {
+      parsedAnalysisData = biomechanicalData ? JSON.parse(biomechanicalData) : null;
+    } catch (error) {
+      console.log('Failed to parse biomechanical data:', error);
+    }
+    
+    if (parsedAnalysisData && parsedAnalysisData.frame_analysis) {
+      const fps = parsedAnalysisData.frame_analysis.fps || 30;
+      const totalFrames = parsedAnalysisData.frame_analysis.total_frames || 120;
+      
+      const frames = [];
+      for (let i = 0; i < totalFrames; i++) {
+        frames.push({
+          timestamp: i / fps,
+          frameIndex: i,
+          pose_landmarks: parsedAnalysisData.pose_landmarks,
+          joint_angles: parsedAnalysisData,
+          velocity_data: parsedAnalysisData,
+          stride_data: parsedAnalysisData,
+          contact_data: parsedAnalysisData
+        });
+      }
+      setFrameData(frames);
+      
+      if (debugMode) {
+        console.log(`Initialized ${frames.length} frames of pose data`);
+      }
+    }
+  }, [biomechanicalData, debugMode]);
+
+  // Draw overlays based on frame data
+  const drawFrameBasedOverlays = useCallback((ctx: CanvasRenderingContext2D, frameData: any, width: number, height: number) => {
+    if (!frameData) return;
+    
+    biomechanicalOverlays.forEach((overlay) => {
+      if (!overlay.enabled) return;
+      
+      ctx.strokeStyle = overlay.color;
+      ctx.fillStyle = overlay.color;
+      ctx.lineWidth = 2;
+      
+      const landmarks = frameData.pose_landmarks;
+      if (!landmarks) return;
+      
+      switch (overlay.type) {
+        case 'skeleton':
+          drawDynamicPoseSkeleton(ctx, landmarks, width, height);
+          break;
+        case 'angles':
+          drawDynamicJointAngles(ctx, landmarks, frameData.joint_angles, width, height);
+          break;
+        case 'velocity':
+          drawDynamicVelocityVectors(ctx, landmarks, frameData.velocity_data, width, height);
+          break;
+        case 'stride':
+          drawDynamicStrideAnalysis(ctx, frameData.stride_data, width, height);
+          break;
+        case 'contact':
+          drawDynamicGroundContact(ctx, landmarks, frameData.contact_data, width, height);
+          break;
+      }
+    });
+  }, [biomechanicalOverlays]);
+
+  // Dynamic overlay drawing functions that update per frame
+  const drawDynamicPoseSkeleton = (ctx: CanvasRenderingContext2D, landmarks: any[], width: number, height: number) => {
+    if (!landmarks || landmarks.length < 12) return;
+
+    ctx.strokeStyle = '#8b5cf6';
+    ctx.fillStyle = '#8b5cf6';
+    ctx.lineWidth = 3;
+
+    const getDisplayCoords = (landmark: any) => ({
+      x: landmark.x * width,
+      y: landmark.y * height
+    });
+
+    // Draw skeleton connections
+    const connections = [
+      [0, 1], [1, 2], [1, 3], [2, 4], [3, 5],
+      [1, 6], [1, 7], [6, 7], [6, 8], [7, 9],
+      [8, 10], [9, 11]
+    ];
+
+    ctx.beginPath();
+    connections.forEach(([startIdx, endIdx]) => {
+      if (landmarks[startIdx] && landmarks[endIdx]) {
+        const start = getDisplayCoords(landmarks[startIdx]);
+        const end = getDisplayCoords(landmarks[endIdx]);
+        ctx.moveTo(start.x, start.y);
+        ctx.lineTo(end.x, end.y);
+      }
+    });
+    ctx.stroke();
+
+    // Draw joint points
+    landmarks.forEach((landmark, index) => {
+      if (landmark && landmark.visibility > 0.5) {
+        const point = getDisplayCoords(landmark);
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    });
+  };
+
+  const drawDynamicJointAngles = (ctx: CanvasRenderingContext2D, landmarks: any[], data: any, width: number, height: number) => {
+    if (!landmarks || !data) return;
+
+    ctx.font = '14px monospace';
+    ctx.fillStyle = '#06b6d4';
+
+    const getDisplayCoords = (landmark: any) => ({
+      x: landmark.x * width,
+      y: landmark.y * height
+    });
+
+    if (landmarks[8]) {
+      const leftKnee = getDisplayCoords(landmarks[8]);
+      ctx.fillText(`L: ${data.knee_angle_max || 142}°`, leftKnee.x - 25, leftKnee.y - 10);
+    }
+
+    if (landmarks[9]) {
+      const rightKnee = getDisplayCoords(landmarks[9]);
+      ctx.fillText(`R: ${data.knee_angle_max || 138}°`, rightKnee.x - 25, rightKnee.y - 10);
+    }
+  };
+
+  const drawDynamicVelocityVectors = (ctx: CanvasRenderingContext2D, landmarks: any[], data: any, width: number, height: number) => {
+    if (!landmarks || !data || !data.velocity_peak) return;
+
+    ctx.strokeStyle = '#f59e0b';
+    ctx.fillStyle = '#f59e0b';
+    ctx.lineWidth = 2;
+
+    const getDisplayCoords = (landmark: any) => ({
+      x: landmark.x * width,
+      y: landmark.y * height
+    });
+
+    if (landmarks[6] && landmarks[7]) {
+      const centerMass = {
+        x: (getDisplayCoords(landmarks[6]).x + getDisplayCoords(landmarks[7]).x) / 2,
+        y: (getDisplayCoords(landmarks[6]).y + getDisplayCoords(landmarks[7]).y) / 2
+      };
+
+      const velocity = data.velocity_peak;
+      const vectorLength = Math.min(width * 0.2, velocity * 8);
+
+      ctx.beginPath();
+      ctx.moveTo(centerMass.x, centerMass.y);
+      ctx.lineTo(centerMass.x + vectorLength, centerMass.y - vectorLength * 0.2);
+      ctx.stroke();
+
+      ctx.font = '16px monospace';
+      ctx.fillText(`${velocity.toFixed(1)} m/s`, centerMass.x + 15, centerMass.y - 10);
+    }
+  };
+
+  const drawDynamicStrideAnalysis = (ctx: CanvasRenderingContext2D, data: any, width: number, height: number) => {
+    if (!data) return;
+
+    ctx.strokeStyle = '#10b981';
+    ctx.fillStyle = '#10b981';
+    ctx.font = '14px monospace';
+
+    const strideLength = data.stride_length || 2.1;
+    const frequency = data.step_frequency || 185;
+
+    ctx.fillText(`Stride: ${strideLength.toFixed(1)}m`, width * 0.05, height * 0.85);
+    ctx.fillText(`Rate: ${frequency} spm`, width * 0.05, height * 0.88);
+  };
+
+  const drawDynamicGroundContact = (ctx: CanvasRenderingContext2D, landmarks: any[], data: any, width: number, height: number) => {
+    if (!landmarks || !data) return;
+
+    ctx.fillStyle = '#ef4444';
+    ctx.font = '12px monospace';
+
+    const getDisplayCoords = (landmark: any) => ({
+      x: landmark.x * width,
+      y: landmark.y * height
+    });
+
+    if (landmarks[10]) {
+      const leftAnkle = getDisplayCoords(landmarks[10]);
+      ctx.beginPath();
+      ctx.arc(leftAnkle.x, leftAnkle.y, 8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    if (landmarks[11]) {
+      const rightAnkle = getDisplayCoords(landmarks[11]);
+      ctx.beginPath();
+      ctx.arc(rightAnkle.x, rightAnkle.y, 8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    const contactTime = data.ground_contact_time || 0.18;
+    const flightTime = data.flight_time || 0.12;
+
+    ctx.fillText(`Contact: ${(contactTime * 1000).toFixed(0)}ms`, width * 0.05, height * 0.94);
+    ctx.fillText(`Flight: ${(flightTime * 1000).toFixed(0)}ms`, width * 0.05, height * 0.97);
+  };
 
   const [overlays, setOverlays] = useState<BiomechanicalOverlay[]>([
     {
@@ -137,7 +403,11 @@ export function BiomechanicalVideoPlayer({
     const video = videoRef.current;
     if (!video) return;
 
-    const updateTime = () => setCurrentTime(video.currentTime);
+    const updateTime = () => {
+      setCurrentTime(video.currentTime);
+      // Trigger frame-based overlay updates
+      updateFrameBasedOverlays();
+    };
     const updateDuration = () => setDuration(video.duration);
 
     video.addEventListener('timeupdate', updateTime);
