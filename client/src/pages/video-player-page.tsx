@@ -92,12 +92,12 @@ export function VideoPlayerPage() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Video Player - Main Column */}
-          <div className="lg:col-span-2">
-            <Card className="bg-black/40 border-white/10 backdrop-blur-sm">
-              <CardContent className="p-0">
+      <div className="relative z-0 min-h-screen pt-6 pb-20">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col xl:flex-row gap-6 h-full">
+            {/* Video Player - Main Column */}
+            <div className="flex-1 xl:w-3/4">
+              <div className="relative bg-black/40 border border-white/10 backdrop-blur-sm rounded-lg overflow-hidden">
                 <BiomechanicalVideoPlayer
                   videoUrl={currentVideo.url}
                   videoName={currentVideo.name}
@@ -107,12 +107,11 @@ export function VideoPlayerPage() {
                   biomechanicalData={currentVideo.analysisData}
                   analysisStatus={currentVideo.status}
                 />
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </div>
 
-          {/* Side Panel */}
-          <div className="space-y-6">
+            {/* Side Panel */}
+            <div className="xl:w-1/4 space-y-4">
             {/* Video Info */}
             <Card className="bg-black/40 border-white/10 backdrop-blur-sm">
               <CardHeader>
@@ -200,6 +199,7 @@ export function VideoPlayerPage() {
                 </div>
               </CardContent>
             </Card>
+          </div>
           </div>
         </div>
       </div>
