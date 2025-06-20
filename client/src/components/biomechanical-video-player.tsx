@@ -1590,8 +1590,8 @@ export function BiomechanicalVideoPlayer({
   };
 
   return (
-    <div className="fixed inset-0 bg-black z-50">
-      {/* Main Video Area - Full Screen */}
+    <div className="relative w-full bg-black rounded-lg overflow-hidden" style={{ aspectRatio: '16/9' }}>
+      {/* Main Video Area */}
       <div className="relative w-full h-full">
         <div 
           ref={containerRef}
@@ -1702,99 +1702,47 @@ export function BiomechanicalVideoPlayer({
         </div>
       </div>
 
-      {/* Top Control Panel */}
-      <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/90 to-transparent p-4 z-10">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Activity className="h-5 w-5 text-white" />
-            <h1 className="text-white font-semibold truncate">{videoName}</h1>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleClose}
-            className="text-white hover:bg-white/20"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
+      {/* Overlay Controls - Positioned in top-right corner */}
+      <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-sm rounded-lg p-3 z-20 max-w-xs">
 
-        {/* MediaPipe Error Display */}
-        {mediapipeError && (
-          <div className="mb-4 bg-red-900/90 border border-red-600 rounded-lg p-4 backdrop-blur-sm">
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div>
-                <h4 className="text-red-200 font-medium text-sm mb-1">Analysis Failed</h4>
-                <p className="text-red-300 text-xs leading-relaxed">{mediapipeError}</p>
-                <p className="text-red-400 text-xs mt-2">Try uploading a different video with clear visibility of the subject.</p>
-              </div>
+          {/* MediaPipe Error Display */}
+          {mediapipeError && (
+            <div className="mb-3 bg-red-900/90 border border-red-600 rounded p-2">
+              <div className="text-red-200 text-xs font-medium mb-1">Analysis Failed</div>
+              <div className="text-red-300 text-xs">{mediapipeError}</div>
+            </div>
+          )}
+
+          {/* Biomechanical Overlay Controls */}
+          <div className="mb-3">
+            <h3 className="flex items-center gap-2 text-white font-medium text-sm mb-2">
+              <Eye className="h-4 w-4" />
+              Pose Overlays
+            </h3>
+            <div className="grid grid-cols-1 gap-1">
+              {overlays.map((overlay) => {
+                const Icon = overlay.icon;
+                return (
+                  <Button
+                    key={overlay.id}
+                    variant={overlay.enabled ? "default" : "outline"}
+                    onClick={() => toggleOverlay(overlay.id)}
+                    size="sm"
+                    className={`flex items-center justify-start gap-2 h-8 text-xs ${
+                      overlay.enabled ? 'border-2' : ''
+                    }`}
+                    style={{
+                      borderColor: overlay.enabled ? overlay.color : undefined,
+                      backgroundColor: overlay.enabled ? `${overlay.color}20` : undefined
+                    }}
+                  >
+                    <Icon className="h-3 w-3" style={{ color: overlay.color }} />
+                    <span>{overlay.label}</span>
+                  </Button>
+                );
+              })}
             </div>
           </div>
-        )}
-
-        {/* Biomechanical Overlay Controls */}
-        <div className="mb-4">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="flex items-center gap-2 text-white font-medium">
-              <Eye className="h-4 w-4" />
-              Overlays
-            </h3>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setDebugMode(!debugMode)}
-              className={`text-xs ${debugMode ? 'bg-green-600 text-white' : 'text-white hover:bg-white/20'}`}
-            >
-              Debug {debugMode ? 'ON' : 'OFF'}
-            </Button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {overlays.map((overlay) => {
-              const Icon = overlay.icon;
-              return (
-                <Button
-                  key={overlay.id}
-                  variant={overlay.enabled ? "default" : "outline"}
-                  onClick={() => toggleOverlay(overlay.id)}
-                  size="sm"
-                  className={`flex items-center gap-2 ${
-                    overlay.enabled ? 'border-2' : ''
-                  }`}
-                  style={{
-                    borderColor: overlay.enabled ? overlay.color : undefined,
-                    backgroundColor: overlay.enabled ? `${overlay.color}20` : undefined
-                  }}
-                >
-                  <Icon className="h-3 w-3" style={{ color: overlay.color }} />
-                  <span className="text-xs">{overlay.label}</span>
-                </Button>
-              );
-            })}
-          </div>
-          
-          {/* Debug Mode Toggle */}
-          <div className="mt-3 flex items-center gap-2">
-            <Button
-              variant={debugMode ? "default" : "outline"}
-              onClick={() => setDebugMode(!debugMode)}
-              size="sm"
-              className={`flex items-center gap-2 ${
-                debugMode ? 'bg-green-600 hover:bg-green-700' : 'border-gray-600 hover:bg-gray-800'
-              }`}
-            >
-              <Settings className="h-3 w-3" />
-              <span className="text-xs">Debug Mode</span>
-            </Button>
-            {debugMode && (
-              <span className="text-xs text-green-400">Frame info visible</span>
-            )}
-          </div>
-        </div>
 
         {/* Analysis Controls */}
         <div>
