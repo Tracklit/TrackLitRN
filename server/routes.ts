@@ -7927,38 +7927,9 @@ Keep the response professional, evidence-based, and specific to track and field 
         biomechanicalData = JSON.parse(pythonResult);
         console.log('Biomechanical data extracted successfully');
       } catch (error) {
-        console.log(`Biomechanical extraction failed, using demo data: ${error}`);
-        // Use demo biomechanical data with realistic athletic performance metrics
-        biomechanicalData = {
-          stride_length: 2.1,
-          step_frequency: 185,
-          ground_contact_time: 0.18,
-          flight_time: 0.12,
-          knee_angle_max: 142,
-          hip_angle_max: 165,
-          trunk_angle: 85,
-          velocity_peak: 8.5,
-          pose_landmarks: [
-            // Sample pose data for overlay positioning
-            { x: 0.5, y: 0.3, visibility: 0.9 }, // head
-            { x: 0.5, y: 0.4, visibility: 0.9 }, // neck
-            { x: 0.45, y: 0.45, visibility: 0.8 }, // left shoulder
-            { x: 0.55, y: 0.45, visibility: 0.8 }, // right shoulder
-            { x: 0.42, y: 0.55, visibility: 0.7 }, // left elbow
-            { x: 0.58, y: 0.55, visibility: 0.7 }, // right elbow
-            { x: 0.48, y: 0.6, visibility: 0.9 }, // left hip
-            { x: 0.52, y: 0.6, visibility: 0.9 }, // right hip
-            { x: 0.47, y: 0.75, visibility: 0.8 }, // left knee
-            { x: 0.53, y: 0.75, visibility: 0.8 }, // right knee
-            { x: 0.46, y: 0.9, visibility: 0.7 }, // left ankle
-            { x: 0.54, y: 0.9, visibility: 0.7 }  // right ankle
-          ],
-          frame_analysis: {
-            total_frames: 120,
-            fps: 30,
-            duration: 4.0
-          }
-        };
+        console.error(`MediaPipe biomechanical extraction failed: ${error}`);
+        // Set biomechanicalData to null to indicate failure - no fallback data
+        biomechanicalData = null;
       }
 
       // Create video analysis entry with processing status

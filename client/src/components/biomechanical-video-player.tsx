@@ -77,6 +77,7 @@ export function BiomechanicalVideoPlayer({
   const [debugMode, setDebugMode] = useState(false);
   const [frameData, setFrameData] = useState<any[]>([]);
   const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
+  const [mediapipeError, setMediapipeError] = useState<string | null>(null);
   const animationFrameRef = useRef<number | null>(null);
 
   // Overlay state
@@ -244,15 +245,42 @@ export function BiomechanicalVideoPlayer({
     }
   }, [frameData, currentFrameIndex, poseData, debugMode]);
 
-  // MediaPipe Controller: Initialize authentic pose landmark data with enhanced validation
+  // MediaPipe Controller: Process authentic pose landmark data only
   useEffect(() => {
-    if (!biomechanicalData) return;
+    if (!biomechanicalData) {
+      setFrameData([]);
+      return;
+    }
+    
+    // Check if biomechanicalData indicates MediaPipe failure
+    if (biomechanicalData === "null" || biomechanicalData === null) {
+      console.error('MediaPipe processing failed - no pose data available');
+      setMediapipeError('MediaPipe could not process this video. The video format may not be supported or the subject may not be clearly visible.');
+      setFrameData([]);
+      return;
+    }
     
     let mediapipeData = null;
     try {
       mediapipeData = JSON.parse(biomechanicalData);
     } catch (error) {
       console.error('MediaPipe data parsing failed:', error);
+      setFrameData([]);
+      return;
+    }
+    
+    // Verify we have valid MediaPipe data structure
+    if (!mediapipeData || typeof mediapipeData !== 'object') {
+      console.error('Invalid MediaPipe data structure');
+      setFrameData([]);
+      return;
+    }
+    
+    // Check for MediaPipe error responses
+    if (mediapipeData.error) {
+      console.error('MediaPipe processing error:', mediapipeData.error);
+      setMediapipeError(`MediaPipe processing failed: ${mediapipeData.error}`);
+      setFrameData([]);
       return;
     }
     
@@ -260,13 +288,19 @@ export function BiomechanicalVideoPlayer({
       const fps = mediapipeData.fps || 24;
       const duration = mediapipeData.duration || 0;
       
-      // Validate and process MediaPipe landmarks with quality checks
+      // Validate and process authentic MediaPipe landmarks
       const validFrames = mediapipeData.frame_data.filter((frameData: any) => {
         return frameData.pose_landmarks && 
                Array.isArray(frameData.pose_landmarks) && 
                frameData.pose_landmarks.length === 33 &&
                typeof frameData.timestamp === 'number';
       });
+      
+      if (validFrames.length === 0) {
+        console.error('No valid pose data found in MediaPipe results');
+        setFrameData([]);
+        return;
+      }
       
       const mediapipeFrames = validFrames.map((frameData: any, index: number) => {
         // Ensure landmarks have proper structure
@@ -291,7 +325,7 @@ export function BiomechanicalVideoPlayer({
       
       setFrameData(mediapipeFrames);
       
-      console.log(`MediaPipe Enhanced Controller: ${mediapipeFrames.length}/${mediapipeData.frame_data.length} valid frames`);
+      console.log(`MediaPipe Controller: ${mediapipeFrames.length}/${mediapipeData.frame_data.length} valid frames processed`);
       console.log(`Video info: ${duration.toFixed(2)}s at ${fps} FPS`);
       
       // Quality assessment
@@ -308,7 +342,8 @@ export function BiomechanicalVideoPlayer({
         console.log(`Sample nose landmark: x=${nose.x.toFixed(3)}, y=${nose.y.toFixed(3)}, v=${nose.visibility.toFixed(3)}`);
       }
     } else {
-      console.warn('Invalid or missing MediaPipe frame data structure');
+      console.error('MediaPipe frame data missing or invalid format');
+      setFrameData([]);
     }
   }, [biomechanicalData]);
 
