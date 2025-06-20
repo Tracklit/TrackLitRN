@@ -153,11 +153,39 @@ export default function VideoAnalysisPage() {
 
   const analysisMutation = useMutation({
     mutationFn: async ({ videoId, promptId }: { videoId: number; promptId: string }) => {
+      setIsAnalyzing(true);
+      setAnalysisProgress(0);
+      setProcessingStage("Starting analysis...");
+      
+      // Simulate progress stages
+      const progressStages = [
+        { progress: 20, stage: "Processing video frames..." },
+        { progress: 40, stage: "Extracting pose data..." },
+        { progress: 60, stage: "Analyzing biomechanics..." },
+        { progress: 80, stage: "Generating insights..." },
+        { progress: 95, stage: "Finalizing results..." }
+      ];
+      
+      let currentStageIndex = 0;
+      const progressInterval = setInterval(() => {
+        if (currentStageIndex < progressStages.length) {
+          const stage = progressStages[currentStageIndex];
+          setAnalysisProgress(stage.progress);
+          setProcessingStage(stage.stage);
+          currentStageIndex++;
+        }
+      }, 1000);
+      
       const endpoint = analysisType === "enhanced" 
         ? `/api/video-analysis/${videoId}/analyze-enhanced`
         : `/api/video-analysis/${videoId}/analyze`;
       
       const response = await apiRequest("POST", endpoint, { promptId });
+      
+      clearInterval(progressInterval);
+      setAnalysisProgress(100);
+      setProcessingStage("Analysis complete!");
+      
       if (!response.ok) {
         throw new Error("Analysis failed");
       }
@@ -181,10 +209,14 @@ export default function VideoAnalysisPage() {
       }
       
       setIsAnalyzing(false);
+      setAnalysisProgress(0);
+      setProcessingStage("");
       setCurrentStep("results");
     },
     onError: (error: any) => {
       setIsAnalyzing(false);
+      setAnalysisProgress(0);
+      setProcessingStage("");
       toast({
         title: "Analysis Failed",
         description: "Failed to analyze video. Please try again.",
@@ -491,13 +523,19 @@ export default function VideoAnalysisPage() {
                   
                   {selectedFile ? (
                     <div className="space-y-4">
-                      {uploadMutation.isPending ? (
+                      {uploadMutation.isPending || isUploading ? (
                         <>
                           <div className="h-16 w-16 mx-auto rounded-full border-4 border-gray-200 border-t-blue-600 border-r-purple-600 animate-spin"></div>
-                          <div>
+                          <div className="space-y-3">
                             <h3 className="text-lg font-semibold text-blue-700">
-                              Uploading {selectedFile.name}...
+                              {processingStage || "Uploading video..."}
                             </h3>
+                            {isUploading && (
+                              <div className="w-full max-w-md mx-auto">
+                                <Progress value={uploadProgress} className="h-2" />
+                                <p className="text-sm text-gray-600 mt-1">{uploadProgress.toFixed(0)}% complete</p>
+                              </div>
+                            )}
                             <p className="text-sm text-gray-600">
                               {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
                             </p>
@@ -585,11 +623,36 @@ export default function VideoAnalysisPage() {
               analysisStatus={currentVideo?.status}
             />
             
+            {/* Analysis Progress Bar */}
+            {isAnalyzing && (
+              <Card className="border-blue-200 bg-blue-50">
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-full border-2 border-blue-600 border-t-transparent animate-spin"></div>
+                      <div>
+                        <h3 className="font-semibold text-blue-900">Analyzing Video</h3>
+                        <p className="text-sm text-blue-700">{processingStage}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Progress value={analysisProgress} className="h-3" />
+                      <div className="flex justify-between text-sm text-blue-600">
+                        <span>{analysisProgress.toFixed(0)}% complete</span>
+                        <span>This may take a few minutes</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
             <div className="flex justify-between">
               <Button 
                 variant="outline"
                 onClick={() => setCurrentStep("upload")}
                 className="flex items-center gap-2"
+                disabled={isAnalyzing}
               >
                 <ArrowLeft className="h-4 w-4" />
                 Upload New Video
