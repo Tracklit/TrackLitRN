@@ -36,6 +36,7 @@ interface BiomechanicalVideoPlayerProps {
   onAnalyze: (promptId: string) => void;
   isAnalyzing: boolean;
   biomechanicalData?: any;
+  analysisStatus?: string;
 }
 
 export function BiomechanicalVideoPlayer({ 
@@ -282,54 +283,78 @@ export function BiomechanicalVideoPlayer({
     ctx.lineWidth = 2;
 
     // Use pre-analyzed biomechanical data if available
-    const hasBiomechanicalData = biomechanicalData && biomechanicalData.pose_landmarks;
+    const parsedAnalysisData = biomechanicalData ? JSON.parse(biomechanicalData) : null;
+    const hasBiomechanicalData = parsedAnalysisData && parsedAnalysisData.pose_landmarks;
     
     if (hasBiomechanicalData) {
       // Use authentic pose data from server analysis
-      const landmarks = biomechanicalData.pose_landmarks;
+      const landmarks = parsedAnalysisData.pose_landmarks;
       
       switch (overlay.type) {
         case 'skeleton':
           drawAnalyzedPoseSkeleton(ctx, landmarks, width, height, offsetX, offsetY);
           break;
         case 'angles':
-          drawAnalyzedJointAngles(ctx, landmarks, biomechanicalData, width, height, offsetX, offsetY);
+          drawAnalyzedJointAngles(ctx, landmarks, parsedAnalysisData, width, height, offsetX, offsetY);
           break;
         case 'velocity':
-          drawAnalyzedVelocityVectors(ctx, landmarks, biomechanicalData, width, height, offsetX, offsetY);
+          drawAnalyzedVelocityVectors(ctx, landmarks, parsedAnalysisData, width, height, offsetX, offsetY);
           break;
         case 'stride':
-          drawAnalyzedStrideAnalysis(ctx, biomechanicalData, width, height, offsetX, offsetY);
+          drawAnalyzedStrideAnalysis(ctx, parsedAnalysisData, width, height, offsetX, offsetY);
           break;
         case 'contact':
-          drawAnalyzedGroundContact(ctx, landmarks, biomechanicalData, width, height, offsetX, offsetY);
+          drawAnalyzedGroundContact(ctx, landmarks, parsedAnalysisData, width, height, offsetX, offsetY);
           break;
       }
       return;
     }
 
     // Fallback to real-time MediaPipe data if available
-    if (poseData && poseData.landmarks) {
+    if (poseData && poseData.landmarks && videoRef.current) {
       const landmarks = poseData.landmarks;
       
       switch (overlay.type) {
         case 'skeleton':
-          drawRealPoseSkeleton(ctx, landmarks, width, height, offsetX, offsetY, videoRef.current!.videoWidth, videoRef.current!.videoHeight);
+          drawRealPoseSkeleton(ctx, landmarks, width, height, offsetX, offsetY, videoRef.current.videoWidth, videoRef.current.videoHeight);
           break;
         case 'angles':
-          drawRealJointAngles(ctx, poseData.joint_angles, landmarks, width, height, offsetX, offsetY, videoRef.current!.videoWidth, videoRef.current!.videoHeight);
+          drawRealJointAngles(ctx, poseData.joint_angles, landmarks, width, height, offsetX, offsetY, videoRef.current.videoWidth, videoRef.current.videoHeight);
           break;
         case 'velocity':
-          drawRealVelocityVectors(ctx, poseData.velocities, landmarks, width, height, offsetX, offsetY, videoRef.current!.videoWidth, videoRef.current!.videoHeight);
+          drawRealVelocityVectors(ctx, poseData.velocities, landmarks, width, height, offsetX, offsetY, videoRef.current.videoWidth, videoRef.current.videoHeight);
           break;
         case 'stride':
           drawRealStrideAnalysis(ctx, poseData.stride_metrics, width, height, offsetX, offsetY);
           break;
         case 'contact':
-          drawRealGroundContact(ctx, poseData.ground_contact, landmarks, width, height, offsetX, offsetY, videoRef.current!.videoWidth, videoRef.current!.videoHeight);
+          drawRealGroundContact(ctx, poseData.ground_contact, landmarks, width, height, offsetX, offsetY, videoRef.current.videoWidth, videoRef.current.videoHeight);
           break;
       }
       return;
+    }
+    
+    // Final fallback: show demo overlays positioned over video center
+    const centerX = offsetX + width * 0.5;
+    const centerY = offsetY + height * 0.6;
+    const scale = Math.min(width, height) * 0.15;
+
+    switch (overlay.type) {
+      case 'skeleton':
+        drawDemoPoseSkeleton(ctx, centerX, centerY, scale);
+        break;
+      case 'angles':
+        drawDemoJointAngles(ctx, centerX, centerY, scale);
+        break;
+      case 'velocity':
+        drawDemoVelocityVectors(ctx, centerX, centerY, scale);
+        break;
+      case 'stride':
+        drawDemoStrideAnalysis(ctx, width, height, offsetX, offsetY);
+        break;
+      case 'contact':
+        drawDemoGroundContact(ctx, centerX, centerY + scale * 1.5, scale);
+        break;
     }
 
     const landmarks = poseData.landmarks;

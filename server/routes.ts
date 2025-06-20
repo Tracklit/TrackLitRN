@@ -7961,7 +7961,7 @@ Keep the response professional, evidence-based, and specific to track and field 
         };
       }
 
-      // Create video analysis entry with biomechanical data
+      // Create video analysis entry with processing status
       const videoData = {
         userId: user.id,
         name: name.trim(),
@@ -7969,11 +7969,27 @@ Keep the response professional, evidence-based, and specific to track and field 
         fileUrl: `/uploads/video-analysis/${uniqueFilename}`,
         fileSize: req.file.size,
         mimeType: req.file.mimetype,
-        status: 'completed' as const,
-        biomechanicalData: JSON.stringify(biomechanicalData)
+        status: 'processing' as const,
+        biomechanicalData: null
       };
       
       const newVideo = await dbStorage.createVideoAnalysis(videoData);
+      
+      // Process biomechanical data in background and update video entry
+      setImmediate(async () => {
+        try {
+          await dbStorage.updateVideoAnalysis(newVideo.id, {
+            status: 'completed',
+            analysisData: JSON.stringify(biomechanicalData)
+          });
+          console.log(`Video ${newVideo.id} analysis completed with biomechanical data`);
+        } catch (error) {
+          console.error(`Failed to update video ${newVideo.id} with analysis data:`, error);
+          await dbStorage.updateVideoAnalysis(newVideo.id, {
+            status: 'failed'
+          });
+        }
+      });
       
       res.status(201).json({
         id: newVideo.id,

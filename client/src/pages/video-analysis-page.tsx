@@ -104,6 +104,12 @@ export default function VideoAnalysisPage() {
       setSelectedVideoId(data.id);
       setUploadedVideoUrl(data.fileUrl);
       setCurrentStep("video");
+      
+      // Show analysis progress notification
+      toast({
+        title: "Video Uploaded Successfully",
+        description: "Analyzing biomechanical data in the background...",
+      });
     },
     onError: (error) => {
       toast({
