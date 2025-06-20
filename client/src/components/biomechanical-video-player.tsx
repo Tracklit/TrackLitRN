@@ -193,26 +193,40 @@ export function BiomechanicalVideoPlayer({
       console.log('Failed to parse biomechanical data:', error);
     }
     
-    if (parsedAnalysisData && parsedAnalysisData.frame_analysis) {
-      const fps = parsedAnalysisData.frame_analysis.fps || 30;
-      const totalFrames = parsedAnalysisData.frame_analysis.total_frames || 120;
+    if (parsedAnalysisData && parsedAnalysisData.frame_data) {
+      const frameAnalysis = parsedAnalysisData.frame_data;
+      const fps = parsedAnalysisData.fps || 30;
       
-      const frames = [];
-      for (let i = 0; i < totalFrames; i++) {
-        frames.push({
-          timestamp: i / fps,
-          frameIndex: i,
-          pose_landmarks: parsedAnalysisData.pose_landmarks,
-          joint_angles: parsedAnalysisData,
-          velocity_data: parsedAnalysisData,
-          stride_data: parsedAnalysisData,
-          contact_data: parsedAnalysisData
-        });
-      }
+      const frames = frameAnalysis.map((frameData: any, index: number) => ({
+        timestamp: index / fps,
+        frameIndex: index,
+        pose_landmarks: frameData.pose_landmarks || frameData.landmarks,
+        joint_angles: frameData.joint_angles,
+        velocity_data: frameData.velocity_data,
+        stride_data: frameData.stride_data,
+        contact_data: frameData.contact_data
+      }));
+      
       setFrameData(frames);
       
       if (debugMode) {
-        console.log(`Initialized ${frames.length} frames of pose data`);
+        console.log(`Initialized ${frames.length} frames of real pose data`);
+      }
+    } else if (parsedAnalysisData && parsedAnalysisData.pose_landmarks) {
+      // Fallback for single-frame data
+      const singleFrame = {
+        timestamp: 0,
+        frameIndex: 0,
+        pose_landmarks: parsedAnalysisData.pose_landmarks,
+        joint_angles: parsedAnalysisData.joint_angles,
+        velocity_data: parsedAnalysisData.velocity_data,
+        stride_data: parsedAnalysisData.stride_data,
+        contact_data: parsedAnalysisData.contact_data
+      };
+      setFrameData([singleFrame]);
+      
+      if (debugMode) {
+        console.log('Initialized single frame pose data');
       }
     }
   }, [biomechanicalData, debugMode]);

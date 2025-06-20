@@ -1,10 +1,10 @@
-modules = ["nodejs-20", "web", "postgresql-16", "python-3.11"]
+modules = ["nodejs-20", "web", "postgresql-16", "python-3.11", "python3"]
 run = "npm run dev"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["ffmpeg", "imagemagick", "jq", "libGL", "libGLU", "opencv4", "python3", "python311Packages.numpy", "python311Packages.opencv4", "wget", "libstdcxx5", "gcc-unwrapped"]
+packages = ["atk", "ffmpeg", "gcc-unwrapped", "gdk-pixbuf", "glib", "gtk3", "imagemagick", "jq", "libGL", "libGLU", "libstdcxx5", "opencv4", "pango", "python3", "python311Packages.numpy", "python311Packages.opencv4", "wget"]
 
 [deployment]
 deploymentTarget = "autoscale"

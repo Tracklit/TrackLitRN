@@ -255,9 +255,20 @@ class BiomechanicalAnalyzer:
                 key_points = self.extract_key_points(results.pose_landmarks)
                 joint_angles = self.calculate_joint_angles(key_points, frame_idx)
                 
+                # Extract raw pose landmarks for skeleton overlay
+                pose_landmarks = []
+                for landmark in results.pose_landmarks.landmark:
+                    pose_landmarks.append({
+                        'x': landmark.x,
+                        'y': landmark.y,
+                        'z': landmark.z,
+                        'visibility': landmark.visibility
+                    })
+                
                 frame_data.append({
                     'frame': frame_idx,
                     'timestamp': timestamp,
+                    'pose_landmarks': pose_landmarks,
                     'key_points': key_points,
                     'joint_angles': joint_angles
                 })
@@ -277,16 +288,19 @@ class BiomechanicalAnalyzer:
         angle_stats = self.calculate_angle_statistics(frame_data)
         
         return {
+            "fps": fps,
+            "total_frames": total_frames,
+            "duration": duration,
+            "frame_data": frame_data,
+            "stride_analysis": stride_metrics,
+            "joint_angles": angle_stats,
+            "contact_events": contact_events[:10],
             "video_info": {
                 "duration": duration,
                 "total_frames": total_frames,
                 "fps": fps,
                 "analyzed_frames": len(frame_data)
-            },
-            "stride_analysis": stride_metrics,
-            "joint_angles": angle_stats,
-            "contact_events": contact_events[:10],  # Limit for response size
-            "frame_data": frame_data[::max(1, len(frame_data)//20)]  # Sample frames
+            }
         }
     
     def calculate_angle_statistics(self, frame_data: List[Dict]) -> Dict:
