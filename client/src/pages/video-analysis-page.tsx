@@ -88,6 +88,12 @@ export default function VideoAnalysisPage() {
     queryKey: ["/api/video-analysis"],
   });
 
+  // Get current selected video data
+  const { data: currentVideo } = useQuery({
+    queryKey: ["/api/video-analysis", selectedVideoId],
+    enabled: !!selectedVideoId,
+  });
+
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
       const response = await fetch("/api/video-analysis/upload", {
@@ -550,7 +556,8 @@ export default function VideoAnalysisPage() {
               videoId={selectedVideoId!}
               onAnalyze={handleAnalyze}
               isAnalyzing={isAnalyzing}
-              biomechanicalData={biomechanicalData}
+              biomechanicalData={currentVideo?.analysisData}
+              analysisStatus={currentVideo?.status}
             />
             
             <div className="flex justify-between">

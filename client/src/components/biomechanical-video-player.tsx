@@ -45,7 +45,8 @@ export function BiomechanicalVideoPlayer({
   videoId,
   onAnalyze, 
   isAnalyzing,
-  biomechanicalData 
+  biomechanicalData,
+  analysisStatus 
 }: BiomechanicalVideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -283,7 +284,12 @@ export function BiomechanicalVideoPlayer({
     ctx.lineWidth = 2;
 
     // Use pre-analyzed biomechanical data if available
-    const parsedAnalysisData = biomechanicalData ? JSON.parse(biomechanicalData) : null;
+    let parsedAnalysisData = null;
+    try {
+      parsedAnalysisData = biomechanicalData ? JSON.parse(biomechanicalData) : null;
+    } catch (error) {
+      console.log('Failed to parse biomechanical data:', error);
+    }
     const hasBiomechanicalData = parsedAnalysisData && parsedAnalysisData.pose_landmarks;
     
     if (hasBiomechanicalData) {
