@@ -7897,8 +7897,8 @@ Keep the response professional, evidence-based, and specific to track and field 
       try {
         console.log(`Extracting biomechanical data for uploaded video: ${finalPath}`);
         
-        const pythonResult = await new Promise((resolve, reject) => {
-          exec(`python3 server/video-analysis-mediapipe.py "${finalPath}"`, (error, stdout, stderr) => {
+        const pythonResult = await new Promise<any>((resolve, reject) => {
+          exec(`python3 server/video-analysis-mediapipe.py "${finalPath}"`, (error: any, stdout: string, stderr: string) => {
             if (error) {
               console.error('Python subprocess error:', error);
               console.error('Stderr:', stderr);
