@@ -222,52 +222,44 @@ export function BiomechanicalVideoPlayer({
     }
   }, [frameData, currentFrameIndex, poseData, debugMode]);
 
-  // Initialize frame data from preprocessed biomechanical data
+  // MediaPipe Controller: Initialize authentic pose landmark data
   useEffect(() => {
-    let parsedAnalysisData = null;
+    if (!biomechanicalData) return;
+    
+    let mediapipeData = null;
     try {
-      parsedAnalysisData = biomechanicalData ? JSON.parse(biomechanicalData) : null;
+      mediapipeData = JSON.parse(biomechanicalData);
     } catch (error) {
-      console.log('Failed to parse biomechanical data:', error);
+      console.error('MediaPipe data parsing failed:', error);
+      return;
     }
     
-    if (parsedAnalysisData && parsedAnalysisData.frame_data) {
-      const frameAnalysis = parsedAnalysisData.frame_data;
-      const fps = parsedAnalysisData.fps || 30;
+    if (mediapipeData?.frame_data) {
+      const fps = mediapipeData.fps || 24; // Use actual FPS from MediaPipe analysis
       
-      const frames = frameAnalysis.map((frameData: any, index: number) => ({
-        timestamp: index / fps,
-        frameIndex: index,
-        pose_landmarks: frameData.pose_landmarks || frameData.landmarks,
-        joint_angles: frameData.joint_angles,
-        velocity_data: frameData.velocity_data,
-        stride_data: frameData.stride_data,
-        contact_data: frameData.contact_data
+      // Process authentic MediaPipe landmarks
+      const mediapipeFrames = mediapipeData.frame_data.map((frameData: any) => ({
+        timestamp: frameData.timestamp,
+        frameIndex: frameData.frame,
+        pose_landmarks: frameData.pose_landmarks, // Direct MediaPipe 33-point landmarks
+        key_points: frameData.key_points,
+        joint_angles: frameData.joint_angles
       }));
       
-      setFrameData(frames);
+      setFrameData(mediapipeFrames);
       
-      if (debugMode) {
-        console.log(`Initialized ${frames.length} frames of real pose data`);
-      }
-    } else if (parsedAnalysisData && parsedAnalysisData.pose_landmarks) {
-      // Fallback for single-frame data
-      const singleFrame = {
-        timestamp: 0,
-        frameIndex: 0,
-        pose_landmarks: parsedAnalysisData.pose_landmarks,
-        joint_angles: parsedAnalysisData.joint_angles,
-        velocity_data: parsedAnalysisData.velocity_data,
-        stride_data: parsedAnalysisData.stride_data,
-        contact_data: parsedAnalysisData.contact_data
-      };
-      setFrameData([singleFrame]);
+      console.log(`MediaPipe Controller Active: ${mediapipeFrames.length} frames, ${fps} FPS`);
+      console.log(`First frame landmarks:`, mediapipeFrames[0]?.pose_landmarks?.length || 0);
       
-      if (debugMode) {
-        console.log('Initialized single frame pose data');
+      // Verify MediaPipe landmark structure
+      if (mediapipeFrames[0]?.pose_landmarks?.[0]) {
+        const sample = mediapipeFrames[0].pose_landmarks[0];
+        console.log(`MediaPipe landmark format:`, { x: sample.x, y: sample.y, visibility: sample.visibility });
       }
+    } else {
+      console.warn('No MediaPipe frame data available');
     }
-  }, [biomechanicalData, debugMode]);
+  }, [biomechanicalData]);
 
   // Attach video event listeners for pose synchronization
   useEffect(() => {
@@ -319,7 +311,7 @@ export function BiomechanicalVideoPlayer({
       
       switch (overlay.type) {
         case 'skeleton':
-          drawDynamicPoseSkeleton(ctx, landmarks, width, height);
+          drawMediaPipeSkeleton(ctx, landmarks, width, height);
           break;
         case 'angles':
           drawDynamicJointAngles(ctx, landmarks, frameData.joint_angles, width, height);
@@ -337,81 +329,74 @@ export function BiomechanicalVideoPlayer({
     });
   }, [overlays]);
 
-  // Dynamic overlay drawing functions that update per frame
-  const drawDynamicPoseSkeleton = (ctx: CanvasRenderingContext2D, landmarks: any[], width: number, height: number) => {
-    if (!landmarks || landmarks.length < 33) return; // MediaPipe has 33 landmarks
+  // MediaPipe-controlled skeleton renderer
+  const drawMediaPipeSkeleton = (ctx: CanvasRenderingContext2D, landmarks: any[], width: number, height: number) => {
+    if (!landmarks || landmarks.length !== 33) {
+      console.warn('MediaPipe skeleton: Invalid landmark count', landmarks?.length);
+      return;
+    }
 
+    // MediaPipe styling
     ctx.strokeStyle = '#8b5cf6';
     ctx.fillStyle = '#8b5cf6';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
 
-    // Transform normalized coordinates (0-1) to canvas pixel coordinates
-    const getDisplayCoords = (landmark: any) => ({
+    // MediaPipe coordinate transformation
+    const toLandmarkCoords = (landmark: any) => ({
       x: landmark.x * width,
-      y: landmark.y * height
+      y: landmark.y * height,
+      visibility: landmark.visibility
     });
 
-    // MediaPipe pose landmark connections for running analysis
-    const connections = [
-      // Core body structure
-      [11, 12], // left shoulder to right shoulder
-      [11, 23], // left shoulder to left hip
-      [12, 24], // right shoulder to right hip
-      [23, 24], // left hip to right hip
-      
-      // Left arm
-      [11, 13], // left shoulder to left elbow
-      [13, 15], // left elbow to left wrist
-      
-      // Right arm
-      [12, 14], // right shoulder to right elbow
-      [14, 16], // right elbow to right wrist
-      
-      // Left leg
-      [23, 25], // left hip to left knee
-      [25, 27], // left knee to left ankle
-      [27, 29], // left ankle to left heel
-      [27, 31], // left ankle to left foot index
-      
-      // Right leg
-      [24, 26], // right hip to right knee
-      [26, 28], // right knee to right ankle
-      [28, 30], // right ankle to right heel
-      [28, 32], // right ankle to right foot index
+    // Authentic MediaPipe pose connections
+    const POSE_CONNECTIONS = [
+      // Core body
+      [11, 12], [12, 24], [24, 23], [23, 11],
+      // Arms
+      [11, 13], [13, 15], [15, 17], [15, 19], [15, 21],
+      [12, 14], [14, 16], [16, 18], [16, 20], [16, 22],
+      // Legs  
+      [23, 25], [25, 27], [27, 29], [29, 31],
+      [24, 26], [26, 28], [28, 30], [30, 32],
+      [27, 31], [28, 32]
     ];
 
-    // Draw skeleton connections
+    // Draw MediaPipe skeleton connections
     ctx.beginPath();
-    connections.forEach(([startIdx, endIdx]) => {
-      if (landmarks[startIdx] && landmarks[endIdx] && 
-          landmarks[startIdx].visibility > 0.5 && landmarks[endIdx].visibility > 0.5) {
-        const start = getDisplayCoords(landmarks[startIdx]);
-        const end = getDisplayCoords(landmarks[endIdx]);
+    POSE_CONNECTIONS.forEach(([start, end]) => {
+      const startLandmark = landmarks[start];
+      const endLandmark = landmarks[end];
+      
+      if (startLandmark?.visibility > 0.6 && endLandmark?.visibility > 0.6) {
+        const startCoords = toLandmarkCoords(startLandmark);
+        const endCoords = toLandmarkCoords(endLandmark);
         
-        // Ensure coordinates are within canvas bounds
-        if (start.x >= 0 && start.x <= width && start.y >= 0 && start.y <= height &&
-            end.x >= 0 && end.x <= width && end.y >= 0 && end.y <= height) {
-          ctx.moveTo(start.x, start.y);
-          ctx.lineTo(end.x, end.y);
-        }
+        ctx.moveTo(startCoords.x, startCoords.y);
+        ctx.lineTo(endCoords.x, endCoords.y);
       }
     });
     ctx.stroke();
 
-    // Draw key joint points for running analysis
-    const keyPoints = [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32];
-    keyPoints.forEach((index) => {
-      if (landmarks[index] && landmarks[index].visibility > 0.5) {
-        const point = getDisplayCoords(landmarks[index]);
-        
-        // Only draw points within canvas bounds
-        if (point.x >= 0 && point.x <= width && point.y >= 0 && point.y <= height) {
-          ctx.beginPath();
-          ctx.arc(point.x, point.y, 4, 0, Math.PI * 2);
-          ctx.fill();
-        }
+    // Draw MediaPipe joint markers
+    const KEY_LANDMARKS = [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28];
+    KEY_LANDMARKS.forEach(index => {
+      const landmark = landmarks[index];
+      if (landmark?.visibility > 0.6) {
+        const coords = toLandmarkCoords(landmark);
+        ctx.beginPath();
+        ctx.arc(coords.x, coords.y, 5, 0, Math.PI * 2);
+        ctx.fill();
       }
     });
+
+    // Debug: Show landmark count
+    if (debugMode) {
+      ctx.fillStyle = '#00ff00';
+      ctx.font = '12px monospace';
+      const visibleCount = landmarks.filter(l => l?.visibility > 0.6).length;
+      ctx.fillText(`MediaPipe: ${visibleCount}/33 landmarks`, 10, 140);
+    }
   };
 
   const drawDynamicJointAngles = (ctx: CanvasRenderingContext2D, landmarks: any[], data: any, width: number, height: number) => {
