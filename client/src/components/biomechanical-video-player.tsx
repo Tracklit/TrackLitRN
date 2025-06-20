@@ -313,8 +313,13 @@ export function BiomechanicalVideoPlayer({
       // Legacy format: Direct MediaPipe data
       mediapipeData = analysisData;
       console.log('✅ Found direct MediaPipe data format');
+    } else if (analysisData?.fps && analysisData?.processed_frames) {
+      // Simplified MediaPipe format from new script
+      mediapipeData = analysisData;
+      console.log('✅ Found simplified MediaPipe data format');
     } else {
       console.log('No MediaPipe pose data found in analysis');
+      console.log('Available keys:', Object.keys(analysisData || {}));
     }
     
     // Verify we have valid MediaPipe data structure

@@ -653,7 +653,7 @@ export default function VideoAnalysisPage() {
               videoId={selectedVideoId!}
               onAnalyze={handleAnalyze}
               isAnalyzing={isAnalyzing}
-              biomechanicalData={currentVideo?.analysisData}
+              biomechanicalData={currentVideo?.biomechanicalData || currentVideo?.analysisData}
               analysisStatus={currentVideo?.status}
             />
             
