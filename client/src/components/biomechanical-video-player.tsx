@@ -298,6 +298,7 @@ export function BiomechanicalVideoPlayer({
       
       if (validFrames.length === 0) {
         console.error('No valid pose data found in MediaPipe results');
+        setMediapipeError('MediaPipe detected the video but could not extract pose data. The subject may not be clearly visible or the movement may be too fast.');
         setFrameData([]);
         return;
       }
@@ -324,6 +325,7 @@ export function BiomechanicalVideoPlayer({
       mediapipeFrames.sort((a, b) => a.timestamp - b.timestamp);
       
       setFrameData(mediapipeFrames);
+      setMediapipeError(null); // Clear any previous errors on successful processing
       
       console.log(`MediaPipe Controller: ${mediapipeFrames.length}/${mediapipeData.frame_data.length} valid frames processed`);
       console.log(`Video info: ${duration.toFixed(2)}s at ${fps} FPS`);
@@ -1663,6 +1665,24 @@ export function BiomechanicalVideoPlayer({
             <X className="h-4 w-4" />
           </Button>
         </div>
+
+        {/* MediaPipe Error Display */}
+        {mediapipeError && (
+          <div className="mb-4 bg-red-900/90 border border-red-600 rounded-lg p-4 backdrop-blur-sm">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div>
+                <h4 className="text-red-200 font-medium text-sm mb-1">Analysis Failed</h4>
+                <p className="text-red-300 text-xs leading-relaxed">{mediapipeError}</p>
+                <p className="text-red-400 text-xs mt-2">Try uploading a different video with clear visibility of the subject.</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Biomechanical Overlay Controls */}
         <div className="mb-4">
