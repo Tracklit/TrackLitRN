@@ -68,92 +68,68 @@ import FootRehabPage from "@/pages/rehab/chronic-injuries/foot";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { TickerProvider } from "@/contexts/ticker-context";
+import { initializeScrollOverride } from "@/lib/scroll-override";
+
+// Initialize global scroll override immediately
+initializeScrollOverride();
 
 // Component to handle scroll restoration
 function ScrollRestoration() {
   const [location] = useLocation();
   
   useEffect(() => {
-    // Disable browser's automatic scroll restoration
+    // Disable browser's automatic scroll restoration completely
     if ('scrollRestoration' in history) {
       history.scrollRestoration = 'manual';
     }
     
-    // Reset scroll position immediately and comprehensively
-    const resetScroll = () => {
-      // Reset main window scroll
-      window.scrollTo(0, 0);
+    // Immediately and aggressively reset scroll position
+    const forceScrollReset = () => {
+      // Override any existing scroll behavior
+      const originalScrollBehavior = document.documentElement.style.scrollBehavior;
+      document.documentElement.style.scrollBehavior = 'auto';
+      
+      // Force window scroll to top with all possible methods
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      window.scroll(0, 0);
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
       
-      // Reset all potentially scrollable containers
-      const scrollableSelectors = [
-        '[data-scroll-container]',
-        '.overflow-auto',
-        '.overflow-y-auto',
-        '.overflow-x-auto',
-        '.overflow-scroll',
-        '.h-screen',
-        '.min-h-screen',
-        '.max-h-screen',
-        '[style*="overflow"]',
-        '[style*="height"]',
-        '.relative',
-        '.absolute',
-        '.fixed'
-      ];
-      
-      scrollableSelectors.forEach(selector => {
-        const elements = document.querySelectorAll(selector);
-        elements.forEach(el => {
-          if (el instanceof HTMLElement) {
-            el.scrollTop = 0;
-            el.scrollLeft = 0;
-          }
-        });
-      });
-      
-      // Reset React Router scroll containers
-      const routerContainers = document.querySelectorAll('[data-router], [data-testid*="router"]');
-      routerContainers.forEach(el => {
-        if (el instanceof HTMLElement) {
+      // Force all scrollable elements to reset
+      const allElements = document.querySelectorAll('*');
+      allElements.forEach(el => {
+        if (el instanceof HTMLElement && (el.scrollHeight > el.clientHeight || el.scrollWidth > el.clientWidth)) {
           el.scrollTop = 0;
           el.scrollLeft = 0;
         }
       });
+      
+      // Restore original scroll behavior
+      document.documentElement.style.scrollBehavior = originalScrollBehavior;
     };
     
-    // Reset immediately
-    resetScroll();
+    // Execute immediately - no delays
+    forceScrollReset();
     
-    // Force reset with multiple attempts to override any competing scroll behavior
+    // Use requestAnimationFrame for the next frame
+    const frameId = requestAnimationFrame(() => {
+      forceScrollReset();
+      
+      // One more frame to be absolutely sure
+      requestAnimationFrame(forceScrollReset);
+    });
+    
+    // Backup timer-based resets
     const timers = [
-      setTimeout(resetScroll, 0),
-      setTimeout(resetScroll, 50),
-      setTimeout(resetScroll, 100),
-      setTimeout(resetScroll, 250)
+      setTimeout(forceScrollReset, 1),
+      setTimeout(forceScrollReset, 10),
+      setTimeout(forceScrollReset, 50),
+      setTimeout(forceScrollReset, 100)
     ];
     
-    // Add event listeners to catch any scroll events during navigation
-    const preventScrollDuringNavigation = (e: Event) => {
-      e.preventDefault();
-      resetScroll();
-    };
-    
-    window.addEventListener('scroll', preventScrollDuringNavigation, { passive: false });
-    document.addEventListener('scroll', preventScrollDuringNavigation, { passive: false });
-    
-    // Remove scroll event listeners after navigation is complete
-    const cleanupTimer = setTimeout(() => {
-      window.removeEventListener('scroll', preventScrollDuringNavigation);
-      document.removeEventListener('scroll', preventScrollDuringNavigation);
-    }, 500);
-    
     return () => {
+      cancelAnimationFrame(frameId);
       timers.forEach(timer => clearTimeout(timer));
-      clearTimeout(cleanupTimer);
-      window.removeEventListener('scroll', preventScrollDuringNavigation);
-      document.removeEventListener('scroll', preventScrollDuringNavigation);
     };
   }, [location]);
   

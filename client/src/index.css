@@ -5,22 +5,36 @@
 /* Prevent scroll position preservation across navigation */
 html {
   scroll-behavior: auto !important;
+  overflow-x: hidden;
 }
 
 /* Force scroll reset on route changes */
 body, #root {
   position: relative;
   overflow-x: hidden;
+  scroll-behavior: auto !important;
 }
 
 /* Reset scroll position for all containers on navigation */
 * {
-  scroll-behavior: auto;
+  scroll-behavior: auto !important;
 }
 
 /* Prevent browser scroll restoration */
 :root {
   scroll-behavior: auto !important;
+}
+
+/* Force all elements to start at scroll position 0 */
+html, body, #root, main, div, section, article {
+  scroll-behavior: auto !important;
+}
+
+/* Override any smooth scrolling that might interfere */
+@media (prefers-reduced-motion: no-preference) {
+  * {
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Custom card shadow with strong visibility */
