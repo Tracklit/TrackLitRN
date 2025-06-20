@@ -167,20 +167,35 @@ export function BiomechanicalVideoPlayer({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Get video element's actual display size
+    // Get video element's actual display size and position
     const rect = video.getBoundingClientRect();
-    const displayWidth = rect.width;
-    const displayHeight = rect.height;
+    const containerRect = video.parentElement?.getBoundingClientRect();
     
-    // Set canvas size to match video display exactly
-    canvas.width = displayWidth;
-    canvas.height = displayHeight;
+    // Calculate actual video display dimensions accounting for aspect ratio
+    const videoAspectRatio = video.videoWidth / video.videoHeight;
+    const containerAspectRatio = rect.width / rect.height;
     
-    // Ensure canvas is positioned correctly over video
-    canvas.style.width = displayWidth + 'px';
-    canvas.style.height = displayHeight + 'px';
+    let displayWidth, displayHeight, offsetX = 0, offsetY = 0;
     
-    // Clear previous frame completely
+    if (videoAspectRatio > containerAspectRatio) {
+      // Video is wider - letterboxed top/bottom
+      displayWidth = rect.width;
+      displayHeight = rect.width / videoAspectRatio;
+      offsetY = (rect.height - displayHeight) / 2;
+    } else {
+      // Video is taller - letterboxed left/right
+      displayHeight = rect.height;
+      displayWidth = rect.height * videoAspectRatio;
+      offsetX = (rect.width - displayWidth) / 2;
+    }
+    
+    // Set canvas size to match video container
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = rect.height + 'px';
+    
+    // Clear previous frame
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     // Get current pose data synchronized with video time
@@ -194,15 +209,19 @@ export function BiomechanicalVideoPlayer({
     // Debug mode: show synchronization info
     if (debugMode) {
       ctx.fillStyle = '#00ff00';
-      ctx.font = '14px monospace';
-      ctx.fillText(`Frame: ${currentFrameIndex}/${frameData.length}`, 10, 25);
-      ctx.fillText(`Video Time: ${video.currentTime.toFixed(3)}s`, 10, 45);
+      ctx.font = '12px monospace';
+      ctx.fillText(`Frame: ${currentFrameIndex}/${frameData.length}`, 10, 20);
+      ctx.fillText(`Video: ${video.currentTime.toFixed(3)}s`, 10, 35);
+      ctx.fillText(`Display: ${displayWidth.toFixed(0)}x${displayHeight.toFixed(0)}`, 10, 50);
+      ctx.fillText(`Offset: ${offsetX.toFixed(0)},${offsetY.toFixed(0)}`, 10, 65);
       if (currentFramePose) {
-        ctx.fillText(`Pose Time: ${currentFramePose.timestamp?.toFixed(3)}s`, 10, 65);
-        ctx.fillText(`Landmarks: ${currentFramePose.pose_landmarks?.length || 0}`, 10, 85);
-      } else {
-        ctx.fillText('No pose data', 10, 65);
+        ctx.fillText(`Landmarks: ${currentFramePose.pose_landmarks?.length || 0}`, 10, 80);
       }
+      
+      // Show video area outline
+      ctx.strokeStyle = '#ffff00';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(offsetX, offsetY, displayWidth, displayHeight);
       
       // Real-time sync indicator
       const flash = Math.floor(Date.now() / 300) % 2;
@@ -212,13 +231,14 @@ export function BiomechanicalVideoPlayer({
         ctx.fillStyle = '#ff0000';
         ctx.fill();
       }
-      
-      console.log(`Sync: Video ${video.currentTime.toFixed(3)}s -> Frame ${currentFrameIndex} (${currentFramePose?.timestamp?.toFixed(3)}s)`);
     }
     
-    // Draw pose overlays synchronized with current frame
+    // Draw pose overlays with proper coordinate transformation
     if (currentFramePose && currentFramePose.pose_landmarks) {
+      ctx.save();
+      ctx.translate(offsetX, offsetY);
       drawFrameBasedOverlays(ctx, currentFramePose, displayWidth, displayHeight);
+      ctx.restore();
     }
   }, [frameData, currentFrameIndex, poseData, debugMode]);
 
