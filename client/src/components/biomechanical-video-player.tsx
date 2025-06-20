@@ -132,57 +132,86 @@ export function BiomechanicalVideoPlayer({
     ));
   };
 
-  // Frame synchronization system - updates pose data with video time
-  const updateFrameBasedOverlays = useCallback(() => {
+  // Video time update handler for pose synchronization
+  const handleTimeUpdate = useCallback(() => {
+    if (!videoRef.current) return;
+    
     const video = videoRef.current;
+    const currentVideoTime = video.currentTime;
+    
+    // Find closest pose frame by timestamp
+    if (frameData.length > 0) {
+      let closestFrameIndex = 0;
+      let minTimeDiff = Infinity;
+      
+      frameData.forEach((frame, index) => {
+        const timeDiff = Math.abs(frame.timestamp - currentVideoTime);
+        if (timeDiff < minTimeDiff) {
+          minTimeDiff = timeDiff;
+          closestFrameIndex = index;
+        }
+      });
+      
+      setCurrentFrameIndex(closestFrameIndex);
+    }
+    
+    setCurrentTime(currentVideoTime);
+  }, [frameData]);
+
+  // Real-time canvas drawing synchronized with video playback
+  const updateCanvas = useCallback(() => {
+    if (!canvasRef.current || !videoRef.current) return;
+    
     const canvas = canvasRef.current;
-    
-    if (!video || !canvas) return;
-    
+    const video = videoRef.current;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    // Sync canvas size with video display dimensions
+    canvas.width = video.clientWidth;
+    canvas.height = video.clientHeight;
     
-    // Calculate current frame index based on video time
-    const fps = 30; // Default FPS
-    const frameIndex = Math.floor(video.currentTime * fps);
-    setCurrentFrameIndex(frameIndex);
+    // Clear previous frame completely
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Get pose data for current frame
+    // Get current pose data synchronized with video time
     let currentFramePose = null;
-    if (frameData.length > 0 && frameIndex < frameData.length) {
-      currentFramePose = frameData[frameIndex];
+    if (frameData.length > 0 && currentFrameIndex < frameData.length) {
+      currentFramePose = frameData[currentFrameIndex];
     } else if (poseData) {
       currentFramePose = poseData;
     }
     
-    // Clear canvas for fresh frame
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Debug mode: show frame info
+    // Debug mode: show synchronization info
     if (debugMode) {
       ctx.fillStyle = '#00ff00';
-      ctx.font = '16px monospace';
-      ctx.fillText(`Frame: ${frameIndex}`, 10, 30);
-      ctx.fillText(`Time: ${video.currentTime.toFixed(2)}s`, 10, 50);
-      ctx.fillText(`Pose: ${currentFramePose ? 'Available' : 'Missing'}`, 10, 70);
+      ctx.font = '14px monospace';
+      ctx.fillText(`Frame: ${currentFrameIndex}/${frameData.length}`, 10, 25);
+      ctx.fillText(`Video Time: ${video.currentTime.toFixed(3)}s`, 10, 45);
+      if (currentFramePose) {
+        ctx.fillText(`Pose Time: ${currentFramePose.timestamp?.toFixed(3)}s`, 10, 65);
+        ctx.fillText(`Landmarks: ${currentFramePose.pose_landmarks?.length || 0}`, 10, 85);
+      } else {
+        ctx.fillText('No pose data', 10, 65);
+      }
       
-      // Flashing dot to confirm dynamic redraws
-      const flash = Math.floor(Date.now() / 500) % 2;
+      // Real-time sync indicator
+      const flash = Math.floor(Date.now() / 300) % 2;
       if (flash) {
         ctx.beginPath();
-        ctx.arc(canvas.width - 30, 30, 8, 0, Math.PI * 2);
+        ctx.arc(canvas.width - 25, 25, 6, 0, Math.PI * 2);
         ctx.fillStyle = '#ff0000';
         ctx.fill();
       }
       
-      console.log(`Frame update: ${frameIndex} at ${video.currentTime.toFixed(2)}s, pose: ${currentFramePose ? 'yes' : 'no'}`);
+      console.log(`Sync: Video ${video.currentTime.toFixed(3)}s -> Frame ${currentFrameIndex} (${currentFramePose?.timestamp?.toFixed(3)}s)`);
     }
     
-    // Draw active overlays with current frame data
+    // Draw pose overlays synchronized with current frame
     if (currentFramePose && currentFramePose.pose_landmarks) {
       drawFrameBasedOverlays(ctx, currentFramePose, canvas.width, canvas.height);
     }
-  }, [frameData, poseData, debugMode]);
+  }, [frameData, currentFrameIndex, poseData, debugMode]);
 
   // Initialize frame data from preprocessed biomechanical data
   useEffect(() => {
@@ -231,6 +260,40 @@ export function BiomechanicalVideoPlayer({
     }
   }, [biomechanicalData, debugMode]);
 
+  // Attach video event listeners for pose synchronization
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    video.addEventListener('timeupdate', handleTimeUpdate);
+    video.addEventListener('seeked', handleTimeUpdate);
+    video.addEventListener('loadedmetadata', handleTimeUpdate);
+    
+    return () => {
+      video.removeEventListener('timeupdate', handleTimeUpdate);
+      video.removeEventListener('seeked', handleTimeUpdate);
+      video.removeEventListener('loadedmetadata', handleTimeUpdate);
+    };
+  }, [handleTimeUpdate]);
+
+  // Animation loop for smooth overlay updates
+  useEffect(() => {
+    const animate = () => {
+      updateCanvas();
+      animationFrameRef.current = requestAnimationFrame(animate);
+    };
+    
+    if (frameData.length > 0 || poseData) {
+      animate();
+    }
+    
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [updateCanvas]);
+
   // Draw overlays based on frame data
   const drawFrameBasedOverlays = useCallback((ctx: CanvasRenderingContext2D, frameData: any, width: number, height: number) => {
     if (!frameData || !frameData.pose_landmarks) return;
@@ -267,7 +330,7 @@ export function BiomechanicalVideoPlayer({
 
   // Dynamic overlay drawing functions that update per frame
   const drawDynamicPoseSkeleton = (ctx: CanvasRenderingContext2D, landmarks: any[], width: number, height: number) => {
-    if (!landmarks || landmarks.length < 12) return;
+    if (!landmarks || landmarks.length < 33) return; // MediaPipe has 33 landmarks
 
     ctx.strokeStyle = '#8b5cf6';
     ctx.fillStyle = '#8b5cf6';
@@ -278,16 +341,24 @@ export function BiomechanicalVideoPlayer({
       y: landmark.y * height
     });
 
-    // Draw skeleton connections
+    // MediaPipe pose landmark connections
     const connections = [
-      [0, 1], [1, 2], [1, 3], [2, 4], [3, 5],
-      [1, 6], [1, 7], [6, 7], [6, 8], [7, 9],
-      [8, 10], [9, 11]
+      // Face
+      [0, 1], [1, 2], [2, 3], [3, 7], [0, 4], [4, 5], [5, 6], [6, 8],
+      // Arms
+      [9, 10], [11, 12], [11, 13], [13, 15], [15, 17], [15, 19], [15, 21],
+      [12, 14], [14, 16], [16, 18], [16, 20], [16, 22],
+      // Body
+      [11, 12], [12, 24], [24, 23], [23, 11],
+      // Legs
+      [23, 25], [25, 27], [27, 29], [29, 31], [27, 31],
+      [24, 26], [26, 28], [28, 30], [30, 32], [28, 32]
     ];
 
     ctx.beginPath();
     connections.forEach(([startIdx, endIdx]) => {
-      if (landmarks[startIdx] && landmarks[endIdx]) {
+      if (landmarks[startIdx] && landmarks[endIdx] && 
+          landmarks[startIdx].visibility > 0.5 && landmarks[endIdx].visibility > 0.5) {
         const start = getDisplayCoords(landmarks[startIdx]);
         const end = getDisplayCoords(landmarks[endIdx]);
         ctx.moveTo(start.x, start.y);
@@ -296,10 +367,11 @@ export function BiomechanicalVideoPlayer({
     });
     ctx.stroke();
 
-    // Draw joint points
-    landmarks.forEach((landmark, index) => {
-      if (landmark && landmark.visibility > 0.5) {
-        const point = getDisplayCoords(landmark);
+    // Draw joint points for key landmarks
+    const keyPoints = [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28]; // Main body joints
+    keyPoints.forEach((index) => {
+      if (landmarks[index] && landmarks[index].visibility > 0.5) {
+        const point = getDisplayCoords(landmarks[index]);
         ctx.beginPath();
         ctx.arc(point.x, point.y, 6, 0, Math.PI * 2);
         ctx.fill();
@@ -1436,10 +1508,20 @@ export function BiomechanicalVideoPlayer({
 
         {/* Biomechanical Overlay Controls */}
         <div className="mb-4">
-          <h3 className="flex items-center gap-2 text-white font-medium mb-2">
-            <Eye className="h-4 w-4" />
-            Overlays
-          </h3>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="flex items-center gap-2 text-white font-medium">
+              <Eye className="h-4 w-4" />
+              Overlays
+            </h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setDebugMode(!debugMode)}
+              className={`text-xs ${debugMode ? 'bg-green-600 text-white' : 'text-white hover:bg-white/20'}`}
+            >
+              Debug {debugMode ? 'ON' : 'OFF'}
+            </Button>
+          </div>
           <div className="flex flex-wrap gap-2">
             {overlays.map((overlay) => {
               const Icon = overlay.icon;
