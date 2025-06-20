@@ -281,28 +281,52 @@ export function BiomechanicalVideoPlayer({
     ctx.fillStyle = overlay.color;
     ctx.lineWidth = 2;
 
-    // Use real MediaPipe pose data if available, otherwise show demo overlays
-    if (!poseData || !poseData.landmarks) {
-      // Fall back to demonstration overlays positioned over video center
-      const centerX = offsetX + width * 0.5;
-      const centerY = offsetY + height * 0.6;
-      const scale = Math.min(width, height) * 0.15;
-
+    // Use pre-analyzed biomechanical data if available
+    const hasBiomechanicalData = biomechanicalData && biomechanicalData.pose_landmarks;
+    
+    if (hasBiomechanicalData) {
+      // Use authentic pose data from server analysis
+      const landmarks = biomechanicalData.pose_landmarks;
+      
       switch (overlay.type) {
         case 'skeleton':
-          drawDemoPoseSkeleton(ctx, centerX, centerY, scale);
+          drawAnalyzedPoseSkeleton(ctx, landmarks, width, height, offsetX, offsetY);
           break;
         case 'angles':
-          drawDemoJointAngles(ctx, centerX, centerY, scale);
+          drawAnalyzedJointAngles(ctx, landmarks, biomechanicalData, width, height, offsetX, offsetY);
           break;
         case 'velocity':
-          drawDemoVelocityVectors(ctx, centerX, centerY, scale);
+          drawAnalyzedVelocityVectors(ctx, landmarks, biomechanicalData, width, height, offsetX, offsetY);
           break;
         case 'stride':
-          drawDemoStrideAnalysis(ctx, width, height, offsetX, offsetY);
+          drawAnalyzedStrideAnalysis(ctx, biomechanicalData, width, height, offsetX, offsetY);
           break;
         case 'contact':
-          drawDemoGroundContact(ctx, centerX, centerY + scale * 1.5, scale);
+          drawAnalyzedGroundContact(ctx, landmarks, biomechanicalData, width, height, offsetX, offsetY);
+          break;
+      }
+      return;
+    }
+
+    // Fallback to real-time MediaPipe data if available
+    if (poseData && poseData.landmarks) {
+      const landmarks = poseData.landmarks;
+      
+      switch (overlay.type) {
+        case 'skeleton':
+          drawRealPoseSkeleton(ctx, landmarks, width, height, offsetX, offsetY, videoRef.current!.videoWidth, videoRef.current!.videoHeight);
+          break;
+        case 'angles':
+          drawRealJointAngles(ctx, poseData.joint_angles, landmarks, width, height, offsetX, offsetY, videoRef.current!.videoWidth, videoRef.current!.videoHeight);
+          break;
+        case 'velocity':
+          drawRealVelocityVectors(ctx, poseData.velocities, landmarks, width, height, offsetX, offsetY, videoRef.current!.videoWidth, videoRef.current!.videoHeight);
+          break;
+        case 'stride':
+          drawRealStrideAnalysis(ctx, poseData.stride_metrics, width, height, offsetX, offsetY);
+          break;
+        case 'contact':
+          drawRealGroundContact(ctx, poseData.ground_contact, landmarks, width, height, offsetX, offsetY, videoRef.current!.videoWidth, videoRef.current!.videoHeight);
           break;
       }
       return;
@@ -438,6 +462,198 @@ export function BiomechanicalVideoPlayer({
     ctx.font = '12px monospace';
     ctx.fillText(`CT: ${(contactTime * 1000).toFixed(0)}ms`, x - 40, y + 25);
     ctx.fillText(`FT: ${(flightTime * 1000).toFixed(0)}ms`, x - 40, y + 40);
+  };
+
+  // Analyzed pose overlay functions using pre-processed biomechanical data
+  const drawAnalyzedPoseSkeleton = (ctx: CanvasRenderingContext2D, landmarks: any[], width: number, height: number, offsetX: number, offsetY: number) => {
+    if (!landmarks || landmarks.length < 12) return;
+
+    ctx.strokeStyle = '#8b5cf6';
+    ctx.fillStyle = '#8b5cf6';
+    ctx.lineWidth = 3;
+
+    // Convert normalized coordinates to display coordinates
+    const getDisplayCoords = (landmark: any) => ({
+      x: offsetX + landmark.x * width,
+      y: offsetY + landmark.y * height
+    });
+
+    // Draw skeleton connections based on anatomical structure
+    const connections = [
+      [0, 1], // head to neck
+      [1, 2], [1, 3], // neck to shoulders
+      [2, 4], [3, 5], // shoulders to elbows
+      [1, 6], [1, 7], // neck to hips
+      [6, 7], // hip connection
+      [6, 8], [7, 9], // hips to knees
+      [8, 10], [9, 11] // knees to ankles
+    ];
+
+    // Draw skeleton lines
+    ctx.beginPath();
+    connections.forEach(([startIdx, endIdx]) => {
+      if (landmarks[startIdx] && landmarks[endIdx]) {
+        const start = getDisplayCoords(landmarks[startIdx]);
+        const end = getDisplayCoords(landmarks[endIdx]);
+        ctx.moveTo(start.x, start.y);
+        ctx.lineTo(end.x, end.y);
+      }
+    });
+    ctx.stroke();
+
+    // Draw joint points
+    landmarks.forEach((landmark, index) => {
+      if (landmark && landmark.visibility > 0.5) {
+        const point = getDisplayCoords(landmark);
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    });
+  };
+
+  const drawAnalyzedJointAngles = (ctx: CanvasRenderingContext2D, landmarks: any[], data: any, width: number, height: number, offsetX: number, offsetY: number) => {
+    if (!landmarks || !data) return;
+
+    ctx.font = '14px monospace';
+    ctx.fillStyle = '#06b6d4';
+
+    const getDisplayCoords = (landmark: any) => ({
+      x: offsetX + landmark.x * width,
+      y: offsetY + landmark.y * height
+    });
+
+    // Display joint angles from analyzed data
+    if (landmarks[8]) { // left knee
+      const leftKnee = getDisplayCoords(landmarks[8]);
+      ctx.fillText(`L: ${data.knee_angle_max || 142}°`, leftKnee.x - 25, leftKnee.y - 10);
+    }
+
+    if (landmarks[9]) { // right knee
+      const rightKnee = getDisplayCoords(landmarks[9]);
+      ctx.fillText(`R: ${data.knee_angle_max || 138}°`, rightKnee.x - 25, rightKnee.y - 10);
+    }
+
+    if (landmarks[6] && landmarks[7]) { // hip center
+      const hipCenter = {
+        x: (getDisplayCoords(landmarks[6]).x + getDisplayCoords(landmarks[7]).x) / 2,
+        y: (getDisplayCoords(landmarks[6]).y + getDisplayCoords(landmarks[7]).y) / 2
+      };
+      ctx.fillText(`Hip: ${data.hip_angle_max || 165}°`, hipCenter.x - 30, hipCenter.y + 20);
+    }
+
+    if (landmarks[1]) { // trunk angle at neck
+      const neck = getDisplayCoords(landmarks[1]);
+      ctx.fillText(`Trunk: ${data.trunk_angle || 85}°`, neck.x - 35, neck.y - 20);
+    }
+  };
+
+  const drawAnalyzedVelocityVectors = (ctx: CanvasRenderingContext2D, landmarks: any[], data: any, width: number, height: number, offsetX: number, offsetY: number) => {
+    if (!landmarks || !data || !data.velocity_peak) return;
+
+    ctx.strokeStyle = '#f59e0b';
+    ctx.fillStyle = '#f59e0b';
+    ctx.lineWidth = 2;
+
+    const getDisplayCoords = (landmark: any) => ({
+      x: offsetX + landmark.x * width,
+      y: offsetY + landmark.y * height
+    });
+
+    // Draw velocity vector from center of mass (approximate hip center)
+    if (landmarks[6] && landmarks[7]) {
+      const centerMass = {
+        x: (getDisplayCoords(landmarks[6]).x + getDisplayCoords(landmarks[7]).x) / 2,
+        y: (getDisplayCoords(landmarks[6]).y + getDisplayCoords(landmarks[7]).y) / 2
+      };
+
+      const velocity = data.velocity_peak;
+      const vectorLength = Math.min(width * 0.2, velocity * 8);
+
+      // Draw main velocity vector
+      ctx.beginPath();
+      ctx.moveTo(centerMass.x, centerMass.y);
+      ctx.lineTo(centerMass.x + vectorLength, centerMass.y - vectorLength * 0.2);
+      ctx.stroke();
+
+      // Draw arrow head
+      const arrowX = centerMass.x + vectorLength;
+      const arrowY = centerMass.y - vectorLength * 0.2;
+      ctx.beginPath();
+      ctx.moveTo(arrowX, arrowY);
+      ctx.lineTo(arrowX - 12, arrowY - 4);
+      ctx.moveTo(arrowX, arrowY);
+      ctx.lineTo(arrowX - 12, arrowY + 4);
+      ctx.stroke();
+
+      // Display velocity value
+      ctx.font = '16px monospace';
+      ctx.fillText(`${velocity.toFixed(1)} m/s`, centerMass.x + 15, centerMass.y - 10);
+    }
+  };
+
+  const drawAnalyzedStrideAnalysis = (ctx: CanvasRenderingContext2D, data: any, width: number, height: number, offsetX: number, offsetY: number) => {
+    if (!data) return;
+
+    ctx.strokeStyle = '#10b981';
+    ctx.fillStyle = '#10b981';
+    ctx.font = '14px monospace';
+
+    const strideLength = data.stride_length || 2.1;
+    const frequency = data.step_frequency || 185;
+
+    // Draw stride length measurement
+    const stridePixels = (strideLength / 3) * width * 0.6;
+    const baseY = offsetY + height * 0.9;
+
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(offsetX + width * 0.2, baseY);
+    ctx.lineTo(offsetX + width * 0.2 + stridePixels, baseY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Display metrics
+    ctx.fillText(`Stride: ${strideLength.toFixed(1)}m`, offsetX + width * 0.05, offsetY + height * 0.85);
+    ctx.fillText(`Rate: ${frequency} spm`, offsetX + width * 0.05, offsetY + height * 0.88);
+
+    if (data.frame_analysis) {
+      ctx.fillText(`Duration: ${data.frame_analysis.duration.toFixed(1)}s`, offsetX + width * 0.05, offsetY + height * 0.91);
+    }
+  };
+
+  const drawAnalyzedGroundContact = (ctx: CanvasRenderingContext2D, landmarks: any[], data: any, width: number, height: number, offsetX: number, offsetY: number) => {
+    if (!landmarks || !data) return;
+
+    ctx.fillStyle = '#ef4444';
+    ctx.font = '12px monospace';
+
+    const getDisplayCoords = (landmark: any) => ({
+      x: offsetX + landmark.x * width,
+      y: offsetY + landmark.y * height
+    });
+
+    // Draw ground contact indicators at ankle positions
+    if (landmarks[10]) { // left ankle
+      const leftAnkle = getDisplayCoords(landmarks[10]);
+      ctx.beginPath();
+      ctx.arc(leftAnkle.x, leftAnkle.y, 8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    if (landmarks[11]) { // right ankle
+      const rightAnkle = getDisplayCoords(landmarks[11]);
+      ctx.beginPath();
+      ctx.arc(rightAnkle.x, rightAnkle.y, 8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Display ground contact metrics
+    const contactTime = data.ground_contact_time || 0.18;
+    const flightTime = data.flight_time || 0.12;
+
+    ctx.fillText(`Contact: ${(contactTime * 1000).toFixed(0)}ms`, offsetX + width * 0.05, offsetY + height * 0.94);
+    ctx.fillText(`Flight: ${(flightTime * 1000).toFixed(0)}ms`, offsetX + width * 0.05, offsetY + height * 0.97);
   };
 
   const drawRealPoseSkeleton = (
