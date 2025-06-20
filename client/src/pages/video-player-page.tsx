@@ -77,7 +77,7 @@ export function VideoPlayerPage() {
             </div>
             
             <div className="flex items-center gap-2">
-              {currentVideo.biomechanicalData && (
+              {currentVideo.analysisData && (
                 <Badge variant="secondary" className="bg-green-600/20 text-green-400 border-green-600/30">
                   <Activity className="h-3 w-3 mr-1" />
                   Pose Data Available
@@ -104,7 +104,7 @@ export function VideoPlayerPage() {
                   videoId={currentVideo.id}
                   onAnalyze={handleAnalyze}
                   isAnalyzing={false}
-                  biomechanicalData={currentVideo.biomechanicalData}
+                  biomechanicalData={currentVideo.analysisData}
                   analysisStatus={currentVideo.status}
                 />
               </CardContent>
@@ -155,7 +155,7 @@ export function VideoPlayerPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {currentVideo.biomechanicalData ? (
+                {currentVideo.analysisData ? (
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 text-green-400">
                       <div className="h-2 w-2 bg-green-400 rounded-full"></div>
