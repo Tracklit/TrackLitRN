@@ -7964,15 +7964,31 @@ Keep the response professional, evidence-based, and specific to track and field 
       
       const newVideo = await dbStorage.createVideoAnalysis(videoData);
       
-      // Background processing to update database
+      // Background processing to update database with MediaPipe pose data
       setImmediate(async () => {
         try {
-          await dbStorage.updateVideoAnalysis(newVideo.id, {
-            status: 'completed',
-            analysisData: biomechanicalData ? JSON.stringify(biomechanicalData) : null,
-          });
-
-          console.log(`✅ Video ${newVideo.id} analysis completed`);
+          if (biomechanicalData) {
+            // Store MediaPipe pose data in the combined format to preserve it
+            const combinedData = {
+              mediapipe_data: biomechanicalData,
+              ai_analysis: null,
+              data_format: 'mediapipe_only'
+            };
+            
+            await dbStorage.updateVideoAnalysis(newVideo.id, {
+              status: 'completed',
+              analysisData: JSON.stringify(combinedData),
+            });
+            
+            console.log(`✅ Video ${newVideo.id} analysis completed with MediaPipe pose data`);
+          } else {
+            await dbStorage.updateVideoAnalysis(newVideo.id, {
+              status: 'failed',
+              analysisData: null,
+            });
+            
+            console.log(`❌ Video ${newVideo.id} analysis failed - no MediaPipe data`);
+          }
         } catch (error) {
           console.error(`❌ Failed to update video ${newVideo.id} with analysis data:`, error);
         }
