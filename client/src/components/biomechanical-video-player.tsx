@@ -247,8 +247,15 @@ export function BiomechanicalVideoPlayer({
 
   // MediaPipe Controller: Process authentic pose landmark data only
   useEffect(() => {
+    console.log('=== MediaPipe Data Flow Debug ===');
+    console.log('biomechanicalData type:', typeof biomechanicalData);
+    console.log('biomechanicalData value:', biomechanicalData);
+    console.log('biomechanicalData length:', biomechanicalData?.length);
+    
     if (!biomechanicalData) {
+      console.log('No biomechanical data provided - clearing frame data');
       setFrameData([]);
+      setMediapipeError(null);
       return;
     }
     
@@ -264,8 +271,10 @@ export function BiomechanicalVideoPlayer({
     try {
       mediapipeData = JSON.parse(biomechanicalData);
       console.log('MediaPipe data parsed successfully:', mediapipeData);
+      console.log('MediaPipe data keys:', Object.keys(mediapipeData));
     } catch (error) {
       console.error('MediaPipe data parsing failed:', error);
+      console.error('Raw data causing parse error:', biomechanicalData);
       setMediapipeError('Failed to parse MediaPipe analysis data.');
       setFrameData([]);
       return;

@@ -613,6 +613,16 @@ export default function VideoAnalysisPage() {
         {/* Video Player Step */}
         {currentStep === "video" && uploadedVideoUrl && (
           <div className="space-y-6">
+            {/* Debug Info */}
+            <div className="bg-gray-900 p-4 rounded text-xs text-white font-mono">
+              <div><strong>Video Debug Info:</strong></div>
+              <div>Video ID: {selectedVideoId}</div>
+              <div>Current Video Status: {currentVideo?.status}</div>
+              <div>Analysis Data Type: {typeof currentVideo?.analysisData}</div>
+              <div>Analysis Data Length: {currentVideo?.analysisData?.length || 'null'}</div>
+              <div>Analysis Data Preview: {currentVideo?.analysisData ? currentVideo.analysisData.substring(0, 100) + '...' : 'No data'}</div>
+            </div>
+            
             <BiomechanicalVideoPlayer
               videoUrl={uploadedVideoUrl}
               videoName={videoName}
