@@ -176,7 +176,7 @@ export function BiomechanicalVideoPlayer({
     }
     
     // Draw active overlays with current frame data
-    if (currentFramePose) {
+    if (currentFramePose && currentFramePose.pose_landmarks) {
       drawFrameBasedOverlays(ctx, currentFramePose, canvas.width, canvas.height);
     }
   }, [frameData, poseData, debugMode]);
@@ -216,7 +216,7 @@ export function BiomechanicalVideoPlayer({
 
   // Draw overlays based on frame data
   const drawFrameBasedOverlays = useCallback((ctx: CanvasRenderingContext2D, frameData: any, width: number, height: number) => {
-    if (!frameData) return;
+    if (!frameData || !frameData.pose_landmarks) return;
     
     overlays.forEach((overlay) => {
       if (!overlay.enabled) return;
@@ -226,7 +226,7 @@ export function BiomechanicalVideoPlayer({
       ctx.lineWidth = 2;
       
       const landmarks = frameData.pose_landmarks;
-      if (!landmarks) return;
+      if (!landmarks || !Array.isArray(landmarks) || landmarks.length === 0) return;
       
       switch (overlay.type) {
         case 'skeleton':
@@ -598,7 +598,7 @@ export function BiomechanicalVideoPlayer({
     }
 
     // Fallback to real-time MediaPipe data if available
-    if (poseData && poseData.landmarks && videoRef.current) {
+    if (poseData && poseData.landmarks && Array.isArray(poseData.landmarks) && poseData.landmarks.length > 0 && videoRef.current) {
       const landmarks = poseData.landmarks;
       
       switch (overlay.type) {

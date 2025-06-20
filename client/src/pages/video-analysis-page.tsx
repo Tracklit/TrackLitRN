@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -35,6 +36,10 @@ export default function VideoAnalysisPage() {
   const [keyInsights, setKeyInsights] = useState<string[]>([]);
   const [recommendations, setRecommendations] = useState<string[]>([]);
   const [analysisType, setAnalysisType] = useState<"standard" | "enhanced">("enhanced");
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [processingStage, setProcessingStage] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -96,10 +101,29 @@ export default function VideoAnalysisPage() {
 
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
+      setIsUploading(true);
+      setUploadProgress(0);
+      setProcessingStage("Uploading video...");
+      
+      // Simulate progress during upload
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + Math.random() * 10;
+        });
+      }, 200);
+      
       const response = await fetch("/api/video-analysis/upload", {
         method: "POST",
         body: formData,
       });
+      
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+      
       if (!response.ok) {
         throw new Error("Upload failed");
       }
@@ -109,15 +133,16 @@ export default function VideoAnalysisPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/video-analysis"] });
       setSelectedVideoId(data.id);
       setUploadedVideoUrl(data.fileUrl);
+      setIsUploading(false);
+      setUploadProgress(0);
+      setProcessingStage("Processing biomechanical data...");
+      setAnalysisProgress(25);
       setCurrentStep("video");
-      
-      // Show analysis progress notification
-      toast({
-        title: "Video Uploaded Successfully",
-        description: "Analyzing biomechanical data in the background...",
-      });
     },
     onError: (error) => {
+      setIsUploading(false);
+      setUploadProgress(0);
+      setProcessingStage("");
       toast({
         title: "Upload Failed",
         description: "Failed to upload video. Please try again.",
