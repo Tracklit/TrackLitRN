@@ -48,7 +48,7 @@ export function BiomechanicalVideoPlayer({
   isAnalyzing,
   biomechanicalData,
   analysisStatus 
-}: BiomechanicalVideoPlayerProps) {
+}: BiomechanicalVideoPlayerProps): JSX.Element {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -59,6 +59,9 @@ export function BiomechanicalVideoPlayer({
   const [volume, setVolume] = useState(1);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [showControls, setShowControls] = useState(true);
+
+  // Add missing variable declarations
+  const hasBiomechanicalData = biomechanicalData && Object.keys(biomechanicalData).length > 0;
 
   // Real-time pose tracking data
   const [poseData, setPoseData] = useState<any>(null);
