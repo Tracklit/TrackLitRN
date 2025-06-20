@@ -7928,7 +7928,7 @@ Keep the response professional, evidence-based, and specific to track and field 
             reject(new Error('MediaPipe processing timeout after 60 seconds'));
           }, 60000);
           
-          exec(`timeout 60s python3 server/video-analysis-mediapipe.py "${finalPath}"`, {
+          exec(`timeout 30s python3 server/video-analysis-simple.py "${finalPath}"`, {
             maxBuffer: 10 * 1024 * 1024 // 10MB buffer
           }, (error: any, stdout: string, stderr: string) => {
             clearTimeout(timeout);
