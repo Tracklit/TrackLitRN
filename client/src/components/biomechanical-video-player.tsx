@@ -560,18 +560,21 @@ export function BiomechanicalVideoPlayer({
     offsetX: number,
     offsetY: number
   ) => {
-    ctx.strokeStyle = overlay.color;
-    ctx.fillStyle = overlay.color;
-    ctx.lineWidth = 2;
-
-    // Use pre-analyzed biomechanical data if available
-    let parsedAnalysisData = null;
+    if (!overlay.enabled || !ctx) return;
+    
     try {
-      parsedAnalysisData = biomechanicalData ? JSON.parse(biomechanicalData) : null;
-    } catch (error) {
-      console.log('Failed to parse biomechanical data:', error);
-    }
-    const hasBiomechanicalData = parsedAnalysisData && parsedAnalysisData.pose_landmarks;
+      ctx.strokeStyle = overlay.color;
+      ctx.fillStyle = overlay.color;
+      ctx.lineWidth = 2;
+
+      // Use pre-analyzed biomechanical data if available
+      let parsedAnalysisData = null;
+      try {
+        parsedAnalysisData = biomechanicalData ? JSON.parse(biomechanicalData) : null;
+      } catch (error) {
+        console.log('Failed to parse biomechanical data:', error);
+      }
+      const hasBiomechanicalData = parsedAnalysisData && parsedAnalysisData.pose_landmarks;
     
     if (hasBiomechanicalData) {
       // Use authentic pose data from server analysis
@@ -654,6 +657,9 @@ export function BiomechanicalVideoPlayer({
       case 'contact':
         drawDemoGroundContact(ctx, centerX, centerY + scale * 1.5, scale);
         break;
+    }
+    } catch (error) {
+      console.error('Error drawing biomechanical overlay:', error);
     }
   };
 
