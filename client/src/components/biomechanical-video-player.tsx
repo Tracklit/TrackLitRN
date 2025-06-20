@@ -599,26 +599,38 @@ export function BiomechanicalVideoPlayer({
 
     // Fallback to real-time MediaPipe data if available
     if (poseData && poseData.landmarks && Array.isArray(poseData.landmarks) && poseData.landmarks.length > 0 && videoRef.current) {
-      const landmarks = poseData.landmarks;
+      try {
+        const landmarks = poseData.landmarks;
       
-      switch (overlay.type) {
-        case 'skeleton':
-          drawRealPoseSkeleton(ctx, landmarks, width, height, offsetX, offsetY, videoRef.current.videoWidth, videoRef.current.videoHeight);
-          break;
-        case 'angles':
-          drawRealJointAngles(ctx, poseData.joint_angles, landmarks, width, height, offsetX, offsetY, videoRef.current.videoWidth, videoRef.current.videoHeight);
-          break;
-        case 'velocity':
-          drawRealVelocityVectors(ctx, poseData.velocities, landmarks, width, height, offsetX, offsetY, videoRef.current.videoWidth, videoRef.current.videoHeight);
-          break;
-        case 'stride':
-          drawRealStrideAnalysis(ctx, poseData.stride_metrics, width, height, offsetX, offsetY);
-          break;
-        case 'contact':
-          drawRealGroundContact(ctx, poseData.ground_contact, landmarks, width, height, offsetX, offsetY, videoRef.current.videoWidth, videoRef.current.videoHeight);
-          break;
+        switch (overlay.type) {
+          case 'skeleton':
+            drawRealPoseSkeleton(ctx, landmarks, width, height, offsetX, offsetY, videoRef.current.videoWidth, videoRef.current.videoHeight);
+            break;
+          case 'angles':
+            if (poseData.joint_angles) {
+              drawRealJointAngles(ctx, poseData.joint_angles, landmarks, width, height, offsetX, offsetY, videoRef.current.videoWidth, videoRef.current.videoHeight);
+            }
+            break;
+          case 'velocity':
+            if (poseData.velocities) {
+              drawRealVelocityVectors(ctx, poseData.velocities, landmarks, width, height, offsetX, offsetY, videoRef.current.videoWidth, videoRef.current.videoHeight);
+            }
+            break;
+          case 'stride':
+            if (poseData.stride_metrics) {
+              drawRealStrideAnalysis(ctx, poseData.stride_metrics, width, height, offsetX, offsetY);
+            }
+            break;
+          case 'contact':
+            if (poseData.ground_contact) {
+              drawRealGroundContact(ctx, poseData.ground_contact, landmarks, width, height, offsetX, offsetY, videoRef.current.videoWidth, videoRef.current.videoHeight);
+            }
+            break;
+        }
+        return;
+      } catch (error) {
+        console.error('Error drawing real-time pose overlay:', error);
       }
-      return;
     }
     
     // Final fallback: show demo overlays positioned over video center
@@ -641,28 +653,6 @@ export function BiomechanicalVideoPlayer({
         break;
       case 'contact':
         drawDemoGroundContact(ctx, centerX, centerY + scale * 1.5, scale);
-        break;
-    }
-
-    const landmarks = poseData.landmarks;
-    const videoWidth = poseData.frame_dimensions?.width || 1;
-    const videoHeight = poseData.frame_dimensions?.height || 1;
-
-    switch (overlay.type) {
-      case 'skeleton':
-        drawRealPoseSkeleton(ctx, landmarks, width, height, offsetX, offsetY, videoWidth, videoHeight);
-        break;
-      case 'angles':
-        drawRealJointAngles(ctx, landmarks, poseData.angles, width, height, offsetX, offsetY, videoWidth, videoHeight);
-        break;
-      case 'velocity':
-        drawRealVelocityVectors(ctx, landmarks, poseData.velocities, width, height, offsetX, offsetY, videoWidth, videoHeight);
-        break;
-      case 'stride':
-        drawRealStrideAnalysis(ctx, poseData.stride_metrics, width, height, offsetX, offsetY);
-        break;
-      case 'contact':
-        drawRealGroundContact(ctx, poseData.ground_contact, landmarks, width, height, offsetX, offsetY, videoWidth, videoHeight);
         break;
     }
   };
