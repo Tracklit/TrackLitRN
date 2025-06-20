@@ -76,6 +76,7 @@ export function BiomechanicalVideoPlayer({
   const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
   const animationFrameRef = useRef<number | null>(null);
 
+  // Overlay state
   const [overlays, setOverlays] = useState<BiomechanicalOverlay[]>([
     {
       id: 'skeleton',
@@ -118,6 +119,15 @@ export function BiomechanicalVideoPlayer({
       type: 'contact'
     }
   ]);
+
+  // Toggle overlay function
+  const toggleOverlay = (overlayId: string) => {
+    setOverlays(prev => prev.map(overlay => 
+      overlay.id === overlayId 
+        ? { ...overlay, enabled: !overlay.enabled }
+        : overlay
+    ));
+  };
 
   // Frame synchronization system - updates pose data with video time
   const updateFrameBasedOverlays = useCallback(() => {
@@ -1269,14 +1279,6 @@ export function BiomechanicalVideoPlayer({
     if (!video) return;
     video.currentTime = value[0];
     setCurrentTime(value[0]);
-  };
-
-  const toggleOverlay = (overlayId: string) => {
-    setOverlays(prev => prev.map(overlay => 
-      overlay.id === overlayId 
-        ? { ...overlay, enabled: !overlay.enabled }
-        : overlay
-    ));
   };
 
   const formatTime = (time: number) => {
