@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
@@ -17,7 +17,8 @@ import {
   Footprints,
   Sparkles,
   Zap,
-  Crown
+  Crown,
+  Settings
 } from "lucide-react";
 
 interface BiomechanicalOverlay {
@@ -74,6 +75,49 @@ export function BiomechanicalVideoPlayer({
   const [frameData, setFrameData] = useState<any[]>([]);
   const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
   const animationFrameRef = useRef<number | null>(null);
+
+  const [overlays, setOverlays] = useState<BiomechanicalOverlay[]>([
+    {
+      id: 'skeleton',
+      label: 'Pose Skeleton',
+      icon: Activity,
+      color: '#8b5cf6',
+      enabled: true,
+      type: 'skeleton'
+    },
+    {
+      id: 'angles',
+      label: 'Joint Angles',
+      icon: Target,
+      color: '#06b6d4',
+      enabled: false,
+      type: 'angles'
+    },
+    {
+      id: 'velocity',
+      label: 'Velocity Vector',
+      icon: Gauge,
+      color: '#f59e0b',
+      enabled: false,
+      type: 'velocity'
+    },
+    {
+      id: 'stride',
+      label: 'Stride Analysis',
+      icon: Timer,
+      color: '#10b981',
+      enabled: false,
+      type: 'stride'
+    },
+    {
+      id: 'contact',
+      label: 'Ground Contact',
+      icon: Footprints,
+      color: '#ef4444',
+      enabled: false,
+      type: 'contact'
+    }
+  ]);
 
   // Frame synchronization system - updates pose data with video time
   const updateFrameBasedOverlays = useCallback(() => {
@@ -164,7 +208,7 @@ export function BiomechanicalVideoPlayer({
   const drawFrameBasedOverlays = useCallback((ctx: CanvasRenderingContext2D, frameData: any, width: number, height: number) => {
     if (!frameData) return;
     
-    biomechanicalOverlays.forEach((overlay) => {
+    overlays.forEach((overlay) => {
       if (!overlay.enabled) return;
       
       ctx.strokeStyle = overlay.color;
@@ -192,7 +236,7 @@ export function BiomechanicalVideoPlayer({
           break;
       }
     });
-  }, [biomechanicalOverlays]);
+  }, [overlays]);
 
   // Dynamic overlay drawing functions that update per frame
   const drawDynamicPoseSkeleton = (ctx: CanvasRenderingContext2D, landmarks: any[], width: number, height: number) => {
@@ -334,49 +378,6 @@ export function BiomechanicalVideoPlayer({
     ctx.fillText(`Contact: ${(contactTime * 1000).toFixed(0)}ms`, width * 0.05, height * 0.94);
     ctx.fillText(`Flight: ${(flightTime * 1000).toFixed(0)}ms`, width * 0.05, height * 0.97);
   };
-
-  const [overlays, setOverlays] = useState<BiomechanicalOverlay[]>([
-    {
-      id: 'skeleton',
-      label: 'Pose Skeleton',
-      icon: Activity,
-      color: '#8b5cf6',
-      enabled: true,
-      type: 'skeleton'
-    },
-    {
-      id: 'angles',
-      label: 'Joint Angles',
-      icon: Target,
-      color: '#06b6d4',
-      enabled: false,
-      type: 'angles'
-    },
-    {
-      id: 'velocity',
-      label: 'Velocity Vector',
-      icon: Gauge,
-      color: '#f59e0b',
-      enabled: false,
-      type: 'velocity'
-    },
-    {
-      id: 'stride',
-      label: 'Stride Analysis',
-      icon: Timer,
-      color: '#10b981',
-      enabled: false,
-      type: 'stride'
-    },
-    {
-      id: 'contact',
-      label: 'Ground Contact',
-      icon: Footprints,
-      color: '#ef4444',
-      enabled: false,
-      type: 'contact'
-    }
-  ]);
 
   const analysisPrompts = [
     {
@@ -1446,6 +1447,24 @@ export function BiomechanicalVideoPlayer({
                 </Button>
               );
             })}
+          </div>
+          
+          {/* Debug Mode Toggle */}
+          <div className="mt-3 flex items-center gap-2">
+            <Button
+              variant={debugMode ? "default" : "outline"}
+              onClick={() => setDebugMode(!debugMode)}
+              size="sm"
+              className={`flex items-center gap-2 ${
+                debugMode ? 'bg-green-600 hover:bg-green-700' : 'border-gray-600 hover:bg-gray-800'
+              }`}
+            >
+              <Settings className="h-3 w-3" />
+              <span className="text-xs">Debug Mode</span>
+            </Button>
+            {debugMode && (
+              <span className="text-xs text-green-400">Frame info visible</span>
+            )}
           </div>
         </div>
 
