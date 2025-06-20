@@ -167,9 +167,18 @@ export function BiomechanicalVideoPlayer({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Sync canvas size with video display dimensions
-    canvas.width = video.clientWidth;
-    canvas.height = video.clientHeight;
+    // Get video element's actual display size
+    const rect = video.getBoundingClientRect();
+    const displayWidth = rect.width;
+    const displayHeight = rect.height;
+    
+    // Set canvas size to match video display exactly
+    canvas.width = displayWidth;
+    canvas.height = displayHeight;
+    
+    // Ensure canvas is positioned correctly over video
+    canvas.style.width = displayWidth + 'px';
+    canvas.style.height = displayHeight + 'px';
     
     // Clear previous frame completely
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -209,7 +218,7 @@ export function BiomechanicalVideoPlayer({
     
     // Draw pose overlays synchronized with current frame
     if (currentFramePose && currentFramePose.pose_landmarks) {
-      drawFrameBasedOverlays(ctx, currentFramePose, canvas.width, canvas.height);
+      drawFrameBasedOverlays(ctx, currentFramePose, displayWidth, displayHeight);
     }
   }, [frameData, currentFrameIndex, poseData, debugMode]);
 
@@ -505,8 +514,7 @@ export function BiomechanicalVideoPlayer({
 
     const updateTime = () => {
       setCurrentTime(video.currentTime);
-      // Trigger frame-based overlay updates
-      updateFrameBasedOverlays();
+      // Frame updates are now handled by the animation loop
     };
     const updateDuration = () => setDuration(video.duration);
 
