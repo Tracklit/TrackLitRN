@@ -60,6 +60,7 @@ import PublicProfilePage from "@/pages/public-profile-page";
 import ExerciseLibraryPage from "@/pages/exercise-library-page";
 import ExerciseLibraryAddPage from "@/pages/exercise-library-add-page";
 import VideoAnalysisPage from "@/pages/video-analysis-page";
+import { VideoPlayerPage } from "@/pages/video-player-page";
 import AdminPanelPage from "@/pages/admin-panel-page";
 import SprinthiaPage from "@/pages/sprinthia-simple";
 import RehabPage from "@/pages/rehab-page";
@@ -192,6 +193,7 @@ function Router() {
       
       {/* AI */}
       <ProtectedRoute path="/sprinthia" component={SprinthiaPage} />
+      <ProtectedRoute path="/video-player/:id" component={VideoPlayerPage} />
       
       {/* Account */}
       <ProtectedRoute path="/spikes" component={SpikesPage} />

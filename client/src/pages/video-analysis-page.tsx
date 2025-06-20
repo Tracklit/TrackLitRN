@@ -12,11 +12,13 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Camera, Upload, FileVideo, Play, Sparkles, Zap, Crown, ArrowLeft, ArrowRight, Check, Copy, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Camera, Upload, FileVideo, Play, Sparkles, Zap, Crown, ArrowLeft, ArrowRight, Check, Copy, ThumbsUp, ThumbsDown, CheckCircle } from "lucide-react";
+import { useLocation } from "wouter";
 import videoAnalysisCardImage from "@assets/video-analysis-card.jpeg";
 import { BiomechanicalVideoPlayer } from "@/components/biomechanical-video-player";
 
 export default function VideoAnalysisPage() {
+  const [, setLocation] = useLocation();
   const [currentStep, setCurrentStep] = useState<"upload" | "video" | "results">("upload");
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -619,7 +621,7 @@ export default function VideoAnalysisPage() {
           </Card>
         )}
 
-        {/* Video Player Step */}
+        {/* Video Upload Success - Redirect to Dedicated Player */}
         {currentStep === "video" && uploadedVideoUrl && (
           <div className="space-y-6">
             {/* Processing Status */}
@@ -637,25 +639,24 @@ export default function VideoAnalysisPage() {
               </Card>
             )}
 
-            {/* Debug Info */}
-            <div className="bg-gray-900 p-4 rounded text-xs text-white font-mono">
-              <div><strong>Video Debug Info:</strong></div>
-              <div>Video ID: {selectedVideoId}</div>
-              <div>Current Video Status: {currentVideo?.status}</div>
-              <div>Analysis Data Type: {typeof currentVideo?.analysisData}</div>
-              <div>Analysis Data Length: {currentVideo?.analysisData?.length || 'null'}</div>
-              <div>Analysis Data Preview: {currentVideo?.analysisData ? currentVideo.analysisData.substring(0, 100) + '...' : 'No data'}</div>
-            </div>
-            
-            <BiomechanicalVideoPlayer
-              videoUrl={uploadedVideoUrl}
-              videoName={videoName}
-              videoId={selectedVideoId!}
-              onAnalyze={handleAnalyze}
-              isAnalyzing={isAnalyzing}
-              biomechanicalData={currentVideo?.biomechanicalData || currentVideo?.analysisData}
-              analysisStatus={currentVideo?.status}
-            />
+            <Card className="border-green-200 bg-green-50">
+              <CardContent className="p-6 text-center">
+                <div className="flex flex-col items-center gap-4">
+                  <CheckCircle className="h-12 w-12 text-green-600" />
+                  <div>
+                    <h3 className="text-lg font-semibold text-green-900">Upload Complete!</h3>
+                    <p className="text-green-700 mb-4">Your video has been uploaded and is ready for analysis</p>
+                  </div>
+                  <Button 
+                    onClick={() => setLocation(`/video-player/${selectedVideoId}`)}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    <Play className="h-4 w-4 mr-2" />
+                    Open Video Player
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
             
             {/* Analysis Progress Bar */}
             {isAnalyzing && (
