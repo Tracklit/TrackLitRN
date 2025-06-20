@@ -20,14 +20,14 @@ except ImportError:
 
 class BiomechanicalAnalyzer:
     def __init__(self):
-        """Initialize MediaPipe pose detection"""
+        """Initialize MediaPipe pose detection with optimized settings"""
         self.mp_pose = mp.solutions.pose
         self.pose = self.mp_pose.Pose(
             static_image_mode=False,
-            model_complexity=2,
+            model_complexity=1,  # Reduced complexity for speed
             enable_segmentation=False,
-            min_detection_confidence=0.7,
-            min_tracking_confidence=0.5
+            min_detection_confidence=0.5,  # Lower threshold for better detection
+            min_tracking_confidence=0.3
         )
         self.mp_draw = mp.solutions.drawing_utils
         
@@ -225,7 +225,7 @@ class BiomechanicalAnalyzer:
         }
     
     def analyze_video(self, video_path: str) -> Dict:
-        """Main video analysis function"""
+        """Main video analysis function with optimized processing"""
         cap = cv2.VideoCapture(video_path)
         
         if not cap.isOpened():
@@ -235,13 +235,33 @@ class BiomechanicalAnalyzer:
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         duration = total_frames / fps if fps > 0 else 0
         
+        # Limit processing to max 300 frames (10 seconds at 30fps) for performance
+        max_frames = min(total_frames, 300)
+        frame_skip = max(1, total_frames // max_frames)
+        
         frame_idx = 0
+        processed_frames = 0
         frame_data = []
         
-        while True:
+        print(f"Processing {max_frames} frames from {total_frames} total frames", file=sys.stderr)
+        
+        while processed_frames < max_frames:
             ret, frame = cap.read()
             if not ret:
                 break
+            
+            # Skip frames for performance optimization
+            if frame_idx % frame_skip != 0:
+                frame_idx += 1
+                continue
+            
+            # Resize frame for faster processing while maintaining aspect ratio
+            height, width = frame.shape[:2]
+            if width > 640:
+                scale = 640 / width
+                new_width = 640
+                new_height = int(height * scale)
+                frame = cv2.resize(frame, (new_width, new_height))
             
             # Convert BGR to RGB
             rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -272,8 +292,18 @@ class BiomechanicalAnalyzer:
                     'key_points': key_points,
                     'joint_angles': joint_angles
                 })
+            else:
+                # Add frame with empty pose data for timing consistency
+                frame_data.append({
+                    'frame': frame_idx,
+                    'timestamp': timestamp,
+                    'pose_landmarks': [],
+                    'key_points': {},
+                    'joint_angles': {}
+                })
             
             frame_idx += 1
+            processed_frames += 1
         
         cap.release()
         
