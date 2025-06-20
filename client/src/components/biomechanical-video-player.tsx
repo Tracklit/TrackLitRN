@@ -1704,45 +1704,44 @@ export function BiomechanicalVideoPlayer({
 
       {/* Overlay Controls - Positioned in top-right corner */}
       <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-sm rounded-lg p-3 z-20 max-w-xs">
-
-          {/* MediaPipe Error Display */}
-          {mediapipeError && (
-            <div className="mb-3 bg-red-900/90 border border-red-600 rounded p-2">
-              <div className="text-red-200 text-xs font-medium mb-1">Analysis Failed</div>
-              <div className="text-red-300 text-xs">{mediapipeError}</div>
-            </div>
-          )}
-
-          {/* Biomechanical Overlay Controls */}
-          <div className="mb-3">
-            <h3 className="flex items-center gap-2 text-white font-medium text-sm mb-2">
-              <Eye className="h-4 w-4" />
-              Pose Overlays
-            </h3>
-            <div className="grid grid-cols-1 gap-1">
-              {overlays.map((overlay) => {
-                const Icon = overlay.icon;
-                return (
-                  <Button
-                    key={overlay.id}
-                    variant={overlay.enabled ? "default" : "outline"}
-                    onClick={() => toggleOverlay(overlay.id)}
-                    size="sm"
-                    className={`flex items-center justify-start gap-2 h-8 text-xs ${
-                      overlay.enabled ? 'border-2' : ''
-                    }`}
-                    style={{
-                      borderColor: overlay.enabled ? overlay.color : undefined,
-                      backgroundColor: overlay.enabled ? `${overlay.color}20` : undefined
-                    }}
-                  >
-                    <Icon className="h-3 w-3" style={{ color: overlay.color }} />
-                    <span>{overlay.label}</span>
-                  </Button>
-                );
-              })}
-            </div>
+        {/* MediaPipe Error Display */}
+        {mediapipeError && (
+          <div className="mb-3 bg-red-900/90 border border-red-600 rounded p-2">
+            <div className="text-red-200 text-xs font-medium mb-1">Analysis Failed</div>
+            <div className="text-red-300 text-xs">{mediapipeError}</div>
           </div>
+        )}
+
+        {/* Biomechanical Overlay Controls */}
+        <div className="mb-3">
+          <h3 className="flex items-center gap-2 text-white font-medium text-sm mb-2">
+            <Eye className="h-4 w-4" />
+            Pose Overlays
+          </h3>
+          <div className="grid grid-cols-1 gap-1">
+            {overlays.map((overlay) => {
+              const Icon = overlay.icon;
+              return (
+                <Button
+                  key={overlay.id}
+                  variant={overlay.enabled ? "default" : "outline"}
+                  onClick={() => toggleOverlay(overlay.id)}
+                  size="sm"
+                  className={`flex items-center justify-start gap-2 h-8 text-xs ${
+                    overlay.enabled ? 'border-2' : ''
+                  }`}
+                  style={{
+                    borderColor: overlay.enabled ? overlay.color : undefined,
+                    backgroundColor: overlay.enabled ? `${overlay.color}20` : undefined
+                  }}
+                >
+                  <Icon className="h-3 w-3" style={{ color: overlay.color }} />
+                  <span>{overlay.label}</span>
+                </Button>
+              );
+            })}
+          </div>
+        </div>
 
         {/* Analysis Controls */}
         <div>
