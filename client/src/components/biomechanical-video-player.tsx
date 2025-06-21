@@ -95,6 +95,16 @@ export function BiomechanicalVideoPlayer({
   const [videoDimensions, setVideoDimensions] = useState({ width: 0, height: 0 });
   const [videoAspectRatio, setVideoAspectRatio] = useState(16/9);
   
+  // Add effect to monitor aspect ratio changes
+  useEffect(() => {
+    console.log('🎥 Video aspect ratio state changed:', {
+      newAspectRatio: videoAspectRatio,
+      isLandscape: videoAspectRatio > 1,
+      isPortrait: videoAspectRatio < 1,
+      containerStyle: `aspectRatio: ${videoAspectRatio.toString()}`
+    });
+  }, [videoAspectRatio]);
+  
   // Floating scrubber state
   const [isFloatingScrubber, setIsFloatingScrubber] = useState(false);
   const [floatingScrubberPos, setFloatingScrubberPos] = useState({ x: 20, y: 100 });
@@ -1850,15 +1860,12 @@ export function BiomechanicalVideoPlayer({
                 videoNetworkState: video.networkState
               });
 
-              // Force container update for landscape videos
-              if (aspectRatio > 1) {
-                console.log('🏞️ LANDSCAPE VIDEO DETECTED - Forcing container update');
-                // Use setTimeout to ensure state update happens
-                setTimeout(() => {
-                  setVideoAspectRatio(aspectRatio);
-                  console.log('📐 Container aspect ratio updated to:', aspectRatio);
-                }, 100);
-              }
+              // Ensure aspect ratio is properly set for all video formats
+              console.log('Setting video aspect ratio:', {
+                from: videoAspectRatio,
+                to: aspectRatio,
+                videoFormat: aspectRatio > 1 ? 'landscape' : 'portrait'
+              });
               
               setVideoDimensions({ width, height });
               setVideoAspectRatio(aspectRatio);
