@@ -844,7 +844,9 @@ export function BiomechanicalVideoPlayer({
           drawDynamicJointAngles(ctx, landmarks, frameData.joint_angles, width, height);
           break;
         case 'velocity':
-          drawDynamicVelocityVectors(ctx, landmarks, frameData.velocity_data, width, height);
+          if (frameData.has_velocity && frameData.velocity_data) {
+            drawDynamicVelocityVectors(ctx, landmarks, frameData.velocity_data, width, height);
+          }
           break;
         case 'stride':
           drawDynamicStrideAnalysis(ctx, frameData.stride_data, width, height);
