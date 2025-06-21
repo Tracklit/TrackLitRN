@@ -1838,6 +1838,16 @@ export function BiomechanicalVideoPlayer({
               const height = video.videoHeight;
               const aspectRatio = width / height;
               
+              console.log('Video metadata debug:', {
+                videoUrl,
+                videoWidth: width,
+                videoHeight: height,
+                calculatedAspectRatio: aspectRatio,
+                isLandscape: aspectRatio > 1,
+                isPortrait: aspectRatio < 1,
+                currentContainerAspectRatio: videoAspectRatio
+              });
+              
               setVideoDimensions({ width, height });
               setVideoAspectRatio(aspectRatio);
               
@@ -1849,7 +1859,8 @@ export function BiomechanicalVideoPlayer({
                 duration: video.duration,
                 videoWidth: width,
                 videoHeight: height,
-                aspectRatio: aspectRatio
+                aspectRatio: aspectRatio,
+                containerWillUpdate: true
               });
             }}
             onLoadedData={(e) => {
