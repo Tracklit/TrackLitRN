@@ -124,61 +124,17 @@ export function VideoPlayerPage() {
         <div className="container mx-auto px-4">
           <div className="flex flex-col xl:flex-row gap-6 h-full">
             {/* Video Player - Main Column */}
-            <div className="flex-1 xl:w-3/4 space-y-4">
-              <div className="relative bg-black/40 border border-white/10 backdrop-blur-sm rounded-lg overflow-hidden">
-                <BiomechanicalVideoPlayer
-                  videoUrl={currentVideo.fileUrl}
-                  videoName={currentVideo.name}
-                  videoId={currentVideo.id}
-                  onAnalyze={handleAnalyze}
-                  isAnalyzing={false}
-                  biomechanicalData={currentVideo.analysisData}
-                  analysisStatus={currentVideo.status}
-                  onOverlayChange={handleOverlayChange}
-                />
-              </div>
-
-              {/* Pose Overlay Controls - Below Video */}
-              <Card className="bg-black/40 border-white/10 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2">
-                    <Activity className="h-5 w-5 text-purple-400" />
-                    Pose Overlay Controls
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {overlays.map((overlay) => {
-                      const Icon = overlay.icon;
-                      return (
-                        <Button
-                          key={overlay.id}
-                          variant={overlay.enabled ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => toggleOverlay(overlay.id)}
-                          className={`flex items-center gap-2 text-white ${
-                            overlay.enabled 
-                              ? `border-2` 
-                              : 'border-gray-600 hover:bg-white/10'
-                          }`}
-                          style={{
-                            borderColor: overlay.enabled ? overlay.color : undefined,
-                            backgroundColor: overlay.enabled ? `${overlay.color}20` : undefined
-                          }}
-                        >
-                          <Icon className="h-4 w-4" style={{ color: overlay.color }} />
-                          {overlay.label}
-                        </Button>
-                      );
-                    })}
-                  </div>
-                  {overlays.length === 0 && (
-                    <div className="text-gray-400 text-sm">
-                      Pose overlay controls will appear when MediaPipe analysis is available
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+            <div className="flex-1 xl:w-3/4">
+              <BiomechanicalVideoPlayer
+                videoUrl={currentVideo.fileUrl}
+                videoName={currentVideo.name}
+                videoId={currentVideo.id}
+                onAnalyze={handleAnalyze}
+                isAnalyzing={false}
+                biomechanicalData={currentVideo.analysisData}
+                analysisStatus={currentVideo.status}
+                onOverlayChange={handleOverlayChange}
+              />
             </div>
 
             {/* Side Panel */}
