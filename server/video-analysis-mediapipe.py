@@ -250,6 +250,73 @@ class BiomechanicalAnalyzer:
         
         return contact_events
     
+    def calculate_velocity_vectors(self, frame_data: List[Dict]) -> List[Dict]:
+        """Calculate velocity vectors for key body points between frames"""
+        velocity_data = []
+        
+        if len(frame_data) < 2:
+            return velocity_data
+        
+        # Key points to track for velocity analysis
+        tracked_points = [
+            'nose', 'left_shoulder', 'right_shoulder', 'left_elbow', 'right_elbow',
+            'left_wrist', 'right_wrist', 'left_hip', 'right_hip', 'left_knee', 
+            'right_knee', 'left_ankle', 'right_ankle'
+        ]
+        
+        for i in range(1, len(frame_data)):
+            prev_frame = frame_data[i-1]
+            curr_frame = frame_data[i]
+            
+            frame_velocities = {
+                'frame': curr_frame['frame'],
+                'timestamp': curr_frame['timestamp'],
+                'velocities': {},
+                'has_valid_data': False
+            }
+            
+            # Calculate time difference between frames
+            time_diff = curr_frame['timestamp'] - prev_frame['timestamp']
+            if time_diff <= 0:
+                continue
+            
+            valid_velocity_count = 0
+            
+            for point in tracked_points:
+                if (point in prev_frame['key_points'] and point in curr_frame['key_points']):
+                    prev_pos = prev_frame['key_points'][point]
+                    curr_pos = curr_frame['key_points'][point]
+                    
+                    # Only calculate if both points have good visibility
+                    if prev_pos['visibility'] >= 0.7 and curr_pos['visibility'] >= 0.7:
+                        # Calculate velocity in normalized coordinates per second
+                        vel_x = (curr_pos['x'] - prev_pos['x']) / time_diff
+                        vel_y = (curr_pos['y'] - prev_pos['y']) / time_diff
+                        
+                        # Calculate speed (magnitude) and direction
+                        speed = math.sqrt(vel_x**2 + vel_y**2)
+                        direction = math.atan2(vel_y, vel_x) if speed > 0 else 0
+                        
+                        frame_velocities['velocities'][point] = {
+                            'velocity_x': vel_x,
+                            'velocity_y': vel_y,
+                            'speed': speed,
+                            'direction_rad': direction,
+                            'direction_deg': math.degrees(direction)
+                        }
+                        
+                        valid_velocity_count += 1
+            
+            # Mark frame as having valid data if we have enough velocity measurements
+            if valid_velocity_count >= 3:
+                frame_velocities['has_valid_data'] = True
+                frame_velocities['valid_point_count'] = valid_velocity_count
+            
+            velocity_data.append(frame_velocities)
+        
+        print(f"Calculated velocity vectors for {len(velocity_data)} frames with {sum(1 for v in velocity_data if v['has_valid_data'])} having valid data", file=sys.stderr)
+        return velocity_data
+    
     def calculate_stride_metrics(self, contact_events: List[Dict]) -> Dict:
         """Calculate stride-related metrics"""
         if len(contact_events) < 4:
@@ -394,6 +461,9 @@ class BiomechanicalAnalyzer:
         contact_events = self.detect_foot_contacts(frame_data)
         stride_metrics = self.calculate_stride_metrics(contact_events)
         
+        # Calculate velocity vectors
+        velocity_data = self.calculate_velocity_vectors(frame_data)
+        
         # Calculate joint angle statistics
         angle_stats = self.calculate_angle_statistics(frame_data)
         
@@ -405,11 +475,14 @@ class BiomechanicalAnalyzer:
             "stride_analysis": stride_metrics,
             "joint_angles": angle_stats,
             "contact_events": contact_events[:10],
+            "velocity_data": velocity_data,
+            "has_velocity_data": len([v for v in velocity_data if v['has_valid_data']]) > 0,
             "video_info": {
                 "duration": duration,
                 "total_frames": total_frames,
                 "fps": fps,
-                "analyzed_frames": len(frame_data)
+                "analyzed_frames": len(frame_data),
+                "velocity_frames": len([v for v in velocity_data if v['has_valid_data']])
             }
         }
     

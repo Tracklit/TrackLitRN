@@ -111,7 +111,10 @@ export function BiomechanicalVideoPlayer({
   const [isDraggingScrubber, setIsDraggingScrubber] = useState(false);
   const [scrubberDragStart, setScrubberDragStart] = useState({ x: 0, y: 0 });
 
-  // Overlay state
+  // State for velocity data availability
+  const [hasVelocityData, setHasVelocityData] = useState(false);
+
+  // Overlay state with dynamic velocity detection
   const [overlays, setOverlays] = useState<BiomechanicalOverlay[]>([
     {
       id: 'skeleton',
@@ -131,9 +134,9 @@ export function BiomechanicalVideoPlayer({
     },
     {
       id: 'velocity',
-      label: 'Velocity Vector',
+      label: hasVelocityData ? 'Velocity Vector' : 'No Velocity Detected',
       icon: Gauge,
-      color: '#f59e0b',
+      color: hasVelocityData ? '#f59e0b' : '#6b7280',
       enabled: false,
       type: 'velocity'
     },
@@ -1923,14 +1926,24 @@ export function BiomechanicalVideoPlayer({
     });
   };
 
-  const togglePlay = () => {
+  const togglePlay = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     const video = videoRef.current;
     if (!video) return;
 
     if (isPlaying) {
       video.pause();
     } else {
-      video.play();
+      // Prevent fullscreen mode by controlling play behavior
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          console.log('Play prevented:', error);
+        });
+      }
     }
     setIsPlaying(!isPlaying);
   };
