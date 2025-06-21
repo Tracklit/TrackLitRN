@@ -235,6 +235,19 @@ export function BiomechanicalVideoPlayer({
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     e.preventDefault();
+    
+    // Check for double tap to reset zoom
+    if (e.touches.length === 0 && e.changedTouches.length === 1) {
+      const currentTime = Date.now();
+      if (currentTime - lastTapTime < 300) {
+        // Double tap detected - reset zoom
+        setScale(1);
+        setTranslateX(0);
+        setTranslateY(0);
+      }
+      setLastTapTime(currentTime);
+    }
+    
     setIsDragging(false);
     setLastPinchDistance(0);
   };
