@@ -94,6 +94,12 @@ export function BiomechanicalVideoPlayer({
   // Video dimensions
   const [videoDimensions, setVideoDimensions] = useState({ width: 0, height: 0 });
   const [videoAspectRatio, setVideoAspectRatio] = useState(16/9);
+  
+  // Floating scrubber state
+  const [isFloatingScrubber, setIsFloatingScrubber] = useState(false);
+  const [floatingScrubberPos, setFloatingScrubberPos] = useState({ x: 20, y: 100 });
+  const [isDraggingScrubber, setIsDraggingScrubber] = useState(false);
+  const [scrubberDragStart, setScrubberDragStart] = useState({ x: 0, y: 0 });
 
   // Overlay state
   const [overlays, setOverlays] = useState<BiomechanicalOverlay[]>([

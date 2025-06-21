@@ -56,7 +56,7 @@ export function VideoPlayerPage() {
         <div className="text-white text-center">
           <h1 className="text-2xl font-bold mb-4">Invalid Video ID</h1>
           <Button 
-            onClick={() => setLocation('/video-analysis')}
+            onClick={() => setLocation('/tools/video-analysis')}
             className="bg-purple-600 hover:bg-purple-700"
           >
             Back to Video Analysis
@@ -72,7 +72,7 @@ export function VideoPlayerPage() {
         <div className="text-white text-center">
           <h1 className="text-2xl font-bold mb-4">Video Not Found</h1>
           <Button 
-            onClick={() => setLocation('/video-analysis')}
+            onClick={() => setLocation('/tools/video-analysis')}
             className="bg-purple-600 hover:bg-purple-700"
           >
             Back to Video Analysis
@@ -106,7 +106,7 @@ export function VideoPlayerPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setLocation('/video-analysis')}
+                onClick={() => setLocation('/tools/video-analysis')}
                 className="text-white hover:bg-white/10"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
