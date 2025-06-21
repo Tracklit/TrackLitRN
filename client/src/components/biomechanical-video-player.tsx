@@ -1844,31 +1844,49 @@ export function BiomechanicalVideoPlayer({
             }}
             onLoadedMetadata={(e) => {
               const video = e.currentTarget;
-              const width = video.videoWidth;
-              const height = video.videoHeight;
-              const aspectRatio = width / height;
+              let width = video.videoWidth;
+              let height = video.videoHeight;
+              
+              // Check if video content appears to be rotated landscape in a portrait container
+              // This is common with mobile recordings that are landscape but encoded as portrait
+              const naturalAspectRatio = width / height;
+              
+              // Detect if this looks like a rotated landscape video
+              // If video is portrait (height > width) but content appears landscape oriented,
+              // we should treat it as landscape for display purposes
+              const shouldTreatAsLandscape = naturalAspectRatio < 1 && 
+                (width > 400 && height > 800); // Common mobile portrait dimensions with landscape content
+              
+              let displayAspectRatio;
+              if (shouldTreatAsLandscape) {
+                // Swap dimensions for display to show landscape orientation
+                displayAspectRatio = height / width; // Invert the ratio
+                console.log('🔄 Detected rotated landscape video - adjusting container');
+              } else {
+                displayAspectRatio = naturalAspectRatio;
+              }
               
               console.log('Video metadata debug:', {
                 videoUrl,
                 videoWidth: width,
                 videoHeight: height,
-                calculatedAspectRatio: aspectRatio,
-                isLandscape: aspectRatio > 1,
-                isPortrait: aspectRatio < 1,
-                currentContainerAspectRatio: videoAspectRatio,
-                videoReadyState: video.readyState,
-                videoNetworkState: video.networkState
+                naturalAspectRatio: naturalAspectRatio,
+                shouldTreatAsLandscape: shouldTreatAsLandscape,
+                displayAspectRatio: displayAspectRatio,
+                isLandscapeDisplay: displayAspectRatio > 1,
+                currentContainerAspectRatio: videoAspectRatio
               });
 
-              // Ensure aspect ratio is properly set for all video formats
+              // Set the corrected aspect ratio for container
               console.log('Setting video aspect ratio:', {
                 from: videoAspectRatio,
-                to: aspectRatio,
-                videoFormat: aspectRatio > 1 ? 'landscape' : 'portrait'
+                to: displayAspectRatio,
+                videoFormat: displayAspectRatio > 1 ? 'landscape' : 'portrait',
+                corrected: shouldTreatAsLandscape
               });
               
               setVideoDimensions({ width, height });
-              setVideoAspectRatio(aspectRatio);
+              setVideoAspectRatio(displayAspectRatio);
               
               // Show first frame immediately
               video.currentTime = 0.1;
@@ -1878,7 +1896,7 @@ export function BiomechanicalVideoPlayer({
                 duration: video.duration,
                 videoWidth: width,
                 videoHeight: height,
-                aspectRatio: aspectRatio,
+                displayAspectRatio: displayAspectRatio,
                 containerWillUpdate: true
               });
             }}
