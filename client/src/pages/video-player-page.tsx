@@ -73,7 +73,7 @@ export function VideoPlayerPage() {
       currentVideo: {
         id: currentVideo.id,
         name: currentVideo.name,
-        url: currentVideo.url,
+        fileUrl: currentVideo.fileUrl,
         hasAnalysisData: !!currentVideo.analysisData,
         analysisDataLength: currentVideo.analysisData?.length || 0
       }
@@ -127,7 +127,7 @@ export function VideoPlayerPage() {
             <div className="flex-1 xl:w-3/4 space-y-4">
               <div className="relative bg-black/40 border border-white/10 backdrop-blur-sm rounded-lg overflow-hidden">
                 <BiomechanicalVideoPlayer
-                  videoUrl={currentVideo.url}
+                  videoUrl={currentVideo.fileUrl}
                   videoName={currentVideo.name}
                   videoId={currentVideo.id}
                   onAnalyze={handleAnalyze}

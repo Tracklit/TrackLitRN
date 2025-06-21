@@ -137,6 +137,11 @@ export function BiomechanicalVideoPlayer({
     onOverlayChange?.(newOverlays);
   };
 
+  // Initialize overlay state when component mounts
+  useEffect(() => {
+    onOverlayChange?.(overlays);
+  }, []);
+
   // Video time update handler for precise pose synchronization
   const handleTimeUpdate = useCallback(() => {
     if (!videoRef.current) return;
@@ -1609,7 +1614,6 @@ export function BiomechanicalVideoPlayer({
             src={videoUrl}
             className="w-full h-full object-contain"
             preload="metadata"
-            controls
             onLoadedMetadata={(e) => {
               console.log('Video loaded metadata:', {
                 videoUrl,
