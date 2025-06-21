@@ -570,17 +570,22 @@ export default function VideoAnalysisPage() {
                     <div className="space-y-4">
                       {uploadMutation.isPending || isUploading ? (
                         <>
-                          <div className="h-16 w-16 mx-auto rounded-full border-4 border-gray-200 border-t-blue-600 border-r-purple-600 animate-spin"></div>
+                          <div className="relative flex items-center justify-center w-16 h-16 mx-auto">
+                            <div className="absolute inset-0 rounded-full border-4 border-blue-200"></div>
+                            <div 
+                              className="absolute inset-0 rounded-full border-4 border-blue-600 border-t-transparent animate-spin"
+                              style={{
+                                background: `conic-gradient(from 0deg, #2563eb ${uploadProgress * 3.6}deg, transparent ${uploadProgress * 3.6}deg)`
+                              }}
+                            ></div>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <span className="text-sm font-semibold text-blue-700">{uploadProgress.toFixed(0)}%</span>
+                            </div>
+                          </div>
                           <div className="space-y-3">
                             <h3 className="text-lg font-semibold text-blue-700">
                               {processingStage || "Uploading video..."}
                             </h3>
-                            {isUploading && (
-                              <div className="w-full max-w-md mx-auto">
-                                <Progress value={uploadProgress} className="h-2" />
-                                <p className="text-sm text-gray-600 mt-1">{uploadProgress.toFixed(0)}% complete</p>
-                              </div>
-                            )}
                             <p className="text-sm text-gray-600">
                               {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
                             </p>
@@ -659,7 +664,7 @@ export default function VideoAnalysisPage() {
         {currentStep === "video" && uploadedVideoUrl && (
           <div className="space-y-6">
             {/* Processing Status */}
-            {currentVideo?.status === 'processing' && (
+            {currentVideo && 'status' in currentVideo && currentVideo.status === 'processing' && (
               <Card className="border-yellow-200 bg-yellow-50">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
@@ -692,24 +697,27 @@ export default function VideoAnalysisPage() {
               </CardContent>
             </Card>
             
-            {/* Analysis Progress Bar */}
+            {/* Analysis Progress */}
             {isAnalyzing && (
               <Card className="border-blue-200 bg-blue-50">
                 <CardContent className="p-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-full border-2 border-blue-600 border-t-transparent animate-spin"></div>
-                      <div>
-                        <h3 className="font-semibold text-blue-900">Analyzing Video</h3>
-                        <p className="text-sm text-blue-700">{processingStage}</p>
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="relative flex items-center justify-center w-16 h-16">
+                      <div className="absolute inset-0 rounded-full border-4 border-blue-200"></div>
+                      <div 
+                        className="absolute inset-0 rounded-full border-4 border-blue-600 border-t-transparent animate-spin"
+                        style={{
+                          background: `conic-gradient(from 0deg, #2563eb ${analysisProgress * 3.6}deg, transparent ${analysisProgress * 3.6}deg)`
+                        }}
+                      ></div>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-sm font-semibold text-blue-700">{analysisProgress.toFixed(0)}%</span>
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <Progress value={analysisProgress} className="h-3" />
-                      <div className="flex justify-between text-sm text-blue-600">
-                        <span>{analysisProgress.toFixed(0)}% complete</span>
-                        <span>This may take a few minutes</span>
-                      </div>
+                    <div className="text-center">
+                      <h3 className="font-semibold text-blue-900">Analyzing Video</h3>
+                      <p className="text-sm text-blue-700">{processingStage}</p>
+                      <span className="text-xs text-blue-600">This may take a few minutes</span>
                     </div>
                   </div>
                 </CardContent>
