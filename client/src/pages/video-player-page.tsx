@@ -52,6 +52,18 @@ export function VideoPlayerPage() {
     );
   }
 
+  // Debug video data
+  console.log('Video Player Debug:', {
+    videoId: id,
+    currentVideo: {
+      id: currentVideo.id,
+      name: currentVideo.name,
+      url: currentVideo.url,
+      hasAnalysisData: !!currentVideo.analysisData,
+      analysisDataLength: currentVideo.analysisData?.length || 0
+    }
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       {/* Header */}

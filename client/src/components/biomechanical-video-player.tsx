@@ -1603,8 +1603,21 @@ export function BiomechanicalVideoPlayer({
           <video
             ref={videoRef}
             src={videoUrl}
-            className="max-w-full max-h-full object-contain"
+            className="w-full h-full object-contain"
             preload="metadata"
+            controls
+            onLoadedMetadata={(e) => {
+              console.log('Video loaded metadata:', {
+                videoUrl,
+                duration: e.currentTarget.duration,
+                videoWidth: e.currentTarget.videoWidth,
+                videoHeight: e.currentTarget.videoHeight
+              });
+            }}
+            onError={(e) => {
+              console.error('Video load error:', e);
+              console.error('Video URL:', videoUrl);
+            }}
           />
           
           {/* Overlay Canvas */}
