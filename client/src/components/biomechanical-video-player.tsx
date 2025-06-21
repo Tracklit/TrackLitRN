@@ -1639,19 +1639,7 @@ export function BiomechanicalVideoPlayer({
             }}
           />
 
-          {/* Minimal Overlay Controls - Only Play/Pause */}
-          {showControls && (
-            <div className="absolute bottom-4 left-4 z-10">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={togglePlay}
-                className="text-white hover:bg-black/50 p-3 rounded-full bg-black/30 backdrop-blur-sm"
-              >
-                {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
-              </Button>
-            </div>
-          )}
+
 
           {/* MediaPipe Error Display */}
           {mediapipeError && (
@@ -1689,33 +1677,7 @@ export function BiomechanicalVideoPlayer({
               onClick={togglePlay}
               className="text-white hover:bg-white/20 px-4 py-2"
             >
-              {isPlaying ? (
-                <>
-                  <Pause className="h-4 w-4 mr-2" />
-                  Pause
-                </>
-              ) : (
-                <>
-                  <Play className="h-4 w-4 mr-2" />
-                  Play
-                </>
-              )}
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                const video = videoRef.current;
-                if (video) {
-                  video.currentTime = 0;
-                  setCurrentTime(0);
-                }
-              }}
-              className="text-white hover:bg-white/20 px-4 py-2"
-            >
-              <RotateCcw className="h-4 w-4 mr-2" />
-              Reset
+              {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
             </Button>
 
             <div className="flex items-center gap-2">
@@ -1733,27 +1695,42 @@ export function BiomechanicalVideoPlayer({
                 className="w-20"
               />
             </div>
-
-            <select
-              value={playbackRate}
-              onChange={(e) => {
-                const rate = parseFloat(e.target.value);
-                setPlaybackRate(rate);
-                if (videoRef.current) {
-                  videoRef.current.playbackRate = rate;
-                }
-              }}
-              className="bg-black/50 text-white text-sm rounded px-3 py-1 border border-gray-600"
-            >
-              <option value={0.25}>0.25x</option>
-              <option value={0.5}>0.5x</option>
-              <option value={1}>1x</option>
-              <option value={1.25}>1.25x</option>
-              <option value={1.5}>1.5x</option>
-              <option value={2}>2x</option>
-            </select>
           </div>
         </div>
+      </div>
+
+      {/* Overlay Icons Below Video */}
+      <div className="bg-black/40 border border-white/10 backdrop-blur-sm rounded-lg p-4 mt-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {overlays.map((overlay) => {
+            const Icon = overlay.icon;
+            return (
+              <Button
+                key={overlay.id}
+                variant={overlay.enabled ? "default" : "outline"}
+                size="sm"
+                onClick={() => toggleOverlay(overlay.id)}
+                className={`flex items-center gap-2 text-white ${
+                  overlay.enabled 
+                    ? `border-2` 
+                    : 'border-gray-600 hover:bg-white/10'
+                }`}
+                style={{
+                  borderColor: overlay.enabled ? overlay.color : undefined,
+                  backgroundColor: overlay.enabled ? `${overlay.color}20` : undefined
+                }}
+              >
+                <Icon className="h-4 w-4" style={{ color: overlay.color }} />
+                {overlay.label}
+              </Button>
+            );
+          })}
+        </div>
+        {overlays.length === 0 && (
+          <div className="text-gray-400 text-sm text-center">
+            Pose overlay controls will appear when MediaPipe analysis is available
+          </div>
+        )}
       </div>
     </div>
   );

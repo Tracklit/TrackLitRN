@@ -113,17 +113,7 @@ export function VideoPlayerPage() {
                 Back to Videos
               </Button>
               <div>
-                <h1 className="text-xl font-bold text-white">{currentVideo.name}</h1>
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="secondary" className="bg-purple-600/20 text-purple-300">
-                    {currentVideo.status}
-                  </Badge>
-                  {currentVideo.analysisData && (
-                    <Badge variant="secondary" className="bg-green-600/20 text-green-300">
-                      MediaPipe Data Available
-                    </Badge>
-                  )}
-                </div>
+                <h1 className="text-xl font-bold text-white">Video Analysis</h1>
               </div>
             </div>
           </div>
