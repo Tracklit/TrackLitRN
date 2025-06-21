@@ -489,6 +489,115 @@ export function BiomechanicalVideoPlayer({
     }
   }, [frameData, currentFrameIndex, poseData, debugMode]);
 
+  // Real-time joint angle calculation from MediaPipe landmarks
+  const calculateJointAngle = (p1: any, p2: any, p3: any): number => {
+    if (!p1 || !p2 || !p3) return 0;
+    
+    // Calculate vectors from center point to endpoints
+    const v1 = { x: p1.x - p2.x, y: p1.y - p2.y };
+    const v2 = { x: p3.x - p2.x, y: p3.y - p2.y };
+    
+    // Calculate angle using dot product
+    const dot = v1.x * v2.x + v1.y * v2.y;
+    const mag1 = Math.sqrt(v1.x * v1.x + v1.y * v1.y);
+    const mag2 = Math.sqrt(v2.x * v2.x + v2.y * v2.y);
+    
+    if (mag1 === 0 || mag2 === 0) return 0;
+    
+    const cosAngle = dot / (mag1 * mag2);
+    const angle = Math.acos(Math.max(-1, Math.min(1, cosAngle)));
+    
+    return (angle * 180) / Math.PI;
+  };
+
+  const calculateRealJointAngles = (landmarks: any[]): any => {
+    if (!landmarks || landmarks.length < 33) return {};
+    
+    // MediaPipe landmark indices for real skeletal joints
+    const indices = {
+      left_shoulder: 11, right_shoulder: 12,
+      left_hip: 23, right_hip: 24,
+      left_knee: 25, right_knee: 26,
+      left_ankle: 27, right_ankle: 28,
+      left_foot_index: 31, right_foot_index: 32
+    };
+    
+    const angles: any = {};
+    const minVisibility = 0.5;
+    
+    try {
+      // Left knee angle (hip-knee-ankle) - Real biomechanical measurement
+      const leftHip = landmarks[indices.left_hip];
+      const leftKnee = landmarks[indices.left_knee];
+      const leftAnkle = landmarks[indices.left_ankle];
+      
+      if (leftHip?.visibility > minVisibility && leftKnee?.visibility > minVisibility && leftAnkle?.visibility > minVisibility) {
+        angles.left_knee = calculateJointAngle(leftHip, leftKnee, leftAnkle);
+      }
+      
+      // Right knee angle (hip-knee-ankle) - Real biomechanical measurement
+      const rightHip = landmarks[indices.right_hip];
+      const rightKnee = landmarks[indices.right_knee];
+      const rightAnkle = landmarks[indices.right_ankle];
+      
+      if (rightHip?.visibility > minVisibility && rightKnee?.visibility > minVisibility && rightAnkle?.visibility > minVisibility) {
+        angles.right_knee = calculateJointAngle(rightHip, rightKnee, rightAnkle);
+      }
+      
+      // Left hip angle (shoulder-hip-knee) - Real biomechanical measurement
+      const leftShoulder = landmarks[indices.left_shoulder];
+      if (leftShoulder?.visibility > minVisibility && leftHip?.visibility > minVisibility && leftKnee?.visibility > minVisibility) {
+        angles.left_hip = calculateJointAngle(leftShoulder, leftHip, leftKnee);
+      }
+      
+      // Right hip angle (shoulder-hip-knee) - Real biomechanical measurement
+      const rightShoulder = landmarks[indices.right_shoulder];
+      if (rightShoulder?.visibility > minVisibility && rightHip?.visibility > minVisibility && rightKnee?.visibility > minVisibility) {
+        angles.right_hip = calculateJointAngle(rightShoulder, rightHip, rightKnee);
+      }
+      
+      // Left ankle angle (knee-ankle-foot) - Real biomechanical measurement
+      const leftFootIndex = landmarks[indices.left_foot_index];
+      if (leftKnee?.visibility > minVisibility && leftAnkle?.visibility > minVisibility && leftFootIndex?.visibility > minVisibility) {
+        angles.left_ankle = calculateJointAngle(leftKnee, leftAnkle, leftFootIndex);
+      }
+      
+      // Right ankle angle (knee-ankle-foot) - Real biomechanical measurement
+      const rightFootIndex = landmarks[indices.right_foot_index];
+      if (rightKnee?.visibility > minVisibility && rightAnkle?.visibility > minVisibility && rightFootIndex?.visibility > minVisibility) {
+        angles.right_ankle = calculateJointAngle(rightKnee, rightAnkle, rightFootIndex);
+      }
+      
+      // Trunk angle (torso lean from vertical) - Real biomechanical measurement
+      if (leftShoulder?.visibility > minVisibility && rightShoulder?.visibility > minVisibility && 
+          leftHip?.visibility > minVisibility && rightHip?.visibility > minVisibility) {
+        const shoulderMid = {
+          x: (leftShoulder.x + rightShoulder.x) / 2,
+          y: (leftShoulder.y + rightShoulder.y) / 2
+        };
+        const hipMid = {
+          x: (leftHip.x + rightHip.x) / 2,
+          y: (leftHip.y + rightHip.y) / 2
+        };
+        
+        // Calculate angle from vertical using real skeletal data
+        const trunkVector = { x: hipMid.x - shoulderMid.x, y: hipMid.y - shoulderMid.y };
+        const magnitude = Math.sqrt(trunkVector.x * trunkVector.x + trunkVector.y * trunkVector.y);
+        
+        if (magnitude > 0) {
+          const cosAngle = Math.abs(trunkVector.y) / magnitude;
+          angles.trunk = Math.acos(Math.max(0, Math.min(1, cosAngle))) * (180 / Math.PI);
+          if (trunkVector.x > 0) angles.trunk = -angles.trunk; // Forward lean
+        }
+      }
+      
+    } catch (error) {
+      console.log('Error calculating real joint angles from skeletal data:', error);
+    }
+    
+    return angles;
+  };
+
   // MediaPipe Controller: Process authentic pose landmark data only
   useEffect(() => {
     console.log('=== MediaPipe Data Flow Debug ===');
@@ -590,12 +699,21 @@ export function BiomechanicalVideoPlayer({
           visibility: Math.max(0, Math.min(1, landmark.visibility || 0)) // Clamp to [0,1]
         }));
         
+        // Calculate real joint angles from authentic MediaPipe skeletal data
+        const realJointAngles = calculateRealJointAngles(validatedLandmarks);
+        
+        // Log real joint angle calculations for first few frames
+        if (index < 3 && Object.keys(realJointAngles).length > 0) {
+          console.log(`✅ Frame ${index} real joint angles from skeletal data:`, realJointAngles);
+          console.log(`📊 Angle count: ${Object.keys(realJointAngles).length}, Landmark count: ${validatedLandmarks.length}`);
+        }
+        
         return {
           timestamp: frameData.timestamp,
           frameIndex: frameData.frame || index,
           pose_landmarks: validatedLandmarks,
           key_points: frameData.key_points || {},
-          joint_angles: frameData.joint_angles || {}
+          joint_angles: realJointAngles // Use calculated real angles instead of fallback data
         };
       });
       
