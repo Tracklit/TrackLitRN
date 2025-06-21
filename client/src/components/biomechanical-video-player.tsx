@@ -1054,7 +1054,7 @@ export function BiomechanicalVideoPlayer({
         const coords = getDisplayCoords(landmarks[point.index]);
         const velocity = data[point.name];
         
-        if (velocity.speed && velocity.speed > 0.01) { // Only show significant velocities
+        if (velocity.speed && velocity.speed > 0.005) { // Lowered threshold for more sensitive detection
           const vectorLength = Math.min(velocity.speed * 1000, 60); // Scale for display
           const angle = velocity.direction_rad || 0;
           

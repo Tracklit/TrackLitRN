@@ -287,8 +287,8 @@ class BiomechanicalAnalyzer:
                     prev_pos = prev_frame['key_points'][point]
                     curr_pos = curr_frame['key_points'][point]
                     
-                    # Only calculate if both points have good visibility
-                    if prev_pos['visibility'] >= 0.7 and curr_pos['visibility'] >= 0.7:
+                    # Only calculate if both points have reasonable visibility
+                    if prev_pos['visibility'] >= 0.5 and curr_pos['visibility'] >= 0.5:
                         # Calculate velocity in normalized coordinates per second
                         vel_x = (curr_pos['x'] - prev_pos['x']) / time_diff
                         vel_y = (curr_pos['y'] - prev_pos['y']) / time_diff
@@ -308,13 +308,22 @@ class BiomechanicalAnalyzer:
                         valid_velocity_count += 1
             
             # Mark frame as having valid data if we have enough velocity measurements
-            if valid_velocity_count >= 3:
+            if valid_velocity_count >= 2:  # Lowered threshold for more sensitive detection
                 frame_velocities['has_valid_data'] = True
                 frame_velocities['valid_point_count'] = valid_velocity_count
             
             velocity_data.append(frame_velocities)
         
-        print(f"Calculated velocity vectors for {len(velocity_data)} frames with {sum(1 for v in velocity_data if v['has_valid_data'])} having valid data", file=sys.stderr)
+        valid_frames = sum(1 for v in velocity_data if v['has_valid_data'])
+        print(f"Calculated velocity vectors for {len(velocity_data)} frames with {valid_frames} having valid data", file=sys.stderr)
+        
+        # Debug velocity detection for first few frames
+        for i, frame_vel in enumerate(velocity_data[:3]):
+            if frame_vel['velocities']:
+                speeds = [v['speed'] for v in frame_vel['velocities'].values()]
+                max_speed = max(speeds) if speeds else 0
+                print(f"Frame {i} velocity: {len(frame_vel['velocities'])} points, max speed: {max_speed:.4f}, valid: {frame_vel['has_valid_data']}", file=sys.stderr)
+        
         return velocity_data
     
     def calculate_stride_metrics(self, contact_events: List[Dict]) -> Dict:
