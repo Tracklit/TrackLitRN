@@ -38,6 +38,7 @@ interface BiomechanicalVideoPlayerProps {
   isAnalyzing: boolean;
   biomechanicalData?: any;
   analysisStatus?: string;
+  onOverlayChange?: (overlays: BiomechanicalOverlay[]) => void;
 }
 
 export function BiomechanicalVideoPlayer({ 
@@ -47,7 +48,8 @@ export function BiomechanicalVideoPlayer({
   onAnalyze, 
   isAnalyzing,
   biomechanicalData,
-  analysisStatus 
+  analysisStatus,
+  onOverlayChange
 }: BiomechanicalVideoPlayerProps): JSX.Element {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -126,11 +128,13 @@ export function BiomechanicalVideoPlayer({
 
   // Toggle overlay function
   const toggleOverlay = (overlayId: string) => {
-    setOverlays(prev => prev.map(overlay => 
+    const newOverlays = overlays.map(overlay => 
       overlay.id === overlayId 
         ? { ...overlay, enabled: !overlay.enabled }
         : overlay
-    ));
+    );
+    setOverlays(newOverlays);
+    onOverlayChange?.(newOverlays);
   };
 
   // Video time update handler for precise pose synchronization
@@ -1715,80 +1719,13 @@ export function BiomechanicalVideoPlayer({
         </div>
       </div>
 
-      {/* Overlay Controls - Positioned in top-right corner */}
-      <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-sm rounded-lg p-3 z-20 max-w-xs">
-        {/* MediaPipe Error Display */}
-        {mediapipeError && (
-          <div className="mb-3 bg-red-900/90 border border-red-600 rounded p-2">
-            <div className="text-red-200 text-xs font-medium mb-1">Analysis Failed</div>
-            <div className="text-red-300 text-xs">{mediapipeError}</div>
-          </div>
-        )}
-
-        {/* Biomechanical Overlay Controls */}
-        <div className="mb-3">
-          <h3 className="flex items-center gap-2 text-white font-medium text-sm mb-2">
-            <Eye className="h-4 w-4" />
-            Pose Overlays
-          </h3>
-          <div className="grid grid-cols-1 gap-1">
-            {overlays.map((overlay) => {
-              const Icon = overlay.icon;
-              return (
-                <Button
-                  key={overlay.id}
-                  variant={overlay.enabled ? "default" : "outline"}
-                  onClick={() => toggleOverlay(overlay.id)}
-                  size="sm"
-                  className={`flex items-center justify-start gap-2 h-8 text-xs ${
-                    overlay.enabled ? 'border-2' : ''
-                  }`}
-                  style={{
-                    borderColor: overlay.enabled ? overlay.color : undefined,
-                    backgroundColor: overlay.enabled ? `${overlay.color}20` : undefined
-                  }}
-                >
-                  <Icon className="h-3 w-3" style={{ color: overlay.color }} />
-                  <span>{overlay.label}</span>
-                </Button>
-              );
-            })}
-          </div>
+      {/* MediaPipe Error Display - only if there's an error */}
+      {mediapipeError && (
+        <div className="absolute top-4 left-4 right-4 bg-red-900/90 border border-red-600 rounded p-2 z-20">
+          <div className="text-red-200 text-xs font-medium mb-1">Analysis Failed</div>
+          <div className="text-red-300 text-xs">{mediapipeError}</div>
         </div>
-
-        {/* Analysis Controls */}
-        <div>
-          <h3 className="flex items-center gap-2 text-white font-medium mb-2">
-            <Sparkles className="h-4 w-4" />
-            Analysis
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {analysisPrompts.map((prompt) => {
-              const Icon = prompt.icon;
-              return (
-                <Button
-                  key={prompt.id}
-                  onClick={() => onAnalyze(prompt.id)}
-                  disabled={isAnalyzing}
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-2 text-white border-gray-600 hover:bg-gray-800"
-                >
-                  <Icon className="h-3 w-3" />
-                  <span className="text-xs">{prompt.title}</span>
-                </Button>
-              );
-            })}
-          </div>
-          
-          {isAnalyzing && (
-            <div className="mt-2 flex items-center gap-2">
-              <Sparkles className="h-3 w-3 animate-spin text-white" />
-              <span className="text-xs text-white">Analyzing video...</span>
-            </div>
-          )}
-        </div>
-      </div>
+      )}
     </div>
   );
 }
