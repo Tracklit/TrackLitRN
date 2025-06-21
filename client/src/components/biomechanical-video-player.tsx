@@ -114,6 +114,19 @@ export function BiomechanicalVideoPlayer({
   // State for velocity data availability
   const [hasVelocityData, setHasVelocityData] = useState(false);
 
+  // Update overlay labels when velocity data availability changes
+  useEffect(() => {
+    setOverlays(prev => prev.map(overlay => 
+      overlay.id === 'velocity' 
+        ? {
+            ...overlay,
+            label: hasVelocityData ? 'Velocity Vector' : 'No Velocity Detected',
+            color: hasVelocityData ? '#f59e0b' : '#6b7280'
+          }
+        : overlay
+    ));
+  }, [hasVelocityData]);
+
   // Overlay state with dynamic velocity detection
   const [overlays, setOverlays] = useState<BiomechanicalOverlay[]>([
     {
@@ -158,8 +171,13 @@ export function BiomechanicalVideoPlayer({
     }
   ]);
 
-  // Toggle overlay function
+  // Toggle overlay function with velocity data check
   const toggleOverlay = (overlayId: string) => {
+    // Prevent toggling velocity overlay if no velocity data is available
+    if (overlayId === 'velocity' && !hasVelocityData) {
+      return;
+    }
+    
     const newOverlays = overlays.map(overlay => 
       overlay.id === overlayId 
         ? { ...overlay, enabled: !overlay.enabled }
@@ -659,6 +677,18 @@ export function BiomechanicalVideoPlayer({
       console.log('Available keys:', Object.keys(analysisData || {}));
     }
     
+    // Check for velocity data availability
+    const hasValidVelocityData = !!(mediapipeData?.velocity_data && 
+      Array.isArray(mediapipeData.velocity_data) && 
+      mediapipeData.velocity_data.some(frame => frame.has_valid_data));
+    
+    setHasVelocityData(hasValidVelocityData);
+    console.log(`Velocity data detected: ${hasValidVelocityData ? 'Yes' : 'No'}`);
+    if (hasValidVelocityData) {
+      const validVelocityFrames = mediapipeData.velocity_data.filter(frame => frame.has_valid_data).length;
+      console.log(`Found ${validVelocityFrames} frames with valid velocity data`);
+    }
+    
     // Verify we have valid MediaPipe data structure
     if (!mediapipeData || typeof mediapipeData !== 'object') {
       console.error('Invalid MediaPipe data structure');
@@ -705,10 +735,18 @@ export function BiomechanicalVideoPlayer({
         // Calculate real joint angles from authentic MediaPipe skeletal data
         const realJointAngles = calculateRealJointAngles(validatedLandmarks);
         
+        // Find corresponding velocity data for this frame
+        const frameVelocityData = mediapipeData.velocity_data?.find((velocityFrame: any) => 
+          Math.abs(velocityFrame.timestamp - frameData.timestamp) < 0.05 // 50ms tolerance
+        );
+        
         // Log real joint angle calculations for first few frames
         if (index < 3 && Object.keys(realJointAngles).length > 0) {
           console.log(`✅ Frame ${index} real joint angles from skeletal data:`, realJointAngles);
           console.log(`📊 Angle count: ${Object.keys(realJointAngles).length}, Landmark count: ${validatedLandmarks.length}`);
+          if (frameVelocityData?.has_valid_data) {
+            console.log(`🏃 Frame ${index} has velocity data with ${frameVelocityData.valid_point_count} points`);
+          }
         }
         
         return {
@@ -716,7 +754,9 @@ export function BiomechanicalVideoPlayer({
           frameIndex: frameData.frame || index,
           pose_landmarks: validatedLandmarks,
           key_points: frameData.key_points || {},
-          joint_angles: realJointAngles // Use calculated real angles instead of fallback data
+          joint_angles: realJointAngles, // Use calculated real angles instead of fallback data
+          velocity_data: frameVelocityData?.velocities || null, // Add velocity data to frame
+          has_velocity: frameVelocityData?.has_valid_data || false
         };
       });
       
@@ -979,7 +1019,7 @@ export function BiomechanicalVideoPlayer({
   };
 
   const drawDynamicVelocityVectors = (ctx: CanvasRenderingContext2D, landmarks: any[], data: any, width: number, height: number) => {
-    if (!landmarks || !data || !data.velocity_peak) return;
+    if (!landmarks || !data || !hasVelocityData) return;
 
     ctx.strokeStyle = '#f59e0b';
     ctx.fillStyle = '#f59e0b';
@@ -990,23 +1030,65 @@ export function BiomechanicalVideoPlayer({
       y: landmark.y * height
     });
 
-    if (landmarks[6] && landmarks[7]) {
-      const centerMass = {
-        x: (getDisplayCoords(landmarks[6]).x + getDisplayCoords(landmarks[7]).x) / 2,
-        y: (getDisplayCoords(landmarks[6]).y + getDisplayCoords(landmarks[7]).y) / 2
-      };
+    // Draw velocity vectors for key body points using MediaPipe indices
+    const velocityPoints = [
+      { name: 'nose', index: 0 },
+      { name: 'left_shoulder', index: 11 },
+      { name: 'right_shoulder', index: 12 },
+      { name: 'left_elbow', index: 13 },
+      { name: 'right_elbow', index: 14 },
+      { name: 'left_wrist', index: 15 },
+      { name: 'right_wrist', index: 16 },
+      { name: 'left_hip', index: 23 },
+      { name: 'right_hip', index: 24 },
+      { name: 'left_knee', index: 25 },
+      { name: 'right_knee', index: 26 },
+      { name: 'left_ankle', index: 27 },
+      { name: 'right_ankle', index: 28 }
+    ];
 
-      const velocity = data.velocity_peak;
-      const vectorLength = Math.min(width * 0.2, velocity * 8);
-
-      ctx.beginPath();
-      ctx.moveTo(centerMass.x, centerMass.y);
-      ctx.lineTo(centerMass.x + vectorLength, centerMass.y - vectorLength * 0.2);
-      ctx.stroke();
-
-      ctx.font = '16px monospace';
-      ctx.fillText(`${velocity.toFixed(1)} m/s`, centerMass.x + 15, centerMass.y - 10);
-    }
+    velocityPoints.forEach(point => {
+      if (landmarks[point.index] && data[point.name]) {
+        const coords = getDisplayCoords(landmarks[point.index]);
+        const velocity = data[point.name];
+        
+        if (velocity.speed && velocity.speed > 0.01) { // Only show significant velocities
+          const vectorLength = Math.min(velocity.speed * 1000, 60); // Scale for display
+          const angle = velocity.direction_rad || 0;
+          
+          // Draw velocity vector
+          ctx.beginPath();
+          ctx.moveTo(coords.x, coords.y);
+          ctx.lineTo(
+            coords.x + vectorLength * Math.cos(angle),
+            coords.y + vectorLength * Math.sin(angle)
+          );
+          ctx.stroke();
+          
+          // Draw arrowhead
+          const arrowLength = 8;
+          const endX = coords.x + vectorLength * Math.cos(angle);
+          const endY = coords.y + vectorLength * Math.sin(angle);
+          
+          ctx.beginPath();
+          ctx.moveTo(endX, endY);
+          ctx.lineTo(
+            endX - arrowLength * Math.cos(angle - 0.5),
+            endY - arrowLength * Math.sin(angle - 0.5)
+          );
+          ctx.moveTo(endX, endY);
+          ctx.lineTo(
+            endX - arrowLength * Math.cos(angle + 0.5),
+            endY - arrowLength * Math.sin(angle + 0.5)
+          );
+          ctx.stroke();
+          
+          // Display speed value
+          ctx.font = '11px monospace';
+          ctx.fillText(`${(velocity.speed * 100).toFixed(1)}`, coords.x + 10, coords.y - 10);
+        }
+      }
+    });
   };
 
   const drawDynamicStrideAnalysis = (ctx: CanvasRenderingContext2D, data: any, width: number, height: number) => {
@@ -2261,7 +2343,12 @@ export function BiomechanicalVideoPlayer({
                 variant={overlay.enabled ? "default" : "outline"}
                 size="sm"
                 onClick={() => toggleOverlay(overlay.id)}
-                className={`flex items-center gap-2 text-white ${
+                disabled={overlay.id === 'velocity' && !hasVelocityData}
+                className={`flex items-center gap-2 ${
+                  overlay.id === 'velocity' && !hasVelocityData
+                    ? 'text-gray-500 cursor-not-allowed opacity-50'
+                    : 'text-white'
+                } ${
                   overlay.enabled 
                     ? `border-2` 
                     : 'border-gray-600 hover:bg-white/10'
