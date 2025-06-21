@@ -89,51 +89,131 @@ class BiomechanicalAnalyzer:
         """Calculate key joint angles for biomechanical analysis"""
         angles = {'frame': frame_idx}
         
+        # Debug: Check what key points are available
+        available_points = list(key_points.keys())
+        print(f"Frame {frame_idx}: Available key points: {available_points}", file=sys.stderr)
+        
+        # Check visibility threshold for reliable angle calculation
+        min_visibility = 0.5
+        
         try:
             # Left knee angle (hip-knee-ankle)
-            if all(k in key_points for k in ['left_hip', 'left_knee', 'left_ankle']):
-                hip = (key_points['left_hip']['x'], key_points['left_hip']['y'])
-                knee = (key_points['left_knee']['x'], key_points['left_knee']['y'])
-                ankle = (key_points['left_ankle']['x'], key_points['left_ankle']['y'])
-                angles['left_knee'] = self.calculate_angle(hip, knee, ankle)
+            required_points = ['left_hip', 'left_knee', 'left_ankle']
+            if all(k in key_points for k in required_points):
+                # Check visibility
+                visibilities = [key_points[k]['visibility'] for k in required_points]
+                if all(v >= min_visibility for v in visibilities):
+                    hip = (key_points['left_hip']['x'], key_points['left_hip']['y'])
+                    knee = (key_points['left_knee']['x'], key_points['left_knee']['y'])
+                    ankle = (key_points['left_ankle']['x'], key_points['left_ankle']['y'])
+                    angle = self.calculate_angle(hip, knee, ankle)
+                    angles['left_knee'] = float(angle)
+                    print(f"Frame {frame_idx}: Left knee angle calculated: {angle:.1f}°", file=sys.stderr)
+                else:
+                    print(f"Frame {frame_idx}: Left knee points have low visibility: {visibilities}", file=sys.stderr)
+            else:
+                missing = [k for k in required_points if k not in key_points]
+                print(f"Frame {frame_idx}: Missing left knee points: {missing}", file=sys.stderr)
             
             # Right knee angle
-            if all(k in key_points for k in ['right_hip', 'right_knee', 'right_ankle']):
-                hip = (key_points['right_hip']['x'], key_points['right_hip']['y'])
-                knee = (key_points['right_knee']['x'], key_points['right_knee']['y'])
-                ankle = (key_points['right_ankle']['x'], key_points['right_ankle']['y'])
-                angles['right_knee'] = self.calculate_angle(hip, knee, ankle)
+            required_points = ['right_hip', 'right_knee', 'right_ankle']
+            if all(k in key_points for k in required_points):
+                visibilities = [key_points[k]['visibility'] for k in required_points]
+                if all(v >= min_visibility for v in visibilities):
+                    hip = (key_points['right_hip']['x'], key_points['right_hip']['y'])
+                    knee = (key_points['right_knee']['x'], key_points['right_knee']['y'])
+                    ankle = (key_points['right_ankle']['x'], key_points['right_ankle']['y'])
+                    angle = self.calculate_angle(hip, knee, ankle)
+                    angles['right_knee'] = float(angle)
+                    print(f"Frame {frame_idx}: Right knee angle calculated: {angle:.1f}°", file=sys.stderr)
+                else:
+                    print(f"Frame {frame_idx}: Right knee points have low visibility: {visibilities}", file=sys.stderr)
+            else:
+                missing = [k for k in required_points if k not in key_points]
+                print(f"Frame {frame_idx}: Missing right knee points: {missing}", file=sys.stderr)
             
             # Left hip angle (shoulder-hip-knee)
-            if all(k in key_points for k in ['left_shoulder', 'left_hip', 'left_knee']):
-                shoulder = (key_points['left_shoulder']['x'], key_points['left_shoulder']['y'])
-                hip = (key_points['left_hip']['x'], key_points['left_hip']['y'])
-                knee = (key_points['left_knee']['x'], key_points['left_knee']['y'])
-                angles['left_hip'] = self.calculate_angle(shoulder, hip, knee)
+            required_points = ['left_shoulder', 'left_hip', 'left_knee']
+            if all(k in key_points for k in required_points):
+                visibilities = [key_points[k]['visibility'] for k in required_points]
+                if all(v >= min_visibility for v in visibilities):
+                    shoulder = (key_points['left_shoulder']['x'], key_points['left_shoulder']['y'])
+                    hip = (key_points['left_hip']['x'], key_points['left_hip']['y'])
+                    knee = (key_points['left_knee']['x'], key_points['left_knee']['y'])
+                    angle = self.calculate_angle(shoulder, hip, knee)
+                    angles['left_hip'] = float(angle)
+                    print(f"Frame {frame_idx}: Left hip angle calculated: {angle:.1f}°", file=sys.stderr)
             
             # Right hip angle
-            if all(k in key_points for k in ['right_shoulder', 'right_hip', 'right_knee']):
-                shoulder = (key_points['right_shoulder']['x'], key_points['right_shoulder']['y'])
-                hip = (key_points['right_hip']['x'], key_points['right_hip']['y'])
-                knee = (key_points['right_knee']['x'], key_points['right_knee']['y'])
-                angles['right_hip'] = self.calculate_angle(shoulder, hip, knee)
+            required_points = ['right_shoulder', 'right_hip', 'right_knee']
+            if all(k in key_points for k in required_points):
+                visibilities = [key_points[k]['visibility'] for k in required_points]
+                if all(v >= min_visibility for v in visibilities):
+                    shoulder = (key_points['right_shoulder']['x'], key_points['right_shoulder']['y'])
+                    hip = (key_points['right_hip']['x'], key_points['right_hip']['y'])
+                    knee = (key_points['right_knee']['x'], key_points['right_knee']['y'])
+                    angle = self.calculate_angle(shoulder, hip, knee)
+                    angles['right_hip'] = float(angle)
+                    print(f"Frame {frame_idx}: Right hip angle calculated: {angle:.1f}°", file=sys.stderr)
                 
             # Left ankle angle (knee-ankle-foot)
-            if all(k in key_points for k in ['left_knee', 'left_ankle', 'left_foot_index']):
-                knee = (key_points['left_knee']['x'], key_points['left_knee']['y'])
-                ankle = (key_points['left_ankle']['x'], key_points['left_ankle']['y'])
-                foot = (key_points['left_foot_index']['x'], key_points['left_foot_index']['y'])
-                angles['left_ankle'] = self.calculate_angle(knee, ankle, foot)
+            required_points = ['left_knee', 'left_ankle', 'left_foot_index']
+            if all(k in key_points for k in required_points):
+                visibilities = [key_points[k]['visibility'] for k in required_points]
+                if all(v >= min_visibility for v in visibilities):
+                    knee = (key_points['left_knee']['x'], key_points['left_knee']['y'])
+                    ankle = (key_points['left_ankle']['x'], key_points['left_ankle']['y'])
+                    foot = (key_points['left_foot_index']['x'], key_points['left_foot_index']['y'])
+                    angle = self.calculate_angle(knee, ankle, foot)
+                    angles['left_ankle'] = float(angle)
+                    print(f"Frame {frame_idx}: Left ankle angle calculated: {angle:.1f}°", file=sys.stderr)
                 
             # Right ankle angle
-            if all(k in key_points for k in ['right_knee', 'right_ankle', 'right_foot_index']):
-                knee = (key_points['right_knee']['x'], key_points['right_knee']['y'])
-                ankle = (key_points['right_ankle']['x'], key_points['right_ankle']['y'])
-                foot = (key_points['right_foot_index']['x'], key_points['right_foot_index']['y'])
-                angles['right_ankle'] = self.calculate_angle(knee, ankle, foot)
+            required_points = ['right_knee', 'right_ankle', 'right_foot_index']
+            if all(k in key_points for k in required_points):
+                visibilities = [key_points[k]['visibility'] for k in required_points]
+                if all(v >= min_visibility for v in visibilities):
+                    knee = (key_points['right_knee']['x'], key_points['right_knee']['y'])
+                    ankle = (key_points['right_ankle']['x'], key_points['right_ankle']['y'])
+                    foot = (key_points['right_foot_index']['x'], key_points['right_foot_index']['y'])
+                    angle = self.calculate_angle(knee, ankle, foot)
+                    angles['right_ankle'] = float(angle)
+                    print(f"Frame {frame_idx}: Right ankle angle calculated: {angle:.1f}°", file=sys.stderr)
+            
+            # Trunk angle (torso lean from vertical)
+            required_points = ['left_shoulder', 'right_shoulder', 'left_hip', 'right_hip']
+            if all(k in key_points for k in required_points):
+                visibilities = [key_points[k]['visibility'] for k in required_points]
+                if all(v >= min_visibility for v in visibilities):
+                    # Calculate midpoints
+                    shoulder_mid_x = (key_points['left_shoulder']['x'] + key_points['right_shoulder']['x']) / 2
+                    shoulder_mid_y = (key_points['left_shoulder']['y'] + key_points['right_shoulder']['y']) / 2
+                    hip_mid_x = (key_points['left_hip']['x'] + key_points['right_hip']['x']) / 2
+                    hip_mid_y = (key_points['left_hip']['y'] + key_points['right_hip']['y']) / 2
+                    
+                    # Calculate trunk vector and angle from vertical
+                    trunk_vector = (hip_mid_x - shoulder_mid_x, hip_mid_y - shoulder_mid_y)
+                    vertical_vector = (0, 1)  # Pointing down
+                    
+                    # Calculate angle from vertical
+                    dot_product = trunk_vector[1]
+                    magnitude = math.sqrt(trunk_vector[0]**2 + trunk_vector[1]**2)
+                    if magnitude > 0:
+                        cos_angle = dot_product / magnitude
+                        trunk_angle = math.degrees(math.acos(abs(cos_angle)))
+                        # Determine lean direction
+                        if trunk_vector[0] > 0:
+                            trunk_angle = -trunk_angle  # Leaning forward
+                        angles['trunk'] = trunk_angle
+                        print(f"Frame {frame_idx}: Trunk angle calculated: {trunk_angle:.1f}°", file=sys.stderr)
         
         except Exception as e:
+            print(f"Frame {frame_idx}: Error calculating joint angles: {str(e)}", file=sys.stderr)
             angles['error'] = str(e)
+        
+        # Debug: Report calculated angles
+        calculated_angles = {k: v for k, v in angles.items() if k != 'frame' and k != 'error'}
+        print(f"Frame {frame_idx}: Calculated angles: {calculated_angles}", file=sys.stderr)
         
         return angles
     
