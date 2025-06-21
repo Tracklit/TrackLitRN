@@ -268,6 +268,46 @@ export function BiomechanicalVideoPlayer({
     setLastPinchDistance(0);
   };
 
+  // Floating scrubber handlers
+  const toggleFloatingScrubber = () => {
+    setIsFloatingScrubber(!isFloatingScrubber);
+  };
+
+  const handleScrubberMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDraggingScrubber(true);
+    setScrubberDragStart({
+      x: e.clientX - floatingScrubberPos.x,
+      y: e.clientY - floatingScrubberPos.y
+    });
+  };
+
+  const handleScrubberMouseMove = (e: MouseEvent) => {
+    if (!isDraggingScrubber) return;
+    
+    const newX = Math.max(10, Math.min(window.innerWidth - 300, e.clientX - scrubberDragStart.x));
+    const newY = Math.max(10, Math.min(window.innerHeight - 100, e.clientY - scrubberDragStart.y));
+    
+    setFloatingScrubberPos({ x: newX, y: newY });
+  };
+
+  const handleScrubberMouseUp = () => {
+    setIsDraggingScrubber(false);
+  };
+
+  // Add global mouse event listeners for floating scrubber
+  useEffect(() => {
+    if (isDraggingScrubber) {
+      document.addEventListener('mousemove', handleScrubberMouseMove);
+      document.addEventListener('mouseup', handleScrubberMouseUp);
+      
+      return () => {
+        document.removeEventListener('mousemove', handleScrubberMouseMove);
+        document.removeEventListener('mouseup', handleScrubberMouseUp);
+      };
+    }
+  }, [isDraggingScrubber, scrubberDragStart]);
+
   // Video time update handler for precise pose synchronization
   const handleTimeUpdate = useCallback(() => {
     if (!videoRef.current) return;
@@ -1812,52 +1852,157 @@ export function BiomechanicalVideoPlayer({
       </div>
 
       {/* External Video Controls - Below Video */}
-      <div className="bg-black/40 border border-white/10 backdrop-blur-sm rounded-lg p-4">
-        <div className="space-y-4">
-          {/* Progress Bar */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm text-gray-300">
-              <span>{formatTime(currentTime)}</span>
-              <span>{formatTime(duration)}</span>
-            </div>
-            <Slider
-              value={[currentTime]}
-              max={duration}
-              step={0.1}
-              onValueChange={handleSeek}
-              className="w-full"
-            />
-          </div>
-          
-          {/* Control Buttons */}
-          <div className="flex items-center justify-center gap-4 flex-wrap">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={togglePlay}
-              className="text-white hover:bg-white/20 px-4 py-2"
-            >
-              {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-            </Button>
-
-            <div className="flex items-center gap-2">
-              <Volume2 className="h-4 w-4 text-white" />
+      {!isFloatingScrubber && (
+        <div className="bg-black/40 border border-white/10 backdrop-blur-sm rounded-lg p-4">
+          <div className="space-y-4">
+            {/* Progress Bar */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm text-gray-300">
+                <span>{formatTime(currentTime)}</span>
+                <span>{formatTime(duration)}</span>
+              </div>
               <Slider
-                value={[volume]}
-                max={1}
+                value={[currentTime]}
+                max={duration}
                 step={0.1}
-                onValueChange={(value) => {
-                  setVolume(value[0]);
-                  if (videoRef.current) {
-                    videoRef.current.volume = value[0];
-                  }
-                }}
-                className="w-20"
+                onValueChange={handleSeek}
+                className="w-full"
               />
+            </div>
+            
+            {/* Control Buttons */}
+            <div className="flex items-center justify-center gap-4 flex-wrap">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={togglePlay}
+                className="text-white hover:bg-white/20 px-4 py-2"
+              >
+                {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              </Button>
+
+              <div className="flex items-center gap-2">
+                <Volume2 className="h-4 w-4 text-white" />
+                <Slider
+                  value={[volume]}
+                  max={1}
+                  step={0.1}
+                  onValueChange={(value) => {
+                    setVolume(value[0]);
+                    if (videoRef.current) {
+                      videoRef.current.volume = value[0];
+                    }
+                  }}
+                  className="w-20"
+                />
+              </div>
+
+              {/* Float Scrubber Toggle */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleFloatingScrubber}
+                className="text-white hover:bg-white/20 px-3 py-2"
+                title="Make scrubber float for easier access"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 12h-8m8 0l-4 4m4-4l-4-4" />
+                  <path d="M9 6H3v12h6" />
+                </svg>
+              </Button>
             </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Floating Scrubber */}
+      {isFloatingScrubber && (
+        <div
+          className="fixed bg-black/80 border border-white/20 backdrop-blur-sm rounded-lg p-3 z-50 shadow-lg"
+          style={{
+            left: `${floatingScrubberPos.x}px`,
+            top: `${floatingScrubberPos.y}px`,
+            width: '280px',
+            cursor: isDraggingScrubber ? 'grabbing' : 'grab'
+          }}
+          onMouseDown={handleScrubberMouseDown}
+        >
+          <div className="space-y-3">
+            {/* Drag Handle */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs text-gray-300">
+                <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="9" cy="12" r="1"/>
+                  <circle cx="9" cy="5" r="1"/>
+                  <circle cx="9" cy="19" r="1"/>
+                  <circle cx="15" cy="12" r="1"/>
+                  <circle cx="15" cy="5" r="1"/>
+                  <circle cx="15" cy="19" r="1"/>
+                </svg>
+                Drag to move
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleFloatingScrubber}
+                className="text-white hover:bg-white/20 p-1 h-6 w-6"
+                title="Dock scrubber back to bottom"
+              >
+                <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 12h8m-8 0l4 4m-4-4l4-4" />
+                  <path d="M15 18h6V6h-6" />
+                </svg>
+              </Button>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs text-gray-300">
+                <span>{formatTime(currentTime)}</span>
+                <span>{formatTime(duration)}</span>
+              </div>
+              <Slider
+                value={[currentTime]}
+                max={duration}
+                step={0.1}
+                onValueChange={handleSeek}
+                className="w-full"
+                onMouseDown={(e) => e.stopPropagation()}
+              />
+            </div>
+            
+            {/* Compact Control Buttons */}
+            <div className="flex items-center justify-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={togglePlay}
+                className="text-white hover:bg-white/20 p-2 h-8 w-8"
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                {isPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+              </Button>
+
+              <div className="flex items-center gap-1">
+                <Volume2 className="h-3 w-3 text-white" />
+                <Slider
+                  value={[volume]}
+                  max={1}
+                  step={0.1}
+                  onValueChange={(value) => {
+                    setVolume(value[0]);
+                    if (videoRef.current) {
+                      videoRef.current.volume = value[0];
+                    }
+                  }}
+                  className="w-16"
+                  onMouseDown={(e) => e.stopPropagation()}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Overlay Icons Below Video */}
       <div className="bg-black/40 border border-white/10 backdrop-blur-sm rounded-lg p-4 mt-4">
