@@ -275,11 +275,15 @@ export function BiomechanicalVideoPlayer({
 
   const handleScrubberMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDraggingScrubber(true);
     setScrubberDragStart({
       x: e.clientX - floatingScrubberPos.x,
       y: e.clientY - floatingScrubberPos.y
     });
+    
+    // Prevent text selection during drag
+    document.body.style.userSelect = 'none';
   };
 
   const handleScrubberMouseMove = (e: MouseEvent) => {
@@ -293,17 +297,53 @@ export function BiomechanicalVideoPlayer({
 
   const handleScrubberMouseUp = () => {
     setIsDraggingScrubber(false);
+    // Restore text selection
+    document.body.style.userSelect = '';
   };
 
-  // Add global mouse event listeners for floating scrubber
+  // Touch handlers for mobile drag support
+  const handleScrubberTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const touch = e.touches[0];
+    setIsDraggingScrubber(true);
+    setScrubberDragStart({
+      x: touch.clientX - floatingScrubberPos.x,
+      y: touch.clientY - floatingScrubberPos.y
+    });
+  };
+
+  const handleScrubberTouchMove = (e: TouchEvent) => {
+    if (!isDraggingScrubber) return;
+    e.preventDefault();
+    
+    const touch = e.touches[0];
+    const newX = Math.max(10, Math.min(window.innerWidth - 300, touch.clientX - scrubberDragStart.x));
+    const newY = Math.max(10, Math.min(window.innerHeight - 100, touch.clientY - scrubberDragStart.y));
+    
+    setFloatingScrubberPos({ x: newX, y: newY });
+  };
+
+  const handleScrubberTouchEnd = () => {
+    setIsDraggingScrubber(false);
+  };
+
+  // Add global event listeners for floating scrubber (mouse and touch)
   useEffect(() => {
     if (isDraggingScrubber) {
+      // Mouse events
       document.addEventListener('mousemove', handleScrubberMouseMove);
       document.addEventListener('mouseup', handleScrubberMouseUp);
+      
+      // Touch events
+      document.addEventListener('touchmove', handleScrubberTouchMove, { passive: false });
+      document.addEventListener('touchend', handleScrubberTouchEnd);
       
       return () => {
         document.removeEventListener('mousemove', handleScrubberMouseMove);
         document.removeEventListener('mouseup', handleScrubberMouseUp);
+        document.removeEventListener('touchmove', handleScrubberTouchMove);
+        document.removeEventListener('touchend', handleScrubberTouchEnd);
       };
     }
   }, [isDraggingScrubber, scrubberDragStart]);
@@ -1922,15 +1962,21 @@ export function BiomechanicalVideoPlayer({
           style={{
             left: `${floatingScrubberPos.x}px`,
             top: `${floatingScrubberPos.y}px`,
-            width: '280px',
-            cursor: isDraggingScrubber ? 'grabbing' : 'grab'
+            width: '280px'
           }}
-          onMouseDown={handleScrubberMouseDown}
         >
           <div className="space-y-3">
             {/* Drag Handle */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs text-gray-300">
+            <div 
+              className="flex items-center justify-between p-2 -m-2 rounded cursor-grab active:cursor-grabbing hover:bg-white/5"
+              onMouseDown={handleScrubberMouseDown}
+              onTouchStart={handleScrubberTouchStart}
+              style={{
+                cursor: isDraggingScrubber ? 'grabbing' : 'grab',
+                touchAction: 'none'
+              }}
+            >
+              <div className="flex items-center gap-2 text-xs text-gray-300 pointer-events-none">
                 <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="9" cy="12" r="1"/>
                   <circle cx="9" cy="5" r="1"/>
