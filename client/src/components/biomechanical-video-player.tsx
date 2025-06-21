@@ -167,18 +167,23 @@ export function BiomechanicalVideoPlayer({
     if (!container) return { scale: newScale, translateX: newTranslateX, translateY: newTranslateY };
 
     const containerRect = container.getBoundingClientRect();
-    const scaledWidth = containerRect.width * newScale;
-    const scaledHeight = containerRect.height * newScale;
+    
+    // Ensure scale is within bounds
+    const constrainedScale = Math.max(1, Math.min(3, newScale));
+    
+    // Calculate scaled dimensions
+    const scaledWidth = containerRect.width * constrainedScale;
+    const scaledHeight = containerRect.height * constrainedScale;
 
-    // Calculate maximum translation to keep video within container
-    const maxTranslateX = Math.max(0, (scaledWidth - containerRect.width) / 2);
-    const maxTranslateY = Math.max(0, (scaledHeight - containerRect.height) / 2);
+    // Calculate maximum translation to keep video edges within container
+    const maxTranslateX = Math.max(0, (scaledWidth - containerRect.width) / 2 / constrainedScale);
+    const maxTranslateY = Math.max(0, (scaledHeight - containerRect.height) / 2 / constrainedScale);
 
     const constrainedTranslateX = Math.max(-maxTranslateX, Math.min(maxTranslateX, newTranslateX));
     const constrainedTranslateY = Math.max(-maxTranslateY, Math.min(maxTranslateY, newTranslateY));
 
     return {
-      scale: Math.max(1, Math.min(3, newScale)), // Limit scale between 1x and 3x
+      scale: constrainedScale,
       translateX: constrainedTranslateX,
       translateY: constrainedTranslateY
     };
@@ -189,16 +194,15 @@ export function BiomechanicalVideoPlayer({
     e.preventDefault();
     
     if (e.touches.length === 2) {
-      // Pinch zoom start
+      // Pinch zoom start and pan start
       const distance = getDistance(e.touches[0], e.touches[1]);
       setLastPinchDistance(distance);
-    } else if (e.touches.length === 1) {
-      // Pan start
+      
+      // Start panning with 2 fingers
+      const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
       setIsDragging(true);
-      setLastTouchPos({
-        x: e.touches[0].clientX,
-        y: e.touches[0].clientY
-      });
+      setLastTouchPos({ x: centerX, y: centerY });
     }
   };
 
@@ -218,22 +222,24 @@ export function BiomechanicalVideoPlayer({
         setTranslateY(constrained.translateY);
       }
       setLastPinchDistance(distance);
-    } else if (e.touches.length === 1 && isDragging && scale > 1) {
-      // Pan
-      const deltaX = e.touches[0].clientX - lastTouchPos.x;
-      const deltaY = e.touches[0].clientY - lastTouchPos.y;
       
-      const newTranslateX = translateX + deltaX;
-      const newTranslateY = translateY + deltaY;
-      
-      const constrained = constrainTransform(scale, newTranslateX, newTranslateY);
-      setTranslateX(constrained.translateX);
-      setTranslateY(constrained.translateY);
-      
-      setLastTouchPos({
-        x: e.touches[0].clientX,
-        y: e.touches[0].clientY
-      });
+      // Two-finger pan
+      if (isDragging && scale > 1) {
+        const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        
+        const deltaX = centerX - lastTouchPos.x;
+        const deltaY = centerY - lastTouchPos.y;
+        
+        const newTranslateX = translateX + deltaX;
+        const newTranslateY = translateY + deltaY;
+        
+        const constrained = constrainTransform(scale, newTranslateX, newTranslateY);
+        setTranslateX(constrained.translateX);
+        setTranslateY(constrained.translateY);
+        
+        setLastTouchPos({ x: centerX, y: centerY });
+      }
     }
   };
 
@@ -1749,6 +1755,9 @@ export function BiomechanicalVideoPlayer({
               setVideoDimensions({ width, height });
               setVideoAspectRatio(aspectRatio);
               
+              // Show first frame immediately
+              video.currentTime = 0.1;
+              
               console.log('Video loaded metadata:', {
                 videoUrl,
                 duration: video.duration,
@@ -1756,6 +1765,13 @@ export function BiomechanicalVideoPlayer({
                 videoHeight: height,
                 aspectRatio: aspectRatio
               });
+            }}
+            onLoadedData={(e) => {
+              // Ensure first frame is visible
+              const video = e.currentTarget;
+              if (video.currentTime === 0) {
+                video.currentTime = 0.1;
+              }
             }}
             onError={(e) => {
               console.error('Video load error:', e);
