@@ -1845,8 +1845,20 @@ export function BiomechanicalVideoPlayer({
                 calculatedAspectRatio: aspectRatio,
                 isLandscape: aspectRatio > 1,
                 isPortrait: aspectRatio < 1,
-                currentContainerAspectRatio: videoAspectRatio
+                currentContainerAspectRatio: videoAspectRatio,
+                videoReadyState: video.readyState,
+                videoNetworkState: video.networkState
               });
+
+              // Force container update for landscape videos
+              if (aspectRatio > 1) {
+                console.log('🏞️ LANDSCAPE VIDEO DETECTED - Forcing container update');
+                // Use setTimeout to ensure state update happens
+                setTimeout(() => {
+                  setVideoAspectRatio(aspectRatio);
+                  console.log('📐 Container aspect ratio updated to:', aspectRatio);
+                }, 100);
+              }
               
               setVideoDimensions({ width, height });
               setVideoAspectRatio(aspectRatio);
