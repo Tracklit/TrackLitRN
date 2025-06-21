@@ -947,14 +947,31 @@ export function BiomechanicalVideoPlayer({
       y: landmark.y * height
     });
 
-    if (landmarks[8]) {
-      const leftKnee = getDisplayCoords(landmarks[8]);
-      ctx.fillText(`L: ${data.knee_angle_max || 142}°`, leftKnee.x - 25, leftKnee.y - 10);
+    // Use real calculated joint angles from MediaPipe skeletal data
+    if (landmarks[25] && data.left_knee) { // MediaPipe left knee index 25
+      const leftKnee = getDisplayCoords(landmarks[25]);
+      ctx.fillText(`L: ${Math.round(data.left_knee)}°`, leftKnee.x - 25, leftKnee.y - 10);
     }
 
-    if (landmarks[9]) {
-      const rightKnee = getDisplayCoords(landmarks[9]);
-      ctx.fillText(`R: ${data.knee_angle_max || 138}°`, rightKnee.x - 25, rightKnee.y - 10);
+    if (landmarks[26] && data.right_knee) { // MediaPipe right knee index 26
+      const rightKnee = getDisplayCoords(landmarks[26]);
+      ctx.fillText(`R: ${Math.round(data.right_knee)}°`, rightKnee.x + 10, rightKnee.y - 10);
+    }
+
+    if (landmarks[23] && landmarks[24] && data.left_hip) { // MediaPipe hip indices 23, 24
+      const hipCenter = {
+        x: (getDisplayCoords(landmarks[23]).x + getDisplayCoords(landmarks[24]).x) / 2,
+        y: (getDisplayCoords(landmarks[23]).y + getDisplayCoords(landmarks[24]).y) / 2
+      };
+      ctx.fillText(`Hip: ${Math.round(data.left_hip)}°`, hipCenter.x - 30, hipCenter.y + 20);
+    }
+
+    if (landmarks[11] && landmarks[12] && data.trunk) { // MediaPipe shoulder indices 11, 12
+      const shoulderCenter = {
+        x: (getDisplayCoords(landmarks[11]).x + getDisplayCoords(landmarks[12]).x) / 2,
+        y: (getDisplayCoords(landmarks[11]).y + getDisplayCoords(landmarks[12]).y) / 2
+      };
+      ctx.fillText(`Trunk: ${Math.round(Math.abs(data.trunk))}°`, shoulderCenter.x - 35, shoulderCenter.y - 20);
     }
   };
 
@@ -1476,28 +1493,31 @@ export function BiomechanicalVideoPlayer({
       y: offsetY + landmark.y * height
     });
 
-    // Display joint angles from analyzed data
-    if (landmarks[8]) { // left knee
-      const leftKnee = getDisplayCoords(landmarks[8]);
-      ctx.fillText(`L: ${data.knee_angle_max || 142}°`, leftKnee.x - 25, leftKnee.y - 10);
+    // Display real joint angles from calculated skeletal data
+    if (landmarks[25] && data.joint_angles?.left_knee) { // MediaPipe left knee index 25
+      const leftKnee = getDisplayCoords(landmarks[25]);
+      ctx.fillText(`L: ${Math.round(data.joint_angles.left_knee)}°`, leftKnee.x - 25, leftKnee.y - 10);
     }
 
-    if (landmarks[9]) { // right knee
-      const rightKnee = getDisplayCoords(landmarks[9]);
-      ctx.fillText(`R: ${data.knee_angle_max || 138}°`, rightKnee.x - 25, rightKnee.y - 10);
+    if (landmarks[26] && data.joint_angles?.right_knee) { // MediaPipe right knee index 26
+      const rightKnee = getDisplayCoords(landmarks[26]);
+      ctx.fillText(`R: ${Math.round(data.joint_angles.right_knee)}°`, rightKnee.x + 10, rightKnee.y - 10);
     }
 
-    if (landmarks[6] && landmarks[7]) { // hip center
+    if (landmarks[23] && landmarks[24] && data.joint_angles?.left_hip) { // MediaPipe hip indices 23, 24
       const hipCenter = {
-        x: (getDisplayCoords(landmarks[6]).x + getDisplayCoords(landmarks[7]).x) / 2,
-        y: (getDisplayCoords(landmarks[6]).y + getDisplayCoords(landmarks[7]).y) / 2
+        x: (getDisplayCoords(landmarks[23]).x + getDisplayCoords(landmarks[24]).x) / 2,
+        y: (getDisplayCoords(landmarks[23]).y + getDisplayCoords(landmarks[24]).y) / 2
       };
-      ctx.fillText(`Hip: ${data.hip_angle_max || 165}°`, hipCenter.x - 30, hipCenter.y + 20);
+      ctx.fillText(`Hip: ${Math.round(data.joint_angles.left_hip)}°`, hipCenter.x - 30, hipCenter.y + 20);
     }
 
-    if (landmarks[1]) { // trunk angle at neck
-      const neck = getDisplayCoords(landmarks[1]);
-      ctx.fillText(`Trunk: ${data.trunk_angle || 85}°`, neck.x - 35, neck.y - 20);
+    if (landmarks[11] && landmarks[12] && data.joint_angles?.trunk) { // MediaPipe shoulder indices 11, 12
+      const shoulderCenter = {
+        x: (getDisplayCoords(landmarks[11]).x + getDisplayCoords(landmarks[12]).x) / 2,
+        y: (getDisplayCoords(landmarks[11]).y + getDisplayCoords(landmarks[12]).y) / 2
+      };
+      ctx.fillText(`Trunk: ${Math.round(Math.abs(data.joint_angles.trunk))}°`, shoulderCenter.x - 35, shoulderCenter.y - 20);
     }
   };
 
