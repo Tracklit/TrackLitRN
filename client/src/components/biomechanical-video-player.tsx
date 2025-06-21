@@ -81,6 +81,15 @@ export function BiomechanicalVideoPlayer({
   const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
   const [mediapipeError, setMediapipeError] = useState<string | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  
+  // Zoom and pan state
+  const [scale, setScale] = useState(1);
+  const [translateX, setTranslateX] = useState(0);
+  const [translateY, setTranslateY] = useState(0);
+  const [lastPinchDistance, setLastPinchDistance] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [lastTouchPos, setLastTouchPos] = useState({ x: 0, y: 0 });
+  const [lastTapTime, setLastTapTime] = useState(0);
 
   // Overlay state
   const [overlays, setOverlays] = useState<BiomechanicalOverlay[]>([
@@ -141,6 +150,94 @@ export function BiomechanicalVideoPlayer({
   useEffect(() => {
     onOverlayChange?.(overlays);
   }, []);
+
+  // Helper functions for zoom and pan
+  const getDistance = (touch1: React.Touch, touch2: React.Touch) => {
+    const dx = touch1.clientX - touch2.clientX;
+    const dy = touch1.clientY - touch2.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  const constrainTransform = (newScale: number, newTranslateX: number, newTranslateY: number) => {
+    const container = containerRef.current;
+    if (!container) return { scale: newScale, translateX: newTranslateX, translateY: newTranslateY };
+
+    const containerRect = container.getBoundingClientRect();
+    const scaledWidth = containerRect.width * newScale;
+    const scaledHeight = containerRect.height * newScale;
+
+    // Calculate maximum translation to keep video within container
+    const maxTranslateX = Math.max(0, (scaledWidth - containerRect.width) / 2);
+    const maxTranslateY = Math.max(0, (scaledHeight - containerRect.height) / 2);
+
+    const constrainedTranslateX = Math.max(-maxTranslateX, Math.min(maxTranslateX, newTranslateX));
+    const constrainedTranslateY = Math.max(-maxTranslateY, Math.min(maxTranslateY, newTranslateY));
+
+    return {
+      scale: Math.max(1, Math.min(3, newScale)), // Limit scale between 1x and 3x
+      translateX: constrainedTranslateX,
+      translateY: constrainedTranslateY
+    };
+  };
+
+  // Touch event handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault();
+    
+    if (e.touches.length === 2) {
+      // Pinch zoom start
+      const distance = getDistance(e.touches[0], e.touches[1]);
+      setLastPinchDistance(distance);
+    } else if (e.touches.length === 1) {
+      // Pan start
+      setIsDragging(true);
+      setLastTouchPos({
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY
+      });
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    e.preventDefault();
+    
+    if (e.touches.length === 2) {
+      // Pinch zoom
+      const distance = getDistance(e.touches[0], e.touches[1]);
+      if (lastPinchDistance > 0) {
+        const scaleChange = distance / lastPinchDistance;
+        const newScale = scale * scaleChange;
+        
+        const constrained = constrainTransform(newScale, translateX, translateY);
+        setScale(constrained.scale);
+        setTranslateX(constrained.translateX);
+        setTranslateY(constrained.translateY);
+      }
+      setLastPinchDistance(distance);
+    } else if (e.touches.length === 1 && isDragging && scale > 1) {
+      // Pan
+      const deltaX = e.touches[0].clientX - lastTouchPos.x;
+      const deltaY = e.touches[0].clientY - lastTouchPos.y;
+      
+      const newTranslateX = translateX + deltaX;
+      const newTranslateY = translateY + deltaY;
+      
+      const constrained = constrainTransform(scale, newTranslateX, newTranslateY);
+      setTranslateX(constrained.translateX);
+      setTranslateY(constrained.translateY);
+      
+      setLastTouchPos({
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY
+      });
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    setLastPinchDistance(0);
+  };
 
   // Video time update handler for precise pose synchronization
   const handleTimeUpdate = useCallback(() => {
@@ -1604,16 +1701,25 @@ export function BiomechanicalVideoPlayer({
       <div className="relative w-full bg-black rounded-lg overflow-hidden" style={{ aspectRatio: '16/9' }}>
         <div 
           ref={containerRef}
-          className="absolute inset-0 bg-black flex items-center justify-center"
+          className="absolute inset-0 bg-black flex items-center justify-center overflow-hidden"
           onMouseEnter={() => setShowControls(true)}
           onMouseLeave={() => setShowControls(false)}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          style={{ touchAction: 'none' }}
         >
-          {/* Video Element - Maximized with object-cover */}
+          {/* Video Element - Maximized with zoom and pan */}
           <video
             ref={videoRef}
             src={videoUrl}
             className="w-full h-full object-cover"
             preload="metadata"
+            style={{
+              transform: `scale(${scale}) translate(${translateX}px, ${translateY}px)`,
+              transformOrigin: 'center center',
+              transition: isDragging ? 'none' : 'transform 0.1s ease-out'
+            }}
             onLoadedMetadata={(e) => {
               console.log('Video loaded metadata:', {
                 videoUrl,
@@ -1635,7 +1741,10 @@ export function BiomechanicalVideoPlayer({
             style={{ 
               mixBlendMode: 'normal',
               width: '100%',
-              height: '100%'
+              height: '100%',
+              transform: `scale(${scale}) translate(${translateX}px, ${translateY}px)`,
+              transformOrigin: 'center center',
+              transition: isDragging ? 'none' : 'transform 0.1s ease-out'
             }}
           />
 
