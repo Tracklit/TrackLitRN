@@ -50,6 +50,22 @@ export function VideoPlayerPage() {
     );
   }
 
+  if (!videoId) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="text-white text-center">
+          <h1 className="text-2xl font-bold mb-4">Invalid Video ID</h1>
+          <Button 
+            onClick={() => setLocation('/video-analysis')}
+            className="bg-purple-600 hover:bg-purple-700"
+          >
+            Back to Video Analysis
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (!currentVideo) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
@@ -94,26 +110,21 @@ export function VideoPlayerPage() {
                 className="text-white hover:bg-white/10"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
+                Back to Videos
               </Button>
               <div>
                 <h1 className="text-xl font-bold text-white">{currentVideo.name}</h1>
-                <p className="text-sm text-gray-300">
-                  {currentVideo.biomechanicalData ? 'MediaPipe Analysis Complete' : 'Raw Video'}
-                </p>
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant="secondary" className="bg-purple-600/20 text-purple-300">
+                    {currentVideo.status}
+                  </Badge>
+                  {currentVideo.analysisData && (
+                    <Badge variant="secondary" className="bg-green-600/20 text-green-300">
+                      MediaPipe Data Available
+                    </Badge>
+                  )}
+                </div>
               </div>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              {currentVideo.analysisData && (
-                <Badge variant="secondary" className="bg-green-600/20 text-green-400 border-green-600/30">
-                  <Activity className="h-3 w-3 mr-1" />
-                  Pose Data Available
-                </Badge>
-              )}
-              <Badge variant="outline" className="text-purple-300 border-purple-600/30">
-                ID: {currentVideo.id}
-              </Badge>
             </div>
           </div>
         </div>
@@ -139,94 +150,60 @@ export function VideoPlayerPage() {
 
             {/* Side Panel */}
             <div className="xl:w-1/4 space-y-4">
-            {/* Video Info */}
-            <Card className="bg-black/40 border-white/10 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Activity className="h-5 w-5 text-purple-400" />
-                  Video Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-sm text-gray-300">
-                  <div className="flex justify-between mb-2">
-                    <span>Name:</span>
-                    <span className="text-white">{currentVideo.name}</span>
-                  </div>
-                  <div className="flex justify-between mb-2">
-                    <span>Upload Date:</span>
-                    <span className="text-white">
-                      {new Date(currentVideo.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <div className="flex justify-between mb-2">
+              {/* Video Info */}
+              <Card className="bg-black/40 border-white/10 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center gap-2">
+                    <Target className="h-5 w-5 text-blue-400" />
+                    Video Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="text-gray-300 space-y-2">
+                  <div className="flex justify-between">
                     <span>Status:</span>
-                    <Badge 
-                      variant={currentVideo.status === 'completed' ? 'default' : 'secondary'}
-                      className="text-xs"
-                    >
-                      {currentVideo.status || 'Ready'}
+                    <Badge variant="outline" className="border-gray-600">
+                      {currentVideo.status}
                     </Badge>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* MediaPipe Status */}
-            <Card className="bg-black/40 border-white/10 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Brain className="h-5 w-5 text-blue-400" />
-                  MediaPipe Analysis
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {currentVideo.analysisData ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-green-400">
-                      <div className="h-2 w-2 bg-green-400 rounded-full"></div>
-                      <span className="text-sm">Pose tracking data available</span>
-                    </div>
-                    <div className="text-xs text-gray-400">
-                      Enable pose overlays in the video player to see real-time biomechanical analysis
-                    </div>
+                  <div className="flex justify-between">
+                    <span>Analysis:</span>
+                    <span className="text-sm">
+                      {currentVideo.analysisData ? 'Available' : 'Pending'}
+                    </span>
                   </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-yellow-400">
-                      <div className="h-2 w-2 bg-yellow-400 rounded-full"></div>
-                      <span className="text-sm">No pose data available</span>
+                  {currentVideo.fileSize && (
+                    <div className="flex justify-between">
+                      <span>Size:</span>
+                      <span className="text-sm">
+                        {(currentVideo.fileSize / (1024 * 1024)).toFixed(1)} MB
+                      </span>
                     </div>
-                    <div className="text-xs text-gray-400">
-                      MediaPipe analysis was not performed on this video
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                  )}
+                </CardContent>
+              </Card>
 
-            {/* Controls */}
-            <Card className="bg-black/40 border-white/10 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Target className="h-5 w-5 text-green-400" />
-                  Analysis Controls
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button 
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-                  onClick={() => handleAnalyze('sprint-form')}
-                >
-                  <Zap className="h-4 w-4 mr-2" />
-                  Run AI Analysis
-                </Button>
-                <div className="text-xs text-gray-400">
-                  Generate detailed performance insights using AI analysis
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+              {/* Analysis Actions */}
+              <Card className="bg-black/40 border-white/10 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center gap-2">
+                    <Brain className="h-5 w-5 text-green-400" />
+                    AI Analysis
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    onClick={() => handleAnalyze('comprehensive')}
+                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                  >
+                    <Zap className="h-4 w-4 mr-2" />
+                    Run AI Analysis
+                  </Button>
+                  <div className="text-xs text-gray-400">
+                    Generate detailed performance insights using AI analysis
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>
