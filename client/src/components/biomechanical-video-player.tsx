@@ -90,6 +90,10 @@ export function BiomechanicalVideoPlayer({
   const [isDragging, setIsDragging] = useState(false);
   const [lastTouchPos, setLastTouchPos] = useState({ x: 0, y: 0 });
   const [lastTapTime, setLastTapTime] = useState(0);
+  
+  // Video dimensions
+  const [videoDimensions, setVideoDimensions] = useState({ width: 0, height: 0 });
+  const [videoAspectRatio, setVideoAspectRatio] = useState(16/9);
 
   // Overlay state
   const [overlays, setOverlays] = useState<BiomechanicalOverlay[]>([
@@ -1710,8 +1714,11 @@ export function BiomechanicalVideoPlayer({
 
   return (
     <div className="space-y-4">
-      {/* Video Container - Maximized */}
-      <div className="relative w-full bg-black rounded-lg overflow-hidden" style={{ aspectRatio: '16/9' }}>
+      {/* Video Container - Dynamic Aspect Ratio */}
+      <div 
+        className="relative w-full bg-black rounded-lg overflow-hidden" 
+        style={{ aspectRatio: videoAspectRatio.toString() }}
+      >
         <div 
           ref={containerRef}
           className="absolute inset-0 bg-black flex items-center justify-center overflow-hidden"
@@ -1734,11 +1741,20 @@ export function BiomechanicalVideoPlayer({
               transition: isDragging ? 'none' : 'transform 0.1s ease-out'
             }}
             onLoadedMetadata={(e) => {
+              const video = e.currentTarget;
+              const width = video.videoWidth;
+              const height = video.videoHeight;
+              const aspectRatio = width / height;
+              
+              setVideoDimensions({ width, height });
+              setVideoAspectRatio(aspectRatio);
+              
               console.log('Video loaded metadata:', {
                 videoUrl,
-                duration: e.currentTarget.duration,
-                videoWidth: e.currentTarget.videoWidth,
-                videoHeight: e.currentTarget.videoHeight
+                duration: video.duration,
+                videoWidth: width,
+                videoHeight: height,
+                aspectRatio: aspectRatio
               });
             }}
             onError={(e) => {
