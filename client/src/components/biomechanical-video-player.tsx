@@ -1945,10 +1945,11 @@ export function BiomechanicalVideoPlayer({
                 className="text-white hover:bg-white/20 px-3 py-2"
                 title="Make scrubber float for easier access"
               >
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg className="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M21 12h-8m8 0l-4 4m4-4l-4-4" />
                   <path d="M9 6H3v12h6" />
                 </svg>
+                Pop Out
               </Button>
             </div>
           </div>
