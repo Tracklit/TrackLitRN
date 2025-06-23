@@ -331,6 +331,18 @@ export function VideoPlayerPage() {
           <div className="flex flex-col xl:flex-row gap-6 h-full">
             {/* Video Player - Main Column */}
             <div className="flex-1 xl:w-3/4">
+              {/* Save Video Button */}
+              <div className="flex justify-end mb-4">
+                <div className="flex items-center gap-3 bg-black/40 backdrop-blur-sm border border-white/10 rounded-lg px-4 py-2">
+                  <span className="text-white font-medium text-sm">Save Video</span>
+                  <SaveToLibraryIcon 
+                    videoId={videoId!} 
+                    videoName={currentVideo.name}
+                    analysisData={currentVideo.analysisData}
+                  />
+                </div>
+              </div>
+              
               <BiomechanicalVideoPlayer
                 videoUrl={currentVideo.fileUrl}
                 videoName={currentVideo.name}
@@ -345,15 +357,6 @@ export function VideoPlayerPage() {
 
             {/* Side Panel */}
             <div className="xl:w-1/4 space-y-4">
-              {/* Save To Library Icon */}
-              <div className="flex justify-end">
-                <SaveToLibraryIcon 
-                  videoId={videoId!} 
-                  videoName={currentVideo.name}
-                  analysisData={currentVideo.analysisData}
-                />
-              </div>
-
               {/* Analysis Actions */}
               <Card className="bg-black/40 border-white/10 backdrop-blur-sm">
                 <CardHeader>
