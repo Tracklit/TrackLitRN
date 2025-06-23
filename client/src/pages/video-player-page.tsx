@@ -219,19 +219,27 @@ export function VideoPlayerPage() {
   const [overlays, setOverlays] = useState<any[]>([]);
 
   // Fetch video data with polling for processing status
-  const { data: videos, isLoading } = useQuery({
+  const { data: videos, isLoading, error } = useQuery({
     queryKey: ['/api/video-analysis'],
     enabled: !!videoId,
     refetchInterval: (data: any) => {
-      // Poll every 2 seconds if any video is still processing
+      // Poll every 2 seconds if any video is still processing or if video not found yet
       const videos = Array.isArray(data) ? data : [];
       const currentVideo = videos.find((v: any) => v.id === videoId);
-      return currentVideo && currentVideo.status === 'processing' ? 2000 : false;
-    }
+      
+      // Keep polling if video is processing OR if video doesn't exist yet (likely still uploading)
+      return (currentVideo && currentVideo.status === 'processing') || !currentVideo ? 2000 : false;
+    },
+    retry: (failureCount, error: any) => {
+      // Keep retrying if video not found (might still be uploading)
+      return failureCount < 10;
+    },
+    retryDelay: 2000
   });
 
   const currentVideo = Array.isArray(videos) ? videos.find((v: any) => v.id === videoId) : null;
   const isProcessing = currentVideo && currentVideo.status === 'processing';
+  const isVideoNotFoundButStillLoading = !currentVideo && (isLoading || error);
 
   const handleAnalyze = async (promptId: string) => {
     // Handle analysis if needed
@@ -278,11 +286,8 @@ export function VideoPlayerPage() {
     );
   }
 
-  // Show loading state if video is not found but data is still loading
-  const showLoadingOverlay = !currentVideo && isLoading;
-  
-  // Only show "Video Not Found" if we're not loading and video doesn't exist
-  if (!currentVideo && !isLoading) {
+  // Only show "Video Not Found" if we've exhausted retries and video definitely doesn't exist
+  if (!currentVideo && !isLoading && !isVideoNotFoundButStillLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
         <div className="text-white text-center">
@@ -378,16 +383,20 @@ export function VideoPlayerPage() {
                 )}
               </>
             ) : (
-              /* Show loading placeholder when video is being loaded */
-              <div className="aspect-video bg-gray-800/50 rounded-lg flex items-center justify-center">
+              /* Show loading placeholder when video is being uploaded/processed */
+              <div className="aspect-video bg-gray-800/50 rounded flex items-center justify-center">
                 <div className="text-center space-y-4">
                   <div className="relative flex items-center justify-center w-16 h-16 mx-auto">
                     <div className="absolute inset-0 rounded-full border-4 border-blue-200/30"></div>
                     <div className="absolute inset-0 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"></div>
                   </div>
                   <div className="text-white">
-                    <h3 className="font-semibold mb-2">Loading Video</h3>
-                    <p className="text-sm text-gray-300">Please wait while we load your video...</p>
+                    <h3 className="font-semibold mb-2">
+                      {isLoading ? "Loading Video..." : "Processing Upload..."}
+                    </h3>
+                    <p className="text-sm text-gray-300">
+                      {isLoading ? "Please wait while we load your video..." : "Your video is being processed and will appear shortly..."}
+                    </p>
                   </div>
                 </div>
               </div>
