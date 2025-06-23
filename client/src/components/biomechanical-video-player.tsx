@@ -111,23 +111,9 @@ export function BiomechanicalVideoPlayer({
   const [isDraggingScrubber, setIsDraggingScrubber] = useState(false);
   const [scrubberDragStart, setScrubberDragStart] = useState({ x: 0, y: 0 });
 
-  // State for velocity data availability
-  const [hasVelocityData, setHasVelocityData] = useState(false);
 
-  // Update overlay labels when velocity data availability changes
-  useEffect(() => {
-    setOverlays(prev => prev.map(overlay => 
-      overlay.id === 'velocity' 
-        ? {
-            ...overlay,
-            label: hasVelocityData ? 'Velocity Vector' : 'No Velocity Detected',
-            color: hasVelocityData ? '#f59e0b' : '#6b7280'
-          }
-        : overlay
-    ));
-  }, [hasVelocityData]);
 
-  // Overlay state with dynamic velocity detection
+  // Overlay state - simplified to core biomechanical analysis
   const [overlays, setOverlays] = useState<BiomechanicalOverlay[]>([
     {
       id: 'skeleton',
@@ -144,40 +130,11 @@ export function BiomechanicalVideoPlayer({
       color: '#06b6d4',
       enabled: false,
       type: 'angles'
-    },
-    {
-      id: 'velocity',
-      label: hasVelocityData ? 'Velocity Vector' : 'No Velocity Detected',
-      icon: Gauge,
-      color: hasVelocityData ? '#f59e0b' : '#6b7280',
-      enabled: false,
-      type: 'velocity'
-    },
-    {
-      id: 'stride',
-      label: 'Stride Analysis',
-      icon: Timer,
-      color: '#10b981',
-      enabled: false,
-      type: 'stride'
-    },
-    {
-      id: 'contact',
-      label: 'Ground Contact',
-      icon: Footprints,
-      color: '#ef4444',
-      enabled: false,
-      type: 'contact'
     }
   ]);
 
-  // Toggle overlay function with velocity data check
+  // Toggle overlay function
   const toggleOverlay = (overlayId: string) => {
-    // Prevent toggling velocity overlay if no velocity data is available
-    if (overlayId === 'velocity' && !hasVelocityData) {
-      return;
-    }
-    
     const newOverlays = overlays.map(overlay => 
       overlay.id === overlayId 
         ? { ...overlay, enabled: !overlay.enabled }
@@ -677,17 +634,7 @@ export function BiomechanicalVideoPlayer({
       console.log('Available keys:', Object.keys(analysisData || {}));
     }
     
-    // Check for velocity data availability
-    const hasValidVelocityData = !!(mediapipeData?.velocity_data && 
-      Array.isArray(mediapipeData.velocity_data) && 
-      mediapipeData.velocity_data.some(frame => frame.has_valid_data));
-    
-    setHasVelocityData(hasValidVelocityData);
-    console.log(`Velocity data detected: ${hasValidVelocityData ? 'Yes' : 'No'}`);
-    if (hasValidVelocityData) {
-      const validVelocityFrames = mediapipeData.velocity_data.filter(frame => frame.has_valid_data).length;
-      console.log(`Found ${validVelocityFrames} frames with valid velocity data`);
-    }
+
     
     // Verify we have valid MediaPipe data structure
     if (!mediapipeData || typeof mediapipeData !== 'object') {
@@ -843,17 +790,7 @@ export function BiomechanicalVideoPlayer({
         case 'angles':
           drawDynamicJointAngles(ctx, landmarks, frameData.joint_angles, width, height);
           break;
-        case 'velocity':
-          if (frameData.has_velocity && frameData.velocity_data) {
-            drawDynamicVelocityVectors(ctx, landmarks, frameData.velocity_data, width, height);
-          }
-          break;
-        case 'stride':
-          drawDynamicStrideAnalysis(ctx, frameData.stride_data, width, height);
-          break;
-        case 'contact':
-          drawDynamicGroundContact(ctx, landmarks, frameData.contact_data, width, height);
-          break;
+
       }
     });
   }, [overlays]);
@@ -2345,12 +2282,7 @@ export function BiomechanicalVideoPlayer({
                 variant={overlay.enabled ? "default" : "outline"}
                 size="sm"
                 onClick={() => toggleOverlay(overlay.id)}
-                disabled={overlay.id === 'velocity' && !hasVelocityData}
-                className={`flex items-center gap-2 ${
-                  overlay.id === 'velocity' && !hasVelocityData
-                    ? 'text-gray-500 cursor-not-allowed opacity-50'
-                    : 'text-white'
-                } ${
+                className={`flex items-center gap-2 text-white ${
                   overlay.enabled 
                     ? `border-2` 
                     : 'border-gray-600 hover:bg-white/10'

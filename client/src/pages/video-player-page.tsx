@@ -140,37 +140,12 @@ export function VideoPlayerPage() {
 
             {/* Side Panel */}
             <div className="xl:w-1/4 space-y-4">
-              {/* Video Info */}
-              <Card className="bg-black/40 border-white/10 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2">
-                    <Target className="h-5 w-5 text-blue-400" />
-                    Video Details
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="text-gray-300 space-y-2">
-                  <div className="flex justify-between">
-                    <span>Status:</span>
-                    <Badge variant="outline" className="border-gray-600">
-                      {currentVideo.status}
-                    </Badge>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Analysis:</span>
-                    <span className="text-sm">
-                      {currentVideo.analysisData ? 'Available' : 'Pending'}
-                    </span>
-                  </div>
-                  {currentVideo.fileSize && (
-                    <div className="flex justify-between">
-                      <span>Size:</span>
-                      <span className="text-sm">
-                        {(currentVideo.fileSize / (1024 * 1024)).toFixed(1)} MB
-                      </span>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              {/* Save To Library */}
+              <SaveToLibraryCard 
+                videoId={videoId!} 
+                videoName={currentVideo.name}
+                analysisData={currentVideo.analysisData}
+              />
 
               {/* Analysis Actions */}
               <Card className="bg-black/40 border-white/10 backdrop-blur-sm">
