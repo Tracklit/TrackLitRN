@@ -11,18 +11,18 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { BiomechanicalVideoPlayer } from "@/components/biomechanical-video-player";
 import { ArrowLeft, Activity, Brain, Zap, Target, Bookmark, Crown, Lock, Check } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-// Save To Library Card Component
-function SaveToLibraryCard({ videoId, videoName, analysisData }: { 
+// Compact Save To Library Icon Component
+function SaveToLibraryIcon({ videoId, videoName, analysisData }: { 
   videoId: number; 
   videoName: string; 
   analysisData: any; 
 }) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [libraryName, setLibraryName] = useState("");
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [libraryName, setLibraryName] = useState(videoName || "");
   const [libraryDescription, setLibraryDescription] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
@@ -56,11 +56,10 @@ function SaveToLibraryCard({ videoId, videoName, analysisData }: {
       return response.json();
     },
     onSuccess: () => {
-      setIsSaved(true);
-      setIsExpanded(false);
+      setShowSaveDialog(false);
       toast({
         title: "Saved to Library",
-        description: "Video analysis has been saved to your exercise library.",
+        description: "Video analysis has been saved to your library.",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/exercise-library'] });
       queryClient.invalidateQueries({ queryKey: ['/api/exercise-library/check-video', videoId] });
