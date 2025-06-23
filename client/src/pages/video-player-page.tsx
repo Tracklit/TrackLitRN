@@ -342,7 +342,7 @@ export function VideoPlayerPage() {
         <div className="max-w-7xl mx-auto px-2">
           <div className="flex flex-col xl:flex-row gap-8 h-full">
             {/* Video Player - Main Column */}
-            <div className="flex-1 xl:w-4/5">
+            <div className="flex-1 xl:w-4/5 relative">
               <BiomechanicalVideoPlayer
                 videoUrl={currentVideo.fileUrl}
                 videoName={currentVideo.name}
@@ -353,6 +353,22 @@ export function VideoPlayerPage() {
                 analysisStatus={currentVideo.status}
                 onOverlayChange={handleOverlayChange}
               />
+              
+              {/* Processing Spinner Overlay */}
+              {isProcessing && (
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 rounded">
+                  <div className="text-center space-y-4">
+                    <div className="relative flex items-center justify-center w-16 h-16 mx-auto">
+                      <div className="absolute inset-0 rounded-full border-4 border-blue-200/30"></div>
+                      <div className="absolute inset-0 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"></div>
+                    </div>
+                    <div className="text-white">
+                      <h3 className="font-semibold mb-2">Processing Video Analysis</h3>
+                      <p className="text-sm text-gray-300">Analyzing biomechanical data...</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Side Panel */}
