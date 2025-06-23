@@ -16,6 +16,7 @@ import { Camera, Upload, FileVideo, Play, Sparkles, Zap, Crown, ArrowLeft, Arrow
 import { useLocation } from "wouter";
 import videoAnalysisCardImage from "@assets/video-analysis-card.jpeg";
 import { BiomechanicalVideoPlayer } from "@/components/biomechanical-video-player";
+import { VideoThumbnail } from "@/components/video-thumbnail";
 
 export default function VideoAnalysisPage() {
   const [, setLocation] = useLocation();
@@ -479,22 +480,21 @@ export default function VideoAnalysisPage() {
 
         {/* Upload Step */}
         {currentStep === "upload" && (
-          <Card className="border-2">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowUploadDropdown(!showUploadDropdown)}
-                  className="flex items-center gap-2"
-                >
-                  {showUploadDropdown ? (
-                    <Minus className="h-4 w-4" />
-                  ) : (
-                    <Plus className="h-4 w-4" />
-                  )}
-                  Upload Video
-                </Button>
+          <div className="mb-6">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowUploadDropdown(!showUploadDropdown)}
+                className="flex items-center gap-2 border-white/20 text-white hover:bg-white/10"
+              >
+                {showUploadDropdown ? (
+                  <Minus className="h-4 w-4" />
+                ) : (
+                  <Plus className="h-4 w-4" />
+                )}
+                Upload Video
+              </Button>
                 
                 {selectedFile && (
                   <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -564,8 +564,7 @@ export default function VideoAnalysisPage() {
                   </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
+          </div>
         )}
 
         {/* Saved Videos */}
@@ -574,30 +573,18 @@ export default function VideoAnalysisPage() {
             <CardContent className="p-4">
               <div className="text-center">
                 <h3 className="font-semibold text-white mb-3">Saved Videos</h3>
-                {videos && videos.length > 0 ? (
+                {Array.isArray(videos) && videos.length > 0 ? (
                   <div className="grid grid-cols-2 gap-3">
                     {videos.slice(0, 4).map((video: any) => (
-                      <div 
-                        key={video.id}
-                        className="cursor-pointer group"
-                        onClick={() => setLocation(`/video-player/${video.id}`)}
-                      >
-                        <div className="aspect-video bg-gray-800 rounded overflow-hidden mb-2 relative">
-                          <video
-                            src={video.fileUrl}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                            muted
-                            onLoadedData={(e) => {
-                              const videoEl = e.target as HTMLVideoElement;
-                              videoEl.currentTime = 1; // Show frame at 1 second
-                            }}
-                          />
-                          <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
-                          <div className="absolute bottom-1 right-1">
-                            <Play className="h-4 w-4 text-white/80" />
-                          </div>
-                        </div>
-                        <p className="text-xs text-white truncate">{video.name || `Video #${video.id}`}</p>
+                      <div key={video.id}>
+                        <VideoThumbnail
+                          videoUrl={video.fileUrl}
+                          videoId={video.id}
+                          onClick={() => setLocation(`/video-player/${video.id}`)}
+                        />
+                        <p className="text-xs text-white truncate text-center">
+                          {video.createdAt ? new Date(video.createdAt).toLocaleDateString() : `Video #${video.id}`}
+                        </p>
                       </div>
                     ))}
                   </div>
