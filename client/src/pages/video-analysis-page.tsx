@@ -155,14 +155,8 @@ export default function VideoAnalysisPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/video-analysis"] });
       setIsUploading(false);
       setUploadProgress(0);
-      // Stay on the video analysis page and show the uploaded video
-      setSelectedVideoId(data.id);
-      setUploadedVideoUrl(data.fileUrl);
-      setCurrentStep("video");
-      toast({
-        title: "Upload Complete",
-        description: "Your video has been uploaded and is ready for analysis.",
-      });
+      // Redirect directly to video player page
+      setLocation(`/video-player/${data.id}`);
     },
     onError: (error) => {
       setIsUploading(false);
@@ -639,22 +633,23 @@ export default function VideoAnalysisPage() {
           </Card>
         )}
 
-        {/* Video Upload Success - Show Analysis Interface */}
-        {currentStep === "video" && uploadedVideoUrl && selectedVideoId && (
+        {/* Video Upload Success - Redirect to Dedicated Player */}
+        {currentStep === "video" && uploadedVideoUrl && (
           <div className="space-y-6">
-            {/* Video Player */}
-            <div className="w-full">
-              <BiomechanicalVideoPlayer
-                videoUrl={uploadedVideoUrl}
-                videoName={videoName || `Video ${selectedVideoId}`}
-                videoId={selectedVideoId}
-                onAnalyze={handleAnalyze}
-                isAnalyzing={isAnalyzing}
-                biomechanicalData={null}
-                analysisStatus="complete"
-                onOverlayChange={() => {}}
-              />
-            </div>
+            {/* Processing Status */}
+            {currentVideo && 'status' in currentVideo && currentVideo.status === 'processing' && (
+              <Card className="border-yellow-200 bg-yellow-50">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-6 w-6 rounded-full border-2 border-yellow-600 border-t-transparent animate-spin"></div>
+                    <div>
+                      <h3 className="font-semibold text-yellow-900">Processing Video</h3>
+                      <p className="text-sm text-yellow-700">Extracting biomechanical data with MediaPipe...</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             <Card className="border-green-200 bg-green-50">
               <CardContent className="p-6 text-center">
@@ -664,6 +659,13 @@ export default function VideoAnalysisPage() {
                     <h3 className="text-lg font-semibold text-green-900">Upload Complete!</h3>
                     <p className="text-green-700 mb-4">Your video has been uploaded and is ready for analysis</p>
                   </div>
+                  <Button 
+                    onClick={() => setLocation(`/video-player/${selectedVideoId}`)}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    <Play className="h-4 w-4 mr-2" />
+                    Open Video Player
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -716,116 +718,6 @@ export default function VideoAnalysisPage() {
                 </Button>
               )}
             </div>
-          </div>
-        )}
-
-        {/* Video Player Step - When video is uploaded */}
-        {currentStep === "video" && uploadedVideoUrl && selectedVideoId && (
-          <div className="space-y-6">
-            {/* Video Player */}
-            <div className="w-full">
-              <BiomechanicalVideoPlayer
-                videoUrl={uploadedVideoUrl}
-                videoName={videoName || `Video ${selectedVideoId}`}
-                videoId={selectedVideoId}
-                onAnalyze={handleAnalyze}
-                isAnalyzing={isAnalyzing}
-                biomechanicalData={null}
-                analysisStatus="complete"
-                onOverlayChange={() => {}}
-              />
-            </div>
-
-            {/* Analysis Options */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5" />
-                  Choose Analysis Type
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Pre-made Prompts Grid */}
-                <div>
-                  <Label className="text-base font-medium mb-3 block">Pre-made Analysis</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {analysisPrompts.map((prompt) => (
-                      <div
-                        key={prompt.id}
-                        className="p-3 border border-slate-700 bg-slate-700 rounded-lg cursor-pointer"
-                        onClick={() => !useCustomPrompt && handlePromptToggle(prompt.id)}
-                      >
-                        <div className="flex items-start gap-2">
-                          <Checkbox
-                            checked={selectedPrompts.includes(prompt.id)}
-                            disabled={useCustomPrompt}
-                            className="mt-1"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-sm leading-tight">{prompt.title}</h4>
-                            <p className="text-xs text-gray-600 mt-1 line-clamp-2">{prompt.description}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Custom Prompt Option */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      checked={useCustomPrompt}
-                      onCheckedChange={(checked) => {
-                        setUseCustomPrompt(!!checked);
-                        if (checked) {
-                          setSelectedPrompts([]);
-                        }
-                      }}
-                    />
-                    <Label className="text-base font-medium">Custom Analysis</Label>
-                  </div>
-
-                  {useCustomPrompt && (
-                    <Textarea
-                      placeholder="Describe what you'd like to analyze about this video..."
-                      value={customPrompt}
-                      onChange={(e) => setCustomPrompt(e.target.value)}
-                      className="min-h-[100px]"
-                    />
-                  )}
-                </div>
-
-                <div className="flex justify-between">
-                  <Button 
-                    variant="outline"
-                    onClick={() => setCurrentStep("upload")}
-                    className="flex items-center gap-2"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                    Back to Upload
-                  </Button>
-
-                  <Button
-                    onClick={handleRunSelectedAnalyses}
-                    disabled={isAnalyzing || (!useCustomPrompt && selectedPrompts.length === 0) || (useCustomPrompt && !customPrompt.trim())}
-                    className="flex items-center gap-2"
-                  >
-                    {isAnalyzing ? (
-                      <>
-                        <Sparkles className="h-4 w-4 animate-spin" />
-                        Analyzing...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="h-4 w-4" />
-                        Analyze
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         )}
 
