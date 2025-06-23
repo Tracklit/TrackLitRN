@@ -3491,6 +3491,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(404).json({ error: "Video analysis not found" });
         }
         
+        // Check if this video analysis is already saved in the user's library
+        const existingEntry = await db
+          .select()
+          .from(exerciseLibrary)
+          .where(and(
+            eq(exerciseLibrary.userId, user.id),
+            eq(exerciseLibrary.type, 'video_analysis'),
+            eq(exerciseLibrary.videoAnalysisId, videoId)
+          ))
+          .limit(1);
+        
+        if (existingEntry.length > 0) {
+          return res.status(409).json({ 
+            error: "Already saved",
+            message: "This video analysis is already saved in your library",
+            existingEntry: existingEntry[0]
+          });
+        }
+        
         // Create exercise library entry for video analysis
         const exerciseData: InsertExerciseLibrary = {
           userId: user.id,
@@ -3521,6 +3540,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating exercise library entry:", error);
       res.status(500).json({ error: "Failed to create exercise library entry" });
+    }
+  });
+
+  // Check if video analysis is already saved in library
+  app.get("/api/exercise-library/check-video/:videoId", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const user = req.user!;
+      const videoId = parseInt(req.params.videoId);
+      
+      if (isNaN(videoId)) {
+        return res.status(400).json({ error: "Invalid video ID" });
+      }
+      
+      // Check if this video analysis is already saved in the user's library
+      const existingEntry = await db
+        .select()
+        .from(exerciseLibrary)
+        .where(and(
+          eq(exerciseLibrary.userId, user.id),
+          eq(exerciseLibrary.type, 'video_analysis'),
+          eq(exerciseLibrary.videoAnalysisId, videoId)
+        ))
+        .limit(1);
+      
+      if (existingEntry.length > 0) {
+        return res.json(existingEntry[0]);
+      } else {
+        return res.status(404).json({ message: "Video not found in library" });
+      }
+    } catch (error) {
+      console.error("Error checking video in library:", error);
+      res.status(500).json({ error: "Failed to check video status" });
     }
   });
 

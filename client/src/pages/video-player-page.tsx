@@ -31,7 +31,18 @@ function SaveToLibraryCard({ videoId, videoName, analysisData }: {
     queryKey: ['/api/user']
   });
 
+  // Check if video is already saved in library
+  const { data: existingLibraryEntry } = useQuery({
+    queryKey: ['/api/exercise-library/check-video', videoId],
+    queryFn: async () => {
+      const response = await apiRequest('GET', `/api/exercise-library/check-video/${videoId}`);
+      return response.json();
+    },
+    enabled: !!videoId && !!user
+  });
+
   const isProOrStar = user && typeof user === 'object' && user !== null && 'subscriptionTier' in user && ((user as any).subscriptionTier === 'pro' || (user as any).subscriptionTier === 'star');
+  const isAlreadySaved = !!existingLibraryEntry;
 
   const saveToLibraryMutation = useMutation({
     mutationFn: async (data: { name: string; description: string; videoId: number }) => {
@@ -52,6 +63,7 @@ function SaveToLibraryCard({ videoId, videoName, analysisData }: {
         description: "Video analysis has been saved to your exercise library.",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/exercise-library'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/exercise-library/check-video', videoId] });
     },
     onError: (error: any) => {
       toast({
@@ -67,6 +79,15 @@ function SaveToLibraryCard({ videoId, videoName, analysisData }: {
       toast({
         title: "Name Required",
         description: "Please enter a name for your library entry.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (isAlreadySaved) {
+      toast({
+        title: "Already Saved",
+        description: "This video is already saved to your library.",
         variant: "destructive",
       });
       return;
@@ -108,19 +129,21 @@ function SaveToLibraryCard({ videoId, videoName, analysisData }: {
     );
   }
 
-  if (isSaved) {
+  if (isSaved || isAlreadySaved) {
     return (
       <Card className="bg-black/40 border-white/10 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
             <Check className="h-5 w-5 text-green-400" />
-            Saved to Library
+            {isAlreadySaved ? 'Already in Library' : 'Saved to Library'}
           </CardTitle>
         </CardHeader>
         <CardContent className="text-gray-300 space-y-3">
           <div className="flex items-center gap-2 p-3 bg-green-800/20 rounded-lg border border-green-700/30">
             <Check className="h-4 w-4 text-green-400" />
-            <span className="text-sm">Successfully saved</span>
+            <span className="text-sm">
+              {isAlreadySaved ? `Saved as "${existingLibraryEntry.name}"` : 'Successfully saved'}
+            </span>
           </div>
           <Button 
             variant="outline"
@@ -201,10 +224,25 @@ function SaveToLibraryCard({ videoId, videoName, analysisData }: {
               </Button>
               <Button
                 onClick={handleSave}
-                disabled={saveToLibraryMutation.isPending}
-                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                disabled={saveToLibraryMutation.isPending || isAlreadySaved || !libraryName.trim()}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
               >
-                {saveToLibraryMutation.isPending ? "Saving..." : "Save"}
+                {saveToLibraryMutation.isPending ? (
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                    Saving...
+                  </div>
+                ) : isAlreadySaved ? (
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4" />
+                    Already Saved
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Bookmark className="h-4 w-4" />
+                    Save
+                  </div>
+                )}
               </Button>
             </div>
           </div>
