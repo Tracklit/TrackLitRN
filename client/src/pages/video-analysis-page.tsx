@@ -482,117 +482,81 @@ export default function VideoAnalysisPage() {
         {/* Upload Step */}
         {currentStep === "upload" && (
           <Card className="border-2">
-            <CardContent className="p-8">
-              <div className="space-y-6">
-                {/* File Upload Area */}
-                <div
-                  className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                    dragActive
-                      ? "border-primary bg-primary/5"
-                      : selectedFile
-                      ? "border-green-500 bg-green-50"
-                      : "border-blue-300 bg-gray-50"
-                  }`}
-                  onDragEnter={handleDrag}
-                  onDragLeave={handleDrag}
-                  onDragOver={handleDrag}
-                  onDrop={handleDrop}
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="video/mp4,video/mov,video/avi,video/quicktime"
-                    onChange={handleFileInputChange}
-                    className="hidden"
-                  />
-                  
-                  {selectedFile ? (
-                    <div className="space-y-4">
-                      {uploadMutation.isPending || isUploading ? (
-                        <>
-                          <div className="relative flex items-center justify-center w-16 h-16 mx-auto">
-                            <div className="absolute inset-0 rounded-full border-4 border-blue-200"></div>
-                            <div 
-                              className="absolute inset-0 rounded-full border-4 border-blue-600 border-t-transparent animate-spin"
-                              style={{
-                                background: `conic-gradient(from 0deg, #2563eb ${uploadProgress * 3.6}deg, transparent ${uploadProgress * 3.6}deg)`
-                              }}
-                            ></div>
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <span className="text-sm font-semibold text-blue-700">{uploadProgress.toFixed(0)}%</span>
-                            </div>
+            <CardContent className="p-4">
+              <div
+                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                  dragActive
+                    ? "border-primary bg-primary/5"
+                    : selectedFile
+                    ? "border-green-500 bg-green-50"
+                    : "border-blue-300 bg-gray-50"
+                }`}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="video/mp4,video/mov,video/avi,video/quicktime"
+                  onChange={handleFileInputChange}
+                  className="hidden"
+                />
+                
+                {selectedFile ? (
+                  <div className="space-y-3">
+                    {uploadMutation.isPending || isUploading ? (
+                      <>
+                        <div className="relative flex items-center justify-center w-12 h-12 mx-auto">
+                          <div className="absolute inset-0 rounded-full border-3 border-blue-200"></div>
+                          <div 
+                            className="absolute inset-0 rounded-full border-3 border-blue-600 border-t-transparent animate-spin"
+                          ></div>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-xs font-semibold text-blue-700">{uploadProgress.toFixed(0)}%</span>
                           </div>
-                          <div className="space-y-3">
-                            <h3 className="text-lg font-semibold text-blue-700">
-                              {processingStage || "Uploading video..."}
-                            </h3>
-                            <p className="text-sm text-gray-600">
-                              {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
-                            </p>
-                            <p className="text-xs text-blue-600 mt-2">
-                              Will automatically proceed to analysis when complete
-                            </p>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <FileVideo className="h-16 w-16 text-green-600 mx-auto" />
-                          <div>
-                            <h3 className="text-lg font-semibold text-green-700">
-                              Ready for Analysis
-                            </h3>
-                            <p className="text-sm text-gray-600">
-                              {selectedFile.name} ({(selectedFile.size / (1024 * 1024)).toFixed(2)} MB)
-                            </p>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => fileInputRef.current?.click()}
-                            className="bg-yellow-400 hover:bg-yellow-500 text-black border-yellow-400"
-                          >
-                            Change Video
-                          </Button>
-                        </>
-                      )}
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-blue-700">
+                            {processingStage || "Uploading..."}
+                          </h3>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <FileVideo className="h-12 w-12 text-green-600 mx-auto" />
+                        <div>
+                          <h3 className="font-semibold text-green-700">Ready</h3>
+                          <p className="text-sm text-gray-600">{selectedFile.name}</p>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="bg-yellow-400 hover:bg-yellow-500 text-black border-yellow-400"
+                        >
+                          Change
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <Upload className="h-12 w-12 text-gray-400 mx-auto" />
+                    <div>
+                      <h3 className="font-semibold text-gray-700">Upload Video</h3>
                     </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <Upload className="h-16 w-16 text-gray-400 mx-auto" />
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-700">
-                          Select Race Video
-                        </h3>
-                        <p className="text-gray-500 mb-4">
-                          Click to select or drag and drop your video
-                        </p>
-                        <p className="text-sm text-gray-400">
-                          Supports MP4, MOV, AVI formats • Auto-uploads when selected
-                        </p>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="bg-yellow-400 hover:bg-yellow-500 text-black border-yellow-400"
-                      >
-                        Select Video File
-                      </Button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Video Preview */}
-                {videoPreview && !uploadMutation.isPending && (
-                  <div className="space-y-2">
-                    <Label>Preview</Label>
-                    <div className="relative bg-black rounded-lg overflow-hidden">
-                      <video
-                        src={videoPreview}
-                        controls
-                        className="w-full max-h-48 object-contain"
-                      />
-                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="bg-yellow-400 hover:bg-yellow-500 text-black border-yellow-400"
+                    >
+                      Select File
+                    </Button>
                   </div>
                 )}
               </div>
