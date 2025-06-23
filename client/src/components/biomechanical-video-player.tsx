@@ -1998,7 +1998,7 @@ export function BiomechanicalVideoPlayer({
 
       {/* External Video Controls - Below Video */}
       {!isFloatingScrubber && (
-        <div className="bg-black/40 border border-white/10 backdrop-blur-sm rounded-lg p-4">
+        <div className="bg-black/40 border border-white/10 backdrop-blur-sm rounded p-4">
           <div className="space-y-4">
             {/* Progress Bar */}
             <div className="space-y-2">
@@ -2064,7 +2064,7 @@ export function BiomechanicalVideoPlayer({
       {/* Floating Scrubber */}
       {isFloatingScrubber && (
         <div
-          className="fixed bg-black/80 border border-white/20 backdrop-blur-sm rounded-lg p-3 z-50 shadow-lg"
+          className="fixed bg-black/80 border border-white/20 backdrop-blur-sm rounded p-3 z-50 shadow-lg"
           style={{
             left: `${floatingScrubberPos.x}px`,
             top: `${floatingScrubberPos.y}px`,
