@@ -640,8 +640,21 @@ export default function VideoAnalysisPage() {
         )}
 
         {/* Video Upload Success - Show Analysis Interface */}
-        {currentStep === "video" && uploadedVideoUrl && (
+        {currentStep === "video" && uploadedVideoUrl && selectedVideoId && (
           <div className="space-y-6">
+            {/* Video Player */}
+            <div className="w-full">
+              <BiomechanicalVideoPlayer
+                videoUrl={uploadedVideoUrl}
+                videoName={videoName || `Video ${selectedVideoId}`}
+                videoId={selectedVideoId}
+                onAnalyze={handleAnalyze}
+                isAnalyzing={isAnalyzing}
+                biomechanicalData={null}
+                analysisStatus="complete"
+                onOverlayChange={() => {}}
+              />
+            </div>
 
             <Card className="border-green-200 bg-green-50">
               <CardContent className="p-6 text-center">
@@ -651,13 +664,6 @@ export default function VideoAnalysisPage() {
                     <h3 className="text-lg font-semibold text-green-900">Upload Complete!</h3>
                     <p className="text-green-700 mb-4">Your video has been uploaded and is ready for analysis</p>
                   </div>
-                  <Button 
-                    onClick={() => setCurrentStep("video")}
-                    className="bg-green-600 hover:bg-green-700 text-white"
-                  >
-                    <Play className="h-4 w-4 mr-2" />
-                    Start Analysis
-                  </Button>
                 </div>
               </CardContent>
             </Card>
