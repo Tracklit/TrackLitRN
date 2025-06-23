@@ -570,38 +570,43 @@ export default function VideoAnalysisPage() {
 
         {/* Saved Videos */}
         {currentStep === "upload" && (
-          <Card className="border-blue-200 bg-blue-50 mb-6">
+          <Card className="bg-black border-gray-700 mb-6">
             <CardContent className="p-4">
               <div className="text-center">
-                <h3 className="font-semibold text-blue-900 mb-3">Saved Videos</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <div 
-                    className="cursor-pointer group"
-                    onClick={() => setLocation('/video-player/64')}
-                  >
-                    <div className="aspect-video bg-gray-200 rounded overflow-hidden mb-2">
-                      <img 
-                        src="/api/video-analysis/64/thumbnail" 
-                        alt="Video 64 thumbnail"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                      />
-                    </div>
-                    <p className="text-xs text-blue-700">Video #64</p>
+                <h3 className="font-semibold text-white mb-3">Saved Videos</h3>
+                {videos && videos.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    {videos.slice(0, 4).map((video: any) => (
+                      <div 
+                        key={video.id}
+                        className="cursor-pointer group"
+                        onClick={() => setLocation(`/video-player/${video.id}`)}
+                      >
+                        <div className="aspect-video bg-gray-800 rounded overflow-hidden mb-2 relative">
+                          <video
+                            src={video.fileUrl}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                            muted
+                            onLoadedData={(e) => {
+                              const videoEl = e.target as HTMLVideoElement;
+                              videoEl.currentTime = 1; // Show frame at 1 second
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
+                          <div className="absolute bottom-1 right-1">
+                            <Play className="h-4 w-4 text-white/80" />
+                          </div>
+                        </div>
+                        <p className="text-xs text-white truncate">{video.name || `Video #${video.id}`}</p>
+                      </div>
+                    ))}
                   </div>
-                  <div 
-                    className="cursor-pointer group"
-                    onClick={() => setLocation('/video-player/65')}
-                  >
-                    <div className="aspect-video bg-gray-200 rounded overflow-hidden mb-2">
-                      <img 
-                        src="/api/video-analysis/65/thumbnail" 
-                        alt="Video 65 thumbnail"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                      />
-                    </div>
-                    <p className="text-xs text-blue-700">Video #65</p>
+                ) : (
+                  <div className="text-gray-400 py-8">
+                    <FileVideo className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No saved videos yet</p>
                   </div>
-                </div>
+                )}
               </div>
             </CardContent>
           </Card>
