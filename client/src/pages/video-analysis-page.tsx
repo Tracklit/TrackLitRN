@@ -518,37 +518,7 @@ export default function VideoAnalysisPage() {
 
 
 
-        {/* Quick Access to Video Player */}
-        {currentStep === "upload" && (
-          <Card className="border-blue-200 bg-blue-50 mb-6">
-            <CardContent className="p-4">
-              <div className="text-center">
-                <h3 className="font-semibold text-blue-900 mb-2">Access Your Videos</h3>
-                <p className="text-sm text-blue-700 mb-3">
-                  If you have already uploaded videos, you can access them directly
-                </p>
-                <div className="flex gap-2 justify-center">
-                  <Button 
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setLocation('/video-player/64')}
-                    className="text-blue-600 border-blue-300"
-                  >
-                    Video #64
-                  </Button>
-                  <Button 
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setLocation('/video-player/65')}
-                    className="text-blue-600 border-blue-300"
-                  >
-                    Video #65
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+
 
         {/* Upload Step */}
         {currentStep === "upload" && (
@@ -666,6 +636,38 @@ export default function VideoAnalysisPage() {
                     </div>
                   </div>
                 )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Quick Access to Video Player */}
+        {currentStep === "upload" && (
+          <Card className="border-blue-200 bg-blue-50 mb-6">
+            <CardContent className="p-4">
+              <div className="text-center">
+                <h3 className="font-semibold text-blue-900 mb-2">Access Your Videos</h3>
+                <p className="text-sm text-blue-700 mb-3">
+                  If you have already uploaded videos, you can access them directly
+                </p>
+                <div className="flex gap-2 justify-center">
+                  <Button 
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setLocation('/video-player/64')}
+                    className="text-blue-600 border-blue-300"
+                  >
+                    Video #64
+                  </Button>
+                  <Button 
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setLocation('/video-player/65')}
+                    className="text-blue-600 border-blue-300"
+                  >
+                    Video #65
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
