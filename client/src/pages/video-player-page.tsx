@@ -345,80 +345,53 @@ export function VideoPlayerPage() {
 
       {/* Main Content */}
       <div className="relative z-0 min-h-screen pt-6 pb-20">
-        <div className="max-w-7xl mx-auto px-2">
-          <div className="flex flex-col xl:flex-row gap-8 h-full">
-            {/* Video Player - Main Column */}
-            <div className="flex-1 xl:w-4/5 relative">
-              {currentVideo ? (
-                <>
-                  <BiomechanicalVideoPlayer
-                    videoUrl={currentVideo.fileUrl}
-                    videoName={currentVideo.name}
-                    videoId={currentVideo.id}
-                    onAnalyze={handleAnalyze}
-                    isAnalyzing={false}
-                    biomechanicalData={currentVideo.analysisData}
-                    analysisStatus={currentVideo.status}
-                    onOverlayChange={handleOverlayChange}
-                  />
-                  
-                  {/* Processing Spinner Overlay */}
-                  {isProcessing && (
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 rounded">
-                      <div className="text-center space-y-4">
-                        <div className="relative flex items-center justify-center w-16 h-16 mx-auto">
-                          <div className="absolute inset-0 rounded-full border-4 border-blue-200/30"></div>
-                          <div className="absolute inset-0 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"></div>
-                        </div>
-                        <div className="text-white">
-                          <h3 className="font-semibold mb-2">Processing Video Analysis</h3>
-                          <p className="text-sm text-gray-300">Analyzing biomechanical data...</p>
-                        </div>
+        <div className="max-w-5xl mx-auto px-4">
+          {/* Video Player - Full Width */}
+          <div className="w-full relative">
+            {currentVideo ? (
+              <>
+                <BiomechanicalVideoPlayer
+                  videoUrl={currentVideo.fileUrl}
+                  videoName={currentVideo.name}
+                  videoId={currentVideo.id}
+                  onAnalyze={handleAnalyze}
+                  isAnalyzing={false}
+                  biomechanicalData={currentVideo.analysisData}
+                  analysisStatus={currentVideo.status}
+                  onOverlayChange={handleOverlayChange}
+                />
+                
+                {/* Processing Spinner Overlay */}
+                {isProcessing && (
+                  <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 rounded">
+                    <div className="text-center space-y-4">
+                      <div className="relative flex items-center justify-center w-16 h-16 mx-auto">
+                        <div className="absolute inset-0 rounded-full border-4 border-blue-200/30"></div>
+                        <div className="absolute inset-0 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"></div>
+                      </div>
+                      <div className="text-white">
+                        <h3 className="font-semibold mb-2">Processing Video Analysis</h3>
+                        <p className="text-sm text-gray-300">Analyzing biomechanical data...</p>
                       </div>
                     </div>
-                  )}
-                </>
-              ) : (
-                /* Show loading placeholder when video is being loaded */
-                <div className="aspect-video bg-gray-800/50 rounded-lg flex items-center justify-center">
-                  <div className="text-center space-y-4">
-                    <div className="relative flex items-center justify-center w-16 h-16 mx-auto">
-                      <div className="absolute inset-0 rounded-full border-4 border-blue-200/30"></div>
-                      <div className="absolute inset-0 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"></div>
-                    </div>
-                    <div className="text-white">
-                      <h3 className="font-semibold mb-2">Loading Video</h3>
-                      <p className="text-sm text-gray-300">Please wait while we load your video...</p>
-                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              /* Show loading placeholder when video is being loaded */
+              <div className="aspect-video bg-gray-800/50 rounded-lg flex items-center justify-center">
+                <div className="text-center space-y-4">
+                  <div className="relative flex items-center justify-center w-16 h-16 mx-auto">
+                    <div className="absolute inset-0 rounded-full border-4 border-blue-200/30"></div>
+                    <div className="absolute inset-0 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"></div>
+                  </div>
+                  <div className="text-white">
+                    <h3 className="font-semibold mb-2">Loading Video</h3>
+                    <p className="text-sm text-gray-300">Please wait while we load your video...</p>
                   </div>
                 </div>
-              )}
-            </div>
-
-            {/* Side Panel */}
-            <div className="xl:w-1/5 space-y-4">
-              {/* Analysis Actions */}
-              <Card className="bg-black/40 border-white/10 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2">
-                    <Brain className="h-5 w-5 text-green-400" />
-                    AI Analysis
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Button
-                    onClick={() => handleAnalyze('comprehensive')}
-                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
-                  >
-                    <Zap className="h-4 w-4 mr-2" />
-                    Run AI Analysis
-                  </Button>
-                  <div className="text-xs text-gray-400">
-                    Generate detailed performance insights using AI analysis
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
