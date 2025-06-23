@@ -3460,6 +3460,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // General exercise library endpoint (supports video analysis, upload, and youtube)
+  app.post("/api/exercise-library", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const user = req.user!;
+      const { name, description, type, videoId, analysisData, tags, isPublic } = req.body;
+      
+      // Validate required fields
+      if (!name || !type) {
+        return res.status(400).json({ error: "Name and type are required" });
+      }
+      
+      // Check subscription limits for Pro/Star users for video_analysis type
+      if (type === 'video_analysis') {
+        const subscriptionTier = user.subscriptionTier || 'free';
+        
+        if (subscriptionTier !== 'pro' && subscriptionTier !== 'star') {
+          return res.status(403).json({ 
+            error: "Feature restricted",
+            message: "Save To Library is available for Pro and Star users only"
+          });
+        }
+        
+        // Verify the video analysis exists and belongs to the user
+        const videoAnalysisRecord = await dbStorage.getVideoAnalysis(videoId);
+        
+        if (!videoAnalysisRecord || videoAnalysisRecord.userId !== user.id) {
+          return res.status(404).json({ error: "Video analysis not found" });
+        }
+        
+        // Create exercise library entry for video analysis
+        const exerciseData: InsertExerciseLibrary = {
+          userId: user.id,
+          name,
+          description: description || null,
+          type: 'video_analysis',
+          fileUrl: videoAnalysisRecord.fileUrl,
+          youtubeUrl: null,
+          youtubeVideoId: null,
+          thumbnailUrl: null,
+          fileSize: videoAnalysisRecord.fileSize,
+          mimeType: videoAnalysisRecord.mimeType,
+          isPublic: isPublic || false,
+          tags: tags ? (Array.isArray(tags) ? tags : tags.split(',').map((tag: string) => tag.trim())) : [],
+          videoAnalysisId: videoId,
+          analysisData: analysisData || videoAnalysisRecord.analysisData
+        };
+        
+        const [newExercise] = await db
+          .insert(exerciseLibrary)
+          .values(exerciseData)
+          .returning();
+        
+        return res.status(201).json(newExercise);
+      }
+      
+      return res.status(400).json({ error: "Unsupported type for this endpoint" });
+    } catch (error) {
+      console.error("Error creating exercise library entry:", error);
+      res.status(500).json({ error: "Failed to create exercise library entry" });
+    }
+  });
+
   // Add YouTube video to exercise library
   app.post("/api/exercise-library/youtube", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
