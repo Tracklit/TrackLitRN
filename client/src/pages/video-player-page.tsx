@@ -32,17 +32,21 @@ function SaveToLibraryIcon({ videoId, videoName, analysisData }: {
   });
 
   // Check if video is already saved in library
-  const { data: existingLibraryEntry } = useQuery({
+  const { data: existingLibraryEntry, error: checkError } = useQuery({
     queryKey: ['/api/exercise-library/check-video', videoId],
     queryFn: async () => {
       const response = await apiRequest('GET', `/api/exercise-library/check-video/${videoId}`);
+      if (!response.ok) {
+        throw new Error('Failed to check video status');
+      }
       return response.json();
     },
-    enabled: !!videoId && !!user
+    enabled: !!videoId && !!user,
+    retry: false
   });
 
   const isProOrStar = user && typeof user === 'object' && user !== null && 'subscriptionTier' in user && ((user as any).subscriptionTier === 'pro' || (user as any).subscriptionTier === 'star');
-  const isAlreadySaved = !!existingLibraryEntry;
+  const isAlreadySaved = !checkError && !!existingLibraryEntry;
 
   const saveToLibraryMutation = useMutation({
     mutationFn: async (data: { name: string; description: string; videoId: number }) => {

@@ -3282,16 +3282,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const offset = (page - 1) * limit;
       const { type } = req.query;
       
-      let whereConditions = [eq(exerciseLibrary.userId, req.user!.id)];
+      let whereCondition;
       
       if (type) {
-        whereConditions.push(eq(exerciseLibrary.type, type as string));
+        whereCondition = and(
+          eq(exerciseLibrary.userId, req.user!.id),
+          eq(exerciseLibrary.type, type as string)
+        );
+      } else {
+        whereCondition = eq(exerciseLibrary.userId, req.user!.id);
       }
       
-      const whereCondition = whereConditions.length > 1 ? and(...whereConditions) : whereConditions[0];
-      
       const exercises = await db
-        .select()
+        .select({
+          id: exerciseLibrary.id,
+          name: exerciseLibrary.name,
+          description: exerciseLibrary.description,
+          type: exerciseLibrary.type,
+          fileUrl: exerciseLibrary.fileUrl,
+          thumbnailUrl: exerciseLibrary.thumbnailUrl,
+          duration: exerciseLibrary.duration,
+          videoAnalysisId: exerciseLibrary.videoAnalysisId,
+          createdAt: exerciseLibrary.createdAt,
+          userId: exerciseLibrary.userId
+        })
         .from(exerciseLibrary)
         .where(whereCondition)
         .orderBy(sql`${exerciseLibrary.createdAt} DESC`)
