@@ -100,6 +100,15 @@ export default function VideoAnalysisPage() {
     }
   });
 
+  // Get saved video analyses from exercise library
+  const { data: savedVideos } = useQuery({
+    queryKey: ["/api/exercise-library/saved-videos"],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/exercise-library?type=video_analysis');
+      return response.json();
+    }
+  });
+
   // Get current selected video data with polling for processing status
   const { data: currentVideo, refetch: refetchCurrentVideo } = useQuery({
     queryKey: ["/api/video-analysis", selectedVideoId],
