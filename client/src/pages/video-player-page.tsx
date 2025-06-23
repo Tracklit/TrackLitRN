@@ -332,7 +332,7 @@ export function VideoPlayerPage() {
 
       {/* Main Content */}
       <div className="relative z-0 min-h-screen pt-6 pb-20">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-7xl mx-auto px-2">
           <div className="flex flex-col xl:flex-row gap-8 h-full">
             {/* Video Player - Main Column */}
             <div className="flex-1 xl:w-4/5">
