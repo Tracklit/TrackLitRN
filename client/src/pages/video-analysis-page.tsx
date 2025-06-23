@@ -12,7 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Camera, Upload, FileVideo, Play, Sparkles, Zap, Crown, ArrowLeft, ArrowRight, Check, Copy, ThumbsUp, ThumbsDown, CheckCircle } from "lucide-react";
+import { Camera, Upload, FileVideo, Play, Sparkles, Zap, Crown, ArrowLeft, ArrowRight, Check, Copy, ThumbsUp, ThumbsDown, CheckCircle, Plus, Minus } from "lucide-react";
 import { useLocation } from "wouter";
 import videoAnalysisCardImage from "@assets/video-analysis-card.jpeg";
 import { BiomechanicalVideoPlayer } from "@/components/biomechanical-video-player";
@@ -22,6 +22,7 @@ export default function VideoAnalysisPage() {
   const [currentStep, setCurrentStep] = useState<"upload" | "video" | "results">("upload");
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [showUploadDropdown, setShowUploadDropdown] = useState(false);
   const [videoName, setVideoName] = useState("");
   const [videoDescription, setVideoDescription] = useState("");
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
@@ -151,13 +152,10 @@ export default function VideoAnalysisPage() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/video-analysis"] });
-      setSelectedVideoId(data.id);
-      setUploadedVideoUrl(data.fileUrl);
       setIsUploading(false);
       setUploadProgress(0);
-      setProcessingStage("Processing biomechanical data...");
-      setAnalysisProgress(25);
-      setCurrentStep("video");
+      // Redirect directly to video player page
+      setLocation(`/video-player/${data.id}`);
     },
     onError: (error) => {
       setIsUploading(false);
@@ -483,31 +481,54 @@ export default function VideoAnalysisPage() {
         {currentStep === "upload" && (
           <Card className="border-2">
             <CardContent className="p-4">
-              <div
-                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                  dragActive
-                    ? "border-primary bg-primary/5"
-                    : selectedFile
-                    ? "border-green-500 bg-green-50"
-                    : "border-blue-300 bg-gray-50"
-                }`}
-                onDragEnter={handleDrag}
-                onDragLeave={handleDrag}
-                onDragOver={handleDrag}
-                onDrop={handleDrop}
-              >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="video/mp4,video/mov,video/avi,video/quicktime"
-                  onChange={handleFileInputChange}
-                  className="hidden"
-                />
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowUploadDropdown(!showUploadDropdown)}
+                  className="flex items-center gap-2"
+                >
+                  {showUploadDropdown ? (
+                    <Minus className="h-4 w-4" />
+                  ) : (
+                    <Plus className="h-4 w-4" />
+                  )}
+                  Upload Video
+                </Button>
                 
-                {selectedFile ? (
-                  <div className="space-y-3">
+                {selectedFile && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <FileVideo className="h-4 w-4 text-green-600" />
+                    <span>{selectedFile.name}</span>
+                  </div>
+                )}
+              </div>
+              
+              {showUploadDropdown && (
+                <div className="mt-4">
+                  <div
+                    className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                      dragActive
+                        ? "border-primary bg-primary/5"
+                        : selectedFile
+                        ? "border-green-500 bg-green-50"
+                        : "border-blue-300 bg-gray-50"
+                    }`}
+                    onDragEnter={handleDrag}
+                    onDragLeave={handleDrag}
+                    onDragOver={handleDrag}
+                    onDrop={handleDrop}
+                  >
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="video/mp4,video/mov,video/avi,video/quicktime"
+                      onChange={handleFileInputChange}
+                      className="hidden"
+                    />
+                    
                     {uploadMutation.isPending || isUploading ? (
-                      <>
+                      <div className="space-y-3">
                         <div className="relative flex items-center justify-center w-12 h-12 mx-auto">
                           <div className="absolute inset-0 rounded-full border-3 border-blue-200"></div>
                           <div 
@@ -522,13 +543,12 @@ export default function VideoAnalysisPage() {
                             {processingStage || "Uploading..."}
                           </h3>
                         </div>
-                      </>
+                      </div>
                     ) : (
-                      <>
-                        <FileVideo className="h-12 w-12 text-green-600 mx-auto" />
+                      <div className="space-y-3">
+                        <Upload className="h-12 w-12 text-gray-400 mx-auto" />
                         <div>
-                          <h3 className="font-semibold text-green-700">Ready</h3>
-                          <p className="text-sm text-gray-600">{selectedFile.name}</p>
+                          <h3 className="font-semibold text-gray-700">Drop video here or click to select</h3>
                         </div>
                         <Button
                           type="button"
@@ -537,59 +557,50 @@ export default function VideoAnalysisPage() {
                           onClick={() => fileInputRef.current?.click()}
                           className="bg-yellow-400 hover:bg-yellow-500 text-black border-yellow-400"
                         >
-                          Change
+                          Select File
                         </Button>
-                      </>
+                      </div>
                     )}
                   </div>
-                ) : (
-                  <div className="space-y-3">
-                    <Upload className="h-12 w-12 text-gray-400 mx-auto" />
-                    <div>
-                      <h3 className="font-semibold text-gray-700">Upload Video</h3>
-                    </div>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="bg-yellow-400 hover:bg-yellow-500 text-black border-yellow-400"
-                    >
-                      Select File
-                    </Button>
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
 
-        {/* Quick Access to Video Player */}
+        {/* Saved Videos */}
         {currentStep === "upload" && (
           <Card className="border-blue-200 bg-blue-50 mb-6">
             <CardContent className="p-4">
               <div className="text-center">
-                <h3 className="font-semibold text-blue-900 mb-2">Access Your Videos</h3>
-                <p className="text-sm text-blue-700 mb-3">
-                  If you have already uploaded videos, you can access them directly
-                </p>
-                <div className="flex gap-2 justify-center">
-                  <Button 
-                    size="sm"
-                    variant="outline"
+                <h3 className="font-semibold text-blue-900 mb-3">Saved Videos</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div 
+                    className="cursor-pointer group"
                     onClick={() => setLocation('/video-player/64')}
-                    className="text-blue-600 border-blue-300"
                   >
-                    Video #64
-                  </Button>
-                  <Button 
-                    size="sm"
-                    variant="outline"
+                    <div className="aspect-video bg-gray-200 rounded overflow-hidden mb-2">
+                      <img 
+                        src="/api/video-analysis/64/thumbnail" 
+                        alt="Video 64 thumbnail"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      />
+                    </div>
+                    <p className="text-xs text-blue-700">Video #64</p>
+                  </div>
+                  <div 
+                    className="cursor-pointer group"
                     onClick={() => setLocation('/video-player/65')}
-                    className="text-blue-600 border-blue-300"
                   >
-                    Video #65
-                  </Button>
+                    <div className="aspect-video bg-gray-200 rounded overflow-hidden mb-2">
+                      <img 
+                        src="/api/video-analysis/65/thumbnail" 
+                        alt="Video 65 thumbnail"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      />
+                    </div>
+                    <p className="text-xs text-blue-700">Video #65</p>
+                  </div>
                 </div>
               </div>
             </CardContent>

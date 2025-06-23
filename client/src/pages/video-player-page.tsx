@@ -218,13 +218,20 @@ export function VideoPlayerPage() {
   const videoId = params?.id ? parseInt(params.id) : null;
   const [overlays, setOverlays] = useState<any[]>([]);
 
-  // Fetch video data
+  // Fetch video data with polling for processing status
   const { data: videos, isLoading } = useQuery({
     queryKey: ['/api/video-analysis'],
-    enabled: !!videoId
+    enabled: !!videoId,
+    refetchInterval: (data: any) => {
+      // Poll every 2 seconds if any video is still processing
+      const videos = Array.isArray(data) ? data : [];
+      const currentVideo = videos.find((v: any) => v.id === videoId);
+      return currentVideo && currentVideo.status === 'processing' ? 2000 : false;
+    }
   });
 
   const currentVideo = Array.isArray(videos) ? videos.find((v: any) => v.id === videoId) : null;
+  const isProcessing = currentVideo && currentVideo.status === 'processing';
 
   const handleAnalyze = async (promptId: string) => {
     // Handle analysis if needed
