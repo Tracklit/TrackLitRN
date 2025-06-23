@@ -278,7 +278,11 @@ export function VideoPlayerPage() {
     );
   }
 
-  if (!currentVideo) {
+  // Show loading state if video is not found but data is still loading
+  const showLoadingOverlay = !currentVideo && isLoading;
+  
+  // Only show "Video Not Found" if we're not loading and video doesn't exist
+  if (!currentVideo && !isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
         <div className="text-white text-center">
@@ -324,14 +328,16 @@ export function VideoPlayerPage() {
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back To Upload
               </Button>
-              <div className="flex items-center gap-3">
-                <span className="text-white font-medium text-sm">Save Video</span>
-                <SaveToLibraryIcon 
-                  videoId={videoId!} 
-                  videoName={currentVideo.name}
-                  analysisData={currentVideo.analysisData}
-                />
-              </div>
+              {currentVideo && (
+                <div className="flex items-center gap-3">
+                  <span className="text-white font-medium text-sm">Save Video</span>
+                  <SaveToLibraryIcon 
+                    videoId={videoId!} 
+                    videoName={currentVideo.name}
+                    analysisData={currentVideo.analysisData}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -343,28 +349,46 @@ export function VideoPlayerPage() {
           <div className="flex flex-col xl:flex-row gap-8 h-full">
             {/* Video Player - Main Column */}
             <div className="flex-1 xl:w-4/5 relative">
-              <BiomechanicalVideoPlayer
-                videoUrl={currentVideo.fileUrl}
-                videoName={currentVideo.name}
-                videoId={currentVideo.id}
-                onAnalyze={handleAnalyze}
-                isAnalyzing={false}
-                biomechanicalData={currentVideo.analysisData}
-                analysisStatus={currentVideo.status}
-                onOverlayChange={handleOverlayChange}
-              />
-              
-              {/* Processing Spinner Overlay */}
-              {isProcessing && (
-                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 rounded">
+              {currentVideo ? (
+                <>
+                  <BiomechanicalVideoPlayer
+                    videoUrl={currentVideo.fileUrl}
+                    videoName={currentVideo.name}
+                    videoId={currentVideo.id}
+                    onAnalyze={handleAnalyze}
+                    isAnalyzing={false}
+                    biomechanicalData={currentVideo.analysisData}
+                    analysisStatus={currentVideo.status}
+                    onOverlayChange={handleOverlayChange}
+                  />
+                  
+                  {/* Processing Spinner Overlay */}
+                  {isProcessing && (
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 rounded">
+                      <div className="text-center space-y-4">
+                        <div className="relative flex items-center justify-center w-16 h-16 mx-auto">
+                          <div className="absolute inset-0 rounded-full border-4 border-blue-200/30"></div>
+                          <div className="absolute inset-0 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"></div>
+                        </div>
+                        <div className="text-white">
+                          <h3 className="font-semibold mb-2">Processing Video Analysis</h3>
+                          <p className="text-sm text-gray-300">Analyzing biomechanical data...</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                /* Show loading placeholder when video is being loaded */
+                <div className="aspect-video bg-gray-800/50 rounded-lg flex items-center justify-center">
                   <div className="text-center space-y-4">
                     <div className="relative flex items-center justify-center w-16 h-16 mx-auto">
                       <div className="absolute inset-0 rounded-full border-4 border-blue-200/30"></div>
                       <div className="absolute inset-0 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"></div>
                     </div>
                     <div className="text-white">
-                      <h3 className="font-semibold mb-2">Processing Video Analysis</h3>
-                      <p className="text-sm text-gray-300">Analyzing biomechanical data...</p>
+                      <h3 className="font-semibold mb-2">Loading Video</h3>
+                      <p className="text-sm text-gray-300">Please wait while we load your video...</p>
                     </div>
                   </div>
                 </div>
