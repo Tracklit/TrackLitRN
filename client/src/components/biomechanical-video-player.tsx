@@ -1875,7 +1875,7 @@ export function BiomechanicalVideoPlayer({
     <div className="space-y-4">
       {/* Video Container - Dynamic Aspect Ratio */}
       <div 
-        className="relative w-full bg-black rounded-lg overflow-hidden" 
+        className="relative w-full bg-black rounded overflow-hidden" 
         style={{ aspectRatio: videoAspectRatio.toString() }}
       >
         <div 
