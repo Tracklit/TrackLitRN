@@ -307,7 +307,7 @@ export function VideoPlayerPage() {
       <div className="border-b border-white/10 bg-black/20 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center justify-between w-full">
               <Button
                 variant="ghost"
                 size="sm"
@@ -315,10 +315,15 @@ export function VideoPlayerPage() {
                 className="text-white hover:bg-white/10"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Videos
+                Back To Upload
               </Button>
-              <div>
-                <h1 className="text-xl font-bold text-white">Video Analysis</h1>
+              <div className="flex items-center gap-3">
+                <span className="text-white font-medium text-sm">Save Video</span>
+                <SaveToLibraryIcon 
+                  videoId={videoId!} 
+                  videoName={currentVideo.name}
+                  analysisData={currentVideo.analysisData}
+                />
               </div>
             </div>
           </div>
@@ -331,18 +336,6 @@ export function VideoPlayerPage() {
           <div className="flex flex-col xl:flex-row gap-6 h-full">
             {/* Video Player - Main Column */}
             <div className="flex-1 xl:w-3/4">
-              {/* Save Video Button */}
-              <div className="flex justify-end mb-4">
-                <div className="flex items-center gap-3 bg-black/40 backdrop-blur-sm border border-white/10 rounded-lg px-4 py-2">
-                  <span className="text-white font-medium text-sm">Save Video</span>
-                  <SaveToLibraryIcon 
-                    videoId={videoId!} 
-                    videoName={currentVideo.name}
-                    analysisData={currentVideo.analysisData}
-                  />
-                </div>
-              </div>
-              
               <BiomechanicalVideoPlayer
                 videoUrl={currentVideo.fileUrl}
                 videoName={currentVideo.name}
