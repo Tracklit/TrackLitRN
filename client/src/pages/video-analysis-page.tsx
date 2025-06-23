@@ -471,48 +471,7 @@ export default function VideoAnalysisPage() {
 
       
       <div className="space-y-6">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 text-white">
-          <div className="flex items-center gap-3 mb-4">
-            <Camera className="h-8 w-8" />
-            <h1 className="text-2xl font-bold">Video Analysis</h1>
-          </div>
-          <p className="text-blue-100">
-            Upload race videos and get AI-powered analysis from Sprinthia
-          </p>
-        </div>
 
-        {/* Step Progress Indicator */}
-        <div className="flex items-center justify-center mb-6">
-          <div className="flex items-center space-x-4">
-            <div className={`flex items-center justify-center w-6 h-6 rounded-full text-sm ${
-              currentStep === "upload" ? "bg-blue-600 text-white" : "bg-green-500 text-white"
-            }`}>
-              {currentStep !== "upload" ? <Check className="w-3 h-3" /> : "1"}
-            </div>
-            <div className="w-12 h-0.5 bg-gray-300 rounded">
-              <div className={`h-full bg-blue-600 rounded transition-all duration-300 ${
-                currentStep === "video" || currentStep === "results" ? "w-full" : "w-0"
-              }`} />
-            </div>
-            <div className={`flex items-center justify-center w-6 h-6 rounded-full text-sm ${
-              currentStep === "video" ? "bg-blue-600 text-white" : 
-              currentStep === "results" ? "bg-green-500 text-white" : "bg-gray-400 text-gray-600"
-            }`}>
-              {currentStep === "results" ? <Check className="w-3 h-3" /> : "2"}
-            </div>
-            <div className="w-12 h-0.5 bg-gray-300 rounded">
-              <div className={`h-full bg-blue-600 rounded transition-all duration-300 ${
-                currentStep === "results" ? "w-full" : "w-0"
-              }`} />
-            </div>
-            <div className={`flex items-center justify-center w-6 h-6 rounded-full text-sm ${
-              currentStep === "results" ? "bg-blue-600 text-white" : "bg-gray-400 text-gray-600"
-            }`}>
-              3
-            </div>
-          </div>
-        </div>
 
 
 
