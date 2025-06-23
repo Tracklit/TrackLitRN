@@ -31,7 +31,7 @@ function SaveToLibraryCard({ videoId, videoName, analysisData }: {
     queryKey: ['/api/user']
   });
 
-  const isProOrStar = (user as any)?.subscriptionTier === 'pro' || (user as any)?.subscriptionTier === 'star';
+  const isProOrStar = user && typeof user === 'object' && 'subscriptionTier' in user && (user.subscriptionTier === 'pro' || user.subscriptionTier === 'star');
 
   const saveToLibraryMutation = useMutation({
     mutationFn: async (data: { name: string; description: string; videoId: number }) => {

@@ -1287,7 +1287,7 @@ export const exerciseLibrary = pgTable("exercise_library", {
   userId: integer("user_id").notNull().references(() => users.id),
   name: text("name").notNull(),
   description: text("description"),
-  type: text("type", { enum: ['upload', 'youtube'] }).notNull(),
+  type: text("type", { enum: ['upload', 'youtube', 'video_analysis'] }).notNull(),
   fileUrl: text("file_url"), // For uploaded videos/images
   youtubeUrl: text("youtube_url"), // For YouTube links
   youtubeVideoId: text("youtube_video_id"), // Extracted YouTube video ID
@@ -1297,6 +1297,8 @@ export const exerciseLibrary = pgTable("exercise_library", {
   mimeType: text("mime_type"), // For uploaded files
   isPublic: boolean("is_public").default(false),
   tags: text("tags").array(), // Array of tags for categorization
+  videoAnalysisId: integer("video_analysis_id").references(() => videoAnalysis.id), // For video_analysis type entries
+  analysisData: text("analysis_data"), // JSON string of biomechanical analysis data
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
