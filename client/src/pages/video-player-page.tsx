@@ -1,11 +1,218 @@
 import { useState, useEffect } from "react";
 import { useRoute, useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { BiomechanicalVideoPlayer } from "@/components/biomechanical-video-player";
-import { ArrowLeft, Activity, Brain, Zap, Target } from "lucide-react";
+import { ArrowLeft, Activity, Brain, Zap, Target, Bookmark, Crown, Lock, Check } from "lucide-react";
+
+// Save To Library Card Component
+function SaveToLibraryCard({ videoId, videoName, analysisData }: { 
+  videoId: number; 
+  videoName: string; 
+  analysisData: any; 
+}) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [libraryName, setLibraryName] = useState("");
+  const [libraryDescription, setLibraryDescription] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+
+  // Fetch user data to check subscription tier
+  const { data: user } = useQuery({
+    queryKey: ['/api/user']
+  });
+
+  const isProOrStar = (user as any)?.subscriptionTier === 'pro' || (user as any)?.subscriptionTier === 'star';
+
+  const saveToLibraryMutation = useMutation({
+    mutationFn: async (data: { name: string; description: string; videoId: number }) => {
+      const response = await apiRequest('POST', '/api/exercise-library', {
+        name: data.name,
+        description: data.description,
+        videoId: data.videoId,
+        type: 'video_analysis',
+        analysisData: analysisData
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      setIsSaved(true);
+      setIsExpanded(false);
+      toast({
+        title: "Saved to Library",
+        description: "Video analysis has been saved to your exercise library.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/exercise-library'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Save Failed",
+        description: error.message || "Failed to save to library",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSave = () => {
+    if (!libraryName.trim()) {
+      toast({
+        title: "Name Required",
+        description: "Please enter a name for your library entry.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    saveToLibraryMutation.mutate({
+      name: libraryName,
+      description: libraryDescription,
+      videoId: videoId
+    });
+  };
+
+  if (!isProOrStar) {
+    return (
+      <Card className="bg-black/40 border-white/10 backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <Bookmark className="h-5 w-5 text-blue-400" />
+            Save To Library
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-gray-300 space-y-3">
+          <div className="flex items-center gap-2 p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+            <Lock className="h-4 w-4 text-yellow-400" />
+            <span className="text-sm">Pro/Star Feature</span>
+          </div>
+          <p className="text-sm text-gray-400">
+            Upgrade to Pro or Star to save analyzed videos to your exercise library.
+          </p>
+          <Button 
+            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+            onClick={() => setLocation('/spikes')}
+          >
+            <Crown className="h-4 w-4 mr-2" />
+            Upgrade Plan
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isSaved) {
+    return (
+      <Card className="bg-black/40 border-white/10 backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <Check className="h-5 w-5 text-green-400" />
+            Saved to Library
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-gray-300 space-y-3">
+          <div className="flex items-center gap-2 p-3 bg-green-800/20 rounded-lg border border-green-700/30">
+            <Check className="h-4 w-4 text-green-400" />
+            <span className="text-sm">Successfully saved</span>
+          </div>
+          <Button 
+            variant="outline"
+            className="w-full"
+            onClick={() => setLocation('/tools/exercise-library')}
+          >
+            View in Library
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="bg-black/40 border-white/10 backdrop-blur-sm">
+      <CardHeader>
+        <CardTitle className="text-white flex items-center gap-2">
+          <Bookmark className="h-5 w-5 text-blue-400" />
+          Save To Library
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="text-gray-300 space-y-3">
+        {!isExpanded ? (
+          <>
+            <div className="flex items-center gap-2 p-3 bg-blue-800/20 rounded-lg border border-blue-700/30">
+              <Bookmark className="h-4 w-4 text-blue-400" />
+              <span className="text-sm">Ready to save</span>
+            </div>
+            <p className="text-sm text-gray-400">
+              Save this analyzed video to your exercise library for future reference.
+            </p>
+            <Button 
+              className="w-full bg-blue-600 hover:bg-blue-700"
+              onClick={() => {
+                setIsExpanded(true);
+                setLibraryName(videoName || "");
+              }}
+            >
+              Save to Library
+            </Button>
+          </>
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="library-name" className="text-sm font-medium text-gray-300">
+                Library Name
+              </Label>
+              <Input
+                id="library-name"
+                value={libraryName}
+                onChange={(e) => setLibraryName(e.target.value)}
+                placeholder="Enter a name for this exercise"
+                className="mt-1 bg-gray-800/50 border-gray-600 text-white placeholder-gray-400"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="library-description" className="text-sm font-medium text-gray-300">
+                Description (Optional)
+              </Label>
+              <Textarea
+                id="library-description"
+                value={libraryDescription}
+                onChange={(e) => setLibraryDescription(e.target.value)}
+                placeholder="Add notes about this analysis..."
+                className="mt-1 bg-gray-800/50 border-gray-600 text-white placeholder-gray-400"
+                rows={3}
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setIsExpanded(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSave}
+                disabled={saveToLibraryMutation.isPending}
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+              >
+                {saveToLibraryMutation.isPending ? "Saving..." : "Save"}
+              </Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 export function VideoPlayerPage() {
   const [, params] = useRoute("/video-player/:id");
