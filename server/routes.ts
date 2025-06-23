@@ -3284,10 +3284,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let whereCondition;
       
-      if (type) {
+      if (type && type === 'video_analysis') {
         whereCondition = and(
           eq(exerciseLibrary.userId, req.user!.id),
-          eq(exerciseLibrary.type, type as string)
+          sql`${exerciseLibrary.type} = 'video_analysis'`
         );
       } else {
         whereCondition = eq(exerciseLibrary.userId, req.user!.id);
@@ -3580,7 +3580,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Check if this video analysis is already saved in the user's library
       const existingEntry = await db
-        .select()
+        .select({
+          id: exerciseLibrary.id,
+          name: exerciseLibrary.name,
+          description: exerciseLibrary.description,
+          type: exerciseLibrary.type,
+          videoAnalysisId: exerciseLibrary.videoAnalysisId,
+          createdAt: exerciseLibrary.createdAt
+        })
         .from(exerciseLibrary)
         .where(and(
           eq(exerciseLibrary.userId, user.id),
