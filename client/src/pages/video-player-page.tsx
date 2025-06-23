@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { BiomechanicalVideoPlayer } from "@/components/biomechanical-video-player";
-import { ArrowLeft, Activity, Brain, Zap, Target, Bookmark, Crown, Lock, Check } from "lucide-react";
+import { ArrowLeft, Activity, Brain, Zap, Target, Save, Crown, Lock, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -129,7 +129,7 @@ function SaveToLibraryIcon({ videoId, videoName, analysisData }: {
             ) : !isProOrStar ? (
               <Lock className="h-5 w-5" />
             ) : (
-              <Bookmark className="h-5 w-5" />
+              <Save className="h-5 w-5" />
             )}
           </Button>
         </TooltipTrigger>
@@ -137,8 +137,8 @@ function SaveToLibraryIcon({ videoId, videoName, analysisData }: {
           {isAlreadySaved 
             ? 'Already saved - View in library' 
             : !isProOrStar 
-              ? 'Save to Library (Pro/Star only)' 
-              : 'Save to Library'
+              ? 'Save Video (Pro/Star only)' 
+              : 'Save Video'
           }
         </TooltipContent>
       </Tooltip>
@@ -147,8 +147,8 @@ function SaveToLibraryIcon({ videoId, videoName, analysisData }: {
         <DialogContent className="bg-gray-900 border-gray-700 text-white">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Bookmark className="h-5 w-5 text-blue-400" />
-              Save to Library
+              <Save className="h-5 w-5 text-blue-400" />
+              Save Video
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
@@ -199,7 +199,7 @@ function SaveToLibraryIcon({ videoId, videoName, analysisData }: {
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <Bookmark className="h-4 w-4" />
+                    <Save className="h-4 w-4" />
                     Save
                   </div>
                 )}
