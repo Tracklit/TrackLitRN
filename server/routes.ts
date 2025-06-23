@@ -3272,7 +3272,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Exercise Library endpoints
   
-  // Get user's exercise library with pagination
+  // Get user's exercise library with pagination and type filtering
   app.get("/api/exercise-library", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
@@ -3280,11 +3280,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const page = parseInt(req.query.page as string) || 1;
       const limit = 30;
       const offset = (page - 1) * limit;
+      const { type } = req.query;
+      
+      let whereConditions = [eq(exerciseLibrary.userId, req.user!.id)];
+      
+      if (type) {
+        whereConditions.push(eq(exerciseLibrary.type, type as string));
+      }
+      
+      const whereCondition = whereConditions.length > 1 ? and(...whereConditions) : whereConditions[0];
       
       const exercises = await db
         .select()
         .from(exerciseLibrary)
-        .where(eq(exerciseLibrary.userId, req.user!.id))
+        .where(whereCondition)
         .orderBy(sql`${exerciseLibrary.createdAt} DESC`)
         .limit(limit)
         .offset(offset);
@@ -3292,7 +3301,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const totalCount = await db
         .select({ count: sql<number>`count(*)` })
         .from(exerciseLibrary)
-        .where(eq(exerciseLibrary.userId, req.user!.id));
+        .where(whereCondition);
       
       res.json({
         exercises,

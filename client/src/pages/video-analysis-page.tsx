@@ -516,6 +516,40 @@ export default function VideoAnalysisPage() {
 
 
 
+        {/* Saved Videos Section */}
+        {currentStep === "upload" && savedVideos && savedVideos.exercises && savedVideos.exercises.length > 0 && (
+          <Card className="border-green-200 bg-green-50 mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-green-800">
+                <CheckCircle className="h-5 w-5" />
+                Saved Video Analyses
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {savedVideos.exercises.map((video: any) => (
+                  <div key={video.id} className="bg-white rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow border border-green-200"
+                       onClick={() => setLocation(`/video-player/${video.videoAnalysisId}`)}>
+                    <div className="aspect-video bg-gray-100 rounded mb-3 flex items-center justify-center">
+                      <Play className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <h3 className="font-medium text-sm mb-1 truncate text-gray-900">{video.name}</h3>
+                    {video.description && (
+                      <p className="text-xs text-gray-600 line-clamp-2 mb-2">{video.description}</p>
+                    )}
+                    <div className="flex items-center justify-between">
+                      <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">Saved</Badge>
+                      <span className="text-xs text-gray-500">
+                        {new Date(video.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Quick Access to Video Player */}
         {currentStep === "upload" && (
           <Card className="border-blue-200 bg-blue-50 mb-6">
