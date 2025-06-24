@@ -260,9 +260,9 @@ export default function HomePage() {
       
       {/* Fixed Community Activity Ticker - Below Header */}
       {isTickerVisible && (
-        <div className="fixed top-[60px] left-0 right-0 z-40 bg-gradient-to-b from-gray-800 to-gray-900">
+        <div className="fixed top-[60px] left-0 right-0 z-40 bg-gray-900">
           <div className="mx-auto" style={{ maxWidth: "540px" }}>
-            <div className="bg-gradient-to-b from-gray-800 to-gray-900 relative overflow-hidden">
+            <div className="bg-gray-900 relative overflow-hidden">
               <div className="absolute left-2 top-1 z-60 flex flex-col gap-1">
                 <Button
                   variant="ghost"
