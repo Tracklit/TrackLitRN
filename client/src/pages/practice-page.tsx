@@ -675,7 +675,7 @@ function PracticePage() {
                         htmlFor="track-adjust" 
                         className="text-xs cursor-pointer"
                       >
-                        Track adjustment
+                        On Movement
                       </label>
                     </div>
                   </div>
