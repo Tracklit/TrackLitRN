@@ -287,7 +287,7 @@ export default function HomePage() {
                   className="h-6 w-6 p-0 text-white/70 hover:text-white"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setIsTickerVisible(false);
+                    toggleTickerVisibility(false);
                   }}
                   title="Hide ticker"
                 >
@@ -303,19 +303,15 @@ export default function HomePage() {
         </div>
       
       
-      {/* Show ticker button when hidden */}
+      {/* Show ticker background when hidden */}
       {!isTickerVisible && (
-        <div className="fixed top-[60px] left-0 right-0 z-40">
+        <div 
+          className="fixed top-[60px] left-0 right-0 z-40 cursor-pointer"
+          onClick={() => toggleTickerVisibility(true)}
+          title="Show community activity ticker"
+        >
           <div className="mx-auto" style={{ maxWidth: "540px" }}>
-            <div className="bg-purple-600/20 backdrop-blur-sm border-b border-purple-500/30 px-2 py-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 w-full text-xs text-white/70 hover:text-white"
-                onClick={() => setIsTickerVisible(true)}
-              >
-                Show Community Activity
-              </Button>
+            <div className="bg-purple-600/20 backdrop-blur-sm border-b border-purple-500/30 h-6">
             </div>
           </div>
         </div>
