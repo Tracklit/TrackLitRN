@@ -340,7 +340,7 @@ export default function HomePage() {
                               <div className="flex-1 space-y-2">
                                 {/* Static content for consistency with other cards */}
                                 <div className="text-center">
-                                  <h2 className="font-bold mb-2" style={{ fontSize: '16px' }}>On Movement</h2>
+                                  <h2 className="font-bold mb-2" style={{ fontSize: '16px' }}>Today's Workout</h2>
                                   <p className="text-muted-foreground text-sm">Track your training sessions</p>
                                 </div>
                               </div>
