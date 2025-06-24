@@ -268,20 +268,11 @@ export default function HomePage() {
                   className="h-6 w-6 p-0 text-white/70 hover:text-white"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setIsCarouselPaused(!isCarouselPaused);
+                    setIsTickerVisible(false);
                   }}
-                  title={isCarouselPaused ? "Resume ticker" : "Pause ticker"}
+                  title="Close ticker"
                 >
-                  {isCarouselPaused ? (
-                    <div className="h-3 w-3 flex items-center justify-center">
-                      <div className="w-0 h-0 border-l-2 border-l-current border-y-1.5 border-y-transparent"></div>
-                    </div>
-                  ) : (
-                    <div className="h-3 w-3 flex items-center justify-center">
-                      <div className="w-1 h-3 bg-current mr-0.5"></div>
-                      <div className="w-1 h-3 bg-current"></div>
-                    </div>
-                  )}
+                  <X className="h-3 w-3" />
                 </Button>
                 <Button
                   variant="ghost"
@@ -289,11 +280,15 @@ export default function HomePage() {
                   className="h-6 w-6 p-0 text-white/70 hover:text-white"
                   onClick={(e) => {
                     e.stopPropagation();
-                    toggleTickerVisibility(!isTickerVisible);
+                    setIsCarouselPaused(!isCarouselPaused);
                   }}
-                  title="Close ticker"
+                  title={isCarouselPaused ? "Resume ticker" : "Pause ticker"}
                 >
-                  <X className="h-4 w-4" />
+                  {isCarouselPaused ? (
+                    <Play className="h-3 w-3" />
+                  ) : (
+                    <Pause className="h-3 w-3" />
+                  )}
                 </Button>
               </div>
               

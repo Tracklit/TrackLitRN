@@ -194,6 +194,41 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
   return (
     <div className="relative overflow-hidden h-20 flex items-center">
       {activities.map((activity, index) => renderActivityCard(activity, index))}
+      {/* Duplicate first item for seamless loop */}
+      {activities.length > 0 && currentIndex === activities.length - 1 && (
+        <div 
+          key={`duplicate-${activities[0].id}`}
+          className="absolute inset-0 p-4 flex items-center transition-transform duration-500 ease-in-out"
+          style={{
+            transform: `translateX(${activities.length * 100}%)`,
+          }}
+        >
+          <div className="flex items-center gap-2 pr-8 h-full w-full ml-10">
+            <div className="rounded-full bg-gray-700/50 h-8 w-8 flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-600">
+              {activities[0].user?.profileImageUrl ? (
+                <img 
+                  src={activities[0].user.profileImageUrl} 
+                  alt={activities[0].user?.username}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                getActivityIcon(activities[0].activityType)
+              )}
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <div className="flex items-center gap-1 mb-0.5">
+                <span className="text-xs font-medium text-yellow-400 truncate">{activities[0].title}</span>
+                {activities[0].user?.username && (
+                  <span className="text-xs text-gray-400">• {activities[0].user.username}</span>
+                )}
+              </div>
+              {activities[0].description && (
+                <p className="text-xs text-gray-400 line-clamp-1 truncate">{activities[0].description}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
