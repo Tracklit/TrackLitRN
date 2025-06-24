@@ -317,7 +317,7 @@ export default function HomePage() {
                         <h2 className="font-bold mb-2 text-muted-foreground/70" style={{ fontSize: '16px' }}>{card.title}</h2>
                         <p className="text-muted-foreground/70 text-sm">{card.description}</p>
                       </div>
-                      <ArrowRight className="h-5 w-5 text-muted-foreground/70" />
+                      <span className="text-muted-foreground/70 text-lg">></span>
                     </div>
                   </CardContent>
                 </Card>
@@ -347,7 +347,7 @@ export default function HomePage() {
                                     <h2 className="font-bold mb-2" style={{ fontSize: '16px' }}>Today's Workout</h2>
                                     <p className="text-muted-foreground text-sm">Your daily session and journaling</p>
                                   </div>
-                                  <ArrowRight className="h-5 w-5 text-muted-foreground" />
+                                  <span className="text-muted-foreground text-lg">></span>
                                 </div>
                               </div>
                             </div>
@@ -360,7 +360,7 @@ export default function HomePage() {
                             <h2 className="font-bold mb-2" style={{ fontSize: '16px' }}>{card.title}</h2>
                             <p className="text-muted-foreground text-sm">{card.description}</p>
                           </div>
-                          <ArrowRight className="h-5 w-5 text-muted-foreground" />
+                          <span className="text-muted-foreground text-lg">></span>
                         </div>
                       </CardContent>
                     )}
