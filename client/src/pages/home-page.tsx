@@ -287,6 +287,8 @@ export default function HomePage() {
                   className="h-6 w-6 p-0 text-white/70 hover:text-white"
                   onClick={(e) => {
                     e.stopPropagation();
+                    e.preventDefault();
+                    console.log('X button clicked, hiding ticker');
                     toggleTickerVisibility(false);
                   }}
                   title="Hide ticker"
