@@ -250,13 +250,24 @@ export default function ConversationDetailPage() {
 
   // Set initial scroll position to bottom only when conversation first loads
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const [initialScrollDone, setInitialScrollDone] = useState(false);
   
   useEffect(() => {
-    if (targetUserId && messages.length > 0 && messagesContainerRef.current) {
+    if (targetUserId && messages.length > 0 && messagesContainerRef.current && !initialScrollDone) {
       // Scroll to bottom immediately when conversation loads
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      setTimeout(() => {
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+          setInitialScrollDone(true);
+        }
+      }, 100);
     }
-  }, [targetUserId]); // Only trigger when conversation changes
+  }, [targetUserId, messages, initialScrollDone]);
+
+  // Reset scroll flag when changing conversations
+  useEffect(() => {
+    setInitialScrollDone(false);
+  }, [targetUserId]);
 
   // Mark messages as read when conversation loads
   const markMessagesAsReadMutation = useMutation({

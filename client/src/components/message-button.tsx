@@ -36,28 +36,29 @@ export function MessageButton({ className, targetUserId }: MessageButtonProps) {
     conv.lastMessage.receiverId === user.id
   ).length : 0;
 
-  // Check if currently in a message chat
-  const isInMessageChat = location.startsWith('/messages/') || location === '/conversations';
+  // Check if currently in a message chat using window.location.pathname
+  const currentPath = typeof window !== 'undefined' ? window.location.pathname : location;
+  const isInMessageChat = currentPath.startsWith('/messages/') || currentPath === '/conversations';
   
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('Speech bubble clicked, location:', location, 'isInMessageChat:', isInMessageChat);
     
-    if (isInMessageChat) {
-      // Navigate back if in message chat
-      if (location.startsWith('/messages/')) {
-        console.log('Navigating from message to conversations');
+    // Get fresh path from browser
+    const browserPath = window.location.pathname;
+    console.log('Speech bubble clicked, browserPath:', browserPath, 'location:', location);
+    
+    // Always check browser path first for most accurate routing
+    if (browserPath.includes('messages') || browserPath.includes('conversations')) {
+      console.log('In message area, navigating back');
+      if (browserPath.includes('messages/')) {
+        console.log('From individual message to conversations list');
         setLocation('/conversations');
-      } else if (location === '/conversations') {
-        console.log('Navigating from conversations to home');
-        setLocation('/');
-      } else {
-        console.log('Default navigation to home');
+      } else if (browserPath === '/conversations') {
+        console.log('From conversations list to home');
         setLocation('/');
       }
     } else {
-      // Normal behavior - open message panel
       console.log('Opening message panel');
       setShowPanel(true);
     }
