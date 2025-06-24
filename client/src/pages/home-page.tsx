@@ -181,7 +181,7 @@ export default function HomePage() {
   // Get current program description
   const currentProgram = assignedPrograms?.[0]; // Get first assigned program
   const programsDescription = currentProgram 
-    ? `Currently assigned: ${currentProgram.title}`
+    ? `Currently assigned: ${currentProgram.program?.title || 'Unknown Program'}`
     : "Training plans and schedules";
 
   // Category cards for main navigation
