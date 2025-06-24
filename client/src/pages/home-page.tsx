@@ -259,9 +259,9 @@ export default function HomePage() {
       <PreloadImages images={dashboardImages} quality={20} priority={true} />
       
       {/* Fixed Community Activity Ticker - Below Header */}
-      <div className={`fixed top-[60px] left-0 right-0 z-40 bg-gradient-to-r from-purple-500 to-blue-600 transition-transform duration-300 ease-in-out ${isTickerVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+      <div className={`fixed top-[60px] left-0 right-0 z-40 bg-gradient-to-r from-purple-500 via-purple-500 to-blue-800 transition-transform duration-300 ease-in-out ${isTickerVisible ? 'translate-y-0' : '-translate-y-full'}`}>
           <div className="mx-auto" style={{ maxWidth: "540px" }}>
-            <div className="bg-gradient-to-r from-purple-500 to-blue-600 relative overflow-hidden">
+            <div className="bg-gradient-to-r from-purple-500 via-purple-500 to-blue-800 relative overflow-hidden">
               <div className="absolute left-2 top-1/2 transform -translate-y-1/2 z-60">
                 <Button
                   variant="ghost"
@@ -281,20 +281,17 @@ export default function HomePage() {
                 </Button>
               </div>
               <div className="absolute right-2 top-1/2 transform -translate-y-1/2 z-60">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0 text-white/70 hover:text-white"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
+                <button
+                  type="button"
+                  className="h-6 w-6 p-0 text-white/70 hover:text-white flex items-center justify-center rounded transition-colors"
+                  onClick={() => {
                     console.log('X button clicked, hiding ticker');
                     toggleTickerVisibility(false);
                   }}
                   title="Hide ticker"
                 >
                   <X className="h-3 w-3" />
-                </Button>
+                </button>
               </div>
               
               <div className="overflow-hidden">
@@ -313,7 +310,7 @@ export default function HomePage() {
           title="Show community activity ticker"
         >
           <div className="mx-auto" style={{ maxWidth: "540px" }}>
-            <div className="bg-purple-600/20 backdrop-blur-sm border-b border-purple-500/30 h-6">
+            <div className="bg-purple-800/20 backdrop-blur-sm border-b border-purple-700/30 h-6">
             </div>
           </div>
         </div>
