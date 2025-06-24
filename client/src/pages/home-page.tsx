@@ -73,7 +73,10 @@ export default function HomePage() {
 
   // Preload critical images with compression
   const { imagesLoaded } = useImageOptimization(dashboardImages);
-  // Removed session-related state variables as data fetching was removed
+  const [currentSession, setCurrentSession] = useState<any>(null);
+  const [isSavingSession, setIsSavingSession] = useState(false);
+  const [activeSessionIndex, setActiveSessionIndex] = useState(0);
+  const [isSessionFading, setIsSessionFading] = useState(false);
   const { isTickerVisible, toggleTickerVisibility } = useTicker();
   
   // Fetch data for stats
@@ -164,11 +167,27 @@ export default function HomePage() {
     };
   };
   
-  // Static workout preview data for consistent UI
-  const sessionPreviews = null; // Removed data fetching as requested
-  const isLoadingPreviews = false;
+  // Fetch workout session previews
+  const { data: sessionPreviews, isLoading: isLoadingPreviews } = useQuery<SessionPreviewWithUser[]>({
+    queryKey: ['/api/workout-previews']
+  });
   
-  // Removed session rotation effect as data fetching was removed
+  // Interval for rotating through sessions with fade transition
+  useEffect(() => {
+    if (!sessionPreviews?.length) return;
+    
+    const interval = setInterval(() => {
+      setIsSessionFading(true);
+      setTimeout(() => {
+        setActiveSessionIndex(prev => 
+          prev >= (sessionPreviews.length - 1) ? 0 : prev + 1
+        );
+        setIsSessionFading(false);
+      }, 300); // Fade out duration
+    }, 5000); // 5 second interval
+    
+    return () => clearInterval(interval);
+  }, [sessionPreviews]);
 
 
   
@@ -275,12 +294,13 @@ export default function HomePage() {
 
         {/* Quote removed as requested */}
         
-        {/* Session Preview Ticker - Static content for visual consistency */}
-        {isTickerVisible && (
+        {/* Session Preview Ticker */}
+        {sessionPreviews && sessionPreviews.length > 0 && (
           <section className="mb-6 mx-auto" style={{ maxWidth: "540px" }}>
             <div className="grid grid-cols-2 gap-2" style={{ margin: "0 auto" }}>
               <div className="col-span-2">
-                <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-lg border border-gray-700 relative overflow-hidden">
+                {isTickerVisible ? (
+                  <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-lg border border-gray-700 relative overflow-hidden">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -294,22 +314,53 @@ export default function HomePage() {
                     </Button>
                     
                     <div className="overflow-hidden">
-                      <div className="p-3">
-                        <div className="flex items-center gap-2 pr-8">
-                          <div className="rounded-full bg-gray-700/50 h-8 w-8 flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-600">
-                            <UserCircle className="h-4 w-4 text-gray-400" />
-                          </div>
-                          <div className="flex-1 overflow-hidden">
-                            <div className="flex items-center gap-1 mb-0.5">
-                              <span className="text-xs font-medium text-yellow-400">Daily Training</span>
-                              <span className="text-xs text-gray-300">· Community workouts</span>
+                      {isLoadingPreviews ? (
+                        <div className="p-3">
+                          <div className="flex items-center gap-2">
+                            <Skeleton className="h-6 w-6 rounded-full bg-gray-700" />
+                            <div className="flex-1">
+                              <Skeleton className="h-3 w-24 mb-1 bg-gray-700" />
+                              <Skeleton className="h-3 w-32 bg-gray-700" />
                             </div>
-                            <p className="text-xs text-gray-400 line-clamp-1">Join fellow athletes in today's training sessions</p>
                           </div>
                         </div>
-                      </div>
+                      ) : sessionPreviews && sessionPreviews.length > 0 ? (
+                        <div 
+                          className={`cursor-pointer p-3 transition-opacity duration-300 ease-in-out ${
+                            isSessionFading ? 'opacity-0' : 'opacity-100'
+                          }`}
+                          onClick={() => openSessionDetails(sessionPreviews[activeSessionIndex])}
+                          key={activeSessionIndex}
+                        >
+                          <div className="flex items-center gap-2 pr-8">
+                            <div className="rounded-full bg-gray-700/50 h-8 w-8 flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-600">
+                              {sessionPreviews[activeSessionIndex].user?.profileImageUrl ? (
+                                <img 
+                                  src={sessionPreviews[activeSessionIndex].user.profileImageUrl} 
+                                  alt={sessionPreviews[activeSessionIndex].user?.username}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <UserCircle className="h-4 w-4 text-gray-400" />
+                              )}
+                            </div>
+                            <div className="flex-1 overflow-hidden">
+                              <div className="flex items-center gap-1 mb-0.5">
+                                <span className="text-xs font-medium text-yellow-400">{sessionPreviews[activeSessionIndex].title}</span>
+                                <span className="text-xs text-gray-300">· {sessionPreviews[activeSessionIndex].user?.username}</span>
+                              </div>
+                              <p className="text-xs text-gray-400 line-clamp-1">{sessionPreviews[activeSessionIndex].previewText}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="p-3 h-12 flex items-center">
+                          <span className="text-xs text-gray-400">No recent workouts</span>
+                        </div>
+                      )}
                     </div>
-                </div>
+                  </div>
+                ) : null}
               </div>
             </div>
           </section>
