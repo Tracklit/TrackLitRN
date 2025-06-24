@@ -177,7 +177,9 @@ export function MessagePanel({ isOpen, onClose, targetUserId }: MessagePanelProp
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [initialScrollDone, setInitialScrollDone] = useState(false);
 
   // Fetch conversations
   const { data: conversations = [] } = useQuery<ConversationWithUser[]>({
@@ -240,10 +242,30 @@ export function MessagePanel({ isOpen, onClose, targetUserId }: MessagePanelProp
     }
   });
 
-  // Auto-scroll to bottom when new messages arrive
+  // Scroll to bottom when entering a conversation or new messages arrive
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (selectedConversationUserId && messages.length > 0 && messagesContainerRef.current && !initialScrollDone) {
+      // Scroll to absolute bottom immediately when conversation loads
+      setTimeout(() => {
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+          setInitialScrollDone(true);
+        }
+      }, 100);
+    }
+  }, [selectedConversationUserId, messages, initialScrollDone]);
+
+  // Reset scroll flag when changing conversations
+  useEffect(() => {
+    setInitialScrollDone(false);
+  }, [selectedConversationUserId]);
+
+  // Auto-scroll to bottom when new messages arrive (for existing conversations)
+  useEffect(() => {
+    if (initialScrollDone) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, initialScrollDone]);
 
   // Mark messages as read when conversation is selected
   useEffect(() => {
@@ -435,7 +457,7 @@ export function MessagePanel({ isOpen, onClose, targetUserId }: MessagePanelProp
           // Individual Conversation View
           <>
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center">
                   <Avatar className="h-16 w-16 mb-4">
