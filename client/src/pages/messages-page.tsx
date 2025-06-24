@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Search, Send, ArrowLeft, MoreVertical, Play, ExternalLink, MessageCircle } from "lucide-react";
+import { Search, Send, MoreVertical, Play, ExternalLink, MessageCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
@@ -254,7 +254,7 @@ export default function MessagesPage() {
             className="mr-3 text-gray-300 hover:text-white"
             onClick={() => window.history.back()}
           >
-            <ArrowLeft className="h-5 w-5" />
+            <MessageCircle className="h-5 w-5" />
           </Button>
           
           <Avatar className="h-10 w-10 mr-3">

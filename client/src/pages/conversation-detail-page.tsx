@@ -5,7 +5,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowLeft, Send, MoreVertical, Play, ExternalLink, ImagePlus, Paperclip, X } from "lucide-react";
+import { Send, MoreVertical, Play, ExternalLink, ImagePlus, Paperclip, X, MessageCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useParams, useLocation } from "wouter";
@@ -356,7 +356,7 @@ export default function ConversationDetailPage() {
           onClick={() => setLocation("/conversations")}
           className="p-2"
         >
-          <ArrowLeft className="h-5 w-5" />
+          <MessageCircle className="h-5 w-5" />
         </Button>
         
         <Avatar className="h-10 w-10">
