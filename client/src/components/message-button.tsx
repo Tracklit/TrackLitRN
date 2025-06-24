@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MessageCircle } from "lucide-react";
 import { MessagePanel } from "./message-panel";
+import { useLocation } from "wouter";
 import type { DirectMessage, Conversation, User } from "@shared/schema";
 
 interface MessageButtonProps {
@@ -18,6 +19,7 @@ interface ConversationWithUser extends Conversation {
 
 export function MessageButton({ className, targetUserId }: MessageButtonProps) {
   const [showPanel, setShowPanel] = useState(false);
+  const [location, setLocation] = useLocation();
 
   // Fetch conversations to get unread count
   const { data: conversations = [] } = useQuery<ConversationWithUser[]>({
@@ -34,12 +36,29 @@ export function MessageButton({ className, targetUserId }: MessageButtonProps) {
     conv.lastMessage.receiverId === user.id
   ).length : 0;
 
+  // Check if currently in a message chat
+  const isInMessageChat = location.startsWith('/messages/') || location === '/conversations';
+  
+  const handleClick = () => {
+    if (isInMessageChat) {
+      // Navigate back if in message chat
+      if (location.startsWith('/messages/')) {
+        setLocation('/conversations');
+      } else {
+        window.history.back();
+      }
+    } else {
+      // Normal behavior - open message panel
+      setShowPanel(true);
+    }
+  };
+
   return (
     <>
       <Button
         variant="ghost"
         size="sm"
-        onClick={() => setShowPanel(true)}
+        onClick={handleClick}
         className={`relative ${className}`}
       >
         <MessageCircle className="h-5 w-5" />

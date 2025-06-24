@@ -248,14 +248,6 @@ export default function MessagesPage() {
       <div className="h-screen flex flex-col bg-[#010a18] pt-16">
         {/* Instagram-style Header */}
         <div className="p-4 border-b border-gray-700 flex items-center">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mr-3 text-gray-300 hover:text-white"
-            onClick={() => window.history.back()}
-          >
-            <MessageCircle className="h-5 w-5" />
-          </Button>
           
           <Avatar className="h-10 w-10 mr-3">
             <AvatarFallback name={userProfile.name} />

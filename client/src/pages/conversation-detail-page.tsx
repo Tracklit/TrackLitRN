@@ -350,14 +350,6 @@ export default function ConversationDetailPage() {
     <div className="flex flex-col h-screen bg-background fixed inset-0 overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-3 p-4 border-b border-border bg-background fixed top-0 left-0 right-0 z-40">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setLocation("/conversations")}
-          className="p-2"
-        >
-          <MessageCircle className="h-5 w-5" />
-        </Button>
         
         <Avatar className="h-10 w-10">
           <AvatarFallback className="bg-primary/10 text-primary font-medium">
