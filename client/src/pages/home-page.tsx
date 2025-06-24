@@ -260,22 +260,10 @@ export default function HomePage() {
       
       {/* Fixed Community Activity Ticker - Below Header */}
       {isTickerVisible && (
-        <div className="fixed top-[60px] left-0 right-0 z-40 bg-gray-900">
+        <div className="fixed top-[60px] left-0 right-0 z-40 bg-purple-800">
           <div className="mx-auto" style={{ maxWidth: "540px" }}>
-            <div className="bg-gray-900 relative overflow-hidden">
+            <div className="bg-purple-800 relative overflow-hidden">
               <div className="absolute left-2 top-1 z-60 flex flex-col gap-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0 text-white/70 hover:text-white"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsTickerVisible(false);
-                  }}
-                  title="Close ticker"
-                >
-                  <X className="h-3 w-3" />
-                </Button>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -291,6 +279,20 @@ export default function HomePage() {
                   ) : (
                     <Pause className="h-3 w-3" />
                   )}
+                </Button>
+              </div>
+              <div className="absolute right-2 top-1 z-60">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0 text-white/70 hover:text-white"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsTickerVisible(false);
+                  }}
+                  title="Close ticker"
+                >
+                  <X className="h-3 w-3" />
                 </Button>
               </div>
               
