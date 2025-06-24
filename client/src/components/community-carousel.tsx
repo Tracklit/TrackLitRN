@@ -21,9 +21,13 @@ interface CommunityActivity {
   };
 }
 
-export function CommunityCarousel() {
+interface CommunityCarouselProps {
+  isPaused?: boolean;
+  onPauseToggle?: (paused: boolean) => void;
+}
+
+export function CommunityCarousel({ isPaused = false, onPauseToggle }: CommunityCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [nextIndex, setNextIndex] = useState(1);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Fetch community activities with fallback data
@@ -101,20 +105,19 @@ export function CommunityCarousel() {
 
   // Auto-rotate every 7 seconds with sliding animation
   useEffect(() => {
-    if (!activities?.length) return;
+    if (!activities?.length || isPaused) return;
 
     const interval = setInterval(() => {
       setIsTransitioning(true);
-      setNextIndex((currentIndex + 1) % activities.length);
       
       setTimeout(() => {
         setCurrentIndex((prevIndex) => (prevIndex + 1) % activities.length);
         setIsTransitioning(false);
-      }, 400); // Match transition duration
+      }, 500); // Match transition duration
     }, 7000); // 7 seconds per activity
 
     return () => clearInterval(interval);
-  }, [activities?.length, currentIndex]);
+  }, [activities?.length, currentIndex, isPaused]);
 
   const getActivityIcon = (activityType: string) => {
     switch (activityType) {
@@ -185,6 +188,8 @@ export function CommunityCarousel() {
       </div>
     );
   }
+
+  const nextIndex = (currentIndex + 1) % activities.length;
 
   return (
     <div className="relative overflow-hidden h-20 flex items-center">

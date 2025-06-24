@@ -64,6 +64,7 @@ export default function HomePage() {
   const { user } = useAuth();
   const [isCreateMeetOpen, setIsCreateMeetOpen] = useState(false);
   const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
+  const [isCarouselPaused, setIsCarouselPaused] = useState(false);
 
   // Critical dashboard images for preloading with 80% compression
   const dashboardImages = [
@@ -257,23 +258,47 @@ export default function HomePage() {
       
       {/* Fixed Community Activity Ticker - Below Header */}
       {isTickerVisible && (
-        <div className="fixed top-16 left-0 right-0 z-10 bg-gray-900/95 backdrop-blur-md border-b border-gray-700 shadow-lg">
+        <div className="fixed top-16 left-0 right-0 z-10 bg-gray-900 border-b border-gray-700 shadow-lg">
           <div className="mx-auto" style={{ maxWidth: "540px" }}>
-            <div className="bg-gradient-to-r from-gray-800 to-gray-900 border-b border-gray-600 relative overflow-hidden">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 w-6 p-0 absolute right-2 top-2 z-10 text-white/70 hover:text-white"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleTickerVisibility(!isTickerVisible);
-                }}
-              >
-                <Globe className="h-4 w-4" />
-              </Button>
+            <div className="bg-gray-900 border-b border-gray-600 relative overflow-hidden">
+              <div className="absolute right-2 top-2 z-10 flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0 text-white/70 hover:text-white"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsCarouselPaused(!isCarouselPaused);
+                  }}
+                  title={isCarouselPaused ? "Resume ticker" : "Pause ticker"}
+                >
+                  {isCarouselPaused ? (
+                    <div className="h-3 w-3 flex items-center justify-center">
+                      <div className="w-0 h-0 border-l-2 border-l-current border-y-1.5 border-y-transparent"></div>
+                    </div>
+                  ) : (
+                    <div className="h-3 w-3 flex items-center justify-center">
+                      <div className="w-1 h-3 bg-current mr-0.5"></div>
+                      <div className="w-1 h-3 bg-current"></div>
+                    </div>
+                  )}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0 text-white/70 hover:text-white"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleTickerVisibility(!isTickerVisible);
+                  }}
+                  title="Close ticker"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
               
               <div className="overflow-hidden">
-                <CommunityCarousel />
+                <CommunityCarousel isPaused={isCarouselPaused} onPauseToggle={setIsCarouselPaused} />
               </div>
             </div>
           </div>
