@@ -310,7 +310,7 @@ export default function HomePage() {
                         toggleTickerVisibility(!isTickerVisible);
                       }}
                     >
-                      <X className="h-4 w-4" />
+                      <Globe className="h-4 w-4" />
                     </Button>
                     
                     <div className="overflow-hidden">
