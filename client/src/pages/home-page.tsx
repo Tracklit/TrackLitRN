@@ -312,9 +312,12 @@ export default function HomePage() {
               card.disabled ? (
                 <Card key={index} className={`h-[90px] overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 shadow-2xl ${index > 0 ? 'mt-3' : ''}`} style={{ border: '0.5px solid rgba(168, 85, 247, 0.25)' }}>
                   <CardContent className="p-4 relative h-full flex flex-col justify-center opacity-50">
-                    <div className="text-center">
-                      <h2 className="font-bold mb-2 text-muted-foreground/70" style={{ fontSize: '16px' }}>{card.title}</h2>
-                      <p className="text-muted-foreground/70 text-sm">{card.description}</p>
+                    <div className="flex items-center justify-between">
+                      <div className="text-left">
+                        <h2 className="font-bold mb-2 text-muted-foreground/70" style={{ fontSize: '16px' }}>{card.title}</h2>
+                        <p className="text-muted-foreground/70 text-sm">{card.description}</p>
+                      </div>
+                      <ArrowRight className="h-5 w-5 text-muted-foreground/70" />
                     </div>
                   </CardContent>
                 </Card>
@@ -339,9 +342,12 @@ export default function HomePage() {
                             <div className="flex flex-col h-full">
                               <div className="flex-1 space-y-2">
                                 {/* Static content for consistency with other cards */}
-                                <div className="text-center">
-                                  <h2 className="font-bold mb-2" style={{ fontSize: '16px' }}>Today's Workout</h2>
-                                  <p className="text-muted-foreground text-sm">Your daily session and journaling</p>
+                                <div className="flex items-center justify-between">
+                                  <div className="text-left">
+                                    <h2 className="font-bold mb-2" style={{ fontSize: '16px' }}>Today's Workout</h2>
+                                    <p className="text-muted-foreground text-sm">Your daily session and journaling</p>
+                                  </div>
+                                  <ArrowRight className="h-5 w-5 text-muted-foreground" />
                                 </div>
                               </div>
                             </div>
@@ -349,9 +355,12 @@ export default function HomePage() {
                       </>
                     ) : (
                       <CardContent className="p-4 relative h-full flex flex-col justify-center z-10">
-                        <div className="text-center">
-                          <h2 className="font-bold mb-2" style={{ fontSize: '16px' }}>{card.title}</h2>
-                          <p className="text-muted-foreground text-sm">{card.description}</p>
+                        <div className="flex items-center justify-between">
+                          <div className="text-left">
+                            <h2 className="font-bold mb-2" style={{ fontSize: '16px' }}>{card.title}</h2>
+                            <p className="text-muted-foreground text-sm">{card.description}</p>
+                          </div>
+                          <ArrowRight className="h-5 w-5 text-muted-foreground" />
                         </div>
                       </CardContent>
                     )}
