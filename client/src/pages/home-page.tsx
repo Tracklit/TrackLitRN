@@ -341,7 +341,7 @@ export default function HomePage() {
                                 {/* Static content for consistency with other cards */}
                                 <div className="text-center">
                                   <h2 className="font-bold mb-2" style={{ fontSize: '16px' }}>Today's Workout</h2>
-                                  <p className="text-muted-foreground text-sm">Track your training sessions</p>
+                                  <p className="text-muted-foreground text-sm">Your daily session and journaling</p>
                                 </div>
                               </div>
                             </div>
