@@ -344,8 +344,8 @@ export default function HomePage() {
                                 {/* Static content for consistency with other cards */}
                                 <div className="flex items-center justify-between">
                                   <div className="text-left">
-                                    <h2 className="font-bold mb-2 flex items-center gap-1" style={{ fontSize: '16px' }}>
-                                      Hi {user?.name?.split(' ')[0] || user?.username || 'there'} <span className="text-base">👋</span>, ready to start today's workout?
+                                    <h2 className="font-bold mb-2" style={{ fontSize: '16px' }}>
+                                      Hi {user?.name?.split(' ')[0] || user?.username || 'there'} <span className="text-base">👋</span>, ready to train?
                                     </h2>
                                     <p className="text-muted-foreground text-sm">Your daily session and journaling</p>
                                   </div>
