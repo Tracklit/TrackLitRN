@@ -35,7 +35,7 @@ import ClubsPage from "@/pages/clubs-page";
 import { Component as ClubDetailPage } from "@/pages/club-detail-page";
 import { Component as ClubManagementPage } from "@/pages/club-management-page";
 
-import ConversationsPage from "@/pages/conversations-page";
+
 import ConversationDetailPage from "@/pages/conversation-detail-page";
 import GroupsPage from "@/pages/groups-page";
 import AthletesPage from "@/pages/athletes-page";

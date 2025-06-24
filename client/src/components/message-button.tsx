@@ -36,40 +36,13 @@ export function MessageButton({ className, targetUserId }: MessageButtonProps) {
     conv.lastMessage.receiverId === user.id
   ).length : 0;
 
-  // Check if currently in a message channel
-  const currentPath = typeof window !== 'undefined' ? window.location.pathname : location;
-  const isInMessageChannel = currentPath.startsWith('/messages/');
-  
-  console.log('MessageButton render - currentPath:', currentPath, 'location:', location, 'isInMessageChannel:', isInMessageChannel);
-  
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    // Get fresh path from browser
-    const browserPath = window.location.pathname;
-    console.log('Speech bubble clicked, browserPath:', browserPath, 'location:', location);
-    
-    // Always check browser path first for most accurate routing
-    if (browserPath.includes('messages') || browserPath.includes('conversations')) {
-      console.log('In message area, navigating back');
-      if (browserPath.includes('messages/')) {
-        console.log('From individual message to conversations list');
-        setLocation('/conversations');
-      } else if (browserPath === '/conversations') {
-        console.log('From conversations list to home');
-        setLocation('/');
-      }
-    } else {
-      console.log('Opening message panel');
-      setShowPanel(true);
-    }
+    console.log('Speech bubble clicked, opening message panel');
+    setShowPanel(true);
   };
-
-  // Hide speech bubble icon when inside a message channel
-  if (isInMessageChannel) {
-    return null;
-  }
 
   return (
     <>
