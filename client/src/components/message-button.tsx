@@ -40,17 +40,22 @@ export function MessageButton({ className, targetUserId }: MessageButtonProps) {
   const isInMessageChat = location.startsWith('/messages/') || location === '/conversations';
   
   const handleClick = () => {
+    console.log('Speech bubble clicked, location:', location, 'isInMessageChat:', isInMessageChat);
     if (isInMessageChat) {
       // Navigate back if in message chat
       if (location.startsWith('/messages/')) {
+        console.log('Navigating from message to conversations');
         setLocation('/conversations');
       } else if (location === '/conversations') {
+        console.log('Navigating from conversations to home');
         setLocation('/');
       } else {
+        console.log('Navigating to home');
         setLocation('/');
       }
     } else {
       // Normal behavior - open message panel
+      console.log('Opening message panel');
       setShowPanel(true);
     }
   };
@@ -62,9 +67,10 @@ export function MessageButton({ className, targetUserId }: MessageButtonProps) {
         size="sm"
         onClick={handleClick}
         className={`relative ${className}`}
+        aria-label={isInMessageChat ? "Back" : "Messages"}
       >
         <MessageCircle className="h-5 w-5" />
-        {unreadCount > 0 && (
+        {!isInMessageChat && unreadCount > 0 && (
           <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-xs min-w-[1.25rem] h-5 flex items-center justify-center rounded-full">
             {unreadCount > 99 ? '99+' : unreadCount}
           </Badge>

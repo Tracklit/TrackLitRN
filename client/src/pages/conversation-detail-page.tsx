@@ -248,13 +248,23 @@ export default function ConversationDetailPage() {
     },
   });
 
-  // Initial scroll to bottom without smooth animation, then only on new messages
+  // Only scroll to bottom once when conversation first loads
+  const [hasScrolled, setHasScrolled] = useState(false);
+  
   useEffect(() => {
-    if (messages.length > 0) {
-      // Initial load - scroll immediately to bottom without smooth animation
-      messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
+    if (targetUserId && messages.length > 0 && !hasScrolled) {
+      // Scroll to bottom instantly only on first load
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
+        setHasScrolled(true);
+      }, 50);
     }
-  }, [targetUserId]); // Only trigger on conversation change
+  }, [targetUserId, messages, hasScrolled]);
+
+  // Reset scroll flag when changing conversations
+  useEffect(() => {
+    setHasScrolled(false);
+  }, [targetUserId]);
 
   // Mark messages as read when conversation loads
   const markMessagesAsReadMutation = useMutation({
@@ -390,7 +400,10 @@ export default function ConversationDetailPage() {
       </div>
 
       {/* Messages */}
-      <div className="absolute top-20 bottom-32 left-0 right-0 overflow-y-auto p-4 space-y-4">
+      <div 
+        className="absolute top-20 bottom-32 left-0 right-0 overflow-y-auto p-4 space-y-4"
+        style={{ scrollBehavior: 'auto' }}
+      >
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <Avatar className="h-16 w-16 mb-4">
