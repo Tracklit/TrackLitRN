@@ -261,16 +261,13 @@ export default function HomePage() {
       {/* Fixed Community Activity Ticker - Below Header */}
       <div className={`fixed top-[60px] left-5 right-5 z-40 bg-gradient-to-r from-purple-500 via-purple-500 to-blue-800 rounded-sm transition-transform duration-300 ease-in-out ${isTickerVisible ? 'translate-y-0' : '-translate-y-full'}`}>
           <div className="mx-auto" style={{ maxWidth: "500px" }}>
-            <div className="bg-gradient-to-r from-purple-500 via-purple-500 to-blue-800 relative overflow-hidden rounded-sm">
-              <div className="absolute left-2 top-1/2 transform -translate-y-1/2 z-60">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0 text-white/70 hover:text-white"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsCarouselPaused(!isCarouselPaused);
-                  }}
+            <div className="bg-gradient-to-r from-purple-500 via-purple-500 to-blue-800 relative rounded-sm">
+              {/* Control buttons with higher z-index */}
+              <div className="absolute left-2 top-1/2 transform -translate-y-1/2 z-[80]">
+                <button
+                  type="button"
+                  className="h-6 w-6 text-white/70 hover:text-white flex items-center justify-center rounded transition-colors bg-black/10 hover:bg-black/20"
+                  onClick={() => setIsCarouselPaused(!isCarouselPaused)}
                   title={isCarouselPaused ? "Resume ticker" : "Pause ticker"}
                 >
                   {isCarouselPaused ? (
@@ -278,12 +275,13 @@ export default function HomePage() {
                   ) : (
                     <Pause className="h-3 w-3" />
                   )}
-                </Button>
+                </button>
               </div>
-              <div className="absolute right-2 top-1/2 transform -translate-y-1/2 z-60">
+              
+              <div className="absolute right-2 top-1/2 transform -translate-y-1/2 z-[80]">
                 <button
                   type="button"
-                  className="h-6 w-6 p-0 text-white/70 hover:text-white flex items-center justify-center rounded transition-colors"
+                  className="h-6 w-6 text-white/70 hover:text-white flex items-center justify-center rounded transition-colors bg-black/10 hover:bg-black/20"
                   onClick={() => {
                     console.log('X button clicked, hiding ticker');
                     toggleTickerVisibility(false);
@@ -294,7 +292,8 @@ export default function HomePage() {
                 </button>
               </div>
               
-              <div className="overflow-hidden">
+              {/* Carousel content */}
+              <div className="overflow-hidden relative">
                 <CommunityCarousel isPaused={isCarouselPaused} onPauseToggle={setIsCarouselPaused} />
               </div>
             </div>
