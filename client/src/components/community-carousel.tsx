@@ -210,7 +210,7 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
               transform: `translateX(${(position - currentIndex) * 100}%)`,
             }}
           >
-            <div className="flex items-center gap-2 pr-8 h-full w-full ml-6">
+            <div className="flex items-center gap-2 h-full w-4/5 mx-auto">
               <div className="rounded-full bg-gray-200 h-8 w-8 flex items-center justify-center flex-shrink-0 overflow-hidden border border-white/20">
                 <img 
                   src={activity.user?.profileImageUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face'} 
