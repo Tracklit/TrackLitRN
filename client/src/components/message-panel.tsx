@@ -336,7 +336,7 @@ export function MessagePanel({ isOpen, onClose, targetUserId }: MessagePanelProp
             <div className="flex items-center space-x-2 mr-auto ml-5">
             </div>
             <div className="flex items-center space-x-2">
-              <MessageCircle className="h-5 w-5" />
+              {!selectedConversationUserId && <MessageCircle className="h-5 w-5" />}
               <h3 className="text-lg font-semibold">
                 {selectedConversationUserId && targetUser 
                   ? (targetUser.name || targetUser.username)
@@ -345,7 +345,17 @@ export function MessagePanel({ isOpen, onClose, targetUserId }: MessagePanelProp
               </h3>
             </div>
             <div className="ml-4">
-              <Button variant="ghost" size="sm" onClick={onClose}>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => {
+                  if (selectedConversationUserId) {
+                    setSelectedConversationUserId(null);
+                  } else {
+                    onClose();
+                  }
+                }}
+              >
                 <ArrowRight className="h-5 w-5" />
               </Button>
             </div>
