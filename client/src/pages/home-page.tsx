@@ -179,7 +179,7 @@ export default function HomePage() {
     : "No upcoming meets scheduled";
 
   // Get current program description
-  const currentProgram = assignedPrograms?.find(p => p.isActive);
+  const currentProgram = assignedPrograms?.[0]; // Get first assigned program
   const programsDescription = currentProgram 
     ? `Currently assigned: ${currentProgram.title}`
     : "Training plans and schedules";
@@ -334,7 +334,7 @@ export default function HomePage() {
                       <div className="text-left">
                         <h2 className="font-bold mb-2 text-muted-foreground/70" style={{ fontSize: '16px' }}>{card.title}</h2>
                         <p className="text-muted-foreground/70 text-sm flex items-center gap-2">
-                          <Circle className="w-2 h-2 fill-blue-400 text-blue-400" />
+                          <Circle className="w-2 h-2 text-blue-400" />
                           {card.description}
                         </p>
                       </div>
@@ -369,7 +369,7 @@ export default function HomePage() {
                                       Hi {user?.name?.split(' ')[0] || user?.username || 'there'} <span className="text-base">👋</span> Ready to train?
                                     </h2>
                                     <p className="text-muted-foreground text-sm flex items-center gap-2">
-                                      <Circle className="w-2 h-2 fill-blue-400 text-blue-400" />
+                                      <Circle className="w-2 h-2 text-blue-400" />
                                       Your daily session and journaling
                                     </p>
                                   </div>
@@ -388,7 +388,7 @@ export default function HomePage() {
                               {card.showStar && <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />}
                             </h2>
                             <p className="text-muted-foreground text-sm flex items-center gap-2">
-                              <Circle className="w-2 h-2 fill-blue-400 text-blue-400" />
+                              <Circle className="w-2 h-2 text-blue-400" />
                               {card.description}
                             </p>
                           </div>
