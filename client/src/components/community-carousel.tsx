@@ -28,8 +28,6 @@ interface CommunityCarouselProps {
 
 export function CommunityCarousel({ isPaused = false, onPauseToggle }: CommunityCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [nextIndex, setNextIndex] = useState(1);
-  const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Fetch community activities with fallback data
   const { data: activities, isLoading } = useQuery<CommunityActivity[]>({
@@ -104,26 +102,16 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
     ]
   });
 
-  // Auto-rotate every 7 seconds with sliding animation
+  // Auto-advance to next item every 7 seconds
   useEffect(() => {
     if (!activities?.length || isPaused) return;
 
     const interval = setInterval(() => {
-      const newNextIndex = (currentIndex + 1) % activities.length;
-      setNextIndex(newNextIndex);
-      setIsTransitioning(true);
-      
-      // After transition completes, update current index and reset
-      setTimeout(() => {
-        setCurrentIndex(newNextIndex);
-        setIsTransitioning(false);
-        // Prepare next item for future transition
-        setNextIndex((newNextIndex + 1) % activities.length);
-      }, 500); // Match transition duration
-    }, 7000); // 7 seconds per activity
+      setCurrentIndex(prev => (prev + 1) % activities.length);
+    }, 7000);
 
     return () => clearInterval(interval);
-  }, [activities?.length, currentIndex, isPaused]);
+  }, [activities?.length, isPaused]);
 
   const getActivityIcon = (activityType: string) => {
     switch (activityType) {
@@ -146,29 +134,37 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
     }
   };
 
-  const renderActivityCard = (activity: CommunityActivity) => (
-    <div className="flex items-center gap-2 pr-8 h-full">
-      <div className="rounded-full bg-gray-700/50 h-8 w-8 flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-600">
-        {activity.user?.profileImageUrl ? (
-          <img 
-            src={activity.user.profileImageUrl} 
-            alt={activity.user?.username}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          getActivityIcon(activity.activityType)
-        )}
-      </div>
-      <div className="flex-1 overflow-hidden">
-        <div className="flex items-center gap-1 mb-0.5">
-          <span className="text-xs font-medium text-yellow-400 truncate">{activity.title}</span>
-          {activity.user?.username && (
-            <span className="text-xs text-gray-300 truncate">· {activity.user.username}</span>
+  const renderActivityCard = (activity: CommunityActivity, index: number) => (
+    <div 
+      key={activity.id} 
+      className="absolute inset-0 p-4 flex items-center transition-transform duration-500 ease-in-out"
+      style={{
+        transform: `translateX(${(index - currentIndex) * 100}%)`,
+      }}
+    >
+      <div className="flex items-center gap-2 pr-8 h-full w-full">
+        <div className="rounded-full bg-gray-700/50 h-8 w-8 flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-600">
+          {activity.user?.profileImageUrl ? (
+            <img 
+              src={activity.user.profileImageUrl} 
+              alt={activity.user?.username}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            getActivityIcon(activity.activityType)
           )}
         </div>
-        {activity.description && (
-          <p className="text-xs text-gray-400 line-clamp-1 truncate">{activity.description}</p>
-        )}
+        <div className="flex-1 overflow-hidden">
+          <div className="flex items-center gap-1 mb-0.5">
+            <span className="text-xs font-medium text-yellow-400 truncate">{activity.title}</span>
+            {activity.user?.username && (
+              <span className="text-xs text-gray-300 truncate">· {activity.user.username}</span>
+            )}
+          </div>
+          {activity.description && (
+            <p className="text-xs text-gray-400 line-clamp-1 truncate">{activity.description}</p>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -197,23 +193,7 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
 
   return (
     <div className="relative overflow-hidden h-20 flex items-center">
-      {/* Current activity - slides out to left */}
-      <div 
-        className={`absolute inset-0 p-4 flex items-center transition-transform duration-500 ease-in-out ${
-          isTransitioning ? '-translate-x-full opacity-0' : 'translate-x-0 opacity-100'
-        }`}
-      >
-        {renderActivityCard(activities[currentIndex])}
-      </div>
-      
-      {/* Next activity - slides in from right */}
-      <div 
-        className={`absolute inset-0 p-4 flex items-center transition-transform duration-500 ease-in-out ${
-          isTransitioning ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
-        }`}
-      >
-        {renderActivityCard(activities[nextIndex])}
-      </div>
+      {activities.map((activity, index) => renderActivityCard(activity, index))}
     </div>
   );
 }
