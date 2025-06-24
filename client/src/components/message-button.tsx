@@ -44,8 +44,10 @@ export function MessageButton({ className, targetUserId }: MessageButtonProps) {
       // Navigate back if in message chat
       if (location.startsWith('/messages/')) {
         setLocation('/conversations');
+      } else if (location === '/conversations') {
+        setLocation('/');
       } else {
-        window.history.back();
+        setLocation('/');
       }
     } else {
       // Normal behavior - open message panel

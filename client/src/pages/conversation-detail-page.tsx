@@ -248,10 +248,28 @@ export default function ConversationDetailPage() {
     },
   });
 
-  // Auto-scroll to bottom when new messages arrive
+  // Initial scroll to bottom without smooth animation, then only on new messages
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (messages.length > 0) {
+      // Initial load - scroll immediately to bottom without smooth animation
+      messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
+    }
+  }, [targetUserId]); // Only trigger on conversation change
+
+  // Mark messages as read when conversation loads
+  const markMessagesAsReadMutation = useMutation({
+    mutationFn: (userId: number) => 
+      apiRequest("PATCH", `/api/direct-messages/${userId}/mark-read`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+    }
+  });
+
+  useEffect(() => {
+    if (targetUserId && user) {
+      markMessagesAsReadMutation.mutate(targetUserId);
+    }
+  }, [targetUserId, user?.id]);
 
   // Handle image selection
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
