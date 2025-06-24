@@ -230,7 +230,7 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
                   )}
                 </div>
                 {activity.description && (
-                  <p className="text-xs text-gray-400 line-clamp-1 truncate">{activity.description}</p>
+                  <p className="text-xs text-white line-clamp-1 truncate">{activity.description}</p>
                 )}
               </div>
             </div>
