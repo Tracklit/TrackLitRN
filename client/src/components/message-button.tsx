@@ -44,9 +44,31 @@ export function MessageButton({ className, targetUserId }: MessageButtonProps) {
     e.preventDefault();
     e.stopPropagation();
     
-    // Force immediate navigation to conversations list regardless of current location
-    console.log('Speech bubble clicked - always navigate to conversations');
-    setLocation('/conversations');
+    console.log('Speech bubble clicked - forcing navigation to conversations');
+    
+    // Use multiple navigation methods to ensure it works
+    try {
+      setLocation('/conversations');
+      
+      // Alternative method using history API
+      if (typeof window !== 'undefined') {
+        window.history.pushState({}, '', '/conversations');
+        
+        // Trigger a popstate event to notify wouter
+        window.dispatchEvent(new PopStateEvent('popstate'));
+        
+        // Final fallback
+        setTimeout(() => {
+          if (window.location.pathname !== '/conversations') {
+            window.location.replace('/conversations');
+          }
+        }, 200);
+      }
+    } catch (error) {
+      console.error('Navigation error:', error);
+      // Emergency fallback
+      window.location.href = '/conversations';
+    }
   };
 
   return (
