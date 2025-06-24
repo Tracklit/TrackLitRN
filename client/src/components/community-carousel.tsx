@@ -43,7 +43,7 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
         title: 'Sprint Training Complete',
         description: 'Finished 6x100m sprint session with excellent form',
         createdAt: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
-        user: { id: 1, username: 'speedster_pro', name: 'Alex R.', profileImageUrl: undefined }
+        user: { id: 1, username: 'speedster_pro', name: 'Alex R.', profileImageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face' }
       },
       {
         id: 2,
@@ -70,7 +70,7 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
         title: 'Personal Best Achievement!',
         description: 'New 200m PB of 22.85s at Regional Qualifier meet',
         createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-        user: { id: 1, username: 'speedster_pro', name: 'Alex R.', profileImageUrl: undefined }
+        user: { id: 1, username: 'speedster_pro', name: 'Alex R.', profileImageUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face' }
       },
       {
         id: 5,
