@@ -33,7 +33,9 @@ import {
   BookOpen,
   MessageCircle,
   Circle,
-  Star
+  Star,
+  Play,
+  Pause
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { CreateMeetModal } from '@/components/create-meet-modal';
