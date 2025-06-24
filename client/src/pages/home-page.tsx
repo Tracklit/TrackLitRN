@@ -250,11 +250,11 @@ export default function HomePage() {
   // Quote removed as requested
 
   return (
-    <div className="min-h-screen text-foreground pb-16 bg-background">
+    <div className="h-screen text-foreground bg-background overflow-hidden flex flex-col">
       {/* Preload critical images */}
       <PreloadImages images={dashboardImages} quality={20} priority={true} />
       
-      <main className="pt-2 px-4 container mx-auto max-w-7xl">
+      <main className="pt-2 px-4 container mx-auto max-w-7xl flex-1 overflow-y-auto pb-16">
         {/* Logo will be placed here in the future */}
         <div className="h-1 mx-auto" style={{ maxWidth: "540px" }}>
           {/* Reserved space for logo */}
@@ -395,7 +395,7 @@ export default function HomePage() {
                       <CardContent className="p-4 relative h-full flex flex-col justify-center z-10">
                         <div className="flex items-center justify-between">
                           <div className="text-left">
-                            <h2 className="font-bold mb-2 flex items-center gap-2" style={{ fontSize: '16px' }}>
+                            <h2 className="font-bold mb-2 flex items-center gap-2" style={{ fontSize: '18px' }}>
                               {card.title}
                               {card.showStar && (
                                 <svg 
