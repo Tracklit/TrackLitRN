@@ -192,7 +192,7 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
   }
 
   return (
-    <div className="relative overflow-hidden h-20 flex items-center">
+    <div className="relative overflow-hidden h-12 flex items-center">
       {activities.map((activity, index) => {
         let position;
         if (currentIndex === activities.length - 1 && index === 0) {
@@ -205,12 +205,13 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
         return (
           <div 
             key={activity.id} 
-            className="absolute inset-0 p-4 flex items-center transition-transform duration-500 ease-in-out"
+            className="absolute inset-0 flex items-center transition-transform duration-500 ease-in-out"
             style={{
               transform: `translateX(${(position - currentIndex) * 100}%)`,
             }}
           >
-            <div className="flex items-center gap-2 h-full w-4/5 mx-auto">
+            {/* Container with padding to avoid control overlap */}
+            <div className="flex items-center gap-2 h-full w-full px-12">
               <div className="rounded-full bg-gray-200 h-8 w-8 flex items-center justify-center flex-shrink-0 overflow-hidden border border-white/20">
                 <img 
                   src={activity.user?.profileImageUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face'} 
@@ -219,15 +220,11 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
                 />
               </div>
               <div className="flex-1 overflow-hidden">
-                <div className="flex items-center gap-1 mb-0.5">
-                  <span className="text-xs font-medium text-yellow-400 truncate">{activity.title}</span>
-                  {activity.user?.username && (
-                    <span className="text-xs text-white">• {activity.user.username}</span>
-                  )}
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-medium text-white truncate">{activity.user?.name || activity.user?.username}</span>
+                  <span className="text-sm text-white/80 truncate">• {activity.title}</span>
+                  <span className="text-xs text-white/60 flex-shrink-0">{formatTimeAgo(activity.createdAt)}</span>
                 </div>
-                {activity.description && (
-                  <p className="text-xs text-white line-clamp-1 truncate">{activity.description}</p>
-                )}
               </div>
             </div>
           </div>
