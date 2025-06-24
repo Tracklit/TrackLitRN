@@ -44,24 +44,9 @@ export function MessageButton({ className, targetUserId }: MessageButtonProps) {
     e.preventDefault();
     e.stopPropagation();
     
-    // Get fresh path from browser
-    const browserPath = window.location.pathname;
-    console.log('Speech bubble clicked, browserPath:', browserPath, 'location:', location);
-    
-    // Always check browser path first for most accurate routing
-    if (browserPath.includes('messages') || browserPath.includes('conversations')) {
-      console.log('In message area, navigating back');
-      if (browserPath.includes('messages/')) {
-        console.log('From individual message to conversations list');
-        setLocation('/conversations');
-      } else if (browserPath === '/conversations') {
-        console.log('From conversations list to home');
-        setLocation('/');
-      }
-    } else {
-      console.log('Opening message panel');
-      setShowPanel(true);
-    }
+    // Force immediate navigation to conversations list regardless of current location
+    console.log('Speech bubble clicked - always navigate to conversations');
+    setLocation('/conversations');
   };
 
   return (
@@ -69,7 +54,8 @@ export function MessageButton({ className, targetUserId }: MessageButtonProps) {
       <button
         type="button"
         onClick={handleClick}
-        className={`relative inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 w-9 ${className}`}
+        className={`relative inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 w-9 z-[9999] ${className}`}
+        style={{ zIndex: 9999 }}
         aria-label={isInMessageChat ? "Back" : "Messages"}
       >
         <MessageCircle className="h-5 w-5" />
