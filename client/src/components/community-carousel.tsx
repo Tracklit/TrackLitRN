@@ -22,8 +22,9 @@ interface CommunityActivity {
 }
 
 export function CommunityCarousel() {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [nextIndex, setNextIndex] = useState(1);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Fetch community activities with fallback data
   const { data: activities, isLoading } = useQuery<CommunityActivity[]>({
@@ -98,20 +99,22 @@ export function CommunityCarousel() {
     ]
   });
 
-  // Auto-rotate every 7 seconds
+  // Auto-rotate every 7 seconds with sliding animation
   useEffect(() => {
     if (!activities?.length) return;
 
     const interval = setInterval(() => {
-      setIsAnimating(true);
+      setIsTransitioning(true);
+      setNextIndex((currentIndex + 1) % activities.length);
+      
       setTimeout(() => {
-        setActiveIndex(prev => (prev + 1) % activities.length);
-        setIsAnimating(false);
-      }, 300);
+        setCurrentIndex((prevIndex) => (prevIndex + 1) % activities.length);
+        setIsTransitioning(false);
+      }, 400); // Match transition duration
     }, 7000); // 7 seconds per activity
 
     return () => clearInterval(interval);
-  }, [activities?.length]);
+  }, [activities?.length, currentIndex]);
 
   const getActivityIcon = (activityType: string) => {
     switch (activityType) {
@@ -134,14 +137,41 @@ export function CommunityCarousel() {
     }
   };
 
+  const renderActivityCard = (activity: CommunityActivity) => (
+    <div className="flex items-center gap-2 pr-8 h-full">
+      <div className="rounded-full bg-gray-700/50 h-8 w-8 flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-600">
+        {activity.user?.profileImageUrl ? (
+          <img 
+            src={activity.user.profileImageUrl} 
+            alt={activity.user?.username}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          getActivityIcon(activity.activityType)
+        )}
+      </div>
+      <div className="flex-1 overflow-hidden">
+        <div className="flex items-center gap-1 mb-0.5">
+          <span className="text-xs font-medium text-yellow-400 truncate">{activity.title}</span>
+          {activity.user?.username && (
+            <span className="text-xs text-gray-300 truncate">· {activity.user.username}</span>
+          )}
+        </div>
+        {activity.description && (
+          <p className="text-xs text-gray-400 line-clamp-1 truncate">{activity.description}</p>
+        )}
+      </div>
+    </div>
+  );
+
   if (isLoading) {
     return (
-      <div className="p-3">
+      <div className="p-4 h-20">
         <div className="flex items-center gap-2">
-          <Skeleton className="h-6 w-6 rounded-full bg-gray-700" />
+          <Skeleton className="h-8 w-8 rounded-full bg-gray-700" />
           <div className="flex-1">
-            <Skeleton className="h-3 w-24 mb-1 bg-gray-700" />
-            <Skeleton className="h-3 w-32 bg-gray-700" />
+            <Skeleton className="h-3 w-32 mb-1 bg-gray-700" />
+            <Skeleton className="h-3 w-48 bg-gray-700" />
           </div>
         </div>
       </div>
@@ -150,43 +180,30 @@ export function CommunityCarousel() {
 
   if (!activities?.length) {
     return (
-      <div className="p-3 h-12 flex items-center">
+      <div className="p-4 h-20 flex items-center">
         <span className="text-xs text-gray-400">No community activity yet</span>
       </div>
     );
   }
 
-  const currentActivity = activities[activeIndex];
-
   return (
-    <div 
-      className={`p-3 transition-opacity duration-300 ease-in-out ${
-        isAnimating ? 'opacity-0' : 'opacity-100'
-      }`}
-    >
-      <div className="flex items-center gap-2 pr-8">
-        <div className="rounded-full bg-gray-700/50 h-8 w-8 flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-600">
-          {currentActivity.user?.profileImageUrl ? (
-            <img 
-              src={currentActivity.user.profileImageUrl} 
-              alt={currentActivity.user?.username}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            getActivityIcon(currentActivity.activityType)
-          )}
-        </div>
-        <div className="flex-1 overflow-hidden">
-          <div className="flex items-center gap-1 mb-0.5">
-            <span className="text-xs font-medium text-yellow-400">{currentActivity.title}</span>
-            {currentActivity.user?.username && (
-              <span className="text-xs text-gray-300">· {currentActivity.user.username}</span>
-            )}
-          </div>
-          {currentActivity.description && (
-            <p className="text-xs text-gray-400 line-clamp-1">{currentActivity.description}</p>
-          )}
-        </div>
+    <div className="relative overflow-hidden h-20 flex items-center">
+      {/* Current activity */}
+      <div 
+        className={`absolute inset-0 p-4 flex items-center transition-transform duration-500 ease-in-out ${
+          isTransitioning ? '-translate-x-full' : 'translate-x-0'
+        }`}
+      >
+        {renderActivityCard(activities[currentIndex])}
+      </div>
+      
+      {/* Next activity sliding in from right */}
+      <div 
+        className={`absolute inset-0 p-4 flex items-center transition-transform duration-500 ease-in-out ${
+          isTransitioning ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        {renderActivityCard(activities[nextIndex])}
       </div>
     </div>
   );

@@ -255,7 +255,32 @@ export default function HomePage() {
       {/* Preload critical images */}
       <PreloadImages images={dashboardImages} quality={20} priority={true} />
       
-      <main className="pt-2 px-4 container mx-auto max-w-7xl">
+      {/* Fixed Community Activity Ticker */}
+      {isTickerVisible && (
+        <div className="fixed top-0 left-0 right-0 z-50 bg-gray-900/95 backdrop-blur-md border-b border-gray-700 shadow-lg">
+          <div className="mx-auto" style={{ maxWidth: "540px" }}>
+            <div className="bg-gradient-to-r from-gray-800 to-gray-900 border-b border-gray-600 relative overflow-hidden">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0 absolute right-2 top-2 z-10 text-white/70 hover:text-white"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleTickerVisibility(!isTickerVisible);
+                }}
+              >
+                <Globe className="h-4 w-4" />
+              </Button>
+              
+              <div className="overflow-hidden">
+                <CommunityCarousel />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <main className={`px-4 container mx-auto max-w-7xl ${isTickerVisible ? 'pt-24' : 'pt-2'}`}>
         {/* Logo will be placed here in the future */}
         <div className="h-1 mx-auto" style={{ maxWidth: "540px" }}>
           {/* Reserved space for logo */}
@@ -263,32 +288,7 @@ export default function HomePage() {
 
         {/* Quote removed as requested */}
         
-        {/* Community Activity Carousel Ticker */}
-        {isTickerVisible && (
-          <section className="mb-6 mx-auto" style={{ maxWidth: "540px" }}>
-            <div className="grid grid-cols-2 gap-2" style={{ margin: "0 auto" }}>
-              <div className="col-span-2">
-                <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-lg border border-gray-700 relative overflow-hidden">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0 absolute right-2 top-2 z-10 text-white/70 hover:text-white"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleTickerVisibility(!isTickerVisible);
-                    }}
-                  >
-                    <Globe className="h-4 w-4" />
-                  </Button>
-                  
-                  <div className="overflow-hidden">
-                    <CommunityCarousel />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
+
 
         
         {/* Main Category Cards - Single Column Full Width */}
