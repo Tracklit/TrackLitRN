@@ -3134,6 +3134,51 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(videoAnalysis)
       .where(eq(videoAnalysis.id, id));
+    return (result as any).changes > 0;
+  }
+
+  // Community Activities for Ticker
+  async getCommunityActivities(limit: number = 50): Promise<CommunityActivity[]> {
+    return await db
+      .select({
+        id: communityActivities.id,
+        userId: communityActivities.userId,
+        activityType: communityActivities.activityType,
+        title: communityActivities.title,
+        description: communityActivities.description,
+        relatedEntityId: communityActivities.relatedEntityId,
+        relatedEntityType: communityActivities.relatedEntityType,
+        metadata: communityActivities.metadata,
+        isVisible: communityActivities.isVisible,
+        createdAt: communityActivities.createdAt,
+        user: {
+          id: users.id,
+          username: users.username,
+          name: users.name,
+          profileImageUrl: users.profileImageUrl,
+        }
+      })
+      .from(communityActivities)
+      .leftJoin(users, eq(communityActivities.userId, users.id))
+      .where(eq(communityActivities.isVisible, true))
+      .orderBy(desc(communityActivities.createdAt))
+      .limit(limit);
+  }
+
+  async createCommunityActivity(activity: InsertCommunityActivity): Promise<CommunityActivity> {
+    const [newActivity] = await db
+      .insert(communityActivities)
+      .values(activity)
+      .returning();
+    return newActivity;
+  }
+
+  async deleteCommunityActivity(id: number): Promise<void> {
+    await db
+      .delete(communityActivities)
+      .where(eq(communityActivities.id, id));
+  }
+}
     return result.rowCount! > 0;
   }
 }

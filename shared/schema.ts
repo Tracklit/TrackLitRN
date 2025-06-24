@@ -1215,6 +1215,8 @@ export type CommunityActivity = typeof communityActivities.$inferSelect;
 export type InsertCommunityActivity = z.infer<typeof insertCommunityActivitySchema>;
 
 // Direct Messages
+
+// Direct Messages
 export const directMessages = pgTable("direct_messages", {
   id: serial("id").primaryKey(),
   senderId: integer("sender_id").notNull().references(() => users.id),
