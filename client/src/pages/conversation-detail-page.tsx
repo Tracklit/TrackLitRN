@@ -248,23 +248,15 @@ export default function ConversationDetailPage() {
     },
   });
 
-  // Only scroll to bottom once when conversation first loads
-  const [hasScrolled, setHasScrolled] = useState(false);
+  // Set initial scroll position to bottom only when conversation first loads
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
-    if (targetUserId && messages.length > 0 && !hasScrolled) {
-      // Scroll to bottom instantly only on first load
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
-        setHasScrolled(true);
-      }, 50);
+    if (targetUserId && messages.length > 0 && messagesContainerRef.current) {
+      // Scroll to bottom immediately when conversation loads
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
-  }, [targetUserId, messages, hasScrolled]);
-
-  // Reset scroll flag when changing conversations
-  useEffect(() => {
-    setHasScrolled(false);
-  }, [targetUserId]);
+  }, [targetUserId]); // Only trigger when conversation changes
 
   // Mark messages as read when conversation loads
   const markMessagesAsReadMutation = useMutation({
@@ -401,6 +393,7 @@ export default function ConversationDetailPage() {
 
       {/* Messages */}
       <div 
+        ref={messagesContainerRef}
         className="absolute top-20 bottom-32 left-0 right-0 overflow-y-auto p-4 space-y-4"
         style={{ scrollBehavior: 'auto' }}
       >

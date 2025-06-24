@@ -39,8 +39,11 @@ export function MessageButton({ className, targetUserId }: MessageButtonProps) {
   // Check if currently in a message chat
   const isInMessageChat = location.startsWith('/messages/') || location === '/conversations';
   
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     console.log('Speech bubble clicked, location:', location, 'isInMessageChat:', isInMessageChat);
+    
     if (isInMessageChat) {
       // Navigate back if in message chat
       if (location.startsWith('/messages/')) {
@@ -50,7 +53,7 @@ export function MessageButton({ className, targetUserId }: MessageButtonProps) {
         console.log('Navigating from conversations to home');
         setLocation('/');
       } else {
-        console.log('Navigating to home');
+        console.log('Default navigation to home');
         setLocation('/');
       }
     } else {
@@ -62,11 +65,10 @@ export function MessageButton({ className, targetUserId }: MessageButtonProps) {
 
   return (
     <>
-      <Button
-        variant="ghost"
-        size="sm"
+      <button
+        type="button"
         onClick={handleClick}
-        className={`relative ${className}`}
+        className={`relative inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 w-9 ${className}`}
         aria-label={isInMessageChat ? "Back" : "Messages"}
       >
         <MessageCircle className="h-5 w-5" />
@@ -75,7 +77,7 @@ export function MessageButton({ className, targetUserId }: MessageButtonProps) {
             {unreadCount > 99 ? '99+' : unreadCount}
           </Badge>
         )}
-      </Button>
+      </button>
 
       <MessagePanel
         isOpen={showPanel}
