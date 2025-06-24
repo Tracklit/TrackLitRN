@@ -61,7 +61,7 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
         title: 'Spring Championship Meet',
         description: 'New track meet scheduled for April 15th at Metro Stadium',
         createdAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-        user: { id: 3, username: 'coach_jones', name: 'Coach Jones', profileImageUrl: undefined }
+        user: { id: 3, username: 'coach_jones', name: 'Coach Jones', profileImageUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=jones' }
       },
       {
         id: 4,
@@ -79,7 +79,7 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
         title: 'Certified Coach',
         description: 'Marcus T. became a certified coach on TrackLit',
         createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-        user: { id: 4, username: 'coach_marcus', name: 'Marcus T.', profileImageUrl: undefined }
+        user: { id: 4, username: 'coach_marcus', name: 'Marcus T.', profileImageUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=marcus' }
       },
       {
         id: 6,
@@ -88,7 +88,7 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
         title: 'Speed Development Program',
         description: 'Started 8-week speed development training program',
         createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-        user: { id: 2, username: 'sarah_m_runner', name: 'Sarah M.', profileImageUrl: undefined }
+        user: { id: 2, username: 'sarah_m_runner', name: 'Sarah M.', profileImageUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sarah' }
       },
       {
         id: 7,
