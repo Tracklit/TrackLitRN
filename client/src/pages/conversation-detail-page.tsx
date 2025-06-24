@@ -397,7 +397,12 @@ export default function ConversationDetailPage() {
           </p>
         </div>
         
-        <Button variant="ghost" size="sm" className="p-2">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="p-2"
+          onClick={() => setLocation('/conversations')}
+        >
           <MoreVertical className="h-5 w-5" />
         </Button>
       </div>

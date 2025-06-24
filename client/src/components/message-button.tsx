@@ -64,16 +64,21 @@ export function MessageButton({ className, targetUserId }: MessageButtonProps) {
     }
   };
 
+  // Hide speech bubble icon when inside a message channel
+  if (isInMessageChannel) {
+    return null;
+  }
+
   return (
     <>
       <button
         type="button"
         onClick={handleClick}
         className={`relative inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 w-9 ${className}`}
-        aria-label={isInMessageChat ? "Back" : "Messages"}
+        aria-label="Messages"
       >
         <MessageCircle className="h-5 w-5" />
-        {!isInMessageChat && unreadCount > 0 && (
+        {unreadCount > 0 && (
           <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-xs min-w-[1.25rem] h-5 flex items-center justify-center rounded-full">
             {unreadCount > 99 ? '99+' : unreadCount}
           </Badge>
