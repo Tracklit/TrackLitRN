@@ -317,7 +317,7 @@ export default function HomePage() {
                         <h2 className="font-bold mb-2 text-muted-foreground/70" style={{ fontSize: '16px' }}>{card.title}</h2>
                         <p className="text-muted-foreground/70 text-sm">{card.description}</p>
                       </div>
-                      <span className="text-muted-foreground/70 text-lg">&gt;</span>
+                      <span className="text-muted-foreground/70 text-sm ml-4">&gt;</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -344,10 +344,12 @@ export default function HomePage() {
                                 {/* Static content for consistency with other cards */}
                                 <div className="flex items-center justify-between">
                                   <div className="text-left">
-                                    <h2 className="font-bold mb-2" style={{ fontSize: '16px' }}>Today's Workout</h2>
+                                    <h2 className="font-bold mb-2 flex items-center gap-1" style={{ fontSize: '16px' }}>
+                                      Hi {user?.name?.split(' ')[0] || user?.username || 'there'} <span className="text-base">👋</span>, ready to start today's workout?
+                                    </h2>
                                     <p className="text-muted-foreground text-sm">Your daily session and journaling</p>
                                   </div>
-                                  <span className="text-muted-foreground text-lg">&gt;</span>
+                                  <span className="text-muted-foreground text-sm ml-4">&gt;</span>
                                 </div>
                               </div>
                             </div>
@@ -360,7 +362,7 @@ export default function HomePage() {
                             <h2 className="font-bold mb-2" style={{ fontSize: '16px' }}>{card.title}</h2>
                             <p className="text-muted-foreground text-sm">{card.description}</p>
                           </div>
-                          <span className="text-muted-foreground text-lg">&gt;</span>
+                          <span className="text-muted-foreground text-sm ml-4">&gt;</span>
                         </div>
                       </CardContent>
                     )}
