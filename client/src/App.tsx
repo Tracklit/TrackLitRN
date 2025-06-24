@@ -69,10 +69,11 @@ import FootRehabPage from "@/pages/rehab/chronic-injuries/foot";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { TickerProvider } from "@/contexts/ticker-context";
-import { initializeScrollOverride } from "@/lib/scroll-override";
+// Scroll override system disabled to prevent interference with normal scrolling
+// import { initializeScrollOverride } from "@/lib/scroll-override";
 
 // Initialize global scroll override immediately
-initializeScrollOverride();
+// initializeScrollOverride();
 
 // Component to handle scroll restoration
 function ScrollRestoration() {
