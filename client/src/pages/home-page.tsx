@@ -88,69 +88,7 @@ export default function HomePage() {
     queryKey: ['/api/results'],
   });
   
-  // Fetch assigned programs
-  const { assignedPrograms, isLoading: isLoadingPrograms } = useAssignedPrograms();
-  
-  // Get the first assigned program's ID and details
-  const primaryProgram = assignedPrograms?.[0] || null;
-  const primaryProgramId = primaryProgram?.programId || null;
-  
-  // Fetch program sessions for the primary program
-  const { programSessions, isLoading: isLoadingSessions } = useProgramSessions(primaryProgramId);
-  
-  // Find today's workout session using actual current date
-  const getTodayDateString = () => {
-    const today = new Date();
-    const month = today.toLocaleDateString('en-US', { month: 'short' });
-    const day = today.getDate();
-    return `${month}-${day}`;
-  };
-  
-  const todayDate = getTodayDateString();
-  const todaySession = programSessions?.find(session => session.date === todayDate) || null;
-  
-  // Check if there's a meet scheduled for today
-  const isTodayMeetDay = meets?.some(meet => {
-    const meetDate = new Date(meet.date);
-    const today = new Date();
-    return meetDate.toDateString() === today.toDateString();
-  }) || false;
-  
-  // Determine Today's Session description based on program type
-  const getTodaySessionDescription = () => {
-    // Check if it's a race day first (applies to all program types)
-    if (isTodayMeetDay) {
-      return "Race Day";
-    }
-    
-    if (!primaryProgram) {
-      return "Assign Program";
-    }
-    
-    // Check if it's a Google Sheets program
-    if (primaryProgram.program?.importedFromSheet && primaryProgram.program?.googleSheetId) {
-      if (todaySession && (todaySession.shortDistanceWorkout || todaySession.mediumDistanceWorkout || todaySession.longDistanceWorkout)) {
-        return todaySession.shortDistanceWorkout?.slice(0, 50) + "..." || 
-               todaySession.mediumDistanceWorkout?.slice(0, 50) + "..." || 
-               todaySession.longDistanceWorkout?.slice(0, 50) + "..." || 
-               "Practice";
-      } else {
-        return "Rest Day";
-      }
-    }
-    
-    // For text-based programs
-    if (primaryProgram.program?.isTextBased) {
-      return "Practice";
-    }
-    
-    // For uploaded PDF programs
-    if (primaryProgram.program?.isUploadedProgram) {
-      return "Practice";
-    }
-    
-    return "Practice";
-  };
+  // Static content for practice card - no more dynamic workout fetching
   
   // Temporary type for session previews with user data
   type SessionPreviewWithUser = {
@@ -400,46 +338,11 @@ export default function HomePage() {
                         <CardContent className="h-full p-4 relative flex flex-col z-10">
                             <div className="flex flex-col h-full">
                               <div className="flex-1 space-y-2">
-                                {/* Show workout details for Google Sheets programs */}
-                                {primaryProgram?.program?.importedFromSheet ? (
-                                  // Check for race day first, regardless of session availability
-                                  isTodayMeetDay ? (
-                                    <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
-                                      <p className="text-center font-bold text-lg text-purple-400">
-                                        Race Day!
-                                      </p>
-                                    </div>
-                                  ) : todaySession && (todaySession.shortDistanceWorkout || todaySession.mediumDistanceWorkout || todaySession.longDistanceWorkout) ? (
-                                    <>
-                                      {todaySession.shortDistanceWorkout && (
-                                        <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
-                                          <span className="font-medium text-primary">60m/100m:</span> {todaySession.shortDistanceWorkout.slice(0, 35)}...
-                                        </div>
-                                      )}
-                                      {todaySession.mediumDistanceWorkout && (
-                                        <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
-                                          <span className="font-medium text-primary">200m:</span> {todaySession.mediumDistanceWorkout.slice(0, 35)}...
-                                        </div>
-                                      )}
-                                      {todaySession.longDistanceWorkout && (
-                                        <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm">
-                                          <span className="font-medium text-primary">400m:</span> {todaySession.longDistanceWorkout.slice(0, 35)}...
-                                        </div>
-                                      )}
-                                    </>
-                                  ) : (
-                                    <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm flex items-center justify-center h-full">
-                                      <p className="text-purple-400 text-center font-bold text-lg">
-                                        Rest Day
-                                      </p>
-                                    </div>
-                                  )
-                                ) : (
-                                  /* Show fallback message for other program types or no program */
-                                  <div className="p-2 bg-background/80 dark:bg-background/40 rounded text-sm flex items-center justify-center h-full">
-                                    <p className="text-purple-400 text-center font-bold text-lg">{getTodaySessionDescription()}</p>
-                                  </div>
-                                )}
+                                {/* Static content for consistency with other cards */}
+                                <div className="text-center">
+                                  <h2 className="font-bold mb-2" style={{ fontSize: '16px' }}>On Movement</h2>
+                                  <p className="text-muted-foreground text-sm">Track your training sessions</p>
+                                </div>
                               </div>
                             </div>
                           </CardContent>
