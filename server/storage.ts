@@ -64,6 +64,8 @@ import {
   InsertWorkoutLibrary,
   WorkoutSessionPreview,
   InsertWorkoutSessionPreview,
+  CommunityActivity,
+  InsertCommunityActivity,
   exerciseLibrary,
   users,
   meets,
@@ -293,6 +295,11 @@ export interface IStorage {
   updateExerciseLibraryItem(id: number, data: any): Promise<any>;
   deleteExerciseLibraryItem(id: number): Promise<boolean>;
   getExerciseLibraryLimits(userId: number): Promise<any>;
+
+  // Community Activities for Ticker
+  getCommunityActivities(limit?: number): Promise<CommunityActivity[]>;
+  createCommunityActivity(activity: InsertCommunityActivity): Promise<CommunityActivity>;
+  deleteCommunityActivity(id: number): Promise<void>;
 
   // Session store
   sessionStore: session.Store;

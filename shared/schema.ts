@@ -1185,6 +1185,35 @@ export type InsertWorkoutLibrary = z.infer<typeof insertWorkoutLibrarySchema>;
 export type WorkoutSessionPreview = typeof workoutSessionPreview.$inferSelect;
 export type InsertWorkoutSessionPreview = z.infer<typeof insertWorkoutSessionPreviewSchema>;
 
+// Community Activity Feed for Ticker Carousel
+export const communityActivities = pgTable("community_activities", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  activityType: text("activity_type").notNull(), // workout, user_joined, meet_created, meet_results, coach_status, program_assigned, group_joined
+  title: text("title").notNull(), // Display title for the activity
+  description: text("description"), // Optional additional details
+  relatedEntityId: integer("related_entity_id"), // ID of related meet, program, group, etc.
+  relatedEntityType: text("related_entity_type"), // meet, program, group, etc.
+  metadata: json("metadata"), // Additional flexible data
+  isVisible: boolean("is_visible").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const communityActivitiesRelations = relations(communityActivities, ({ one }) => ({
+  user: one(users, {
+    fields: [communityActivities.userId],
+    references: [users.id],
+  }),
+}));
+
+export const insertCommunityActivitySchema = createInsertSchema(communityActivities).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type CommunityActivity = typeof communityActivities.$inferSelect;
+export type InsertCommunityActivity = z.infer<typeof insertCommunityActivitySchema>;
+
 // Direct Messages
 export const directMessages = pgTable("direct_messages", {
   id: serial("id").primaryKey(),
