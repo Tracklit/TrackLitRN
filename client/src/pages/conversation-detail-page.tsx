@@ -401,7 +401,10 @@ export default function ConversationDetailPage() {
           variant="ghost" 
           size="sm" 
           className="p-2"
-          onClick={() => setLocation('/conversations')}
+          onClick={() => {
+            console.log('MoreVertical clicked, navigating to /conversations');
+            setLocation('/conversations');
+          }}
         >
           <MoreVertical className="h-5 w-5" />
         </Button>
