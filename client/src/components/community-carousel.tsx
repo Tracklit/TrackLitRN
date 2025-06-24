@@ -28,6 +28,7 @@ interface CommunityCarouselProps {
 
 export function CommunityCarousel({ isPaused = false, onPauseToggle }: CommunityCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [nextIndex, setNextIndex] = useState(1);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Fetch community activities with fallback data
@@ -108,11 +109,16 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
     if (!activities?.length || isPaused) return;
 
     const interval = setInterval(() => {
+      const newNextIndex = (currentIndex + 1) % activities.length;
+      setNextIndex(newNextIndex);
       setIsTransitioning(true);
       
+      // After transition completes, update current index and reset
       setTimeout(() => {
-        setCurrentIndex((prevIndex) => (prevIndex + 1) % activities.length);
+        setCurrentIndex(newNextIndex);
         setIsTransitioning(false);
+        // Prepare next item for future transition
+        setNextIndex((newNextIndex + 1) % activities.length);
       }, 500); // Match transition duration
     }, 7000); // 7 seconds per activity
 
@@ -189,23 +195,21 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
     );
   }
 
-  const nextIndex = (currentIndex + 1) % activities.length;
-
   return (
     <div className="relative overflow-hidden h-20 flex items-center">
-      {/* Current activity */}
+      {/* Current activity - slides out to left */}
       <div 
         className={`absolute inset-0 p-4 flex items-center transition-transform duration-500 ease-in-out ${
-          isTransitioning ? '-translate-x-full' : 'translate-x-0'
+          isTransitioning ? '-translate-x-full opacity-0' : 'translate-x-0 opacity-100'
         }`}
       >
         {renderActivityCard(activities[currentIndex])}
       </div>
       
-      {/* Next activity sliding in from right */}
+      {/* Next activity - slides in from right */}
       <div 
         className={`absolute inset-0 p-4 flex items-center transition-transform duration-500 ease-in-out ${
-          isTransitioning ? 'translate-x-0' : 'translate-x-full'
+          isTransitioning ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
         }`}
       >
         {renderActivityCard(activities[nextIndex])}
