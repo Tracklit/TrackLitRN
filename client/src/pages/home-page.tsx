@@ -250,11 +250,11 @@ export default function HomePage() {
   // Quote removed as requested
 
   return (
-    <div className="h-screen text-foreground bg-background overflow-hidden flex flex-col">
+    <div className="min-h-screen text-foreground pb-16 bg-background" style={{ overscrollBehavior: 'none' }}>
       {/* Preload critical images */}
       <PreloadImages images={dashboardImages} quality={20} priority={true} />
       
-      <main className="pt-2 px-4 container mx-auto max-w-7xl flex-1 overflow-y-auto pb-16">
+      <main className="pt-2 px-4 container mx-auto max-w-7xl">
         {/* Logo will be placed here in the future */}
         <div className="h-1 mx-auto" style={{ maxWidth: "540px" }}>
           {/* Reserved space for logo */}
