@@ -258,9 +258,9 @@ export default function HomePage() {
       
       {/* Fixed Community Activity Ticker - Below Header */}
       {isTickerVisible && (
-        <div className="fixed top-16 left-0 right-0 z-10 bg-gray-900 border-b border-gray-700 shadow-lg">
+        <div className="fixed top-16 left-0 right-0 z-10 bg-gradient-to-b from-gray-800 to-gray-900 border-b border-gray-700 shadow-lg">
           <div className="mx-auto" style={{ maxWidth: "540px" }}>
-            <div className="bg-gray-900 border-b border-gray-600 relative overflow-hidden">
+            <div className="bg-gradient-to-b from-gray-800 to-gray-900 border-b border-gray-600 relative overflow-hidden">
               <div className="absolute right-2 top-2 z-10 flex items-center gap-1">
                 <Button
                   variant="ghost"
@@ -305,7 +305,7 @@ export default function HomePage() {
         </div>
       )}
       
-      <main className={`px-4 container mx-auto max-w-7xl ${isTickerVisible ? 'pt-36' : 'pt-16'}`}>
+      <main className={`px-4 container mx-auto max-w-7xl ${isTickerVisible ? 'pt-24' : 'pt-16'}`}>
         {/* Logo will be placed here in the future */}
         <div className="h-1 mx-auto" style={{ maxWidth: "540px" }}>
           {/* Reserved space for logo */}
