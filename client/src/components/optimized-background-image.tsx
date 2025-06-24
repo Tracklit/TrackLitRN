@@ -26,7 +26,7 @@ export const OptimizedBackgroundImage: React.FC<OptimizedBackgroundImageProps> =
   quality = 20, // 80% compression (100-80=20)
   lazy = true,
   blur = true,
-  opacity = 0.95
+  opacity = 0.8
 }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -247,7 +247,7 @@ export const BackgroundImageContainer: React.FC<{
   alt, 
   children, 
   className = '', 
-  opacity = 0.95, 
+  opacity = 0.8, 
   filter 
 }) => {
   const [imageLoaded, setImageLoaded] = React.useState(false);
