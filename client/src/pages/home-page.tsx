@@ -188,11 +188,11 @@ export default function HomePage() {
     // The API should return enriched data with program details
     // If program object exists, use its title, otherwise use programId as fallback
     if (currentProgram.program?.title) {
-      programsDescription = `Currently assigned: ${currentProgram.program.title}`;
+      programsDescription = currentProgram.program.title;
     } else if (currentProgram.programId) {
-      programsDescription = `Currently assigned: Program ${currentProgram.programId}`;
+      programsDescription = `Program ${currentProgram.programId}`;
     } else {
-      programsDescription = "Currently assigned: Unknown Program";
+      programsDescription = "Unknown Program";
     }
   }
 
