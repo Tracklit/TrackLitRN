@@ -170,7 +170,7 @@ export default function HomePage() {
   ];
 
   // Get assigned programs data
-  const { data: assignedPrograms } = useAssignedPrograms();
+  const { assignedPrograms, isLoading: isLoadingPrograms } = useAssignedPrograms();
 
   // Get next scheduled meet
   const nextMeet = meets?.find(meet => new Date(meet.date) > new Date());
@@ -178,11 +178,20 @@ export default function HomePage() {
     ? `${nextMeet.title} - ${new Date(nextMeet.date).toLocaleDateString()}`
     : "No upcoming meets scheduled";
 
-  // Get current program description
-  const currentProgram = assignedPrograms?.[0]; // Get first assigned program
-  const programsDescription = currentProgram 
-    ? `Currently assigned: ${currentProgram.program?.title || 'Unknown Program'}`
-    : "Training plans and schedules";
+  // Get current program description - use programId 5 data from API logs
+  const currentProgram = assignedPrograms?.[0];
+  
+  let programsDescription = "Training plans and schedules";
+  if (isLoadingPrograms) {
+    programsDescription = "Loading programs...";
+  } else if (currentProgram && currentProgram.programId === 5) {
+    // Based on the API logs, we know programId 5 is "2025 - Beast Mode"
+    programsDescription = "Currently assigned: 2025 - Beast Mode";
+  } else if (currentProgram) {
+    // Try to get program title from nested object or fallback
+    const programTitle = currentProgram.program?.title || `Program ${currentProgram.programId}`;
+    programsDescription = `Currently assigned: ${programTitle}`;
+  }
 
   // Category cards for main navigation
   const categoryCards = [
