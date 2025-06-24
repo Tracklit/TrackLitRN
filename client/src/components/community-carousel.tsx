@@ -52,7 +52,7 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
         title: 'New Athlete Joined',
         description: 'Welcome Sarah M. to the TrackLit community!',
         createdAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-        user: { id: 2, username: 'sarah_m_runner', name: 'Sarah M.', profileImageUrl: undefined }
+        user: { id: 2, username: 'sarah_m_runner', name: 'Sarah M.', profileImageUrl: 'https://images.unsplash.com/photo-1494790108755-2616b612b002?w=150&h=150&fit=crop&crop=face' }
       },
       {
         id: 3,
@@ -61,7 +61,7 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
         title: 'Spring Championship Meet',
         description: 'New track meet scheduled for April 15th at Metro Stadium',
         createdAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-        user: { id: 3, username: 'coach_jones', name: 'Coach Jones', profileImageUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=jones' }
+        user: { id: 3, username: 'coach_jones', name: 'Coach Jones', profileImageUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face' }
       },
       {
         id: 4,
@@ -79,7 +79,7 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
         title: 'Certified Coach',
         description: 'Marcus T. became a certified coach on TrackLit',
         createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-        user: { id: 4, username: 'coach_marcus', name: 'Marcus T.', profileImageUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=marcus' }
+        user: { id: 4, username: 'coach_marcus', name: 'Marcus T.', profileImageUrl: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=150&h=150&fit=crop&crop=face' }
       },
       {
         id: 6,
@@ -88,7 +88,7 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
         title: 'Speed Development Program',
         description: 'Started 8-week speed development training program',
         createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-        user: { id: 2, username: 'sarah_m_runner', name: 'Sarah M.', profileImageUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sarah' }
+        user: { id: 2, username: 'sarah_m_runner', name: 'Sarah M.', profileImageUrl: 'https://images.unsplash.com/photo-1494790108755-2616b612b002?w=150&h=150&fit=crop&crop=face' }
       },
       {
         id: 7,
@@ -97,7 +97,7 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
         title: 'Elite Sprinters Club',
         description: 'Joined the Elite Sprinters training group',
         createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-        user: { id: 5, username: 'elite_runner', name: 'Jordan K.', profileImageUrl: undefined }
+        user: { id: 5, username: 'elite_runner', name: 'Jordan K.', profileImageUrl: 'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=150&h=150&fit=crop&crop=face' }
       }
     ]
   });
@@ -211,16 +211,12 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
             }}
           >
             <div className="flex items-center gap-2 pr-8 h-full w-full ml-6">
-              <div className="rounded-full bg-gray-700/50 h-8 w-8 flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-600">
-                {activity.user?.profileImageUrl ? (
-                  <img 
-                    src={activity.user.profileImageUrl} 
-                    alt={activity.user?.username}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  getActivityIcon(activity.activityType)
-                )}
+              <div className="rounded-full bg-gray-200 h-8 w-8 flex items-center justify-center flex-shrink-0 overflow-hidden border border-white/20">
+                <img 
+                  src={activity.user?.profileImageUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face'} 
+                  alt={activity.user?.username || 'User'}
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div className="flex-1 overflow-hidden">
                 <div className="flex items-center gap-1 mb-0.5">
