@@ -261,7 +261,7 @@ export default function HomePage() {
         <div className="fixed top-[60px] left-0 right-0 z-40 bg-gradient-to-b from-gray-800 to-gray-900">
           <div className="mx-auto" style={{ maxWidth: "540px" }}>
             <div className="bg-gradient-to-b from-gray-800 to-gray-900 relative overflow-hidden">
-              <div className="absolute left-2 top-2 z-60 flex items-center gap-1">
+              <div className="absolute left-2 top-1 z-60 flex flex-col gap-1">
                 <Button
                   variant="ghost"
                   size="sm"
