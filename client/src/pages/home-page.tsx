@@ -274,7 +274,7 @@ export default function HomePage() {
       icon: <MessageCircle className="h-6 w-6 text-primary" />,
       href: "/sprinthia",
       disabled: false,
-      backgroundImage: sprinthiaBackground,
+      backgroundImage: toolsBackground,
       hasBackground: true
     }
   ];
