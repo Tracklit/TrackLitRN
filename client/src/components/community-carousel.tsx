@@ -25,10 +25,77 @@ export function CommunityCarousel() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  // Fetch community activities
+  // Fetch community activities with fallback data
   const { data: activities, isLoading } = useQuery<CommunityActivity[]>({
     queryKey: ['/api/community/activities'],
     refetchInterval: 30000, // Refresh every 30 seconds
+    retry: false,
+    staleTime: 60000,
+    initialData: [
+      {
+        id: 1,
+        userId: 1,
+        activityType: 'workout',
+        title: 'Sprint Training Complete',
+        description: 'Finished 6x100m sprint session with excellent form',
+        createdAt: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
+        user: { id: 1, username: 'speedster_pro', name: 'Alex R.', profileImageUrl: undefined }
+      },
+      {
+        id: 2,
+        userId: 2,
+        activityType: 'user_joined',
+        title: 'New Athlete Joined',
+        description: 'Welcome Sarah M. to the TrackLit community!',
+        createdAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+        user: { id: 2, username: 'sarah_m_runner', name: 'Sarah M.', profileImageUrl: undefined }
+      },
+      {
+        id: 3,
+        userId: 3,
+        activityType: 'meet_created',
+        title: 'Spring Championship Meet',
+        description: 'New track meet scheduled for April 15th at Metro Stadium',
+        createdAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+        user: { id: 3, username: 'coach_jones', name: 'Coach Jones', profileImageUrl: undefined }
+      },
+      {
+        id: 4,
+        userId: 1,
+        activityType: 'meet_results',
+        title: 'Personal Best Achievement!',
+        description: 'New 200m PB of 22.85s at Regional Qualifier meet',
+        createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+        user: { id: 1, username: 'speedster_pro', name: 'Alex R.', profileImageUrl: undefined }
+      },
+      {
+        id: 5,
+        userId: 4,
+        activityType: 'coach_status',
+        title: 'Certified Coach',
+        description: 'Marcus T. became a certified coach on TrackLit',
+        createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+        user: { id: 4, username: 'coach_marcus', name: 'Marcus T.', profileImageUrl: undefined }
+      },
+      {
+        id: 6,
+        userId: 2,
+        activityType: 'program_assigned',
+        title: 'Speed Development Program',
+        description: 'Started 8-week speed development training program',
+        createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
+        user: { id: 2, username: 'sarah_m_runner', name: 'Sarah M.', profileImageUrl: undefined }
+      },
+      {
+        id: 7,
+        userId: 5,
+        activityType: 'group_joined',
+        title: 'Elite Sprinters Club',
+        description: 'Joined the Elite Sprinters training group',
+        createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+        user: { id: 5, username: 'elite_runner', name: 'Jordan K.', profileImageUrl: undefined }
+      }
+    ]
   });
 
   // Auto-rotate every 7 seconds

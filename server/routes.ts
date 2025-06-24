@@ -20,6 +20,10 @@ import { GoogleSpreadsheet } from "google-spreadsheet";
 import { notificationSystem } from "./notification-system";
 import { insertAthleteProfileSchema } from "@shared/athlete-profile-schema";
 import { worldAthleticsService } from "./world-athletics";
+import journalRoutes from "./routes/journal";
+import worldAthleticsRoutes from "./routes/world-athletics";
+import rehabRoutes from "./routes/rehab";
+import communityRoutes from "./routes/community";
 
 // Background processing function for gym data
 async function processGymDataInBackground(programId: number, googleSheetId: string, sessions: any[]) {
