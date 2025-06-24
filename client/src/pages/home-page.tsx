@@ -31,7 +31,9 @@ import {
   Plus,
   Globe,
   BookOpen,
-  MessageCircle
+  MessageCircle,
+  Circle,
+  Star
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { CreateMeetModal } from '@/components/create-meet-modal';
@@ -167,6 +169,21 @@ export default function HomePage() {
     backgroundImage5
   ];
 
+  // Get assigned programs data
+  const { data: assignedPrograms } = useAssignedPrograms();
+
+  // Get next scheduled meet
+  const nextMeet = meets?.find(meet => new Date(meet.date) > new Date());
+  const raceDescription = nextMeet 
+    ? `${nextMeet.title} - ${new Date(nextMeet.date).toLocaleDateString()}`
+    : "No upcoming meets scheduled";
+
+  // Get current program description
+  const currentProgram = assignedPrograms?.find(p => p.isActive);
+  const programsDescription = currentProgram 
+    ? `Currently assigned: ${currentProgram.title}`
+    : "Training plans and schedules";
+
   // Category cards for main navigation
   const categoryCards = [
     {
@@ -181,7 +198,7 @@ export default function HomePage() {
     },
     {
       title: "Programs",
-      description: "Training plans and schedules",
+      description: programsDescription,
       icon: <BookOpen className="h-6 w-6 text-primary" />,
       href: "/programs",
       disabled: false,
@@ -190,7 +207,7 @@ export default function HomePage() {
     },
     {
       title: "Race",
-      description: "Meets, results and analytics",
+      description: raceDescription,
       icon: <Trophy className="h-6 w-6 text-primary" />,
       href: "/meets",
       disabled: false,
@@ -213,7 +230,8 @@ export default function HomePage() {
       href: "/sprinthia",
       disabled: false,
       backgroundImage: toolsBackground,
-      hasBackground: true
+      hasBackground: true,
+      showStar: true
     }
   ];
 
@@ -315,7 +333,10 @@ export default function HomePage() {
                     <div className="flex items-center justify-between">
                       <div className="text-left">
                         <h2 className="font-bold mb-2 text-muted-foreground/70" style={{ fontSize: '16px' }}>{card.title}</h2>
-                        <p className="text-muted-foreground/70 text-sm">{card.description}</p>
+                        <p className="text-muted-foreground/70 text-sm flex items-center gap-2">
+                          <Circle className="w-2 h-2 fill-blue-400 text-blue-400" />
+                          {card.description}
+                        </p>
                       </div>
                       <span className="text-muted-foreground/70 text-sm ml-4">&gt;</span>
                     </div>
@@ -345,9 +366,12 @@ export default function HomePage() {
                                 <div className="flex items-center justify-between">
                                   <div className="text-left">
                                     <h2 className="font-bold mb-2" style={{ fontSize: '16px' }}>
-                                      Hi {user?.name?.split(' ')[0] || user?.username || 'there'} <span className="text-base">👋</span>, ready to train?
+                                      Hi {user?.name?.split(' ')[0] || user?.username || 'there'} <span className="text-base">👋</span> Ready to train?
                                     </h2>
-                                    <p className="text-muted-foreground text-sm">Your daily session and journaling</p>
+                                    <p className="text-muted-foreground text-sm flex items-center gap-2">
+                                      <Circle className="w-2 h-2 fill-blue-400 text-blue-400" />
+                                      Your daily session and journaling
+                                    </p>
                                   </div>
                                   <span className="text-muted-foreground text-sm ml-4">&gt;</span>
                                 </div>
@@ -359,8 +383,14 @@ export default function HomePage() {
                       <CardContent className="p-4 relative h-full flex flex-col justify-center z-10">
                         <div className="flex items-center justify-between">
                           <div className="text-left">
-                            <h2 className="font-bold mb-2" style={{ fontSize: '16px' }}>{card.title}</h2>
-                            <p className="text-muted-foreground text-sm">{card.description}</p>
+                            <h2 className="font-bold mb-2 flex items-center gap-2" style={{ fontSize: '16px' }}>
+                              {card.title}
+                              {card.showStar && <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />}
+                            </h2>
+                            <p className="text-muted-foreground text-sm flex items-center gap-2">
+                              <Circle className="w-2 h-2 fill-blue-400 text-blue-400" />
+                              {card.description}
+                            </p>
                           </div>
                           <span className="text-muted-foreground text-sm ml-4">&gt;</span>
                         </div>
