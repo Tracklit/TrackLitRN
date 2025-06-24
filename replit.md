@@ -107,6 +107,13 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Database Migrations**: Drizzle Kit for schema management
 - **Asset Management**: Local file uploads with cleanup services
 
+## Recent Changes
+- June 24, 2025: Implemented sliding community activity carousel with fixed positioning below header
+  - Changed carousel animation from fade to sliding (push from right, exit left)
+  - Made ticker area fixed with proper z-index layering below navigation header
+  - Increased ticker height and improved visual design
+  - Content now scrolls properly underneath the fixed ticker
+
 ## Changelog
 - June 23, 2025. Initial setup
 
