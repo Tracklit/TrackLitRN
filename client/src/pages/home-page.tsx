@@ -259,8 +259,7 @@ export default function HomePage() {
       <PreloadImages images={dashboardImages} quality={20} priority={true} />
       
       {/* Fixed Community Activity Ticker - Below Header */}
-      {isTickerVisible && (
-        <div className="fixed top-[60px] left-0 right-0 z-40 bg-gradient-to-r from-purple-500 to-blue-600">
+      <div className={`fixed top-[60px] left-0 right-0 z-40 bg-gradient-to-r from-purple-500 to-blue-600 transition-transform duration-300 ease-in-out ${isTickerVisible ? 'translate-y-0' : '-translate-y-full'}`}>
           <div className="mx-auto" style={{ maxWidth: "540px" }}>
             <div className="bg-gradient-to-r from-purple-500 to-blue-600 relative overflow-hidden">
               <div className="absolute left-2 top-1/2 transform -translate-y-1/2 z-60">
@@ -281,7 +280,7 @@ export default function HomePage() {
                   )}
                 </Button>
               </div>
-              <div className="absolute right-2 top-1 z-60">
+              <div className="absolute right-2 top-1/2 transform -translate-y-1/2 z-60">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -290,7 +289,7 @@ export default function HomePage() {
                     e.stopPropagation();
                     setIsTickerVisible(false);
                   }}
-                  title="Close ticker"
+                  title="Hide ticker"
                 >
                   <X className="h-3 w-3" />
                 </Button>
@@ -302,9 +301,27 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-      )}
       
-      <main className={`px-4 container mx-auto max-w-7xl ${isTickerVisible ? 'pt-24' : 'pt-16'}`}>
+      
+      {/* Show ticker button when hidden */}
+      {!isTickerVisible && (
+        <div className="fixed top-[60px] left-0 right-0 z-40">
+          <div className="mx-auto" style={{ maxWidth: "540px" }}>
+            <div className="bg-purple-600/20 backdrop-blur-sm border-b border-purple-500/30 px-2 py-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-full text-xs text-white/70 hover:text-white"
+                onClick={() => setIsTickerVisible(true)}
+              >
+                Show Community Activity
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <main className={`px-4 container mx-auto max-w-7xl ${isTickerVisible ? 'pt-24' : 'pt-20'}`}>
         {/* Logo will be placed here in the future */}
         <div className="h-1 mx-auto" style={{ maxWidth: "540px" }}>
           {/* Reserved space for logo */}
