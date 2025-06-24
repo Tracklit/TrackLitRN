@@ -42,6 +42,7 @@ import { useAssignedPrograms } from '@/hooks/use-assigned-programs';
 import { useProgramSessions } from '@/hooks/use-program-sessions';
 import { SimpleWorkoutLike } from '@/components/workout-reactions';
 import { useTicker } from '@/contexts/ticker-context';
+import { CommunityCarousel } from '@/components/community-carousel';
 
 import { BackgroundImageContainer, OptimizedBackgroundImage } from '@/components/optimized-background-image';
 import { ImageOptimizer, useImageOptimization } from '@/lib/image-optimizer';

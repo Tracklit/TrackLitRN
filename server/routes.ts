@@ -8226,5 +8226,8 @@ Keep the response professional, evidence-based, and specific to track and field 
   app.post("/api/journal/:journalId/comments", addJournalComment);
   app.post("/api/mood-entries", recordMoodEntry);
 
+  // Use modular routes
+  app.use("/api/community", communityRoutes);
+
   return httpServer;
 }

@@ -1,6 +1,5 @@
 import { Router } from "express";
-import { requireAuth } from "../auth";
-import { db } from "../db";
+import { dbStorage } from "../storage";
 import type { Request, Response } from "express";
 
 const router = Router();
