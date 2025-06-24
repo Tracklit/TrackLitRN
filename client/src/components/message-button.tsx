@@ -38,7 +38,7 @@ export function MessageButton({ className, targetUserId }: MessageButtonProps) {
 
   // Check if currently in a message chat using window.location.pathname
   const currentPath = typeof window !== 'undefined' ? window.location.pathname : location;
-  const isInMessageChat = currentPath.startsWith('/messages/') || currentPath === '/conversations';
+  const isInMessageChannel = currentPath.startsWith('/messages/');
   
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
