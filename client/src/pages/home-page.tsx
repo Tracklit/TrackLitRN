@@ -259,9 +259,9 @@ export default function HomePage() {
       <PreloadImages images={dashboardImages} quality={20} priority={true} />
       
       {/* Fixed Community Activity Ticker - Below Header */}
-      <div className={`fixed top-[60px] left-0 right-0 z-40 bg-gradient-to-r from-purple-500 via-purple-500 to-blue-800 transition-transform duration-300 ease-in-out ${isTickerVisible ? 'translate-y-0' : '-translate-y-full'}`}>
-          <div className="mx-auto" style={{ maxWidth: "540px" }}>
-            <div className="bg-gradient-to-r from-purple-500 via-purple-500 to-blue-800 relative overflow-hidden">
+      <div className={`fixed top-[60px] left-5 right-5 z-40 bg-gradient-to-r from-purple-500 via-purple-500 to-blue-800 rounded-sm transition-transform duration-300 ease-in-out ${isTickerVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+          <div className="mx-auto" style={{ maxWidth: "500px" }}>
+            <div className="bg-gradient-to-r from-purple-500 via-purple-500 to-blue-800 relative overflow-hidden rounded-sm">
               <div className="absolute left-2 top-1/2 transform -translate-y-1/2 z-60">
                 <Button
                   variant="ghost"
@@ -305,12 +305,12 @@ export default function HomePage() {
       {/* Show ticker background when hidden */}
       {!isTickerVisible && (
         <div 
-          className="fixed top-[60px] left-0 right-0 z-40 cursor-pointer"
+          className="fixed top-[60px] left-5 right-5 z-40 cursor-pointer"
           onClick={() => toggleTickerVisibility(true)}
           title="Show community activity ticker"
         >
-          <div className="mx-auto" style={{ maxWidth: "540px" }}>
-            <div className="bg-purple-800/20 backdrop-blur-sm border-b border-purple-700/30 h-6">
+          <div className="mx-auto" style={{ maxWidth: "500px" }}>
+            <div className="bg-purple-800/20 backdrop-blur-sm border-b border-purple-700/30 h-6 rounded-sm">
             </div>
           </div>
         </div>
