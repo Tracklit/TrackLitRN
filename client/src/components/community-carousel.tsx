@@ -222,7 +222,7 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
                 <div className="flex items-center gap-1 mb-0.5">
                   <span className="text-xs font-medium text-yellow-400 truncate">{activity.title}</span>
                   {activity.user?.username && (
-                    <span className="text-xs text-gray-400">• {activity.user.username}</span>
+                    <span className="text-xs text-white">• {activity.user.username}</span>
                   )}
                 </div>
                 {activity.description && (
