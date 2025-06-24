@@ -242,18 +242,14 @@ export function MessagePanel({ isOpen, onClose, targetUserId }: MessagePanelProp
     }
   });
 
-  // Scroll to bottom when entering a conversation or new messages arrive
+  // Scroll to bottom when entering a conversation - immediate and synchronous
   useEffect(() => {
-    if (selectedConversationUserId && messages.length > 0 && messagesContainerRef.current && !initialScrollDone) {
-      // Scroll to absolute bottom immediately when conversation loads
-      setTimeout(() => {
-        if (messagesContainerRef.current) {
-          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-          setInitialScrollDone(true);
-        }
-      }, 100);
+    if (selectedConversationUserId && messages.length > 0 && messagesContainerRef.current) {
+      // Force immediate scroll to bottom without any delay
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      setInitialScrollDone(true);
     }
-  }, [selectedConversationUserId, messages, initialScrollDone]);
+  }, [selectedConversationUserId, messages]);
 
   // Reset scroll flag when changing conversations
   useEffect(() => {
@@ -262,8 +258,8 @@ export function MessagePanel({ isOpen, onClose, targetUserId }: MessagePanelProp
 
   // Auto-scroll to bottom when new messages arrive (for existing conversations)
   useEffect(() => {
-    if (initialScrollDone) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (initialScrollDone && messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
   }, [messages, initialScrollDone]);
 
@@ -457,7 +453,13 @@ export function MessagePanel({ isOpen, onClose, targetUserId }: MessagePanelProp
           // Individual Conversation View
           <>
             {/* Messages */}
-            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div 
+              ref={messagesContainerRef} 
+              className="flex-1 overflow-y-auto p-4 space-y-4"
+              style={{ 
+                scrollBehavior: 'auto' // Prevent smooth scrolling on initial load
+              }}
+            >
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center">
                   <Avatar className="h-16 w-16 mb-4">
