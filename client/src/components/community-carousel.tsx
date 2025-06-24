@@ -1,0 +1,126 @@
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { UserCircle, Trophy, Users, Calendar, BookOpen, Medal } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+
+interface CommunityActivity {
+  id: number;
+  userId: number;
+  activityType: string;
+  title: string;
+  description?: string;
+  relatedEntityId?: number;
+  relatedEntityType?: string;
+  metadata?: any;
+  createdAt: string;
+  user: {
+    id: number;
+    username: string;
+    name: string;
+    profileImageUrl?: string;
+  };
+}
+
+export function CommunityCarousel() {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  // Fetch community activities
+  const { data: activities, isLoading } = useQuery<CommunityActivity[]>({
+    queryKey: ['/api/community/activities'],
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
+  // Auto-rotate every 7 seconds
+  useEffect(() => {
+    if (!activities?.length) return;
+
+    const interval = setInterval(() => {
+      setIsAnimating(true);
+      setTimeout(() => {
+        setActiveIndex(prev => (prev + 1) % activities.length);
+        setIsAnimating(false);
+      }, 300);
+    }, 7000); // 7 seconds per activity
+
+    return () => clearInterval(interval);
+  }, [activities?.length]);
+
+  const getActivityIcon = (activityType: string) => {
+    switch (activityType) {
+      case 'workout':
+        return <UserCircle className="h-4 w-4 text-blue-400" />;
+      case 'user_joined':
+        return <Users className="h-4 w-4 text-green-400" />;
+      case 'meet_created':
+        return <Calendar className="h-4 w-4 text-purple-400" />;
+      case 'meet_results':
+        return <Medal className="h-4 w-4 text-yellow-400" />;
+      case 'coach_status':
+        return <Trophy className="h-4 w-4 text-orange-400" />;
+      case 'program_assigned':
+        return <BookOpen className="h-4 w-4 text-indigo-400" />;
+      case 'group_joined':
+        return <Users className="h-4 w-4 text-teal-400" />;
+      default:
+        return <UserCircle className="h-4 w-4 text-gray-400" />;
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="p-3">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-6 w-6 rounded-full bg-gray-700" />
+          <div className="flex-1">
+            <Skeleton className="h-3 w-24 mb-1 bg-gray-700" />
+            <Skeleton className="h-3 w-32 bg-gray-700" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!activities?.length) {
+    return (
+      <div className="p-3 h-12 flex items-center">
+        <span className="text-xs text-gray-400">No community activity yet</span>
+      </div>
+    );
+  }
+
+  const currentActivity = activities[activeIndex];
+
+  return (
+    <div 
+      className={`p-3 transition-opacity duration-300 ease-in-out ${
+        isAnimating ? 'opacity-0' : 'opacity-100'
+      }`}
+    >
+      <div className="flex items-center gap-2 pr-8">
+        <div className="rounded-full bg-gray-700/50 h-8 w-8 flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-600">
+          {currentActivity.user?.profileImageUrl ? (
+            <img 
+              src={currentActivity.user.profileImageUrl} 
+              alt={currentActivity.user?.username}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            getActivityIcon(currentActivity.activityType)
+          )}
+        </div>
+        <div className="flex-1 overflow-hidden">
+          <div className="flex items-center gap-1 mb-0.5">
+            <span className="text-xs font-medium text-yellow-400">{currentActivity.title}</span>
+            {currentActivity.user?.username && (
+              <span className="text-xs text-gray-300">· {currentActivity.user.username}</span>
+            )}
+          </div>
+          {currentActivity.description && (
+            <p className="text-xs text-gray-400 line-clamp-1">{currentActivity.description}</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

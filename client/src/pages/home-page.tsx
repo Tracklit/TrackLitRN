@@ -262,73 +262,28 @@ export default function HomePage() {
 
         {/* Quote removed as requested */}
         
-        {/* Session Preview Ticker */}
-        {sessionPreviews && sessionPreviews.length > 0 && (
+        {/* Community Activity Carousel Ticker */}
+        {isTickerVisible && (
           <section className="mb-6 mx-auto" style={{ maxWidth: "540px" }}>
             <div className="grid grid-cols-2 gap-2" style={{ margin: "0 auto" }}>
               <div className="col-span-2">
-                {isTickerVisible ? (
-                  <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-lg border border-gray-700 relative overflow-hidden">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0 absolute right-2 top-2 z-10 text-white/70 hover:text-white"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleTickerVisibility(!isTickerVisible);
-                      }}
-                    >
-                      <Globe className="h-4 w-4" />
-                    </Button>
-                    
-                    <div className="overflow-hidden">
-                      {isLoadingPreviews ? (
-                        <div className="p-3">
-                          <div className="flex items-center gap-2">
-                            <Skeleton className="h-6 w-6 rounded-full bg-gray-700" />
-                            <div className="flex-1">
-                              <Skeleton className="h-3 w-24 mb-1 bg-gray-700" />
-                              <Skeleton className="h-3 w-32 bg-gray-700" />
-                            </div>
-                          </div>
-                        </div>
-                      ) : sessionPreviews && sessionPreviews.length > 0 ? (
-                        <div 
-                          className={`cursor-pointer p-3 transition-opacity duration-300 ease-in-out ${
-                            isSessionFading ? 'opacity-0' : 'opacity-100'
-                          }`}
-                          onClick={() => openSessionDetails(sessionPreviews[activeSessionIndex])}
-                          key={activeSessionIndex}
-                        >
-                          <div className="flex items-center gap-2 pr-8">
-                            <div className="rounded-full bg-gray-700/50 h-8 w-8 flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-600">
-                              {sessionPreviews[activeSessionIndex].user?.profileImageUrl ? (
-                                <img 
-                                  src={sessionPreviews[activeSessionIndex].user.profileImageUrl} 
-                                  alt={sessionPreviews[activeSessionIndex].user?.username}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <UserCircle className="h-4 w-4 text-gray-400" />
-                              )}
-                            </div>
-                            <div className="flex-1 overflow-hidden">
-                              <div className="flex items-center gap-1 mb-0.5">
-                                <span className="text-xs font-medium text-yellow-400">{sessionPreviews[activeSessionIndex].title}</span>
-                                <span className="text-xs text-gray-300">· {sessionPreviews[activeSessionIndex].user?.username}</span>
-                              </div>
-                              <p className="text-xs text-gray-400 line-clamp-1">{sessionPreviews[activeSessionIndex].previewText}</p>
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="p-3 h-12 flex items-center">
-                          <span className="text-xs text-gray-400">No recent workouts</span>
-                        </div>
-                      )}
-                    </div>
+                <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-lg border border-gray-700 relative overflow-hidden">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 absolute right-2 top-2 z-10 text-white/70 hover:text-white"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleTickerVisibility(!isTickerVisible);
+                    }}
+                  >
+                    <Globe className="h-4 w-4" />
+                  </Button>
+                  
+                  <div className="overflow-hidden">
+                    <CommunityCarousel />
                   </div>
-                ) : null}
+                </div>
               </div>
             </div>
           </section>

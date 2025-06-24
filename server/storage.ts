@@ -3179,8 +3179,5 @@ export class DatabaseStorage implements IStorage {
       .where(eq(communityActivities.id, id));
   }
 }
-    return result.rowCount! > 0;
-  }
-}
 
 export const storage = new DatabaseStorage();
