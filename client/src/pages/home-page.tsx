@@ -397,7 +397,15 @@ export default function HomePage() {
                           <div className="text-left">
                             <h2 className="font-bold mb-2 flex items-center gap-2" style={{ fontSize: '16px' }}>
                               {card.title}
-                              {card.showStar && <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />}
+                              {card.showStar && (
+                                <svg 
+                                  className="w-4 h-4 text-yellow-400 fill-yellow-400" 
+                                  viewBox="0 0 24 24" 
+                                  fill="currentColor"
+                                >
+                                  <path d="M12 2L15 9L22 12L15 15L12 22L9 15L2 12L9 9Z" />
+                                </svg>
+                              )}
                             </h2>
                             <p className="text-muted-foreground text-sm flex items-center gap-2">
                               <Circle className="w-2 h-2 text-blue-400" />
