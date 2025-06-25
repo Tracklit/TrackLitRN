@@ -171,6 +171,13 @@ export function SidebarNavigation({ isMobile = false }: { isMobile?: boolean }) 
           >
             Coaches
           </NavItem>
+          <NavItem 
+            href="/groups" 
+            icon={<Users className="h-5 w-5" />} 
+            isActive={location === '/groups'}
+          >
+            Groups
+          </NavItem>
           
           {/* AI Section */}
           <div className="pt-4 pb-2">

@@ -286,6 +286,18 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                 Coaches
               </div>
             </Link>
+            <Link href="/groups">
+              <div
+                className={cn(
+                  "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
+                  location === "/groups" ? "bg-primary text-primary-foreground" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                )}
+                onClick={() => setIsOpen(false)}
+              >
+                <Users className="h-4 w-4 mr-3" />
+                Groups
+              </div>
+            </Link>
             
             {/* Admin Section - Only show for admin users */}
             {(currentUser as any)?.role === 'admin' && (
