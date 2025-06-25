@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { UserCircle, Trophy, Users, Calendar, BookOpen, Medal, MapPin, Clock, Save } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { UserCircle, Trophy, Users, Calendar, BookOpen, Medal, MapPin, Clock, Save, X, BookmarkPlus, Dumbbell } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { apiRequest } from "@/lib/queryClient";
@@ -44,8 +43,9 @@ interface CommunityCarouselProps {
 
 export function CommunityCarousel({ isPaused = false, onPauseToggle }: CommunityCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedActivity, setSelectedActivity] = useState<CommunityActivity | null>(null);
-  const [dialogType, setDialogType] = useState<'meet' | 'group' | 'journal' | null>(null);
+  const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
+  const [currentActivity, setCurrentActivity] = useState<CommunityActivity | null>(null);
+  const [isSavingItem, setIsSavingItem] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -262,7 +262,7 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
                   {activity.description && (
                     <div 
                       className="text-xs text-white/70 truncate cursor-pointer hover:text-white/90 transition-colors"
-                      onClick={() => handleActivityClick(activity)}
+                      onClick={() => handleTickerClick(activity)}
                     >
                       {activity.description}
                     </div>
@@ -274,212 +274,287 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
         );
       })}
       
-      {/* Activity Dialog */}
-      <ActivityDialog 
-        activity={selectedActivity}
-        type={dialogType}
-        onClose={() => {
-          setSelectedActivity(null);
-          setDialogType(null);
-        }}
-      />
+      {/* Activity Modal - Based on session modal design */}
+      {isActivityModalOpen && currentActivity && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          }}
+          onClick={() => setIsActivityModalOpen(false)}
+        >
+          <div 
+            className="bg-slate-800 rounded-lg shadow-2xl border border-slate-600 p-6 mx-4"
+            style={{
+              width: '100%',
+              maxWidth: '28rem',
+              maxHeight: '90vh',
+              overflow: 'auto',
+              position: 'static',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white">
+                {currentActivity.title}
+              </h2>
+              <button
+                onClick={() => setIsActivityModalOpen(false)}
+                className="text-gray-300 hover:text-white p-1"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="rounded-full bg-blue-600/20 h-8 w-8 flex items-center justify-center flex-shrink-0">
+                  <UserCircle className="h-4 w-4 text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-white">{currentActivity.user?.name || currentActivity.user?.username}</p>
+                  <p className="text-xs text-gray-300">@{currentActivity.user?.username}</p>
+                </div>
+              </div>
+              
+              <div className="border-t border-slate-600 pt-4">
+                <h3 className="text-sm font-medium mb-2 text-white">Activity Details</h3>
+                <p className="text-sm text-gray-300">{currentActivity.description}</p>
+              </div>
+              
+              {/* Activity-specific content */}
+              {(currentActivity.activityType === 'meet_created' || currentActivity.activityType === 'meet_joined') && currentActivity.metadata?.meetData && (
+                <div className="bg-slate-700 p-3 rounded-md">
+                  <h4 className="text-xs font-medium mb-2 text-white">Meet Information</h4>
+                  <ul className="space-y-2 text-sm text-gray-300">
+                    <li className="flex items-center gap-2">
+                      <MapPin className="h-3 w-3 text-blue-400" />
+                      <span>{currentActivity.metadata.meetData.location || 'Location TBD'}</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Clock className="h-3 w-3 text-blue-400" />
+                      <span>{new Date(currentActivity.metadata.meetData.date).toLocaleDateString()}</span>
+                    </li>
+                    {currentActivity.metadata.meetData.events && (
+                      <li className="flex items-start gap-2">
+                        <Calendar className="h-3 w-3 text-blue-400 mt-0.5" />
+                        <div className="flex flex-wrap gap-1">
+                          {currentActivity.metadata.meetData.events.map((event: string, index: number) => (
+                            <Badge key={index} variant="secondary" className="text-xs">
+                              {event}
+                            </Badge>
+                          ))}
+                        </div>
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              )}
+              
+              {currentActivity.activityType === 'group_joined' && currentActivity.metadata?.groupData && (
+                <div className="bg-slate-700 p-3 rounded-md">
+                  <h4 className="text-xs font-medium mb-2 text-white">Group Information</h4>
+                  <ul className="space-y-2 text-sm text-gray-300">
+                    <li className="flex items-center gap-2">
+                      <Users className="h-3 w-3 text-green-400" />
+                      <span>{currentActivity.metadata.groupData.name}</span>
+                    </li>
+                    <li className="text-sm text-gray-400">
+                      {currentActivity.metadata.groupData.description}
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Users className="h-3 w-3 text-green-400" />
+                      <span>{currentActivity.metadata.groupData.memberCount || 0} members</span>
+                    </li>
+                  </ul>
+                </div>
+              )}
+              
+              {currentActivity.activityType === 'journal_entry' && currentActivity.metadata?.workoutData && (
+                <div className="bg-slate-700 p-3 rounded-md">
+                  <h4 className="text-xs font-medium mb-2 text-white">Workout Details</h4>
+                  <ul className="space-y-2 text-sm text-gray-300">
+                    <li className="flex items-center gap-2">
+                      <Dumbbell className="h-3 w-3 text-blue-400" />
+                      <span>{currentActivity.metadata.workoutData.program}</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <BookOpen className="h-3 w-3 text-blue-400" />
+                      <span>{currentActivity.metadata.workoutData.session}</span>
+                    </li>
+                    {currentActivity.metadata.workoutData.moodRating && (
+                      <li className="flex items-center gap-2">
+                        <span className="text-xs font-medium">Mood:</span>
+                        <div 
+                          className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                          style={{ 
+                            background: currentActivity.metadata.workoutData.moodRating <= 3 ? '#ef4444' : 
+                                      currentActivity.metadata.workoutData.moodRating <= 5 ? '#f59e0b' : 
+                                      '#22c55e'
+                          }}
+                        >
+                          {currentActivity.metadata.workoutData.moodRating}
+                        </div>
+                        <span className="text-xs">/10</span>
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              )}
+            </div>
+            
+            {/* Footer */}
+            <div className="flex justify-between items-center mt-6 pt-4 border-t border-slate-600">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsActivityModalOpen(false)}
+              >
+                Close
+              </Button>
+              
+              {/* Action button based on activity type */}
+              {(currentActivity.activityType === 'meet_created' || currentActivity.activityType === 'meet_joined') && (
+                <Button 
+                  type="button"
+                  onClick={saveMeetToCalendar}
+                  disabled={isSavingItem}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {isSavingItem ? (
+                    <>
+                      <Save className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-4 w-4" />
+                      Save to Meets
+                    </>
+                  )}
+                </Button>
+              )}
+              
+              {currentActivity.activityType === 'group_joined' && (
+                <Button 
+                  type="button"
+                  onClick={viewGroupInfo}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <Users className="mr-2 h-4 w-4" />
+                  View Group
+                </Button>
+              )}
+              
+              {currentActivity.activityType === 'journal_entry' && (
+                <Button 
+                  type="button"
+                  onClick={saveWorkoutToLibrary}
+                  disabled={isSavingItem}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {isSavingItem ? (
+                    <>
+                      <BookmarkPlus className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <BookmarkPlus className="mr-2 h-4 w-4" />
+                      Save to Library
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 
-  function handleActivityClick(activity: CommunityActivity) {
-    setSelectedActivity(activity);
-    
-    // Determine dialog type based on activity type
-    if (activity.activityType === 'meet_created' || activity.activityType === 'meet_joined') {
-      setDialogType('meet');
-    } else if (activity.activityType === 'group_joined') {
-      setDialogType('group');
-    } else if (activity.activityType === 'journal_entry') {
-      setDialogType('journal');
-    } else {
-      // Default to journal for other activity types
-      setDialogType('journal');
-    }
+  // Function to handle ticker click
+  function handleTickerClick(activity: CommunityActivity) {
+    setCurrentActivity(activity);
+    setIsActivityModalOpen(true);
   }
-}
 
-// Activity Dialog Component
-interface ActivityDialogProps {
-  activity: CommunityActivity | null;
-  type: 'meet' | 'group' | 'journal' | null;
-  onClose: () => void;
-}
-
-function ActivityDialog({ activity, type, onClose }: ActivityDialogProps) {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  
-  const saveMeetMutation = useMutation({
-    mutationFn: async (meetData: any) => {
-      return apiRequest('/api/meets', {
+  // Function to save meet to calendar
+  async function saveMeetToCalendar() {
+    if (!currentActivity?.metadata?.meetData) return;
+    
+    setIsSavingItem(true);
+    
+    try {
+      const response = await apiRequest('/api/meets', {
         method: 'POST',
-        body: JSON.stringify(meetData)
+        body: JSON.stringify(currentActivity.metadata.meetData)
       });
-    },
-    onSuccess: () => {
+      
       toast({
         title: "Meet Saved",
         description: "The meet has been added to your calendar."
       });
+      
       queryClient.invalidateQueries({ queryKey: ['/api/meets'] });
-      onClose();
-    },
-    onError: () => {
+      setIsActivityModalOpen(false);
+    } catch (error) {
       toast({
         title: "Error",
         description: "Failed to save meet. Please try again.",
         variant: "destructive"
       });
+    } finally {
+      setIsSavingItem(false);
     }
-  });
+  }
 
-  if (!activity || !type) return null;
-
-  const handleSaveMeet = () => {
-    if (activity.metadata && activity.metadata.meetData) {
-      saveMeetMutation.mutate(activity.metadata.meetData);
+  // Function to view group info
+  function viewGroupInfo() {
+    if (currentActivity?.metadata?.groupId) {
+      window.open(`/groups/${currentActivity.metadata.groupId}`, '_blank');
     }
-  };
+  }
 
-  const handleViewGroup = () => {
-    if (activity.metadata && activity.metadata.groupId) {
-      window.open(`/groups/${activity.metadata.groupId}`, '_blank');
+  // Function to save workout to library
+  async function saveWorkoutToLibrary() {
+    if (!currentActivity?.metadata?.workoutData) return;
+    
+    setIsSavingItem(true);
+    
+    try {
+      const workoutData = {
+        title: `${currentActivity.metadata.workoutData.session} - ${currentActivity.user?.username}`,
+        description: currentActivity.description,
+        category: 'saved',
+        content: currentActivity.metadata.workoutData,
+        isPublic: false,
+        originalUserId: currentActivity.userId
+      };
+      
+      const response = await apiRequest('/api/workout-library', {
+        method: 'POST',
+        body: JSON.stringify(workoutData)
+      });
+      
+      toast({
+        title: "Workout Saved",
+        description: "The workout has been saved to your library."
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['/api/workout-library'] });
+      setIsActivityModalOpen(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save workout. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSavingItem(false);
     }
-  };
-
-  return (
-    <Dialog open={!!activity} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md bg-[#0c1525] border-blue-800/50 text-white">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {type === 'meet' && <Calendar className="h-5 w-5 text-blue-400" />}
-            {type === 'group' && <Users className="h-5 w-5 text-green-400" />}
-            {type === 'journal' && <BookOpen className="h-5 w-5 text-purple-400" />}
-            {activity.title}
-          </DialogTitle>
-          <DialogDescription className="text-gray-300">
-            {activity.description}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="py-4">
-          {type === 'meet' && activity.metadata?.meetData && (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-sm">
-                <MapPin className="h-4 w-4 text-blue-400" />
-                <span>{activity.metadata.meetData.location || 'Location TBD'}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Clock className="h-4 w-4 text-blue-400" />
-                <span>{new Date(activity.metadata.meetData.date).toLocaleDateString()}</span>
-              </div>
-              {activity.metadata.meetData.events && (
-                <div className="space-y-2">
-                  <span className="text-sm font-medium">Events:</span>
-                  <div className="flex flex-wrap gap-1">
-                    {activity.metadata.meetData.events.map((event: string, index: number) => (
-                      <Badge key={index} variant="secondary" className="text-xs">
-                        {event}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {type === 'group' && activity.metadata?.groupData && (
-            <div className="space-y-3">
-              <div className="text-sm">
-                <span className="font-medium">Group: </span>
-                <span>{activity.metadata.groupData.name}</span>
-              </div>
-              <div className="text-sm text-gray-400">
-                {activity.metadata.groupData.description}
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Users className="h-4 w-4 text-green-400" />
-                <span>{activity.metadata.groupData.memberCount || 0} members</span>
-              </div>
-            </div>
-          )}
-
-          {type === 'journal' && (
-            <div className="space-y-3">
-              <div className="text-sm text-gray-400">
-                Workout session completed by {activity.user.name || activity.user.username}
-              </div>
-              {activity.metadata?.workoutData && (
-                <div className="space-y-2">
-                  <div className="text-sm">
-                    <span className="font-medium">Program: </span>
-                    <span>{activity.metadata.workoutData.program}</span>
-                  </div>
-                  <div className="text-sm">
-                    <span className="font-medium">Session: </span>
-                    <span>{activity.metadata.workoutData.session}</span>
-                  </div>
-                  {activity.metadata.workoutData.moodRating && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="font-medium">Mood: </span>
-                      <div 
-                        className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
-                        style={{ 
-                          background: activity.metadata.workoutData.moodRating <= 3 ? '#ef4444' : 
-                                    activity.metadata.workoutData.moodRating <= 5 ? '#f59e0b' : 
-                                    '#22c55e'
-                        }}
-                      >
-                        {activity.metadata.workoutData.moodRating}
-                      </div>
-                      <span className="text-xs">/10</span>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Close
-          </Button>
-          {type === 'meet' && (
-            <Button 
-              onClick={handleSaveMeet}
-              disabled={saveMeetMutation.isPending}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              {saveMeetMutation.isPending ? (
-                <>
-                  <Save className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Save Meet
-                </>
-              )}
-            </Button>
-          )}
-          {type === 'group' && (
-            <Button 
-              onClick={handleViewGroup}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              <Users className="mr-2 h-4 w-4" />
-              View Group
-            </Button>
-          )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
+  }
 }
+
