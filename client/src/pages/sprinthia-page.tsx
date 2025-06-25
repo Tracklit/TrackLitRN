@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
-import { Header } from '@/components/layout/header';
-import { SidebarNavigation } from '@/components/layout/sidebar-navigation';
+import { PageContainer } from '@/components/page-container';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -119,24 +118,19 @@ export default function SprinthiaPage() {
   const activeConversation = conversations.find((c: SprinthiaConversation) => c.id === activeConversationId);
 
   return (
-    <div className="flex h-screen bg-background" data-sprinthia-page>
-      <SidebarNavigation />
-      
-      <div className="flex-1 flex flex-col">
-        <Header />
-        
-        <div className="flex-1 overflow-hidden">
-          <div className="flex items-center justify-between p-4 border-b border-border">
-            <div className="flex items-center gap-3">
-              <div className="w-6 h-6 rounded-full overflow-hidden">
-                <img 
-                  src="/sprinthia-avatar-fresh.jpeg" 
-                  alt="Sprinthia"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <h1 className="text-xl font-semibold">Sprinthia AI Coach</h1>
+    <PageContainer>
+      <div className="flex-1 overflow-hidden">
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <div className="flex items-center gap-3">
+            <div className="w-6 h-6 rounded-full overflow-hidden">
+              <img 
+                src="/sprinthia-avatar-fresh.jpeg" 
+                alt="Sprinthia"
+                className="w-full h-full object-cover"
+              />
             </div>
+            <h1 className="text-xl font-semibold">Sprinthia AI Coach</h1>
+          </div>
 
             <div className="flex items-center gap-2">
               <Dialog>
@@ -305,8 +299,7 @@ export default function SprinthiaPage() {
               </div>
             )}
           </div>
-        </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }
