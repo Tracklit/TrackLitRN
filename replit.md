@@ -108,14 +108,15 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
-- June 25, 2025: Built first Arcade game with Pixi.js integration
-  - Integrated Pixi.js 2D rendering engine for pixel art games
-  - Created Reaction Time game with interactive graphics and animations
-  - Implemented game mechanics: target spawning, collision detection, timing measurement
-  - Added comprehensive stats tracking (attempts, best time, average time)
-  - Built performance rating system and visual feedback
-  - Used TypeScript for type safety and better development experience
-  - Added game state management and visual transitions
+- June 25, 2025: Built Tracklympics - retro 90s pixel art track & field game
+  - Created complete game flow: splash screen → event selector → character select → gameplay
+  - Implemented 100m Dash event with isometric track view and pixel art characters
+  - Added stadium atmosphere with crowd and authentic retro aesthetics
+  - Built dual-button running controls (alternate left/right foot tapping)
+  - Created race sequence with starter commands and timing system
+  - Added comprehensive game state management and screen transitions
+  - Implemented stats tracking and performance rating system
+  - Used Pixi.js for pixel-perfect 2D rendering and animations
 
 - June 25, 2025: Added Arcade page with mini-games for athletic performance training
   - Created new Arcade page with dashboard-style card layout
