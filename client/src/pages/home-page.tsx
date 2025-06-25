@@ -117,58 +117,7 @@ export default function HomePage() {
     queryKey: ['/api/workout-previews']
   });
   
-  // Complete scroll lock for dashboard
-  useEffect(() => {
-    // Prevent all scroll events
-    const preventScroll = (e: Event) => {
-      e.preventDefault();
-      e.stopPropagation();
-      return false;
-    };
 
-    const preventWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      return false;
-    };
-
-    const preventTouch = (e: TouchEvent) => {
-      if (e.touches.length > 1) return;
-      e.preventDefault();
-      e.stopPropagation();
-      return false;
-    };
-
-    // Lock scroll completely
-    document.body.style.overflow = 'hidden';
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.height = '100vh';
-    document.documentElement.style.height = '100vh';
-    document.body.style.position = 'fixed';
-    document.body.style.width = '100%';
-    
-    // Add event listeners to prevent all scroll events
-    document.addEventListener('scroll', preventScroll, { passive: false });
-    document.addEventListener('wheel', preventWheel, { passive: false });
-    document.addEventListener('touchmove', preventTouch, { passive: false });
-    window.addEventListener('scroll', preventScroll, { passive: false });
-
-    return () => {
-      // Restore scroll when leaving dashboard
-      document.body.style.overflow = '';
-      document.documentElement.style.overflow = '';
-      document.body.style.height = '';
-      document.documentElement.style.height = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-      
-      // Remove event listeners
-      document.removeEventListener('scroll', preventScroll);
-      document.removeEventListener('wheel', preventWheel);  
-      document.removeEventListener('touchmove', preventTouch);
-      window.removeEventListener('scroll', preventScroll);
-    };
-  }, []);
 
   // Interval for rotating through sessions with fade transition
   useEffect(() => {

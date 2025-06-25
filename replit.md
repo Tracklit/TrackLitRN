@@ -108,6 +108,11 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
+- June 25, 2025: Fixed dashboard scroll lock affecting sidebar navigation
+  - Removed global scroll prevention code that was blocking sidebar menu scrolling
+  - Updated dashboard to use fixed height container without scroll lock
+  - Ensured sidebar menu can scroll properly while dashboard content fits viewport
+
 - June 25, 2025: Removed Tracklympics game and cleaned up Arcade page
   - Removed all game-related code and components
   - Updated Arcade page to show placeholder for future games
