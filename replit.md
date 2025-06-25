@@ -108,15 +108,10 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
-- June 25, 2025: Built Tracklympics - retro 90s pixel art track & field game
-  - Created complete game flow: splash screen → event selector → character select → gameplay
-  - Implemented 100m Dash event with isometric track view and pixel art characters
-  - Added stadium atmosphere with crowd and authentic retro aesthetics
-  - Built dual-button running controls (alternate left/right foot tapping)
-  - Created race sequence with starter commands and timing system
-  - Added comprehensive game state management and screen transitions
-  - Implemented stats tracking and performance rating system
-  - Used Pixi.js for pixel-perfect 2D rendering and animations
+- June 25, 2025: Removed Tracklympics game and cleaned up Arcade page
+  - Removed all game-related code and components
+  - Updated Arcade page to show placeholder for future games
+  - Cleaned up routing and imports
 
 - June 25, 2025: Added Arcade page with mini-games for athletic performance training
   - Created new Arcade page with dashboard-style card layout

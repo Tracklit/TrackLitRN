@@ -14,17 +14,8 @@ export default function ArcadePage() {
   // Background image for all game cards (consistent with dashboard)
   const gameBackground = practiceBackground;
 
-  // Game cards - currently only Reaction Time game
+  // Game cards - placeholder for future games
   const gameCards = [
-    {
-      title: "Tracklympics",
-      description: "Retro track & field championship game",
-      icon: <Zap className="h-6 w-6 text-white" />,
-      href: "/arcade/tracklympics",
-      disabled: false,
-      backgroundImage: gameBackground,
-      hasBackground: true
-    }
   ];
 
   return (
@@ -36,7 +27,7 @@ export default function ArcadePage() {
         {/* Page Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-foreground mb-2">Arcade</h1>
-          <p className="text-muted-foreground">Experience retro track and field championship</p>
+          <p className="text-muted-foreground">Athletic performance training games coming soon</p>
         </div>
 
         {/* Game Cards Grid */}
