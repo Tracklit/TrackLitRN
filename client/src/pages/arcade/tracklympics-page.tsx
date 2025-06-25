@@ -3,8 +3,8 @@ import { PageContainer } from "@/components/page-container";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Application, Graphics, Text, TextStyle, Sprite, Container, Rectangle } from 'pixi.js';
-import { ArrowLeft, Play, RotateCcw } from "lucide-react";
+import { Application, Graphics, Text, TextStyle, Container } from 'pixi.js';
+import { ArrowLeft, RotateCcw } from "lucide-react";
 import { Link } from "wouter";
 
 type GameState = 'splash' | 'eventSelect' | 'characterSelect' | 'gameplay' | 'finished';
@@ -45,22 +45,26 @@ export default function TracklympicsPage() {
     if (!canvasRef.current) return;
 
     const initializeApp = async () => {
-      const app = new Application();
-      await app.init({
-        width: 800,
-        height: 600,
-        backgroundColor: 0x87ceeb,
-        antialias: false // Pixel art style
-      });
+      try {
+        const app = new Application();
+        await app.init({
+          width: 800,
+          height: 600,
+          backgroundColor: 0x87ceeb,
+          antialias: false
+        });
 
-      canvasRef.current!.appendChild(app.canvas);
-      appRef.current = app;
+        canvasRef.current!.appendChild(app.canvas);
+        appRef.current = app;
 
-      // Initialize all game screens
-      setupAllScreens();
+        // Initialize all game screens
+        setupAllScreens();
+      } catch (error) {
+        console.error('Failed to initialize Pixi.js application:', error);
+      }
     };
 
-    initializeApp().catch(console.error);
+    initializeApp();
 
     return () => {
       if (appRef.current) {
@@ -102,29 +106,26 @@ export default function TracklympicsPage() {
   const setupSplashScreen = (container: Container) => {
     // Stadium background with gradient
     const stadium = new Graphics();
-    stadium.beginFill(0x2d5016); // Dark green
-    stadium.drawRect(0, 0, 800, 600);
-    stadium.endFill();
+    stadium.rect(0, 0, 800, 600);
+    stadium.fill(0x2d5016); // Dark green
 
     // Stadium stands
     for (let i = 0; i < 20; i++) {
       const stand = new Graphics();
-      stand.beginFill(0x8b4513); // Brown
-      stand.drawRect(i * 40, 50 + Math.random() * 20, 38, 100);
-      stand.endFill();
+      stand.rect(i * 40, 50 + Math.random() * 20, 38, 100);
+      stand.fill(0x8b4513); // Brown
       stadium.addChild(stand);
     }
 
     // Crowd (simplified pixels)
     for (let i = 0; i < 100; i++) {
       const person = new Graphics();
-      person.beginFill(Math.random() > 0.5 ? 0xff6b9d : 0x6ba3ff);
-      person.drawRect(
+      person.rect(
         Math.random() * 800,
         60 + Math.random() * 80,
         4, 8
       );
-      person.endFill();
+      person.fill(Math.random() > 0.5 ? 0xff6b9d : 0x6ba3ff);
       stadium.addChild(person);
     }
 
@@ -135,10 +136,11 @@ export default function TracklympicsPage() {
       fontFamily: 'monospace',
       fontSize: 48,
       fill: 0xffff00,
-      align: 'center'
+      align: 'center',
+      stroke: { color: 0x000000, width: 3 }
     });
 
-    const title = new Text('TRACKLYMPICS', titleStyle);
+    const title = new Text({ text: 'TRACKLYMPICS', style: titleStyle });
     title.anchor.set(0.5);
     title.x = 400;
     title.y = 250;
@@ -152,7 +154,7 @@ export default function TracklympicsPage() {
       align: 'center'
     });
 
-    const subtitle = new Text('Retro Track & Field Championship', subtitleStyle);
+    const subtitle = new Text({ text: 'Retro Track & Field Championship', style: subtitleStyle });
     subtitle.anchor.set(0.5);
     subtitle.x = 400;
     subtitle.y = 300;
@@ -160,13 +162,12 @@ export default function TracklympicsPage() {
 
     // Start button area (invisible but clickable)
     const startArea = new Graphics();
-    startArea.beginFill(0x00ff00, 0.3);
-    startArea.drawRoundedRect(300, 350, 200, 60, 10);
-    startArea.endFill();
+    startArea.roundRect(300, 350, 200, 60, 10);
+    startArea.fill({ color: 0x00ff00, alpha: 0.3 });
     startArea.interactive = true;
     startArea.cursor = 'pointer';
     
-    const startText = new Text('START GAME', subtitleStyle);
+    const startText = new Text({ text: 'START GAME', style: subtitleStyle });
     startText.anchor.set(0.5);
     startText.x = 400;
     startText.y = 380;
@@ -179,15 +180,14 @@ export default function TracklympicsPage() {
   const setupEventSelectScreen = (container: Container) => {
     // Track background
     const bg = new Graphics();
-    bg.beginFill(0x228b22); // Forest green
-    bg.drawRect(0, 0, 800, 600);
-    bg.endFill();
+    bg.rect(0, 0, 800, 600);
+    bg.fill(0x228b22); // Forest green
     container.addChild(bg);
 
     // Track oval outline
     const track = new Graphics();
-    track.lineStyle(8, 0xcc6600); // Brown track
-    track.drawEllipse(400, 300, 350, 200);
+    track.ellipse(400, 300, 350, 200);
+    track.stroke({ color: 0xcc6600, width: 8 }); // Brown track
     container.addChild(track);
 
     // Title
@@ -195,10 +195,11 @@ export default function TracklympicsPage() {
       fontFamily: 'monospace',
       fontSize: 36,
       fill: 0xffff00,
-      align: 'center'
+      align: 'center',
+      stroke: { color: 0x000000, width: 2 }
     });
 
-    const title = new Text('SELECT EVENT', titleStyle);
+    const title = new Text({ text: 'SELECT EVENT', style: titleStyle });
     title.anchor.set(0.5);
     title.x = 400;
     title.y = 100;
@@ -206,13 +207,12 @@ export default function TracklympicsPage() {
 
     // 100m Dash button
     const dashButton = new Graphics();
-    dashButton.beginFill(0x0066ff);
-    dashButton.drawRoundedRect(250, 200, 300, 80, 10);
-    dashButton.endFill();
+    dashButton.roundRect(250, 200, 300, 80, 10);
+    dashButton.fill(0x0066ff);
     dashButton.interactive = true;
     dashButton.cursor = 'pointer';
 
-    const dashText = new Text('100M DASH', titleStyle);
+    const dashText = new Text({ text: '100M DASH', style: titleStyle });
     dashText.anchor.set(0.5);
     dashText.x = 400;
     dashText.y = 240;
@@ -225,9 +225,8 @@ export default function TracklympicsPage() {
   const setupCharacterSelectScreen = (container: Container) => {
     // Background
     const bg = new Graphics();
-    bg.beginFill(0x4169e1); // Royal blue
-    bg.drawRect(0, 0, 800, 600);
-    bg.endFill();
+    bg.rect(0, 0, 800, 600);
+    bg.fill(0x4169e1); // Royal blue
     container.addChild(bg);
 
     // Title
@@ -235,10 +234,11 @@ export default function TracklympicsPage() {
       fontFamily: 'monospace',
       fontSize: 36,
       fill: 0xffffff,
-      align: 'center'
+      align: 'center',
+      stroke: { color: 0x000000, width: 2 }
     });
 
-    const title = new Text('SELECT YOUR CHARACTER', titleStyle);
+    const title = new Text({ text: 'SELECT YOUR CHARACTER', style: titleStyle });
     title.anchor.set(0.5);
     title.x = 400;
     title.y = 100;
@@ -267,7 +267,7 @@ export default function TracklympicsPage() {
       align: 'center'
     });
 
-    const charName = new Text(char.name, nameStyle);
+    const charName = new Text({ text: char.name, style: nameStyle });
     charName.anchor.set(0.5);
     charName.x = 400;
     charName.y = 400;
@@ -276,14 +276,13 @@ export default function TracklympicsPage() {
     // Play button (initially hidden)
     const playButton = new Graphics();
     playButton.name = 'playButton';
-    playButton.beginFill(0x00ff00);
-    playButton.drawRoundedRect(300, 450, 200, 60, 10);
-    playButton.endFill();
+    playButton.roundRect(300, 450, 200, 60, 10);
+    playButton.fill(0x00ff00);
     playButton.interactive = true;
     playButton.cursor = 'pointer';
     playButton.visible = false;
 
-    const playText = new Text('PLAY!', titleStyle);
+    const playText = new Text({ text: 'PLAY!', style: titleStyle });
     playText.anchor.set(0.5);
     playText.x = 400;
     playText.y = 480;
@@ -296,40 +295,37 @@ export default function TracklympicsPage() {
   const setupGameplayScreen = (container: Container) => {
     // Sky background
     const sky = new Graphics();
-    sky.beginFill(0x87ceeb);
-    sky.drawRect(0, 0, 800, 300);
-    sky.endFill();
+    sky.rect(0, 0, 800, 300);
+    sky.fill(0x87ceeb);
     container.addChild(sky);
 
     // Track (isometric view)
     const track = new Graphics();
-    track.beginFill(0xcc6600); // Brown track
     // Draw isometric track lanes
     for (let lane = 0; lane < 8; lane++) {
       const y = 250 + lane * 15;
-      track.drawRect(50, y, 700, 12);
+      track.rect(50, y, 700, 12);
+      track.fill(0xcc6600); // Brown track
       // Lane lines
-      track.lineStyle(1, 0xffffff);
       track.moveTo(50, y);
       track.lineTo(750, y);
+      track.stroke({ color: 0xffffff, width: 1 });
     }
-    track.endFill();
     container.addChild(track);
 
     // Starting blocks
     for (let lane = 0; lane < 8; lane++) {
       const block = new Graphics();
-      block.beginFill(0x666666);
-      block.drawRect(80, 252 + lane * 15, 8, 8);
-      block.endFill();
+      block.rect(80, 252 + lane * 15, 8, 8);
+      block.fill(0x666666);
       container.addChild(block);
     }
 
     // Finish line
     const finishLine = new Graphics();
-    finishLine.lineStyle(3, 0xffffff);
     finishLine.moveTo(700, 250);
     finishLine.lineTo(700, 370);
+    finishLine.stroke({ color: 0xffffff, width: 3 });
     container.addChild(finishLine);
 
     // Player character (will be positioned dynamically)
@@ -341,11 +337,10 @@ export default function TracklympicsPage() {
 
     // Starter figure
     const starter = new Graphics();
-    starter.beginFill(0x000000); // Black suit
-    starter.drawRect(30, 240, 8, 16);
-    starter.beginFill(0xfdbcb4); // Skin color
-    starter.drawCircle(34, 236, 4);
-    starter.endFill();
+    starter.rect(30, 240, 8, 16);
+    starter.fill(0x000000); // Black suit
+    starter.circle(34, 236, 4);
+    starter.fill(0xfdbcb4); // Skin color
     container.addChild(starter);
 
     // Game status text
@@ -353,10 +348,11 @@ export default function TracklympicsPage() {
       fontFamily: 'monospace',
       fontSize: 24,
       fill: 0x000000,
-      align: 'center'
+      align: 'center',
+      stroke: { color: 0xffffff, width: 2 }
     });
 
-    const gameStatus = new Text('On your marks...', statusStyle);
+    const gameStatus = new Text({ text: 'On your marks...', style: statusStyle });
     gameStatus.name = 'gameStatus';
     gameStatus.anchor.set(0.5);
     gameStatus.x = 400;
@@ -365,9 +361,8 @@ export default function TracklympicsPage() {
 
     // Game controls area
     const controlsBg = new Graphics();
-    controlsBg.beginFill(0x333333);
-    controlsBg.drawRect(0, 400, 800, 200);
-    controlsBg.endFill();
+    controlsBg.rect(0, 400, 800, 200);
+    controlsBg.fill(0x333333);
     container.addChild(controlsBg);
 
     // Control buttons will be handled by React buttons below the canvas
@@ -378,37 +373,31 @@ export default function TracklympicsPage() {
     
     // Body
     const body = new Graphics();
-    body.beginFill(character.color);
-    body.drawRect(-4 * scale, -8 * scale, 8 * scale, 12 * scale);
-    body.endFill();
+    body.rect(-4 * scale, -8 * scale, 8 * scale, 12 * scale);
+    body.fill(character.color);
     
     // Head
     const head = new Graphics();
-    head.beginFill(character.skinColor);
-    head.drawCircle(0, -12 * scale, 4 * scale);
-    head.endFill();
+    head.circle(0, -12 * scale, 4 * scale);
+    head.fill(character.skinColor);
     
     // Arms
     const leftArm = new Graphics();
-    leftArm.beginFill(character.skinColor);
-    leftArm.drawRect(-6 * scale, -6 * scale, 2 * scale, 8 * scale);
-    leftArm.endFill();
+    leftArm.rect(-6 * scale, -6 * scale, 2 * scale, 8 * scale);
+    leftArm.fill(character.skinColor);
     
     const rightArm = new Graphics();
-    rightArm.beginFill(character.skinColor);
-    rightArm.drawRect(4 * scale, -6 * scale, 2 * scale, 8 * scale);
-    rightArm.endFill();
+    rightArm.rect(4 * scale, -6 * scale, 2 * scale, 8 * scale);
+    rightArm.fill(character.skinColor);
     
     // Legs
     const leftLeg = new Graphics();
-    leftLeg.beginFill(character.skinColor);
-    leftLeg.drawRect(-3 * scale, 4 * scale, 2 * scale, 8 * scale);
-    leftLeg.endFill();
+    leftLeg.rect(-3 * scale, 4 * scale, 2 * scale, 8 * scale);
+    leftLeg.fill(character.skinColor);
     
     const rightLeg = new Graphics();
-    rightLeg.beginFill(character.skinColor);
-    rightLeg.drawRect(1 * scale, 4 * scale, 2 * scale, 8 * scale);
-    rightLeg.endFill();
+    rightLeg.rect(1 * scale, 4 * scale, 2 * scale, 8 * scale);
+    rightLeg.fill(character.skinColor);
 
     char.addChild(body, head, leftArm, rightArm, leftLeg, rightLeg);
     char.x = x;

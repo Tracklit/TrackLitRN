@@ -65,7 +65,7 @@ import AdminPanelPage from "@/pages/admin-panel-page";
 import SprinthiaPage from "@/pages/sprinthia-simple";
 import RehabPage from "@/pages/rehab-page";
 import ArcadePage from "@/pages/arcade-page";
-import TracklympicsPage from "@/pages/arcade/reaction-time-page";
+import TracklympicsPage from "@/pages/arcade/tracklympics-page";
 import HamstringRehabPage from "@/pages/rehab/acute-muscle/hamstring";
 import FootRehabPage from "@/pages/rehab/chronic-injuries/foot";
 import { ProtectedRoute } from "@/lib/protected-route";
