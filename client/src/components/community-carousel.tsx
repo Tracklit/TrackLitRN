@@ -231,10 +231,19 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
                 />
               </div>
               <div className="flex-1 overflow-hidden">
-                <div className="flex items-center gap-1">
-                  <span className="text-sm font-medium text-white truncate">{activity.user?.name || activity.user?.username}</span>
-                  <span className="text-sm text-white/80 truncate">• {activity.title}</span>
-                  <span className="text-xs text-white/60 flex-shrink-0">{formatTimeAgo(activity.createdAt)}</span>
+                <div className="flex flex-col justify-center h-full">
+                  {/* Row 1: Username, title, and timestamp */}
+                  <div className="flex items-center gap-1 mb-0.5">
+                    <span className="text-sm font-medium text-white truncate">{activity.user?.name || activity.user?.username}</span>
+                    <span className="text-sm text-white/80 truncate">• {activity.title}</span>
+                    <span className="text-xs text-white/60 flex-shrink-0">{formatTimeAgo(activity.createdAt)}</span>
+                  </div>
+                  {/* Row 2: Message body/description */}
+                  {activity.description && (
+                    <div className="text-xs text-white/70 truncate">
+                      {activity.description}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
