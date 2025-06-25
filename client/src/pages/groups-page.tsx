@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Search, Send, ArrowLeft, MoreVertical, Users, Plus, Crown, Settings, UserPlus } from "lucide-react";
+import { Search, Send, ArrowLeft, MoreVertical, Users, Plus, Crown, Settings, UserPlus, MessageSquare } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
