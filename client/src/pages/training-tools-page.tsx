@@ -26,14 +26,14 @@ import toolsBackground from '@assets/Screenshot 2025-06-15 205721_1750013855168.
 
 
 export default function WorkoutToolsPage() {
-  // Background images for tool cards (in dashboard order)
+  // Background images for tool cards - all use Start Gun background (practiceBackground)
   const toolBackgrounds = [
-    sprinthiaBackground,    // Video Analysis - Sprinthia image
-    programsBackground,     // Photo Finish - Programs image
-    practiceBackground,     // Start Gun - Practice image  
-    raceBackground,         // Stopwatch - Race image
-    toolsBackground,        // Journal - Tools image
-    toolsBackground         // Exercise Library - Tools image (repeat)
+    practiceBackground,     // Video Analysis - Start Gun image
+    practiceBackground,     // Photo Finish - Start Gun image
+    practiceBackground,     // Start Gun - Start Gun image  
+    practiceBackground,     // Stopwatch - Start Gun image
+    practiceBackground,     // Journal - Start Gun image
+    practiceBackground      // Exercise Library - Start Gun image
   ];
 
   // Tool cards with links to individual pages
