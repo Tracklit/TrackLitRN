@@ -229,7 +229,8 @@ export default function HomePage() {
       disabled: false,
       isSpecial: true,
       backgroundImage: programsBackground,
-      hasBackground: true
+      hasBackground: true,
+      hasPreview: true
     },
     {
       title: "Programs",
@@ -238,8 +239,7 @@ export default function HomePage() {
       href: "/programs",
       disabled: false,
       backgroundImage: practiceBackground,
-      hasBackground: true,
-      hasPreview: true
+      hasBackground: true
     },
     {
       title: "Race",
@@ -410,17 +410,17 @@ export default function HomePage() {
                           </div>
                           <div className="flex items-center gap-2 ml-4">
                             {card.hasPreview && (
-                              <button
+                              <Button
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
-                                  setShowProgramsPreview(!showProgramsPreview);
+                                  setShowProgramsPreview(true);
                                 }}
-                                className="h-8 w-8 flex items-center justify-center rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
-                                title="Preview today's session"
+                                size="sm"
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1"
                               >
-                                <Eye className="h-4 w-4" />
-                              </button>
+                                Preview
+                              </Button>
                             )}
                             <span className="text-muted-foreground text-sm">&gt;</span>
                           </div>
@@ -434,86 +434,103 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Programs Preview Dropdown */}
+        {/* Programs Preview Dialog */}
         {showProgramsPreview && (
-          <div className="mt-4 mx-4">
-            <div className="max-w-2xl mx-auto">
-              <Card className="border border-primary/20 bg-primary/5">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">Today's Session Preview</CardTitle>
-                    <button
-                      onClick={() => setShowProgramsPreview(false)}
-                      className="h-6 w-6 flex items-center justify-center text-muted-foreground hover:text-foreground"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
+          <div 
+            className="fixed inset-0 z-50 flex items-center justify-center"
+            style={{
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            }}
+            onClick={() => setShowProgramsPreview(false)}
+          >
+            <div 
+              className="bg-slate-800 rounded-lg shadow-2xl border border-slate-600 p-6 mx-4"
+              style={{
+                width: '100%',
+                maxWidth: '28rem',
+                maxHeight: '90vh',
+                overflow: 'auto',
+                position: 'static',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-white">
+                  Today's Session Preview
+                </h2>
+                <button
+                  onClick={() => setShowProgramsPreview(false)}
+                  className="text-gray-300 hover:text-white p-1"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="space-y-4">
+                {todaysSession ? (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-blue-400" />
+                      <span className="font-medium text-white">{firstAssignedProgram?.program?.title}</span>
+                    </div>
+                    
+                    {todaysSession.isRestDay ? (
+                      <div className="p-4 bg-slate-700/50 rounded-md text-center">
+                        <p className="font-medium text-white">Rest Day</p>
+                        <p className="text-sm text-gray-300">Take time to recover</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {todaysSession.shortDistanceWorkout && (
+                          <div className="p-3 bg-slate-700/50 rounded border border-slate-600">
+                            <p className="text-sm font-medium mb-2 text-blue-400">Short Distance</p>
+                            <p className="text-sm text-gray-200">{todaysSession.shortDistanceWorkout}</p>
+                          </div>
+                        )}
+                        {todaysSession.mediumDistanceWorkout && (
+                          <div className="p-3 bg-slate-700/50 rounded border border-slate-600">
+                            <p className="text-sm font-medium mb-2 text-blue-400">Medium Distance</p>
+                            <p className="text-sm text-gray-200">{todaysSession.mediumDistanceWorkout}</p>
+                          </div>
+                        )}
+                        {todaysSession.longDistanceWorkout && (
+                          <div className="p-3 bg-slate-700/50 rounded border border-slate-600">
+                            <p className="text-sm font-medium mb-2 text-blue-400">Long Distance</p>
+                            <p className="text-sm text-gray-200">{todaysSession.longDistanceWorkout}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    <div className="flex justify-end pt-2">
+                      <Link href="/practice">
+                        <Button className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
+                          Start Practice
+                          <ArrowRight className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-6">
+                    <p className="text-sm text-gray-300 mb-4">
+                      {firstAssignedProgram ? 
+                        "No session scheduled for today" : 
+                        "No programs assigned yet"
+                      }
+                    </p>
+                    {!firstAssignedProgram && (
+                      <Link href="/programs">
+                        <Button variant="outline" className="border-slate-600 text-gray-200 hover:bg-slate-700">
+                          Browse Programs
+                        </Button>
+                      </Link>
+                    )}
                   </div>
-                </CardHeader>
-                <CardContent>
-                  {todaysSession ? (
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-primary" />
-                        <span className="font-medium">{firstAssignedProgram?.program?.title}</span>
-                      </div>
-                      
-                      {todaysSession.isRestDay ? (
-                        <div className="p-3 bg-muted/30 rounded-md text-center">
-                          <p className="font-medium">Rest Day</p>
-                          <p className="text-sm text-muted-foreground">Take time to recover</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {todaysSession.shortDistanceWorkout && (
-                            <div className="p-2 bg-background/50 rounded border">
-                              <p className="text-sm font-medium mb-1">Short Distance</p>
-                              <p className="text-xs">{todaysSession.shortDistanceWorkout}</p>
-                            </div>
-                          )}
-                          {todaysSession.mediumDistanceWorkout && (
-                            <div className="p-2 bg-background/50 rounded border">
-                              <p className="text-sm font-medium mb-1">Medium Distance</p>
-                              <p className="text-xs">{todaysSession.mediumDistanceWorkout}</p>
-                            </div>
-                          )}
-                          {todaysSession.longDistanceWorkout && (
-                            <div className="p-2 bg-background/50 rounded border">
-                              <p className="text-sm font-medium mb-1">Long Distance</p>
-                              <p className="text-xs">{todaysSession.longDistanceWorkout}</p>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      
-                      <div className="flex justify-end pt-2">
-                        <Link href="/practice">
-                          <Button size="sm" className="gap-2">
-                            Start Practice
-                            <ArrowRight className="h-3 w-3" />
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-4">
-                      <p className="text-sm text-muted-foreground">
-                        {firstAssignedProgram ? 
-                          "No session scheduled for today" : 
-                          "No programs assigned yet"
-                        }
-                      </p>
-                      {!firstAssignedProgram && (
-                        <Link href="/programs">
-                          <Button size="sm" variant="outline" className="mt-2">
-                            Browse Programs
-                          </Button>
-                        </Link>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                )}
+              </div>
             </div>
           </div>
         )}
