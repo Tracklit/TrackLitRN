@@ -381,7 +381,22 @@ export default function HomePage() {
                                       Your daily session and journaling
                                     </p>
                                   </div>
-                                  <span className="text-muted-foreground text-sm ml-4">&gt;</span>
+                                  <div className="flex items-center gap-2 ml-4">
+                                    {card.hasPreview && (
+                                      <Button
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          setShowProgramsPreview(true);
+                                        }}
+                                        size="sm"
+                                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1"
+                                      >
+                                        Preview
+                                      </Button>
+                                    )}
+                                    <span className="text-muted-foreground text-sm">&gt;</span>
+                                  </div>
                                 </div>
                               </div>
                             </div>
