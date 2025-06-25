@@ -183,246 +183,245 @@ export default function GroupsPage() {
   const selectedGroupData = groups.find(g => g.id === selectedGroup);
 
   return (
-    <div className="h-screen flex bg-[#010a18] pt-16">
-      {/* Groups Sidebar */}
-      <div className="w-1/3 border-r border-gray-700 flex flex-col">
-        <div className="p-4 border-b border-gray-700">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center">
-              <Users className="h-5 w-5 text-white mr-2" />
-              <h1 className="text-xl font-bold text-white">Groups</h1>
-            </div>
-            {canCreateGroups && canCreateMore && (
-              <Dialog open={isCreating} onOpenChange={setIsCreating}>
-                <DialogTrigger asChild>
-                  <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="bg-gray-900 border-gray-700 fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 shadow-2xl">
-                  <DialogHeader>
-                    <DialogTitle className="text-white">Create New Group</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 mt-4">
-                    <div>
-                      <Label htmlFor="groupName" className="text-white">Group Name</Label>
-                      <Input
-                        id="groupName"
-                        value={newGroupName}
-                        onChange={(e) => setNewGroupName(e.target.value)}
-                        onFocus={() => setKeyboardVisible(true)}
-                        onBlur={() => setKeyboardVisible(false)}
-                        placeholder="Enter group name"
-                        className="bg-gray-800 border-gray-600 text-white mt-1"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="groupDescription" className="text-white">Description (Optional)</Label>
-                      <Textarea
-                        id="groupDescription"
-                        value={newGroupDescription}
-                        onChange={(e) => setNewGroupDescription(e.target.value)}
-                        onFocus={() => setKeyboardVisible(true)}
-                        onBlur={() => setKeyboardVisible(false)}
-                        placeholder="Enter group description"
-                        className="bg-gray-800 border-gray-600 text-white mt-1"
-                        rows={3}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="groupPrivacy" className="text-white">Privacy</Label>
-                      <Select value={newGroupPrivacy} onValueChange={(value: "public" | "private") => setNewGroupPrivacy(value)}>
-                        <SelectTrigger className="bg-gray-800 border-gray-600 text-white mt-1">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-gray-800 border-gray-600">
-                          <SelectItem value="private">Private</SelectItem>
-                          <SelectItem value="public">Public</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex justify-end space-x-2">
-                      <Button variant="outline" onClick={() => setIsCreating(false)}>
-                        Cancel
-                      </Button>
-                      <Button 
-                        onClick={handleCreateGroup}
-                        disabled={!newGroupName.trim() || createGroupMutation.isPending}
-                      >
-                        {createGroupMutation.isPending ? "Creating..." : "Create Group"}
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            )}
-          </div>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Search groups..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => setKeyboardVisible(true)}
-              onBlur={() => setKeyboardVisible(false)}
-              className="pl-10 bg-gray-800 border-gray-600 text-white placeholder-gray-400"
-            />
-          </div>
-          {!canCreateGroups && (
-            <div className="mt-2 p-2 bg-yellow-900/20 border border-yellow-700/50 rounded text-yellow-400 text-xs">
-              Only coaches and Star users can create groups
-            </div>
-          )}
-          {canCreateGroups && !canCreateMore && (
-            <div className="mt-2 p-2 bg-red-900/20 border border-red-700/50 rounded text-red-400 text-xs">
-              Group limit reached ({currentGroupCount}/{groupLimits.maxGroups})
-            </div>
-          )}
-        </div>
-        
-        <div className="flex-1 overflow-y-auto">
-          {filteredGroups.length === 0 ? (
-            <div className="p-4 text-center text-gray-400">
-              <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p>No groups found</p>
-            </div>
-          ) : (
-            filteredGroups.map((group) => (
-              <div
-                key={group.id}
-                onClick={() => setSelectedGroup(group.id)}
-                className={cn(
-                  "p-4 cursor-pointer border-b border-gray-700 hover:bg-gray-800/50 transition-colors",
-                  selectedGroup === group.id && "bg-gray-800"
-                )}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center flex-1 min-w-0">
-                    <div className="bg-purple-600 rounded-full p-2 mr-3">
-                      <Users className="h-4 w-4 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center">
-                        <h3 className="font-medium text-white truncate">{group.name}</h3>
-                        {group.isPrivate && (
-                          <Badge variant="secondary" className="ml-2 text-xs">Private</Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center text-sm text-gray-400">
-                        <span>{group.memberCount} members</span>
-                        {group.lastMessage && (
-                          <>
-                            <span className="mx-1">•</span>
-                            <span className="truncate">
-                              {group.lastMessage.message.substring(0, 30)}...
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  {group.lastMessage && (
-                    <div className="text-xs text-gray-400">
-                      {formatDistanceToNow(new Date(group.lastMessage.createdAt!), { addSuffix: true })}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      {/* Chat Area */}
-      <div className="flex-1 flex flex-col">
-        {selectedGroup && selectedGroupData ? (
-          <>
+    <div className="min-h-screen bg-gray-900 w-full">
+      {/* Full width layout */}
+      <div className="w-full">
+        {selectedGroup ? (
+          <div className="flex flex-col h-screen">
             {/* Chat Header */}
-            <div className="p-4 border-b border-gray-700 bg-gray-900">
+            <div className="p-4 border-b border-gray-700 bg-gray-800 flex-shrink-0">
               <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="bg-purple-600 rounded-full p-2 mr-3">
-                    <Users className="h-5 w-5 text-white" />
-                  </div>
+                <div className="flex items-center space-x-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-gray-400 hover:text-white"
+                    onClick={() => setSelectedGroup(null)}
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                  </Button>
                   <div>
-                    <h2 className="font-semibold text-white">{selectedGroupData.name}</h2>
+                    <h2 className="text-lg font-semibold text-white">
+                      {selectedGroupData?.name}
+                    </h2>
                     <p className="text-sm text-gray-400">
-                      {selectedGroupData.memberCount} members
-                      {selectedGroupData.description && ` • ${selectedGroupData.description}`}
+                      {selectedGroupData?.memberCount} member{selectedGroupData?.memberCount !== 1 ? 's' : ''}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Button variant="ghost" size="sm">
-                    <UserPlus className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-gray-400 hover:text-white"
+                  >
                     <Settings className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
             </div>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={cn(
-                    "flex",
-                    message.senderId === user?.id ? "justify-end" : "justify-start"
-                  )}
-                >
-                  <div
-                    className={cn(
-                      "max-w-xs lg:max-w-md px-4 py-2 rounded-lg",
-                      message.senderId === user?.id
-                        ? "bg-purple-600 text-white"
-                        : "bg-gray-700 text-white"
-                    )}
-                  >
-                    {message.senderId !== user?.id && (
-                      <p className="text-xs text-purple-300 mb-1">{message.sender.name || message.sender.username}</p>
-                    )}
-                    <p className="text-sm">{message.message}</p>
-                    <p className="text-xs mt-1 opacity-70">
-                      {message.createdAt && formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
-                    </p>
+            {/* Messages Area */}
+            <div className="flex-1 p-4 overflow-y-auto bg-gray-900">
+              <div className="space-y-4 max-w-4xl mx-auto">
+                {messages.length === 0 ? (
+                  <div className="text-center text-gray-400 py-8">
+                    <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <h3 className="text-lg font-medium mb-2">No messages yet</h3>
+                    <p>Be the first to start the conversation!</p>
                   </div>
-                </div>
-              ))}
-              <div ref={messagesEndRef} />
+                ) : (
+                  messages.map((message) => (
+                    <div key={message.id} className="flex items-start space-x-3">
+                      <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center text-sm font-medium">
+                        {message.sender?.username?.charAt(0).toUpperCase() || 'U'}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <span className="text-sm font-medium text-white">
+                            {message.sender?.username || 'Unknown User'}
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
+                          </span>
+                        </div>
+                        <p className="text-gray-300 text-sm">{message.message}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+                <div ref={messagesEndRef} />
+              </div>
             </div>
 
             {/* Message Input */}
-            <div className="p-4 border-t border-gray-700">
-              <div className="flex space-x-2">
-                <Input
+            <div className="p-4 border-t border-gray-700 bg-gray-800 flex-shrink-0">
+              <div className="flex items-center space-x-2 max-w-4xl mx-auto">
+                <input
+                  type="text"
+                  placeholder="Type a message..."
+                  className="flex-1 bg-gray-700 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent"
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={handleKeyPress}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSendMessage();
+                    }
+                  }}
                   onFocus={() => setKeyboardVisible(true)}
                   onBlur={() => setKeyboardVisible(false)}
-                  placeholder="Type a message..."
-                  className="flex-1 bg-gray-800 border-gray-600 text-white placeholder-gray-400"
                 />
                 <Button
+                  size="sm"
+                  className="bg-accent hover:bg-accent/90"
                   onClick={handleSendMessage}
                   disabled={!newMessage.trim() || sendMessageMutation.isPending}
-                  size="sm"
-                  className="bg-purple-600 hover:bg-purple-700"
                 >
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
             </div>
-          </>
+          </div>
         ) : (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center text-gray-400">
-              <Users className="h-16 w-16 mx-auto mb-4 opacity-50" />
-              <h3 className="text-lg font-medium mb-2">Select a group</h3>
-              <p>Choose a group from the sidebar to start chatting</p>
+          <div className="h-screen">
+            {/* Groups List */}
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h1 className="text-2xl font-bold text-white">Groups</h1>
+                {canCreateGroups && canCreateMore && (
+                  <Dialog open={isCreating} onOpenChange={setIsCreating}>
+                    <DialogTrigger asChild>
+                      <Button 
+                        size="sm" 
+                        className="bg-accent hover:bg-accent/90 text-accent-foreground"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create Group
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="bg-gray-800 border-gray-700">
+                      <DialogHeader>
+                        <DialogTitle className="text-white">Create Group</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="name" className="text-white">Group Name</Label>
+                          <Input
+                            id="name"
+                            value={newGroupName}
+                            onChange={(e) => setNewGroupName(e.target.value)}
+                            className="bg-gray-700 border-gray-600 text-white"
+                            placeholder="Enter group name"
+                            onFocus={() => setKeyboardVisible(true)}
+                            onBlur={() => setKeyboardVisible(false)}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="description" className="text-white">Description (Optional)</Label>
+                          <Textarea
+                            id="description"
+                            value={newGroupDescription}
+                            onChange={(e) => setNewGroupDescription(e.target.value)}
+                            className="bg-gray-700 border-gray-600 text-white"
+                            placeholder="Enter group description"
+                            onFocus={() => setKeyboardVisible(true)}
+                            onBlur={() => setKeyboardVisible(false)}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="privacy" className="text-white">Privacy</Label>
+                          <Select value={newGroupPrivacy} onValueChange={(value: "public" | "private") => setNewGroupPrivacy(value)}>
+                            <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-gray-700 border-gray-600">
+                              <SelectItem value="private" className="text-white">Private</SelectItem>
+                              <SelectItem value="public" className="text-white">Public</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex justify-end space-x-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => setIsCreating(false)}
+                            className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={handleCreateGroup}
+                            disabled={createGroupMutation.isPending}
+                            className="bg-accent hover:bg-accent/90 text-accent-foreground"
+                          >
+                            {createGroupMutation.isPending ? "Creating..." : "Create Group"}
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                )}
+              </div>
+
+              {!canCreateGroups && (
+                <div className="mb-4 p-3 bg-yellow-900/20 border border-yellow-700/50 rounded text-yellow-400 text-sm">
+                  Only coaches and Star users can create groups
+                </div>
+              )}
+              {canCreateGroups && !canCreateMore && (
+                <div className="mb-4 p-3 bg-red-900/20 border border-red-700/50 rounded text-red-400 text-sm">
+                  Group limit reached ({currentGroupCount}/{groupLimits.maxGroups})
+                </div>
+              )}
+
+              {/* Search */}
+              <div className="relative mb-6">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Search groups..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 bg-gray-800 border-gray-600 text-white"
+                  onFocus={() => setKeyboardVisible(true)}
+                  onBlur={() => setKeyboardVisible(false)}
+                />
+              </div>
+
+              {/* Groups Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {filteredGroups.length === 0 ? (
+                  <div className="col-span-full text-gray-400 text-center py-8">
+                    {searchQuery ? "No groups found" : "No groups yet. Create your first group!"}
+                  </div>
+                ) : (
+                  filteredGroups.map((group) => (
+                    <div
+                      key={group.id}
+                      className="p-4 rounded-lg cursor-pointer transition-colors bg-gray-800 hover:bg-gray-700 text-white border border-gray-700"
+                      onClick={() => setSelectedGroup(group.id)}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-medium text-lg">{group.name}</h3>
+                        <MessageSquare className="h-5 w-5 opacity-50" />
+                      </div>
+                      <p className="text-sm opacity-70 mb-2">
+                        {group.memberCount} member{group.memberCount !== 1 ? 's' : ''}
+                      </p>
+                      {group.description && (
+                        <p className="text-xs text-gray-400 line-clamp-2">
+                          {group.description}
+                        </p>
+                      )}
+                      {group.lastMessage && (
+                        <div className="mt-2 pt-2 border-t border-gray-700">
+                          <p className="text-xs text-gray-400">
+                            Last activity: {formatDistanceToNow(new Date(group.lastMessage.createdAt), { addSuffix: true })}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         )}
