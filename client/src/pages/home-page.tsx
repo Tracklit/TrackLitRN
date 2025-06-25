@@ -399,7 +399,7 @@ export default function HomePage() {
                               )}
                             </h2>
                             <p className="text-muted-foreground text-sm flex items-center gap-2">
-                              <Circle className="w-2 h-2 text-blue-400" />
+                              <div className="w-2 h-2 bg-blue-400 rounded-full" />
                               {card.description}
                             </p>
                           </div>
