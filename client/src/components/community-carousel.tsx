@@ -1,7 +1,12 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { UserCircle, Trophy, Users, Calendar, BookOpen, Medal } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { UserCircle, Trophy, Users, Calendar, BookOpen, Medal, MapPin, Clock, Save } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 function formatTimeAgo(dateString: string): string {
   const now = new Date();
@@ -39,6 +44,11 @@ interface CommunityCarouselProps {
 
 export function CommunityCarousel({ isPaused = false, onPauseToggle }: CommunityCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [selectedActivity, setSelectedActivity] = useState<CommunityActivity | null>(null);
+  const [dialogType, setDialogType] = useState<'meet' | 'group' | 'journal' | null>(null);
+  
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Fetch community activities with fallback data
   const { data: activities, isLoading } = useQuery<CommunityActivity[]>({
@@ -250,7 +260,10 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
                   </div>
                   {/* Row 2: Message body/description */}
                   {activity.description && (
-                    <div className="text-xs text-white/70 truncate">
+                    <div 
+                      className="text-xs text-white/70 truncate cursor-pointer hover:text-white/90 transition-colors"
+                      onClick={() => handleActivityClick(activity)}
+                    >
                       {activity.description}
                     </div>
                   )}
@@ -260,6 +273,213 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
           </div>
         );
       })}
+      
+      {/* Activity Dialog */}
+      <ActivityDialog 
+        activity={selectedActivity}
+        type={dialogType}
+        onClose={() => {
+          setSelectedActivity(null);
+          setDialogType(null);
+        }}
+      />
     </div>
+  );
+
+  function handleActivityClick(activity: CommunityActivity) {
+    setSelectedActivity(activity);
+    
+    // Determine dialog type based on activity type
+    if (activity.activityType === 'meet_created' || activity.activityType === 'meet_joined') {
+      setDialogType('meet');
+    } else if (activity.activityType === 'group_joined') {
+      setDialogType('group');
+    } else if (activity.activityType === 'journal_entry') {
+      setDialogType('journal');
+    } else {
+      // Default to journal for other activity types
+      setDialogType('journal');
+    }
+  }
+}
+
+// Activity Dialog Component
+interface ActivityDialogProps {
+  activity: CommunityActivity | null;
+  type: 'meet' | 'group' | 'journal' | null;
+  onClose: () => void;
+}
+
+function ActivityDialog({ activity, type, onClose }: ActivityDialogProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  const saveMeetMutation = useMutation({
+    mutationFn: async (meetData: any) => {
+      return apiRequest('/api/meets', {
+        method: 'POST',
+        body: JSON.stringify(meetData)
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Meet Saved",
+        description: "The meet has been added to your calendar."
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/meets'] });
+      onClose();
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to save meet. Please try again.",
+        variant: "destructive"
+      });
+    }
+  });
+
+  if (!activity || !type) return null;
+
+  const handleSaveMeet = () => {
+    if (activity.metadata && activity.metadata.meetData) {
+      saveMeetMutation.mutate(activity.metadata.meetData);
+    }
+  };
+
+  const handleViewGroup = () => {
+    if (activity.metadata && activity.metadata.groupId) {
+      window.open(`/groups/${activity.metadata.groupId}`, '_blank');
+    }
+  };
+
+  return (
+    <Dialog open={!!activity} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md bg-[#0c1525] border-blue-800/50 text-white">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            {type === 'meet' && <Calendar className="h-5 w-5 text-blue-400" />}
+            {type === 'group' && <Users className="h-5 w-5 text-green-400" />}
+            {type === 'journal' && <BookOpen className="h-5 w-5 text-purple-400" />}
+            {activity.title}
+          </DialogTitle>
+          <DialogDescription className="text-gray-300">
+            {activity.description}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="py-4">
+          {type === 'meet' && activity.metadata?.meetData && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm">
+                <MapPin className="h-4 w-4 text-blue-400" />
+                <span>{activity.metadata.meetData.location || 'Location TBD'}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <Clock className="h-4 w-4 text-blue-400" />
+                <span>{new Date(activity.metadata.meetData.date).toLocaleDateString()}</span>
+              </div>
+              {activity.metadata.meetData.events && (
+                <div className="space-y-2">
+                  <span className="text-sm font-medium">Events:</span>
+                  <div className="flex flex-wrap gap-1">
+                    {activity.metadata.meetData.events.map((event: string, index: number) => (
+                      <Badge key={index} variant="secondary" className="text-xs">
+                        {event}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {type === 'group' && activity.metadata?.groupData && (
+            <div className="space-y-3">
+              <div className="text-sm">
+                <span className="font-medium">Group: </span>
+                <span>{activity.metadata.groupData.name}</span>
+              </div>
+              <div className="text-sm text-gray-400">
+                {activity.metadata.groupData.description}
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <Users className="h-4 w-4 text-green-400" />
+                <span>{activity.metadata.groupData.memberCount || 0} members</span>
+              </div>
+            </div>
+          )}
+
+          {type === 'journal' && (
+            <div className="space-y-3">
+              <div className="text-sm text-gray-400">
+                Workout session completed by {activity.user.name || activity.user.username}
+              </div>
+              {activity.metadata?.workoutData && (
+                <div className="space-y-2">
+                  <div className="text-sm">
+                    <span className="font-medium">Program: </span>
+                    <span>{activity.metadata.workoutData.program}</span>
+                  </div>
+                  <div className="text-sm">
+                    <span className="font-medium">Session: </span>
+                    <span>{activity.metadata.workoutData.session}</span>
+                  </div>
+                  {activity.metadata.workoutData.moodRating && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="font-medium">Mood: </span>
+                      <div 
+                        className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                        style={{ 
+                          background: activity.metadata.workoutData.moodRating <= 3 ? '#ef4444' : 
+                                    activity.metadata.workoutData.moodRating <= 5 ? '#f59e0b' : 
+                                    '#22c55e'
+                        }}
+                      >
+                        {activity.metadata.workoutData.moodRating}
+                      </div>
+                      <span className="text-xs">/10</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+          {type === 'meet' && (
+            <Button 
+              onClick={handleSaveMeet}
+              disabled={saveMeetMutation.isPending}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {saveMeetMutation.isPending ? (
+                <>
+                  <Save className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Save Meet
+                </>
+              )}
+            </Button>
+          )}
+          {type === 'group' && (
+            <Button 
+              onClick={handleViewGroup}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <Users className="mr-2 h-4 w-4" />
+              View Group
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
