@@ -312,6 +312,25 @@ export default function HomePage() {
 
   // Quote removed as requested
 
+  // Prevent scrolling on dashboard content only
+  useEffect(() => {
+    const mainElement = document.querySelector('main[data-dashboard="true"]');
+    if (mainElement) {
+      const preventScroll = (e: WheelEvent | TouchEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+      };
+
+      mainElement.addEventListener('wheel', preventScroll, { passive: false });
+      mainElement.addEventListener('touchmove', preventScroll, { passive: false });
+
+      return () => {
+        mainElement.removeEventListener('wheel', preventScroll);
+        mainElement.removeEventListener('touchmove', preventScroll);
+      };
+    }
+  }, []);
+
   return (
     <div className="h-screen text-foreground bg-background overflow-hidden" style={{ overscrollBehavior: 'none', marginTop: '-15px' }}>
       {/* Preload critical images */}
@@ -359,7 +378,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <main className={`px-4 container mx-auto max-w-7xl overflow-hidden ${isTickerVisible ? 'pt-24' : 'pt-20'}`}>
+      <main data-dashboard="true" className={`px-4 container mx-auto max-w-7xl overflow-hidden ${isTickerVisible ? 'pt-24' : 'pt-20'}`}>
         {/* Logo will be placed here in the future */}
         <div className="h-1 mx-auto" style={{ maxWidth: "540px" }}>
           {/* Reserved space for logo */}
