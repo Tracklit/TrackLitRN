@@ -259,48 +259,46 @@ export default function HomePage() {
       <PreloadImages images={dashboardImages} quality={20} priority={true} />
       
       {/* Fixed Community Activity Ticker - Below Header */}
-      {isTickerVisible && (
-        <div className="fixed top-[60px] left-5 right-5 z-40 bg-gradient-to-br from-purple-500 to-blue-800 rounded-sm transition-transform duration-300 ease-in-out">
-          <div className="mx-auto" style={{ maxWidth: "500px" }}>
-            <div className="bg-gradient-to-br from-purple-500 to-blue-800 relative rounded-sm">
-              {/* Control buttons with higher z-index */}
-              <div className="absolute left-2 top-1/2 transform -translate-y-1/2 z-[80]">
-                <button
-                  type="button"
-                  className="h-6 w-6 text-white/70 hover:text-white flex items-center justify-center rounded transition-colors bg-black/10 hover:bg-black/20"
-                  onClick={() => setIsCarouselPaused(!isCarouselPaused)}
-                  title={isCarouselPaused ? "Resume ticker" : "Pause ticker"}
-                >
-                  {isCarouselPaused ? (
-                    <Play className="h-3 w-3" />
-                  ) : (
-                    <Pause className="h-3 w-3" />
-                  )}
-                </button>
-              </div>
-              
-              <div className="absolute right-2 top-1/2 transform -translate-y-1/2 z-[80]">
-                <button
-                  type="button"
-                  className="h-6 w-6 text-white/70 hover:text-white flex items-center justify-center rounded transition-colors bg-black/10 hover:bg-black/20"
-                  onClick={() => {
-                    console.log('X button clicked, hiding ticker');
-                    toggleTickerVisibility(false);
-                  }}
-                  title="Hide ticker"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-              
-              {/* Carousel content */}
-              <div className="relative h-20 overflow-hidden">
-                <CommunityCarousel isPaused={isCarouselPaused} onPauseToggle={setIsCarouselPaused} />
-              </div>
+      <div className={`fixed top-[60px] left-5 right-5 z-40 transition-transform duration-300 ease-in-out ${isTickerVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+        <div className="mx-auto" style={{ maxWidth: "500px" }}>
+          <div className="bg-gradient-to-br from-purple-500 to-blue-800 relative rounded-sm">
+            {/* Control buttons with higher z-index */}
+            <div className="absolute left-2 top-1/2 transform -translate-y-1/2 z-[80]">
+              <button
+                type="button"
+                className="h-6 w-6 text-white/70 hover:text-white flex items-center justify-center rounded transition-colors bg-black/10 hover:bg-black/20"
+                onClick={() => setIsCarouselPaused(!isCarouselPaused)}
+                title={isCarouselPaused ? "Resume ticker" : "Pause ticker"}
+              >
+                {isCarouselPaused ? (
+                  <Play className="h-3 w-3" />
+                ) : (
+                  <Pause className="h-3 w-3" />
+                )}
+              </button>
+            </div>
+            
+            <div className="absolute right-2 top-1/2 transform -translate-y-1/2 z-[80]">
+              <button
+                type="button"
+                className="h-6 w-6 text-white/70 hover:text-white flex items-center justify-center rounded transition-colors bg-black/10 hover:bg-black/20"
+                onClick={() => {
+                  console.log('X button clicked, hiding ticker');
+                  toggleTickerVisibility(false);
+                }}
+                title="Hide ticker"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+            
+            {/* Carousel content */}
+            <div className="relative h-20 overflow-hidden">
+              <CommunityCarousel isPaused={isCarouselPaused} onPauseToggle={setIsCarouselPaused} />
             </div>
           </div>
         </div>
-      )}
+      </div>
 
       <main className={`px-4 container mx-auto max-w-7xl ${isTickerVisible ? 'pt-24' : 'pt-20'}`}>
         {/* Logo will be placed here in the future */}
