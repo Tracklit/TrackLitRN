@@ -283,9 +283,9 @@ export default function GroupsPage() {
             </div>
           </div>
         ) : (
-          <div className="h-screen">
-            {/* Groups List */}
-            <div className="p-6">
+          <div className="h-screen bg-gray-900">
+            {/* Header */}
+            <div className="px-4 py-6 border-b border-gray-700">
               <div className="flex items-center justify-between mb-6">
                 <h1 className="text-2xl font-bold text-white">Groups</h1>
                 {canCreateGroups && canCreateMore && (
@@ -374,52 +374,78 @@ export default function GroupsPage() {
               )}
 
               {/* Search */}
-              <div className="relative mb-6">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search groups..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 bg-gray-800 border-gray-600 text-white"
-                  onFocus={() => setKeyboardVisible(true)}
-                  onBlur={() => setKeyboardVisible(false)}
-                />
+              <div className="px-4 py-3 border-b border-gray-700">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Search groups..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 bg-gray-800 border-gray-600 text-white rounded-lg"
+                    onFocus={() => setKeyboardVisible(true)}
+                    onBlur={() => setKeyboardVisible(false)}
+                  />
+                </div>
               </div>
 
-              {/* Groups Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {/* Groups List - Telegram Style */}
+              <div className="bg-gray-900">
                 {filteredGroups.length === 0 ? (
-                  <div className="col-span-full text-gray-400 text-center py-8">
+                  <div className="text-gray-400 text-center py-8">
                     {searchQuery ? "No groups found" : "No groups yet. Create your first group!"}
                   </div>
                 ) : (
-                  filteredGroups.map((group) => (
-                    <div
-                      key={group.id}
-                      className="p-4 rounded-lg cursor-pointer transition-colors bg-gray-800 hover:bg-gray-700 text-white border border-gray-700"
-                      onClick={() => setSelectedGroup(group.id)}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-medium text-lg">{group.name}</h3>
-                        <MessageSquare className="h-5 w-5 opacity-50" />
-                      </div>
-                      <p className="text-sm opacity-70 mb-2">
-                        {group.memberCount} member{group.memberCount !== 1 ? 's' : ''}
-                      </p>
-                      {group.description && (
-                        <p className="text-xs text-gray-400 line-clamp-2">
-                          {group.description}
-                        </p>
-                      )}
-                      {group.lastMessage && (
-                        <div className="mt-2 pt-2 border-t border-gray-700">
-                          <p className="text-xs text-gray-400">
-                            Last activity: {formatDistanceToNow(new Date(group.lastMessage.createdAt), { addSuffix: true })}
-                          </p>
+                  <div className="divide-y divide-gray-700">
+                    {filteredGroups.map((group) => (
+                      <div
+                        key={group.id}
+                        className="w-full px-4 py-3 cursor-pointer transition-colors hover:bg-gray-800 active:bg-gray-750"
+                        onClick={() => setSelectedGroup(group.id)}
+                      >
+                        <div className="flex items-center space-x-3">
+                          {/* Avatar */}
+                          <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-white font-medium text-lg">
+                              {group.name.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          
+                          {/* Content */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <h3 className="text-white font-medium text-base truncate">
+                                {group.name}
+                              </h3>
+                              {group.lastMessage && (
+                                <span className="text-gray-400 text-sm ml-2 flex-shrink-0">
+                                  {formatDistanceToNow(new Date(group.lastMessage.createdAt), { 
+                                    addSuffix: false 
+                                  }).replace('about ', '')}
+                                </span>
+                              )}
+                            </div>
+                            
+                            <div className="flex items-center justify-between mt-1">
+                              <p className="text-gray-400 text-sm truncate">
+                                {group.lastMessage 
+                                  ? group.lastMessage.message.length > 40 
+                                    ? `${group.lastMessage.message.substring(0, 40)}...`
+                                    : group.lastMessage.message
+                                  : `${group.memberCount} member${group.memberCount !== 1 ? 's' : ''}`
+                                }
+                              </p>
+                              {group.lastMessage && (
+                                <div className="flex items-center space-x-2 ml-2">
+                                  {/* Read status indicator */}
+                                  <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  ))
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>
