@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { SimpleWorkoutLike } from "@/components/workout-reactions";
 
 function formatTimeAgo(dateString: string): string {
   const now = new Date();
@@ -280,15 +281,18 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{
             backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            paddingTop: '10vh',
+            paddingBottom: '10vh',
           }}
           onClick={() => setIsActivityModalOpen(false)}
         >
           <div 
-            className="bg-slate-800 rounded-lg shadow-2xl border border-slate-600 p-6 w-full max-w-md mx-auto my-auto"
+            className="bg-slate-800 rounded-lg shadow-2xl border border-slate-600 p-6 w-full max-w-md"
             style={{
-              maxHeight: '90vh',
+              maxHeight: '80vh',
               overflow: 'auto',
-              transform: 'translateY(0)',
+              marginTop: 'auto',
+              marginBottom: 'auto',
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -405,13 +409,23 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
             
             {/* Footer */}
             <div className="flex justify-between items-center mt-6 pt-4 border-t border-slate-600">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsActivityModalOpen(false)}
-              >
-                Close
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsActivityModalOpen(false)}
+                >
+                  Close
+                </Button>
+                
+                {/* Thumbs up like button for workouts */}
+                {currentActivity.activityType === 'journal_entry' && currentActivity.metadata?.workoutId && (
+                  <SimpleWorkoutLike 
+                    sessionId={currentActivity.metadata.workoutId} 
+                    className="ml-2"
+                  />
+                )}
+              </div>
               
               {/* Action button based on activity type */}
               {(currentActivity.activityType === 'meet_created' || currentActivity.activityType === 'meet_joined') && (
