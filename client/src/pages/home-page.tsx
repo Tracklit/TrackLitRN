@@ -259,7 +259,8 @@ export default function HomePage() {
       <PreloadImages images={dashboardImages} quality={20} priority={true} />
       
       {/* Fixed Community Activity Ticker - Below Header */}
-      <div className={`fixed top-[60px] left-5 right-5 z-40 bg-gradient-to-br from-purple-500 to-blue-800 rounded-sm transition-transform duration-300 ease-in-out ${isTickerVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+      {isTickerVisible && (
+        <div className="fixed top-[60px] left-5 right-5 z-40 bg-gradient-to-br from-purple-500 to-blue-800 rounded-sm transition-transform duration-300 ease-in-out">
           <div className="mx-auto" style={{ maxWidth: "500px" }}>
             <div className="bg-gradient-to-br from-purple-500 to-blue-800 relative rounded-sm">
               {/* Control buttons with higher z-index */}
@@ -296,20 +297,6 @@ export default function HomePage() {
               <div className="relative h-20 overflow-hidden">
                 <CommunityCarousel isPaused={isCarouselPaused} onPauseToggle={setIsCarouselPaused} />
               </div>
-            </div>
-          </div>
-        </div>
-      
-      
-      {/* Show ticker background when hidden */}
-      {!isTickerVisible && (
-        <div 
-          className="fixed top-[60px] left-5 right-5 z-40 cursor-pointer"
-          onClick={() => toggleTickerVisibility(true)}
-          title="Show community activity ticker"
-        >
-          <div className="mx-auto" style={{ maxWidth: "500px" }}>
-            <div className="bg-purple-800/20 backdrop-blur-sm border-b border-purple-700/30 h-8 rounded-sm">
             </div>
           </div>
         </div>
