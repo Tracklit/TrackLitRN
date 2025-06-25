@@ -88,6 +88,25 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
       {
         id: 4,
         userId: 1,
+        activityType: 'journal_entry',
+        title: 'Training Journal Entry',
+        description: 'Completed Beast Mode Day 15 - felt strong during 6x100m intervals',
+        relatedEntityId: 15,
+        relatedEntityType: 'session',
+        metadata: {
+          workoutData: {
+            program: 'Beast Mode 2025',
+            session: 'Day 15 - Speed Development',
+            moodRating: 8
+          },
+          workoutId: 15
+        },
+        createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+        user: { id: 1, username: 'speedster_pro', name: 'Alex R.', profileImageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face' }
+      },
+      {
+        id: 5,
+        userId: 1,
         activityType: 'meet_results',
         title: 'Personal Best Achievement!',
         description: 'New 200m PB of 22.85s at Regional Qualifier meet',
@@ -138,7 +157,8 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
   const getActivityIcon = (activityType: string) => {
     switch (activityType) {
       case 'workout':
-        return <UserCircle className="h-4 w-4 text-blue-400" />;
+      case 'journal_entry':
+        return <BookOpen className="h-4 w-4 text-blue-400" />;
       case 'user_joined':
         return <Users className="h-4 w-4 text-green-400" />;
       case 'meet_created':
@@ -419,9 +439,9 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
                 </Button>
                 
                 {/* Thumbs up like button for workouts */}
-                {currentActivity.activityType === 'journal_entry' && currentActivity.metadata?.workoutId && (
+                {currentActivity.activityType === 'journal_entry' && (
                   <SimpleWorkoutLike 
-                    sessionId={currentActivity.metadata.workoutId} 
+                    sessionId={currentActivity.relatedEntityId || currentActivity.id} 
                     className="ml-2"
                   />
                 )}

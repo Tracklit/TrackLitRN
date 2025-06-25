@@ -42,6 +42,25 @@ router.get("/activities", async (req: Request, res: Response) => {
         {
           id: 4,
           userId: 1,
+          activityType: 'journal_entry',
+          title: 'Training Journal Entry',
+          description: 'Completed Beast Mode Day 15 - felt strong during 6x100m intervals',
+          relatedEntityId: 15,
+          relatedEntityType: 'session',
+          metadata: {
+            workoutData: {
+              program: 'Beast Mode 2025',
+              session: 'Day 15 - Speed Development',
+              moodRating: 8
+            },
+            workoutId: 15
+          },
+          createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+          user: { id: 1, username: 'speedster_pro', name: 'Alex R.', profileImageUrl: undefined }
+        },
+        {
+          id: 5,
+          userId: 1,
           activityType: 'meet_results',
           title: 'Personal Best Achievement!',
           description: 'New 200m PB of 22.85s at Regional Qualifier meet',
