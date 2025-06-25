@@ -337,7 +337,7 @@ export default function HomePage() {
                       <div className="text-left">
                         <h2 className="font-bold mb-2 text-muted-foreground/70" style={{ fontSize: '16px' }}>{card.title}</h2>
                         <p className="text-muted-foreground/70 text-sm flex items-center gap-2">
-                          <Circle className="w-2 h-2 text-blue-400" />
+                          <div className="w-2 h-2 bg-blue-400 rounded-full" />
                           {card.description}
                         </p>
                       </div>
@@ -372,7 +372,7 @@ export default function HomePage() {
                                       Hi {user?.name?.split(' ')[0] || user?.username || 'there'} <span className="text-base">👋</span> Ready to train?
                                     </h2>
                                     <p className="text-muted-foreground text-sm flex items-center gap-2">
-                                      <Circle className="w-2 h-2 text-blue-400" />
+                                      <div className="w-2 h-2 bg-blue-400 rounded-full" />
                                       Your daily session and journaling
                                     </p>
                                   </div>
