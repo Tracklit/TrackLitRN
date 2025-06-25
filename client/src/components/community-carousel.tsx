@@ -203,7 +203,7 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
   }
 
   return (
-    <div className="relative overflow-hidden h-16 flex items-center">
+    <div className="relative overflow-hidden h-20 flex items-center">
       {activities.map((activity, index) => {
         let position;
         if (currentIndex === activities.length - 1 && index === 0) {

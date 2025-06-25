@@ -293,7 +293,7 @@ export default function HomePage() {
               </div>
               
               {/* Carousel content */}
-              <div className="relative h-16 overflow-hidden">
+              <div className="relative h-20 overflow-hidden">
                 <CommunityCarousel isPaused={isCarouselPaused} onPauseToggle={setIsCarouselPaused} />
               </div>
             </div>
@@ -309,7 +309,7 @@ export default function HomePage() {
           title="Show community activity ticker"
         >
           <div className="mx-auto" style={{ maxWidth: "500px" }}>
-            <div className="bg-purple-800/20 backdrop-blur-sm border-b border-purple-700/30 h-6 rounded-sm">
+            <div className="bg-purple-800/20 backdrop-blur-sm border-b border-purple-700/30 h-8 rounded-sm">
             </div>
           </div>
         </div>
