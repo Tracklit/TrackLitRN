@@ -293,7 +293,7 @@ export default function HomePage() {
               </div>
               
               {/* Carousel content */}
-              <div className="relative h-12 overflow-hidden">
+              <div className="relative h-16 overflow-hidden">
                 <CommunityCarousel isPaused={isCarouselPaused} onPauseToggle={setIsCarouselPaused} />
               </div>
             </div>
