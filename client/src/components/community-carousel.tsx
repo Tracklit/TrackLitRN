@@ -277,20 +277,18 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
       {/* Activity Modal - Based on session modal design */}
       {isActivityModalOpen && currentActivity && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
           }}
           onClick={() => setIsActivityModalOpen(false)}
         >
           <div 
-            className="bg-slate-800 rounded-lg shadow-2xl border border-slate-600 p-6 mx-4"
+            className="bg-slate-800 rounded-lg shadow-2xl border border-slate-600 p-6 w-full max-w-md mx-auto my-auto"
             style={{
-              width: '100%',
-              maxWidth: '28rem',
               maxHeight: '90vh',
               overflow: 'auto',
-              position: 'static',
+              transform: 'translateY(0)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -488,10 +486,16 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
     setIsSavingItem(true);
     
     try {
-      const response = await apiRequest('/api/meets', {
+      const response = await fetch('/api/meets', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(currentActivity.metadata.meetData)
       });
+      
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(`Failed to save meet: ${errorData}`);
+      }
       
       toast({
         title: "Meet Saved",
@@ -501,6 +505,7 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
       queryClient.invalidateQueries({ queryKey: ['/api/meets'] });
       setIsActivityModalOpen(false);
     } catch (error) {
+      console.error('Error saving meet:', error);
       toast({
         title: "Error",
         description: "Failed to save meet. Please try again.",
@@ -525,28 +530,34 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
     setIsSavingItem(true);
     
     try {
-      const workoutData = {
-        title: `${currentActivity.metadata.workoutData.session} - ${currentActivity.user?.username}`,
-        description: currentActivity.description,
-        category: 'saved',
-        content: currentActivity.metadata.workoutData,
-        isPublic: false,
-        originalUserId: currentActivity.userId
+      // Create journal entry object similar to practice page
+      const journalEntry = {
+        title: `${currentActivity.metadata.workoutData.session} - ${new Date().toLocaleDateString('en-CA')}`,
+        content: currentActivity.description || 'Completed workout session',
+        mood: currentActivity.metadata.workoutData.moodRating || 7,
+        workoutData: currentActivity.metadata.workoutData
       };
-      
-      const response = await apiRequest('/api/workout-library', {
+
+      const response = await fetch('/api/journal', {
         method: 'POST',
-        body: JSON.stringify(workoutData)
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(journalEntry)
       });
+      
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(`Failed to save journal entry: ${errorData}`);
+      }
       
       toast({
         title: "Workout Saved",
-        description: "The workout has been saved to your library."
+        description: "The workout has been saved to your journal library."
       });
       
-      queryClient.invalidateQueries({ queryKey: ['/api/workout-library'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/journal'] });
       setIsActivityModalOpen(false);
     } catch (error) {
+      console.error('Error saving workout:', error);
       toast({
         title: "Error",
         description: "Failed to save workout. Please try again.",
