@@ -354,22 +354,81 @@ function ActivityDialog({ activity, type, onClose }: ActivityDialogProps) {
 
   return (
     <Dialog open={!!activity} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md bg-[#0c1525] border-blue-800/50 text-white">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            {type === 'meet' && <Calendar className="h-5 w-5 text-blue-400" />}
-            {type === 'group' && <Users className="h-5 w-5 text-green-400" />}
-            {type === 'journal' && <BookOpen className="h-5 w-5 text-purple-400" />}
-            {activity.title}
+            {type === 'meet' && <Calendar className="text-green-500 h-5 w-5" />}
+            {type === 'group' && <Users className="text-blue-500 h-5 w-5" />}
+            {type === 'journal' && <BookOpen className="text-green-500 h-5 w-5" />}
+            {type === 'journal' ? 'Training Session' : activity.title}
           </DialogTitle>
-          <DialogDescription className="text-gray-300">
-            {activity.description}
+          <DialogDescription>
+            {type === 'journal' 
+              ? 'View details from this completed training session.'
+              : activity.description
+            }
           </DialogDescription>
         </DialogHeader>
 
-        <div className="py-4">
-          {type === 'meet' && activity.metadata?.meetData && (
-            <div className="space-y-3">
+        {type === 'journal' && (
+          <div className="bg-muted/30 p-4 rounded-md mb-4">
+            <h3 className="font-medium mb-2">Training Session</h3>
+            
+            {/* Display user info */}
+            <div className="flex items-center gap-2 mb-3">
+              <img 
+                src={activity.user?.profileImageUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face'} 
+                alt={activity.user?.username || 'User'}
+                className="w-8 h-8 rounded-full object-cover"
+              />
+              <span className="text-sm font-medium">{activity.user.name || activity.user.username}</span>
+            </div>
+            
+            {/* Display the mood rating if available */}
+            {activity.metadata?.workoutData?.moodRating && (
+              <div className="flex items-center gap-2 mb-3">
+                <p className="text-sm font-medium">How they felt:</p>
+                <div className="flex items-center">
+                  <div 
+                    className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-white"
+                    style={{ 
+                      background: activity.metadata.workoutData.moodRating <= 3 ? '#ef4444' : 
+                                activity.metadata.workoutData.moodRating <= 5 ? '#f59e0b' : 
+                                '#22c55e'
+                    }}
+                  >
+                    {activity.metadata.workoutData.moodRating}
+                  </div>
+                  <span className="text-xs ml-1">/10</span>
+                </div>
+              </div>
+            )}
+            
+            {/* Program and session info */}
+            {activity.metadata?.workoutData && (
+              <div className="space-y-1 mb-3">
+                <div className="text-sm">
+                  <span className="font-medium">Program: </span>
+                  <span>{activity.metadata.workoutData.program}</span>
+                </div>
+                <div className="text-sm">
+                  <span className="font-medium">Session: </span>
+                  <span>{activity.metadata.workoutData.session}</span>
+                </div>
+              </div>
+            )}
+            
+            <p className="text-sm font-medium mb-1">Notes:</p>
+            <p className="text-sm text-muted-foreground">
+              {activity.metadata?.workoutData?.notes || activity.description || "No notes added for this session."}
+            </p>
+          </div>
+        )}
+
+        {type === 'meet' && activity.metadata?.meetData && (
+          <div className="bg-muted/30 p-4 rounded-md mb-4">
+            <h3 className="font-medium mb-2">Meet Details</h3>
+            <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
                 <MapPin className="h-4 w-4 text-blue-400" />
                 <span>{activity.metadata.meetData.location || 'Location TBD'}</span>
@@ -391,15 +450,18 @@ function ActivityDialog({ activity, type, onClose }: ActivityDialogProps) {
                 </div>
               )}
             </div>
-          )}
+          </div>
+        )}
 
-          {type === 'group' && activity.metadata?.groupData && (
-            <div className="space-y-3">
+        {type === 'group' && activity.metadata?.groupData && (
+          <div className="bg-muted/30 p-4 rounded-md mb-4">
+            <h3 className="font-medium mb-2">Group Information</h3>
+            <div className="space-y-2">
               <div className="text-sm">
                 <span className="font-medium">Group: </span>
                 <span>{activity.metadata.groupData.name}</span>
               </div>
-              <div className="text-sm text-gray-400">
+              <div className="text-sm text-muted-foreground">
                 {activity.metadata.groupData.description}
               </div>
               <div className="flex items-center gap-2 text-sm">
@@ -407,54 +469,23 @@ function ActivityDialog({ activity, type, onClose }: ActivityDialogProps) {
                 <span>{activity.metadata.groupData.memberCount || 0} members</span>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {type === 'journal' && (
-            <div className="space-y-3">
-              <div className="text-sm text-gray-400">
-                Workout session completed by {activity.user.name || activity.user.username}
-              </div>
-              {activity.metadata?.workoutData && (
-                <div className="space-y-2">
-                  <div className="text-sm">
-                    <span className="font-medium">Program: </span>
-                    <span>{activity.metadata.workoutData.program}</span>
-                  </div>
-                  <div className="text-sm">
-                    <span className="font-medium">Session: </span>
-                    <span>{activity.metadata.workoutData.session}</span>
-                  </div>
-                  {activity.metadata.workoutData.moodRating && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="font-medium">Mood: </span>
-                      <div 
-                        className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
-                        style={{ 
-                          background: activity.metadata.workoutData.moodRating <= 3 ? '#ef4444' : 
-                                    activity.metadata.workoutData.moodRating <= 5 ? '#f59e0b' : 
-                                    '#22c55e'
-                        }}
-                      >
-                        {activity.metadata.workoutData.moodRating}
-                      </div>
-                      <span className="text-xs">/10</span>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+        <DialogFooter className="flex sm:justify-between">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+          >
             Close
           </Button>
           {type === 'meet' && (
             <Button 
+              type="button"
+              className="bg-primary text-white"
               onClick={handleSaveMeet}
               disabled={saveMeetMutation.isPending}
-              className="bg-blue-600 hover:bg-blue-700"
             >
               {saveMeetMutation.isPending ? (
                 <>
@@ -471,11 +502,22 @@ function ActivityDialog({ activity, type, onClose }: ActivityDialogProps) {
           )}
           {type === 'group' && (
             <Button 
+              type="button"
+              className="bg-primary text-white"
               onClick={handleViewGroup}
-              className="bg-green-600 hover:bg-green-700"
             >
               <Users className="mr-2 h-4 w-4" />
               View Group
+            </Button>
+          )}
+          {type === 'journal' && (
+            <Button 
+              type="button"
+              className="bg-primary text-white"
+              onClick={() => window.location.href = '/tools/journal'}
+            >
+              <BookOpen className="mr-2 h-4 w-4" />
+              Go to Journal
             </Button>
           )}
         </DialogFooter>
