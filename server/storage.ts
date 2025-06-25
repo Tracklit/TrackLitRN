@@ -1855,6 +1855,14 @@ export class DatabaseStorage implements IStorage {
     
     return savedWorkouts;
   }
+
+  async saveWorkoutToLibrary(workoutData: any): Promise<any> {
+    const [savedWorkout] = await db
+      .insert(workoutLibrary)
+      .values(workoutData)
+      .returning();
+    return savedWorkout;
+  }
   
   // Programs Methods
   async getUserPrograms(userId: number): Promise<TrainingProgram[]> {
