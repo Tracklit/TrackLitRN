@@ -223,29 +223,18 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
           >
             {/* Container with padding to avoid control overlap */}
             <div className="flex items-center gap-2 h-full w-full px-12">
-              {/* Clickable profile image */}
-              <a 
-                href={`/profile/${activity.user?.username}`}
-                className="rounded-full bg-gray-200 h-8 w-8 flex items-center justify-center flex-shrink-0 overflow-hidden border border-white/20 hover:border-white/40 transition-colors cursor-pointer"
-                onClick={(e) => e.preventDefault()}
-              >
+              <div className="rounded-full bg-gray-200 h-8 w-8 flex items-center justify-center flex-shrink-0 overflow-hidden border border-white/20">
                 <img 
                   src={activity.user?.profileImageUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face'} 
                   alt={activity.user?.username || 'User'}
                   className="w-full h-full object-cover"
                 />
-              </a>
+              </div>
               <div className="flex-1 overflow-hidden">
                 <div className="flex flex-col justify-center h-full">
                   {/* Row 1: Username, title, and timestamp */}
                   <div className="flex items-center gap-1 mb-0.5">
-                    <a 
-                      href={`/profile/${activity.user?.username}`}
-                      className="text-sm font-medium text-white hover:text-white/80 truncate transition-colors cursor-pointer"
-                      onClick={(e) => e.preventDefault()}
-                    >
-                      {activity.user?.name || activity.user?.username}
-                    </a>
+                    <span className="text-sm font-medium text-white truncate">{activity.user?.name || activity.user?.username}</span>
                     <span className="text-sm text-white/80 truncate">• {activity.title}</span>
                     <span className="text-xs text-white/60 flex-shrink-0">{formatTimeAgo(activity.createdAt)}</span>
                   </div>
