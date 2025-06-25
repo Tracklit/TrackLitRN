@@ -259,9 +259,9 @@ export default function HomePage() {
       <PreloadImages images={dashboardImages} quality={20} priority={true} />
       
       {/* Fixed Community Activity Ticker - Below Header */}
-      <div className={`fixed top-[60px] left-5 right-5 z-40 bg-gradient-to-r from-purple-500 via-purple-500 to-blue-800 rounded-sm transition-transform duration-300 ease-in-out ${isTickerVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+      <div className={`fixed top-[60px] left-5 right-5 z-40 bg-gradient-to-br from-purple-500 to-blue-800 rounded-sm transition-transform duration-300 ease-in-out ${isTickerVisible ? 'translate-y-0' : '-translate-y-full'}`}>
           <div className="mx-auto" style={{ maxWidth: "500px" }}>
-            <div className="bg-gradient-to-r from-purple-500 via-purple-500 to-blue-800 relative rounded-sm">
+            <div className="bg-gradient-to-br from-purple-500 to-blue-800 relative rounded-sm">
               {/* Control buttons with higher z-index */}
               <div className="absolute left-2 top-1/2 transform -translate-y-1/2 z-[80]">
                 <button
