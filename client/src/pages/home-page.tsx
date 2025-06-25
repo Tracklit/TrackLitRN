@@ -427,9 +427,10 @@ export default function HomePage() {
                                           setShowProgramsPreview(true);
                                         }}
                                         size="sm"
-                                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1"
+                                        variant="ghost"
+                                        className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 p-2"
                                       >
-                                        Preview
+                                        <Eye className="h-4 w-4" />
                                       </Button>
                                     )}
                                     <span className="text-muted-foreground text-sm">&gt;</span>
@@ -469,9 +470,10 @@ export default function HomePage() {
                                   setShowProgramsPreview(true);
                                 }}
                                 size="sm"
-                                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1"
+                                variant="ghost"
+                                className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 p-2"
                               >
-                                Preview
+                                <Eye className="h-4 w-4" />
                               </Button>
                             )}
                             <span className="text-muted-foreground text-sm">&gt;</span>
@@ -565,6 +567,21 @@ export default function HomePage() {
                       </Link>
                     </div>
                   </>
+                ) : selectedProgram?.program?.isUploadedProgram ? (
+                  // Fallback for uploaded document programs
+                  <div className="text-center py-6">
+                    <div className="flex items-center gap-2 justify-center mb-4">
+                      <Calendar className="h-4 w-4 text-blue-400" />
+                      <span className="font-medium text-white">{selectedProgram?.program?.title}</span>
+                    </div>
+                    <p className="text-sm text-gray-300 mb-4">Check Program</p>
+                    <Link href="/practice">
+                      <Button className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
+                        View Program
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </div>
                 ) : (
                   <div className="text-center py-6">
                     <p className="text-sm text-gray-300 mb-4">
