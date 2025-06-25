@@ -81,18 +81,18 @@ export default function TracklympicsPage() {
 
     // Create containers for each screen
     const splashContainer = new Container();
-    splashContainer.name = 'splash';
+    splashContainer.label = 'splash';
     
     const eventSelectContainer = new Container();
-    eventSelectContainer.name = 'eventSelect';
+    eventSelectContainer.label = 'eventSelect';
     eventSelectContainer.visible = false;
     
     const characterSelectContainer = new Container();
-    characterSelectContainer.name = 'characterSelect';
+    characterSelectContainer.label = 'characterSelect';
     characterSelectContainer.visible = false;
     
     const gameplayContainer = new Container();
-    gameplayContainer.name = 'gameplay';
+    gameplayContainer.label = 'gameplay';
     gameplayContainer.visible = false;
 
     app.stage.addChild(splashContainer, eventSelectContainer, characterSelectContainer, gameplayContainer);
@@ -104,122 +104,247 @@ export default function TracklympicsPage() {
   };
 
   const setupSplashScreen = (container: Container) => {
-    // Stadium background with gradient
+    // Gradient sky background
+    const bg = new Graphics();
+    bg.rect(0, 0, 800, 600);
+    bg.fill(0x87ceeb); // Sky blue
+    container.addChild(bg);
+
+    // Stadium background with detailed architecture
     const stadium = new Graphics();
-    stadium.rect(0, 0, 800, 600);
-    stadium.fill(0x2d5016); // Dark green
-
-    // Stadium stands
-    for (let i = 0; i < 20; i++) {
-      const stand = new Graphics();
-      stand.rect(i * 40, 50 + Math.random() * 20, 38, 100);
-      stand.fill(0x8b4513); // Brown
-      stadium.addChild(stand);
+    
+    // Stadium structure - tiered stands
+    for (let tier = 0; tier < 4; tier++) {
+      const tierHeight = 40;
+      const tierY = 80 + tier * tierHeight;
+      
+      // Stand structure
+      stadium.rect(0, tierY, 800, tierHeight);
+      stadium.fill(tier % 2 === 0 ? 0x606060 : 0x707070);
+      
+      // Detailed crowd
+      for (let x = 10; x < 790; x += 12) {
+        const person = new Graphics();
+        const colors = [0xff6b6b, 0x4ecdc4, 0x45b7d1, 0x96ceb4, 0xfeca57, 0xff9ff3];
+        person.rect(x, tierY + 5, 8, 25);
+        person.fill(colors[Math.floor(Math.random() * colors.length)]);
+        
+        // Head
+        person.circle(x + 4, tierY + 2, 3);
+        person.fill(0xfdbcb4);
+        
+        stadium.addChild(person);
+      }
     }
 
-    // Crowd (simplified pixels)
-    for (let i = 0; i < 100; i++) {
-      const person = new Graphics();
-      person.rect(
-        Math.random() * 800,
-        60 + Math.random() * 80,
-        4, 8
-      );
-      person.fill(Math.random() > 0.5 ? 0xff6b9d : 0x6ba3ff);
-      stadium.addChild(person);
-    }
-
+    // Stadium roof/overhang
+    stadium.rect(0, 60, 800, 20);
+    stadium.fill(0x2c3e50);
+    
     container.addChild(stadium);
 
-    // Title
+    // Large stylized Olympic rings
+    const ringColors = [0x0081c8, 0x000000, 0xee334e, 0xfcb131, 0x00a651];
+    const ringPositions = [
+      { x: 300, y: 180 }, { x: 350, y: 180 }, { x: 400, y: 180 },
+      { x: 325, y: 210 }, { x: 375, y: 210 }
+    ];
+    
+    ringPositions.forEach((pos, i) => {
+      const ring = new Graphics();
+      ring.circle(pos.x, pos.y, 25);
+      ring.stroke({ color: ringColors[i], width: 8 });
+      container.addChild(ring);
+    });
+
+    // Title with arcade-style glow effect
     const titleStyle = new TextStyle({
       fontFamily: 'monospace',
-      fontSize: 48,
+      fontSize: 64,
       fill: 0xffff00,
       align: 'center',
-      stroke: { color: 0x000000, width: 3 }
+      stroke: { color: 0xff0000, width: 4 },
+      dropShadow: { 
+        color: 0x000000, 
+        blur: 4, 
+        angle: Math.PI / 6, 
+        distance: 6 
+      }
     });
 
     const title = new Text({ text: 'TRACKLYMPICS', style: titleStyle });
     title.anchor.set(0.5);
     title.x = 400;
-    title.y = 250;
+    title.y = 300;
     container.addChild(title);
 
-    // Subtitle
+    // Subtitle with retro styling
     const subtitleStyle = new TextStyle({
       fontFamily: 'monospace',
-      fontSize: 24,
-      fill: 0xffffff,
-      align: 'center'
+      fontSize: 32,
+      fill: 0x00ffff,
+      align: 'center',
+      stroke: { color: 0x000080, width: 2 }
     });
 
-    const subtitle = new Text({ text: 'Retro Track & Field Championship', style: subtitleStyle });
+    const subtitle = new Text({ text: '"90s ARCADE CHAMPIONSHIP"', style: subtitleStyle });
     subtitle.anchor.set(0.5);
     subtitle.x = 400;
-    subtitle.y = 300;
+    subtitle.y = 350;
     container.addChild(subtitle);
 
-    // Start button area (invisible but clickable)
-    const startArea = new Graphics();
-    startArea.roundRect(300, 350, 200, 60, 10);
-    startArea.fill({ color: 0x00ff00, alpha: 0.3 });
-    startArea.interactive = true;
-    startArea.cursor = 'pointer';
+    // Animated "PRESS START" button with classic arcade styling
+    const startButtonBg = new Graphics();
+    startButtonBg.roundRect(250, 420, 300, 80, 15);
+    startButtonBg.fill(0xff6600);
+    startButtonBg.stroke({ color: 0xffff00, width: 4 });
     
-    const startText = new Text({ text: 'START GAME', style: subtitleStyle });
+    const startButtonShadow = new Graphics();
+    startButtonShadow.roundRect(255, 425, 300, 80, 15);
+    startButtonShadow.fill(0x992200);
+    
+    container.addChild(startButtonShadow, startButtonBg);
+
+    const startText = new Text({ text: 'PRESS START', style: {
+      fontFamily: 'monospace',
+      fontSize: 28,
+      fill: 0xffffff,
+      align: 'center',
+      stroke: { color: 0x000000, width: 2 }
+    }});
     startText.anchor.set(0.5);
     startText.x = 400;
-    startText.y = 380;
+    startText.y = 460;
 
-    startArea.on('pointerdown', () => switchToScreen('eventSelect'));
+    // Make start button interactive
+    startButtonBg.interactive = true;
+    startButtonBg.cursor = 'pointer';
+    startButtonBg.on('pointerdown', () => switchToScreen('eventSelect'));
     
-    container.addChild(startArea, startText);
+    container.addChild(startText);
+
+    // Add some sparkle effects
+    for (let i = 0; i < 20; i++) {
+      const sparkle = new Graphics();
+      sparkle.star(
+        Math.random() * 800,
+        Math.random() * 250 + 350,
+        4,
+        8,
+        4
+      );
+      sparkle.fill(0xffffff);
+      container.addChild(sparkle);
+    }
   };
 
   const setupEventSelectScreen = (container: Container) => {
-    // Track background
+    // Gradient background - grass field
     const bg = new Graphics();
     bg.rect(0, 0, 800, 600);
     bg.fill(0x228b22); // Forest green
     container.addChild(bg);
 
-    // Track oval outline
-    const track = new Graphics();
-    track.ellipse(400, 300, 350, 200);
-    track.stroke({ color: 0xcc6600, width: 8 }); // Brown track
-    container.addChild(track);
+    // Detailed track with multiple lanes and infield
+    const trackOuter = new Graphics();
+    trackOuter.ellipse(400, 300, 380, 220);
+    trackOuter.fill(0x8b4513); // Brown track
 
-    // Title
+    const trackInner = new Graphics();
+    trackInner.ellipse(400, 300, 300, 160);
+    trackInner.fill(0x32cd32); // Bright green infield
+
+    container.addChild(trackOuter, trackInner);
+
+    // Track lanes with white lines
+    for (let i = 0; i < 8; i++) {
+      const laneRadius = 300 + (i * 10);
+      const lane = new Graphics();
+      lane.ellipse(400, 300, laneRadius, 160 + (i * 6));
+      lane.stroke({ color: 0xffffff, width: 2 });
+      container.addChild(lane);
+    }
+
+    // Title with sports styling
     const titleStyle = new TextStyle({
       fontFamily: 'monospace',
-      fontSize: 36,
+      fontSize: 48,
       fill: 0xffff00,
       align: 'center',
-      stroke: { color: 0x000000, width: 2 }
+      stroke: { color: 0xff0000, width: 3 },
+      dropShadow: { 
+        color: 0x000000, 
+        blur: 6, 
+        angle: Math.PI / 4, 
+        distance: 4 
+      }
     });
 
     const title = new Text({ text: 'SELECT EVENT', style: titleStyle });
     title.anchor.set(0.5);
     title.x = 400;
-    title.y = 100;
+    title.y = 80;
     container.addChild(title);
 
-    // 100m Dash button
+    // Large, detailed event selection button
+    const dashButtonShadow = new Graphics();
+    dashButtonShadow.roundRect(155, 205, 490, 120, 20);
+    dashButtonShadow.fill(0x000080);
+
     const dashButton = new Graphics();
-    dashButton.roundRect(250, 200, 300, 80, 10);
+    dashButton.roundRect(150, 200, 490, 120, 20);
     dashButton.fill(0x0066ff);
+    dashButton.stroke({ color: 0x00ffff, width: 6 });
+    
+    // Button highlight effect
+    const highlight = new Graphics();
+    highlight.roundRect(160, 210, 470, 20, 10);
+    highlight.fill(0x66ccff);
+
     dashButton.interactive = true;
     dashButton.cursor = 'pointer';
 
-    const dashText = new Text({ text: '100M DASH', style: titleStyle });
+    const dashText = new Text({ text: '100M DASH', style: {
+      fontFamily: 'monospace',
+      fontSize: 42,
+      fill: 0xffffff,
+      align: 'center',
+      stroke: { color: 0x000080, width: 2 }
+    }});
     dashText.anchor.set(0.5);
     dashText.x = 400;
-    dashText.y = 240;
+    dashText.y = 260;
+
+    // Event icon - running figure
+    const runnerIcon = new Graphics();
+    // Body
+    runnerIcon.rect(350, 240, 16, 24);
+    runnerIcon.fill(0xffffff);
+    // Head
+    runnerIcon.circle(358, 232, 8);
+    runnerIcon.fill(0xfdbcb4);
+    // Arms in running position
+    runnerIcon.rect(342, 245, 6, 16);
+    runnerIcon.fill(0xfdbcb4);
+    runnerIcon.rect(370, 248, 6, 12);
+    runnerIcon.fill(0xfdbcb4);
+    // Legs in stride
+    runnerIcon.rect(352, 264, 6, 18);
+    runnerIcon.fill(0xfdbcb4);
+    runnerIcon.rect(360, 270, 6, 12);
+    runnerIcon.fill(0xfdbcb4);
 
     dashButton.on('pointerdown', () => switchToScreen('characterSelect'));
 
-    container.addChild(dashButton, dashText);
+    container.addChild(dashButtonShadow, dashButton, highlight, dashText, runnerIcon);
+
+    // Additional visual flair
+    const flames = new Graphics();
+    for (let i = 0; i < 10; i++) {
+      flames.circle(100 + i * 60, 450 + Math.sin(i) * 20, 8);
+      flames.fill(i % 2 === 0 ? 0xff6600 : 0xffaa00);
+    }
+    container.addChild(flames);
   };
 
   const setupCharacterSelectScreen = (container: Container) => {
@@ -253,7 +378,7 @@ export default function TracklympicsPage() {
     characterDisplay.on('pointerdown', () => {
       setSelectedCharacter(char);
       // Show play button
-      const playButton = container.getChildByName('playButton') as Graphics;
+      const playButton = container.getChildByLabel('playButton') as Graphics;
       if (playButton) playButton.visible = true;
     });
 
@@ -275,7 +400,7 @@ export default function TracklympicsPage() {
 
     // Play button (initially hidden)
     const playButton = new Graphics();
-    playButton.name = 'playButton';
+    playButton.label = 'playButton';
     playButton.roundRect(300, 450, 200, 60, 10);
     playButton.fill(0x00ff00);
     playButton.interactive = true;
@@ -293,113 +418,304 @@ export default function TracklympicsPage() {
   };
 
   const setupGameplayScreen = (container: Container) => {
-    // Sky background
+    // Detailed stadium environment
     const sky = new Graphics();
-    sky.rect(0, 0, 800, 300);
+    sky.rect(0, 0, 800, 200);
     sky.fill(0x87ceeb);
     container.addChild(sky);
 
-    // Track (isometric view)
-    const track = new Graphics();
-    // Draw isometric track lanes
-    for (let lane = 0; lane < 8; lane++) {
-      const y = 250 + lane * 15;
-      track.rect(50, y, 700, 12);
-      track.fill(0xcc6600); // Brown track
-      // Lane lines
-      track.moveTo(50, y);
-      track.lineTo(750, y);
-      track.stroke({ color: 0xffffff, width: 1 });
-    }
-    container.addChild(track);
-
-    // Starting blocks
-    for (let lane = 0; lane < 8; lane++) {
-      const block = new Graphics();
-      block.rect(80, 252 + lane * 15, 8, 8);
-      block.fill(0x666666);
-      container.addChild(block);
+    // Stadium crowd in background
+    for (let row = 0; row < 3; row++) {
+      for (let seat = 0; seat < 40; seat++) {
+        const spectator = new Graphics();
+        const colors = [0xff6b6b, 0x4ecdc4, 0x45b7d1, 0x96ceb4, 0xfeca57];
+        spectator.rect(seat * 20, 50 + row * 25, 12, 20);
+        spectator.fill(colors[Math.floor(Math.random() * colors.length)]);
+        
+        // Head
+        spectator.circle(seat * 20 + 6, 45 + row * 25, 4);
+        spectator.fill(0xfdbcb4);
+        
+        container.addChild(spectator);
+      }
     }
 
-    // Finish line
-    const finishLine = new Graphics();
-    finishLine.moveTo(700, 250);
-    finishLine.lineTo(700, 370);
-    finishLine.stroke({ color: 0xffffff, width: 3 });
-    container.addChild(finishLine);
+    // Professional track with detailed lanes
+    const trackBase = new Graphics();
+    trackBase.rect(50, 200, 700, 180);
+    trackBase.fill(0xcc6600); // Professional track color
 
-    // Player character (will be positioned dynamically)
+    // Individual lanes with proper spacing
+    for (let lane = 0; lane < 8; lane++) {
+      const laneY = 205 + lane * 20;
+      
+      // Lane surface
+      const laneSurface = new Graphics();
+      laneSurface.rect(55, laneY, 690, 18);
+      laneSurface.fill(lane % 2 === 0 ? 0xb8860b : 0xdaa520);
+      
+      // Lane numbers
+      const laneNumber = new Text({ 
+        text: (lane + 1).toString(), 
+        style: {
+          fontFamily: 'monospace',
+          fontSize: 16,
+          fill: 0xffffff,
+          align: 'center'
+        }
+      });
+      laneNumber.anchor.set(0.5);
+      laneNumber.x = 65;
+      laneNumber.y = laneY + 9;
+      
+      // Lane boundaries
+      if (lane > 0) {
+        const boundary = new Graphics();
+        boundary.rect(55, laneY, 690, 2);
+        boundary.fill(0xffffff);
+        container.addChild(boundary);
+      }
+      
+      container.addChild(laneSurface, laneNumber);
+    }
+
+    container.addChild(trackBase);
+
+    // Starting blocks with detail
+    for (let lane = 0; lane < 8; lane++) {
+      const blockY = 210 + lane * 20;
+      
+      // Starting block base
+      const blockBase = new Graphics();
+      blockBase.rect(90, blockY, 20, 12);
+      blockBase.fill(0x2c3e50);
+      
+      // Block pedals
+      const frontPedal = new Graphics();
+      frontPedal.rect(92, blockY + 2, 6, 8);
+      frontPedal.fill(0x34495e);
+      
+      const backPedal = new Graphics();
+      backPedal.rect(102, blockY + 4, 6, 6);
+      backPedal.fill(0x34495e);
+      
+      container.addChild(blockBase, frontPedal, backPedal);
+    }
+
+    // Dramatic finish line with checkered pattern
+    const finishBase = new Graphics();
+    finishBase.rect(720, 200, 15, 180);
+    finishBase.fill(0x000000);
+    
+    // Checkered pattern
+    for (let i = 0; i < 18; i++) {
+      const checker = new Graphics();
+      checker.rect(720 + (i % 2) * 7.5, 200 + Math.floor(i / 2) * 10, 7.5, 10);
+      checker.fill(i % 2 === 0 ? 0xffffff : 0x000000);
+      container.addChild(checker);
+    }
+    
+    container.addChild(finishBase);
+
+    // Electronic scoreboard
+    const scoreboard = new Graphics();
+    scoreboard.rect(250, 20, 300, 60);
+    scoreboard.fill(0x000000);
+    scoreboard.stroke({ color: 0x00ff00, width: 3 });
+    
+    const scoreText = new Text({ 
+      text: 'LANE 3 TIMER: 00.00', 
+      style: {
+        fontFamily: 'monospace',
+        fontSize: 18,
+        fill: 0x00ff00,
+        align: 'center'
+      }
+    });
+    scoreText.anchor.set(0.5);
+    scoreText.x = 400;
+    scoreText.y = 50;
+    
+    container.addChild(scoreboard, scoreText);
+
+    // Player character (enhanced)
     if (selectedCharacter) {
-      const player = createCharacterSprite(selectedCharacter, 90, 257, 1);
-      player.name = 'player';
+      const player = createCharacterSprite(selectedCharacter, 100, 225, 1.5);
+      player.label = 'player';
       container.addChild(player);
     }
 
-    // Starter figure
+    // Official starter with detailed uniform
     const starter = new Graphics();
-    starter.rect(30, 240, 8, 16);
-    starter.fill(0x000000); // Black suit
-    starter.circle(34, 236, 4);
-    starter.fill(0xfdbcb4); // Skin color
+    // Body in official uniform
+    starter.rect(20, 220, 12, 24);
+    starter.fill(0x000000);
+    // White shirt details
+    starter.rect(22, 222, 8, 8);
+    starter.fill(0xffffff);
+    // Head
+    starter.circle(26, 216, 6);
+    starter.fill(0xfdbcb4);
+    // Official cap
+    starter.rect(20, 212, 12, 4);
+    starter.fill(0x000080);
+    // Starting pistol
+    starter.rect(32, 224, 8, 3);
+    starter.fill(0x666666);
+    
     container.addChild(starter);
 
-    // Game status text
-    const statusStyle = new TextStyle({
-      fontFamily: 'monospace',
-      fontSize: 24,
-      fill: 0x000000,
-      align: 'center',
-      stroke: { color: 0xffffff, width: 2 }
-    });
+    // Game status display with professional styling
+    const statusBg = new Graphics();
+    statusBg.roundRect(200, 100, 400, 60, 10);
+    statusBg.fill(0x1a1a1a);
+    statusBg.stroke({ color: 0x00ff00, width: 3 });
 
-    const gameStatus = new Text({ text: 'On your marks...', style: statusStyle });
-    gameStatus.name = 'gameStatus';
+    const gameStatus = new Text({ 
+      text: 'On your marks...', 
+      style: {
+        fontFamily: 'monospace',
+        fontSize: 32,
+        fill: 0x00ff00,
+        align: 'center',
+        stroke: { color: 0x000000, width: 2 }
+      }
+    });
+    gameStatus.label = 'gameStatus';
     gameStatus.anchor.set(0.5);
     gameStatus.x = 400;
-    gameStatus.y = 50;
-    container.addChild(gameStatus);
+    gameStatus.y = 130;
+    
+    container.addChild(statusBg, gameStatus);
 
-    // Game controls area
+    // Control instruction panel
     const controlsBg = new Graphics();
     controlsBg.rect(0, 400, 800, 200);
-    controlsBg.fill(0x333333);
-    container.addChild(controlsBg);
-
-    // Control buttons will be handled by React buttons below the canvas
+    controlsBg.fill(0x2c3e50);
+    
+    // Control panel details
+    const panel = new Graphics();
+    panel.roundRect(50, 420, 700, 160, 15);
+    panel.fill(0x34495e);
+    panel.stroke({ color: 0x3498db, width: 4 });
+    
+    container.addChild(controlsBg, panel);
   };
 
   const createCharacterSprite = (character: Character, x: number, y: number, scale: number = 1) => {
     const char = new Container();
     
-    // Body
-    const body = new Graphics();
-    body.rect(-4 * scale, -8 * scale, 8 * scale, 12 * scale);
-    body.fill(character.color);
+    // Athletic shoes
+    const leftShoe = new Graphics();
+    leftShoe.roundRect(-6 * scale, 10 * scale, 8 * scale, 4 * scale, 2 * scale);
+    leftShoe.fill(0x000000);
+    leftShoe.stroke({ color: 0xffffff, width: 1 });
     
-    // Head
-    const head = new Graphics();
-    head.circle(0, -12 * scale, 4 * scale);
-    head.fill(character.skinColor);
+    const rightShoe = new Graphics();
+    rightShoe.roundRect(2 * scale, 10 * scale, 8 * scale, 4 * scale, 2 * scale);
+    rightShoe.fill(0x000000);
+    rightShoe.stroke({ color: 0xffffff, width: 1 });
     
-    // Arms
-    const leftArm = new Graphics();
-    leftArm.rect(-6 * scale, -6 * scale, 2 * scale, 8 * scale);
-    leftArm.fill(character.skinColor);
-    
-    const rightArm = new Graphics();
-    rightArm.rect(4 * scale, -6 * scale, 2 * scale, 8 * scale);
-    rightArm.fill(character.skinColor);
-    
-    // Legs
+    // Legs with detailed muscle definition
     const leftLeg = new Graphics();
-    leftLeg.rect(-3 * scale, 4 * scale, 2 * scale, 8 * scale);
+    leftLeg.rect(-4 * scale, 2 * scale, 6 * scale, 12 * scale);
     leftLeg.fill(character.skinColor);
+    // Knee detail
+    leftLeg.circle(-1 * scale, 5 * scale, 2 * scale);
+    leftLeg.fill(character.skinColor - 0x101010);
     
     const rightLeg = new Graphics();
-    rightLeg.rect(1 * scale, 4 * scale, 2 * scale, 8 * scale);
+    rightLeg.rect(0 * scale, 2 * scale, 6 * scale, 12 * scale);
     rightLeg.fill(character.skinColor);
+    // Knee detail
+    rightLeg.circle(3 * scale, 5 * scale, 2 * scale);
+    rightLeg.fill(character.skinColor - 0x101010);
 
-    char.addChild(body, head, leftArm, rightArm, leftLeg, rightLeg);
+    // Athletic shorts
+    const shorts = new Graphics();
+    shorts.rect(-5 * scale, -2 * scale, 10 * scale, 8 * scale);
+    shorts.fill(character.color);
+    shorts.stroke({ color: 0xffffff, width: 1 });
+
+    // Torso with tank top details
+    const torso = new Graphics();
+    torso.rect(-6 * scale, -12 * scale, 12 * scale, 14 * scale);
+    torso.fill(character.color);
+    
+    // Tank top stripes
+    for (let i = 0; i < 3; i++) {
+      const stripe = new Graphics();
+      stripe.rect(-6 * scale, -10 * scale + i * 4 * scale, 12 * scale, 1 * scale);
+      stripe.fill(0xffffff);
+      torso.addChild(stripe);
+    }
+
+    // Muscular arms in running position
+    const leftArm = new Graphics();
+    leftArm.rect(-10 * scale, -8 * scale, 4 * scale, 12 * scale);
+    leftArm.fill(character.skinColor);
+    // Bicep definition
+    leftArm.circle(-8 * scale, -4 * scale, 2 * scale);
+    leftArm.fill(character.skinColor - 0x101010);
+    
+    const rightArm = new Graphics();
+    rightArm.rect(6 * scale, -6 * scale, 4 * scale, 10 * scale);
+    rightArm.fill(character.skinColor);
+    // Bicep definition
+    rightArm.circle(8 * scale, -2 * scale, 2 * scale);
+    rightArm.fill(character.skinColor - 0x101010);
+
+    // Athletic hands/gloves
+    const leftHand = new Graphics();
+    leftHand.circle(-8 * scale, 2 * scale, 2 * scale);
+    leftHand.fill(0x333333);
+    
+    const rightHand = new Graphics();
+    rightHand.circle(8 * scale, 2 * scale, 2 * scale);
+    rightHand.fill(0x333333);
+    
+    // Head with more detail
+    const head = new Graphics();
+    head.circle(0, -18 * scale, 6 * scale);
+    head.fill(character.skinColor);
+    
+    // Hair
+    const hair = new Graphics();
+    hair.circle(0, -20 * scale, 5 * scale);
+    hair.fill(0x4a4a4a);
+    
+    // Eyes
+    const leftEye = new Graphics();
+    leftEye.circle(-2 * scale, -18 * scale, 1 * scale);
+    leftEye.fill(0x000000);
+    
+    const rightEye = new Graphics();
+    rightEye.circle(2 * scale, -18 * scale, 1 * scale);
+    rightEye.fill(0x000000);
+    
+    // Athletic headband
+    const headband = new Graphics();
+    headband.rect(-6 * scale, -20 * scale, 12 * scale, 2 * scale);
+    headband.fill(0xff0000);
+
+    // Race number on chest
+    const numberBg = new Graphics();
+    numberBg.rect(-3 * scale, -10 * scale, 6 * scale, 4 * scale);
+    numberBg.fill(0xffffff);
+    
+    char.addChild(
+      leftShoe, rightShoe,
+      leftLeg, rightLeg,
+      shorts,
+      torso, 
+      leftArm, rightArm,
+      leftHand, rightHand,
+      head, hair,
+      leftEye, rightEye,
+      headband,
+      numberBg
+    );
+    
     char.x = x;
     char.y = y;
     
@@ -414,12 +730,12 @@ export default function TracklympicsPage() {
     // Hide all screens
     const containers = ['splash', 'eventSelect', 'characterSelect', 'gameplay'];
     containers.forEach(name => {
-      const container = app.stage.getChildByName(name) as Container;
+      const container = app.stage.getChildByLabel(name) as Container;
       if (container) container.visible = false;
     });
     
     // Show target screen
-    const targetContainer = app.stage.getChildByName(screen) as Container;
+    const targetContainer = app.stage.getChildByLabel(screen) as Container;
     if (targetContainer) targetContainer.visible = true;
     
     setGameState(screen);
@@ -432,8 +748,8 @@ export default function TracklympicsPage() {
   const startRaceSequence = () => {
     if (!appRef.current) return;
     
-    const gameplayContainer = appRef.current.stage.getChildByName('gameplay') as Container;
-    const gameStatus = gameplayContainer?.getChildByName('gameStatus') as Text;
+    const gameplayContainer = appRef.current.stage.getChildByLabel('gameplay') as Container;
+    const gameStatus = gameplayContainer?.getChildByLabel('gameStatus') as Text;
     
     if (!gameStatus) return;
 
@@ -467,8 +783,8 @@ export default function TracklympicsPage() {
   useEffect(() => {
     if (!appRef.current || !raceStarted || raceFinished) return;
 
-    const gameplayContainer = appRef.current.stage.getChildByName('gameplay') as Container;
-    const player = gameplayContainer?.getChildByName('player') as Container;
+    const gameplayContainer = appRef.current.stage.getChildByLabel('gameplay') as Container;
+    const player = gameplayContainer?.getChildByLabel('player') as Container;
     
     if (player) {
       const newX = 90 + playerPosition * 6; // 6 pixels per step
@@ -486,7 +802,7 @@ export default function TracklympicsPage() {
         }));
         
         // Show completion message
-        const gameStatus = gameplayContainer?.getChildByName('gameStatus') as Text;
+        const gameStatus = gameplayContainer?.getChildByLabel('gameStatus') as Text;
         if (gameStatus) {
           gameStatus.text = `Finished! Time: ${finalTime.toFixed(2)}s`;
         }
