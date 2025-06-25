@@ -265,7 +265,7 @@ export default function HomePage() {
       href: "/practice",
       disabled: false,
       isSpecial: true,
-      backgroundImage: programsBackground,
+      backgroundImage: practiceBackground,
       hasBackground: true,
       hasPreview: true
     },
@@ -284,7 +284,7 @@ export default function HomePage() {
       icon: <Trophy className="h-6 w-6 text-primary" />,
       href: "/meets",
       disabled: false,
-      backgroundImage: raceBackground,
+      backgroundImage: practiceBackground,
       hasBackground: true
     },
     {
@@ -293,7 +293,7 @@ export default function HomePage() {
       icon: <Clock className="h-6 w-6 text-primary" />,
       href: "/training-tools",
       disabled: false,
-      backgroundImage: toolsBackground,
+      backgroundImage: practiceBackground,
       hasBackground: true
     },
     {
@@ -302,7 +302,7 @@ export default function HomePage() {
       icon: <MessageCircle className="h-6 w-6 text-primary" />,
       href: "/sprinthia",
       disabled: false,
-      backgroundImage: toolsBackground,
+      backgroundImage: practiceBackground,
       hasBackground: true,
       showStar: true
     }
