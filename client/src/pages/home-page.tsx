@@ -181,17 +181,26 @@ export default function HomePage() {
 
   // Get today's session from the assigned program
   const getTodaysSession = () => {
-    if (!programSessions || !firstAssignedProgram) return null;
+    if (!programSessions || !firstAssignedProgram) {
+      console.log('Missing data:', { programSessions: !!programSessions, firstAssignedProgram: !!firstAssignedProgram });
+      return null;
+    }
     
     const today = new Date();
     const todayString = today.toISOString().split('T')[0];
+    const todayMonthDay = `${today.toLocaleDateString('en-US', { month: 'short' })}-${today.getDate()}`;
     
-    // For Google Sheets programs, find today's session
-    if (firstAssignedProgram.program?.isGoogleSheets) {
-      return programSessions.find(session => {
-        const sessionDate = new Date(session.date || '').toISOString().split('T')[0];
-        return sessionDate === todayString;
+    console.log('Looking for session with date:', todayMonthDay);
+    console.log('Available sessions:', programSessions.slice(0, 5).map(s => ({ date: s.date, hasWorkout: !!(s.shortDistanceWorkout || s.mediumDistanceWorkout || s.longDistanceWorkout) })));
+    
+    // For Google Sheets programs, find today's session using the MMM-D format
+    if (firstAssignedProgram.program?.isGoogleSheets || firstAssignedProgram.program?.importedFromSheet) {
+      const session = programSessions.find(session => {
+        return session.date === todayMonthDay;
       });
+      
+      console.log('Found session for', todayMonthDay, ':', session ? { date: session.date, hasWorkout: !!(session.shortDistanceWorkout || session.mediumDistanceWorkout || session.longDistanceWorkout) } : null);
+      return session || null;
     }
     
     return null;
@@ -484,7 +493,7 @@ export default function HomePage() {
 
               {/* Content */}
               <div className="space-y-4">
-                {todaysSession ? (
+                {todaysSession && (todaysSession.shortDistanceWorkout || todaysSession.mediumDistanceWorkout || todaysSession.longDistanceWorkout || todaysSession.isRestDay) ? (
                   <>
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-blue-400" />
