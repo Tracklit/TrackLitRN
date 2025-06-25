@@ -5024,6 +5024,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Save workout to library
+  app.post("/api/workout-library", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const { title, description, category, content, isPublic, originalUserId } = req.body;
+      
+      if (!title || !content) {
+        return res.status(400).json({ error: "Title and content are required" });
+      }
+      
+      const workoutData = {
+        userId: req.user!.id,
+        title,
+        description: description || null,
+        category: category || 'saved',
+        content,
+        isPublic: isPublic || false,
+        originalUserId: originalUserId || null
+      };
+      
+      const savedWorkout = await dbStorage.saveWorkoutToLibrary(workoutData);
+      
+      res.status(201).json(savedWorkout);
+    } catch (error) {
+      console.error("Error saving workout to library:", error);
+      res.status(500).json({ error: "Failed to save workout to library" });
+    }
+  });
+
   // Journal API routes
   app.get('/api/journal', getUserJournalEntries);
   app.post('/api/journal', createJournalEntry);

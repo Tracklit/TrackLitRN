@@ -82,6 +82,19 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
         activityType: 'meet_created',
         title: 'Spring Championship Meet',
         description: 'New track meet scheduled for April 15th at Metro Stadium',
+        relatedEntityId: 1,
+        relatedEntityType: 'meet',
+        metadata: {
+          meetData: {
+            name: 'Spring Championship Meet',
+            date: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
+            location: 'Metro Stadium',
+            events: ['100m', '200m', '400m', 'Long Jump'],
+            warmupTime: 60,
+            arrivalTime: 90,
+            websiteUrl: null
+          }
+        },
         createdAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
         user: { id: 3, username: 'coach_jones', name: 'Coach Jones', profileImageUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face' }
       },
@@ -520,10 +533,21 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
     setIsSavingItem(true);
     
     try {
+      // Create proper meet data structure
+      const meetData = {
+        name: currentActivity.metadata.meetData.name || currentActivity.title,
+        date: currentActivity.metadata.meetData.date || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        location: currentActivity.metadata.meetData.location || 'Location TBD',
+        events: currentActivity.metadata.meetData.events || [],
+        warmupTime: currentActivity.metadata.meetData.warmupTime || 60,
+        arrivalTime: currentActivity.metadata.meetData.arrivalTime || 90,
+        websiteUrl: currentActivity.metadata.meetData.websiteUrl || null
+      };
+
       const response = await fetch('/api/meets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(currentActivity.metadata.meetData)
+        body: JSON.stringify(meetData)
       });
       
       if (!response.ok) {
@@ -564,31 +588,39 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
     setIsSavingItem(true);
     
     try {
-      // Create journal entry object similar to practice page
-      const journalEntry = {
-        title: `${currentActivity.metadata.workoutData.session} - ${new Date().toLocaleDateString('en-CA')}`,
-        content: currentActivity.description || 'Completed workout session',
-        mood: currentActivity.metadata.workoutData.moodRating || 7,
-        workoutData: currentActivity.metadata.workoutData
+      // Create workout library entry
+      const workoutData = {
+        title: `${currentActivity.metadata.workoutData.session} - ${currentActivity.user?.username}`,
+        description: currentActivity.description || 'Saved from community activity',
+        category: 'saved',
+        content: {
+          program: currentActivity.metadata.workoutData.program,
+          session: currentActivity.metadata.workoutData.session,
+          moodRating: currentActivity.metadata.workoutData.moodRating,
+          originalUser: currentActivity.user?.username,
+          savedFrom: 'community_ticker'
+        },
+        isPublic: false,
+        originalUserId: currentActivity.userId
       };
 
-      const response = await fetch('/api/journal', {
+      const response = await fetch('/api/workout-library', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(journalEntry)
+        body: JSON.stringify(workoutData)
       });
       
       if (!response.ok) {
         const errorData = await response.text();
-        throw new Error(`Failed to save journal entry: ${errorData}`);
+        throw new Error(`Failed to save workout: ${errorData}`);
       }
       
       toast({
         title: "Workout Saved",
-        description: "The workout has been saved to your journal library."
+        description: "The workout has been saved to your library."
       });
       
-      queryClient.invalidateQueries({ queryKey: ['/api/journal'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/workout-library'] });
       setIsActivityModalOpen(false);
     } catch (error) {
       console.error('Error saving workout:', error);

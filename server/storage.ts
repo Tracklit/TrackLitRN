@@ -246,6 +246,7 @@ export interface IStorage {
   // Workout Library
   getWorkoutPreviews(userId: number): Promise<any[]>;
   getSavedWorkouts(userId: number): Promise<any[]>;
+  saveWorkoutToLibrary(workoutData: any): Promise<any>;
   
   // Programs
   // Training Programs - User's own programs

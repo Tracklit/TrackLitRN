@@ -36,6 +36,19 @@ router.get("/activities", async (req: Request, res: Response) => {
           activityType: 'meet_created',
           title: 'Spring Championship Meet',
           description: 'New track meet scheduled for April 15th at Metro Stadium',
+          relatedEntityId: 1,
+          relatedEntityType: 'meet',
+          metadata: {
+            meetData: {
+              name: 'Spring Championship Meet',
+              date: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
+              location: 'Metro Stadium',
+              events: ['100m', '200m', '400m', 'Long Jump'],
+              warmupTime: 60,
+              arrivalTime: 90,
+              websiteUrl: null
+            }
+          },
           createdAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
           user: { id: 3, username: 'coach_jones', name: 'Coach Jones', profileImageUrl: undefined }
         },
