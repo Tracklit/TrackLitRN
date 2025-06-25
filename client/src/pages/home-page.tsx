@@ -83,6 +83,7 @@ export default function HomePage() {
   const [isSavingSession, setIsSavingSession] = useState(false);
   const [activeSessionIndex, setActiveSessionIndex] = useState(0);
   const [isSessionFading, setIsSessionFading] = useState(false);
+  const [showProgramsPreview, setShowProgramsPreview] = useState(false);
   const { isTickerVisible, toggleTickerVisibility } = useTicker();
   
   // Fetch data for stats
@@ -174,7 +175,29 @@ export default function HomePage() {
   ];
 
   // Get assigned programs data
-  const { assignedPrograms, isLoading: isLoadingPrograms } = useAssignedPrograms();
+  const { data: assignedPrograms } = useAssignedPrograms();
+  const firstAssignedProgram = assignedPrograms && assignedPrograms.length > 0 ? assignedPrograms[0] : null;
+  const { data: programSessions } = useProgramSessions(firstAssignedProgram?.programId);
+
+  // Get today's session from the assigned program
+  const getTodaysSession = () => {
+    if (!programSessions || !firstAssignedProgram) return null;
+    
+    const today = new Date();
+    const todayString = today.toISOString().split('T')[0];
+    
+    // For Google Sheets programs, find today's session
+    if (firstAssignedProgram.program?.isGoogleSheets) {
+      return programSessions.find(session => {
+        const sessionDate = new Date(session.date || '').toISOString().split('T')[0];
+        return sessionDate === todayString;
+      });
+    }
+    
+    return null;
+  };
+
+  const todaysSession = getTodaysSession();
 
   // Get next scheduled meet
   const nextMeet = meets?.find(meet => new Date(meet.date) > new Date());
@@ -183,18 +206,14 @@ export default function HomePage() {
     : "No upcoming meets scheduled";
 
   // Get current program description
-  const currentProgram = assignedPrograms?.[0];
-  
   let programsDescription = "Training plans and schedules";
-  if (isLoadingPrograms) {
-    programsDescription = "Loading programs...";
-  } else if (currentProgram) {
+  if (firstAssignedProgram) {
     // The API should return enriched data with program details
     // If program object exists, use its title, otherwise use programId as fallback
-    if (currentProgram.program?.title) {
-      programsDescription = currentProgram.program.title;
-    } else if (currentProgram.programId) {
-      programsDescription = `Program ${currentProgram.programId}`;
+    if (firstAssignedProgram.program?.title) {
+      programsDescription = firstAssignedProgram.program.title;
+    } else if (firstAssignedProgram.programId) {
+      programsDescription = `Program ${firstAssignedProgram.programId}`;
     } else {
       programsDescription = "Unknown Program";
     }
