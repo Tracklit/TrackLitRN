@@ -239,7 +239,7 @@ export default function HomePage() {
   // Get next scheduled meet
   const nextMeet = meets?.find(meet => new Date(meet.date) > new Date());
   const raceDescription = nextMeet 
-    ? `${nextMeet.title} - ${new Date(nextMeet.date).toLocaleDateString()}`
+    ? `${nextMeet.name} - ${new Date(nextMeet.date).toLocaleDateString()}`
     : "No upcoming meets scheduled";
 
   // Get current program description
@@ -314,19 +314,25 @@ export default function HomePage() {
 
   // Prevent scrolling on dashboard content only
   useEffect(() => {
-    const mainElement = document.querySelector('main[data-dashboard="true"]');
-    if (mainElement) {
-      const preventScroll = (e: WheelEvent | TouchEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-      };
+    const preventWheelScroll = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
 
-      mainElement.addEventListener('wheel', preventScroll, { passive: false });
-      mainElement.addEventListener('touchmove', preventScroll, { passive: false });
+    const preventTouchScroll = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    // Prevent scrolling on the main dashboard container
+    const mainElement = document.querySelector('main[data-dashboard="true"]') as HTMLElement;
+    if (mainElement) {
+      mainElement.addEventListener('wheel', preventWheelScroll, { passive: false });
+      mainElement.addEventListener('touchmove', preventTouchScroll, { passive: false });
 
       return () => {
-        mainElement.removeEventListener('wheel', preventScroll);
-        mainElement.removeEventListener('touchmove', preventScroll);
+        mainElement.removeEventListener('wheel', preventWheelScroll);
+        mainElement.removeEventListener('touchmove', preventTouchScroll);
       };
     }
   }, []);
