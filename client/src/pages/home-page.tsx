@@ -174,39 +174,65 @@ export default function HomePage() {
     backgroundImage5
   ];
 
-  // Get assigned programs data
-  const { data: assignedPrograms } = useAssignedPrograms();
-  const firstAssignedProgram = assignedPrograms && assignedPrograms.length > 0 ? assignedPrograms[0] : null;
-  const { data: programSessions } = useProgramSessions(firstAssignedProgram?.programId);
+  // Get assigned programs data - replicate practice page logic
+  const { assignedPrograms, isLoading: isLoadingPrograms } = useAssignedPrograms();
+  
+  // Use the same selectedProgram logic as practice page
+  const selectedProgram = assignedPrograms && assignedPrograms.length > 0 ? assignedPrograms[0] : null;
+  
+  // Fetch program sessions exactly like practice page
+  const { 
+    programSessions, 
+    isLoading: isLoadingProgramSessions 
+  } = useProgramSessions(selectedProgram?.programId || null);
 
-  // Get today's session from the assigned program
-  const getTodaysSession = () => {
-    if (!programSessions || !firstAssignedProgram) {
-      console.log('Missing data:', { programSessions: !!programSessions, firstAssignedProgram: !!firstAssignedProgram });
-      return null;
-    }
-    
-    const today = new Date();
-    const todayString = today.toISOString().split('T')[0];
-    const todayMonthDay = `${today.toLocaleDateString('en-US', { month: 'short' })}-${today.getDate()}`;
-    
-    console.log('Looking for session with date:', todayMonthDay);
-    console.log('Available sessions:', programSessions.slice(0, 5).map(s => ({ date: s.date, hasWorkout: !!(s.shortDistanceWorkout || s.mediumDistanceWorkout || s.longDistanceWorkout) })));
-    
-    // For Google Sheets programs, find today's session using the MMM-D format
-    if (firstAssignedProgram.program?.isGoogleSheets || firstAssignedProgram.program?.importedFromSheet) {
-      const session = programSessions.find(session => {
-        return session.date === todayMonthDay;
-      });
+  // State for session data - replicate practice page
+  const [activeSessionData, setActiveSessionData] = useState<any>(null);
+
+  // Replicate the exact useEffect from practice page that finds today's session
+  useEffect(() => {
+    if (programSessions && programSessions.length > 0) {
+      // Calculate the target date based on current day offset (today = 0)
+      const today = new Date();
+      const targetDate = new Date(today.getTime() + 0 * 24 * 60 * 60 * 1000); // 0 for today
       
-      console.log('Found session for', todayMonthDay, ':', session ? { date: session.date, hasWorkout: !!(session.shortDistanceWorkout || session.mediumDistanceWorkout || session.longDistanceWorkout) } : null);
-      return session || null;
+      // Format target date to match session date format (e.g., "Jun-25")
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const targetDateString = `${monthNames[targetDate.getMonth()]}-${targetDate.getDate()}`;
+      
+      console.log(`Looking for session with date: ${targetDateString}`);
+      console.log('Available sessions:', programSessions.slice(0, 5).map(s => ({ date: s.date, hasWorkout: !!(s.shortDistanceWorkout || s.mediumDistanceWorkout || s.longDistanceWorkout) })));
+      
+      // Find session that matches the target date
+      let session = programSessions.find(s => s.date === targetDateString);
+      
+      // If no session found for this date, create a rest day session
+      if (!session) {
+        console.log(`No session found for ${targetDateString}, creating rest day`);
+        session = {
+          dayNumber: 1,
+          date: targetDateString,
+          preActivation1: null,
+          preActivation2: null,
+          shortDistanceWorkout: null,
+          mediumDistanceWorkout: null,
+          longDistanceWorkout: null,
+          extraSession: null,
+          title: "Rest Day",
+          description: "Rest and Recovery",
+          notes: null,
+          completed: false,
+          completed_at: null,
+          isRestDay: true
+        };
+      }
+      
+      console.log('Found session for', targetDateString, ':', session ? { date: session.date, hasWorkout: !!(session.shortDistanceWorkout || session.mediumDistanceWorkout || session.longDistanceWorkout) } : null);
+      setActiveSessionData(session);
     }
-    
-    return null;
-  };
+  }, [programSessions]);
 
-  const todaysSession = getTodaysSession();
+  const todaysSession = activeSessionData;
 
   // Get next scheduled meet
   const nextMeet = meets?.find(meet => new Date(meet.date) > new Date());
@@ -216,13 +242,15 @@ export default function HomePage() {
 
   // Get current program description
   let programsDescription = "Training plans and schedules";
-  if (firstAssignedProgram) {
+  if (isLoadingPrograms) {
+    programsDescription = "Loading programs...";
+  } else if (selectedProgram) {
     // The API should return enriched data with program details
     // If program object exists, use its title, otherwise use programId as fallback
-    if (firstAssignedProgram.program?.title) {
-      programsDescription = firstAssignedProgram.program.title;
-    } else if (firstAssignedProgram.programId) {
-      programsDescription = `Program ${firstAssignedProgram.programId}`;
+    if (selectedProgram.program?.title) {
+      programsDescription = selectedProgram.program.title;
+    } else if (selectedProgram.programId) {
+      programsDescription = `Program ${selectedProgram.programId}`;
     } else {
       programsDescription = "Unknown Program";
     }
@@ -497,7 +525,7 @@ export default function HomePage() {
                   <>
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-blue-400" />
-                      <span className="font-medium text-white">{firstAssignedProgram?.program?.title}</span>
+                      <span className="font-medium text-white">{selectedProgram?.program?.title}</span>
                     </div>
                     
                     {todaysSession.isRestDay ? (
@@ -540,12 +568,12 @@ export default function HomePage() {
                 ) : (
                   <div className="text-center py-6">
                     <p className="text-sm text-gray-300 mb-4">
-                      {firstAssignedProgram ? 
+                      {selectedProgram ? 
                         "No session scheduled for today" : 
                         "No programs assigned yet"
                       }
                     </p>
-                    {!firstAssignedProgram && (
+                    {!selectedProgram && (
                       <Link href="/programs">
                         <Button variant="outline" className="border-slate-600 text-gray-200 hover:bg-slate-700">
                           Browse Programs
