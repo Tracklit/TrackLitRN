@@ -254,7 +254,7 @@ export default function HomePage() {
   // Quote removed as requested
 
   return (
-    <div className="min-h-screen text-foreground pb-16 bg-background" style={{ overscrollBehavior: 'none' }}>
+    <div className="min-h-screen text-foreground pb-16 bg-background" style={{ overscrollBehavior: 'none', marginTop: '-15px' }}>
       {/* Preload critical images */}
       <PreloadImages images={dashboardImages} quality={20} priority={true} />
       
