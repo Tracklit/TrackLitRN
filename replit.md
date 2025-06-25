@@ -112,6 +112,7 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
   - Removed all game-related code and components
   - Updated Arcade page to show placeholder for future games
   - Cleaned up routing and imports
+  - Removed "Fun" category and Arcade menu item from navigation
 
 - June 25, 2025: Added Arcade page with mini-games for athletic performance training
   - Created new Arcade page with dashboard-style card layout
