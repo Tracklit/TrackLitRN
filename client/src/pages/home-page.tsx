@@ -219,7 +219,8 @@ export default function HomePage() {
       href: "/programs",
       disabled: false,
       backgroundImage: practiceBackground,
-      hasBackground: true
+      hasBackground: true,
+      hasPreview: true
     },
     {
       title: "Race",
@@ -388,7 +389,22 @@ export default function HomePage() {
                               {card.description}
                             </p>
                           </div>
-                          <span className="text-muted-foreground text-sm ml-4">&gt;</span>
+                          <div className="flex items-center gap-2 ml-4">
+                            {card.hasPreview && (
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setShowProgramsPreview(!showProgramsPreview);
+                                }}
+                                className="h-8 w-8 flex items-center justify-center rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+                                title="Preview today's session"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </button>
+                            )}
+                            <span className="text-muted-foreground text-sm">&gt;</span>
+                          </div>
                         </div>
                       </CardContent>
                     )}
@@ -399,7 +415,89 @@ export default function HomePage() {
           </div>
         </section>
 
-
+        {/* Programs Preview Dropdown */}
+        {showProgramsPreview && (
+          <div className="mt-4 mx-4">
+            <div className="max-w-2xl mx-auto">
+              <Card className="border border-primary/20 bg-primary/5">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">Today's Session Preview</CardTitle>
+                    <button
+                      onClick={() => setShowProgramsPreview(false)}
+                      className="h-6 w-6 flex items-center justify-center text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {todaysSession ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-primary" />
+                        <span className="font-medium">{firstAssignedProgram?.program?.title}</span>
+                      </div>
+                      
+                      {todaysSession.isRestDay ? (
+                        <div className="p-3 bg-muted/30 rounded-md text-center">
+                          <p className="font-medium">Rest Day</p>
+                          <p className="text-sm text-muted-foreground">Take time to recover</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {todaysSession.shortDistanceWorkout && (
+                            <div className="p-2 bg-background/50 rounded border">
+                              <p className="text-sm font-medium mb-1">Short Distance</p>
+                              <p className="text-xs">{todaysSession.shortDistanceWorkout}</p>
+                            </div>
+                          )}
+                          {todaysSession.mediumDistanceWorkout && (
+                            <div className="p-2 bg-background/50 rounded border">
+                              <p className="text-sm font-medium mb-1">Medium Distance</p>
+                              <p className="text-xs">{todaysSession.mediumDistanceWorkout}</p>
+                            </div>
+                          )}
+                          {todaysSession.longDistanceWorkout && (
+                            <div className="p-2 bg-background/50 rounded border">
+                              <p className="text-sm font-medium mb-1">Long Distance</p>
+                              <p className="text-xs">{todaysSession.longDistanceWorkout}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
+                      <div className="flex justify-end pt-2">
+                        <Link href="/practice">
+                          <Button size="sm" className="gap-2">
+                            Start Practice
+                            <ArrowRight className="h-3 w-3" />
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-4">
+                      <p className="text-sm text-muted-foreground">
+                        {firstAssignedProgram ? 
+                          "No session scheduled for today" : 
+                          "No programs assigned yet"
+                        }
+                      </p>
+                      {!firstAssignedProgram && (
+                        <Link href="/programs">
+                          <Button size="sm" variant="outline" className="mt-2">
+                            Browse Programs
+                          </Button>
+                        </Link>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )}
 
       </main>
       
