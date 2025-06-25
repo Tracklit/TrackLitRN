@@ -48,6 +48,7 @@ import {
   Loader2,
   LockIcon,
   Plus,
+  User,
   RefreshCw,
   Search,
   Tag,
@@ -786,6 +787,12 @@ function ProgramCard({ program, type, creator, viewMode }: {
 
 
 function WorkoutCard({ workout }: { workout: any }) {
+  const handleUserClick = () => {
+    if (workout.content?.originalUser) {
+      window.open(`/public-profile/${workout.content.originalUser}`, '_blank');
+    }
+  };
+
   return (
     <Card className="overflow-hidden transition-all hover:shadow-md">
       <CardHeader className="pb-2">
@@ -797,24 +804,39 @@ function WorkoutCard({ workout }: { workout: any }) {
       
       <CardContent className="pb-2">
         <div className="flex flex-col space-y-2 text-sm">
-          <div className="flex items-center text-muted-foreground">
-            <Clock className="h-4 w-4 mr-2" />
-            <span>{workout.duration} min</span>
-          </div>
+          {workout.content?.program && (
+            <div className="flex items-center text-muted-foreground">
+              <BookOpen className="h-4 w-4 mr-2" />
+              <span>{workout.content.program}</span>
+            </div>
+          )}
           
-          <div className="flex items-center text-muted-foreground">
-            <Dumbbell className="h-4 w-4 mr-2" />
-            <span className="capitalize">{workout.focusArea || "Full body"}</span>
-          </div>
+          {workout.content?.session && (
+            <div className="flex items-center text-muted-foreground">
+              <Dumbbell className="h-4 w-4 mr-2" />
+              <span>{workout.content.session}</span>
+            </div>
+          )}
           
-          <div className="flex items-center text-muted-foreground">
-            <TrendingUp className="h-4 w-4 mr-2" />
-            <span>
-              {workout.intensity === 'low' ? 'Low intensity' :
-               workout.intensity === 'medium' ? 'Medium intensity' :
-               workout.intensity === 'high' ? 'High intensity' : 'Varied intensity'}
-            </span>
-          </div>
+          {workout.content?.moodRating && (
+            <div className="flex items-center text-muted-foreground">
+              <span className="h-4 w-4 mr-2">😊</span>
+              <span>Mood: {workout.content.moodRating}/10</span>
+            </div>
+          )}
+
+          {workout.content?.originalUser && (
+            <div className="flex items-center text-muted-foreground">
+              <User className="h-4 w-4 mr-2" />
+              <span>Original by: </span>
+              <button 
+                onClick={handleUserClick}
+                className="text-blue-600 hover:text-blue-800 underline ml-1 transition-colors"
+              >
+                {workout.content.originalUser}
+              </button>
+            </div>
+          )}
         </div>
       </CardContent>
       

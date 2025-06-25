@@ -590,7 +590,7 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
     try {
       // Create workout library entry
       const workoutData = {
-        title: `${currentActivity.metadata.workoutData.session} - ${currentActivity.user?.username}`,
+        title: `${currentActivity.metadata.workoutData.session}`,
         description: currentActivity.description || 'Saved from community activity',
         category: 'saved',
         content: {
@@ -598,6 +598,7 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
           session: currentActivity.metadata.workoutData.session,
           moodRating: currentActivity.metadata.workoutData.moodRating,
           originalUser: currentActivity.user?.username,
+          originalUserId: currentActivity.userId,
           savedFrom: 'community_ticker'
         },
         isPublic: false,
