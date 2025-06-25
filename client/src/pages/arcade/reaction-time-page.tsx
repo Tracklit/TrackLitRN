@@ -21,7 +21,7 @@ interface GameStats {
   races: number;
 }
 
-export default function ReactionTimePage() {
+export default function TracklympicsPage() {
   const canvasRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<Application | null>(null);
   const [gameState, setGameState] = useState<GameState>('splash');
@@ -130,8 +130,7 @@ export default function ReactionTimePage() {
       fontFamily: 'monospace',
       fontSize: 48,
       fill: 0xffff00,
-      align: 'center',
-      stroke: { color: 0x000000, width: 3 }
+      align: 'center'
     });
 
     const title = new Text('TRACKLYMPICS', titleStyle);
@@ -191,8 +190,7 @@ export default function ReactionTimePage() {
       fontFamily: 'monospace',
       fontSize: 36,
       fill: 0xffff00,
-      align: 'center',
-      stroke: { color: 0x000000, width: 2 }
+      align: 'center'
     });
 
     const title = new Text('SELECT EVENT', titleStyle);
@@ -232,8 +230,7 @@ export default function ReactionTimePage() {
       fontFamily: 'monospace',
       fontSize: 36,
       fill: 0xffffff,
-      align: 'center',
-      stroke: { color: 0x000000, width: 2 }
+      align: 'center'
     });
 
     const title = new Text('SELECT YOUR CHARACTER', titleStyle);
@@ -351,8 +348,7 @@ export default function ReactionTimePage() {
       fontFamily: 'monospace',
       fontSize: 24,
       fill: 0x000000,
-      align: 'center',
-      stroke: { color: 0xffffff, width: 2 }
+      align: 'center'
     });
 
     const gameStatus = new Text('On your marks...', statusStyle);

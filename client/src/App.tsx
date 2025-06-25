@@ -200,7 +200,7 @@ function Router() {
       
       {/* Arcade Games */}
       <ProtectedRoute path="/arcade" component={ArcadePage} />
-      <ProtectedRoute path="/arcade/reaction-time" component={TracklympicsPage} />
+      <ProtectedRoute path="/arcade/tracklympics" component={TracklympicsPage} />
       
       {/* Account */}
       <ProtectedRoute path="/spikes" component={SpikesPage} />

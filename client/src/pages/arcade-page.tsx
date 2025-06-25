@@ -20,7 +20,7 @@ export default function ArcadePage() {
       title: "Tracklympics",
       description: "Retro track & field championship game",
       icon: <Zap className="h-6 w-6 text-white" />,
-      href: "/arcade/reaction-time",
+      href: "/arcade/tracklympics",
       disabled: false,
       backgroundImage: gameBackground,
       hasBackground: true
