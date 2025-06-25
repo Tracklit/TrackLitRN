@@ -357,7 +357,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <main className={`px-4 container mx-auto max-w-7xl ${isTickerVisible ? 'pt-24' : 'pt-20'}`}>
+      <main className={`px-4 container mx-auto max-w-7xl overflow-hidden ${isTickerVisible ? 'pt-24' : 'pt-20'}`}>
         {/* Logo will be placed here in the future */}
         <div className="h-1 mx-auto" style={{ maxWidth: "540px" }}>
           {/* Reserved space for logo */}
@@ -369,7 +369,7 @@ export default function HomePage() {
 
         
         {/* Main Category Cards - Single Column Full Width */}
-        <section className="mb-4">
+        <section className="mb-4 overflow-hidden">
           <div className="max-w-2xl mx-auto">
             {categoryCards.map((card, index) => 
               card.disabled ? (
