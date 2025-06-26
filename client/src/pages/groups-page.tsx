@@ -1,14 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Search, Send, ArrowLeft, MoreVertical, Users, Plus, Crown, Settings, UserPlus, MessageSquare } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { Search, Send, ArrowLeft, MoreVertical, Users, Plus, Crown, Settings, UserPlus, MessageSquare, Paperclip, Smile, Reply, Heart, CheckCheck, Mic } from "lucide-react";
+import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -86,18 +86,64 @@ export default function GroupsPage() {
 
   // Send message mutation
   const queryClient = useQueryClient();
-  
+
+  const handleReply = (message: GroupMessageWithUser) => {
+    setReplyingTo(message);
+  };
+
+  const formatMessageTime = (date: Date) => {
+    if (isToday(date)) {
+      return format(date, 'HH:mm');
+    } else if (isYesterday(date)) {
+      return `Yesterday ${format(date, 'HH:mm')}`;
+    } else {
+      return format(date, 'MMM d, HH:mm');
+    }
+  };
+
+  const groupMessages = (messages: GroupMessageWithUser[]) => {
+    const grouped: Array<{
+      sender: User;
+      messages: GroupMessageWithUser[];
+      timestamp: Date;
+    }> = [];
+
+    messages.forEach((message, index) => {
+      const prevMessage = messages[index - 1];
+      const timeDiff = prevMessage 
+        ? new Date(message.createdAt || new Date()).getTime() - new Date(prevMessage.createdAt || new Date()).getTime()
+        : 0;
+      
+      const shouldGroup = 
+        prevMessage && 
+        prevMessage.senderId === message.senderId && 
+        timeDiff < 5 * 60 * 1000; // 5 minutes
+
+      if (shouldGroup && grouped.length > 0) {
+        grouped[grouped.length - 1].messages.push(message);
+      } else {
+        grouped.push({
+          sender: message.sender,
+          messages: [message],
+          timestamp: new Date(message.createdAt || new Date()),
+        });
+      }
+    });
+
+    return grouped;
+  };
+
   const sendMessageMutation = useMutation({
-    mutationFn: async (messageData: { groupId: number; message: string }) => {
+    mutationFn: async (messageData: { groupId: number; message: string; replyToId?: number }) => {
       console.log('Making POST request to /api/group-messages', messageData);
       const response = await apiRequest("POST", "/api/group-messages", messageData);
       console.log('Response status:', response.status);
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/groups", selectedGroup, "messages"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/groups"] });
       setNewMessage("");
+      setReplyingTo(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/groups", selectedGroup, "messages"] });
     },
     onError: (error) => {
       console.error('Failed to send message:', error);
@@ -117,6 +163,7 @@ export default function GroupsPage() {
     sendMessageMutation.mutate({
       groupId: selectedGroup,
       message: newMessage.trim(),
+      replyToId: replyingTo?.id,
     });
   };
 
@@ -477,7 +524,7 @@ export default function GroupsPage() {
                               </h3>
                               {group.lastMessage && (
                                 <span className="text-gray-400 text-sm ml-2 flex-shrink-0">
-                                  {formatDistanceToNow(new Date(group.lastMessage.createdAt), { 
+                                  {formatDistanceToNow(new Date(group.lastMessage.createdAt || new Date()), { 
                                     addSuffix: false 
                                   }).replace('about ', '')}
                                 </span>
