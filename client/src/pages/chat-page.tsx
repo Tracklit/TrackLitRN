@@ -202,7 +202,7 @@ export default function ChatPage() {
   const { data: currentUser } = useQuery({
     queryKey: ['/api/user'],
     retry: false
-  });
+  }) as { data: any };
 
   // Get conversation details
   const { data: conversation } = useQuery({
@@ -336,10 +336,10 @@ export default function ChatPage() {
           </div>
         ) : (
           <div className="space-y-1">
-            {messages.map((message: ChatMessage | DirectMessage) => {
+            {(messages as any[]).map((message: any) => {
               const isOwn = 'sender_id' in message 
-                ? message.sender_id === currentUser?.id 
-                : message.senderId === currentUser?.id;
+                ? message.sender_id === (currentUser as any)?.id 
+                : message.senderId === (currentUser as any)?.id;
               
               return (
                 <MessageBubble
