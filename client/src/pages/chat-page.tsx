@@ -27,34 +27,17 @@ import {
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 
-// Image compression and optimization utilities
-const compressAndResizeImage = (file: File, maxWidth: number, maxHeight: number, quality: number = 0.9): Promise<File> => {
+// Simple image compression utility
+const compressImage = (file: File, maxWidth: number = 800, quality: number = 0.8): Promise<File> => {
   return new Promise((resolve) => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d')!;
     const img = document.createElement('img');
     
     img.onload = () => {
-      // Calculate new dimensions maintaining aspect ratio
       const aspectRatio = img.width / img.height;
       let newWidth = maxWidth;
-      let newHeight = maxHeight;
-      
-      if (aspectRatio > 1) {
-        // Landscape
-        newHeight = maxWidth / aspectRatio;
-        if (newHeight > maxHeight) {
-          newHeight = maxHeight;
-          newWidth = maxHeight * aspectRatio;
-        }
-      } else {
-        // Portrait or square
-        newWidth = maxHeight * aspectRatio;
-        if (newWidth > maxWidth) {
-          newWidth = maxWidth;
-          newHeight = maxWidth / aspectRatio;
-        }
-      }
+      let newHeight = maxWidth / aspectRatio;
       
       canvas.width = newWidth;
       canvas.height = newHeight;
@@ -80,99 +63,6 @@ const compressAndResizeImage = (file: File, maxWidth: number, maxHeight: number,
     
     img.src = URL.createObjectURL(file);
   });
-};
-
-// Optimized image component for profile pictures
-const OptimizedProfileImage = ({ src, alt, className }: { src?: string; alt: string; className?: string }) => {
-  const [imageSrc, setImageSrc] = useState<string | undefined>(src);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  useEffect(() => {
-    if (src) {
-      const img = new HTMLImageElement();
-      img.onload = () => {
-        setImageSrc(src);
-        setIsLoading(false);
-      };
-      img.onerror = () => {
-        setImageSrc(undefined);
-        setIsLoading(false);
-      };
-      img.src = src;
-    } else {
-      setIsLoading(false);
-    }
-  }, [src]);
-  
-  if (isLoading) {
-    return <div className={cn("bg-gray-300 animate-pulse rounded-full", className)} />;
-  }
-  
-  return (
-    <AvatarImage 
-      src={imageSrc} 
-      alt={alt}
-      className={cn("object-cover", className)}
-      style={{ 
-        width: '32px', 
-        height: '32px',
-        minWidth: '32px',
-        minHeight: '32px'
-      }}
-    />
-  );
-};
-
-// Optimized image component for chat thumbnails
-const OptimizedChatImage = ({ src, alt, onClick }: { src: string; alt: string; onClick?: () => void }) => {
-  const [imageSrc, setImageSrc] = useState<string | undefined>();
-  const [isLoading, setIsLoading] = useState(true);
-  
-  useEffect(() => {
-    const img = new HTMLImageElement();
-    img.onload = () => {
-      setImageSrc(src);
-      setIsLoading(false);
-    };
-    img.onerror = () => {
-      setImageSrc(undefined);
-      setIsLoading(false);
-    };
-    img.src = src;
-  }, [src]);
-  
-  if (isLoading) {
-    return (
-      <div className="w-48 h-32 bg-gray-300 animate-pulse rounded-lg flex items-center justify-center">
-        <Image className="w-6 h-6 text-gray-500" />
-      </div>
-    );
-  }
-  
-  if (!imageSrc) {
-    return (
-      <div className="w-48 h-32 bg-gray-200 rounded-lg flex items-center justify-center">
-        <Image className="w-6 h-6 text-gray-500" />
-        <span className="ml-2 text-sm text-gray-500">Image failed to load</span>
-      </div>
-    );
-  }
-  
-  return (
-    <img 
-      src={imageSrc} 
-      alt={alt}
-      className="max-w-48 max-h-32 rounded-lg cursor-pointer hover:opacity-90 transition-opacity object-cover"
-      style={{ 
-        width: 'auto',
-        height: 'auto',
-        maxWidth: '192px',
-        maxHeight: '128px'
-      }}
-      onClick={onClick}
-      loading="lazy"
-    />
-  );
 };
 
 interface ChatGroup {
@@ -632,11 +522,7 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages }: Me
       {/* Profile Image for other users (left side) */}
       {!isOwn && (
         <Avatar className="h-8 w-8 flex-shrink-0">
-          <OptimizedProfileImage 
-            src={getProfileImage() || undefined} 
-            alt={getSenderName()}
-            className="h-8 w-8"
-          />
+          <AvatarImage src={getProfileImage() || undefined} />
           <AvatarFallback className="bg-gray-400 text-white text-xs">
             {getSenderName().slice(0, 2).toUpperCase()}
           </AvatarFallback>
@@ -763,11 +649,7 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages }: Me
       {/* Profile Image for current user (right side) */}
       {isOwn && (
         <Avatar className="h-8 w-8 flex-shrink-0">
-          <OptimizedProfileImage 
-            src={getProfileImage() || undefined} 
-            alt={getSenderName()}
-            className="h-8 w-8"
-          />
+          <AvatarImage src={getProfileImage() || undefined} />
           <AvatarFallback className="bg-blue-400 text-white text-xs">
             {getSenderName().slice(0, 2).toUpperCase()}
           </AvatarFallback>
