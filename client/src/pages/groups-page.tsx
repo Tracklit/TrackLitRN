@@ -56,8 +56,9 @@ export default function GroupsPage() {
 
   // Fetch messages for selected group
   const { data: messages = [] } = useQuery<GroupMessageWithUser[]>({
-    queryKey: ["/api/groups", selectedGroup, "messages"],
+    queryKey: [`/api/groups/${selectedGroup}/messages`],
     enabled: !!selectedGroup,
+    refetchInterval: 2000, // Refetch every 2 seconds to get new messages
   });
 
   // Get subscription limits
