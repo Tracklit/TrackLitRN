@@ -619,8 +619,71 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
   const [messageText, setMessageText] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
+  const [showAttachmentPane, setShowAttachmentPane] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+
+  // Image compression function
+  const compressImage = (file: File, maxWidth: number = 800, quality: number = 0.8): Promise<File> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d')!;
+      const img = new Image();
+      
+      img.onload = () => {
+        // Calculate new dimensions
+        const ratio = Math.min(maxWidth / img.width, maxWidth / img.height);
+        canvas.width = img.width * ratio;
+        canvas.height = img.height * ratio;
+        
+        // Draw and compress
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          const compressedFile = new File([blob!], file.name, {
+            type: 'image/jpeg',
+            lastModified: Date.now()
+          });
+          resolve(compressedFile);
+        }, 'image/jpeg', quality);
+      };
+      
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  // Handle image selection
+  const handleImageSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      // Compress the image
+      const compressedFile = await compressImage(file);
+      setSelectedImage(compressedFile);
+      
+      // Create preview
+      const previewUrl = URL.createObjectURL(compressedFile);
+      setImagePreview(previewUrl);
+      setShowAttachmentPane(false);
+    } catch (error) {
+      console.error('Error processing image:', error);
+    }
+  };
+
+  // Clear selected image
+  const clearSelectedImage = () => {
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   // Fetch current user
   const { data: currentUser } = useQuery({
@@ -663,22 +726,40 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
 
   // Send message mutation
   const sendMessageMutation = useMutation({
-    mutationFn: async ({ text, replyToId }: { text: string; replyToId?: number }) => {
+    mutationFn: async ({ text, replyToId, image }: { text?: string; replyToId?: number; image?: File }) => {
       const endpoint = selectedChat.type === 'group'
         ? `/api/chat/groups/${selectedChat.id}/messages`
         : `/api/chat/direct/${selectedChat.id}/messages`;
       
-      const payload: any = { text };
-      if (replyToId) {
-        payload.replyToId = replyToId;
+      if (image) {
+        // Upload image using FormData
+        const formData = new FormData();
+        formData.append('image', image);
+        if (text) formData.append('text', text);
+        if (replyToId) formData.append('replyToId', replyToId.toString());
+        formData.append('messageType', 'image');
+        
+        const response = await fetch(`/api${endpoint}`, {
+          method: 'POST',
+          body: formData,
+          credentials: 'include'
+        });
+        return response.json();
+      } else {
+        // Send text message
+        const payload: any = { text };
+        if (replyToId) {
+          payload.replyToId = replyToId;
+        }
+        
+        const response = await apiRequest('POST', endpoint, payload);
+        return response.json();
       }
-      
-      const response = await apiRequest('POST', endpoint, payload);
-      return response.json();
     },
     onSuccess: () => {
       setMessageText("");
       setReplyingTo(null);
+      clearSelectedImage();
       const queryKey = selectedChat.type === 'group' 
         ? ['/api/chat/groups', selectedChat.id, 'messages']
         : ['/api/chat/direct', selectedChat.id, 'messages'];
@@ -695,11 +776,12 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!messageText.trim()) return;
+    if (!messageText.trim() && !selectedImage) return;
     
     sendMessageMutation.mutate({ 
-      text: messageText.trim(),
-      replyToId: replyingTo?.id
+      text: messageText.trim() || undefined,
+      replyToId: replyingTo?.id,
+      image: selectedImage || undefined
     });
   };
   
@@ -796,7 +878,67 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
           </div>
         )}
         
+        {/* Image Preview */}
+        {imagePreview && (
+          <div className="mb-3 p-3 bg-gray-100 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-700">Image Preview</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearSelectedImage}
+                className="h-6 w-6 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="relative inline-block">
+              <img
+                src={imagePreview}
+                alt="Preview"
+                className="max-w-48 max-h-48 rounded-lg object-cover"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Attachment Pane */}
+        {showAttachmentPane && !imagePreview && (
+          <div className="mb-3 p-4 bg-gray-100 rounded-lg">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-medium text-gray-700">Add Attachment</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAttachmentPane(false)}
+                className="h-6 w-6 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="grid grid-cols-4 gap-3">
+              <Button
+                variant="outline"
+                className="h-16 flex flex-col items-center justify-center space-y-1"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <ImageIcon className="h-6 w-6 text-blue-500" />
+                <span className="text-xs">Photo</span>
+              </Button>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleSendMessage} className="flex space-x-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowAttachmentPane(!showAttachmentPane)}
+            className="p-2 h-10 w-10 flex-shrink-0"
+          >
+            <Plus className="h-5 w-5 text-gray-500" />
+          </Button>
           <Input
             value={messageText}
             onChange={(e) => setMessageText(e.target.value)}
@@ -806,12 +948,21 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
           />
           <Button
             type="submit"
-            disabled={!messageText.trim() || sendMessageMutation.isPending}
+            disabled={(!messageText.trim() && !selectedImage) || sendMessageMutation.isPending}
             className="bg-blue-500 hover:bg-blue-600"
           >
             <Send className="h-4 w-4" />
           </Button>
         </form>
+
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleImageSelect}
+          className="hidden"
+        />
       </div>
     </div>
   );
