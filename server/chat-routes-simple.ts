@@ -163,13 +163,13 @@ router.get("/api/chat/groups/:groupId/messages", async (req: Request, res: Respo
       return res.status(400).json({ error: "Invalid group ID" });
     }
 
-    // Check if user is a member of this group
-    const memberCheck = await db.execute(sql`
-      SELECT 1 FROM chat_group_members 
-      WHERE group_id = ${groupId} AND user_id = ${userId}
+    // Check if user is a member of this group using the member_ids array
+    const groupCheck = await db.execute(sql`
+      SELECT member_ids FROM chat_groups 
+      WHERE id = ${groupId} AND ${userId} = ANY(member_ids)
     `);
 
-    if (memberCheck.rows.length === 0) {
+    if (groupCheck.rows.length === 0) {
       return res.status(403).json({ error: "Access denied" });
     }
 
@@ -220,20 +220,26 @@ router.post("/api/chat/groups/:groupId/messages", async (req: Request, res: Resp
       return res.status(400).json({ error: "Message text is required" });
     }
 
-    // Check if user is a member of this group
-    const memberCheck = await db.execute(sql`
-      SELECT 1 FROM chat_group_members 
-      WHERE group_id = ${groupId} AND user_id = ${userId}
+    // Check if user is a member of this group using the member_ids array
+    const groupCheck = await db.execute(sql`
+      SELECT member_ids FROM chat_groups 
+      WHERE id = ${groupId} AND ${userId} = ANY(member_ids)
     `);
 
-    if (memberCheck.rows.length === 0) {
+    if (groupCheck.rows.length === 0) {
       return res.status(403).json({ error: "Access denied" });
     }
 
+    // Get user info for the message
+    const userResult = await db.execute(sql`
+      SELECT name, profile_image_url FROM users WHERE id = ${userId}
+    `);
+    const user = userResult.rows[0];
+
     // Insert message
     const messageResult = await db.execute(sql`
-      INSERT INTO chat_group_messages (group_id, sender_id, text, message_type, media_url, reply_to_id)
-      VALUES (${groupId}, ${userId}, ${text.trim()}, ${messageType}, ${mediaUrl || null}, ${replyToId || null})
+      INSERT INTO chat_group_messages (group_id, sender_id, sender_name, sender_profile_image, text, message_type, media_url, reply_to_id)
+      VALUES (${groupId}, ${userId}, ${user.name || 'Unknown'}, ${user.profile_image_url || null}, ${text.trim()}, ${messageType}, ${mediaUrl || null}, ${replyToId || null})
       RETURNING *
     `);
 
