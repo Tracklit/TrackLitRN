@@ -646,6 +646,13 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
   const [initialScrollDone, setInitialScrollDone] = useState(false);
   const queryClient = useQueryClient();
 
+  // Immediate scroll to bottom when entering or changing chats
+  useEffect(() => {
+    if (messagesContainerRef.current && messages.length > 0) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
+  }, [selectedChat.id, messages]);
+
   // Image compression function
   const compressImage = (file: File, maxWidth: number = 800, quality: number = 0.8): Promise<File> => {
     return new Promise((resolve) => {
@@ -846,7 +853,7 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 bg-gray-50">
         <div className="space-y-4">
           {messagesLoading ? (
             <div className="flex justify-center py-8">
