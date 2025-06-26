@@ -3371,14 +3371,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async isUserInChatGroup(userId: number, groupId: number): Promise<boolean> {
-    const member = await db
-      .select()
-      .from(chatGroupMembers)
-      .where(and(
-        eq(chatGroupMembers.userId, userId),
-        eq(chatGroupMembers.groupId, groupId)
-      ));
-    return member.length > 0;
+    // Use direct SQL to avoid ORM column issues
+    const result = await db.execute(sql`
+      SELECT 1 FROM chat_group_members 
+      WHERE user_id = ${userId} AND group_id = ${groupId}
+      LIMIT 1
+    `);
+    return result.rows.length > 0;
   }
 
   async updateChatGroupMemberRole(groupId: number, userId: number, newRole: string): Promise<void> {
