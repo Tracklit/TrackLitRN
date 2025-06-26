@@ -140,7 +140,7 @@ export function SidebarNavigation({ isMobile = false }: { isMobile?: boolean }) 
           
           {/* Social Section */}
           <div className="pt-4 pb-2">
-            <p className="text-xs text-darkGray px-3 font-medium">SOCIAL</p>
+            <p className="text-xs text-gray-400 px-3 font-medium">SOCIAL</p>
           </div>
 
           <NavItem 
