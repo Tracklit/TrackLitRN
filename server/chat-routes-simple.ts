@@ -1,0 +1,152 @@
+import { Request, Response, Router } from "express";
+import { db } from "./db";
+import { sql } from "drizzle-orm";
+
+const router = Router();
+
+// Get chat groups for user
+router.get("/api/chat/groups", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) return res.sendStatus(401);
+  
+  try {
+    const userId = req.user!.id;
+    
+    // Direct SQL query to get groups
+    const groups = await db.execute(sql`
+      SELECT 
+        cg.id,
+        cg.name,
+        cg.description,
+        cg.avatar_url,
+        cg.creator_id,
+        cg.is_private,
+        cg.created_at,
+        cg.last_message,
+        cg.last_message_at,
+        cg.message_count
+      FROM chat_groups cg
+      INNER JOIN chat_group_members cgm ON cg.id = cgm.group_id
+      WHERE cgm.user_id = ${userId}
+      ORDER BY cg.last_message_at DESC
+    `);
+    
+    res.json(groups.rows);
+  } catch (error) {
+    console.error("Error fetching chat groups:", error);
+    res.status(500).json({ error: "Failed to fetch groups" });
+  }
+});
+
+// Create new chat group
+router.post("/api/chat/groups", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) return res.sendStatus(401);
+  
+  try {
+    const userId = req.user!.id;
+    const { name, description, isPrivate = false } = req.body;
+
+    if (!name?.trim()) {
+      return res.status(400).json({ error: "Group name is required" });
+    }
+
+    // Generate invite code
+    const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+    // Create group with direct SQL
+    const groupResult = await db.execute(sql`
+      INSERT INTO chat_groups (name, description, creator_id, admin_ids, member_ids, is_private, invite_code)
+      VALUES (${name.trim()}, ${description || ''}, ${userId}, ARRAY[${userId}], ARRAY[${userId}], ${isPrivate}, ${inviteCode})
+      RETURNING *
+    `);
+
+    const group = groupResult.rows[0];
+
+    // Add creator as member
+    await db.execute(sql`
+      INSERT INTO chat_group_members (group_id, user_id, role)
+      VALUES (${group.id}, ${userId}, 'creator')
+    `);
+
+    res.json(group);
+  } catch (error) {
+    console.error("Error creating chat group:", error);
+    res.status(500).json({ error: "Failed to create group" });
+  }
+});
+
+// Get direct messages for conversation
+router.get("/api/chat/direct/:conversationId/messages", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) return res.sendStatus(401);
+  
+  try {
+    const conversationId = parseInt(req.params.conversationId);
+    const limit = parseInt(req.query.limit as string) || 50;
+    const offset = parseInt(req.query.offset as string) || 0;
+
+    if (isNaN(conversationId)) {
+      return res.status(400).json({ error: "Invalid conversation ID" });
+    }
+
+    // Get messages with direct SQL
+    const messages = await db.execute(sql`
+      SELECT 
+        dm.id,
+        dm.conversation_id,
+        dm.sender_id,
+        dm.receiver_id,
+        dm.text,
+        dm.created_at,
+        dm.is_read,
+        u.name as sender_name,
+        u.profile_image_url as sender_profile_image
+      FROM telegram_direct_messages dm
+      INNER JOIN users u ON dm.sender_id = u.id
+      WHERE dm.conversation_id = ${conversationId}
+      ORDER BY dm.created_at DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `);
+
+    res.json(messages.rows);
+  } catch (error) {
+    console.error("Error fetching direct messages:", error);
+    res.status(500).json({ error: "Failed to fetch messages" });
+  }
+});
+
+// Send direct message
+router.post("/api/chat/direct/:conversationId/messages", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) return res.sendStatus(401);
+  
+  try {
+    const conversationId = parseInt(req.params.conversationId);
+    const userId = req.user!.id;
+    const { text, receiverId } = req.body;
+
+    if (isNaN(conversationId)) {
+      return res.status(400).json({ error: "Invalid conversation ID" });
+    }
+
+    if (!text?.trim()) {
+      return res.status(400).json({ error: "Message text is required" });
+    }
+
+    if (!receiverId) {
+      return res.status(400).json({ error: "Receiver ID is required" });
+    }
+
+    // Insert message with direct SQL
+    const messageResult = await db.execute(sql`
+      INSERT INTO telegram_direct_messages (conversation_id, sender_id, receiver_id, text)
+      VALUES (${conversationId}, ${userId}, ${receiverId}, ${text.trim()})
+      RETURNING *
+    `);
+
+    const message = messageResult.rows[0];
+    res.json(message);
+  } catch (error) {
+    console.error("Error sending direct message:", error);
+    res.status(500).json({ error: "Failed to send message" });
+  }
+});
+
+export default router;

@@ -2709,14 +2709,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Group name is required" });
       }
 
-      const groupData = {
-        name: name.trim(),
-        description: description || null,
-        isPrivate: isPrivate || false,
-        creatorId: userId,
-      };
+      // Generate invite code
+      const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
 
-      const group = await dbStorage.createChatGroup(groupData);
+      // Create group with direct SQL
+      const groupResult = await db.execute(sql`
+        INSERT INTO chat_groups (name, description, creator_id, admin_ids, member_ids, is_private, invite_code)
+        VALUES (${name.trim()}, ${description || ''}, ${userId}, ARRAY[${userId}], ARRAY[${userId}], ${isPrivate || false}, ${inviteCode})
+        RETURNING *
+      `);
+
+      const group = groupResult.rows[0];
+
+      // Add creator as member
+      await db.execute(sql`
+        INSERT INTO chat_group_members (group_id, user_id, role)
+        VALUES (${group.id}, ${userId}, 'creator')
+      `);
+
       res.status(201).json(group);
     } catch (error) {
       console.error("Error creating chat group:", error);
@@ -2729,8 +2739,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       const userId = req.user!.id;
-      const groups = await dbStorage.getChatGroups(userId);
-      res.json(groups);
+      
+      // Direct SQL query to get groups
+      const groups = await db.execute(sql`
+        SELECT 
+          cg.id,
+          cg.name,
+          cg.description,
+          cg.avatar_url,
+          cg.creator_id,
+          cg.is_private,
+          cg.created_at,
+          cg.last_message,
+          cg.last_message_at,
+          cg.message_count
+        FROM chat_groups cg
+        INNER JOIN chat_group_members cgm ON cg.id = cgm.group_id
+        WHERE cgm.user_id = ${userId}
+        ORDER BY cg.last_message_at DESC
+      `);
+      
+      res.json(groups.rows);
     } catch (error) {
       console.error("Error fetching chat groups:", error);
       res.status(500).json({ error: "Failed to fetch groups" });
