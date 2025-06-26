@@ -25,33 +25,32 @@ interface ChatGroup {
   id: number;
   name: string;
   description?: string;
-  image?: string;
-  creatorId: number;
-  adminIds: number[];
-  memberIds: number[];
-  isPrivate: boolean;
-  inviteCode?: string;
-  createdAt: string;
-  lastMessageAt: string;
-  lastMessage?: string;
-  lastMessageSenderId?: number;
-  messageCount: number;
+  avatar_url?: string;
+  creator_id: number;
+  admin_ids?: number[];
+  member_ids?: number[];
+  is_private: boolean;
+  invite_code?: string;
+  created_at: string;
+  last_message_at?: string;
+  last_message?: string;
+  message_count?: number;
 }
 
 interface ChatMessage {
   id: number;
-  groupId: number;
-  senderId: number;
-  senderName: string;
-  senderProfileImage?: string;
+  group_id: number;
+  user_id: number;
+  sender_name: string;
+  sender_username?: string;
+  sender_profile_image?: string;
   text: string;
-  createdAt: string;
-  editedAt?: string;
-  isDeleted: boolean;
-  replyToId?: number;
-  messageType: 'text' | 'image' | 'file' | 'system';
-  mediaUrl?: string;
-  isPinned: boolean;
+  created_at: string;
+  edited_at?: string;
+  is_edited?: boolean;
+  reply_to_id?: number;
+  message_type: 'text' | 'image' | 'file' | 'system';
+  media_url?: string;
 }
 
 interface DirectMessage {
@@ -239,42 +238,7 @@ const ChatPage = () => {
       {/* Chat List - Full Width */}
       <ScrollArea className="flex-1">
         <div className="divide-y divide-gray-100">
-          {/* Direct Messages Section */}
-          {conversations.length > 0 && (
-            <>
-              <div className="px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
-                Direct Messages
-              </div>
-              {conversations.map((conversation: Conversation) => (
-                <button
-                  key={conversation.id}
-                  onClick={() => setSelectedChat({ type: 'direct', id: conversation.id })}
-                  className="w-full p-4 text-left hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-center space-x-3">
-                    <Avatar className="h-12 w-12">
-                      <AvatarFallback className="bg-gray-500 text-white">
-                        <MessageCircle className="h-5 w-5" />
-                      </AvatarFallback>
-                    </Avatar>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-medium text-gray-900 truncate">Direct Chat</h3>
-                        <span className="text-xs text-gray-500">
-                          {formatLastMessageTime(conversation.lastMessageAt)}
-                        </span>
-                      </div>
-                      
-                      <p className="text-sm text-gray-500 truncate">
-                        Click to view conversation
-                      </p>
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </>
-          )}
+
 
           {/* Groups Section */}
           {filteredGroups.length > 0 && (

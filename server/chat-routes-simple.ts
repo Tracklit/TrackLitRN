@@ -149,4 +149,111 @@ router.post("/api/chat/direct/:conversationId/messages", async (req: Request, re
   }
 });
 
+// Get group messages
+router.get("/api/chat/groups/:groupId/messages", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) return res.sendStatus(401);
+  
+  try {
+    const groupId = parseInt(req.params.groupId);
+    const userId = req.user!.id;
+    const limit = parseInt(req.query.limit as string) || 50;
+    const offset = parseInt(req.query.offset as string) || 0;
+
+    if (isNaN(groupId)) {
+      return res.status(400).json({ error: "Invalid group ID" });
+    }
+
+    // Check if user is a member of this group
+    const memberCheck = await db.execute(sql`
+      SELECT 1 FROM chat_group_members 
+      WHERE group_id = ${groupId} AND user_id = ${userId}
+    `);
+
+    if (memberCheck.rows.length === 0) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    // Get messages with sender info
+    const messages = await db.execute(sql`
+      SELECT 
+        cgm.id,
+        cgm.group_id,
+        cgm.user_id,
+        cgm.text,
+        cgm.created_at,
+        cgm.message_type,
+        cgm.media_url,
+        cgm.reply_to_id,
+        cgm.is_edited,
+        cgm.edited_at,
+        u.name as sender_name,
+        u.username as sender_username,
+        u.profile_image_url as sender_profile_image
+      FROM chat_group_messages cgm
+      INNER JOIN users u ON cgm.user_id = u.id
+      WHERE cgm.group_id = ${groupId}
+      ORDER BY cgm.created_at DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `);
+
+    res.json(messages.rows);
+  } catch (error) {
+    console.error("Error fetching group messages:", error);
+    res.status(500).json({ error: "Failed to fetch messages" });
+  }
+});
+
+// Send group message
+router.post("/api/chat/groups/:groupId/messages", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) return res.sendStatus(401);
+  
+  try {
+    const groupId = parseInt(req.params.groupId);
+    const userId = req.user!.id;
+    const { text, replyToId, messageType = "text", mediaUrl } = req.body;
+
+    if (isNaN(groupId)) {
+      return res.status(400).json({ error: "Invalid group ID" });
+    }
+
+    if (!text?.trim()) {
+      return res.status(400).json({ error: "Message text is required" });
+    }
+
+    // Check if user is a member of this group
+    const memberCheck = await db.execute(sql`
+      SELECT 1 FROM chat_group_members 
+      WHERE group_id = ${groupId} AND user_id = ${userId}
+    `);
+
+    if (memberCheck.rows.length === 0) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    // Insert message
+    const messageResult = await db.execute(sql`
+      INSERT INTO chat_group_messages (group_id, user_id, text, message_type, media_url, reply_to_id)
+      VALUES (${groupId}, ${userId}, ${text.trim()}, ${messageType}, ${mediaUrl || null}, ${replyToId || null})
+      RETURNING *
+    `);
+
+    const message = messageResult.rows[0];
+
+    // Update group's last message info
+    await db.execute(sql`
+      UPDATE chat_groups 
+      SET 
+        last_message = ${text.trim()},
+        last_message_at = NOW(),
+        message_count = message_count + 1
+      WHERE id = ${groupId}
+    `);
+
+    res.json(message);
+  } catch (error) {
+    console.error("Error sending group message:", error);
+    res.status(500).json({ error: "Failed to send message" });
+  }
+});
+
 export default router;
