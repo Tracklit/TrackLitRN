@@ -377,7 +377,7 @@ const MessageBubble = ({ message, isOwn, currentUser }: MessageBubbleProps) => {
       console.log('Edit success, updated message:', updatedMessage);
       
       // Update only the specific message in cache without full refetch
-      queryClient.setQueryData(['/api/chat/groups/1/messages'], (oldData: any) => {
+      queryClient.setQueryData(['/api/chat/groups', 1, 'messages'], (oldData: any) => {
         if (!oldData) return oldData;
         return oldData.map((msg: any) => 
           msg.id === updatedMessage.id ? {
@@ -386,7 +386,11 @@ const MessageBubble = ({ message, isOwn, currentUser }: MessageBubbleProps) => {
             edited_at: updatedMessage.edited_at,
             is_edited: true
           } : msg
-        );
+        ).sort((a: any, b: any) => {
+          const timeA = new Date(a.created_at).getTime();
+          const timeB = new Date(b.created_at).getTime();
+          return timeA - timeB;
+        });
       });
       
       setIsEditing(false);
@@ -443,7 +447,8 @@ const MessageBubble = ({ message, isOwn, currentUser }: MessageBubbleProps) => {
             "min-w-[100px] px-3 py-2 rounded-2xl bg-white text-black border border-gray-200 relative",
             isOwn 
               ? "rounded-br-none" 
-              : "rounded-bl-none"
+              : "rounded-bl-none",
+            ((message as any).edited_at || (message as any).editedAt) && "animate-pulse duration-1000"
           )}
           onMouseDown={handlePressStart}
           onMouseUp={handlePressEnd}
