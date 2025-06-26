@@ -334,7 +334,7 @@ export default function GroupsPage() {
                               <div className="flex items-center space-x-1">
                                 <CheckCheck className="h-3 w-3 text-blue-500" />
                                 <span className="text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  {format(new Date(message.createdAt), 'HH:mm')}
+                                  {format(new Date(message.createdAt || new Date()), 'HH:mm')}
                                 </span>
                               </div>
                             </div>
