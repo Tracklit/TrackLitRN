@@ -365,10 +365,10 @@ const MessageBubble = ({ message, isOwn, currentUser }: MessageBubbleProps) => {
       )}
       
       <div className={cn(
-        "max-w-xs lg:max-w-md px-4 py-2 rounded-lg",
+        "min-w-[150px] max-w-xs lg:max-w-md px-4 py-3 rounded-2xl bg-white text-black border border-gray-200",
         isOwn 
-          ? "bg-blue-500 text-white rounded-br-none" 
-          : "bg-gray-200 text-gray-900 rounded-bl-none"
+          ? "rounded-br-none" 
+          : "rounded-bl-none"
       )}>
         {!isOwn && 'sender_name' in message && (
           <div className="text-xs font-medium mb-1 text-gray-600">
@@ -378,10 +378,7 @@ const MessageBubble = ({ message, isOwn, currentUser }: MessageBubbleProps) => {
         <div className="text-sm break-words">
           {message.text}
         </div>
-        <div className={cn(
-          "text-xs mt-1",
-          isOwn ? "text-blue-100" : "text-gray-500"
-        )}>
+        <div className="text-[8px] mt-1 text-gray-500">
           {formatTime('created_at' in message ? message.created_at : message.createdAt)}
           {'is_edited' in message && message.is_edited && (
             <span className="ml-1">(edited)</span>
@@ -517,7 +514,7 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
         <div className="space-y-4">
           {messagesLoading ? (
             <div className="flex justify-center py-8">
