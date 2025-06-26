@@ -293,9 +293,10 @@ const ChatPage = () => {
   }
 
   return (
-    <div className="fixed inset-0 bg-white flex flex-col w-screen h-screen">
-      {/* Header */}
-      <div className="p-4 border-b border-gray-200 flex-shrink-0">
+    <SwipeWrapper currentPage="chat">
+      <div className="fixed inset-0 bg-white flex flex-col w-screen h-screen">
+        {/* Header */}
+        <div className="p-4 border-b border-gray-200 flex-shrink-0">
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-xl font-semibold text-gray-900">Chats</h1>
           <Button
@@ -386,7 +387,8 @@ const ChatPage = () => {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </SwipeWrapper>
   );
 };
 
