@@ -27,6 +27,39 @@ import {
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 
+// Full-screen image viewer component
+const FullScreenImageViewer = ({ 
+  src, 
+  isOpen, 
+  onClose 
+}: { 
+  src: string; 
+  isOpen: boolean; 
+  onClose: () => void; 
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div 
+      className="fixed inset-0 z-50 bg-black flex items-center justify-center"
+      onClick={onClose}
+    >
+      <button
+        className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-60"
+        onClick={onClose}
+      >
+        <X size={32} />
+      </button>
+      <img
+        src={src}
+        alt="Full screen view"
+        className="max-w-full max-h-full object-contain"
+        onClick={(e) => e.stopPropagation()}
+      />
+    </div>
+  );
+};
+
 // Simple image compression utility
 const compressImage = (file: File, maxWidth: number = 800, quality: number = 0.8): Promise<File> => {
   return new Promise((resolve) => {
@@ -128,6 +161,7 @@ const ChatPage = () => {
   const [messageText, setMessageText] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateGroup, setShowCreateGroup] = useState(false);
+  const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
@@ -583,13 +617,13 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages }: Me
             <div className="space-y-2">
               {/* Image content */}
               {(message as any).message_type === 'image' && (message as any).media_url && (
-                <div className="rounded-lg overflow-hidden max-w-64">
+                <div className="rounded-lg overflow-hidden">
                   <img
                     src={(message as any).media_url}
                     alt="Shared image"
                     className="w-full h-auto object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                    style={{ maxHeight: '300px', maxWidth: '192px' }}
-                    onClick={() => window.open((message as any).media_url, '_blank')}
+                    style={{ maxHeight: '450px', maxWidth: '288px' }}
+                    onClick={() => setFullScreenImage((message as any).media_url)}
                     loading="lazy"
                   />
                 </div>
@@ -1113,6 +1147,13 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
           className="hidden"
         />
       </div>
+
+      {/* Full-screen image viewer */}
+      <FullScreenImageViewer 
+        src={fullScreenImage || ''}
+        isOpen={!!fullScreenImage}
+        onClose={() => setFullScreenImage(null)}
+      />
     </div>
   );
 };
