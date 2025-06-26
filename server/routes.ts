@@ -7189,7 +7189,8 @@ Keep the response professional, evidence-based, and specific to track and field 
         },
       }));
 
-      console.log('Messages with sender details:', JSON.stringify(messages, null, 2));
+      console.log('Raw SQL result first row:', JSON.stringify(result.rows[0], null, 2));
+      console.log('Transformed messages first item:', JSON.stringify(messages[0], null, 2));
 
       // Force cache refresh by setting no-cache headers
       res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
