@@ -396,9 +396,10 @@ interface MessageBubbleProps {
   currentUser?: any;
   onReply?: (message: ChatMessage | DirectMessage) => void;
   allMessages?: (ChatMessage | DirectMessage)[];
+  onImageClick?: (imageUrl: string) => void;
 }
 
-const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages }: MessageBubbleProps) => {
+const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages, onImageClick }: MessageBubbleProps) => {
   const [showMenu, setShowMenu] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState('');
@@ -622,7 +623,7 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages }: Me
                     alt="Shared image"
                     className="w-full h-auto object-cover cursor-pointer hover:opacity-90 transition-opacity"
                     style={{ maxHeight: '450px', maxWidth: '288px' }}
-                    onClick={() => setFullScreenImage((message as any).media_url)}
+                    onClick={() => onImageClick?.((message as any).media_url)}
                     loading="lazy"
                   />
                 </div>
@@ -1028,6 +1029,7 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
                 currentUser={currentUser}
                 onReply={(message) => setReplyingTo(message as ChatMessage)}
                 allMessages={messages}
+                onImageClick={setFullScreenImage}
               />
             ))
           )}
