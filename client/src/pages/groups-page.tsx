@@ -315,7 +315,7 @@ export default function GroupsPage() {
                               <h3 className="text-white font-medium text-base truncate">
                                 {group.name}
                               </h3>
-                              {group.lastMessage && (
+                              {group.lastMessage && group.lastMessage.createdAt && (
                                 <span className="text-gray-400 text-sm ml-2 flex-shrink-0">
                                   {formatDistanceToNow(new Date(group.lastMessage.createdAt), { 
                                     addSuffix: false 
