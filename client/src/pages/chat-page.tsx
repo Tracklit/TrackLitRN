@@ -86,7 +86,6 @@ const ChatPage = () => {
   const [messageText, setMessageText] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateGroup, setShowCreateGroup] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
@@ -524,6 +523,7 @@ interface ChatInterfaceProps {
 
 const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
   const [messageText, setMessageText] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
@@ -650,6 +650,7 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
                 message={message}
                 isOwn={message.user_id === currentUser?.id}
                 currentUser={currentUser}
+                onMessageUpdated={() => setRefreshKey(prev => prev + 1)}
               />
             ))
           )}
