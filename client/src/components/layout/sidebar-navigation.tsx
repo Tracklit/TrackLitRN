@@ -158,6 +158,13 @@ export function SidebarNavigation({ isMobile = false }: { isMobile?: boolean }) 
             Messages
           </NavItem>
           <NavItem 
+            href="/chat" 
+            icon={<Users className="h-5 w-5" />} 
+            isActive={location === '/chat'}
+          >
+            Group Chat
+          </NavItem>
+          <NavItem 
             href="/athletes" 
             icon={<Users className="h-5 w-5" />} 
             isActive={location === '/athletes'}
