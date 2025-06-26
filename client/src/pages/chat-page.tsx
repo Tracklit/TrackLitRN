@@ -214,9 +214,9 @@ const ChatPage = () => {
   }
 
   return (
-    <div className="h-screen bg-white flex flex-col">
+    <div className="fixed inset-0 bg-white flex flex-col w-screen h-screen">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-gray-200 flex-shrink-0">
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-xl font-semibold text-gray-900">Chats</h1>
           <Button
@@ -428,9 +428,9 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
   const selectedGroup = chatGroups.find((group: ChatGroup) => group.id === selectedChat.id);
 
   return (
-    <div className="h-screen bg-white flex flex-col">
+    <div className="fixed inset-0 bg-white flex flex-col w-screen h-screen">
       {/* Chat Header */}
-      <div className="p-4 border-b border-gray-200 bg-white">
+      <div className="p-4 border-b border-gray-200 bg-white flex-shrink-0">
         <div className="flex items-center space-x-3">
           <Button
             variant="ghost"
