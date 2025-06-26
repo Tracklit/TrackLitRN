@@ -3208,19 +3208,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async editChatGroupMessage(messageId: number, senderId: number, newText: string): Promise<ChatGroupMessage | undefined> {
-    const [message] = await db
-      .update(chatGroupMessages)
-      .set({
-        text: newText,
-        editedAt: new Date()
-      })
-      .where(and(
-        eq(chatGroupMessages.id, messageId),
-        eq(chatGroupMessages.senderId, senderId)
-      ))
-      .returning();
+    // Use direct SQL to avoid ORM column issues
+    const result = await db.execute(sql`
+      UPDATE chat_group_messages 
+      SET text = ${newText}, edited_at = NOW()
+      WHERE id = ${messageId} AND sender_id = ${senderId}
+      RETURNING *
+    `);
 
-    return message;
+    return result.rows[0] as ChatGroupMessage;
   }
 
   async deleteChatGroupMessage(messageId: number, userId: number): Promise<void> {

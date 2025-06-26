@@ -367,13 +367,11 @@ const MessageBubble = ({ message, isOwn, currentUser }: MessageBubbleProps) => {
 
   const saveEdit = async () => {
     try {
-      const response = await apiRequest(`/api/chat/messages/${message.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ text: editedText }),
-      });
+      const response = await apiRequest(
+        'PUT',
+        `/api/chat/messages/${message.id}`,
+        { text: editedText }
+      );
 
       if (response.ok) {
         // Invalidate and refetch messages to show the update
