@@ -234,19 +234,25 @@ router.get("/api/chat/groups/:groupId/messages", async (req: Request, res: Respo
 });
 
 // Send group message
-router.post("/api/chat/groups/:groupId/messages", async (req: Request, res: Response) => {
+router.post("/api/chat/groups/:groupId/messages", upload.single('image'), async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) return res.sendStatus(401);
   
   try {
     const groupId = parseInt(req.params.groupId);
     const userId = req.user!.id;
-    const { text, replyToId, messageType = "text", mediaUrl } = req.body;
+    const { text, replyToId, messageType = "text" } = req.body;
+    const file = req.file;
 
     if (isNaN(groupId)) {
       return res.status(400).json({ error: "Invalid group ID" });
     }
 
-    if (!text?.trim()) {
+    // For image messages, file is required; for text messages, text is required
+    if (messageType === "image" && !file) {
+      return res.status(400).json({ error: "Image file is required for image messages" });
+    }
+    
+    if (messageType === "text" && !text?.trim() && !file) {
       return res.status(400).json({ error: "Message text is required" });
     }
 
@@ -266,10 +272,15 @@ router.post("/api/chat/groups/:groupId/messages", async (req: Request, res: Resp
     `);
     const user = userResult.rows[0];
 
+    // Determine message type and media URL
+    const finalMessageType = file ? "image" : "text";
+    const mediaUrl = file ? `/uploads/${file.filename}` : null;
+    const messageText = text?.trim() || (file ? "Image" : "");
+
     // Insert message
     const messageResult = await db.execute(sql`
       INSERT INTO chat_group_messages (group_id, sender_id, sender_name, sender_profile_image, text, message_type, media_url, reply_to_id)
-      VALUES (${groupId}, ${userId}, ${user.name || 'Unknown'}, ${user.profile_image_url || null}, ${text.trim()}, ${messageType}, ${mediaUrl || null}, ${replyToId || null})
+      VALUES (${groupId}, ${userId}, ${user.name || 'Unknown'}, ${user.profile_image_url || null}, ${messageText}, ${finalMessageType}, ${mediaUrl}, ${replyToId || null})
       RETURNING *
     `);
 

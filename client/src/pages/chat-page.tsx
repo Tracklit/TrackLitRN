@@ -542,8 +542,25 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages }: Me
               </div>
             </div>
           ) : (
-            <div className="text-sm break-words">
-              {(message as any).text || (message as any).content || ''}
+            <div className="space-y-2">
+              {/* Image content */}
+              {(message as any).message_type === 'image' && (message as any).media_url && (
+                <div className="rounded-lg overflow-hidden max-w-64">
+                  <img
+                    src={(message as any).media_url}
+                    alt="Shared image"
+                    className="w-full h-auto object-cover"
+                    style={{ maxHeight: '300px' }}
+                  />
+                </div>
+              )}
+              
+              {/* Text content */}
+              {((message as any).text || (message as any).content) && (
+                <div className="text-sm break-words">
+                  {(message as any).text || (message as any).content || ''}
+                </div>
+              )}
             </div>
           )}
           

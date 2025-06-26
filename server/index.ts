@@ -24,6 +24,9 @@ app.get('/ping', (req, res) => {
 // Serve static files from the public directory
 app.use(express.static(path.join(process.cwd(), 'public')));
 
+// Serve uploaded images
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
