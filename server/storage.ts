@@ -22,12 +22,8 @@ import {
   InsertClub,
   ClubMember,
   InsertClubMember,
-  Group,
-  InsertGroup,
-  ChatGroupMember,
-  InsertChatGroupMember,
-  GroupMessage,
-  InsertGroupMessage,
+
+
   ProgramAssignment,
   InsertProgramAssignment,
   ClubMessage,
@@ -79,9 +75,9 @@ import {
   practiceCompletions,
   clubs,
   clubMembers,
-  groups,
 
-  groupMessages,
+
+
   clubMessages,
   achievements,
   userAchievements,
@@ -156,18 +152,7 @@ export interface IStorage {
   updateClubMember(id: number, memberData: Partial<ClubMember>): Promise<ClubMember | undefined>;
   deleteClubMember(id: number): Promise<boolean>;
   
-  // Group operations
-  getGroup(id: number): Promise<Group | undefined>;
-  getUserGroups(userId: number): Promise<Group[]>;
-  createGroup(group: InsertGroup): Promise<Group>;
-  updateGroup(id: number, groupData: Partial<Group>): Promise<Group | undefined>;
-  deleteGroup(id: number): Promise<boolean>;
-  getGroupMembers(groupId: number): Promise<ChatGroupMember[]>;
-  getGroupMemberByUserAndGroup(userId: number, groupId: number): Promise<ChatGroupMember | undefined>;
-  createChatGroupMember(member: InsertChatGroupMember): Promise<ChatGroupMember>;
-  deleteChatGroupMember(id: number): Promise<boolean>;
-  getGroupMessages(groupId: number): Promise<GroupMessage[]>;
-  createGroupMessage(message: InsertGroupMessage): Promise<GroupMessage>;
+
   
   // Club Message operations
   getClubMessages(clubId: number): Promise<(ClubMessage & { username: string })[]>;
@@ -1101,155 +1086,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(clubMembers.id, id));
     return !!result;
   }
-  
-  // Group operations
-  async getGroup(id: number): Promise<Group | undefined> {
-    const [group] = await db.select().from(groups).where(eq(groups.id, id));
-    return group;
-  }
-  
-  async getUserGroups(userId: number): Promise<Group[]> {
-    try {
-      // First get groups where user is an accepted member
-      let memberGroups: Group[] = [];
-      
-      try {
-        const memberships = await db
-          .select({
-            groupId: chatGroupMembers.groupId,
-          })
-          .from(chatGroupMembers)
-          .where(eq(chatGroupMembers.userId, userId));
-            
-        if (memberships.length > 0) {
-          const groupIds = memberships.map(m => m.groupId);
-          memberGroups = await db
-            .select()
-            .from(groups)
-            .where(inArray(groups.id, groupIds));
-        }
-      } catch (error) {
-        console.error("Error fetching group memberships:", error);
-      }
-      
-      // Also get groups owned by the user
-      const ownedGroups = await db
-        .select()
-        .from(groups)
-        .where(eq(groups.ownerId, userId));
-      
-      // Combine both lists without duplicates
-      const allGroups = [...memberGroups];
-      ownedGroups.forEach(owned => {
-        if (!allGroups.some(g => g.id === owned.id)) {
-          allGroups.push(owned);
-        }
-      });
-      
-      return allGroups;
-    } catch (error) {
-      console.error("Error in getUserGroups:", error);
-      return [];
-    }
-  }
-  
-  async createGroup(group: InsertGroup): Promise<Group> {
-    try {
-      const [newGroup] = await db
-        .insert(groups)
-        .values(group)
-        .returning();
-        
-      // Automatically add the creator as a member with admin role
-      await this.createChatGroupMember({
-        groupId: newGroup.id,
-        userId: newGroup.ownerId,
-        role: 'admin' as const,
-        status: 'accepted' as const
-      });
-        
-      return newGroup;
-    } catch (error) {
-      console.error("Error in createGroup:", error);
-      throw error;
-    }
-  }
-  
-  async updateGroup(id: number, groupData: Partial<Group>): Promise<Group | undefined> {
-    const [group] = await db
-      .update(groups)
-      .set(groupData)
-      .where(eq(groups.id, id))
-      .returning();
-    return group;
-  }
-  
-  async deleteGroup(id: number): Promise<boolean> {
-    // Delete all members first
-    await db
-      .delete(chatGroupMembers)
-      .where(eq(chatGroupMembers.groupId, id));
-    
-    // Delete all messages 
-    await db
-      .delete(groupMessages)
-      .where(eq(groupMessages.groupId, id));
-    
-    // Delete the group
-    const result = await db
-      .delete(groups)
-      .where(eq(groups.id, id));
-    return !!result;
-  }
-  
-  async getGroupMembers(groupId: number): Promise<ChatGroupMember[]> {
-    return db
-      .select()
-      .from(chatGroupMembers)
-      .where(eq(chatGroupMembers.groupId, groupId));
-  }
-  
-  async getGroupMemberByUserAndGroup(userId: number, groupId: number): Promise<ChatGroupMember | undefined> {
-    const [member] = await db
-      .select()
-      .from(chatGroupMembers)
-      .where(and(
-        eq(chatGroupMembers.userId, userId),
-        eq(chatGroupMembers.groupId, groupId)
-      ));
-    return member;
-  }
-  
-  async createChatGroupMember(member: InsertChatGroupMember): Promise<ChatGroupMember> {
-    const [newMember] = await db
-      .insert(chatGroupMembers)
-      .values(member)
-      .returning();
-    return newMember;
-  }
-  
-  async deleteChatGroupMember(id: number): Promise<boolean> {
-    const result = await db
-      .delete(chatGroupMembers)
-      .where(eq(chatGroupMembers.id, id));
-    return !!result;
-  }
-  
-  async getGroupMessages(groupId: number): Promise<GroupMessage[]> {
-    return db
-      .select()
-      .from(groupMessages)
-      .where(eq(groupMessages.groupId, groupId))
-      .orderBy(asc(groupMessages.createdAt));
-  }
-  
-  async createGroupMessage(message: InsertGroupMessage): Promise<GroupMessage> {
-    const [newMessage] = await db
-      .insert(groupMessages)
-      .values(message)
-      .returning();
-    return newMessage;
-  }
+
 
   // Club Messages operations
   async getClubMessages(clubId: number): Promise<(ClubMessage & { username: string })[]> {
