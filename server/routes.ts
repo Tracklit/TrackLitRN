@@ -7154,19 +7154,19 @@ Keep the response professional, evidence-based, and specific to track and field 
         return res.status(403).json({ error: "Access denied" });
       }
 
-      // Use direct join approach that should work
+      // Simplified query without aliases to avoid PostgreSQL issues
       const result = await db.execute(sql`
         SELECT 
           gm.id,
-          gm.group_id as groupId,
-          gm.sender_id as senderId,
+          gm.group_id,
+          gm.sender_id,
           gm.message,
-          gm.media_url as mediaUrl,
-          gm.created_at as createdAt,
-          u.id as sender_id,
-          u.username as sender_username,
-          u.name as sender_name,
-          u.profile_image_url as sender_profile_image_url
+          gm.media_url,
+          gm.created_at,
+          u.id as user_id,
+          u.username,
+          u.name,
+          u.profile_image_url
         FROM group_messages gm
         INNER JOIN users u ON gm.sender_id = u.id
         WHERE gm.group_id = ${groupId}
@@ -7174,20 +7174,24 @@ Keep the response professional, evidence-based, and specific to track and field 
       `);
 
       // Transform the flat result into the expected structure
-      const messages = result.rows.map((row: any) => ({
-        id: row.id,
-        groupId: row.groupid,
-        senderId: row.senderid,
-        message: row.message,
-        mediaUrl: row.mediaurl,
-        createdAt: row.createdat,
-        sender: {
-          id: row.sender_id,
-          username: row.sender_username,
-          name: row.sender_name,
-          profileImageUrl: row.sender_profile_image_url,
-        },
-      }));
+      const messages = result.rows.map((row: any) => {
+        console.log('Processing row keys:', Object.keys(row));
+        console.log('Row data:', JSON.stringify(row, null, 2));
+        return {
+          id: row.id,
+          groupId: row.group_id,
+          senderId: row.sender_id,
+          message: row.message,
+          mediaUrl: row.media_url,
+          createdAt: row.created_at,
+          sender: {
+            id: row.user_id,
+            username: row.username,
+            name: row.name,
+            profileImageUrl: row.profile_image_url,
+          },
+        };
+      });
 
       console.log('Raw SQL result first row:', JSON.stringify(result.rows[0], null, 2));
       console.log('Transformed messages first item:', JSON.stringify(messages[0], null, 2));
