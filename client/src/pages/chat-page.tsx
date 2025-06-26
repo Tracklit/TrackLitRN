@@ -344,9 +344,7 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages }: Me
 
   const handlePressStart = () => {
     const timer = setTimeout(() => {
-      if (isOwn) {
-        setShowMenu(true);
-      }
+      setShowMenu(true);
     }, 500); // 500ms for long press
     setLongPressTimer(timer);
   };
@@ -619,7 +617,7 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
       
       const payload: any = { text };
       if (replyToId) {
-        payload.reply_to_id = replyToId;
+        payload.replyToId = replyToId;
       }
       
       const response = await apiRequest('POST', endpoint, payload);
