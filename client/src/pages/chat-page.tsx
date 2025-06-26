@@ -479,7 +479,7 @@ const MessageBubble = ({ message, isOwn, currentUser }: MessageBubbleProps) => {
         {/* Right-aligned timestamp */}
         <div className="text-[8px] mt-1 text-gray-500 text-right">
           {formatTime('created_at' in message ? message.created_at : message.createdAt)}
-          {'is_edited' in message && message.is_edited && (
+          {(message.edited_at || message.editedAt) && (
             <span className="ml-1">(edited)</span>
           )}
         </div>
