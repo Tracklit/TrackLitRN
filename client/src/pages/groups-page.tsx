@@ -41,7 +41,11 @@ export default function GroupsPage() {
   const [selectedGroup, setSelectedGroup] = useState<number | null>(targetGroupId);
   const [newMessage, setNewMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  // Removed create group form state - now handled in create-group-page
+  const [hoveredMessage, setHoveredMessage] = useState<number | null>(null);
+  const [selectedMessage, setSelectedMessage] = useState<number | null>(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<GroupMessageWithUser | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Fetch user's groups
@@ -184,56 +188,216 @@ export default function GroupsPage() {
 
             {/* Messages Area */}
             <div className="flex-1 p-4 overflow-y-auto bg-gray-900">
-              <div className="space-y-4 max-w-4xl mx-auto">
+              <div className="space-y-6 max-w-4xl mx-auto">
                 {messages.length === 0 ? (
                   <div className="text-center text-gray-400 py-8">
-                    <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <h3 className="text-lg font-medium mb-2">No messages yet</h3>
                     <p>Be the first to start the conversation!</p>
                   </div>
                 ) : (
-                  messages.map((message) => (
-                    <div key={message.id} className="mb-3">
-                      <div className="bg-gray-800 rounded-lg p-3">
-                        <div className="flex justify-between items-start mb-1">
-                          <p className="text-gray-300 text-sm flex-1">{message.message}</p>
-                          <span className="text-xs text-gray-400 ml-2 flex-shrink-0">
-                            {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
+                  groupMessages(messages).map((group, groupIndex) => (
+                    <div key={`group-${groupIndex}`} className="space-y-1">
+                      {/* Sender info - only show for first message in group */}
+                      <div className="flex items-center space-x-2 mb-2">
+                        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                          <span className="text-white font-medium text-sm">
+                            {group.sender.username?.charAt(0).toUpperCase() || 'U'}
                           </span>
                         </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm font-medium text-white">
+                            {group.sender.username || 'Unknown User'}
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            {formatMessageTime(group.timestamp)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Messages in group */}
+                      <div className="ml-10 space-y-1">
+                        {group.messages.map((message, messageIndex) => (
+                          <div
+                            key={message.id}
+                            className={cn(
+                              "group relative",
+                              hoveredMessage === message.id && "bg-gray-800/50 rounded-lg"
+                            )}
+                            onMouseEnter={() => setHoveredMessage(message.id)}
+                            onMouseLeave={() => setHoveredMessage(null)}
+                          >
+                            <div className="flex items-start justify-between p-2">
+                              <div className="flex-1">
+                                {/* Reply preview if this is a reply */}
+                                {replyingTo && messageIndex === 0 && (
+                                  <div className="mb-2 p-2 bg-gray-800 rounded-lg border-l-2 border-blue-500">
+                                    <div className="text-xs text-gray-400 mb-1">
+                                      Replying to {replyingTo.sender.username}
+                                    </div>
+                                    <div className="text-sm text-gray-300 truncate">
+                                      {replyingTo.message}
+                                    </div>
+                                  </div>
+                                )}
+                                
+                                <p className="text-gray-300 text-sm break-words">
+                                  {message.message}
+                                </p>
+                                
+                                {/* Reactions placeholder */}
+                                <div className="flex items-center space-x-1 mt-1">
+                                  {/* This would be populated with actual reactions */}
+                                </div>
+                              </div>
+
+                              {/* Message actions - show on hover */}
+                              {hoveredMessage === message.id && (
+                                <div className="flex items-center space-x-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 w-6 p-0 text-gray-400 hover:text-white"
+                                    onClick={() => handleReply(message)}
+                                  >
+                                    <Reply className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 w-6 p-0 text-gray-400 hover:text-white"
+                                  >
+                                    <Heart className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 w-6 p-0 text-gray-400 hover:text-white"
+                                  >
+                                    <MoreVertical className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Message status indicators */}
+                            <div className="flex justify-end mt-1 pr-2">
+                              <div className="flex items-center space-x-1">
+                                <CheckCheck className="h-3 w-3 text-blue-500" />
+                                <span className="text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  {format(new Date(message.createdAt), 'HH:mm')}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   ))
                 )}
+                
+                {/* Typing indicator */}
+                {isTyping && (
+                  <div className="flex items-center space-x-2 ml-10">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    </div>
+                    <span className="text-xs text-gray-400">Someone is typing...</span>
+                  </div>
+                )}
+                
                 <div ref={messagesEndRef} />
               </div>
             </div>
 
             {/* Message Input */}
             <div className="p-4 border-t border-gray-700 bg-gray-800 flex-shrink-0">
-              <div className="flex items-center space-x-2 max-w-4xl mx-auto">
-                <input
-                  type="text"
-                  placeholder="Type a message..."
-                  className="flex-1 bg-gray-700 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      handleSendMessage();
-                    }
-                  }}
-                  onFocus={() => setKeyboardVisible(true)}
-                  onBlur={() => setKeyboardVisible(false)}
-                />
-                <Button
-                  size="sm"
-                  className="bg-accent hover:bg-accent/90"
-                  onClick={handleSendMessage}
-                  disabled={!newMessage.trim() || sendMessageMutation.isPending}
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
+              <div className="max-w-4xl mx-auto">
+                {/* Reply preview */}
+                {replyingTo && (
+                  <div className="mb-3 p-2 bg-gray-700 rounded-lg border-l-2 border-blue-500 flex items-center justify-between">
+                    <div>
+                      <div className="text-xs text-gray-400 mb-1">
+                        Replying to {replyingTo.sender.username}
+                      </div>
+                      <div className="text-sm text-gray-300 truncate">
+                        {replyingTo.message.length > 50 
+                          ? `${replyingTo.message.substring(0, 50)}...` 
+                          : replyingTo.message}
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 text-gray-400 hover:text-white"
+                      onClick={() => setReplyingTo(null)}
+                    >
+                      ×
+                    </Button>
+                  </div>
+                )}
+
+                {/* Input area */}
+                <div className="flex items-end space-x-2">
+                  {/* Attachment button */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-gray-400 hover:text-white flex-shrink-0"
+                  >
+                    <Paperclip className="h-4 w-4" />
+                  </Button>
+
+                  {/* Text input */}
+                  <div className="flex-1 relative">
+                    <textarea
+                      placeholder="Type a message..."
+                      className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-accent min-h-[40px] max-h-[120px]"
+                      value={newMessage}
+                      onChange={(e) => {
+                        setNewMessage(e.target.value);
+                        // Auto-resize textarea
+                        e.target.style.height = 'auto';
+                        e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                      }}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendMessage();
+                        }
+                      }}
+                      onFocus={() => setKeyboardVisible(true)}
+                      onBlur={() => setKeyboardVisible(false)}
+                      rows={1}
+                    />
+                  </div>
+
+                  {/* Emoji picker button */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-gray-400 hover:text-white flex-shrink-0"
+                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  >
+                    <Smile className="h-4 w-4" />
+                  </Button>
+
+                  {/* Send/Mic button */}
+                  <Button
+                    size="sm"
+                    className="bg-accent hover:bg-accent/90 h-8 w-8 p-0 flex-shrink-0"
+                    onClick={handleSendMessage}
+                    disabled={!newMessage.trim() || sendMessageMutation.isPending}
+                  >
+                    {newMessage.trim() ? (
+                      <Send className="h-4 w-4" />
+                    ) : (
+                      <Mic className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

@@ -1,0 +1,81 @@
+Chat Layout:
+	•	Chronological vertical scroll, newest at bottom
+	•	Grouped messages (same sender, timestamp proximity)
+	•	Name + avatar above message bubble (unless grouped)
+	•	Timestamps shown on hover/tap or inline (configurable)
+	•	Unread messages separator
+	•	Typing indicator at bottom (real-time, per user)
+	•	Pinned messages displayed in a top collapsible bar
+	•	Message status indicators: sent ✓, delivered ✓✓, seen (✓✓✓ or avatar cluster)
+
+Message Input Box:
+	•	Multi-line text input
+	•	Attachments: 📎 icon → images, files, location, poll
+	•	Send button (changes to mic when empty for voice recording)
+	•	@mention autocomplete when typing @
+	•	Emoji/sticker/gif picker
+
+⸻
+
+3. 🧵 Replies, Mentions & Threads
+	•	Inline Replies:
+	•	Tap/long-press → “Reply”
+	•	Quoted message preview shown above reply
+	•	Mentions:
+	•	Triggered via @username
+	•	Highlighted for the mentioned user
+	•	Creates a notification
+	•	Threads (optional advanced):
+	•	Replying can create a sub-thread view (like Slack)
+	•	Expand/collapse thread beneath parent message
+	•	Thread counter badge on parent message
+
+⸻
+
+4. ❤️ Reactions
+	•	Tap and hold (mobile) / hover (desktop) to add emoji reaction
+	•	Limited reaction set or full emoji selector
+	•	Counts shown under message
+	•	Users can remove their own reaction
+
+⸻
+
+5. 📌 Message Actions (Long-press/Right-click Menu)
+	•	Reply
+	•	Forward
+	•	Edit (within 48h, history kept)
+	•	Delete for me / for everyone (within time limit)
+	•	Copy
+	•	Pin
+	•	React
+	•	Report
+
+⸻
+
+6. 📍 Navigation & UX Features
+	•	Jump to date or search
+	•	Scroll to first unread
+	•	Scroll-to message from notification
+	•	Swipe gestures on mobile:
+	•	Swipe left to reply
+	•	Swipe right to react (optional)
+	•	Admin UI inline controls:
+	•	Tap a message → pin, restrict sender, delete
+	•	Message banners for warnings (“Admin-only mode enabled”)
+
+⸻
+
+7. 📶 Real-Time Messaging
+	•	WebSocket or MQTT-based real-time sync
+	•	Typing indicators (per user)
+	•	Online/offline indicators for members (optional)
+	•	Local cache with sync reconciliation for network drops
+
+⸻
+
+8. 🛡️ Privacy & Security
+	•	End-to-end encryption (optional per group type)
+	•	Admins can restrict:
+	•	Who can send messages (read-only mode)
+	•	Media types (text only, no files, etc.)
+	•	Anti-spam cooldown for new members
