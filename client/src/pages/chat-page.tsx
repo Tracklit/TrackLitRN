@@ -407,6 +407,8 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages, onIm
   const [startPosition, setStartPosition] = useState<{ x: number; y: number } | null>(null);
   const [hasScrolled, setHasScrolled] = useState(false);
   const [menuPosition, setMenuPosition] = useState<'bottom' | 'top'>('bottom');
+  const [lastTap, setLastTap] = useState<number>(0);
+  const [reactionAnimation, setReactionAnimation] = useState(false);
   const bubbleRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
@@ -419,12 +421,54 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages, onIm
     });
   };
 
+  // Reaction mutation
+  const reactionMutation = useMutation({
+    mutationFn: async ({ messageId, messageType, emoji }: { messageId: number; messageType: string; emoji: string }) => {
+      const response = await apiRequest('POST', `/api/messages/${messageId}/${messageType}/reactions`, { emoji });
+      if (!response.ok) {
+        throw new Error('Failed to toggle reaction');
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      console.log('Reaction toggled:', data);
+      // Show animation for successful reaction
+      setReactionAnimation(true);
+      setTimeout(() => setReactionAnimation(false), 1000);
+    },
+    onError: (error) => {
+      console.error('Error toggling reaction:', error);
+    }
+  });
+
+  const handleReaction = () => {
+    const messageType = 'groupId' in message ? 'group' : 'direct';
+    reactionMutation.mutate({
+      messageId: message.id,
+      messageType,
+      emoji: '👍'
+    });
+  };
+
   const handlePressStart = (e: React.MouseEvent | React.TouchEvent) => {
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
     
     setStartPosition({ x: clientX, y: clientY });
     setHasScrolled(false);
+    
+    // Handle double-tap for reactions
+    const currentTime = Date.now();
+    const timeDiff = currentTime - lastTap;
+    
+    if (timeDiff < 300 && timeDiff > 0) {
+      // Double tap detected - add thumbs up reaction
+      handleReaction();
+      setLastTap(0);
+      return;
+    }
+    
+    setLastTap(currentTime);
     
     const timer = setTimeout(() => {
       if (!hasScrolled) {
