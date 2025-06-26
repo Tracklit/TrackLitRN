@@ -247,13 +247,9 @@ router.post("/api/chat/groups/:groupId/messages", upload.single('image'), async 
       return res.status(400).json({ error: "Invalid group ID" });
     }
 
-    // For image messages, file is required; for text messages, text is required
-    if (messageType === "image" && !file) {
-      return res.status(400).json({ error: "Image file is required for image messages" });
-    }
-    
-    if (messageType === "text" && !text?.trim() && !file) {
-      return res.status(400).json({ error: "Message text is required" });
+    // Validate that we have either text or a file
+    if (!text?.trim() && !file) {
+      return res.status(400).json({ error: "Message text or image is required" });
     }
 
     // Check if user is a member of this group using the member_ids array
