@@ -331,6 +331,8 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages }: Me
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState('');
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [startPosition, setStartPosition] = useState<{ x: number; y: number } | null>(null);
+  const [hasScrolled, setHasScrolled] = useState(false);
   const queryClient = useQueryClient();
 
   const formatTime = (timestamp: string) => {
@@ -342,11 +344,38 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages }: Me
     });
   };
 
-  const handlePressStart = () => {
+  const handlePressStart = (e: React.MouseEvent | React.TouchEvent) => {
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    
+    setStartPosition({ x: clientX, y: clientY });
+    setHasScrolled(false);
+    
     const timer = setTimeout(() => {
-      setShowMenu(true);
+      if (!hasScrolled) {
+        setShowMenu(true);
+      }
     }, 500); // 500ms for long press
     setLongPressTimer(timer);
+  };
+
+  const handlePressMove = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!startPosition) return;
+    
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    
+    const deltaX = Math.abs(clientX - startPosition.x);
+    const deltaY = Math.abs(clientY - startPosition.y);
+    
+    // If moved more than 10px in any direction, consider it scrolling
+    if (deltaX > 10 || deltaY > 10) {
+      setHasScrolled(true);
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        setLongPressTimer(null);
+      }
+    }
   };
 
   const handlePressEnd = () => {
@@ -354,6 +383,8 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages }: Me
       clearTimeout(longPressTimer);
       setLongPressTimer(null);
     }
+    setStartPosition(null);
+    setHasScrolled(false);
   };
 
   const startEdit = () => {
@@ -456,8 +487,11 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages }: Me
           onMouseDown={handlePressStart}
           onMouseUp={handlePressEnd}
           onMouseLeave={handlePressEnd}
+          onMouseMove={handlePressMove}
           onTouchStart={handlePressStart}
           onTouchEnd={handlePressEnd}
+          onTouchCancel={handlePressEnd}
+          onTouchMove={handlePressMove}
         >
           {!isOwn && 'sender_name' in message && (
             <div className="text-xs font-medium mb-1 text-gray-600">
