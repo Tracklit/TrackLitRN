@@ -19,7 +19,8 @@ import {
   Globe,
   ArrowLeft,
   Edit,
-  Trash
+  Trash,
+  Reply
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
@@ -319,9 +320,10 @@ interface MessageBubbleProps {
   message: ChatMessage | DirectMessage;
   isOwn: boolean;
   currentUser?: any;
+  onReply?: (message: ChatMessage | DirectMessage) => void;
 }
 
-const MessageBubble = ({ message, isOwn, currentUser }: MessageBubbleProps) => {
+const MessageBubble = ({ message, isOwn, currentUser, onReply }: MessageBubbleProps) => {
   const [showMenu, setShowMenu] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState('');
@@ -536,6 +538,7 @@ interface ChatInterfaceProps {
 const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
   const [messageText, setMessageText] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
+  const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
