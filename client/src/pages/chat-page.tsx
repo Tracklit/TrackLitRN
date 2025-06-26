@@ -241,7 +241,7 @@ const ChatPage = () => {
       </div>
 
       {/* Chat List - Full Width */}
-      <ScrollArea className="flex-1">
+      <div className="flex-1 overflow-y-auto">
         <div className="divide-y divide-gray-100">
 
 
@@ -306,8 +306,7 @@ const ChatPage = () => {
             </div>
           )}
         </div>
-      </ScrollArea>
-    </div>
+      </div>
   );
 };
 
@@ -462,7 +461,7 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
       </div>
 
       {/* Messages Area */}
-      <ScrollArea className="flex-1 p-4">
+      <div className="flex-1 overflow-y-auto p-4">
         <div className="space-y-4">
           {messagesLoading ? (
             <div className="flex justify-center py-8">
@@ -485,10 +484,10 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
           )}
           <div ref={messagesEndRef} />
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Message Input */}
-      <div className="p-4 border-t border-gray-200 bg-white">
+      <div className="p-4 border-t border-gray-200 bg-white flex-shrink-0">
         <form onSubmit={handleSendMessage} className="flex space-x-2">
           <Input
             value={messageText}
