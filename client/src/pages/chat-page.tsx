@@ -317,7 +317,7 @@ const ChatPage = () => {
                         </p>
                         <div className="flex items-center space-x-1">
                           <Badge variant="secondary" className="text-xs">
-                            {group.memberIds.length}
+                            {group.member_ids?.length || 0}
                           </Badge>
                         </div>
                       </div>
