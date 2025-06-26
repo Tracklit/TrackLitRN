@@ -7154,29 +7154,48 @@ Keep the response professional, evidence-based, and specific to track and field 
         return res.status(403).json({ error: "Access denied" });
       }
 
-      // Get messages with sender details - fixed approach
-      const messages = await db
-        .select({
-          id: groupMessages.id,
-          groupId: groupMessages.groupId,
-          senderId: groupMessages.senderId,
-          message: groupMessages.message,
-          mediaUrl: groupMessages.mediaUrl,
-          createdAt: groupMessages.createdAt,
-          sender: {
-            id: users.id,
-            username: users.username,
-            name: users.name,
-            profileImageUrl: users.profileImageUrl,
-          },
-        })
+      // Get messages first, then manually add sender data
+      const rawMessages = await db
+        .select()
         .from(groupMessages)
-        .innerJoin(users, eq(users.id, groupMessages.senderId))
         .where(eq(groupMessages.groupId, groupId))
         .orderBy(asc(groupMessages.createdAt));
 
+      // Get unique sender IDs
+      const senderIds = [...new Set(rawMessages.map(m => m.senderId))];
+      
+      // Fetch all senders
+      const senders = senderIds.length > 0 ? await db
+        .select({
+          id: users.id,
+          username: users.username,
+          name: users.name,
+          profileImageUrl: users.profileImageUrl,
+        })
+        .from(users)
+        .where(sql`${users.id} = ANY(${sql.raw(`ARRAY[${senderIds.join(',')}]`)})`) : [];
+
+      // Create sender lookup map
+      const senderMap = new Map(senders.map(sender => [sender.id, sender]));
+
+      // Combine messages with sender data
+      const messages = rawMessages.map(message => ({
+        ...message,
+        sender: senderMap.get(message.senderId) || {
+          id: message.senderId,
+          username: 'Unknown',
+          name: 'Unknown User',
+          profileImageUrl: null,
+        },
+      }));
+
       console.log('Messages with sender details:', JSON.stringify(messages, null, 2));
 
+      // Force cache refresh by setting no-cache headers
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+      
       res.json(messages);
     } catch (error) {
       console.error("Error fetching group messages:", error);

@@ -59,10 +59,15 @@ export default function GroupsPage() {
     queryKey: [`/api/groups/${selectedGroup}/messages`],
     enabled: !!selectedGroup,
     refetchInterval: 2000, // Refetch every 2 seconds to get new messages
+    staleTime: 0, // Force fresh data
+    gcTime: 0, // Don't cache (updated from cacheTime in newer TanStack Query)
   });
 
   // Debug log the messages
   console.log('Messages from API:', messages);
+  if (messages && messages.length > 0) {
+    console.log('First message sender:', messages[0].sender);
+  }
 
   // Get subscription limits
   const { data: coachLimits } = useQuery({
