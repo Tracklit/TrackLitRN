@@ -7197,13 +7197,19 @@ Keep the response professional, evidence-based, and specific to track and field 
       console.log('Transformed messages first item:', JSON.stringify(messages[0], null, 2));
       console.log('Number of messages returned:', messages.length);
 
-      // Force cache refresh by setting no-cache headers
+      // Force cache refresh by setting no-cache headers and unique identifier
       res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.set('Pragma', 'no-cache');
       res.set('Expires', '0');
-      res.set('ETag', Date.now().toString()); // Force unique response
+      res.set('Last-Modified', new Date().toUTCString());
       
-      res.json(messages);
+      // Add timestamp to force unique response
+      const responseWithTimestamp = messages.map(msg => ({
+        ...msg,
+        _fetchedAt: Date.now()
+      }));
+      
+      res.json(responseWithTimestamp);
     } catch (error) {
       console.error("Error fetching group messages:", error);
       res.status(500).json({ error: "Failed to fetch messages" });
