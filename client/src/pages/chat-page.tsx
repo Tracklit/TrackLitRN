@@ -161,7 +161,6 @@ const ChatPage = () => {
   const [messageText, setMessageText] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateGroup, setShowCreateGroup] = useState(false);
-  const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
@@ -714,6 +713,7 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
   const [showAttachmentPane, setShowAttachmentPane] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
