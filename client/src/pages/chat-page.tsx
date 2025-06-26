@@ -365,7 +365,7 @@ const MessageBubble = ({ message, isOwn, currentUser }: MessageBubbleProps) => {
       )}
       
       <div className={cn(
-        "min-w-[150px] max-w-xs lg:max-w-md px-4 py-3 rounded-2xl bg-white text-black border border-gray-200",
+        "min-w-[100px] max-w-xs lg:max-w-md px-3 py-2 rounded-2xl bg-white text-black border border-gray-200",
         isOwn 
           ? "rounded-br-none" 
           : "rounded-bl-none"
