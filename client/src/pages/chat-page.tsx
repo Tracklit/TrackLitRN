@@ -366,10 +366,26 @@ const MessageBubble = ({ message, isOwn, currentUser }: MessageBubbleProps) => {
   };
 
   const saveEdit = async () => {
-    // TODO: Implement edit message API call
-    console.log('Saving edited message:', editedText);
-    setIsEditing(false);
-    setEditedText('');
+    try {
+      const response = await apiRequest(`/api/chat/messages/${message.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: editedText }),
+      });
+
+      if (response.ok) {
+        // Invalidate and refetch messages to show the update
+        queryClient.invalidateQueries({ queryKey: ['/api/chat/groups/1/messages'] });
+        setIsEditing(false);
+        setEditedText('');
+      } else {
+        console.error('Failed to edit message');
+      }
+    } catch (error) {
+      console.error('Error editing message:', error);
+    }
   };
 
   const getProfileImage = () => {
