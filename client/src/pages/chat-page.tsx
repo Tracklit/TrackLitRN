@@ -86,6 +86,7 @@ const ChatPage = () => {
   const [messageText, setMessageText] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateGroup, setShowCreateGroup] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
@@ -319,9 +320,10 @@ interface MessageBubbleProps {
   message: ChatMessage | DirectMessage;
   isOwn: boolean;
   currentUser?: any;
+  onMessageUpdated?: () => void;
 }
 
-const MessageBubble = ({ message, isOwn, currentUser }: MessageBubbleProps) => {
+const MessageBubble = ({ message, isOwn, currentUser, onMessageUpdated }: MessageBubbleProps) => {
   const [showMenu, setShowMenu] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState('');
@@ -374,13 +376,12 @@ const MessageBubble = ({ message, isOwn, currentUser }: MessageBubbleProps) => {
       return response.json();
     },
     onSuccess: (updatedMessage) => {
-      // Update the messages in the cache immediately
-      queryClient.setQueryData(['/api/chat/groups/1/messages'], (oldData: any) => {
-        if (!oldData) return oldData;
-        return oldData.map((msg: any) => 
-          msg.id === updatedMessage.id ? updatedMessage : msg
-        );
-      });
+      console.log('Edit success, updated message:', updatedMessage);
+      
+      // Trigger refresh callback
+      if (onMessageUpdated) {
+        onMessageUpdated();
+      }
       
       setIsEditing(false);
       setEditedText('');
@@ -547,8 +548,8 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
   // Fetch messages for selected chat
   const { data: messages = [], isLoading: messagesLoading } = useQuery({
     queryKey: selectedChat.type === 'group' 
-      ? ['/api/chat/groups', selectedChat.id, 'messages']
-      : ['/api/chat/direct', selectedChat.id, 'messages'],
+      ? ['/api/chat/groups', selectedChat.id, 'messages', refreshKey]
+      : ['/api/chat/direct', selectedChat.id, 'messages', refreshKey],
     queryFn: async () => {
       const endpoint = selectedChat.type === 'group'
         ? `/api/chat/groups/${selectedChat.id}/messages`
