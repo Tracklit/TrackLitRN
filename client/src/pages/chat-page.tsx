@@ -424,7 +424,7 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages, onIm
   // Reaction mutation
   const reactionMutation = useMutation({
     mutationFn: async ({ messageId, messageType, emoji }: { messageId: number; messageType: string; emoji: string }) => {
-      const response = await apiRequest('POST', `/api/messages/${messageId}/${messageType}/reactions`, { emoji });
+      const response = await apiRequest('POST', `/api/chat/messages/${messageId}/${messageType}/reactions`, { emoji });
       if (!response.ok) {
         throw new Error('Failed to toggle reaction');
       }
@@ -442,7 +442,8 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages, onIm
   });
 
   const handleReaction = () => {
-    const messageType = 'groupId' in message ? 'group' : 'direct';
+    // Detect message type based on message properties
+    const messageType = (message as any).group_id || (message as any).groupId ? 'group' : 'direct';
     reactionMutation.mutate({
       messageId: message.id,
       messageType,

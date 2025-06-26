@@ -312,7 +312,7 @@ router.post("/api/chat/groups/:groupId/messages", upload.single('image'), async 
 });
 
 // Message Reactions Routes
-router.post("/api/messages/:messageId/:messageType/reactions", async (req: Request, res: Response) => {
+router.post("/messages/:messageId/:messageType/reactions", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) return res.sendStatus(401);
   
   try {
@@ -365,7 +365,7 @@ router.post("/api/messages/:messageId/:messageType/reactions", async (req: Reque
   }
 });
 
-router.get("/api/messages/:messageId/:messageType/reactions", async (req: Request, res: Response) => {
+router.get("/messages/:messageId/:messageType/reactions", async (req: Request, res: Response) => {
   try {
     const { messageId, messageType } = req.params;
 

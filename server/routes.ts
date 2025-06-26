@@ -2,7 +2,7 @@ import express, { type Express, type Request, type Response } from "express";
 import { createServer, type Server } from "http";
 import { storage as dbStorage } from "./storage";
 import { pool, db } from "./db";
-import { meets, notifications, users } from "@shared/schema";
+import { meets, notifications, users, messageReactions } from "@shared/schema";
 import { and, eq, or, sql, isNotNull, desc, asc } from "drizzle-orm";
 import { setupAuth } from "./auth";
 import { z } from "zod";
@@ -25,7 +25,7 @@ import worldAthleticsRoutes from "./routes/world-athletics";
 import rehabRoutes from "./routes/rehab";
 import communityRoutes from "./routes/community";
 import chatRoutes from "./chat-routes-simple";
-import { addReaction, getReactions } from "./chat-reactions";
+// Remove unused import
 
 // Background processing function for gym data
 async function processGymDataInBackground(programId: number, googleSheetId: string, sessions: any[]) {
@@ -3131,8 +3131,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Message Reactions Routes
-  app.post("/api/messages/:messageId/:messageType/reactions", addReaction);
-  app.get("/api/messages/:messageId/:messageType/reactions", getReactions);
+  app.post("/api/chat/messages/:messageId/:messageType/reactions", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const { messageId, messageType } = req.params;
+      const { emoji = "👍" } = req.body;
+      const userId = req.user!.id;
+
+      if (!messageId || !messageType) {
+        return res.status(400).json({ error: "Missing messageId or messageType" });
+      }
+
+      // Check if user already reacted with this emoji
+      const existingReaction = await db
+        .select()
+        .from(messageReactions)
+        .where(
+          and(
+            eq(messageReactions.messageId, parseInt(messageId)),
+            eq(messageReactions.messageType, messageType),
+            eq(messageReactions.userId, userId),
+            eq(messageReactions.emoji, emoji)
+          )
+        )
+        .limit(1);
+
+      if (existingReaction.length > 0) {
+        // Remove existing reaction (toggle off)
+        await db
+          .delete(messageReactions)
+          .where(eq(messageReactions.id, existingReaction[0].id));
+        
+        return res.json({ action: "removed", messageId, emoji });
+      } else {
+        // Add new reaction
+        const [newReaction] = await db
+          .insert(messageReactions)
+          .values({
+            messageId: parseInt(messageId),
+            messageType,
+            userId,
+            emoji
+          })
+          .returning();
+
+        return res.json({ action: "added", reaction: newReaction });
+      }
+    } catch (error) {
+      console.error("Error toggling message reaction:", error);
+      res.status(500).json({ error: "Failed to toggle reaction" });
+    }
+  });
+
+  app.get("/api/chat/messages/:messageId/:messageType/reactions", async (req: Request, res: Response) => {
+    try {
+      const { messageId, messageType } = req.params;
+
+      if (!messageId || !messageType) {
+        return res.status(400).json({ error: "Missing messageId or messageType" });
+      }
+
+      const reactions = await db
+        .select({
+          id: messageReactions.id,
+          emoji: messageReactions.emoji,
+          userId: messageReactions.userId,
+          createdAt: messageReactions.createdAt
+        })
+        .from(messageReactions)
+        .where(
+          and(
+            eq(messageReactions.messageId, parseInt(messageId)),
+            eq(messageReactions.messageType, messageType)
+          )
+        )
+        .orderBy(messageReactions.createdAt);
+
+      // Group reactions by emoji
+      const groupedReactions = reactions.reduce((acc: any, reaction) => {
+        if (!acc[reaction.emoji]) {
+          acc[reaction.emoji] = {
+            emoji: reaction.emoji,
+            count: 0,
+            users: []
+          };
+        }
+        acc[reaction.emoji].count++;
+        acc[reaction.emoji].users.push(reaction.userId);
+        return acc;
+      }, {});
+
+      res.json(Object.values(groupedReactions));
+    } catch (error) {
+      console.error("Error getting message reactions:", error);
+      res.status(500).json({ error: "Failed to get reactions" });
+    }
+  });
 
   // Premium features - just mock endpoints for now
   app.post("/api/premium/upgrade", async (req: Request, res: Response) => {
