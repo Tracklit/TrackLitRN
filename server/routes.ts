@@ -7192,20 +7192,9 @@ Keep the response professional, evidence-based, and specific to track and field 
       });
 
       console.log(`Fetched ${messages.length} messages with profile images`);
+      console.log('First message sender object:', JSON.stringify(messages[0]?.sender || null, null, 2));
 
-      // Force cache refresh by setting no-cache headers and unique identifier
-      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.set('Pragma', 'no-cache');
-      res.set('Expires', '0');
-      res.set('Last-Modified', new Date().toUTCString());
-      
-      // Add timestamp to force unique response
-      const responseWithTimestamp = messages.map(msg => ({
-        ...msg,
-        _fetchedAt: Date.now()
-      }));
-      
-      res.json(responseWithTimestamp);
+      res.json(messages);
     } catch (error) {
       console.error("Error fetching group messages:", error);
       res.status(500).json({ error: "Failed to fetch messages" });
