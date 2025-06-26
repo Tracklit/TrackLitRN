@@ -178,19 +178,19 @@ router.get("/api/chat/groups/:groupId/messages", async (req: Request, res: Respo
       SELECT 
         cgm.id,
         cgm.group_id,
-        cgm.user_id,
+        cgm.sender_id as user_id,
         cgm.text,
         cgm.created_at,
         cgm.message_type,
         cgm.media_url,
         cgm.reply_to_id,
-        cgm.is_edited,
+        cgm.is_deleted as is_edited,
         cgm.edited_at,
         u.name as sender_name,
         u.username as sender_username,
         u.profile_image_url as sender_profile_image
       FROM chat_group_messages cgm
-      INNER JOIN users u ON cgm.user_id = u.id
+      INNER JOIN users u ON cgm.sender_id = u.id
       WHERE cgm.group_id = ${groupId}
       ORDER BY cgm.created_at DESC
       LIMIT ${limit} OFFSET ${offset}
@@ -232,7 +232,7 @@ router.post("/api/chat/groups/:groupId/messages", async (req: Request, res: Resp
 
     // Insert message
     const messageResult = await db.execute(sql`
-      INSERT INTO chat_group_messages (group_id, user_id, text, message_type, media_url, reply_to_id)
+      INSERT INTO chat_group_messages (group_id, sender_id, text, message_type, media_url, reply_to_id)
       VALUES (${groupId}, ${userId}, ${text.trim()}, ${messageType}, ${mediaUrl || null}, ${replyToId || null})
       RETURNING *
     `);
