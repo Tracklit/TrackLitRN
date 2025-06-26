@@ -641,7 +641,9 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [initialScrollDone, setInitialScrollDone] = useState(false);
   const queryClient = useQueryClient();
 
   // Image compression function
