@@ -748,31 +748,45 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
     return timeA - timeB;
   });
 
-  // Immediate scroll to bottom when entering or changing chats
+  // Track if we've scrolled to bottom for this chat already
+  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
+
+  // Reset scroll flag when changing chats
   useEffect(() => {
-    if (messagesContainerRef.current && messages.length > 0) {
+    setHasScrolledToBottom(false);
+  }, [selectedChat.id]);
+
+  // Scroll to bottom only on initial chat entry or new messages for current user
+  useEffect(() => {
+    if (messagesContainerRef.current && messages.length > 0 && !hasScrolledToBottom) {
       const scrollToBottom = () => {
         if (messagesContainerRef.current) {
           const container = messagesContainerRef.current;
-          // Use multiple methods to ensure absolute bottom scroll
-          container.scrollTop = container.scrollHeight;
-          container.scrollTo({ top: container.scrollHeight, behavior: 'auto' });
-          
-          // Additional scroll attempt after a short delay
-          setTimeout(() => {
-            if (container) {
-              container.scrollTop = container.scrollHeight + 100; // Add extra pixels to ensure bottom
-            }
-          }, 10);
+          container.scrollTop = container.scrollHeight + 100;
+          setHasScrolledToBottom(true);
         }
       };
 
-      // Initial scroll
       setTimeout(scrollToBottom, 50);
-      // Backup scroll attempt
-      setTimeout(scrollToBottom, 150);
     }
-  }, [selectedChat.id, messages]);
+  }, [messages, hasScrolledToBottom]);
+
+  // Auto-scroll for new messages from current user
+  useEffect(() => {
+    if (hasScrolledToBottom && messages.length > 0 && messagesContainerRef.current) {
+      const lastMessage = messages[messages.length - 1];
+      const currentUserId = currentUser?.id;
+      
+      // Only auto-scroll if the last message is from current user (they sent it)
+      if (lastMessage.user_id === currentUserId) {
+        setTimeout(() => {
+          if (messagesContainerRef.current) {
+            messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight + 100;
+          }
+        }, 50);
+      }
+    }
+  }, [messages, hasScrolledToBottom, currentUser?.id]);
 
   // Send message mutation with optimistic updates
   const sendMessageMutation = useMutation({
