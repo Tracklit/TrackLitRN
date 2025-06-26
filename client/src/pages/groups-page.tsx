@@ -61,6 +61,9 @@ export default function GroupsPage() {
     refetchInterval: 2000, // Refetch every 2 seconds to get new messages
   });
 
+  // Debug log the messages
+  console.log('Messages from API:', messages);
+
   // Get subscription limits
   const { data: coachLimits } = useQuery({
     queryKey: ['/api/coach/limits'],

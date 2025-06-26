@@ -7175,6 +7175,8 @@ Keep the response professional, evidence-based, and specific to track and field 
         .where(eq(groupMessages.groupId, groupId))
         .orderBy(asc(groupMessages.createdAt));
 
+      console.log('Messages with sender details:', JSON.stringify(messages, null, 2));
+
       res.json(messages);
     } catch (error) {
       console.error("Error fetching group messages:", error);
