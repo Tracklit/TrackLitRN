@@ -255,19 +255,11 @@ export default function GroupsPage() {
                           {/* Avatar - only show for other users */}
                           {!isOwnMessage && (
                             <div className="mr-3 flex-shrink-0">
-                              {message.sender?.profileImageUrl ? (
-                                <img 
-                                  src={message.sender.profileImageUrl} 
-                                  alt={message.sender.name || message.sender.username}
-                                  className="w-8 h-8 rounded-full object-cover"
-                                />
-                              ) : (
-                                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                                  <span className="text-white font-medium text-xs">
-                                    {message.sender?.username?.charAt(0).toUpperCase() || 'U'}
-                                  </span>
-                                </div>
-                              )}
+                              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                <span className="text-white font-medium text-xs">
+                                  {message.sender?.username?.charAt(0).toUpperCase() || 'U'}
+                                </span>
+                              </div>
                             </div>
                           )}
                           
@@ -446,17 +438,34 @@ export default function GroupsPage() {
                       onBlur={() => setKeyboardVisible(false)}
                       rows={1}
                     />
+                    {/* Emoji picker button inside textarea */}
+                    <button
+                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-300 transition-colors"
+                    >
+                      😊
+                    </button>
+                    
+                    {/* Simple emoji picker */}
+                    {showEmojiPicker && (
+                      <div className="absolute bottom-full right-0 mb-2 bg-gray-800 border border-gray-600 rounded-lg p-2 shadow-lg z-50">
+                        <div className="grid grid-cols-6 gap-1">
+                          {['😊', '😂', '❤️', '👍', '🎉', '🔥', '💪', '✨', '⚡', '🏃‍♂️', '🏆', '🥇'].map((emoji) => (
+                            <button
+                              key={emoji}
+                              onClick={() => {
+                                setNewMessage(prev => prev + emoji);
+                                setShowEmojiPicker(false);
+                              }}
+                              className="p-2 hover:bg-gray-700 rounded text-lg"
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-
-                  {/* Emoji picker button */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0 text-gray-400 hover:text-white flex-shrink-0"
-                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                  >
-                    <Smile className="h-4 w-4" />
-                  </Button>
 
                   {/* Send/Mic button */}
                   <Button
