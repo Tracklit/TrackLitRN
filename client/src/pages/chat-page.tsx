@@ -683,7 +683,7 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
             value={messageText}
             onChange={(e) => setMessageText(e.target.value)}
             placeholder="Type a message..."
-            className="flex-1"
+            className="flex-1 text-black"
             disabled={sendMessageMutation.isPending}
           />
           <Button
