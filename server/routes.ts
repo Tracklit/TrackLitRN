@@ -7193,9 +7193,13 @@ Keep the response professional, evidence-based, and specific to track and field 
         };
       });
 
-      console.log('Raw SQL result first row:', JSON.stringify(result.rows[0], null, 2));
-      console.log('Transformed messages first item:', JSON.stringify(messages[0], null, 2));
-      console.log('Number of messages returned:', messages.length);
+      if (result.rows.length > 0) {
+        console.log('=== SQL DEBUG ===');
+        console.log('Available columns:', Object.keys(result.rows[0]));
+        console.log('Raw SQL result first row:', JSON.stringify(result.rows[0], null, 2));
+        console.log('Transformed messages first item:', JSON.stringify(messages[0], null, 2));
+        console.log('==================');
+      }
 
       // Force cache refresh by setting no-cache headers and unique identifier
       res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
