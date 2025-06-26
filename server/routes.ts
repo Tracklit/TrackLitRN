@@ -6532,42 +6532,6 @@ Keep the response professional, evidence-based, and specific to track and field 
     }
   });
 
-  // Edit message endpoint
-  app.patch("/api/messages/:messageId", async (req: Request, res: Response) => {
-    if (!req.isAuthenticated()) {
-      return res.sendStatus(401);
-    }
-
-    try {
-      const messageId = parseInt(req.params.messageId);
-      const { content } = req.body;
-
-      if (isNaN(messageId)) {
-        return res.status(400).send("Invalid message ID");
-      }
-
-      if (!content || !content.trim()) {
-        return res.status(400).send("Message content cannot be empty");
-      }
-
-      // Update the message using direct SQL to ensure proper ownership check
-      const result = await (dbStorage as any).db.execute(`
-        UPDATE direct_messages 
-        SET content = ?, isEdited = true
-        WHERE id = ? AND senderId = ?
-      `, [content.trim(), messageId, req.user.id]);
-
-      if (result.rowsAffected === 0) {
-        return res.status(404).send("Message not found or you don't have permission to edit it");
-      }
-
-      res.json({ success: true, message: "Message updated successfully" });
-    } catch (error) {
-      console.error("Error editing message:", error);
-      res.status(500).send("Error editing message");
-    }
-  });
-
   // Following/Followers API
   app.post("/api/follow/:userId", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) {
