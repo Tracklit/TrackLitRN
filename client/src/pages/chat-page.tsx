@@ -319,10 +319,9 @@ interface MessageBubbleProps {
   message: ChatMessage | DirectMessage;
   isOwn: boolean;
   currentUser?: any;
-  onMessageUpdated?: () => void;
 }
 
-const MessageBubble = ({ message, isOwn, currentUser, onMessageUpdated }: MessageBubbleProps) => {
+const MessageBubble = ({ message, isOwn, currentUser }: MessageBubbleProps) => {
   const [showMenu, setShowMenu] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState('');
@@ -377,10 +376,18 @@ const MessageBubble = ({ message, isOwn, currentUser, onMessageUpdated }: Messag
     onSuccess: (updatedMessage) => {
       console.log('Edit success, updated message:', updatedMessage);
       
-      // Trigger refresh callback
-      if (onMessageUpdated) {
-        onMessageUpdated();
-      }
+      // Update only the specific message in cache without full refetch
+      queryClient.setQueryData(['/api/chat/groups/1/messages'], (oldData: any) => {
+        if (!oldData) return oldData;
+        return oldData.map((msg: any) => 
+          msg.id === updatedMessage.id ? {
+            ...msg,
+            text: updatedMessage.text,
+            edited_at: updatedMessage.edited_at,
+            is_edited: true
+          } : msg
+        );
+      });
       
       setIsEditing(false);
       setEditedText('');
@@ -488,7 +495,7 @@ const MessageBubble = ({ message, isOwn, currentUser, onMessageUpdated }: Messag
         {/* Right-aligned timestamp */}
         <div className="text-[8px] mt-1 text-gray-500 text-right">
           {formatTime('created_at' in message ? message.created_at : message.createdAt)}
-          {(message.edited_at || message.editedAt) && (
+          {((message as any).edited_at || (message as any).editedAt) && (
             <span className="ml-1">(edited)</span>
           )}
         </div>
@@ -546,10 +553,10 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
   });
 
   // Fetch messages for selected chat
-  const { data: messages = [], isLoading: messagesLoading } = useQuery({
+  const { data: messagesData = [], isLoading: messagesLoading } = useQuery({
     queryKey: selectedChat.type === 'group' 
-      ? ['/api/chat/groups', selectedChat.id, 'messages', refreshKey]
-      : ['/api/chat/direct', selectedChat.id, 'messages', refreshKey],
+      ? ['/api/chat/groups', selectedChat.id, 'messages']
+      : ['/api/chat/direct', selectedChat.id, 'messages'],
     queryFn: async () => {
       const endpoint = selectedChat.type === 'group'
         ? `/api/chat/groups/${selectedChat.id}/messages`
@@ -557,6 +564,13 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
       const response = await apiRequest('GET', endpoint);
       return response.json();
     }
+  });
+
+  // Sort messages by creation time to ensure newest appear at bottom
+  const messages = messagesData.sort((a: any, b: any) => {
+    const timeA = new Date(a.created_at).getTime();
+    const timeB = new Date(b.created_at).getTime();
+    return timeA - timeB;
   });
 
   // Send message mutation
@@ -650,7 +664,6 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
                 message={message}
                 isOwn={message.user_id === currentUser?.id}
                 currentUser={currentUser}
-                onMessageUpdated={() => setRefreshKey(prev => prev + 1)}
               />
             ))
           )}
