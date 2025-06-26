@@ -245,62 +245,79 @@ export default function GroupsPage() {
                     <p>Be the first to start the conversation!</p>
                   </div>
                 ) : (
-                  messages.map((message) => (
-                    <div key={message.id} className="mb-4">
-                      {/* Sender info */}
-                      <div className="flex items-center space-x-2 mb-2">
-                        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                          <span className="text-white font-medium text-sm">
-                            {message.sender?.username?.charAt(0).toUpperCase() || 'U'}
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm font-medium text-white">
-                            {message.sender?.username || 'Unknown User'}
-                          </span>
-                          <span className="text-xs text-gray-400">
-                            {formatMessageTime(new Date(message.createdAt || new Date()))}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Message content */}
-                      <div className="ml-10">
-                        <div
-                          className={cn(
-                            "group relative",
-                            hoveredMessage === message.id && "bg-gray-800/50 rounded-lg"
+                  messages.map((message) => {
+                    const isOwnMessage = message.senderId === user?.id;
+                    
+                    return (
+                      <div key={message.id} className={cn("mb-4 flex", isOwnMessage ? "justify-end" : "justify-start")}>
+                        <div className={cn("max-w-[70%] flex", isOwnMessage ? "flex-row-reverse" : "flex-row")}>
+                          {/* Avatar - only show for other users */}
+                          {!isOwnMessage && (
+                            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                              <span className="text-white font-medium text-xs">
+                                {message.sender?.username?.charAt(0).toUpperCase() || 'U'}
+                              </span>
+                            </div>
                           )}
-                          onMouseEnter={() => setHoveredMessage(message.id)}
-                          onMouseLeave={() => setHoveredMessage(null)}
-                        >
-                          <div className="flex items-start justify-between p-2">
-                            <div className="flex-1">
+                          
+                          <div className="flex flex-col">
+                            {/* Sender name - only show for other users */}
+                            {!isOwnMessage && (
+                              <div className="mb-1">
+                                <span className="text-xs font-medium text-gray-400">
+                                  {message.sender?.username || 'Unknown User'}
+                                </span>
+                              </div>
+                            )}
+                            
+                            {/* Message bubble */}
+                            <div
+                              className={cn(
+                                "group relative rounded-2xl px-4 py-2 max-w-full break-words",
+                                isOwnMessage 
+                                  ? "bg-blue-600 text-white rounded-br-md" 
+                                  : "bg-gray-700 text-gray-100 rounded-bl-md",
+                                hoveredMessage === message.id && "ring-1 ring-gray-500"
+                              )}
+                              onMouseEnter={() => setHoveredMessage(message.id)}
+                              onMouseLeave={() => setHoveredMessage(null)}
+                            >
                               {/* Reply preview if this is a reply */}
                               {replyingTo && (
-                                <div className="mb-2 p-2 bg-gray-800 rounded-lg border-l-2 border-blue-500">
-                                  <div className="text-xs text-gray-400 mb-1">
+                                <div className={cn(
+                                  "mb-2 p-2 rounded-lg border-l-2 border-opacity-50",
+                                  isOwnMessage 
+                                    ? "bg-blue-700 border-blue-300" 
+                                    : "bg-gray-800 border-gray-500"
+                                )}>
+                                  <div className="text-xs opacity-75 mb-1">
                                     Replying to {replyingTo.sender?.username || 'Unknown'}
                                   </div>
-                                  <div className="text-sm text-gray-300 truncate">
+                                  <div className="text-sm opacity-90 truncate">
                                     {replyingTo.message}
                                   </div>
                                 </div>
                               )}
                               
-                              <p className="text-gray-300 text-sm break-words">
+                              <p className="text-sm leading-relaxed">
                                 {message.message}
                               </p>
                               
-                              {/* Reactions placeholder */}
-                              <div className="flex items-center space-x-1 mt-1">
-                                {/* This would be populated with actual reactions */}
+                              {/* Timestamp - show on hover */}
+                              <div className={cn(
+                                "text-xs mt-1 opacity-0 group-hover:opacity-60 transition-opacity",
+                                isOwnMessage ? "text-right text-blue-100" : "text-left text-gray-400"
+                              )}>
+                                {format(new Date(message.createdAt || new Date()), 'HH:mm')}
                               </div>
                             </div>
-
+                            
                             {/* Message actions - show on hover */}
                             {hoveredMessage === message.id && (
-                              <div className="flex items-center space-x-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div className={cn(
+                                "flex items-center space-x-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity",
+                                isOwnMessage ? "justify-end" : "justify-start"
+                              )}>
                                 <Button
                                   variant="ghost"
                                   size="sm"
@@ -325,21 +342,18 @@ export default function GroupsPage() {
                                 </Button>
                               </div>
                             )}
-                          </div>
-
-                          {/* Message status indicators */}
-                          <div className="flex justify-end mt-1 pr-2">
-                            <div className="flex items-center space-x-1">
-                              <CheckCheck className="h-3 w-3 text-blue-500" />
-                              <span className="text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                                {format(new Date(message.createdAt || new Date()), 'HH:mm')}
-                              </span>
-                            </div>
+                            
+                            {/* Message status for own messages */}
+                            {isOwnMessage && (
+                              <div className="flex justify-end mt-1">
+                                <CheckCheck className="h-3 w-3 text-blue-400" />
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
                 
                 {/* Typing indicator */}
