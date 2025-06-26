@@ -757,7 +757,7 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
         if (replyToId) formData.append('replyToId', replyToId.toString());
         formData.append('messageType', 'image');
         
-        const response = await fetch(`/api${endpoint}`, {
+        const response = await fetch(endpoint, {
           method: 'POST',
           body: formData,
           credentials: 'include'
