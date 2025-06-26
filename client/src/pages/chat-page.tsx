@@ -646,13 +646,6 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
   const [initialScrollDone, setInitialScrollDone] = useState(false);
   const queryClient = useQueryClient();
 
-  // Immediate scroll to bottom when entering or changing chats
-  useEffect(() => {
-    if (messagesContainerRef.current && messages.length > 0) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-    }
-  }, [selectedChat.id, messages]);
-
   // Image compression function
   const compressImage = (file: File, maxWidth: number = 800, quality: number = 0.8): Promise<File> => {
     return new Promise((resolve) => {
@@ -750,6 +743,13 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
     const timeB = new Date(b.created_at).getTime();
     return timeA - timeB;
   });
+
+  // Immediate scroll to bottom when entering or changing chats
+  useEffect(() => {
+    if (messagesContainerRef.current && messages.length > 0) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
+  }, [selectedChat.id, messages]);
 
   // Send message mutation
   const sendMessageMutation = useMutation({
