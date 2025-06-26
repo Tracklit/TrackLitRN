@@ -178,8 +178,8 @@ export default function GroupsPage() {
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 p-4 overflow-y-auto bg-gray-900">
-              <div className="space-y-4 max-w-4xl mx-auto">
+            <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-gray-900">
+              <div className="max-w-4xl mx-auto">
                 {messages.length === 0 ? (
                   <div className="text-center text-gray-400 py-8">
                     <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -187,24 +187,97 @@ export default function GroupsPage() {
                     <p>Be the first to start the conversation!</p>
                   </div>
                 ) : (
-                  messages.map((message) => (
-                    <div key={message.id} className="flex items-start space-x-3">
-                      <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center text-sm font-medium">
-                        {message.sender?.username?.charAt(0).toUpperCase() || 'U'}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <span className="text-sm font-medium text-white">
-                            {message.sender?.username || 'Unknown User'}
-                          </span>
-                          <span className="text-xs text-gray-400">
-                            {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
-                          </span>
+                  messages.map((message, index) => {
+                    const isOwnMessage = message.senderId === user?.id;
+                    const prevMessage = index > 0 ? messages[index - 1] : null;
+                    const nextMessage = index < messages.length - 1 ? messages[index + 1] : null;
+                    
+                    // Group messages from same sender within 5 minutes
+                    const isGroupedWithPrev = prevMessage && 
+                      prevMessage.senderId === message.senderId &&
+                      new Date(message.createdAt).getTime() - new Date(prevMessage.createdAt).getTime() < 300000;
+                    
+                    const isGroupedWithNext = nextMessage && 
+                      nextMessage.senderId === message.senderId &&
+                      new Date(nextMessage.createdAt).getTime() - new Date(message.createdAt).getTime() < 300000;
+
+                    return (
+                      <div
+                        key={message.id}
+                        className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} ${
+                          isGroupedWithPrev ? 'mt-1' : 'mt-4'
+                        }`}
+                      >
+                        <div className={`flex items-end space-x-2 max-w-[70%] ${isOwnMessage ? 'flex-row-reverse space-x-reverse' : ''}`}>
+                          {/* Avatar - only show for others and when not grouped */}
+                          {!isOwnMessage && !isGroupedWithNext && (
+                            <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0 mb-1">
+                              <span className="text-xs font-medium text-white">
+                                {message.sender?.username?.charAt(0).toUpperCase() || 'U'}
+                              </span>
+                            </div>
+                          )}
+                          
+                          {/* Spacer for grouped messages */}
+                          {!isOwnMessage && isGroupedWithNext && (
+                            <div className="w-8"></div>
+                          )}
+
+                          <div className="flex flex-col">
+                            {/* Sender name - only show for others and when not grouped with previous */}
+                            {!isOwnMessage && !isGroupedWithPrev && (
+                              <div className="text-xs text-gray-400 mb-1 px-2">
+                                {message.sender?.username || 'Unknown User'}
+                              </div>
+                            )}
+
+                            {/* Message bubble */}
+                            <div
+                              className={`relative px-4 py-2 rounded-2xl ${
+                                isOwnMessage
+                                  ? 'bg-blue-600 text-white'
+                                  : 'bg-gray-700 text-gray-100'
+                              } ${
+                                // Rounded corners based on grouping
+                                isOwnMessage
+                                  ? isGroupedWithPrev && isGroupedWithNext
+                                    ? 'rounded-tr-md'
+                                    : isGroupedWithPrev
+                                    ? 'rounded-tr-md rounded-br-md'
+                                    : isGroupedWithNext
+                                    ? 'rounded-tr-md'
+                                    : ''
+                                  : isGroupedWithPrev && isGroupedWithNext
+                                    ? 'rounded-tl-md'
+                                    : isGroupedWithPrev
+                                    ? 'rounded-tl-md rounded-bl-md'
+                                    : isGroupedWithNext
+                                    ? 'rounded-tl-md'
+                                    : ''
+                              }`}
+                            >
+                              <p className="text-sm leading-relaxed break-words">{message.message}</p>
+                              
+                              {/* Timestamp - show on last message in group */}
+                              {!isGroupedWithNext && (
+                                <div className={`text-xs mt-1 opacity-70 ${
+                                  isOwnMessage ? 'text-blue-100' : 'text-gray-400'
+                                }`}>
+                                  {new Date(message.createdAt).toLocaleTimeString([], { 
+                                    hour: '2-digit', 
+                                    minute: '2-digit' 
+                                  })}
+                                  {isOwnMessage && (
+                                    <span className="ml-1">✓✓</span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <p className="text-gray-300 text-sm">{message.message}</p>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
                 <div ref={messagesEndRef} />
               </div>
