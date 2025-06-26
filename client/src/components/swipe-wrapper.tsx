@@ -17,6 +17,8 @@ const SwipeWrapper: React.FC<SwipeWrapperProps> = ({ children, currentPage }) =>
   const SWIPE_THRESHOLD = 100; // Minimum distance for swipe
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (!e.touches[0]) return;
+    
     const touch = e.touches[0];
     setStartX(touch.clientX);
     setStartY(touch.clientY);
