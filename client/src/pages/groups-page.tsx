@@ -193,20 +193,14 @@ export default function GroupsPage() {
                   </div>
                 ) : (
                   messages.map((message) => (
-                    <div key={message.id} className="flex items-start space-x-3">
-                      <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center text-sm font-medium">
-                        {message.sender?.username?.charAt(0).toUpperCase() || 'U'}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <span className="text-sm font-medium text-white">
-                            {message.sender?.username || 'Unknown User'}
-                          </span>
-                          <span className="text-xs text-gray-400">
+                    <div key={message.id} className="mb-3">
+                      <div className="bg-gray-800 rounded-lg p-3">
+                        <div className="flex justify-between items-start mb-1">
+                          <p className="text-gray-300 text-sm flex-1">{message.message}</p>
+                          <span className="text-xs text-gray-400 ml-2 flex-shrink-0">
                             {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
                           </span>
                         </div>
-                        <p className="text-gray-300 text-sm">{message.message}</p>
                       </div>
                     </div>
                   ))
