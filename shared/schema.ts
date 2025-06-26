@@ -1588,6 +1588,226 @@ export type InsertProgramSession = z.infer<typeof insertProgramSessionSchema>;
 export type ProgramPurchase = typeof programPurchases.$inferSelect;
 export type InsertProgramPurchase = z.infer<typeof insertProgramPurchaseSchema>;
 
+// ============ TELEGRAM-STYLE CHAT SYSTEM ============
+
+// Chat Groups (Telegram-style channels)
+export const chatGroups = pgTable("chat_groups", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  image: text("image"),
+  creatorId: integer("creator_id").notNull().references(() => users.id),
+  adminIds: integer("admin_ids").array().notNull().default([]),
+  memberIds: integer("member_ids").array().notNull().default([]),
+  isPrivate: boolean("is_private").notNull().default(false),
+  inviteCode: text("invite_code"),
+  createdAt: timestamp("created_at").defaultNow(),
+  lastMessageAt: timestamp("last_message_at").defaultNow(),
+  lastMessage: text("last_message"),
+  lastMessageSenderId: integer("last_message_sender_id").references(() => users.id),
+  messageCount: integer("message_count").notNull().default(0),
+});
+
+// Chat Group Messages
+export const chatGroupMessages = pgTable("chat_group_messages", {
+  id: serial("id").primaryKey(),
+  groupId: integer("group_id").notNull().references(() => chatGroups.id, { onDelete: "cascade" }),
+  senderId: integer("sender_id").notNull().references(() => users.id),
+  senderName: text("sender_name").notNull(),
+  senderProfileImage: text("sender_profile_image"),
+  text: text("text").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  editedAt: timestamp("edited_at"),
+  isDeleted: boolean("is_deleted").notNull().default(false),
+  linkPreview: json("link_preview").$type<{
+    title: string;
+    description: string;
+    image: string;
+    url: string;
+  }>(),
+  replyToId: integer("reply_to_id").references(() => chatGroupMessages.id),
+  messageType: text("message_type").notNull().default("text"), // text, image, file, system
+  mediaUrl: text("media_url"),
+  isPinned: boolean("is_pinned").notNull().default(false),
+});
+
+// Chat Group Members (for detailed member management)
+export const chatGroupMembers = pgTable("chat_group_members", {
+  id: serial("id").primaryKey(),
+  groupId: integer("group_id").notNull().references(() => chatGroups.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  role: text("role").notNull().default("member"), // member, admin, creator
+  joinedAt: timestamp("joined_at").defaultNow(),
+  lastReadMessageId: integer("last_read_message_id").references(() => chatGroupMessages.id),
+  isMuted: boolean("is_muted").notNull().default(false),
+  isOnline: boolean("is_online").notNull().default(false),
+  lastSeenAt: timestamp("last_seen_at").defaultNow(),
+});
+
+// Enhanced Direct Messages (for 1-on-1 chats)
+export const telegramDirectMessages = pgTable("telegram_direct_messages", {
+  id: serial("id").primaryKey(),
+  conversationId: integer("conversation_id").notNull().references(() => conversations.id, { onDelete: "cascade" }),
+  senderId: integer("sender_id").notNull().references(() => users.id),
+  receiverId: integer("receiver_id").notNull().references(() => users.id),
+  text: text("text").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  editedAt: timestamp("edited_at"),
+  isDeleted: boolean("is_deleted").notNull().default(false),
+  isRead: boolean("is_read").notNull().default(false),
+  readAt: timestamp("read_at"),
+  linkPreview: json("link_preview").$type<{
+    title: string;
+    description: string;
+    image: string;
+    url: string;
+  }>(),
+  replyToId: integer("reply_to_id").references(() => telegramDirectMessages.id),
+  messageType: text("message_type").notNull().default("text"), // text, image, file
+  mediaUrl: text("media_url"),
+});
+
+// Typing Status (for real-time typing indicators)
+export const typingStatus = pgTable("typing_status", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  groupId: integer("group_id").references(() => chatGroups.id, { onDelete: "cascade" }),
+  conversationId: integer("conversation_id").references(() => conversations.id, { onDelete: "cascade" }),
+  isTyping: boolean("is_typing").notNull().default(false),
+  lastTypingAt: timestamp("last_typing_at").defaultNow(),
+});
+
+// Relations for chat system
+export const chatGroupsRelations = relations(chatGroups, ({ one, many }) => ({
+  creator: one(users, {
+    fields: [chatGroups.creatorId],
+    references: [users.id],
+    relationName: "created_groups",
+  }),
+  lastMessageSender: one(users, {
+    fields: [chatGroups.lastMessageSenderId],
+    references: [users.id],
+    relationName: "last_message_sender",
+  }),
+  messages: many(chatGroupMessages),
+  members: many(chatGroupMembers),
+}));
+
+export const chatGroupMessagesRelations = relations(chatGroupMessages, ({ one }) => ({
+  group: one(chatGroups, {
+    fields: [chatGroupMessages.groupId],
+    references: [chatGroups.id],
+  }),
+  sender: one(users, {
+    fields: [chatGroupMessages.senderId],
+    references: [users.id],
+    relationName: "sent_group_messages",
+  }),
+  replyTo: one(chatGroupMessages, {
+    fields: [chatGroupMessages.replyToId],
+    references: [chatGroupMessages.id],
+    relationName: "reply_message",
+  }),
+}));
+
+export const chatGroupMembersRelations = relations(chatGroupMembers, ({ one }) => ({
+  group: one(chatGroups, {
+    fields: [chatGroupMembers.groupId],
+    references: [chatGroups.id],
+  }),
+  user: one(users, {
+    fields: [chatGroupMembers.userId],
+    references: [users.id],
+    relationName: "group_memberships",
+  }),
+  lastReadMessage: one(chatGroupMessages, {
+    fields: [chatGroupMembers.lastReadMessageId],
+    references: [chatGroupMessages.id],
+  }),
+}));
+
+export const telegramDirectMessagesRelations = relations(telegramDirectMessages, ({ one }) => ({
+  conversation: one(conversations, {
+    fields: [telegramDirectMessages.conversationId],
+    references: [conversations.id],
+  }),
+  sender: one(users, {
+    fields: [telegramDirectMessages.senderId],
+    references: [users.id],
+    relationName: "sent_direct_messages",
+  }),
+  receiver: one(users, {
+    fields: [telegramDirectMessages.receiverId],
+    references: [users.id],
+    relationName: "received_direct_messages",
+  }),
+  replyTo: one(telegramDirectMessages, {
+    fields: [telegramDirectMessages.replyToId],
+    references: [telegramDirectMessages.id],
+    relationName: "reply_direct_message",
+  }),
+}));
+
+export const typingStatusRelations = relations(typingStatus, ({ one }) => ({
+  user: one(users, {
+    fields: [typingStatus.userId],
+    references: [users.id],
+  }),
+  group: one(chatGroups, {
+    fields: [typingStatus.groupId],
+    references: [chatGroups.id],
+  }),
+  conversation: one(conversations, {
+    fields: [typingStatus.conversationId],
+    references: [conversations.id],
+  }),
+}));
+
+// Insert schemas for chat system
+export const insertChatGroupSchema = createInsertSchema(chatGroups).omit({ 
+  id: true, 
+  createdAt: true, 
+  lastMessageAt: true,
+  messageCount: true 
+});
+
+export const insertChatGroupMessageSchema = createInsertSchema(chatGroupMessages).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export const insertChatGroupMemberSchema = createInsertSchema(chatGroupMembers).omit({ 
+  id: true, 
+  joinedAt: true,
+  lastSeenAt: true 
+});
+
+export const insertTelegramDirectMessageSchema = createInsertSchema(telegramDirectMessages).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
+export const insertTypingStatusSchema = createInsertSchema(typingStatus).omit({ 
+  id: true, 
+  lastTypingAt: true 
+});
+
+// Types for chat system
+export type ChatGroup = typeof chatGroups.$inferSelect;
+export type NewChatGroup = z.infer<typeof insertChatGroupSchema>;
+
+export type ChatGroupMessage = typeof chatGroupMessages.$inferSelect;
+export type NewChatGroupMessage = z.infer<typeof insertChatGroupMessageSchema>;
+
+export type ChatGroupMember = typeof chatGroupMembers.$inferSelect;
+export type NewChatGroupMember = z.infer<typeof insertChatGroupMemberSchema>;
+
+export type TelegramDirectMessage = typeof telegramDirectMessages.$inferSelect;
+export type NewTelegramDirectMessage = z.infer<typeof insertTelegramDirectMessageSchema>;
+
+export type TypingStatus = typeof typingStatus.$inferSelect;
+export type NewTypingStatus = z.infer<typeof insertTypingStatusSchema>;
+
 export type ProgramProgress = typeof programProgress.$inferSelect;
 export type InsertProgramProgress = z.infer<typeof insertProgramProgressSchema>;
 

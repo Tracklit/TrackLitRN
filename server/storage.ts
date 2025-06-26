@@ -48,6 +48,16 @@ import {
   InsertProgramPurchase,
   SprinthiaConversation,
   InsertSprinthiaConversation,
+  ChatGroup,
+  NewChatGroup,
+  ChatGroupMessage,
+  NewChatGroupMessage,
+  ChatGroupMember,
+  NewChatGroupMember,
+  TelegramDirectMessage,
+  NewTelegramDirectMessage,
+  TypingStatus,
+  NewTypingStatus,
   SprinthiaMessage,
   InsertSprinthiaMessage,
   CoachAthlete,
@@ -3023,6 +3033,367 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(communityActivities)
       .where(eq(communityActivities.id, id));
+  }
+
+  // ============ TELEGRAM-STYLE CHAT SYSTEM METHODS ============
+
+  // Chat Groups Management
+  async createChatGroup(groupData: NewChatGroup): Promise<ChatGroup> {
+    const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    
+    const [group] = await db
+      .insert(chatGroups)
+      .values({
+        ...groupData,
+        inviteCode,
+      })
+      .returning();
+
+    // Add creator as admin member
+    await db
+      .insert(chatGroupMembers)
+      .values({
+        groupId: group.id,
+        userId: groupData.creatorId,
+        role: "creator",
+        isOnline: true,
+      });
+
+    return group;
+  }
+
+  async getChatGroup(groupId: number): Promise<ChatGroup | undefined> {
+    const [group] = await db
+      .select()
+      .from(chatGroups)
+      .where(eq(chatGroups.id, groupId));
+    return group;
+  }
+
+  async getChatGroups(userId: number): Promise<ChatGroup[]> {
+    // Get groups where user is a member
+    const memberGroups = await db
+      .select({
+        group: chatGroups,
+        member: chatGroupMembers,
+      })
+      .from(chatGroups)
+      .innerJoin(chatGroupMembers, eq(chatGroups.id, chatGroupMembers.groupId))
+      .where(eq(chatGroupMembers.userId, userId))
+      .orderBy(desc(chatGroups.lastMessageAt));
+
+    return memberGroups.map(mg => mg.group);
+  }
+
+  async joinChatGroup(groupId: number, userId: number): Promise<ChatGroupMember> {
+    // Check if user is already a member
+    const existingMember = await db
+      .select()
+      .from(chatGroupMembers)
+      .where(and(
+        eq(chatGroupMembers.groupId, groupId),
+        eq(chatGroupMembers.userId, userId)
+      ));
+
+    if (existingMember.length > 0) {
+      return existingMember[0];
+    }
+
+    const [member] = await db
+      .insert(chatGroupMembers)
+      .values({
+        groupId,
+        userId,
+        role: "member",
+        isOnline: true,
+      })
+      .returning();
+
+    // Update group member count
+    await db
+      .update(chatGroups)
+      .set({ 
+        memberIds: sql`array_append(${chatGroups.memberIds}, ${userId})` 
+      })
+      .where(eq(chatGroups.id, groupId));
+
+    return member;
+  }
+
+  async leaveChatGroup(groupId: number, userId: number): Promise<void> {
+    await db
+      .delete(chatGroupMembers)
+      .where(and(
+        eq(chatGroupMembers.groupId, groupId),
+        eq(chatGroupMembers.userId, userId)
+      ));
+
+    // Update group member count
+    await db
+      .update(chatGroups)
+      .set({ 
+        memberIds: sql`array_remove(${chatGroups.memberIds}, ${userId})` 
+      })
+      .where(eq(chatGroups.id, groupId));
+  }
+
+  async getChatGroupMembers(groupId: number): Promise<(ChatGroupMember & { user: User })[]> {
+    return await db
+      .select({
+        id: chatGroupMembers.id,
+        groupId: chatGroupMembers.groupId,
+        userId: chatGroupMembers.userId,
+        role: chatGroupMembers.role,
+        joinedAt: chatGroupMembers.joinedAt,
+        lastReadMessageId: chatGroupMembers.lastReadMessageId,
+        isMuted: chatGroupMembers.isMuted,
+        isOnline: chatGroupMembers.isOnline,
+        lastSeenAt: chatGroupMembers.lastSeenAt,
+        user: {
+          id: users.id,
+          username: users.username,
+          name: users.name,
+          profileImageUrl: users.profileImageUrl,
+          isCoach: users.isCoach,
+          subscriptionTier: users.subscriptionTier,
+        }
+      })
+      .from(chatGroupMembers)
+      .innerJoin(users, eq(chatGroupMembers.userId, users.id))
+      .where(eq(chatGroupMembers.groupId, groupId))
+      .orderBy(desc(chatGroupMembers.joinedAt));
+  }
+
+  // Chat Group Messages
+  async sendChatGroupMessage(messageData: NewChatGroupMessage): Promise<ChatGroupMessage> {
+    const [message] = await db
+      .insert(chatGroupMessages)
+      .values(messageData)
+      .returning();
+
+    // Update group last message info
+    await db
+      .update(chatGroups)
+      .set({
+        lastMessage: messageData.text,
+        lastMessageAt: new Date(),
+        lastMessageSenderId: messageData.senderId,
+        messageCount: sql`${chatGroups.messageCount} + 1`
+      })
+      .where(eq(chatGroups.id, messageData.groupId));
+
+    return message;
+  }
+
+  async getChatGroupMessages(groupId: number, limit: number = 50, offset: number = 0): Promise<ChatGroupMessage[]> {
+    return await db
+      .select()
+      .from(chatGroupMessages)
+      .where(and(
+        eq(chatGroupMessages.groupId, groupId),
+        eq(chatGroupMessages.isDeleted, false)
+      ))
+      .orderBy(desc(chatGroupMessages.createdAt))
+      .limit(limit)
+      .offset(offset);
+  }
+
+  async editChatGroupMessage(messageId: number, senderId: number, newText: string): Promise<ChatGroupMessage | undefined> {
+    const [message] = await db
+      .update(chatGroupMessages)
+      .set({
+        text: newText,
+        editedAt: new Date()
+      })
+      .where(and(
+        eq(chatGroupMessages.id, messageId),
+        eq(chatGroupMessages.senderId, senderId)
+      ))
+      .returning();
+
+    return message;
+  }
+
+  async deleteChatGroupMessage(messageId: number, userId: number): Promise<void> {
+    // Check if user is sender or admin
+    const message = await db
+      .select({
+        senderId: chatGroupMessages.senderId,
+        groupId: chatGroupMessages.groupId
+      })
+      .from(chatGroupMessages)
+      .where(eq(chatGroupMessages.id, messageId));
+
+    if (!message.length) return;
+
+    const isOwner = message[0].senderId === userId;
+    
+    if (!isOwner) {
+      // Check if user is admin
+      const member = await db
+        .select()
+        .from(chatGroupMembers)
+        .where(and(
+          eq(chatGroupMembers.groupId, message[0].groupId),
+          eq(chatGroupMembers.userId, userId),
+          or(
+            eq(chatGroupMembers.role, "admin"),
+            eq(chatGroupMembers.role, "creator")
+          )
+        ));
+
+      if (!member.length) return; // Not authorized
+    }
+
+    await db
+      .update(chatGroupMessages)
+      .set({ isDeleted: true })
+      .where(eq(chatGroupMessages.id, messageId));
+  }
+
+  // Direct Messages (Telegram-style)
+  async sendTelegramDirectMessage(messageData: NewTelegramDirectMessage): Promise<TelegramDirectMessage> {
+    const [message] = await db
+      .insert(telegramDirectMessages)
+      .values(messageData)
+      .returning();
+
+    // Update conversation last message time
+    await db
+      .update(conversations)
+      .set({ 
+        lastMessageAt: new Date(),
+        lastMessageId: message.id 
+      })
+      .where(eq(conversations.id, messageData.conversationId));
+
+    return message;
+  }
+
+  async getTelegramDirectMessages(conversationId: number, limit: number = 50, offset: number = 0): Promise<TelegramDirectMessage[]> {
+    return await db
+      .select()
+      .from(telegramDirectMessages)
+      .where(and(
+        eq(telegramDirectMessages.conversationId, conversationId),
+        eq(telegramDirectMessages.isDeleted, false)
+      ))
+      .orderBy(desc(telegramDirectMessages.createdAt))
+      .limit(limit)
+      .offset(offset);
+  }
+
+  async editTelegramDirectMessage(messageId: number, senderId: number, newText: string): Promise<TelegramDirectMessage | undefined> {
+    const [message] = await db
+      .update(telegramDirectMessages)
+      .set({
+        text: newText,
+        editedAt: new Date()
+      })
+      .where(and(
+        eq(telegramDirectMessages.id, messageId),
+        eq(telegramDirectMessages.senderId, senderId)
+      ))
+      .returning();
+
+    return message;
+  }
+
+  async deleteTelegramDirectMessage(messageId: number, senderId: number): Promise<void> {
+    await db
+      .update(telegramDirectMessages)
+      .set({ isDeleted: true })
+      .where(and(
+        eq(telegramDirectMessages.id, messageId),
+        eq(telegramDirectMessages.senderId, senderId)
+      ));
+  }
+
+  async markTelegramMessagesAsRead(conversationId: number, userId: number): Promise<void> {
+    await db
+      .update(telegramDirectMessages)
+      .set({ 
+        isRead: true,
+        readAt: new Date()
+      })
+      .where(and(
+        eq(telegramDirectMessages.conversationId, conversationId),
+        eq(telegramDirectMessages.receiverId, userId),
+        eq(telegramDirectMessages.isRead, false)
+      ));
+  }
+
+  // Typing Status Management
+  async updateTypingStatus(statusData: NewTypingStatus): Promise<void> {
+    // Delete existing typing status for this user/context
+    await db
+      .delete(typingStatus)
+      .where(and(
+        eq(typingStatus.userId, statusData.userId),
+        statusData.groupId ? eq(typingStatus.groupId, statusData.groupId) : sql`${typingStatus.groupId} IS NULL`,
+        statusData.conversationId ? eq(typingStatus.conversationId, statusData.conversationId) : sql`${typingStatus.conversationId} IS NULL`
+      ));
+
+    // Insert new typing status if user is typing
+    if (statusData.isTyping) {
+      await db
+        .insert(typingStatus)
+        .values(statusData);
+    }
+  }
+
+  async getTypingUsers(groupId?: number, conversationId?: number): Promise<TypingStatus[]> {
+    const whereCondition = and(
+      eq(typingStatus.isTyping, true),
+      groupId ? eq(typingStatus.groupId, groupId) : sql`${typingStatus.groupId} IS NULL`,
+      conversationId ? eq(typingStatus.conversationId, conversationId) : sql`${typingStatus.conversationId} IS NULL`,
+      sql`${typingStatus.lastTypingAt} > NOW() - INTERVAL '5 seconds'` // Only show recent typing
+    );
+
+    return await db
+      .select()
+      .from(typingStatus)
+      .where(whereCondition);
+  }
+
+  // Utility Methods
+  async getChatGroupByInviteCode(inviteCode: string): Promise<ChatGroup | undefined> {
+    const [group] = await db
+      .select()
+      .from(chatGroups)
+      .where(eq(chatGroups.inviteCode, inviteCode));
+    return group;
+  }
+
+  async isUserInChatGroup(userId: number, groupId: number): Promise<boolean> {
+    const member = await db
+      .select()
+      .from(chatGroupMembers)
+      .where(and(
+        eq(chatGroupMembers.userId, userId),
+        eq(chatGroupMembers.groupId, groupId)
+      ));
+    return member.length > 0;
+  }
+
+  async updateChatGroupMemberRole(groupId: number, userId: number, newRole: string): Promise<void> {
+    await db
+      .update(chatGroupMembers)
+      .set({ role: newRole })
+      .where(and(
+        eq(chatGroupMembers.groupId, groupId),
+        eq(chatGroupMembers.userId, userId)
+      ));
+  }
+
+  async updateUserOnlineStatus(userId: number, isOnline: boolean): Promise<void> {
+    await db
+      .update(chatGroupMembers)
+      .set({ 
+        isOnline,
+        lastSeenAt: new Date()
+      })
+      .where(eq(chatGroupMembers.userId, userId));
   }
 }
 

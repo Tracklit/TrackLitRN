@@ -1,0 +1,210 @@
+Here is a comprehensive Technical Requirements Specification for implementing a Telegram-style group chat system in a React/React Native TypeScript app, focused on chat channels, user-to-user communication, and core UI/UX behaviors.
+
+⸻
+
+📘 Technical Requirements Spec: Telegram-Style Group Chat System
+
+Tech Stack: React, React Native, TypeScript, Firebase (or Node.js backend + WebSocket), Redux/Context, React Navigation, Styled Components/Tailwind
+
+⸻
+
+1. 🎯 Core Features Overview
+
+Feature	Description
+Group Channels	Users can create and manage group chat channels.
+1-on-1 Messaging	Direct private chats between users.
+Real-time Chat	Message sending/receiving with WebSocket or real-time backend.
+UI/UX	Telegram-style layout: full-width chat, aligned messages, clean bubble design.
+Profile Data	Display profile image, name, and timestamp next to messages.
+Links Parsing	Auto-parsing of URLs with preview/meta data.
+Admin Tools	Group creators can manage members, delete messages, set admin roles.
+
+
+⸻
+
+2. 📱 UI/UX Layout
+
+🧱 Screen Layout (Telegram-style)
+	•	Full-width UI
+	•	User’s messages aligned right, others’ messages left
+	•	Speech bubbles with:
+	•	Rounded corners
+	•	Light blue (sent), light gray (received)
+	•	Small timestamp in corner (e.g., “14:03”)
+	•	Bottom input field:
+	•	Floating above keyboard
+	•	Expands with text
+	•	Attached send button
+	•	Native device keyboard push-up behavior on mobile
+
+💬 Message Composition
+	•	Supports:
+	•	Text
+	•	Emoji
+	•	Markdown-like formatting
+	•	Links auto-parsed into clickable previews
+	•	Typing indicator support (optional later)
+
+👤 User Profile Display
+	•	Profile image (circular) shown beside messages from other users
+	•	Name displayed above first message of a cluster
+	•	Timestamp aligned to bottom corner
+
+⸻
+
+3. 📦 Data Models
+
+User Model
+
+type User = {
+  id: string;
+  username: string;
+  profileImage: string;
+  status: 'online' | 'offline';
+  createdAt: Timestamp;
+}
+
+Message Model
+
+type Message = {
+  id: string;
+  text: string;
+  senderId: string;
+  senderName: string;
+  senderProfileImage: string;
+  createdAt: Timestamp;
+  editedAt?: Timestamp;
+  linkPreview?: LinkMetadata;
+}
+
+Group/Channel Model
+
+type ChatGroup = {
+  id: string;
+  name: string;
+  description?: string;
+  image?: string;
+  creatorId: string;
+  adminIds: string[];
+  memberIds: string[];
+  createdAt: Timestamp;
+  lastMessageAt: Timestamp;
+}
+
+
+⸻
+
+4. 🔧 Functionality Requirements
+
+4.1 Group Management
+	•	Create a new group
+	•	Add/remove users
+	•	Invite via link/code
+	•	Assign admin roles
+	•	Rename or delete group (admin only)
+
+4.2 Messaging
+	•	Send/receive messages in real time
+	•	Display message status (sent, delivered, edited)
+	•	Edit own messages (hold → edit modal)
+	•	Delete own messages (soft delete)
+	•	Link detection and preview (e.g., Open Graph metadata)
+	•	Scroll to bottom on new message
+	•	Show “X is typing…” indicator (future version)
+
+4.3 Admin Tools
+	•	Mute/kick users
+	•	Delete inappropriate messages (moderation)
+	•	Pin messages (optional future)
+	•	Restrict non-admins from editing group info
+
+⸻
+
+5. 🔌 API / Backend Design
+
+Can use:
+	•	Firebase Firestore + Firebase Auth
+	•	OR Node.js + Express + WebSocket with PostgreSQL/MongoDB
+
+Firebase Collections:
+	•	/users
+	•	/groups
+	•	/groups/{groupId}/messages
+
+WebSocket Events (for custom backend)
+	•	NEW_MESSAGE
+	•	EDIT_MESSAGE
+	•	DELETE_MESSAGE
+	•	TYPING_STATUS
+	•	USER_JOINED
+	•	USER_LEFT
+
+⸻
+
+6. 🎨 Frontend Components (React Native + TypeScript)
+
+Component	Purpose
+<ChatScreen />	Main chat interface
+<MessageBubble />	Styled message block
+<InputToolbar />	Input + send button
+<GroupHeader />	Shows title, user count
+<UserAvatar />	Profile image display
+<MessageList />	Virtualized list of messages
+<LinkPreview />	Auto-detect links
+<EditMessageModal />	Modal for editing
+
+
+⸻
+
+7. ⌨️ Native Mobile Behavior
+	•	Keyboard pushes up the chat + input field (iOS/Android)
+	•	Scroll auto-adjusts when keyboard opens
+	•	Tap outside to dismiss keyboard
+	•	Input expands to multiline if message is long
+
+⸻
+
+8. 🔒 Security & Validation
+	•	Input sanitization (e.g., XSS, bad links)
+	•	Max message size: 4,000 chars
+	•	Role-based permissions:
+	•	Only admins can delete others’ messages
+	•	Only creators can delete the group
+
+⸻
+
+9. 🔁 State Management
+	•	Use Redux, Zustand, or React Context for:
+	•	Current chat
+	•	Authenticated user
+	•	Message stream
+	•	Loading states
+
+⸻
+
+10. 📤 External Link Previews (Optional Module)
+
+Fetch Open Graph data on paste:
+
+type LinkMetadata = {
+  title: string;
+  description: string;
+  image: string;
+  url: string;
+}
+
+Implementation via link-preview-js (Node.js) or API call to a proxy server.
+
+⸻
+
+11. ✅ Future Enhancements (Optional Later)
+	•	Reactions (like Telegram emoji reactions)
+	•	Reply to messages with quote threading
+	•	Media uploads (images, files)
+	•	Pinned messages
+	•	Message forwarding
+	•	Typing status & read receipts
+
+⸻
+
+Let me know if you’d like this spec broken into tasks (Jira/Trello-style) or extended for backend implementation.
