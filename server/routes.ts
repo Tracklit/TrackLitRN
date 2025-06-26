@@ -7154,38 +7154,38 @@ Keep the response professional, evidence-based, and specific to track and field 
         return res.status(403).json({ error: "Access denied" });
       }
 
-      // Get messages first, then manually add sender data
-      const rawMessages = await db
-        .select()
-        .from(groupMessages)
-        .where(eq(groupMessages.groupId, groupId))
-        .orderBy(asc(groupMessages.createdAt));
+      // Use direct join approach that should work
+      const result = await db.execute(sql`
+        SELECT 
+          gm.id,
+          gm.group_id as "groupId",
+          gm.sender_id as "senderId",
+          gm.message,
+          gm.media_url as "mediaUrl",
+          gm.created_at as "createdAt",
+          u.id as "sender_id",
+          u.username as "sender_username",
+          u.name as "sender_name",
+          u.profile_image_url as "sender_profile_image_url"
+        FROM group_messages gm
+        INNER JOIN users u ON gm.sender_id = u.id
+        WHERE gm.group_id = ${groupId}
+        ORDER BY gm.created_at ASC
+      `);
 
-      // Get unique sender IDs
-      const senderIds = [...new Set(rawMessages.map(m => m.senderId))];
-      
-      // Fetch all senders
-      const senders = senderIds.length > 0 ? await db
-        .select({
-          id: users.id,
-          username: users.username,
-          name: users.name,
-          profileImageUrl: users.profileImageUrl,
-        })
-        .from(users)
-        .where(sql`${users.id} = ANY(${sql.raw(`ARRAY[${senderIds.join(',')}]`)})`) : [];
-
-      // Create sender lookup map
-      const senderMap = new Map(senders.map(sender => [sender.id, sender]));
-
-      // Combine messages with sender data
-      const messages = rawMessages.map(message => ({
-        ...message,
-        sender: senderMap.get(message.senderId) || {
-          id: message.senderId,
-          username: 'Unknown',
-          name: 'Unknown User',
-          profileImageUrl: null,
+      // Transform the flat result into the expected structure
+      const messages = result.rows.map((row: any) => ({
+        id: row.id,
+        groupId: row.groupId,
+        senderId: row.senderId,
+        message: row.message,
+        mediaUrl: row.mediaUrl,
+        createdAt: row.createdAt,
+        sender: {
+          id: row.sender_id,
+          username: row.sender_username,
+          name: row.sender_name,
+          profileImageUrl: row.sender_profile_image_url,
         },
       }));
 
