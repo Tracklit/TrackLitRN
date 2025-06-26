@@ -54,16 +54,13 @@ export default function GroupsPage() {
     enabled: !!user,
   });
 
-  // Fetch messages for selected group with aggressive cache busting
+  // Fetch messages for selected group
   const { data: messages = [], refetch } = useQuery<GroupMessageWithUser[]>({
-    queryKey: [`/api/groups/${selectedGroup}/messages`, Date.now()], // Force new query each time
+    queryKey: [`/api/groups/${selectedGroup}/messages`],
     enabled: !!selectedGroup,
     refetchInterval: 2000,
     staleTime: 0,
     gcTime: 0,
-    retry: false,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: 'always',
   });
 
   // Force refresh on component mount
