@@ -17,7 +17,9 @@ import {
   Hash,
   Lock,
   Globe,
-  ArrowLeft
+  ArrowLeft,
+  Edit,
+  Trash
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
@@ -320,6 +322,12 @@ interface MessageBubbleProps {
 }
 
 const MessageBubble = ({ message, isOwn, currentUser }: MessageBubbleProps) => {
+  const [showMenu, setShowMenu] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedText, setEditedText] = useState('');
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const queryClient = useQueryClient();
+
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString('en-US', { 
@@ -327,6 +335,41 @@ const MessageBubble = ({ message, isOwn, currentUser }: MessageBubbleProps) => {
       minute: '2-digit',
       hour12: false 
     });
+  };
+
+  const handlePressStart = () => {
+    const timer = setTimeout(() => {
+      if (isOwn) {
+        setShowMenu(true);
+      }
+    }, 500); // 500ms for long press
+    setLongPressTimer(timer);
+  };
+
+  const handlePressEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+
+  const startEdit = () => {
+    setIsEditing(true);
+    const messageText = (message as any).text || (message as any).content || '';
+    setEditedText(messageText);
+    setShowMenu(false);
+  };
+
+  const cancelEdit = () => {
+    setIsEditing(false);
+    setEditedText('');
+  };
+
+  const saveEdit = async () => {
+    // TODO: Implement edit message API call
+    console.log('Saving edited message:', editedText);
+    setIsEditing(false);
+    setEditedText('');
   };
 
   const getProfileImage = () => {
@@ -351,7 +394,7 @@ const MessageBubble = ({ message, isOwn, currentUser }: MessageBubbleProps) => {
 
   return (
     <div className={cn(
-      "flex w-full mb-4 items-end gap-2",
+      "flex w-full mb-4 items-end gap-2 relative",
       isOwn ? "justify-end" : "justify-start"
     )}>
       {/* Profile Image for other users (left side) */}
@@ -364,21 +407,63 @@ const MessageBubble = ({ message, isOwn, currentUser }: MessageBubbleProps) => {
         </Avatar>
       )}
       
-      <div className={cn(
-        "min-w-[100px] max-w-xs lg:max-w-md px-3 py-2 rounded-2xl bg-white text-black border border-gray-200",
-        isOwn 
-          ? "rounded-br-none" 
-          : "rounded-bl-none"
-      )}>
-        {!isOwn && 'sender_name' in message && (
-          <div className="text-xs font-medium mb-1 text-gray-600">
-            {getSenderName()}
-          </div>
-        )}
-        <div className="text-sm break-words">
-          {message.text}
+      <div className="flex flex-col max-w-xs lg:max-w-md">
+        <div 
+          className={cn(
+            "min-w-[100px] px-3 py-2 rounded-2xl bg-white text-black border border-gray-200 relative",
+            isOwn 
+              ? "rounded-br-none" 
+              : "rounded-bl-none"
+          )}
+          onMouseDown={handlePressStart}
+          onMouseUp={handlePressEnd}
+          onMouseLeave={handlePressEnd}
+          onTouchStart={handlePressStart}
+          onTouchEnd={handlePressEnd}
+        >
+          {!isOwn && 'sender_name' in message && (
+            <div className="text-xs font-medium mb-1 text-gray-600">
+              {getSenderName()}
+            </div>
+          )}
+          
+          {isEditing ? (
+            <div className="space-y-2">
+              <Input
+                value={editedText}
+                onChange={(e) => setEditedText(e.target.value)}
+                className="text-sm"
+                autoFocus
+              />
+              <div className="flex gap-2">
+                <Button size="sm" onClick={saveEdit}>Save</Button>
+                <Button size="sm" variant="outline" onClick={cancelEdit}>Cancel</Button>
+              </div>
+            </div>
+          ) : (
+            <div className="text-sm break-words">
+              {(message as any).text || (message as any).content || ''}
+            </div>
+          )}
+          
+          {/* Context Menu */}
+          {showMenu && (
+            <div className="absolute top-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-1">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={startEdit}
+                className="flex items-center gap-2 w-full justify-start"
+              >
+                <Edit className="h-3 w-3" />
+                Edit
+              </Button>
+            </div>
+          )}
         </div>
-        <div className="text-[8px] mt-1 text-gray-500">
+        
+        {/* Right-aligned timestamp */}
+        <div className="text-[8px] mt-1 text-gray-500 text-right">
           {formatTime('created_at' in message ? message.created_at : message.createdAt)}
           {'is_edited' in message && message.is_edited && (
             <span className="ml-1">(edited)</span>
@@ -394,6 +479,14 @@ const MessageBubble = ({ message, isOwn, currentUser }: MessageBubbleProps) => {
             {getSenderName().slice(0, 2).toUpperCase()}
           </AvatarFallback>
         </Avatar>
+      )}
+      
+      {/* Click outside to close menu */}
+      {showMenu && (
+        <div 
+          className="fixed inset-0 z-40" 
+          onClick={() => setShowMenu(false)}
+        />
       )}
     </div>
   );
