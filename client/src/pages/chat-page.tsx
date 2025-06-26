@@ -632,7 +632,11 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages }: Me
       {/* Profile Image for other users (left side) */}
       {!isOwn && (
         <Avatar className="h-8 w-8 flex-shrink-0">
-          <AvatarImage src={getProfileImage() || undefined} />
+          <OptimizedProfileImage 
+            src={getProfileImage() || undefined} 
+            alt={getSenderName()}
+            className="h-8 w-8"
+          />
           <AvatarFallback className="bg-gray-400 text-white text-xs">
             {getSenderName().slice(0, 2).toUpperCase()}
           </AvatarFallback>
@@ -759,7 +763,11 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages }: Me
       {/* Profile Image for current user (right side) */}
       {isOwn && (
         <Avatar className="h-8 w-8 flex-shrink-0">
-          <AvatarImage src={getProfileImage() || undefined} />
+          <OptimizedProfileImage 
+            src={getProfileImage() || undefined} 
+            alt={getSenderName()}
+            className="h-8 w-8"
+          />
           <AvatarFallback className="bg-blue-400 text-white text-xs">
             {getSenderName().slice(0, 2).toUpperCase()}
           </AvatarFallback>
@@ -946,9 +954,12 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
         : `/api/chat/direct/${selectedChat.id}/messages`;
       
       if (image) {
-        // Upload image using FormData
+        // Compress image before upload
+        const compressedImage = await compressAndResizeImage(image, 800, 600, 0.8);
+        
+        // Upload compressed image using FormData
         const formData = new FormData();
-        formData.append('image', image);
+        formData.append('image', compressedImage);
         if (text) formData.append('text', text);
         if (replyToId) formData.append('replyToId', replyToId.toString());
         formData.append('messageType', 'image');
