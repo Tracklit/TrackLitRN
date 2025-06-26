@@ -374,8 +374,16 @@ const MessageBubble = ({ message, isOwn, currentUser }: MessageBubbleProps) => {
       );
 
       if (response.ok) {
-        // Invalidate and refetch messages to show the update
-        queryClient.invalidateQueries({ queryKey: ['/api/chat/groups/1/messages'] });
+        const updatedMessage = await response.json();
+        
+        // Update the query cache with the new message data
+        queryClient.setQueryData(['/api/chat/groups/1/messages'], (oldData: any) => {
+          if (!oldData) return oldData;
+          return oldData.map((msg: any) => 
+            msg.id === message.id ? { ...msg, text: editedText, edited_at: updatedMessage.edited_at } : msg
+          );
+        });
+        
         setIsEditing(false);
         setEditedText('');
       } else {
