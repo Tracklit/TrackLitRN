@@ -333,6 +333,8 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages }: Me
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   const [startPosition, setStartPosition] = useState<{ x: number; y: number } | null>(null);
   const [hasScrolled, setHasScrolled] = useState(false);
+  const [menuPosition, setMenuPosition] = useState<'bottom' | 'top'>('bottom');
+  const bubbleRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
   const formatTime = (timestamp: string) => {
@@ -353,6 +355,19 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages }: Me
     
     const timer = setTimeout(() => {
       if (!hasScrolled) {
+        // Check if menu would go below viewport
+        if (bubbleRef.current) {
+          const bubbleRect = bubbleRef.current.getBoundingClientRect();
+          const viewportHeight = window.innerHeight;
+          const menuHeight = 80; // Approximate menu height
+          
+          // If bubble is in bottom third of viewport, show menu above
+          if (bubbleRect.bottom + menuHeight > viewportHeight - 50) {
+            setMenuPosition('top');
+          } else {
+            setMenuPosition('bottom');
+          }
+        }
         setShowMenu(true);
       }
     }, 500); // 500ms for long press
@@ -477,6 +492,7 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages }: Me
       
       <div className="flex flex-col max-w-xs lg:max-w-md">
         <div 
+          ref={bubbleRef}
           className={cn(
             "min-w-[100px] px-3 py-2 rounded-2xl bg-white text-black border border-gray-200 relative",
             isOwn 
@@ -532,7 +548,10 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages }: Me
           
           {/* Context Menu */}
           {showMenu && (
-            <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-1">
+            <div className={cn(
+              "absolute right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-1",
+              menuPosition === 'bottom' ? "top-full -mt-1" : "bottom-full mb-1"
+            )}>
               <Button
                 size="sm"
                 variant="ghost"
