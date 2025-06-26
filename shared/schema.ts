@@ -1644,6 +1644,16 @@ export const chatGroupMembers = pgTable("chat_group_members", {
   lastSeenAt: timestamp("last_seen_at").defaultNow(),
 });
 
+// Message Reactions
+export const messageReactions = pgTable("message_reactions", {
+  id: serial("id").primaryKey(),
+  messageId: integer("message_id").notNull(), // Can reference either group or direct messages
+  messageType: text("message_type").notNull(), // "group" or "direct"
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  emoji: text("emoji").notNull().default("👍"), // Default to thumbs up
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Enhanced Direct Messages (for 1-on-1 chats)
 export const telegramDirectMessages = pgTable("telegram_direct_messages", {
   id: serial("id").primaryKey(),
@@ -1693,7 +1703,7 @@ export const chatGroupsRelations = relations(chatGroups, ({ one, many }) => ({
   members: many(chatGroupMembers),
 }));
 
-export const chatGroupMessagesRelations = relations(chatGroupMessages, ({ one }) => ({
+export const chatGroupMessagesRelations = relations(chatGroupMessages, ({ one, many }) => ({
   group: one(chatGroups, {
     fields: [chatGroupMessages.groupId],
     references: [chatGroups.id],
@@ -1708,6 +1718,7 @@ export const chatGroupMessagesRelations = relations(chatGroupMessages, ({ one })
     references: [chatGroupMessages.id],
     relationName: "reply_message",
   }),
+  reactions: many(messageReactions),
 }));
 
 export const chatGroupMembersRelations = relations(chatGroupMembers, ({ one }) => ({
@@ -1726,7 +1737,14 @@ export const chatGroupMembersRelations = relations(chatGroupMembers, ({ one }) =
   }),
 }));
 
-export const telegramDirectMessagesRelations = relations(telegramDirectMessages, ({ one }) => ({
+export const messageReactionsRelations = relations(messageReactions, ({ one }) => ({
+  user: one(users, {
+    fields: [messageReactions.userId],
+    references: [users.id],
+  }),
+}));
+
+export const telegramDirectMessagesRelations = relations(telegramDirectMessages, ({ one, many }) => ({
   conversation: one(conversations, {
     fields: [telegramDirectMessages.conversationId],
     references: [conversations.id],
@@ -1746,6 +1764,7 @@ export const telegramDirectMessagesRelations = relations(telegramDirectMessages,
     references: [telegramDirectMessages.id],
     relationName: "reply_direct_message",
   }),
+  reactions: many(messageReactions),
 }));
 
 export const typingStatusRelations = relations(typingStatus, ({ one }) => ({
@@ -1792,6 +1811,11 @@ export const insertTypingStatusSchema = createInsertSchema(typingStatus).omit({
   lastTypingAt: true 
 });
 
+export const insertMessageReactionSchema = createInsertSchema(messageReactions).omit({ 
+  id: true, 
+  createdAt: true 
+});
+
 // Types for chat system
 export type ChatGroup = typeof chatGroups.$inferSelect;
 export type NewChatGroup = z.infer<typeof insertChatGroupSchema>;
@@ -1807,6 +1831,9 @@ export type NewTelegramDirectMessage = z.infer<typeof insertTelegramDirectMessag
 
 export type TypingStatus = typeof typingStatus.$inferSelect;
 export type NewTypingStatus = z.infer<typeof insertTypingStatusSchema>;
+
+export type MessageReaction = typeof messageReactions.$inferSelect;
+export type NewMessageReaction = z.infer<typeof insertMessageReactionSchema>;
 
 export type ProgramProgress = typeof programProgress.$inferSelect;
 export type InsertProgramProgress = z.infer<typeof insertProgramProgressSchema>;

@@ -58,6 +58,8 @@ import {
   NewTelegramDirectMessage,
   TypingStatus,
   NewTypingStatus,
+  MessageReaction,
+  NewMessageReaction,
   SprinthiaMessage,
   InsertSprinthiaMessage,
   CoachAthlete,
