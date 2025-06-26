@@ -274,8 +274,8 @@ function MainApp() {
         </div>
       </main>
       
-      {/* Bottom Navigation */}
-      <BottomNavigation />
+      {/* Bottom Navigation - Hide for chat routes */}
+      {!location.startsWith('/chat') && <BottomNavigation />}
       
       {/* Onboarding flow - Only show for logged in users who haven't seen it */}
       {user && showOnboarding && (

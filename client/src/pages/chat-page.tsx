@@ -16,7 +16,8 @@ import {
   MoreVertical,
   Hash,
   Lock,
-  Globe
+  Globe,
+  ArrowLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
@@ -243,28 +244,28 @@ const ChatPage = () => {
       {/* Chat List - Full Width */}
       <div className="flex-1 overflow-y-auto">
         <div className="divide-y divide-gray-100">
-
-
-          {/* Groups Section */}
-          {filteredGroups.length > 0 && (
+          {groupsLoading || conversationsLoading ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+          ) : (
             <>
-              <div className="px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
-                Groups
-              </div>
               {filteredGroups.map((group: ChatGroup) => (
                 <button
                   key={group.id}
                   onClick={() => setSelectedChat({ type: 'group', id: group.id })}
-                  className="w-full p-4 text-left hover:bg-gray-50 transition-colors"
+                  className="w-full p-4 hover:bg-gray-50 transition-colors text-left"
                 >
                   <div className="flex items-center space-x-3">
                     <div className="relative">
                       <Avatar className="h-12 w-12">
                         <AvatarImage src={group.avatar_url} />
                         <AvatarFallback className="bg-blue-500 text-white">
-                          {group.is_private ? <Lock className="h-5 w-5" /> : <Hash className="h-5 w-5" />}
+                          {group.name.slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
+                      
+                      {/* Privacy Indicator */}
                       {group.is_private ? (
                         <Lock className="absolute -bottom-1 -right-1 h-3 w-3 text-gray-500" />
                       ) : (
@@ -307,6 +308,7 @@ const ChatPage = () => {
           )}
         </div>
       </div>
+    </div>
   );
 };
 
@@ -327,41 +329,32 @@ const MessageBubble = ({ message, isOwn }: MessageBubbleProps) => {
   };
 
   return (
-    <div className={cn("flex", isOwn ? "justify-end" : "justify-start")}>
-      <div className={cn("flex items-end space-x-2 max-w-[70%]", isOwn && "flex-row-reverse space-x-reverse")}>
-        {!isOwn && (
-          <Avatar className="h-6 w-6">
-            <AvatarImage src={('senderProfileImage' in message) ? message.senderProfileImage : undefined} />
-            <AvatarFallback className="text-xs">
-              {('senderName' in message) ? message.senderName.charAt(0) : 'U'}
-            </AvatarFallback>
-          </Avatar>
-        )}
-        
-        <div
-          className={cn(
-            "rounded-2xl px-4 py-2 max-w-full",
-            isOwn
-              ? "bg-blue-500 text-white"
-              : "bg-white border border-gray-200 text-gray-900"
-          )}
-        >
-          {!isOwn && 'senderName' in message && (
-            <p className="text-xs font-medium text-blue-600 mb-1">{message.senderName}</p>
-          )}
-          
-          <p className="text-sm whitespace-pre-wrap break-words">{message.text}</p>
-          
-          <div className={cn("flex items-center justify-end mt-1 space-x-1")}>
-            {message.editedAt && (
-              <span className={cn("text-xs", isOwn ? "text-blue-200" : "text-gray-400")}>
-                edited
-              </span>
-            )}
-            <span className={cn("text-xs", isOwn ? "text-blue-200" : "text-gray-400")}>
-              {formatTime(message.createdAt)}
-            </span>
+    <div className={cn(
+      "flex w-full mb-4",
+      isOwn ? "justify-end" : "justify-start"
+    )}>
+      <div className={cn(
+        "max-w-xs lg:max-w-md px-4 py-2 rounded-lg",
+        isOwn 
+          ? "bg-blue-500 text-white rounded-br-none" 
+          : "bg-gray-200 text-gray-900 rounded-bl-none"
+      )}>
+        {!isOwn && 'sender_name' in message && (
+          <div className="text-xs font-medium mb-1 text-gray-600">
+            {String(message.sender_name)}
           </div>
+        )}
+        <div className="text-sm break-words">
+          {message.text}
+        </div>
+        <div className={cn(
+          "text-xs mt-1",
+          isOwn ? "text-blue-100" : "text-gray-500"
+        )}>
+          {formatTime('created_at' in message ? message.created_at : message.createdAt)}
+          {'is_edited' in message && message.is_edited && (
+            <span className="ml-1">(edited)</span>
+          )}
         </div>
       </div>
     </div>
@@ -379,50 +372,70 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
-  // Fetch messages for selected chat
-  const { data: messages = [], isLoading: messagesLoading } = useQuery({
-    queryKey: [`/api/chat/groups/${selectedChat.id}/messages`],
+  // Fetch current user
+  const { data: currentUser } = useQuery({
+    queryKey: ['/api/user'],
     queryFn: async () => {
-      const response = await apiRequest('GET', `/api/chat/groups/${selectedChat.id}/messages`);
+      const response = await apiRequest('GET', '/api/user');
       return response.json();
-    },
-    enabled: selectedChat.type === 'group'
+    }
   });
 
-  // Get current user from context
-  const { data: currentUser } = useQuery({
-    queryKey: ['/api/user']
+  // Fetch chat groups for group name
+  const { data: chatGroups = [] } = useQuery({
+    queryKey: ['/api/chat/groups'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/chat/groups');
+      return response.json();
+    }
+  });
+
+  // Fetch messages for selected chat
+  const { data: messages = [], isLoading: messagesLoading } = useQuery({
+    queryKey: selectedChat.type === 'group' 
+      ? ['/api/chat/groups', selectedChat.id, 'messages']
+      : ['/api/chat/direct', selectedChat.id, 'messages'],
+    queryFn: async () => {
+      const endpoint = selectedChat.type === 'group'
+        ? `/api/chat/groups/${selectedChat.id}/messages`
+        : `/api/chat/direct/${selectedChat.id}/messages`;
+      const response = await apiRequest('GET', endpoint);
+      return response.json();
+    }
   });
 
   // Send message mutation
   const sendMessageMutation = useMutation({
-    mutationFn: async (data: { text: string }) => {
-      const response = await apiRequest('POST', `/api/chat/groups/${selectedChat.id}/messages`, data);
+    mutationFn: async ({ text }: { text: string }) => {
+      const endpoint = selectedChat.type === 'group'
+        ? `/api/chat/groups/${selectedChat.id}/messages`
+        : `/api/chat/direct/${selectedChat.id}/messages`;
+      
+      const response = await apiRequest('POST', endpoint, { text });
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/chat/groups/${selectedChat.id}/messages`] });
-      queryClient.invalidateQueries({ queryKey: ['/api/chat/groups'] });
       setMessageText("");
+      const queryKey = selectedChat.type === 'group' 
+        ? ['/api/chat/groups', selectedChat.id, 'messages']
+        : ['/api/chat/direct', selectedChat.id, 'messages'];
+      queryClient.invalidateQueries({ queryKey });
     }
   });
 
-  // Auto scroll to bottom when new messages arrive
+  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages]);
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!messageText.trim() || sendMessageMutation.isPending) return;
+    if (!messageText.trim()) return;
     
     sendMessageMutation.mutate({ text: messageText.trim() });
   };
-
-  // Get selected group info
-  const { data: chatGroups = [] } = useQuery({
-    queryKey: ['/api/chat/groups']
-  });
   
   const selectedGroup = chatGroups.find((group: ChatGroup) => group.id === selectedChat.id);
 
@@ -435,20 +448,22 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
             variant="ghost"
             size="sm"
             onClick={onBack}
-            className="p-2"
+            className="p-1"
           >
-            ←
+            <ArrowLeft className="h-5 w-5" />
           </Button>
           
-          <Avatar className="h-10 w-10">
+          <Avatar className="h-8 w-8">
             <AvatarImage src={selectedGroup?.avatar_url} />
-            <AvatarFallback className="bg-blue-500 text-white">
-              {selectedGroup?.is_private ? <Lock className="h-4 w-4" /> : <Hash className="h-4 w-4" />}
+            <AvatarFallback className="bg-blue-500 text-white text-sm">
+              {selectedGroup?.name.slice(0, 2).toUpperCase() || 'CH'}
             </AvatarFallback>
           </Avatar>
           
           <div className="flex-1">
-            <h2 className="font-semibold text-gray-900">{selectedGroup?.name || 'Chat'}</h2>
+            <h2 className="font-semibold text-gray-900">
+              {selectedGroup?.name || 'Chat'}
+            </h2>
             <p className="text-sm text-gray-500">
               {selectedGroup?.member_ids?.length || 0} members
             </p>
@@ -532,60 +547,64 @@ const CreateGroupForm = ({ onCancel, onSubmit }: CreateGroupFormProps) => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Create New Group</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Group Name *
-              </label>
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Enter group name..."
-                required
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Description
-              </label>
-              <Input
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Optional group description..."
-              />
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="isPrivate"
-                checked={isPrivate}
-                onChange={(e) => setIsPrivate(e.target.checked)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <label htmlFor="isPrivate" className="text-sm text-gray-700">
-                Private group (invite only)
-              </label>
-            </div>
-            
-            <div className="flex space-x-2 pt-2">
-              <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
-                Cancel
-              </Button>
-              <Button type="submit" disabled={!name.trim()} className="flex-1 bg-blue-500 hover:bg-blue-600">
-                Create Group
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+    <div className="fixed inset-0 bg-white flex flex-col w-screen h-screen">
+      <div className="p-4 border-b border-gray-200">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-semibold text-gray-900">Create Group</h1>
+          <Button variant="ghost" size="sm" onClick={onCancel}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex-1 p-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Group Name *
+            </label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter group name"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Description (optional)
+            </label>
+            <Input
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Enter group description"
+            />
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="isPrivate"
+              checked={isPrivate}
+              onChange={(e) => setIsPrivate(e.target.checked)}
+              className="rounded border-gray-300"
+            />
+            <label htmlFor="isPrivate" className="text-sm text-gray-700">
+              Make this group private
+            </label>
+          </div>
+
+          <div className="flex space-x-3 pt-4">
+            <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
+              Cancel
+            </Button>
+            <Button type="submit" disabled={!name.trim()} className="flex-1 bg-blue-500 hover:bg-blue-600">
+              Create Group
+            </Button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
