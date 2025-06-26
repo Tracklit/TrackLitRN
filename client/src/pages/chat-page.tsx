@@ -474,7 +474,7 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages }: Me
                 Replying to message
               </div>
               <div className="text-xs text-gray-700 truncate">
-                {allMessages?.find(m => m.id === message.reply_to_id)?.text || 'Original message'}
+                {allMessages?.find((m: ChatMessage | DirectMessage) => m.id === message.reply_to_id)?.text || 'Original message'}
               </div>
             </div>
           )}
