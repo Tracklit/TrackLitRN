@@ -7183,7 +7183,7 @@ Keep the response professional, evidence-based, and specific to track and field 
           mediaUrl: row.media_url,
           createdAt: row.created_at,
           sender: {
-            id: row.sender_id, // Use sender_id since that's what we have from the query
+            id: row.user_id, // Use user_id from the aliased column
             username: row.username,
             name: row.name,
             profileImageUrl: row.profile_image_url,
