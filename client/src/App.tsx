@@ -259,17 +259,19 @@ function MainApp() {
   
   return (
     <div className="min-h-screen text-foreground">
-      {/* Top Header Bar */}
-      <Header />
+      {/* Top Header Bar - Hide for chat routes */}
+      {!location.startsWith('/chat') && <Header />}
       
-      {/* Hamburger Menu for all screens */}
-      <div className="fixed top-4 left-4 z-50">
-        <HamburgerMenu />
-      </div>
+      {/* Hamburger Menu for all screens - Hide for chat routes */}
+      {!location.startsWith('/chat') && (
+        <div className="fixed top-4 left-4 z-50">
+          <HamburgerMenu />
+        </div>
+      )}
       
       {/* Main Content */}
-      <main className="pt-20 pb-16 md:pb-0">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main className={location.startsWith('/chat') ? '' : 'pt-20 pb-16 md:pb-0'}>
+        <div className={location.startsWith('/chat') ? '' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'}>
           <Router />
         </div>
       </main>
