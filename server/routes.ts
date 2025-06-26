@@ -7154,7 +7154,7 @@ Keep the response professional, evidence-based, and specific to track and field 
         return res.status(403).json({ error: "Access denied" });
       }
 
-      // Get messages with sender details
+      // Get messages with sender details - fixed approach
       const messages = await db
         .select({
           id: groupMessages.id,
