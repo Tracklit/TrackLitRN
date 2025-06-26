@@ -1625,7 +1625,7 @@ export const chatGroupMessages = pgTable("chat_group_messages", {
     image: string;
     url: string;
   }>(),
-  replyToId: integer("reply_to_id").references(() => chatGroupMessages.id),
+  replyToId: integer("reply_to_id").references((): any => chatGroupMessages.id),
   messageType: text("message_type").notNull().default("text"), // text, image, file, system
   mediaUrl: text("media_url"),
   isPinned: boolean("is_pinned").notNull().default(false),
@@ -1662,7 +1662,7 @@ export const telegramDirectMessages = pgTable("telegram_direct_messages", {
     image: string;
     url: string;
   }>(),
-  replyToId: integer("reply_to_id").references(() => telegramDirectMessages.id),
+  replyToId: integer("reply_to_id"),
   messageType: text("message_type").notNull().default("text"), // text, image, file
   mediaUrl: text("media_url"),
 });
