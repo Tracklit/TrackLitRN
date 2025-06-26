@@ -7175,8 +7175,6 @@ Keep the response professional, evidence-based, and specific to track and field 
 
       // Transform the flat result into the expected structure
       const messages = result.rows.map((row: any) => {
-        console.log('Processing row keys:', Object.keys(row));
-        console.log('Row data:', JSON.stringify(row, null, 2));
         return {
           id: row.id,
           groupId: row.group_id,
@@ -7185,7 +7183,7 @@ Keep the response professional, evidence-based, and specific to track and field 
           mediaUrl: row.media_url,
           createdAt: row.created_at,
           sender: {
-            id: row.user_id,
+            id: row.sender_id, // Use sender_id since that's what we have from the query
             username: row.username,
             name: row.name,
             profileImageUrl: row.profile_image_url,
@@ -7193,13 +7191,7 @@ Keep the response professional, evidence-based, and specific to track and field 
         };
       });
 
-      if (result.rows.length > 0) {
-        console.log('=== SQL DEBUG ===');
-        console.log('Available columns:', Object.keys(result.rows[0]));
-        console.log('Raw SQL result first row:', JSON.stringify(result.rows[0], null, 2));
-        console.log('Transformed messages first item:', JSON.stringify(messages[0], null, 2));
-        console.log('==================');
-      }
+      console.log(`Fetched ${messages.length} messages with profile images`);
 
       // Force cache refresh by setting no-cache headers and unique identifier
       res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
