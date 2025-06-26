@@ -328,11 +328,35 @@ const MessageBubble = ({ message, isOwn }: MessageBubbleProps) => {
     });
   };
 
+  const getProfileImage = () => {
+    if ('sender_profile_image' in message) {
+      return message.sender_profile_image;
+    }
+    return null;
+  };
+
+  const getSenderName = () => {
+    if ('sender_name' in message) {
+      return String(message.sender_name);
+    }
+    return 'Unknown';
+  };
+
   return (
     <div className={cn(
-      "flex w-full mb-4",
+      "flex w-full mb-4 items-end gap-2",
       isOwn ? "justify-end" : "justify-start"
     )}>
+      {/* Profile Image for other users (left side) */}
+      {!isOwn && (
+        <Avatar className="h-8 w-8 flex-shrink-0">
+          <AvatarImage src={getProfileImage() || undefined} />
+          <AvatarFallback className="bg-gray-400 text-white text-xs">
+            {getSenderName().slice(0, 2).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+      )}
+      
       <div className={cn(
         "max-w-xs lg:max-w-md px-4 py-2 rounded-lg",
         isOwn 
@@ -341,7 +365,7 @@ const MessageBubble = ({ message, isOwn }: MessageBubbleProps) => {
       )}>
         {!isOwn && 'sender_name' in message && (
           <div className="text-xs font-medium mb-1 text-gray-600">
-            {String(message.sender_name)}
+            {getSenderName()}
           </div>
         )}
         <div className="text-sm break-words">
@@ -357,6 +381,16 @@ const MessageBubble = ({ message, isOwn }: MessageBubbleProps) => {
           )}
         </div>
       </div>
+      
+      {/* Profile Image for current user (right side) */}
+      {isOwn && (
+        <Avatar className="h-8 w-8 flex-shrink-0">
+          <AvatarImage src={getProfileImage() || undefined} />
+          <AvatarFallback className="bg-blue-400 text-white text-xs">
+            {getSenderName().slice(0, 2).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+      )}
     </div>
   );
 };
