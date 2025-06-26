@@ -7154,50 +7154,26 @@ Keep the response professional, evidence-based, and specific to track and field 
         return res.status(403).json({ error: "Access denied" });
       }
 
-      // Simplified query without aliases to avoid PostgreSQL issues
-      const result = await db.execute(sql`
-        SELECT 
-          gm.id,
-          gm.group_id,
-          gm.sender_id,
-          gm.message,
-          gm.media_url,
-          gm.created_at,
-          u.id as user_id,
-          u.username,
-          u.name,
-          u.profile_image_url
-        FROM group_messages gm
-        INNER JOIN users u ON gm.sender_id = u.id
-        WHERE gm.group_id = ${groupId}
-        ORDER BY gm.created_at ASC
-      `);
-
-      // Transform the flat result into the expected structure
-      const messages = result.rows.map((row: any) => {
-        return {
-          id: row.id,
-          groupId: row.group_id,
-          senderId: row.sender_id,
-          message: row.message,
-          mediaUrl: row.media_url,
-          createdAt: row.created_at,
+      // Get messages with sender details
+      const messages = await db
+        .select({
+          id: groupMessages.id,
+          groupId: groupMessages.groupId,
+          senderId: groupMessages.senderId,
+          message: groupMessages.message,
+          mediaUrl: groupMessages.mediaUrl,
+          createdAt: groupMessages.createdAt,
           sender: {
-            id: row.user_id, // Use user_id from the aliased column
-            username: row.username,
-            name: row.name,
-            profileImageUrl: row.profile_image_url,
+            id: users.id,
+            username: users.username,
+            name: users.name,
+            profileImageUrl: users.profileImageUrl,
           },
-        };
-      });
-
-      console.log(`=== MESSAGES API EXECUTED AT ${new Date().toISOString()} ===`);
-      console.log(`Fetched ${messages.length} messages with profile images`);
-      if (messages.length > 0) {
-        console.log('First message sender object:', JSON.stringify(messages[0]?.sender || null, null, 2));
-        console.log('Profile image URL:', messages[0]?.sender?.profileImageUrl || 'MISSING');
-      }
-      console.log('=== END MESSAGES API ===');
+        })
+        .from(groupMessages)
+        .innerJoin(users, eq(users.id, groupMessages.senderId))
+        .where(eq(groupMessages.groupId, groupId))
+        .orderBy(asc(groupMessages.createdAt));
 
       res.json(messages);
     } catch (error) {
