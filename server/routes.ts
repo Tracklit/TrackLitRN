@@ -7081,57 +7081,7 @@ Keep the response professional, evidence-based, and specific to track and field 
         .where(eq(groupsTable.id, groupId))
         .limit(1);
 
-      if (membership.length === 0 || (membership[0].role !== 'admin' && group[0]?.ownerId !== userId)) {
-        return res.status(403).json({ error: "Only admins can add members" });
-      }
 
-      // Check if user is already a member
-      const existingMembership = await db
-        .select()
-        .from(chatGroupMembers)
-        .where(and(
-          eq(chatGroupMembers.groupId, groupId),
-          eq(chatGroupMembers.userId, targetUserId)
-        ))
-        .limit(1);
-
-      if (existingMembership.length > 0) {
-        return res.status(400).json({ error: "User is already a member" });
-      }
-
-      // Check member limits
-      const memberCount = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(chatGroupMembers)
-        .where(and(
-          eq(chatGroupMembers.groupId, groupId),
-          eq(chatGroupMembers.status, 'accepted')
-        ));
-
-      const currentMemberCount = memberCount[0]?.count || 0;
-      const maxMembers = req.user.subscriptionTier === 'star' ? Infinity : 50;
-
-      if (currentMemberCount >= maxMembers) {
-        return res.status(403).json({ error: "Member limit reached" });
-      }
-
-      // Add the member
-      const newMember = await db
-        .insert(chatGroupMembers)
-        .values({
-          groupId,
-          userId: targetUserId,
-          role: 'member',
-          status: 'accepted',
-        })
-        .returning();
-
-      res.json(newMember[0]);
-    } catch (error) {
-      console.error("Error adding group member:", error);
-      res.status(500).json({ error: "Failed to add member" });
-    }
-  });
 
   // ============================================================
   // Video Analysis API Routes

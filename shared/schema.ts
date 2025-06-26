@@ -37,7 +37,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   meetsAsCoach: many(meets, { relationName: "coach_meets" }),
   athleteGroups: many(athleteGroups),
   athleteGroupMemberships: many(athleteGroupMembers, { relationName: "athlete_memberships" }),
-  chatGroupMemberships: many(chatGroupMembers, { relationName: "user_groups" }),
+
   coachRelations: many(coaches, { relationName: "coach_side" }),
   athleteRelations: many(coaches, { relationName: "athlete_side" }),
   coachAthleteRelations: many(coachAthletes, { relationName: "coach_relationships" }),
@@ -465,8 +465,7 @@ export const groupsRelations = relations(groups, ({ one, many }) => ({
     fields: [groups.ownerId],
     references: [users.id],
   }),
-  members: many(chatGroupMembers, { relationName: "groups_members" }),
-  messages: many(groupMessages),
+
 }));
 
 
@@ -634,19 +633,7 @@ export const insertClubMemberSchema = createInsertSchema(clubMembers).omit({
 
 export type InsertClubMember = z.infer<typeof insertClubMemberSchema>;
 
-export const insertChatGroupMemberSchema = createInsertSchema(chatGroupMembers).omit({
-  id: true,
-  createdAt: true,
-});
 
-export type InsertChatGroupMember = z.infer<typeof insertChatGroupMemberSchema>;
-
-export const insertGroupMessageSchema = createInsertSchema(groupMessages).omit({
-  id: true,
-  createdAt: true,
-});
-
-export type InsertGroupMessage = z.infer<typeof insertGroupMessageSchema>;
 
 // Select types
 export type Club = typeof clubs.$inferSelect;
@@ -739,8 +726,7 @@ export type Notification = typeof notifications.$inferSelect;
 
 // Select types
 export type ClubMember = typeof clubMembers.$inferSelect;
-export type ChatGroupMember = typeof chatGroupMembers.$inferSelect;
-export type GroupMessage = typeof groupMessages.$inferSelect;
+
 export type ClubMessage = typeof clubMessages.$inferSelect;
 
 // Spikes Reward System

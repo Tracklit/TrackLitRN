@@ -108,6 +108,14 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
+- June 26, 2025: Complete removal of all group/social functionality from the application
+  - User explicitly requested removal of all group messaging and social features
+  - Deleted group-related database tables (groups, chatGroupMembers, groupMessages) from schema
+  - Removed all group API routes and storage functions from server code
+  - Cleaned up imports and references to group functionality throughout codebase
+  - Application now focuses exclusively on individual athlete training tools
+  - Updated project scope to exclude social features entirely
+
 - June 25, 2025: Fixed dashboard scroll lock affecting sidebar navigation
   - Removed global scroll prevention code that was blocking sidebar menu scrolling
   - Updated dashboard to use fixed height container without scroll lock
@@ -118,14 +126,6 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
   - Updated Arcade page to show placeholder for future games
   - Cleaned up routing and imports
   - Removed "Fun" category and Arcade menu item from navigation
-
-- June 25, 2025: Added Arcade page with mini-games for athletic performance training
-  - Created new Arcade page with dashboard-style card layout
-  - Added "Fun" category to sidebar navigation with Arcade menu item
-  - Implemented 4 active games (Reaction Time, Memory Game, Speed Tapping, Target Practice)
-  - Added 4 disabled placeholder games for future development
-  - Used consistent background images and styling matching dashboard design
-  - Integrated proper routing and navigation structure
 
 - June 24, 2025: Completed community activity ticker with enhanced carousel animation
   - Implemented clean single-direction sliding carousel (right to left every 7 seconds)
