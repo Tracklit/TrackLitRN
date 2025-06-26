@@ -24,6 +24,7 @@ import journalRoutes from "./routes/journal";
 import worldAthleticsRoutes from "./routes/world-athletics";
 import rehabRoutes from "./routes/rehab";
 import communityRoutes from "./routes/community";
+import chatRoutes from "./chat-routes-simple";
 
 // Background processing function for gym data
 async function processGymDataInBackground(programId: number, googleSheetId: string, sessions: any[]) {
@@ -2935,32 +2936,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/chat/groups/:groupId/messages", async (req: Request, res: Response) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    
-    try {
-      const groupId = parseInt(req.params.groupId);
-      const userId = req.user!.id;
-      const limit = parseInt(req.query.limit as string) || 50;
-      const offset = parseInt(req.query.offset as string) || 0;
-
-      if (isNaN(groupId)) {
-        return res.status(400).json({ error: "Invalid group ID" });
-      }
-
-      // Check if user is a member
-      const isMember = await dbStorage.isUserInChatGroup(userId, groupId);
-      if (!isMember) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-
-      const messages = await dbStorage.getChatGroupMessages(groupId, limit, offset);
-      res.json(messages);
-    } catch (error) {
-      console.error("Error fetching group messages:", error);
-      res.status(500).json({ error: "Failed to fetch messages" });
-    }
-  });
+  // Group messages endpoint moved to chat-routes-simple.ts
+  // app.get("/api/chat/groups/:groupId/messages", async (req: Request, res: Response) => {
+  //   // Handled by chat-routes-simple.ts
+  // });
 
   app.put("/api/chat/messages/:messageId", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
@@ -8220,6 +8199,7 @@ Keep the response professional, evidence-based, and specific to track and field 
 
   // Use modular routes
   app.use("/api/community", communityRoutes);
+  app.use(chatRoutes);
 
   return httpServer;
 }
