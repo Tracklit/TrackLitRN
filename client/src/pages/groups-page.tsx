@@ -85,6 +85,8 @@ export default function GroupsPage() {
   }, [targetGroupId, selectedGroup]);
 
   // Send message mutation
+  const queryClient = useQueryClient();
+  
   const sendMessageMutation = useMutation({
     mutationFn: async (messageData: { groupId: number; message: string }) => {
       console.log('Making POST request to /api/group-messages', messageData);
