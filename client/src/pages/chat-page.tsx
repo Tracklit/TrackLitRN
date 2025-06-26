@@ -365,33 +365,34 @@ const MessageBubble = ({ message, isOwn, currentUser }: MessageBubbleProps) => {
     setEditedText('');
   };
 
-  const saveEdit = async () => {
-    try {
-      const response = await apiRequest(
-        'PUT',
-        `/api/chat/messages/${message.id}`,
-        { text: editedText }
-      );
-
-      if (response.ok) {
-        const updatedMessage = await response.json();
-        
-        // Update the query cache with the new message data
-        queryClient.setQueryData(['/api/chat/groups/1/messages'], (oldData: any) => {
-          if (!oldData) return oldData;
-          return oldData.map((msg: any) => 
-            msg.id === message.id ? { ...msg, text: editedText, edited_at: updatedMessage.edited_at } : msg
-          );
-        });
-        
-        setIsEditing(false);
-        setEditedText('');
-      } else {
-        console.error('Failed to edit message');
+  const editMutation = useMutation({
+    mutationFn: async ({ messageId, text }: { messageId: number; text: string }) => {
+      const response = await apiRequest('PUT', `/api/chat/messages/${messageId}`, { text });
+      if (!response.ok) {
+        throw new Error('Failed to edit message');
       }
-    } catch (error) {
+      return response.json();
+    },
+    onSuccess: (updatedMessage) => {
+      // Update the messages in the cache immediately
+      queryClient.setQueryData(['/api/chat/groups/1/messages'], (oldData: any) => {
+        if (!oldData) return oldData;
+        return oldData.map((msg: any) => 
+          msg.id === updatedMessage.id ? updatedMessage : msg
+        );
+      });
+      
+      setIsEditing(false);
+      setEditedText('');
+    },
+    onError: (error) => {
       console.error('Error editing message:', error);
     }
+  });
+
+  const saveEdit = () => {
+    if (!editedText.trim()) return;
+    editMutation.mutate({ messageId: message.id, text: editedText.trim() });
   };
 
   const getProfileImage = () => {
