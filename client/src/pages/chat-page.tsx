@@ -316,9 +316,10 @@ const ChatPage = () => {
 interface MessageBubbleProps {
   message: ChatMessage | DirectMessage;
   isOwn: boolean;
+  currentUser?: any;
 }
 
-const MessageBubble = ({ message, isOwn }: MessageBubbleProps) => {
+const MessageBubble = ({ message, isOwn, currentUser }: MessageBubbleProps) => {
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString('en-US', { 
@@ -329,6 +330,9 @@ const MessageBubble = ({ message, isOwn }: MessageBubbleProps) => {
   };
 
   const getProfileImage = () => {
+    if (isOwn && currentUser) {
+      return currentUser.profileImageUrl;
+    }
     if ('sender_profile_image' in message) {
       return message.sender_profile_image;
     }
@@ -336,6 +340,9 @@ const MessageBubble = ({ message, isOwn }: MessageBubbleProps) => {
   };
 
   const getSenderName = () => {
+    if (isOwn && currentUser) {
+      return currentUser.name || currentUser.username;
+    }
     if ('sender_name' in message) {
       return String(message.sender_name);
     }
@@ -528,6 +535,7 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
                 key={message.id}
                 message={message}
                 isOwn={message.user_id === currentUser?.id}
+                currentUser={currentUser}
               />
             ))
           )}
