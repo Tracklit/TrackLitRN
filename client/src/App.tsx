@@ -37,8 +37,7 @@ import { Component as ClubManagementPage } from "@/pages/club-management-page";
 
 
 import ConversationDetailPage from "@/pages/conversation-detail-page";
-import GroupsPage from "@/pages/groups-page";
-import CreateGroupPage from "@/pages/create-group-page";
+
 import AthletesPage from "@/pages/athletes-page";
 import FriendsPage from "@/pages/friends-page";
 import ConnectionsPage from "@/pages/connections-page";
@@ -178,9 +177,6 @@ function Router() {
       
       {/* Social */}
       <ProtectedRoute path="/connections" component={ConnectionsPage} />
-      <ProtectedRoute path="/groups" component={GroupsPage} />
-      <ProtectedRoute path="/groups/:groupId" component={GroupsPage} />
-      <ProtectedRoute path="/create-group" component={CreateGroupPage} />
       <ProtectedRoute path="/my-athletes" component={MyAthletesPage} />
       <ProtectedRoute path="/athletes" component={AthletesPage} />
       <ProtectedRoute path="/coaches" component={CoachesPage} />

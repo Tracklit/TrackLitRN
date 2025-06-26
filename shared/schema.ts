@@ -469,47 +469,9 @@ export const groupsRelations = relations(groups, ({ one, many }) => ({
   messages: many(groupMessages),
 }));
 
-export const chatGroupMembers = pgTable("chat_group_members", {
-  id: serial("id").primaryKey(),
-  groupId: integer("group_id").notNull().references(() => groups.id),
-  userId: integer("user_id").notNull().references(() => users.id),
-  role: text("role", { enum: ['member', 'admin'] }).default('member'),
-  status: text("status", { enum: ['pending', 'accepted', 'rejected'] }).default('pending'),
-  createdAt: timestamp("created_at").defaultNow(),
-});
 
-export const chatGroupMembersRelations = relations(chatGroupMembers, ({ one }) => ({
-  group: one(groups, {
-    fields: [chatGroupMembers.groupId],
-    references: [groups.id],
-    relationName: "groups_members",
-  }),
-  user: one(users, {
-    fields: [chatGroupMembers.userId],
-    references: [users.id],
-    relationName: "user_groups",
-  }),
-}));
 
-export const groupMessages = pgTable("group_messages", {
-  id: serial("id").primaryKey(),
-  groupId: integer("group_id").notNull().references(() => groups.id),
-  senderId: integer("sender_id").notNull().references(() => users.id),
-  message: text("message").notNull(),
-  mediaUrl: text("media_url"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
 
-export const groupMessagesRelations = relations(groupMessages, ({ one }) => ({
-  group: one(groups, {
-    fields: [groupMessages.groupId],
-    references: [groups.id],
-  }),
-  sender: one(users, {
-    fields: [groupMessages.senderId],
-    references: [users.id],
-  }),
-}));
 
 export const videoAnalysis = pgTable("video_analysis", {
   id: serial("id").primaryKey(),
@@ -688,7 +650,7 @@ export type InsertGroupMessage = z.infer<typeof insertGroupMessageSchema>;
 
 // Select types
 export type Club = typeof clubs.$inferSelect;
-export type Group = typeof groups.$inferSelect;
+
 // Club Messages
 export const clubMessages = pgTable("club_messages", {
   id: serial("id").primaryKey(),

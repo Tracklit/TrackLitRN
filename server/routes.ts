@@ -2,7 +2,7 @@ import express, { type Express, type Request, type Response } from "express";
 import { createServer, type Server } from "http";
 import { storage as dbStorage } from "./storage";
 import { pool, db } from "./db";
-import { meets, notifications, groups as groupsTable, chatGroupMembers, groupMessages, users } from "@shared/schema";
+import { meets, notifications, users } from "@shared/schema";
 import { and, eq, or, sql, isNotNull, desc, asc } from "drizzle-orm";
 import { setupAuth } from "./auth";
 import { z } from "zod";
@@ -2695,44 +2695,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Group endpoints
-  app.get("/api/groups", async (req: Request, res: Response) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    
-    try {
-      const groups = await dbStorage.getUserGroups(req.user!.id);
-      res.json(groups);
-    } catch (error) {
-      res.status(500).send("Error fetching user groups");
-    }
-  });
 
-  app.post("/api/groups", async (req: Request, res: Response) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    
-    try {
-      // Validate the request data and use the correct field name for owner
-      const parsedData = insertGroupSchema.safeParse({
-        ...req.body,
-        ownerId: req.user!.id
-      });
-      
-      if (!parsedData.success) {
-        return res.status(400).json({ 
-          error: "Invalid data", 
-          details: parsedData.error.format() 
-        });
-      }
-      
-      // Create the group with owner ID properly set
-      const newGroup = await dbStorage.createGroup(parsedData.data);
-      
-      res.status(201).json(newGroup);
-    } catch (error) {
-      console.error("Error creating group:", error);
-      res.status(500).send("An error occurred while creating the group");
-    }
-  });
 
   app.get("/api/groups/:id", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);

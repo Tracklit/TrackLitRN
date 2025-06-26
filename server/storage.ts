@@ -80,7 +80,7 @@ import {
   clubs,
   clubMembers,
   groups,
-  chatGroupMembers,
+
   groupMessages,
   clubMessages,
   achievements,
