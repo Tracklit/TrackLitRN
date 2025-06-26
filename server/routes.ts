@@ -2889,52 +2889,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Chat Group Messages
-  app.post("/api/chat/groups/:groupId/messages", async (req: Request, res: Response) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    
-    try {
-      const groupId = parseInt(req.params.groupId);
-      const userId = req.user!.id;
-      const { text, replyToId, messageType = "text", mediaUrl } = req.body;
-
-      if (isNaN(groupId)) {
-        return res.status(400).json({ error: "Invalid group ID" });
-      }
-
-      if (!text || text.trim().length === 0) {
-        return res.status(400).json({ error: "Message text is required" });
-      }
-
-      // Check if user is a member
-      const isMember = await dbStorage.isUserInChatGroup(userId, groupId);
-      if (!isMember) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-
-      const user = req.user!;
-      const messageData = {
-        groupId,
-        senderId: userId,
-        senderName: user.name,
-        senderProfileImage: user.profileImageUrl,
-        text: text.trim(),
-        replyToId: replyToId || null,
-        messageType,
-        mediaUrl: mediaUrl || null,
-      };
-
-      const message = await dbStorage.sendChatGroupMessage(messageData);
-      
-      // Broadcast to WebSocket clients (if WebSocket is implemented)
-      // wsClients.broadcastToGroup(groupId, { type: 'NEW_MESSAGE', message });
-      
-      res.status(201).json(message);
-    } catch (error) {
-      console.error("Error sending group message:", error);
-      res.status(500).json({ error: "Failed to send message" });
-    }
-  });
+  // Chat Group Messages - Handled by chat-routes-simple.ts
 
   // Group messages endpoint moved to chat-routes-simple.ts
   // app.get("/api/chat/groups/:groupId/messages", async (req: Request, res: Response) => {
