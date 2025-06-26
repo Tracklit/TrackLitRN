@@ -12,6 +12,7 @@ const SwipeWrapper: React.FC<SwipeWrapperProps> = ({ children, currentPage }) =>
   const [startY, setStartY] = useState<number>(0);
   const [isDragging, setIsDragging] = useState(false);
   const [dragX, setDragX] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const SWIPE_THRESHOLD = 100; // Minimum distance for swipe
@@ -76,15 +77,26 @@ const SwipeWrapper: React.FC<SwipeWrapperProps> = ({ children, currentPage }) =>
       const isLeftSwipe = deltaX < 0;
 
       try {
+        setIsTransitioning(true);
+        
         if (isRightSwipe && currentPage === 'dashboard') {
           // Swipe right from dashboard → go to chat
-          setLocation('/chat');
+          setTimeout(() => {
+            setLocation('/chat');
+            setIsTransitioning(false);
+          }, 150);
         } else if (isLeftSwipe && currentPage === 'chat') {
           // Swipe left from chat → go to dashboard  
-          setLocation('/home');
+          setTimeout(() => {
+            setLocation('/');
+            setIsTransitioning(false);
+          }, 150);
+        } else {
+          setIsTransitioning(false);
         }
       } catch (error) {
         console.error('Navigation error:', error);
+        setIsTransitioning(false);
       }
     }
 
@@ -146,7 +158,9 @@ const SwipeWrapper: React.FC<SwipeWrapperProps> = ({ children, currentPage }) =>
   return (
     <div
       ref={containerRef}
-      className="h-full w-full relative overflow-hidden touch-pan-y"
+      className={`h-full w-full relative overflow-hidden touch-pan-y ${
+        isTransitioning ? 'transition-transform duration-300 ease-out' : ''
+      }`}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -154,8 +168,16 @@ const SwipeWrapper: React.FC<SwipeWrapperProps> = ({ children, currentPage }) =>
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       style={{
-        transform: isDragging ? `translateX(${Math.max(-50, Math.min(50, dragX * 0.3))}px)` : 'translateX(0px)',
-        transition: isDragging ? 'none' : 'transform 0.3s ease-out',
+        transform: isTransitioning 
+          ? (currentPage === 'dashboard' ? 'translateX(100%)' : 'translateX(-100%)')
+          : isDragging 
+            ? `translateX(${Math.max(-50, Math.min(50, dragX * 0.3))}px)` 
+            : 'translateX(0px)',
+        transition: isTransitioning 
+          ? 'transform 0.3s ease-out' 
+          : isDragging 
+            ? 'none' 
+            : 'transform 0.3s ease-out',
       }}
     >
       {children}
@@ -165,7 +187,9 @@ const SwipeWrapper: React.FC<SwipeWrapperProps> = ({ children, currentPage }) =>
         <div className="absolute inset-0 pointer-events-none z-50 flex items-center justify-center">
           <div 
             className={`text-4xl opacity-60 transition-opacity duration-200 ${
-              dragX > 0 ? 'text-blue-500' : 'text-gray-500'
+              dragX > 0 
+                ? (currentPage === 'dashboard' ? 'text-blue-500' : 'text-gray-400')
+                : (currentPage === 'chat' ? 'text-blue-500' : 'text-gray-400')
             }`}
           >
             {dragX > 0 && currentPage === 'dashboard' ? '💬' : 
