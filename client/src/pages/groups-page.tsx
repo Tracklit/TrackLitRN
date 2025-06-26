@@ -116,12 +116,7 @@ export default function GroupsPage() {
 
   // Removed handleCreateGroup - now handled in create-group-page
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
+  // Removed handleKeyPress as it's now handled inline in the textarea
 
   // Check if user can create groups
   const canCreateGroups = user?.isCoach || user?.subscriptionTier === 'star';
@@ -217,28 +212,51 @@ export default function GroupsPage() {
 
             {/* Message Input */}
             <div className="p-4 border-t border-gray-700 bg-gray-800 flex-shrink-0">
-              <div className="flex items-center space-x-2 max-w-4xl mx-auto">
-                <input
-                  type="text"
-                  placeholder="Type a message..."
-                  className="flex-1 bg-gray-700 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      handleSendMessage();
-                    }
-                  }}
-                  onFocus={() => setKeyboardVisible(true)}
-                  onBlur={() => setKeyboardVisible(false)}
-                />
+              <div className="flex items-end space-x-3 max-w-4xl mx-auto">
+                <div className="flex-1 bg-gray-700 rounded-3xl px-4 py-2 focus-within:ring-2 focus-within:ring-blue-500">
+                  <textarea
+                    placeholder="Type a message..."
+                    className="w-full bg-transparent text-white placeholder-gray-400 resize-none focus:outline-none text-sm leading-relaxed"
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage();
+                      }
+                    }}
+                    onFocus={() => setKeyboardVisible(true)}
+                    onBlur={() => setKeyboardVisible(false)}
+                    rows={1}
+                    style={{
+                      minHeight: '20px',
+                      maxHeight: '120px',
+                      height: 'auto',
+                    }}
+                    onInput={(e) => {
+                      const target = e.target as HTMLTextAreaElement;
+                      target.style.height = 'auto';
+                      target.style.height = Math.min(target.scrollHeight, 120) + 'px';
+                    }}
+                  />
+                </div>
+                
+                {/* Send Button */}
                 <Button
                   size="sm"
-                  className="bg-accent hover:bg-accent/90"
+                  className={`rounded-full w-10 h-10 p-0 transition-all ${
+                    newMessage.trim() 
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                      : 'bg-gray-600 hover:bg-gray-500 text-gray-300'
+                  }`}
                   onClick={handleSendMessage}
                   disabled={!newMessage.trim() || sendMessageMutation.isPending}
                 >
-                  <Send className="h-4 w-4" />
+                  {sendMessageMutation.isPending ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
             </div>
