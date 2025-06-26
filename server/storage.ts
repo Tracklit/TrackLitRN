@@ -3171,10 +3171,14 @@ export class DatabaseStorage implements IStorage {
 
   // Chat Group Messages
   async sendChatGroupMessage(messageData: NewChatGroupMessage): Promise<ChatGroupMessage> {
-    const [message] = await db
-      .insert(chatGroupMessages)
-      .values(messageData)
-      .returning();
+    // Use direct SQL to avoid ORM column issues
+    const result = await db.execute(sql`
+      INSERT INTO chat_group_messages (group_id, sender_id, sender_name, sender_profile_image, text, message_type, media_url, reply_to_id, is_deleted, is_pinned)
+      VALUES (${messageData.groupId}, ${messageData.senderId}, ${messageData.senderName || 'Unknown'}, ${messageData.senderProfileImage || null}, ${messageData.text}, ${messageData.messageType || 'text'}, ${messageData.mediaUrl || null}, ${messageData.replyToId || null}, false, false)
+      RETURNING *
+    `);
+
+    const message = result.rows[0] as ChatGroupMessage;
 
     // Update group last message info
     await db
