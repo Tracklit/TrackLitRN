@@ -254,19 +254,32 @@ export default function GroupsPage() {
                         <div className={cn("max-w-[70%] flex", isOwnMessage ? "flex-row-reverse" : "flex-row")}>
                           {/* Avatar - only show for other users */}
                           {!isOwnMessage && (
-                            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
-                              <span className="text-white font-medium text-xs">
-                                {message.sender?.username?.charAt(0).toUpperCase() || 'U'}
-                              </span>
+                            <div className="mr-3 flex-shrink-0">
+                              {message.sender?.profileImageUrl ? (
+                                <img 
+                                  src={message.sender.profileImageUrl} 
+                                  alt={message.sender.name || message.sender.username}
+                                  className="w-8 h-8 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                  <span className="text-white font-medium text-xs">
+                                    {message.sender?.username?.charAt(0).toUpperCase() || 'U'}
+                                  </span>
+                                </div>
+                              )}
                             </div>
                           )}
                           
                           <div className="flex flex-col">
-                            {/* Sender name - only show for other users */}
+                            {/* Sender name and timestamp - only show for other users */}
                             {!isOwnMessage && (
-                              <div className="mb-1">
-                                <span className="text-xs font-medium text-gray-400">
-                                  {message.sender?.username || 'Unknown User'}
+                              <div className="mb-1 flex items-center space-x-2">
+                                <span className="text-xs font-medium text-gray-300">
+                                  {message.sender?.name || message.sender?.username || 'Unknown User'}
+                                </span>
+                                <span className="text-xs text-gray-500">
+                                  {format(new Date(message.createdAt || new Date()), 'MMM d, h:mm a')}
                                 </span>
                               </div>
                             )}
@@ -415,7 +428,7 @@ export default function GroupsPage() {
                   <div className="flex-1 relative">
                     <textarea
                       placeholder="Type a message..."
-                      className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-accent min-h-[40px] max-h-[120px]"
+                      className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 pr-10 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[40px] max-h-[120px]"
                       value={newMessage}
                       onChange={(e) => {
                         setNewMessage(e.target.value);
