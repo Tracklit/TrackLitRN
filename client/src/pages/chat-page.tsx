@@ -747,12 +747,26 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
   // Immediate scroll to bottom when entering or changing chats
   useEffect(() => {
     if (messagesContainerRef.current && messages.length > 0) {
-      // Use setTimeout to ensure DOM is fully rendered
-      setTimeout(() => {
+      const scrollToBottom = () => {
         if (messagesContainerRef.current) {
-          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+          const container = messagesContainerRef.current;
+          // Use multiple methods to ensure absolute bottom scroll
+          container.scrollTop = container.scrollHeight;
+          container.scrollTo({ top: container.scrollHeight, behavior: 'auto' });
+          
+          // Additional scroll attempt after a short delay
+          setTimeout(() => {
+            if (container) {
+              container.scrollTop = container.scrollHeight + 100; // Add extra pixels to ensure bottom
+            }
+          }, 10);
         }
-      }, 50); // Small delay to ensure complete rendering
+      };
+
+      // Initial scroll
+      setTimeout(scrollToBottom, 50);
+      // Backup scroll attempt
+      setTimeout(scrollToBottom, 150);
     }
   }, [selectedChat.id, messages]);
 
