@@ -245,101 +245,98 @@ export default function GroupsPage() {
                     <p>Be the first to start the conversation!</p>
                   </div>
                 ) : (
-                  groupMessages(messages).map((group, groupIndex) => (
-                    <div key={`group-${groupIndex}`} className="space-y-1">
-                      {/* Sender info - only show for first message in group */}
+                  messages.map((message) => (
+                    <div key={message.id} className="mb-4">
+                      {/* Sender info */}
                       <div className="flex items-center space-x-2 mb-2">
                         <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                           <span className="text-white font-medium text-sm">
-                            {group.sender.username?.charAt(0).toUpperCase() || 'U'}
+                            {message.sender?.username?.charAt(0).toUpperCase() || 'U'}
                           </span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <span className="text-sm font-medium text-white">
-                            {group.sender.username || 'Unknown User'}
+                            {message.sender?.username || 'Unknown User'}
                           </span>
                           <span className="text-xs text-gray-400">
-                            {formatMessageTime(group.timestamp)}
+                            {formatMessageTime(new Date(message.createdAt || new Date()))}
                           </span>
                         </div>
                       </div>
 
-                      {/* Messages in group */}
-                      <div className="ml-10 space-y-1">
-                        {group.messages.map((message, messageIndex) => (
-                          <div
-                            key={message.id}
-                            className={cn(
-                              "group relative",
-                              hoveredMessage === message.id && "bg-gray-800/50 rounded-lg"
-                            )}
-                            onMouseEnter={() => setHoveredMessage(message.id)}
-                            onMouseLeave={() => setHoveredMessage(null)}
-                          >
-                            <div className="flex items-start justify-between p-2">
-                              <div className="flex-1">
-                                {/* Reply preview if this is a reply */}
-                                {replyingTo && messageIndex === 0 && (
-                                  <div className="mb-2 p-2 bg-gray-800 rounded-lg border-l-2 border-blue-500">
-                                    <div className="text-xs text-gray-400 mb-1">
-                                      Replying to {replyingTo.sender.username}
-                                    </div>
-                                    <div className="text-sm text-gray-300 truncate">
-                                      {replyingTo.message}
-                                    </div>
+                      {/* Message content */}
+                      <div className="ml-10">
+                        <div
+                          className={cn(
+                            "group relative",
+                            hoveredMessage === message.id && "bg-gray-800/50 rounded-lg"
+                          )}
+                          onMouseEnter={() => setHoveredMessage(message.id)}
+                          onMouseLeave={() => setHoveredMessage(null)}
+                        >
+                          <div className="flex items-start justify-between p-2">
+                            <div className="flex-1">
+                              {/* Reply preview if this is a reply */}
+                              {replyingTo && (
+                                <div className="mb-2 p-2 bg-gray-800 rounded-lg border-l-2 border-blue-500">
+                                  <div className="text-xs text-gray-400 mb-1">
+                                    Replying to {replyingTo.sender?.username || 'Unknown'}
                                   </div>
-                                )}
-                                
-                                <p className="text-gray-300 text-sm break-words">
-                                  {message.message}
-                                </p>
-                                
-                                {/* Reactions placeholder */}
-                                <div className="flex items-center space-x-1 mt-1">
-                                  {/* This would be populated with actual reactions */}
-                                </div>
-                              </div>
-
-                              {/* Message actions - show on hover */}
-                              {hoveredMessage === message.id && (
-                                <div className="flex items-center space-x-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-6 w-6 p-0 text-gray-400 hover:text-white"
-                                    onClick={() => handleReply(message)}
-                                  >
-                                    <Reply className="h-3 w-3" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-6 w-6 p-0 text-gray-400 hover:text-white"
-                                  >
-                                    <Heart className="h-3 w-3" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-6 w-6 p-0 text-gray-400 hover:text-white"
-                                  >
-                                    <MoreVertical className="h-3 w-3" />
-                                  </Button>
+                                  <div className="text-sm text-gray-300 truncate">
+                                    {replyingTo.message}
+                                  </div>
                                 </div>
                               )}
-                            </div>
-
-                            {/* Message status indicators */}
-                            <div className="flex justify-end mt-1 pr-2">
-                              <div className="flex items-center space-x-1">
-                                <CheckCheck className="h-3 w-3 text-blue-500" />
-                                <span className="text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  {format(new Date(message.createdAt || new Date()), 'HH:mm')}
-                                </span>
+                              
+                              <p className="text-gray-300 text-sm break-words">
+                                {message.message}
+                              </p>
+                              
+                              {/* Reactions placeholder */}
+                              <div className="flex items-center space-x-1 mt-1">
+                                {/* This would be populated with actual reactions */}
                               </div>
                             </div>
+
+                            {/* Message actions - show on hover */}
+                            {hoveredMessage === message.id && (
+                              <div className="flex items-center space-x-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0 text-gray-400 hover:text-white"
+                                  onClick={() => handleReply(message)}
+                                >
+                                  <Reply className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0 text-gray-400 hover:text-white"
+                                >
+                                  <Heart className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0 text-gray-400 hover:text-white"
+                                >
+                                  <MoreVertical className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            )}
                           </div>
-                        ))}
+
+                          {/* Message status indicators */}
+                          <div className="flex justify-end mt-1 pr-2">
+                            <div className="flex items-center space-x-1">
+                              <CheckCheck className="h-3 w-3 text-blue-500" />
+                              <span className="text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                                {format(new Date(message.createdAt || new Date()), 'HH:mm')}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   ))
