@@ -255,26 +255,34 @@ export default function GroupsPage() {
                           {/* Avatar - only show for other users */}
                           {!isOwnMessage && (
                             <div className="mr-3 flex-shrink-0">
-                              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                                <span className="text-white font-medium text-xs">
-                                  {message.sender?.username?.charAt(0).toUpperCase() || 'U'}
-                                </span>
-                              </div>
+                              {message.sender?.profileImageUrl ? (
+                                <img 
+                                  src={message.sender.profileImageUrl} 
+                                  alt={message.sender.name || message.sender.username}
+                                  className="w-8 h-8 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                  <span className="text-white font-medium text-xs">
+                                    {message.sender?.username?.charAt(0).toUpperCase() || 'U'}
+                                  </span>
+                                </div>
+                              )}
                             </div>
                           )}
                           
                           <div className="flex flex-col">
-                            {/* Sender name and timestamp - only show for other users */}
-                            {!isOwnMessage && (
-                              <div className="mb-1 flex items-center space-x-2">
+                            {/* Sender name and timestamp - show for all messages */}
+                            <div className="mb-1 flex items-center space-x-2">
+                              {!isOwnMessage && (
                                 <span className="text-xs font-medium text-gray-300">
                                   {message.sender?.name || message.sender?.username || 'Unknown User'}
                                 </span>
-                                <span className="text-xs text-gray-500">
-                                  {format(new Date(message.createdAt || new Date()), 'MMM d, h:mm a')}
-                                </span>
-                              </div>
-                            )}
+                              )}
+                              <span className="text-xs text-gray-500">
+                                {format(new Date(message.createdAt || new Date()), isOwnMessage ? 'h:mm a' : 'MMM d, h:mm a')}
+                              </span>
+                            </div>
                             
                             {/* Message bubble */}
                             <div
@@ -309,12 +317,12 @@ export default function GroupsPage() {
                                 {message.message}
                               </p>
                               
-                              {/* Timestamp - show on hover */}
+                              {/* Additional timestamp on hover */}
                               <div className={cn(
                                 "text-xs mt-1 opacity-0 group-hover:opacity-60 transition-opacity",
                                 isOwnMessage ? "text-right text-blue-100" : "text-left text-gray-400"
                               )}>
-                                {format(new Date(message.createdAt || new Date()), 'HH:mm')}
+                                {format(new Date(message.createdAt || new Date()), 'MMM d, yyyy HH:mm')}
                               </div>
                             </div>
                             
