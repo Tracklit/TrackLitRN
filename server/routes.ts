@@ -7191,8 +7191,13 @@ Keep the response professional, evidence-based, and specific to track and field 
         };
       });
 
+      console.log(`=== MESSAGES API EXECUTED AT ${new Date().toISOString()} ===`);
       console.log(`Fetched ${messages.length} messages with profile images`);
-      console.log('First message sender object:', JSON.stringify(messages[0]?.sender || null, null, 2));
+      if (messages.length > 0) {
+        console.log('First message sender object:', JSON.stringify(messages[0]?.sender || null, null, 2));
+        console.log('Profile image URL:', messages[0]?.sender?.profileImageUrl || 'MISSING');
+      }
+      console.log('=== END MESSAGES API ===');
 
       res.json(messages);
     } catch (error) {
