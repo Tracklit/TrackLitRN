@@ -208,6 +208,11 @@ const ChatPage = () => {
     return <CreateGroupForm onCancel={() => setShowCreateGroup(false)} onSubmit={createGroupMutation.mutate} />;
   }
 
+  // Show chat interface if a chat is selected
+  if (selectedChat) {
+    return <ChatInterface selectedChat={selectedChat} onBack={() => setSelectedChat(null)} />;
+  }
+
   return (
     <div className="h-screen bg-white flex flex-col">
       {/* Header */}
@@ -359,6 +364,147 @@ const MessageBubble = ({ message, isOwn }: MessageBubbleProps) => {
             </span>
           </div>
         </div>
+      </div>
+    </div>
+  );
+};
+
+// Chat Interface Component
+interface ChatInterfaceProps {
+  selectedChat: { type: 'group' | 'direct'; id: number };
+  onBack: () => void;
+}
+
+const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
+  const [messageText, setMessageText] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
+
+  // Fetch messages for selected chat
+  const { data: messages = [], isLoading: messagesLoading } = useQuery({
+    queryKey: [`/api/chat/groups/${selectedChat.id}/messages`],
+    queryFn: async () => {
+      const response = await apiRequest('GET', `/api/chat/groups/${selectedChat.id}/messages`);
+      return response.json();
+    },
+    enabled: selectedChat.type === 'group'
+  });
+
+  // Get current user from context
+  const { data: currentUser } = useQuery({
+    queryKey: ['/api/user']
+  });
+
+  // Send message mutation
+  const sendMessageMutation = useMutation({
+    mutationFn: async (data: { text: string }) => {
+      const response = await apiRequest('POST', `/api/chat/groups/${selectedChat.id}/messages`, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/chat/groups/${selectedChat.id}/messages`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/groups'] });
+      setMessageText("");
+    }
+  });
+
+  // Auto scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!messageText.trim() || sendMessageMutation.isPending) return;
+    
+    sendMessageMutation.mutate({ text: messageText.trim() });
+  };
+
+  // Get selected group info
+  const { data: chatGroups = [] } = useQuery({
+    queryKey: ['/api/chat/groups']
+  });
+  
+  const selectedGroup = chatGroups.find((group: ChatGroup) => group.id === selectedChat.id);
+
+  return (
+    <div className="h-screen bg-white flex flex-col">
+      {/* Chat Header */}
+      <div className="p-4 border-b border-gray-200 bg-white">
+        <div className="flex items-center space-x-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onBack}
+            className="p-2"
+          >
+            ←
+          </Button>
+          
+          <Avatar className="h-10 w-10">
+            <AvatarImage src={selectedGroup?.avatar_url} />
+            <AvatarFallback className="bg-blue-500 text-white">
+              {selectedGroup?.is_private ? <Lock className="h-4 w-4" /> : <Hash className="h-4 w-4" />}
+            </AvatarFallback>
+          </Avatar>
+          
+          <div className="flex-1">
+            <h2 className="font-semibold text-gray-900">{selectedGroup?.name || 'Chat'}</h2>
+            <p className="text-sm text-gray-500">
+              {selectedGroup?.member_ids?.length || 0} members
+            </p>
+          </div>
+          
+          <Button variant="ghost" size="sm">
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Messages Area */}
+      <ScrollArea className="flex-1 p-4">
+        <div className="space-y-4">
+          {messagesLoading ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+              <MessageCircle className="h-16 w-16 mb-4 text-gray-300" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No messages yet</h3>
+              <p className="text-center">Be the first to send a message!</p>
+            </div>
+          ) : (
+            messages.map((message: ChatMessage) => (
+              <MessageBubble
+                key={message.id}
+                message={message}
+                isOwn={message.user_id === currentUser?.id}
+              />
+            ))
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+      </ScrollArea>
+
+      {/* Message Input */}
+      <div className="p-4 border-t border-gray-200 bg-white">
+        <form onSubmit={handleSendMessage} className="flex space-x-2">
+          <Input
+            value={messageText}
+            onChange={(e) => setMessageText(e.target.value)}
+            placeholder="Type a message..."
+            className="flex-1"
+            disabled={sendMessageMutation.isPending}
+          />
+          <Button
+            type="submit"
+            disabled={!messageText.trim() || sendMessageMutation.isPending}
+            className="bg-blue-500 hover:bg-blue-600"
+          >
+            <Send className="h-4 w-4" />
+          </Button>
+        </form>
       </div>
     </div>
   );
