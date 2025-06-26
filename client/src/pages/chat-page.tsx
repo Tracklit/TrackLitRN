@@ -810,14 +810,16 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
       {/* Chat Header */}
       <div className="p-4 border-b border-gray-200 bg-white flex-shrink-0">
         <div className="flex items-center space-x-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onBack}
-            className="p-1"
+          <button
+            onClick={() => {
+              console.log('Back button clicked!');
+              onBack();
+            }}
+            className="p-3 hover:bg-gray-100 rounded-full flex-shrink-0 bg-gray-50 border border-gray-200"
+            type="button"
           >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
+            <ArrowLeft className="h-6 w-6 text-gray-900" />
+          </button>
           
           <Avatar className="h-8 w-8">
             <AvatarImage src={selectedGroup?.avatar_url} />
