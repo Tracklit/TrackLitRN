@@ -734,6 +734,13 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages, onIm
         </Avatar>
       )}
       
+      {/* Reaction Animation */}
+      {reactionAnimation && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
+          <div className="text-2xl animate-bounce">👍</div>
+        </div>
+      )}
+      
       {/* Click outside to close menu */}
       {showMenu && (
         <div 
