@@ -747,7 +747,12 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
   // Immediate scroll to bottom when entering or changing chats
   useEffect(() => {
     if (messagesContainerRef.current && messages.length > 0) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      // Use setTimeout to ensure DOM is fully rendered
+      setTimeout(() => {
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+      }, 50); // Small delay to ensure complete rendering
     }
   }, [selectedChat.id, messages]);
 
