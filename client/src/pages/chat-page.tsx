@@ -532,7 +532,7 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages }: Me
           
           {/* Context Menu */}
           {showMenu && (
-            <div className="absolute top-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-1">
+            <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-1">
               <Button
                 size="sm"
                 variant="ghost"
