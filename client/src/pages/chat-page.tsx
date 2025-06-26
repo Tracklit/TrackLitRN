@@ -410,6 +410,7 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages, onIm
   const [lastTap, setLastTap] = useState<number>(0);
   const [reactionAnimation, setReactionAnimation] = useState(false);
   const [reactions, setReactions] = useState<any[]>([]);
+  const [reactionCooldown, setReactionCooldown] = useState(false);
   const bubbleRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
@@ -458,10 +459,14 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages, onIm
   });
 
   const handleReaction = () => {
-    // Prevent multiple reactions if one is already in progress
-    if (reactionMutation.isPending) {
+    // Prevent multiple reactions if one is already in progress or on cooldown
+    if (reactionMutation.isPending || reactionCooldown) {
       return;
     }
+    
+    // Set cooldown to prevent rapid toggles
+    setReactionCooldown(true);
+    setTimeout(() => setReactionCooldown(false), 1500); // 1.5 second cooldown
     
     // Detect message type based on message properties
     const messageType = (message as any).group_id || (message as any).groupId ? 'group' : 'direct';
