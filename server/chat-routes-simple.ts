@@ -281,7 +281,7 @@ router.post("/api/chat/groups/:groupId/messages", upload.single('image'), async 
     // Determine message type and media URL
     const finalMessageType = file ? "image" : "text";
     const mediaUrl = file ? `/uploads/${file.filename}` : null;
-    const messageText = text?.trim() || (file ? "Image" : "");
+    const messageText = text?.trim() || "";
 
     // Insert message
     const messageResult = await db.execute(sql`
@@ -293,10 +293,11 @@ router.post("/api/chat/groups/:groupId/messages", upload.single('image'), async 
     const message = messageResult.rows[0];
 
     // Update group's last message info
+    const lastMessageText = text?.trim() || (file ? "📷 Photo" : "");
     await db.execute(sql`
       UPDATE chat_groups 
       SET 
-        last_message = ${text.trim()},
+        last_message = ${lastMessageText},
         last_message_at = NOW(),
         message_count = message_count + 1
       WHERE id = ${groupId}
