@@ -232,6 +232,18 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                 Connections
               </div>
             </Link>
+            <Link href="/chat">
+              <div
+                className={cn(
+                  "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
+                  location === "/chat" ? "bg-primary text-primary-foreground" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                )}
+                onClick={() => setIsOpen(false)}
+              >
+                <MessagesSquare className="h-4 w-4 mr-3" />
+                Group Chat
+              </div>
+            </Link>
             {(currentUser as any)?.isCoach && (
               <Link href="/my-athletes">
                 <div
