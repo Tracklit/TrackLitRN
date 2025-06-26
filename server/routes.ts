@@ -2695,6 +2695,477 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============ TELEGRAM-STYLE CHAT SYSTEM API ROUTES ============
+
+  // Chat Groups Management
+  app.post("/api/chat/groups", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const { name, description, isPrivate } = req.body;
+      const userId = req.user!.id;
+
+      if (!name || name.trim().length === 0) {
+        return res.status(400).json({ error: "Group name is required" });
+      }
+
+      const groupData = {
+        name: name.trim(),
+        description: description || null,
+        isPrivate: isPrivate || false,
+        creatorId: userId,
+      };
+
+      const group = await dbStorage.createChatGroup(groupData);
+      res.status(201).json(group);
+    } catch (error) {
+      console.error("Error creating chat group:", error);
+      res.status(500).json({ error: "Failed to create group" });
+    }
+  });
+
+  app.get("/api/chat/groups", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const userId = req.user!.id;
+      const groups = await dbStorage.getChatGroups(userId);
+      res.json(groups);
+    } catch (error) {
+      console.error("Error fetching chat groups:", error);
+      res.status(500).json({ error: "Failed to fetch groups" });
+    }
+  });
+
+  app.get("/api/chat/groups/:groupId", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const groupId = parseInt(req.params.groupId);
+      const userId = req.user!.id;
+
+      if (isNaN(groupId)) {
+        return res.status(400).json({ error: "Invalid group ID" });
+      }
+
+      // Check if user is a member
+      const isMember = await dbStorage.isUserInChatGroup(userId, groupId);
+      if (!isMember) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const group = await dbStorage.getChatGroup(groupId);
+      if (!group) {
+        return res.status(404).json({ error: "Group not found" });
+      }
+
+      res.json(group);
+    } catch (error) {
+      console.error("Error fetching chat group:", error);
+      res.status(500).json({ error: "Failed to fetch group" });
+    }
+  });
+
+  app.post("/api/chat/groups/:groupId/join", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const groupId = parseInt(req.params.groupId);
+      const userId = req.user!.id;
+
+      if (isNaN(groupId)) {
+        return res.status(400).json({ error: "Invalid group ID" });
+      }
+
+      const group = await dbStorage.getChatGroup(groupId);
+      if (!group) {
+        return res.status(404).json({ error: "Group not found" });
+      }
+
+      // Check if group is private and user needs permission
+      if (group.isPrivate) {
+        return res.status(403).json({ error: "Cannot join private group without invitation" });
+      }
+
+      const member = await dbStorage.joinChatGroup(groupId, userId);
+      res.status(201).json(member);
+    } catch (error) {
+      console.error("Error joining chat group:", error);
+      res.status(500).json({ error: "Failed to join group" });
+    }
+  });
+
+  app.post("/api/chat/groups/join/:inviteCode", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const inviteCode = req.params.inviteCode;
+      const userId = req.user!.id;
+
+      const group = await dbStorage.getChatGroupByInviteCode(inviteCode);
+      if (!group) {
+        return res.status(404).json({ error: "Invalid invite code" });
+      }
+
+      const member = await dbStorage.joinChatGroup(group.id, userId);
+      res.status(201).json({ group, member });
+    } catch (error) {
+      console.error("Error joining chat group by invite:", error);
+      res.status(500).json({ error: "Failed to join group" });
+    }
+  });
+
+  app.delete("/api/chat/groups/:groupId/leave", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const groupId = parseInt(req.params.groupId);
+      const userId = req.user!.id;
+
+      if (isNaN(groupId)) {
+        return res.status(400).json({ error: "Invalid group ID" });
+      }
+
+      await dbStorage.leaveChatGroup(groupId, userId);
+      res.status(200).json({ message: "Successfully left group" });
+    } catch (error) {
+      console.error("Error leaving chat group:", error);
+      res.status(500).json({ error: "Failed to leave group" });
+    }
+  });
+
+  app.get("/api/chat/groups/:groupId/members", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const groupId = parseInt(req.params.groupId);
+      const userId = req.user!.id;
+
+      if (isNaN(groupId)) {
+        return res.status(400).json({ error: "Invalid group ID" });
+      }
+
+      // Check if user is a member
+      const isMember = await dbStorage.isUserInChatGroup(userId, groupId);
+      if (!isMember) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const members = await dbStorage.getChatGroupMembers(groupId);
+      res.json(members);
+    } catch (error) {
+      console.error("Error fetching group members:", error);
+      res.status(500).json({ error: "Failed to fetch members" });
+    }
+  });
+
+  // Chat Group Messages
+  app.post("/api/chat/groups/:groupId/messages", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const groupId = parseInt(req.params.groupId);
+      const userId = req.user!.id;
+      const { text, replyToId, messageType = "text", mediaUrl } = req.body;
+
+      if (isNaN(groupId)) {
+        return res.status(400).json({ error: "Invalid group ID" });
+      }
+
+      if (!text || text.trim().length === 0) {
+        return res.status(400).json({ error: "Message text is required" });
+      }
+
+      // Check if user is a member
+      const isMember = await dbStorage.isUserInChatGroup(userId, groupId);
+      if (!isMember) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const user = req.user!;
+      const messageData = {
+        groupId,
+        senderId: userId,
+        senderName: user.name,
+        senderProfileImage: user.profileImageUrl,
+        text: text.trim(),
+        replyToId: replyToId || null,
+        messageType,
+        mediaUrl: mediaUrl || null,
+      };
+
+      const message = await dbStorage.sendChatGroupMessage(messageData);
+      
+      // Broadcast to WebSocket clients (if WebSocket is implemented)
+      // wsClients.broadcastToGroup(groupId, { type: 'NEW_MESSAGE', message });
+      
+      res.status(201).json(message);
+    } catch (error) {
+      console.error("Error sending group message:", error);
+      res.status(500).json({ error: "Failed to send message" });
+    }
+  });
+
+  app.get("/api/chat/groups/:groupId/messages", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const groupId = parseInt(req.params.groupId);
+      const userId = req.user!.id;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
+
+      if (isNaN(groupId)) {
+        return res.status(400).json({ error: "Invalid group ID" });
+      }
+
+      // Check if user is a member
+      const isMember = await dbStorage.isUserInChatGroup(userId, groupId);
+      if (!isMember) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const messages = await dbStorage.getChatGroupMessages(groupId, limit, offset);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching group messages:", error);
+      res.status(500).json({ error: "Failed to fetch messages" });
+    }
+  });
+
+  app.put("/api/chat/messages/:messageId", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const messageId = parseInt(req.params.messageId);
+      const userId = req.user!.id;
+      const { text } = req.body;
+
+      if (isNaN(messageId)) {
+        return res.status(400).json({ error: "Invalid message ID" });
+      }
+
+      if (!text || text.trim().length === 0) {
+        return res.status(400).json({ error: "Message text is required" });
+      }
+
+      const message = await dbStorage.editChatGroupMessage(messageId, userId, text.trim());
+      if (!message) {
+        return res.status(404).json({ error: "Message not found or unauthorized" });
+      }
+
+      res.json(message);
+    } catch (error) {
+      console.error("Error editing message:", error);
+      res.status(500).json({ error: "Failed to edit message" });
+    }
+  });
+
+  app.delete("/api/chat/messages/:messageId", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const messageId = parseInt(req.params.messageId);
+      const userId = req.user!.id;
+
+      if (isNaN(messageId)) {
+        return res.status(400).json({ error: "Invalid message ID" });
+      }
+
+      await dbStorage.deleteChatGroupMessage(messageId, userId);
+      res.status(200).json({ message: "Message deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting message:", error);
+      res.status(500).json({ error: "Failed to delete message" });
+    }
+  });
+
+  // Direct Messages (Telegram-style)
+  app.post("/api/chat/direct/:conversationId/messages", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const conversationId = parseInt(req.params.conversationId);
+      const userId = req.user!.id;
+      const { text, receiverId, replyToId, messageType = "text", mediaUrl } = req.body;
+
+      if (isNaN(conversationId)) {
+        return res.status(400).json({ error: "Invalid conversation ID" });
+      }
+
+      if (!text || text.trim().length === 0) {
+        return res.status(400).json({ error: "Message text is required" });
+      }
+
+      if (!receiverId) {
+        return res.status(400).json({ error: "Receiver ID is required" });
+      }
+
+      const messageData = {
+        conversationId,
+        senderId: userId,
+        receiverId,
+        text: text.trim(),
+        replyToId: replyToId || null,
+        messageType,
+        mediaUrl: mediaUrl || null,
+      };
+
+      const message = await dbStorage.sendTelegramDirectMessage(messageData);
+      res.status(201).json(message);
+    } catch (error) {
+      console.error("Error sending direct message:", error);
+      res.status(500).json({ error: "Failed to send message" });
+    }
+  });
+
+  app.get("/api/chat/direct/:conversationId/messages", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const conversationId = parseInt(req.params.conversationId);
+      const userId = req.user!.id;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
+
+      if (isNaN(conversationId)) {
+        return res.status(400).json({ error: "Invalid conversation ID" });
+      }
+
+      // Verify user is part of this conversation
+      const conversation = await dbStorage.getConversation(conversationId);
+      if (!conversation || (conversation.user1Id !== userId && conversation.user2Id !== userId)) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const messages = await dbStorage.getTelegramDirectMessages(conversationId, limit, offset);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching direct messages:", error);
+      res.status(500).json({ error: "Failed to fetch messages" });
+    }
+  });
+
+  app.put("/api/chat/direct/messages/:messageId", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const messageId = parseInt(req.params.messageId);
+      const userId = req.user!.id;
+      const { text } = req.body;
+
+      if (isNaN(messageId)) {
+        return res.status(400).json({ error: "Invalid message ID" });
+      }
+
+      if (!text || text.trim().length === 0) {
+        return res.status(400).json({ error: "Message text is required" });
+      }
+
+      const message = await dbStorage.editTelegramDirectMessage(messageId, userId, text.trim());
+      if (!message) {
+        return res.status(404).json({ error: "Message not found or unauthorized" });
+      }
+
+      res.json(message);
+    } catch (error) {
+      console.error("Error editing direct message:", error);
+      res.status(500).json({ error: "Failed to edit message" });
+    }
+  });
+
+  app.delete("/api/chat/direct/messages/:messageId", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const messageId = parseInt(req.params.messageId);
+      const userId = req.user!.id;
+
+      if (isNaN(messageId)) {
+        return res.status(400).json({ error: "Invalid message ID" });
+      }
+
+      await dbStorage.deleteTelegramDirectMessage(messageId, userId);
+      res.status(200).json({ message: "Message deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting direct message:", error);
+      res.status(500).json({ error: "Failed to delete message" });
+    }
+  });
+
+  app.post("/api/chat/direct/:conversationId/read", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const conversationId = parseInt(req.params.conversationId);
+      const userId = req.user!.id;
+
+      if (isNaN(conversationId)) {
+        return res.status(400).json({ error: "Invalid conversation ID" });
+      }
+
+      await dbStorage.markTelegramMessagesAsRead(conversationId, userId);
+      res.status(200).json({ message: "Messages marked as read" });
+    } catch (error) {
+      console.error("Error marking messages as read:", error);
+      res.status(500).json({ error: "Failed to mark messages as read" });
+    }
+  });
+
+  // Typing Status
+  app.post("/api/chat/typing", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const userId = req.user!.id;
+      const { groupId, conversationId, isTyping } = req.body;
+
+      const statusData = {
+        userId,
+        groupId: groupId || null,
+        conversationId: conversationId || null,
+        isTyping: !!isTyping,
+      };
+
+      await dbStorage.updateTypingStatus(statusData);
+      res.status(200).json({ message: "Typing status updated" });
+    } catch (error) {
+      console.error("Error updating typing status:", error);
+      res.status(500).json({ error: "Failed to update typing status" });
+    }
+  });
+
+  app.get("/api/chat/typing", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const groupId = req.query.groupId ? parseInt(req.query.groupId as string) : undefined;
+      const conversationId = req.query.conversationId ? parseInt(req.query.conversationId as string) : undefined;
+
+      const typingUsers = await dbStorage.getTypingUsers(groupId, conversationId);
+      res.json(typingUsers);
+    } catch (error) {
+      console.error("Error fetching typing users:", error);
+      res.status(500).json({ error: "Failed to fetch typing users" });
+    }
+  });
+
+  // User Online Status
+  app.post("/api/chat/online", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const userId = req.user!.id;
+      const { isOnline } = req.body;
+
+      await dbStorage.updateUserOnlineStatus(userId, !!isOnline);
+      res.status(200).json({ message: "Online status updated" });
+    } catch (error) {
+      console.error("Error updating online status:", error);
+      res.status(500).json({ error: "Failed to update online status" });
+    }
+  });
+
   // Premium features - just mock endpoints for now
   app.post("/api/premium/upgrade", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);

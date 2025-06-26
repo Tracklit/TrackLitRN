@@ -1,0 +1,575 @@
+import { useState, useEffect, useRef } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { 
+  MessageCircle, 
+  Users, 
+  Send, 
+  Plus, 
+  Search,
+  MoreVertical,
+  Hash,
+  Lock,
+  Globe
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { apiRequest } from "@/lib/queryClient";
+
+interface ChatGroup {
+  id: number;
+  name: string;
+  description?: string;
+  image?: string;
+  creatorId: number;
+  adminIds: number[];
+  memberIds: number[];
+  isPrivate: boolean;
+  inviteCode?: string;
+  createdAt: string;
+  lastMessageAt: string;
+  lastMessage?: string;
+  lastMessageSenderId?: number;
+  messageCount: number;
+}
+
+interface ChatMessage {
+  id: number;
+  groupId: number;
+  senderId: number;
+  senderName: string;
+  senderProfileImage?: string;
+  text: string;
+  createdAt: string;
+  editedAt?: string;
+  isDeleted: boolean;
+  replyToId?: number;
+  messageType: 'text' | 'image' | 'file' | 'system';
+  mediaUrl?: string;
+  isPinned: boolean;
+}
+
+interface DirectMessage {
+  id: number;
+  conversationId: number;
+  senderId: number;
+  receiverId: number;
+  text: string;
+  createdAt: string;
+  editedAt?: string;
+  isDeleted: boolean;
+  isRead: boolean;
+  readAt?: string;
+  replyToId?: number;
+  messageType: 'text' | 'image' | 'file';
+  mediaUrl?: string;
+}
+
+interface Conversation {
+  id: number;
+  user1Id: number;
+  user2Id: number;
+  lastMessageId?: number;
+  lastMessageAt: string;
+  createdAt: string;
+}
+
+const ChatPage = () => {
+  const [selectedChat, setSelectedChat] = useState<{ type: 'group' | 'direct'; id: number } | null>(null);
+  const [messageText, setMessageText] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
+
+  // Fetch chat groups
+  const { data: chatGroups = [], isLoading: groupsLoading } = useQuery({
+    queryKey: ['/api/chat/groups'],
+    queryFn: () => apiRequest('/api/chat/groups')
+  });
+
+  // Fetch conversations
+  const { data: conversations = [], isLoading: conversationsLoading } = useQuery({
+    queryKey: ['/api/conversations'],
+    queryFn: () => apiRequest('/api/conversations')
+  });
+
+  // Fetch messages for selected chat
+  const { data: messages = [], isLoading: messagesLoading } = useQuery({
+    queryKey: selectedChat?.type === 'group' 
+      ? ['/api/chat/groups', selectedChat.id, 'messages']
+      : ['/api/chat/direct', selectedChat?.id, 'messages'],
+    queryFn: () => {
+      if (!selectedChat) return [];
+      return selectedChat.type === 'group'
+        ? apiRequest(`/api/chat/groups/${selectedChat.id}/messages`)
+        : apiRequest(`/api/chat/direct/${selectedChat.id}/messages`);
+    },
+    enabled: !!selectedChat
+  });
+
+  // Send message mutation
+  const sendMessageMutation = useMutation({
+    mutationFn: async ({ text, replyToId }: { text: string; replyToId?: number }) => {
+      if (!selectedChat) throw new Error("No chat selected");
+      
+      const endpoint = selectedChat.type === 'group'
+        ? `/api/chat/groups/${selectedChat.id}/messages`
+        : `/api/chat/direct/${selectedChat.id}/messages`;
+      
+      return apiRequest(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, replyToId })
+      });
+    },
+    onSuccess: () => {
+      setMessageText("");
+      if (selectedChat) {
+        const queryKey = selectedChat.type === 'group' 
+          ? ['/api/chat/groups', selectedChat.id, 'messages']
+          : ['/api/chat/direct', selectedChat.id, 'messages'];
+        queryClient.invalidateQueries({ queryKey });
+        
+        // Also invalidate chat lists to update last message
+        queryClient.invalidateQueries({ queryKey: ['/api/chat/groups'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/conversations'] });
+      }
+    }
+  });
+
+  // Create group mutation
+  const createGroupMutation = useMutation({
+    mutationFn: async (groupData: { name: string; description?: string; isPrivate: boolean }) => {
+      return apiRequest('/api/chat/groups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(groupData)
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/groups'] });
+      setShowCreateGroup(false);
+    }
+  });
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
+
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!messageText.trim() || !selectedChat) return;
+    
+    sendMessageMutation.mutate({ text: messageText.trim() });
+  };
+
+  const formatMessageTime = (timestamp: string) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: false 
+    });
+  };
+
+  const formatLastMessageTime = (timestamp: string) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+      return formatMessageTime(timestamp);
+    } else if (diffDays === 1) {
+      return 'Yesterday';
+    } else if (diffDays < 7) {
+      return date.toLocaleDateString('en-US', { weekday: 'short' });
+    } else {
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+  };
+
+  // Filter chats based on search
+  const filteredGroups = chatGroups.filter((group: ChatGroup) =>
+    group.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  if (showCreateGroup) {
+    return <CreateGroupForm onCancel={() => setShowCreateGroup(false)} onSubmit={createGroupMutation.mutate} />;
+  }
+
+  return (
+    <div className="flex h-screen bg-gray-50">
+      {/* Chat List Sidebar */}
+      <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
+        {/* Header */}
+        <div className="p-4 border-b border-gray-200">
+          <div className="flex items-center justify-between mb-3">
+            <h1 className="text-xl font-semibold text-gray-900">Chats</h1>
+            <Button
+              size="sm"
+              onClick={() => setShowCreateGroup(true)}
+              className="bg-blue-500 hover:bg-blue-600"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search chats..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+
+        {/* Chat List */}
+        <ScrollArea className="flex-1">
+          <div className="space-y-1 p-2">
+            {/* Groups Section */}
+            {filteredGroups.length > 0 && (
+              <>
+                <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Groups
+                </div>
+                {filteredGroups.map((group: ChatGroup) => (
+                  <button
+                    key={group.id}
+                    onClick={() => setSelectedChat({ type: 'group', id: group.id })}
+                    className={cn(
+                      "w-full p-3 rounded-lg text-left hover:bg-gray-100 transition-colors",
+                      selectedChat?.type === 'group' && selectedChat?.id === group.id
+                        ? "bg-blue-50 border border-blue-200"
+                        : ""
+                    )}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="relative">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={group.image} />
+                          <AvatarFallback className="bg-blue-500 text-white">
+                            {group.isPrivate ? <Lock className="h-4 w-4" /> : <Hash className="h-4 w-4" />}
+                          </AvatarFallback>
+                        </Avatar>
+                        {group.isPrivate ? (
+                          <Lock className="absolute -bottom-1 -right-1 h-3 w-3 text-gray-500" />
+                        ) : (
+                          <Globe className="absolute -bottom-1 -right-1 h-3 w-3 text-green-500" />
+                        )}
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-medium text-gray-900 truncate">{group.name}</h3>
+                          <span className="text-xs text-gray-500">
+                            {formatLastMessageTime(group.lastMessageAt)}
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm text-gray-500 truncate">
+                            {group.lastMessage || "No messages yet"}
+                          </p>
+                          <div className="flex items-center space-x-1">
+                            <Badge variant="secondary" className="text-xs">
+                              {group.memberIds.length}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </>
+            )}
+
+            {/* Direct Messages Section */}
+            {conversations.length > 0 && (
+              <>
+                <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Direct Messages
+                </div>
+                {conversations.map((conversation: Conversation) => (
+                  <button
+                    key={conversation.id}
+                    onClick={() => setSelectedChat({ type: 'direct', id: conversation.id })}
+                    className={cn(
+                      "w-full p-3 rounded-lg text-left hover:bg-gray-100 transition-colors",
+                      selectedChat?.type === 'direct' && selectedChat?.id === conversation.id
+                        ? "bg-blue-50 border border-blue-200"
+                        : ""
+                    )}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback className="bg-gray-500 text-white">
+                          <MessageCircle className="h-4 w-4" />
+                        </AvatarFallback>
+                      </Avatar>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-medium text-gray-900 truncate">Direct Chat</h3>
+                          <span className="text-xs text-gray-500">
+                            {formatLastMessageTime(conversation.lastMessageAt)}
+                          </span>
+                        </div>
+                        
+                        <p className="text-sm text-gray-500 truncate">
+                          Click to view conversation
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </>
+            )}
+          </div>
+        </ScrollArea>
+      </div>
+
+      {/* Chat Area */}
+      <div className="flex-1 flex flex-col">
+        {selectedChat ? (
+          <>
+            {/* Chat Header */}
+            <div className="p-4 bg-white border-b border-gray-200 flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="bg-blue-500 text-white">
+                    {selectedChat.type === 'group' ? <Hash className="h-4 w-4" /> : <MessageCircle className="h-4 w-4" />}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h2 className="font-semibold text-gray-900">
+                    {selectedChat.type === 'group' 
+                      ? filteredGroups.find((g: ChatGroup) => g.id === selectedChat.id)?.name 
+                      : "Direct Chat"}
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    {selectedChat.type === 'group' && (
+                      <>
+                        {filteredGroups.find((g: ChatGroup) => g.id === selectedChat.id)?.memberIds.length} members
+                      </>
+                    )}
+                  </p>
+                </div>
+              </div>
+              
+              <Button variant="ghost" size="sm">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Messages Area */}
+            <ScrollArea className="flex-1 p-4">
+              <div className="space-y-4">
+                {messagesLoading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                  </div>
+                ) : messages.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <MessageCircle className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                    <p>No messages yet. Start the conversation!</p>
+                  </div>
+                ) : (
+                  messages.map((message: ChatMessage | DirectMessage) => (
+                    <MessageBubble
+                      key={message.id}
+                      message={message}
+                      isOwn={message.senderId === 1} // TODO: Get current user ID
+                    />
+                  ))
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            </ScrollArea>
+
+            {/* Message Input */}
+            <form onSubmit={handleSendMessage} className="p-4 bg-white border-t border-gray-200">
+              <div className="flex items-center space-x-2">
+                <Input
+                  value={messageText}
+                  onChange={(e) => setMessageText(e.target.value)}
+                  placeholder="Type a message..."
+                  className="flex-1"
+                  disabled={sendMessageMutation.isPending}
+                />
+                <Button 
+                  type="submit" 
+                  disabled={!messageText.trim() || sendMessageMutation.isPending}
+                  className="bg-blue-500 hover:bg-blue-600"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+            </form>
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center bg-gray-50">
+            <div className="text-center">
+              <MessageCircle className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Select a chat</h3>
+              <p className="text-gray-500">Choose a conversation from the sidebar to start messaging</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Message Bubble Component
+interface MessageBubbleProps {
+  message: ChatMessage | DirectMessage;
+  isOwn: boolean;
+}
+
+const MessageBubble = ({ message, isOwn }: MessageBubbleProps) => {
+  const formatTime = (timestamp: string) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: false 
+    });
+  };
+
+  return (
+    <div className={cn("flex", isOwn ? "justify-end" : "justify-start")}>
+      <div className={cn("flex items-end space-x-2 max-w-[70%]", isOwn && "flex-row-reverse space-x-reverse")}>
+        {!isOwn && (
+          <Avatar className="h-6 w-6">
+            <AvatarImage src={('senderProfileImage' in message) ? message.senderProfileImage : undefined} />
+            <AvatarFallback className="text-xs">
+              {('senderName' in message) ? message.senderName.charAt(0) : 'U'}
+            </AvatarFallback>
+          </Avatar>
+        )}
+        
+        <div
+          className={cn(
+            "rounded-2xl px-4 py-2 max-w-full",
+            isOwn
+              ? "bg-blue-500 text-white"
+              : "bg-white border border-gray-200 text-gray-900"
+          )}
+        >
+          {!isOwn && 'senderName' in message && (
+            <p className="text-xs font-medium text-blue-600 mb-1">{message.senderName}</p>
+          )}
+          
+          <p className="text-sm whitespace-pre-wrap break-words">{message.text}</p>
+          
+          <div className={cn("flex items-center justify-end mt-1 space-x-1")}>
+            {message.editedAt && (
+              <span className={cn("text-xs", isOwn ? "text-blue-200" : "text-gray-400")}>
+                edited
+              </span>
+            )}
+            <span className={cn("text-xs", isOwn ? "text-blue-200" : "text-gray-400")}>
+              {formatTime(message.createdAt)}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Create Group Form Component
+interface CreateGroupFormProps {
+  onCancel: () => void;
+  onSubmit: (data: { name: string; description?: string; isPrivate: boolean }) => void;
+}
+
+const CreateGroupForm = ({ onCancel, onSubmit }: CreateGroupFormProps) => {
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [isPrivate, setIsPrivate] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+    
+    onSubmit({
+      name: name.trim(),
+      description: description.trim() || undefined,
+      isPrivate
+    });
+  };
+
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Create New Group</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Group Name *
+              </label>
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter group name..."
+                required
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Description
+              </label>
+              <Input
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Optional group description..."
+              />
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="isPrivate"
+                checked={isPrivate}
+                onChange={(e) => setIsPrivate(e.target.checked)}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <label htmlFor="isPrivate" className="text-sm text-gray-700">
+                Private group (invite only)
+              </label>
+            </div>
+            
+            <div className="flex space-x-2 pt-2">
+              <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
+                Cancel
+              </Button>
+              <Button type="submit" disabled={!name.trim()} className="flex-1 bg-blue-500 hover:bg-blue-600">
+                Create Group
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default ChatPage;
