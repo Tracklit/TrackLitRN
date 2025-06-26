@@ -723,7 +723,7 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
     }
   });
 
-  // Fetch messages for selected chat
+  // Fetch messages for selected chat with improved caching
   const { data: messagesData = [], isLoading: messagesLoading } = useQuery({
     queryKey: selectedChat.type === 'group' 
       ? ['/api/chat/groups', selectedChat.id, 'messages']
@@ -734,7 +734,11 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
         : `/api/chat/direct/${selectedChat.id}/messages`;
       const response = await apiRequest('GET', endpoint);
       return response.json();
-    }
+    },
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
+    refetchOnMount: false, // Don't refetch on component mount if data exists
+    refetchOnReconnect: false // Don't refetch on network reconnect
   });
 
   // Sort messages by creation time to ensure newest appear at bottom
@@ -770,7 +774,7 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
     }
   }, [selectedChat.id, messages]);
 
-  // Send message mutation
+  // Send message mutation with optimistic updates
   const sendMessageMutation = useMutation({
     mutationFn: async ({ text, replyToId, image }: { text?: string; replyToId?: number; image?: File }) => {
       const endpoint = selectedChat.type === 'group'
@@ -802,14 +806,54 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
         return response.json();
       }
     },
+    onMutate: async ({ text, replyToId, image }) => {
+      // Cancel any outgoing refetches
+      const queryKey = selectedChat.type === 'group' 
+        ? ['/api/chat/groups', selectedChat.id, 'messages']
+        : ['/api/chat/direct', selectedChat.id, 'messages'];
+      await queryClient.cancelQueries({ queryKey });
+
+      // Snapshot the previous value
+      const previousMessages = queryClient.getQueryData(queryKey);
+
+      // Optimistically update with new message
+      if (text && !image) {
+        const optimisticMessage = {
+          id: Date.now(), // Temporary ID
+          group_id: selectedChat.type === 'group' ? selectedChat.id : undefined,
+          user_id: currentUser?.id,
+          sender_name: currentUser?.name || 'You',
+          sender_profile_image: currentUser?.profileImageUrl,
+          text: text,
+          created_at: new Date().toISOString(),
+          reply_to_id: replyToId,
+          message_type: 'text' as const,
+          isOptimistic: true // Flag to identify optimistic updates
+        };
+
+        queryClient.setQueryData(queryKey, (old: any[] = []) => [...old, optimisticMessage]);
+      }
+
+      return { previousMessages };
+    },
     onSuccess: () => {
       setMessageText("");
       setReplyingTo(null);
       clearSelectedImage();
+      // Refetch to get the real message with server ID
       const queryKey = selectedChat.type === 'group' 
         ? ['/api/chat/groups', selectedChat.id, 'messages']
         : ['/api/chat/direct', selectedChat.id, 'messages'];
       queryClient.invalidateQueries({ queryKey });
+    },
+    onError: (err, variables, context) => {
+      // Rollback on error
+      if (context?.previousMessages) {
+        const queryKey = selectedChat.type === 'group' 
+          ? ['/api/chat/groups', selectedChat.id, 'messages']
+          : ['/api/chat/direct', selectedChat.id, 'messages'];
+        queryClient.setQueryData(queryKey, context.previousMessages);
+      }
     }
   });
 
