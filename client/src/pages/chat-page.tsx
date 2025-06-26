@@ -321,10 +321,15 @@ interface MessageBubbleProps {
   currentUser?: any;
 }
 
-const MessageBubble = ({ message, isOwn, currentUser }: MessageBubbleProps) => {
+interface MessageBubbleProps {
+  message: ChatMessage | DirectMessage;
+  isOwn: boolean;
+  currentUser?: any;
+  onStartEdit?: (messageId: number, messageText: string) => void;
+}
+
+const MessageBubble = ({ message, isOwn, currentUser, onStartEdit }: MessageBubbleProps) => {
   const [showMenu, setShowMenu] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedText, setEditedText] = useState('');
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   const queryClient = useQueryClient();
 
@@ -354,22 +359,9 @@ const MessageBubble = ({ message, isOwn, currentUser }: MessageBubbleProps) => {
   };
 
   const startEdit = () => {
-    setIsEditing(true);
     const messageText = (message as any).text || (message as any).content || '';
-    setEditedText(messageText);
+    onStartEdit?.(message.id, messageText);
     setShowMenu(false);
-  };
-
-  const cancelEdit = () => {
-    setIsEditing(false);
-    setEditedText('');
-  };
-
-  const saveEdit = async () => {
-    // TODO: Implement edit message API call
-    console.log('Saving edited message:', editedText);
-    setIsEditing(false);
-    setEditedText('');
   };
 
   const getProfileImage = () => {
@@ -427,24 +419,9 @@ const MessageBubble = ({ message, isOwn, currentUser }: MessageBubbleProps) => {
             </div>
           )}
           
-          {isEditing ? (
-            <div className="space-y-2">
-              <Input
-                value={editedText}
-                onChange={(e) => setEditedText(e.target.value)}
-                className="text-sm"
-                autoFocus
-              />
-              <div className="flex gap-2">
-                <Button size="sm" onClick={saveEdit}>Save</Button>
-                <Button size="sm" variant="outline" onClick={cancelEdit}>Cancel</Button>
-              </div>
-            </div>
-          ) : (
-            <div className="text-sm break-words">
-              {(message as any).text || (message as any).content || ''}
-            </div>
-          )}
+          <div className="text-sm break-words">
+            {(message as any).text || (message as any).content || ''}
+          </div>
           
           {/* Context Menu */}
           {showMenu && (
