@@ -235,6 +235,7 @@ router.get("/api/chat/groups/:groupId/messages", async (req: Request, res: Respo
 
 // Send group message
 router.post("/api/chat/groups/:groupId/messages", upload.single('image'), async (req: Request, res: Response) => {
+  console.log('=== GROUP MESSAGE ROUTE HIT ===');
   if (!req.isAuthenticated()) return res.sendStatus(401);
   
   try {
