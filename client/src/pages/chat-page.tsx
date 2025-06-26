@@ -583,14 +583,14 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages }: Me
             <div className="space-y-2">
               {/* Image content */}
               {(message as any).message_type === 'image' && (message as any).media_url && (
-                <div className="rounded-lg overflow-hidden">
-                  <OptimizedChatImage
+                <div className="rounded-lg overflow-hidden max-w-64">
+                  <img
                     src={(message as any).media_url}
                     alt="Shared image"
-                    onClick={() => {
-                      // Optional: Add full-size image view
-                      window.open((message as any).media_url, '_blank');
-                    }}
+                    className="w-full h-auto object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                    style={{ maxHeight: '300px', maxWidth: '192px' }}
+                    onClick={() => window.open((message as any).media_url, '_blank')}
+                    loading="lazy"
                   />
                 </div>
               )}
@@ -837,7 +837,7 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
       
       if (image) {
         // Compress image before upload
-        const compressedImage = await compressAndResizeImage(image, 800, 600, 0.8);
+        const compressedImage = await compressImage(image, 800, 0.8);
         
         // Upload compressed image using FormData
         const formData = new FormData();
