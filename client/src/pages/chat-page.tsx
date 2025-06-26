@@ -735,10 +735,36 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages, onIm
         </Avatar>
       )}
       
-      {/* Reaction Animation */}
+      {/* Reaction Animation - positioned on the bubble edge */}
       {reactionAnimation && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
-          <div className="text-2xl animate-bounce">👍</div>
+        <div className={cn(
+          "absolute pointer-events-none z-50 transition-all duration-300",
+          isOwn 
+            ? "-bottom-2 -right-1" 
+            : "-bottom-2 -left-1"
+        )}>
+          <div className="relative animate-bounce">
+            {/* Main reaction bubble with enhanced depth */}
+            <div className="relative bg-white rounded-full shadow-xl border border-gray-300 p-2 min-w-[36px] min-h-[36px] flex items-center justify-center">
+              {/* Gradient overlay for depth */}
+              <div className="absolute inset-0 bg-gradient-to-b from-white to-gray-50 rounded-full opacity-80"></div>
+              
+              {/* Emoji */}
+              <div className="relative text-xl leading-none">👍</div>
+              
+              {/* Shine effect */}
+              <div className="absolute top-1 left-1 w-2 h-2 bg-white rounded-full opacity-60"></div>
+            </div>
+            
+            {/* Drop shadow */}
+            <div className="absolute inset-0 bg-black opacity-10 rounded-full blur-sm transform translate-y-1 -z-10"></div>
+            
+            {/* Subtle connecting line to message */}
+            <div className={cn(
+              "absolute top-1/2 w-1 h-1 bg-gray-300 rounded-full transform -translate-y-1/2 opacity-50",
+              isOwn ? "right-full mr-1" : "left-full ml-1"
+            )}></div>
+          </div>
         </div>
       )}
       
