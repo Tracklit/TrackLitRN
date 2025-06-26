@@ -90,13 +90,19 @@ const ChatPage = () => {
   // Fetch chat groups
   const { data: chatGroups = [], isLoading: groupsLoading } = useQuery({
     queryKey: ['/api/chat/groups'],
-    queryFn: () => apiRequest('/api/chat/groups')
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/chat/groups');
+      return response.json();
+    }
   });
 
   // Fetch conversations
   const { data: conversations = [], isLoading: conversationsLoading } = useQuery({
     queryKey: ['/api/conversations'],
-    queryFn: () => apiRequest('/api/conversations')
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/conversations');
+      return response.json();
+    }
   });
 
   // Fetch messages for selected chat
@@ -104,11 +110,13 @@ const ChatPage = () => {
     queryKey: selectedChat?.type === 'group' 
       ? ['/api/chat/groups', selectedChat.id, 'messages']
       : ['/api/chat/direct', selectedChat?.id, 'messages'],
-    queryFn: () => {
+    queryFn: async () => {
       if (!selectedChat) return [];
-      return selectedChat.type === 'group'
-        ? apiRequest(`/api/chat/groups/${selectedChat.id}/messages`)
-        : apiRequest(`/api/chat/direct/${selectedChat.id}/messages`);
+      const endpoint = selectedChat.type === 'group'
+        ? `/api/chat/groups/${selectedChat.id}/messages`
+        : `/api/chat/direct/${selectedChat.id}/messages`;
+      const response = await apiRequest('GET', endpoint);
+      return response.json();
     },
     enabled: !!selectedChat
   });
@@ -122,11 +130,8 @@ const ChatPage = () => {
         ? `/api/chat/groups/${selectedChat.id}/messages`
         : `/api/chat/direct/${selectedChat.id}/messages`;
       
-      return apiRequest(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, replyToId })
-      });
+      const response = await apiRequest('POST', endpoint, { text, replyToId });
+      return response.json();
     },
     onSuccess: () => {
       setMessageText("");
@@ -146,11 +151,8 @@ const ChatPage = () => {
   // Create group mutation
   const createGroupMutation = useMutation({
     mutationFn: async (groupData: { name: string; description?: string; isPrivate: boolean }) => {
-      return apiRequest('/api/chat/groups', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(groupData)
-      });
+      const response = await apiRequest('POST', '/api/chat/groups', groupData);
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/chat/groups'] });
