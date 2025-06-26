@@ -7158,15 +7158,15 @@ Keep the response professional, evidence-based, and specific to track and field 
       const result = await db.execute(sql`
         SELECT 
           gm.id,
-          gm.group_id as "groupId",
-          gm.sender_id as "senderId",
+          gm.group_id as groupId,
+          gm.sender_id as senderId,
           gm.message,
-          gm.media_url as "mediaUrl",
-          gm.created_at as "createdAt",
-          u.id as "sender_id",
-          u.username as "sender_username",
-          u.name as "sender_name",
-          u.profile_image_url as "sender_profile_image_url"
+          gm.media_url as mediaUrl,
+          gm.created_at as createdAt,
+          u.id as sender_id,
+          u.username as sender_username,
+          u.name as sender_name,
+          u.profile_image_url as sender_profile_image_url
         FROM group_messages gm
         INNER JOIN users u ON gm.sender_id = u.id
         WHERE gm.group_id = ${groupId}
@@ -7176,11 +7176,11 @@ Keep the response professional, evidence-based, and specific to track and field 
       // Transform the flat result into the expected structure
       const messages = result.rows.map((row: any) => ({
         id: row.id,
-        groupId: row.groupId,
-        senderId: row.senderId,
+        groupId: row.groupid,
+        senderId: row.senderid,
         message: row.message,
-        mediaUrl: row.mediaUrl,
-        createdAt: row.createdAt,
+        mediaUrl: row.mediaurl,
+        createdAt: row.createdat,
         sender: {
           id: row.sender_id,
           username: row.sender_username,
@@ -7191,11 +7191,13 @@ Keep the response professional, evidence-based, and specific to track and field 
 
       console.log('Raw SQL result first row:', JSON.stringify(result.rows[0], null, 2));
       console.log('Transformed messages first item:', JSON.stringify(messages[0], null, 2));
+      console.log('Number of messages returned:', messages.length);
 
       // Force cache refresh by setting no-cache headers
       res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.set('Pragma', 'no-cache');
       res.set('Expires', '0');
+      res.set('ETag', Date.now().toString()); // Force unique response
       
       res.json(messages);
     } catch (error) {

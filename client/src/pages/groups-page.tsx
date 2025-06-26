@@ -56,11 +56,12 @@ export default function GroupsPage() {
 
   // Fetch messages for selected group with cache busting
   const { data: messages = [], refetch } = useQuery<GroupMessageWithUser[]>({
-    queryKey: [`/api/groups/${selectedGroup}/messages`], // Remove timestamp as it breaks caching
+    queryKey: [`/api/groups/${selectedGroup}/messages`], 
     enabled: !!selectedGroup,
-    refetchInterval: 2000, // Refetch every 2 seconds to get new messages
-    staleTime: 0, // Force fresh data
-    gcTime: 0, // Don't cache (updated from cacheTime in newer TanStack Query)
+    refetchInterval: 2000,
+    staleTime: 0,
+    gcTime: 0,
+    retry: false, // Don't retry on errors to see issues faster
   });
 
   // Force refresh on component mount
