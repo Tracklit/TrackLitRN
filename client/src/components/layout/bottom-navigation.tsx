@@ -5,8 +5,7 @@ import {
   BookOpen, 
   Trophy, 
   Clock, 
-  Star,
-  MessageCircle
+  Star
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
@@ -37,12 +36,6 @@ const navItems = [
     href: "/meets", 
     icon: <Trophy className="h-5 w-5" />,
     key: "race"
-  },
-  { 
-    title: "Chat", 
-    href: "/chat", 
-    icon: <MessageCircle className="h-5 w-5" />,
-    key: "chat"
   },
   { 
     title: "Tools", 
