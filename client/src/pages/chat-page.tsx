@@ -409,6 +409,7 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages, onIm
   const [menuPosition, setMenuPosition] = useState<'bottom' | 'top'>('bottom');
   const [lastTap, setLastTap] = useState<number>(0);
   const [reactionAnimation, setReactionAnimation] = useState(false);
+  const [reactions, setReactions] = useState<any[]>([]);
   const bubbleRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
@@ -420,6 +421,18 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages, onIm
       hour12: false 
     });
   };
+
+  // Fetch reactions for this message
+  const messageType = (message as any).group_id || (message as any).groupId ? 'group' : 'direct';
+  const { data: messageReactions } = useQuery({
+    queryKey: ['reactions', message.id, messageType],
+    queryFn: async () => {
+      const response = await fetch(`/api/chat/messages/${message.id}/${messageType}/reactions`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    staleTime: 30000, // 30 seconds
+  });
 
   // Reaction mutation
   const reactionMutation = useMutation({
@@ -435,6 +448,9 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages, onIm
       // Show animation for successful reaction
       setReactionAnimation(true);
       setTimeout(() => setReactionAnimation(false), 1000);
+      
+      // Invalidate reactions query to refresh the display
+      queryClient.invalidateQueries({ queryKey: ['reactions', message.id, messageType] });
     },
     onError: (error) => {
       console.error('Error toggling reaction:', error);
@@ -442,6 +458,11 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages, onIm
   });
 
   const handleReaction = () => {
+    // Prevent multiple reactions if one is already in progress
+    if (reactionMutation.isPending) {
+      return;
+    }
+    
     // Detect message type based on message properties
     const messageType = (message as any).group_id || (message as any).groupId ? 'group' : 'direct';
     reactionMutation.mutate({
@@ -723,6 +744,24 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages, onIm
             <span className="ml-1">(edited)</span>
           )}
         </div>
+        
+        {/* Persistent Reactions Display */}
+        {messageReactions && messageReactions.length > 0 && (
+          <div className={cn(
+            "flex flex-wrap gap-1 mt-1",
+            isOwn ? "justify-end" : "justify-start"
+          )}>
+            {messageReactions.map((reaction: any, index: number) => (
+              <div
+                key={`${reaction.emoji}-${index}`}
+                className="bg-gray-100 border border-gray-200 rounded-full px-2 py-1 flex items-center gap-1 text-xs shadow-sm"
+              >
+                <span>{reaction.emoji}</span>
+                <span className="text-gray-600 font-medium">{reaction.count}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
       
       {/* Profile Image for current user (right side) */}
