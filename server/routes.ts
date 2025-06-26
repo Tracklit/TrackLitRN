@@ -25,6 +25,7 @@ import worldAthleticsRoutes from "./routes/world-athletics";
 import rehabRoutes from "./routes/rehab";
 import communityRoutes from "./routes/community";
 import chatRoutes from "./chat-routes-simple";
+import { addReaction, getReactions } from "./chat-reactions";
 
 // Background processing function for gym data
 async function processGymDataInBackground(programId: number, googleSheetId: string, sessions: any[]) {
@@ -3128,6 +3129,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to update online status" });
     }
   });
+
+  // Message Reactions Routes
+  app.post("/api/messages/:messageId/:messageType/reactions", addReaction);
+  app.get("/api/messages/:messageId/:messageType/reactions", getReactions);
 
   // Premium features - just mock endpoints for now
   app.post("/api/premium/upgrade", async (req: Request, res: Response) => {

@@ -122,7 +122,8 @@ import {
   chatGroupMembers,
   chatGroupMessages,
   telegramDirectMessages,
-  typingStatus
+  typingStatus,
+  messageReactions
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, lt, gte, desc, asc, inArray, or, isNotNull, isNull, ne, sql, exists } from "drizzle-orm";
