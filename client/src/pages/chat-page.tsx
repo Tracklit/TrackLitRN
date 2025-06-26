@@ -5,8 +5,6 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { 
   MessageCircle, 
   Users, 
@@ -17,10 +15,22 @@ import {
   Hash,
   Lock,
   Globe,
-  ArrowLeft
+  ArrowLeft,
+  Check,
+  CheckCheck,
+  Edit2,
+  Reply,
+  MoreHorizontal,
+  Phone,
+  Video,
+  Paperclip,
+  Smile,
+  Pin,
+  Trash2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
+import { formatDistanceToNow, format } from "date-fns";
 
 interface ChatGroup {
   id: number;
@@ -52,561 +62,538 @@ interface ChatMessage {
   reply_to_id?: number;
   message_type: 'text' | 'image' | 'file' | 'system';
   media_url?: string;
+  is_read?: boolean;
+  read_by?: number[];
 }
 
-interface DirectMessage {
+interface User {
   id: number;
-  conversationId: number;
-  senderId: number;
-  receiverId: number;
-  text: string;
-  createdAt: string;
-  editedAt?: string;
-  isDeleted: boolean;
-  isRead: boolean;
-  readAt?: string;
-  replyToId?: number;
-  messageType: 'text' | 'image' | 'file';
-  mediaUrl?: string;
+  name: string;
+  username?: string;
+  profileImageUrl?: string;
 }
 
-interface Conversation {
-  id: number;
-  user1Id: number;
-  user2Id: number;
-  lastMessageId?: number;
-  lastMessageAt: string;
-  createdAt: string;
-}
-
-const ChatPage = () => {
-  const [selectedChat, setSelectedChat] = useState<{ type: 'group' | 'direct'; id: number } | null>(null);
+export default function ChatPage() {
+  const [selectedGroup, setSelectedGroup] = useState<number | null>(null);
   const [messageText, setMessageText] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showCreateGroup, setShowCreateGroup] = useState(false);
+  const [editingMessage, setEditingMessage] = useState<number | null>(null);
+  const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
+  // Get current user
+  const { data: user } = useQuery({
+    queryKey: ['/api/user'],
+    enabled: true,
+  });
+
+  useEffect(() => {
+    if (user) {
+      setCurrentUser(user);
+    }
+  }, [user]);
+
   // Fetch chat groups
-  const { data: chatGroups = [], isLoading: groupsLoading } = useQuery({
+  const { data: groups = [] } = useQuery({
     queryKey: ['/api/chat/groups'],
-    queryFn: async () => {
-      const response = await apiRequest('GET', '/api/chat/groups');
-      return response.json();
-    }
+    enabled: true,
   });
 
-  // Fetch conversations
-  const { data: conversations = [], isLoading: conversationsLoading } = useQuery({
-    queryKey: ['/api/conversations'],
-    queryFn: async () => {
-      const response = await apiRequest('GET', '/api/conversations');
-      return response.json();
-    }
-  });
-
-  // Fetch messages for selected chat
-  const { data: messages = [], isLoading: messagesLoading } = useQuery({
-    queryKey: selectedChat?.type === 'group' 
-      ? ['/api/chat/groups', selectedChat.id, 'messages']
-      : ['/api/chat/direct', selectedChat?.id, 'messages'],
-    queryFn: async () => {
-      if (!selectedChat) return [];
-      const endpoint = selectedChat.type === 'group'
-        ? `/api/chat/groups/${selectedChat.id}/messages`
-        : `/api/chat/direct/${selectedChat.id}/messages`;
-      const response = await apiRequest('GET', endpoint);
-      return response.json();
-    },
-    enabled: !!selectedChat
+  // Fetch messages for selected group
+  const { data: messages = [] } = useQuery({
+    queryKey: ['/api/chat/groups', selectedGroup, 'messages'],
+    enabled: selectedGroup !== null,
   });
 
   // Send message mutation
   const sendMessageMutation = useMutation({
-    mutationFn: async ({ text, replyToId }: { text: string; replyToId?: number }) => {
-      if (!selectedChat) throw new Error("No chat selected");
-      
-      const endpoint = selectedChat.type === 'group'
-        ? `/api/chat/groups/${selectedChat.id}/messages`
-        : `/api/chat/direct/${selectedChat.id}/messages`;
-      
-      const response = await apiRequest('POST', endpoint, { text, replyToId });
-      return response.json();
+    mutationFn: async (data: { text: string; reply_to_id?: number }) => {
+      return apiRequest(`/api/chat/groups/${selectedGroup}/messages`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/groups', selectedGroup, 'messages'] });
       setMessageText("");
-      if (selectedChat) {
-        const queryKey = selectedChat.type === 'group' 
-          ? ['/api/chat/groups', selectedChat.id, 'messages']
-          : ['/api/chat/direct', selectedChat.id, 'messages'];
-        queryClient.invalidateQueries({ queryKey });
-        
-        // Also invalidate chat lists to update last message
-        queryClient.invalidateQueries({ queryKey: ['/api/chat/groups'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/conversations'] });
-      }
-    }
+      setReplyingTo(null);
+    },
   });
 
-  // Create group mutation
-  const createGroupMutation = useMutation({
-    mutationFn: async (groupData: { name: string; description?: string; isPrivate: boolean }) => {
-      const response = await apiRequest('POST', '/api/chat/groups', groupData);
-      return response.json();
+  // Edit message mutation
+  const editMessageMutation = useMutation({
+    mutationFn: async (data: { messageId: number; text: string }) => {
+      return apiRequest(`/api/chat/groups/${selectedGroup}/messages/${data.messageId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ text: data.text }),
+      });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/chat/groups'] });
-      setShowCreateGroup(false);
-    }
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/groups', selectedGroup, 'messages'] });
+      setEditingMessage(null);
+      setMessageText("");
+    },
   });
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!messageText.trim() || !selectedChat) return;
-    
-    sendMessageMutation.mutate({ text: messageText.trim() });
-  };
+  const handleSendMessage = () => {
+    if (!messageText.trim() || !selectedGroup) return;
 
-  const formatMessageTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: false 
-    });
-  };
-
-  const formatLastMessageTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) {
-      return formatMessageTime(timestamp);
-    } else if (diffDays === 1) {
-      return 'Yesterday';
-    } else if (diffDays < 7) {
-      return date.toLocaleDateString('en-US', { weekday: 'short' });
+    if (editingMessage) {
+      editMessageMutation.mutate({ messageId: editingMessage, text: messageText });
     } else {
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      sendMessageMutation.mutate({ 
+        text: messageText, 
+        reply_to_id: replyingTo?.id 
+      });
     }
   };
 
-  // Filter chats based on search
-  const filteredGroups = chatGroups.filter((group: ChatGroup) =>
-    group.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
 
-  if (showCreateGroup) {
-    return <CreateGroupForm onCancel={() => setShowCreateGroup(false)} onSubmit={createGroupMutation.mutate} />;
-  }
+  const startEdit = (message: ChatMessage) => {
+    setEditingMessage(message.id);
+    setMessageText(message.text);
+  };
 
-  // Show chat interface if a chat is selected
-  if (selectedChat) {
-    return <ChatInterface selectedChat={selectedChat} onBack={() => setSelectedChat(null)} />;
-  }
+  const cancelEdit = () => {
+    setEditingMessage(null);
+    setMessageText("");
+  };
 
-  return (
-    <div className="fixed inset-0 bg-white flex flex-col w-screen h-screen">
-      {/* Header */}
-      <div className="p-4 border-b border-gray-200 flex-shrink-0">
-        <div className="flex items-center justify-between mb-3">
-          <h1 className="text-xl font-semibold text-gray-900">Chats</h1>
-          <Button
-            size="sm"
-            onClick={() => setShowCreateGroup(true)}
-            className="bg-blue-500 hover:bg-blue-600"
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
-        </div>
-        
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="Search chats..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      </div>
+  const setReply = (message: ChatMessage) => {
+    setReplyingTo(message);
+  };
 
-      {/* Chat List - Full Width */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="divide-y divide-gray-100">
-          {groupsLoading || conversationsLoading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+  const cancelReply = () => {
+    setReplyingTo(null);
+  };
+
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return format(date, 'HH:mm');
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    const isYesterday = date.toDateString() === new Date(now.getTime() - 24 * 60 * 60 * 1000).toDateString();
+    
+    if (isToday) return 'Today';
+    if (isYesterday) return 'Yesterday';
+    return format(date, 'MMM d, yyyy');
+  };
+
+  // Group messages by date
+  const groupedMessages = messages.reduce((groups: { [key: string]: ChatMessage[] }, message: ChatMessage) => {
+    const date = formatDate(message.created_at);
+    if (!groups[date]) {
+      groups[date] = [];
+    }
+    groups[date].push(message);
+    return groups;
+  }, {});
+
+  if (!selectedGroup) {
+    return (
+      <div className="flex h-screen bg-gray-50">
+        {/* Sidebar */}
+        <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
+          {/* Header */}
+          <div className="p-4 border-b border-gray-200">
+            <div className="flex items-center justify-between mb-4">
+              <h1 className="text-xl font-semibold text-gray-900">Chats</h1>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <Plus className="h-4 w-4" />
+              </Button>
             </div>
-          ) : (
-            <>
-              {filteredGroups.map((group: ChatGroup) => (
-                <button
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search chats..."
+                className="pl-10 bg-gray-50 border-0 focus:bg-white"
+              />
+            </div>
+          </div>
+
+          {/* Chat List */}
+          <ScrollArea className="flex-1">
+            <div className="p-2">
+              {groups.map((group: ChatGroup) => (
+                <div
                   key={group.id}
-                  onClick={() => setSelectedChat({ type: 'group', id: group.id })}
-                  className="w-full p-4 hover:bg-gray-50 transition-colors text-left"
+                  onClick={() => setSelectedGroup(group.id)}
+                  className="flex items-center p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
                 >
-                  <div className="flex items-center space-x-3">
-                    <div className="relative">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage src={group.avatar_url} />
-                        <AvatarFallback className="bg-blue-500 text-white">
-                          {group.name.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      
-                      {/* Privacy Indicator */}
-                      {group.is_private ? (
-                        <Lock className="absolute -bottom-1 -right-1 h-3 w-3 text-gray-500" />
-                      ) : (
-                        <Globe className="absolute -bottom-1 -right-1 h-3 w-3 text-green-500" />
+                  <Avatar className="h-12 w-12 mr-3">
+                    <AvatarImage src={group.avatar_url} />
+                    <AvatarFallback className="bg-blue-500 text-white">
+                      {group.is_private ? <Lock className="h-6 w-6" /> : <Hash className="h-6 w-6" />}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-medium text-gray-900 truncate">{group.name}</h3>
+                      {group.last_message_at && (
+                        <span className="text-xs text-gray-500">
+                          {formatTime(group.last_message_at)}
+                        </span>
                       )}
                     </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-medium text-gray-900 truncate">{group.name}</h3>
-                        <span className="text-xs text-gray-500">
-                          {group.last_message_at ? formatLastMessageTime(group.last_message_at) : ''}
-                        </span>
+                    {group.last_message && (
+                      <p className="text-sm text-gray-500 truncate">{group.last_message}</p>
+                    )}
+                  </div>
+                  {group.message_count && group.message_count > 0 && (
+                    <Badge variant="secondary" className="ml-2">
+                      {group.message_count}
+                    </Badge>
+                  )}
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        </div>
+
+        {/* Main Chat Area - Empty State */}
+        <div className="flex-1 flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <MessageCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Select a chat</h2>
+            <p className="text-gray-500">Choose a conversation to start messaging</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const selectedGroupData = groups.find((g: ChatGroup) => g.id === selectedGroup);
+
+  return (
+    <div className="flex h-screen bg-white">
+      {/* Sidebar */}
+      <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
+        {/* Header */}
+        <div className="p-4 border-b border-gray-200">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-xl font-semibold text-gray-900">Chats</h1>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search chats..."
+              className="pl-10 bg-gray-50 border-0 focus:bg-white"
+            />
+          </div>
+        </div>
+
+        {/* Chat List */}
+        <ScrollArea className="flex-1">
+          <div className="p-2">
+            {groups.map((group: ChatGroup) => (
+              <div
+                key={group.id}
+                onClick={() => setSelectedGroup(group.id)}
+                className={cn(
+                  "flex items-center p-3 rounded-lg cursor-pointer transition-colors",
+                  selectedGroup === group.id ? "bg-blue-50" : "hover:bg-gray-50"
+                )}
+              >
+                <Avatar className="h-12 w-12 mr-3">
+                  <AvatarImage src={group.avatar_url} />
+                  <AvatarFallback className="bg-blue-500 text-white">
+                    {group.is_private ? <Lock className="h-6 w-6" /> : <Hash className="h-6 w-6" />}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium text-gray-900 truncate">{group.name}</h3>
+                    {group.last_message_at && (
+                      <span className="text-xs text-gray-500">
+                        {formatTime(group.last_message_at)}
+                      </span>
+                    )}
+                  </div>
+                  {group.last_message && (
+                    <p className="text-sm text-gray-500 truncate">{group.last_message}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+      </div>
+
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col">
+        {/* Chat Header */}
+        <div className="bg-white border-b border-gray-200 p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mr-3 md:hidden"
+                onClick={() => setSelectedGroup(null)}
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <Avatar className="h-10 w-10 mr-3">
+                <AvatarImage src={selectedGroupData?.avatar_url} />
+                <AvatarFallback className="bg-blue-500 text-white">
+                  {selectedGroupData?.is_private ? <Lock className="h-5 w-5" /> : <Hash className="h-5 w-5" />}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h2 className="font-semibold text-gray-900">{selectedGroupData?.name}</h2>
+                <p className="text-sm text-gray-500">
+                  {selectedGroupData?.member_ids?.length || 0} members
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <Phone className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <Video className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <Search className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Messages Area */}
+        <ScrollArea className="flex-1 p-4">
+          <div className="space-y-4">
+            {Object.entries(groupedMessages).map(([date, dayMessages]) => (
+              <div key={date}>
+                {/* Date Separator */}
+                <div className="flex items-center justify-center my-4">
+                  <div className="bg-gray-100 text-gray-600 text-xs px-3 py-1 rounded-full">
+                    {date}
+                  </div>
+                </div>
+                
+                {/* Messages for this date */}
+                {dayMessages.map((message: ChatMessage) => {
+                  const isOwnMessage = currentUser && message.user_id === currentUser.id;
+                  
+                  return (
+                    <div
+                      key={message.id}
+                      className={cn(
+                        "flex items-start space-x-3 group",
+                        isOwnMessage ? "justify-end" : "justify-start"
+                      )}
+                    >
+                      {!isOwnMessage && (
+                        <Avatar className="h-8 w-8 mt-1">
+                          <AvatarImage src={message.sender_profile_image} />
+                          <AvatarFallback className="bg-gray-500 text-white text-xs">
+                            {getInitials(message.sender_name)}
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
+                      
+                      <div className={cn("flex flex-col", isOwnMessage ? "items-end" : "items-start")}>
+                        {/* Message bubble */}
+                        <div
+                          className={cn(
+                            "relative max-w-md px-4 py-2 rounded-2xl",
+                            isOwnMessage
+                              ? "bg-blue-500 text-white"
+                              : "bg-gray-100 text-gray-900"
+                          )}
+                        >
+                          {/* Reply indicator */}
+                          {message.reply_to_id && (
+                            <div className={cn(
+                              "text-xs opacity-70 mb-1 p-2 rounded border-l-2",
+                              isOwnMessage ? "border-blue-300 bg-blue-400" : "border-gray-400 bg-gray-200"
+                            )}>
+                              Replying to message
+                            </div>
+                          )}
+                          
+                          {/* Sender name for group messages */}
+                          {!isOwnMessage && (
+                            <div className="text-xs font-medium text-blue-600 mb-1">
+                              {message.sender_name}
+                            </div>
+                          )}
+                          
+                          {/* Message text */}
+                          <div className="text-sm leading-relaxed">
+                            {message.text}
+                          </div>
+                          
+                          {/* Edit indicator */}
+                          {message.is_edited && (
+                            <div className={cn(
+                              "text-xs opacity-70 mt-1",
+                              isOwnMessage ? "text-blue-200" : "text-gray-500"
+                            )}>
+                              edited
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Message info */}
+                        <div className="flex items-center space-x-1 mt-1">
+                          <span className="text-xs text-gray-500">
+                            {formatTime(message.created_at)}
+                          </span>
+                          {isOwnMessage && (
+                            <div className="text-blue-500">
+                              {message.is_read ? (
+                                <CheckCheck className="h-3 w-3" />
+                              ) : (
+                                <Check className="h-3 w-3" />
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
                       
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm text-gray-500 truncate">
-                          {group.last_message || "No messages yet"}
-                        </p>
+                      {/* Message actions */}
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                         <div className="flex items-center space-x-1">
-                          <Badge variant="secondary" className="text-xs">
-                            {group.member_ids?.length || 0}
-                          </Badge>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={() => setReply(message)}
+                          >
+                            <Reply className="h-3 w-3" />
+                          </Button>
+                          {isOwnMessage && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              onClick={() => startEdit(message)}
+                            >
+                              <Edit2 className="h-3 w-3" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                          >
+                            <MoreHorizontal className="h-3 w-3" />
+                          </Button>
                         </div>
                       </div>
                     </div>
+                  );
+                })}
+              </div>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+        </ScrollArea>
+
+        {/* Message Input */}
+        <div className="bg-white border-t border-gray-200 p-4">
+          {/* Reply indicator */}
+          {replyingTo && (
+            <div className="bg-blue-50 border-l-4 border-blue-500 p-3 mb-3 rounded">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-medium text-blue-900">
+                    Replying to {replyingTo.sender_name}
                   </div>
-                </button>
-              ))}
-            </>
-          )}
-
-          {/* Empty State */}
-          {filteredGroups.length === 0 && conversations.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-              <MessageCircle className="h-16 w-16 mb-4 text-gray-300" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No chats yet</h3>
-              <p className="text-center">Create a group or start a conversation to get started</p>
+                  <div className="text-sm text-blue-700 truncate">
+                    {replyingTo.text}
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={cancelReply}
+                  className="h-8 w-8 p-0"
+                >
+                  ×
+                </Button>
+              </div>
             </div>
           )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Message Bubble Component
-interface MessageBubbleProps {
-  message: ChatMessage | DirectMessage;
-  isOwn: boolean;
-}
-
-const MessageBubble = ({ message, isOwn }: MessageBubbleProps) => {
-  const formatTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: false 
-    });
-  };
-
-  return (
-    <div className={cn(
-      "flex w-full mb-4",
-      isOwn ? "justify-end" : "justify-start"
-    )}>
-      <div className={cn(
-        "max-w-xs lg:max-w-md px-4 py-2 rounded-lg",
-        isOwn 
-          ? "bg-blue-500 text-white rounded-br-none" 
-          : "bg-gray-200 text-gray-900 rounded-bl-none"
-      )}>
-        {!isOwn && 'sender_name' in message && (
-          <div className="text-xs font-medium mb-1 text-gray-600">
-            {String(message.sender_name)}
-          </div>
-        )}
-        <div className="text-sm break-words">
-          {message.text}
-        </div>
-        <div className={cn(
-          "text-xs mt-1",
-          isOwn ? "text-blue-100" : "text-gray-500"
-        )}>
-          {formatTime('created_at' in message ? message.created_at : message.createdAt)}
-          {'is_edited' in message && message.is_edited && (
-            <span className="ml-1">(edited)</span>
+          
+          {/* Edit indicator */}
+          {editingMessage && (
+            <div className="bg-yellow-50 border-l-4 border-yellow-500 p-3 mb-3 rounded">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-medium text-yellow-900">
+                  Editing message
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={cancelEdit}
+                  className="h-8 w-8 p-0"
+                >
+                  ×
+                </Button>
+              </div>
+            </div>
           )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Chat Interface Component
-interface ChatInterfaceProps {
-  selectedChat: { type: 'group' | 'direct'; id: number };
-  onBack: () => void;
-}
-
-const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
-  const [messageText, setMessageText] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const queryClient = useQueryClient();
-
-  // Fetch current user
-  const { data: currentUser } = useQuery({
-    queryKey: ['/api/user'],
-    queryFn: async () => {
-      const response = await apiRequest('GET', '/api/user');
-      return response.json();
-    }
-  });
-
-  // Fetch chat groups for group name
-  const { data: chatGroups = [] } = useQuery({
-    queryKey: ['/api/chat/groups'],
-    queryFn: async () => {
-      const response = await apiRequest('GET', '/api/chat/groups');
-      return response.json();
-    }
-  });
-
-  // Fetch messages for selected chat
-  const { data: messages = [], isLoading: messagesLoading } = useQuery({
-    queryKey: selectedChat.type === 'group' 
-      ? ['/api/chat/groups', selectedChat.id, 'messages']
-      : ['/api/chat/direct', selectedChat.id, 'messages'],
-    queryFn: async () => {
-      const endpoint = selectedChat.type === 'group'
-        ? `/api/chat/groups/${selectedChat.id}/messages`
-        : `/api/chat/direct/${selectedChat.id}/messages`;
-      const response = await apiRequest('GET', endpoint);
-      return response.json();
-    }
-  });
-
-  // Send message mutation
-  const sendMessageMutation = useMutation({
-    mutationFn: async ({ text }: { text: string }) => {
-      const endpoint = selectedChat.type === 'group'
-        ? `/api/chat/groups/${selectedChat.id}/messages`
-        : `/api/chat/direct/${selectedChat.id}/messages`;
-      
-      const response = await apiRequest('POST', endpoint, { text });
-      return response.json();
-    },
-    onSuccess: () => {
-      setMessageText("");
-      const queryKey = selectedChat.type === 'group' 
-        ? ['/api/chat/groups', selectedChat.id, 'messages']
-        : ['/api/chat/direct', selectedChat.id, 'messages'];
-      queryClient.invalidateQueries({ queryKey });
-    }
-  });
-
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages]);
-
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!messageText.trim()) return;
-    
-    sendMessageMutation.mutate({ text: messageText.trim() });
-  };
-  
-  const selectedGroup = chatGroups.find((group: ChatGroup) => group.id === selectedChat.id);
-
-  return (
-    <div className="fixed inset-0 bg-white flex flex-col w-screen h-screen">
-      {/* Chat Header */}
-      <div className="p-4 border-b border-gray-200 bg-white flex-shrink-0">
-        <div className="flex items-center space-x-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onBack}
-            className="p-1"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
           
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={selectedGroup?.avatar_url} />
-            <AvatarFallback className="bg-blue-500 text-white text-sm">
-              {selectedGroup?.name.slice(0, 2).toUpperCase() || 'CH'}
-            </AvatarFallback>
-          </Avatar>
-          
-          <div className="flex-1">
-            <h2 className="font-semibold text-gray-900">
-              {selectedGroup?.name || 'Chat'}
-            </h2>
-            <p className="text-sm text-gray-500">
-              {selectedGroup?.member_ids?.length || 0} members
-            </p>
-          </div>
-          
-          <Button variant="ghost" size="sm">
-            <MoreVertical className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="space-y-4">
-          {messagesLoading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-            </div>
-          ) : messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-              <MessageCircle className="h-16 w-16 mb-4 text-gray-300" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No messages yet</h3>
-              <p className="text-center">Be the first to send a message!</p>
-            </div>
-          ) : (
-            messages.map((message: ChatMessage) => (
-              <MessageBubble
-                key={message.id}
-                message={message}
-                isOwn={message.user_id === currentUser?.id}
+          <div className="flex items-end space-x-2">
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              <Paperclip className="h-4 w-4" />
+            </Button>
+            <div className="flex-1 relative">
+              <Input
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Type a message..."
+                className="pr-12 resize-none"
+                disabled={sendMessageMutation.isPending || editMessageMutation.isPending}
               />
-            ))
-          )}
-          <div ref={messagesEndRef} />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+              >
+                <Smile className="h-4 w-4" />
+              </Button>
+            </div>
+            <Button
+              onClick={handleSendMessage}
+              disabled={!messageText.trim() || sendMessageMutation.isPending || editMessageMutation.isPending}
+              className="h-10 w-10 p-0 rounded-full"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-      </div>
-
-      {/* Message Input */}
-      <div className="p-4 border-t border-gray-200 bg-white flex-shrink-0">
-        <form onSubmit={handleSendMessage} className="flex space-x-2">
-          <Input
-            value={messageText}
-            onChange={(e) => setMessageText(e.target.value)}
-            placeholder="Type a message..."
-            className="flex-1"
-            disabled={sendMessageMutation.isPending}
-          />
-          <Button
-            type="submit"
-            disabled={!messageText.trim() || sendMessageMutation.isPending}
-            className="bg-blue-500 hover:bg-blue-600"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
-        </form>
       </div>
     </div>
   );
-};
-
-// Create Group Form Component
-interface CreateGroupFormProps {
-  onCancel: () => void;
-  onSubmit: (data: { name: string; description?: string; isPrivate: boolean }) => void;
 }
-
-const CreateGroupForm = ({ onCancel, onSubmit }: CreateGroupFormProps) => {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [isPrivate, setIsPrivate] = useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) return;
-    
-    onSubmit({
-      name: name.trim(),
-      description: description.trim() || undefined,
-      isPrivate
-    });
-  };
-
-  return (
-    <div className="fixed inset-0 bg-white flex flex-col w-screen h-screen">
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-gray-900">Create Group</h1>
-          <Button variant="ghost" size="sm" onClick={onCancel}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </div>
-      </div>
-
-      <div className="flex-1 p-4">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Group Name *
-            </label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Enter group name"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Description (optional)
-            </label>
-            <Input
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Enter group description"
-            />
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="isPrivate"
-              checked={isPrivate}
-              onChange={(e) => setIsPrivate(e.target.checked)}
-              className="rounded border-gray-300"
-            />
-            <label htmlFor="isPrivate" className="text-sm text-gray-700">
-              Make this group private
-            </label>
-          </div>
-
-          <div className="flex space-x-3 pt-4">
-            <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
-              Cancel
-            </Button>
-            <Button type="submit" disabled={!name.trim()} className="flex-1 bg-blue-500 hover:bg-blue-600">
-              Create Group
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-};
-
-export default ChatPage;
