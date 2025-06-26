@@ -243,12 +243,21 @@ router.post("/api/chat/groups/:groupId/messages", upload.single('image'), async 
     const { text, replyToId, messageType = "text" } = req.body;
     const file = req.file;
 
+    console.log('Message upload debug:', {
+      text: text,
+      file: file ? { filename: file.filename, size: file.size } : null,
+      messageType,
+      hasText: !!text?.trim(),
+      hasFile: !!file
+    });
+
     if (isNaN(groupId)) {
       return res.status(400).json({ error: "Invalid group ID" });
     }
 
     // Validate that we have either text or a file
     if (!text?.trim() && !file) {
+      console.log('Validation failed: no text and no file');
       return res.status(400).json({ error: "Message text or image is required" });
     }
 
