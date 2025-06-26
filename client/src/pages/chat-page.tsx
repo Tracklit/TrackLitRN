@@ -20,7 +20,8 @@ import {
   ArrowLeft,
   Edit,
   Trash,
-  Reply
+  Reply,
+  X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
@@ -489,12 +490,26 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply }: MessageBubblePr
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={startEdit}
+                onClick={() => {
+                  onReply?.(message);
+                  setShowMenu(false);
+                }}
                 className="flex items-center gap-2 w-full justify-start"
               >
-                <Edit className="h-3 w-3" />
-                Edit
+                <Reply className="h-3 w-3" />
+                Reply
               </Button>
+              {isOwn && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={startEdit}
+                  className="flex items-center gap-2 w-full justify-start"
+                >
+                  <Edit className="h-3 w-3" />
+                  Edit
+                </Button>
+              )}
             </div>
           )}
         </div>
@@ -583,16 +598,22 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
 
   // Send message mutation
   const sendMessageMutation = useMutation({
-    mutationFn: async ({ text }: { text: string }) => {
+    mutationFn: async ({ text, replyToId }: { text: string; replyToId?: number }) => {
       const endpoint = selectedChat.type === 'group'
         ? `/api/chat/groups/${selectedChat.id}/messages`
         : `/api/chat/direct/${selectedChat.id}/messages`;
       
-      const response = await apiRequest('POST', endpoint, { text });
+      const payload: any = { text };
+      if (replyToId) {
+        payload.reply_to_id = replyToId;
+      }
+      
+      const response = await apiRequest('POST', endpoint, payload);
       return response.json();
     },
     onSuccess: () => {
       setMessageText("");
+      setReplyingTo(null);
       const queryKey = selectedChat.type === 'group' 
         ? ['/api/chat/groups', selectedChat.id, 'messages']
         : ['/api/chat/direct', selectedChat.id, 'messages'];
@@ -611,7 +632,10 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
     e.preventDefault();
     if (!messageText.trim()) return;
     
-    sendMessageMutation.mutate({ text: messageText.trim() });
+    sendMessageMutation.mutate({ 
+      text: messageText.trim(),
+      replyToId: replyingTo?.id
+    });
   };
   
   const selectedGroup = chatGroups.find((group: ChatGroup) => group.id === selectedChat.id);
@@ -672,6 +696,7 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
                 message={message}
                 isOwn={message.user_id === currentUser?.id}
                 currentUser={currentUser}
+                onReply={(message) => setReplyingTo(message as ChatMessage)}
               />
             ))
           )}
@@ -681,11 +706,35 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
 
       {/* Message Input */}
       <div className="p-4 border-t border-gray-200 bg-white flex-shrink-0">
+        {/* Reply Preview */}
+        {replyingTo && (
+          <div className="mb-3 bg-gray-50 border-l-4 border-blue-500 p-3 rounded-r-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <p className="text-sm text-gray-600 font-medium">
+                  Replying to {('sender_name' in replyingTo) ? replyingTo.sender_name : 'Unknown'}
+                </p>
+                <p className="text-sm text-gray-800 truncate">
+                  {(replyingTo as any).text || (replyingTo as any).content || ''}
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setReplyingTo(null)}
+                className="ml-2 p-1 h-6 w-6"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+        
         <form onSubmit={handleSendMessage} className="flex space-x-2">
           <Input
             value={messageText}
             onChange={(e) => setMessageText(e.target.value)}
-            placeholder="Type a message..."
+            placeholder={replyingTo ? "Type your reply..." : "Type a message..."}
             className="flex-1 text-black"
             disabled={sendMessageMutation.isPending}
           />
