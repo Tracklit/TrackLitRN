@@ -25,7 +25,7 @@ const SwipeWrapper: React.FC<SwipeWrapperProps> = ({ children, currentPage }) =>
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging) return;
+    if (!isDragging || !e.touches[0]) return;
 
     const touch = e.touches[0];
     const deltaX = touch.clientX - startX;
@@ -33,44 +33,60 @@ const SwipeWrapper: React.FC<SwipeWrapperProps> = ({ children, currentPage }) =>
 
     // Only handle horizontal swipes (ignore vertical scrolling)
     if (Math.abs(deltaY) < Math.abs(deltaX)) {
-      e.preventDefault();
-      setDragX(deltaX);
+      try {
+        e.preventDefault();
+        setDragX(deltaX);
+      } catch (error) {
+        console.error('Touch move error:', error);
+        resetState();
+      }
     } else if (Math.abs(deltaY) > 10) {
       // Reset if vertical movement is too large
-      setIsDragging(false);
-      setDragX(0);
+      resetState();
     }
   };
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!isDragging) {
-      setIsDragging(false);
-      setDragX(0);
-      return;
-    }
-
-    const touch = e.changedTouches[0];
-    const deltaX = touch.clientX - startX;
-    const deltaY = touch.clientY - startY;
-
-    // Only process if horizontal movement is dominant
-    if (Math.abs(deltaX) > Math.abs(deltaY)) {
-      const isRightSwipe = deltaX > SWIPE_THRESHOLD;
-      const isLeftSwipe = deltaX < -SWIPE_THRESHOLD;
-
-      if (isRightSwipe && currentPage === 'dashboard') {
-        // Swipe right from dashboard → go to chat
-        setLocation('/chat');
-      } else if (isLeftSwipe && currentPage === 'chat') {
-        // Swipe left from chat → go to dashboard
-        setLocation('/');
-      }
-    }
-
+  const resetState = () => {
     setIsDragging(false);
     setDragX(0);
     setStartX(0);
     setStartY(0);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!isDragging) {
+      resetState();
+      return;
+    }
+
+    const touch = e.changedTouches[0];
+    if (!touch) {
+      resetState();
+      return;
+    }
+
+    const deltaX = touch.clientX - startX;
+    const deltaY = touch.clientY - startY;
+
+    // Only process if horizontal movement is dominant and meets threshold
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > SWIPE_THRESHOLD) {
+      const isRightSwipe = deltaX > 0;
+      const isLeftSwipe = deltaX < 0;
+
+      try {
+        if (isRightSwipe && currentPage === 'dashboard') {
+          // Swipe right from dashboard → go to chat
+          setLocation('/chat');
+        } else if (isLeftSwipe && currentPage === 'chat') {
+          // Swipe left from chat → go to dashboard  
+          setLocation('/home');
+        }
+      } catch (error) {
+        console.error('Navigation error:', error);
+      }
+    }
+
+    resetState();
   };
 
   // Mouse events for desktop testing
@@ -94,37 +110,35 @@ const SwipeWrapper: React.FC<SwipeWrapperProps> = ({ children, currentPage }) =>
 
   const handleMouseUp = (e: React.MouseEvent) => {
     if (!isDragging) {
-      setIsDragging(false);
-      setDragX(0);
+      resetState();
       return;
     }
 
     const deltaX = e.clientX - startX;
     const deltaY = e.clientY - startY;
 
-    if (Math.abs(deltaX) > Math.abs(deltaY)) {
-      const isRightSwipe = deltaX > SWIPE_THRESHOLD;
-      const isLeftSwipe = deltaX < -SWIPE_THRESHOLD;
+    // Only process if horizontal movement is dominant and meets threshold
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > SWIPE_THRESHOLD) {
+      const isRightSwipe = deltaX > 0;
+      const isLeftSwipe = deltaX < 0;
 
-      if (isRightSwipe && currentPage === 'dashboard') {
-        setLocation('/chat');
-      } else if (isLeftSwipe && currentPage === 'chat') {
-        setLocation('/');
+      try {
+        if (isRightSwipe && currentPage === 'dashboard') {
+          setLocation('/chat');
+        } else if (isLeftSwipe && currentPage === 'chat') {
+          setLocation('/home');
+        }
+      } catch (error) {
+        console.error('Navigation error:', error);
       }
     }
 
-    setIsDragging(false);
-    setDragX(0);
-    setStartX(0);
-    setStartY(0);
+    resetState();
   };
 
   // Reset drag state when switching pages
   useEffect(() => {
-    setIsDragging(false);
-    setDragX(0);
-    setStartX(0);
-    setStartY(0);
+    resetState();
   }, [currentPage]);
 
   return (
