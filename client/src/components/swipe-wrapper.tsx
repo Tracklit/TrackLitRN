@@ -1,0 +1,165 @@
+import React, { useRef, useState, useEffect } from 'react';
+import { useLocation } from 'wouter';
+
+interface SwipeWrapperProps {
+  children: React.ReactNode;
+  currentPage: 'dashboard' | 'chat';
+}
+
+const SwipeWrapper: React.FC<SwipeWrapperProps> = ({ children, currentPage }) => {
+  const [, setLocation] = useLocation();
+  const [startX, setStartX] = useState<number | null>(null);
+  const [startY, setStartY] = useState<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragX, setDragX] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const SWIPE_THRESHOLD = 100; // Minimum distance for swipe
+  const VELOCITY_THRESHOLD = 0.3; // Minimum velocity for swipe
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    setStartX(touch.clientX);
+    setStartY(touch.clientY);
+    setIsDragging(true);
+    setDragX(0);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging || startX === null || startY === null) return;
+
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - startX;
+    const deltaY = touch.clientY - startY;
+
+    // Only handle horizontal swipes (ignore vertical scrolling)
+    if (Math.abs(deltaY) < Math.abs(deltaX)) {
+      e.preventDefault();
+      setDragX(deltaX);
+    } else if (Math.abs(deltaY) > 10) {
+      // Reset if vertical movement is too large
+      setIsDragging(false);
+      setDragX(0);
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!isDragging || startX === null) {
+      setIsDragging(false);
+      setDragX(0);
+      return;
+    }
+
+    const touch = e.changedTouches[0];
+    const deltaX = touch.clientX - startX;
+    const deltaY = touch.clientY - startY;
+
+    // Only process if horizontal movement is dominant
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      const isRightSwipe = deltaX > SWIPE_THRESHOLD;
+      const isLeftSwipe = deltaX < -SWIPE_THRESHOLD;
+
+      if (isRightSwipe && currentPage === 'dashboard') {
+        // Swipe right from dashboard → go to chat
+        setLocation('/chat');
+      } else if (isLeftSwipe && currentPage === 'chat') {
+        // Swipe left from chat → go to dashboard
+        setLocation('/');
+      }
+    }
+
+    setIsDragging(false);
+    setDragX(0);
+    setStartX(null);
+    setStartY(null);
+  };
+
+  // Mouse events for desktop testing
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setStartX(e.clientX);
+    setStartY(e.clientY);
+    setIsDragging(true);
+    setDragX(0);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || startX === null || startY === null) return;
+
+    const deltaX = e.clientX - startX;
+    const deltaY = e.clientY - startY;
+
+    if (Math.abs(deltaY) < Math.abs(deltaX)) {
+      setDragX(deltaX);
+    }
+  };
+
+  const handleMouseUp = (e: React.MouseEvent) => {
+    if (!isDragging || startX === null) {
+      setIsDragging(false);
+      setDragX(0);
+      return;
+    }
+
+    const deltaX = e.clientX - startX;
+    const deltaY = e.clientY - startY;
+
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      const isRightSwipe = deltaX > SWIPE_THRESHOLD;
+      const isLeftSwipe = deltaX < -SWIPE_THRESHOLD;
+
+      if (isRightSwipe && currentPage === 'dashboard') {
+        setLocation('/chat');
+      } else if (isLeftSwipe && currentPage === 'chat') {
+        setLocation('/');
+      }
+    }
+
+    setIsDragging(false);
+    setDragX(0);
+    setStartX(null);
+    setStartY(null);
+  };
+
+  // Reset drag state when switching pages
+  useEffect(() => {
+    setIsDragging(false);
+    setDragX(0);
+    setStartX(null);
+    setStartY(null);
+  }, [currentPage]);
+
+  return (
+    <div
+      ref={containerRef}
+      className="h-full w-full relative overflow-hidden touch-pan-y"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      style={{
+        transform: isDragging ? `translateX(${Math.max(-50, Math.min(50, dragX * 0.3))}px)` : 'translateX(0px)',
+        transition: isDragging ? 'none' : 'transform 0.3s ease-out',
+      }}
+    >
+      {children}
+      
+      {/* Visual feedback during swipe */}
+      {isDragging && Math.abs(dragX) > 20 && (
+        <div className="absolute inset-0 pointer-events-none z-50 flex items-center justify-center">
+          <div 
+            className={`text-4xl opacity-60 transition-opacity duration-200 ${
+              dragX > 0 ? 'text-blue-500' : 'text-gray-500'
+            }`}
+          >
+            {dragX > 0 && currentPage === 'dashboard' ? '💬' : 
+             dragX < 0 && currentPage === 'chat' ? '🏠' : ''}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default SwipeWrapper;
