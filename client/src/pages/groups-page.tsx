@@ -56,7 +56,7 @@ export default function GroupsPage() {
 
   // Fetch messages for selected group with cache busting
   const { data: messages = [], refetch } = useQuery<GroupMessageWithUser[]>({
-    queryKey: [`/api/groups/${selectedGroup}/messages`, Date.now()], // Add timestamp to force refresh
+    queryKey: [`/api/groups/${selectedGroup}/messages`], // Remove timestamp as it breaks caching
     enabled: !!selectedGroup,
     refetchInterval: 2000, // Refetch every 2 seconds to get new messages
     staleTime: 0, // Force fresh data
