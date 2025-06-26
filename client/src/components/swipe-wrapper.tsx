@@ -8,14 +8,13 @@ interface SwipeWrapperProps {
 
 const SwipeWrapper: React.FC<SwipeWrapperProps> = ({ children, currentPage }) => {
   const [, setLocation] = useLocation();
-  const [startX, setStartX] = useState<number | null>(null);
-  const [startY, setStartY] = useState<number | null>(null);
+  const [startX, setStartX] = useState<number>(0);
+  const [startY, setStartY] = useState<number>(0);
   const [isDragging, setIsDragging] = useState(false);
   const [dragX, setDragX] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const SWIPE_THRESHOLD = 100; // Minimum distance for swipe
-  const VELOCITY_THRESHOLD = 0.3; // Minimum velocity for swipe
 
   const handleTouchStart = (e: React.TouchEvent) => {
     const touch = e.touches[0];
@@ -26,7 +25,7 @@ const SwipeWrapper: React.FC<SwipeWrapperProps> = ({ children, currentPage }) =>
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging || startX === null || startY === null) return;
+    if (!isDragging) return;
 
     const touch = e.touches[0];
     const deltaX = touch.clientX - startX;
@@ -44,7 +43,7 @@ const SwipeWrapper: React.FC<SwipeWrapperProps> = ({ children, currentPage }) =>
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!isDragging || startX === null) {
+    if (!isDragging) {
       setIsDragging(false);
       setDragX(0);
       return;
@@ -70,8 +69,8 @@ const SwipeWrapper: React.FC<SwipeWrapperProps> = ({ children, currentPage }) =>
 
     setIsDragging(false);
     setDragX(0);
-    setStartX(null);
-    setStartY(null);
+    setStartX(0);
+    setStartY(0);
   };
 
   // Mouse events for desktop testing
@@ -83,7 +82,7 @@ const SwipeWrapper: React.FC<SwipeWrapperProps> = ({ children, currentPage }) =>
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || startX === null || startY === null) return;
+    if (!isDragging) return;
 
     const deltaX = e.clientX - startX;
     const deltaY = e.clientY - startY;
@@ -94,7 +93,7 @@ const SwipeWrapper: React.FC<SwipeWrapperProps> = ({ children, currentPage }) =>
   };
 
   const handleMouseUp = (e: React.MouseEvent) => {
-    if (!isDragging || startX === null) {
+    if (!isDragging) {
       setIsDragging(false);
       setDragX(0);
       return;
@@ -116,16 +115,16 @@ const SwipeWrapper: React.FC<SwipeWrapperProps> = ({ children, currentPage }) =>
 
     setIsDragging(false);
     setDragX(0);
-    setStartX(null);
-    setStartY(null);
+    setStartX(0);
+    setStartY(0);
   };
 
   // Reset drag state when switching pages
   useEffect(() => {
     setIsDragging(false);
     setDragX(0);
-    setStartX(null);
-    setStartY(null);
+    setStartX(0);
+    setStartY(0);
   }, [currentPage]);
 
   return (

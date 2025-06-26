@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
+import SwipeWrapper from "@/components/swipe-wrapper";
 
 // Full-screen image viewer component
 const FullScreenImageViewer = ({ 
