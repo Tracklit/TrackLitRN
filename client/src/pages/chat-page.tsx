@@ -255,12 +255,12 @@ const ChatPage = () => {
                   <div className="flex items-center space-x-3">
                     <div className="relative">
                       <Avatar className="h-12 w-12">
-                        <AvatarImage src={group.image} />
+                        <AvatarImage src={group.avatar_url} />
                         <AvatarFallback className="bg-blue-500 text-white">
-                          {group.isPrivate ? <Lock className="h-5 w-5" /> : <Hash className="h-5 w-5" />}
+                          {group.is_private ? <Lock className="h-5 w-5" /> : <Hash className="h-5 w-5" />}
                         </AvatarFallback>
                       </Avatar>
-                      {group.isPrivate ? (
+                      {group.is_private ? (
                         <Lock className="absolute -bottom-1 -right-1 h-3 w-3 text-gray-500" />
                       ) : (
                         <Globe className="absolute -bottom-1 -right-1 h-3 w-3 text-green-500" />
@@ -271,13 +271,13 @@ const ChatPage = () => {
                       <div className="flex items-center justify-between">
                         <h3 className="font-medium text-gray-900 truncate">{group.name}</h3>
                         <span className="text-xs text-gray-500">
-                          {formatLastMessageTime(group.lastMessageAt)}
+                          {group.last_message_at ? formatLastMessageTime(group.last_message_at) : ''}
                         </span>
                       </div>
                       
                       <div className="flex items-center justify-between">
                         <p className="text-sm text-gray-500 truncate">
-                          {group.lastMessage || "No messages yet"}
+                          {group.last_message || "No messages yet"}
                         </p>
                         <div className="flex items-center space-x-1">
                           <Badge variant="secondary" className="text-xs">
