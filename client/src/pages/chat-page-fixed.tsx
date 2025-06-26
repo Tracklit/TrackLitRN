@@ -1,12 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { 
   MessageCircle, 
   Users, 
@@ -14,10 +11,8 @@ import {
   Plus, 
   Search,
   ArrowLeft,
-  X,
-  Image
+  X
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import SwipeWrapper from "@/components/swipe-wrapper";
 
@@ -35,48 +30,6 @@ interface ChatGroup {
   last_message_at?: string;
   last_message?: string;
   message_count?: number;
-}
-
-interface ChatMessage {
-  id: number;
-  group_id: number;
-  user_id: number;
-  sender_name: string;
-  sender_username?: string;
-  sender_profile_image?: string;
-  text: string;
-  created_at: string;
-  edited_at?: string;
-  is_edited?: boolean;
-  reply_to_id?: number;
-  message_type: 'text' | 'image' | 'file' | 'system';
-  media_url?: string;
-}
-
-interface DirectMessage {
-  id: number;
-  conversationId: number;
-  senderId: number;
-  receiverId: number;
-  text: string;
-  createdAt: string;
-  editedAt?: string;
-  isDeleted: boolean;
-  isRead: boolean;
-  readAt?: string;
-  replyToId?: number;
-  reply_to_id?: number;
-  messageType: 'text' | 'image' | 'file';
-  mediaUrl?: string;
-}
-
-interface Conversation {
-  id: number;
-  user1Id: number;
-  user2Id: number;
-  lastMessageId?: number;
-  lastMessageAt: string;
-  createdAt: string;
 }
 
 const ChatPage = () => {
@@ -147,10 +100,12 @@ const ChatPage = () => {
   if (showCreateGroup) {
     return (
       <SwipeWrapper currentPage="chat">
-        <CreateGroupForm 
-          onCancel={() => setShowCreateGroup(false)} 
-          onSubmit={createGroupMutation.mutate} 
-        />
+        <div className="min-h-screen bg-white">
+          <CreateGroupForm 
+            onCancel={() => setShowCreateGroup(false)} 
+            onSubmit={createGroupMutation.mutate} 
+          />
+        </div>
       </SwipeWrapper>
     );
   }
@@ -159,28 +114,31 @@ const ChatPage = () => {
   if (selectedChat) {
     return (
       <SwipeWrapper currentPage="chat">
-        <ChatInterface 
-          selectedChat={selectedChat} 
-          onBack={() => setSelectedChat(null)} 
-        />
+        <div className="min-h-screen bg-white">
+          <ChatInterface 
+            selectedChat={selectedChat} 
+            onBack={() => setSelectedChat(null)} 
+          />
+        </div>
       </SwipeWrapper>
     );
   }
 
   return (
-    <div className="fixed inset-0 bg-white flex flex-col w-screen h-screen z-10">
-      {/* Header */}
-      <div className="p-4 border-b border-gray-200 flex-shrink-0">
-        <div className="flex items-center justify-between mb-3">
-          <h1 className="text-xl font-semibold text-gray-900">Chats</h1>
-          <Button
-            size="sm"
-            onClick={() => setShowCreateGroup(true)}
-            className="bg-blue-500 hover:bg-blue-600"
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
-        </div>
+    <SwipeWrapper currentPage="chat">
+      <div className="min-h-screen bg-white">
+        {/* Header */}
+        <div className="sticky top-0 bg-white z-10 p-4 border-b border-gray-200">
+          <div className="flex items-center justify-between mb-3">
+            <h1 className="text-xl font-semibold text-gray-900">Chats</h1>
+            <Button
+              size="sm"
+              onClick={() => setShowCreateGroup(true)}
+              className="bg-blue-500 hover:bg-blue-600"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
           
           {/* Search */}
           <div className="relative">
@@ -195,7 +153,7 @@ const ChatPage = () => {
         </div>
 
         {/* Chat List */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="pb-4">
           {(groupsLoading || conversationsLoading) ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
@@ -246,20 +204,20 @@ const ChatPage = () => {
                   </div>
                 </button>
               ))}
-            </>
-          )}
 
-          {/* Empty State */}
-          {filteredGroups.length === 0 && conversations.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-              <MessageCircle className="h-16 w-16 mb-4 text-gray-300" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No chats yet</h3>
-              <p className="text-center">Create a group or start a conversation to get started</p>
-            </div>
+              {/* Empty State */}
+              {filteredGroups.length === 0 && conversations.length === 0 && !groupsLoading && !conversationsLoading && (
+                <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+                  <MessageCircle className="h-16 w-16 mb-4 text-gray-300" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No chats yet</h3>
+                  <p className="text-center">Create a group or start a conversation to get started</p>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
-    </div>
+    </SwipeWrapper>
   );
 };
 
@@ -268,9 +226,9 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
   const [messageText, setMessageText] = useState("");
   
   return (
-    <div className="fixed inset-0 bg-white flex flex-col w-screen h-screen">
+    <div className="min-h-screen bg-white flex flex-col">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 flex items-center space-x-3">
+      <div className="sticky top-0 bg-white z-10 p-4 border-b border-gray-200 flex items-center space-x-3">
         <Button variant="ghost" size="sm" onClick={onBack}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
@@ -278,7 +236,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 p-4 overflow-y-auto">
+      <div className="flex-1 p-4">
         <div className="text-center text-gray-500 py-8">
           <MessageCircle className="h-12 w-12 mx-auto mb-2 text-gray-300" />
           <p>Start a conversation</p>
@@ -286,7 +244,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
       </div>
 
       {/* Message Input */}
-      <div className="p-4 border-t border-gray-200">
+      <div className="sticky bottom-0 bg-white p-4 border-t border-gray-200">
         <div className="flex space-x-2">
           <Input
             value={messageText}
@@ -325,9 +283,9 @@ const CreateGroupForm = ({ onCancel, onSubmit }: { onCancel: () => void; onSubmi
   };
 
   return (
-    <div className="fixed inset-0 bg-white flex flex-col w-screen h-screen">
+    <div className="min-h-screen bg-white flex flex-col">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+      <div className="sticky top-0 bg-white z-10 p-4 border-b border-gray-200 flex items-center justify-between">
         <h1 className="text-lg font-semibold text-gray-900">Create Group</h1>
         <Button variant="ghost" size="sm" onClick={onCancel}>
           <X className="h-4 w-4" />

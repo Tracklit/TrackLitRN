@@ -65,7 +65,7 @@ import AdminPanelPage from "@/pages/admin-panel-page";
 import SprinthiaPage from "@/pages/sprinthia-simple";
 import RehabPage from "@/pages/rehab-page";
 import ArcadePage from "@/pages/arcade-page";
-import ChatPage from "@/pages/chat-page-simple";
+import ChatPage from "@/pages/chat-page-fixed";
 
 import HamstringRehabPage from "@/pages/rehab/acute-muscle/hamstring";
 import FootRehabPage from "@/pages/rehab/chronic-injuries/foot";
