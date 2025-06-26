@@ -70,6 +70,7 @@ interface DirectMessage {
   isRead: boolean;
   readAt?: string;
   replyToId?: number;
+  reply_to_id?: number;
   messageType: 'text' | 'image' | 'file';
   mediaUrl?: string;
 }
@@ -322,9 +323,10 @@ interface MessageBubbleProps {
   isOwn: boolean;
   currentUser?: any;
   onReply?: (message: ChatMessage | DirectMessage) => void;
+  allMessages?: (ChatMessage | DirectMessage)[];
 }
 
-const MessageBubble = ({ message, isOwn, currentUser, onReply }: MessageBubbleProps) => {
+const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages }: MessageBubbleProps) => {
   const [showMenu, setShowMenu] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState('');
@@ -462,6 +464,18 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply }: MessageBubblePr
           {!isOwn && 'sender_name' in message && (
             <div className="text-xs font-medium mb-1 text-gray-600">
               {getSenderName()}
+            </div>
+          )}
+          
+          {/* Reply Preview */}
+          {('reply_to_id' in message && message.reply_to_id) && (
+            <div className="mb-2 p-2 bg-gray-100 border-l-2 border-blue-500 rounded-r">
+              <div className="text-xs text-gray-600 font-medium">
+                Replying to message
+              </div>
+              <div className="text-xs text-gray-700 truncate">
+                {allMessages?.find(m => m.id === message.reply_to_id)?.text || 'Original message'}
+              </div>
             </div>
           )}
           
@@ -697,6 +711,7 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
                 isOwn={message.user_id === currentUser?.id}
                 currentUser={currentUser}
                 onReply={(message) => setReplyingTo(message as ChatMessage)}
+                allMessages={messages}
               />
             ))
           )}
