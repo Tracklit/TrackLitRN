@@ -6551,7 +6551,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       }
 
       // Update the message using direct SQL to ensure proper ownership check
-      const result = await dbStorage.db.execute(`
+      const result = await (dbStorage as any).db.execute(`
         UPDATE direct_messages 
         SET content = ?, isEdited = true
         WHERE id = ? AND senderId = ?

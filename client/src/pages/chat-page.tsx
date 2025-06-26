@@ -208,13 +208,13 @@ export default function ChatPage() {
   const { data: conversation } = useQuery({
     queryKey: ['/api/conversations', conversationId],
     enabled: !!conversationId
-  });
+  }) as { data: any };
 
   // Get messages
   const { data: messages = [], isLoading: messagesLoading } = useQuery({
     queryKey: ['/api/conversations', conversationId, 'messages'],
     enabled: !!conversationId
-  });
+  }) as { data: any[], isLoading: boolean };
 
   // Send message mutation
   const sendMessageMutation = useMutation({
@@ -235,10 +235,7 @@ export default function ChatPage() {
   // Edit message mutation
   const editMessageMutation = useMutation({
     mutationFn: async (data: { messageId: number; content: string }) => {
-      return apiRequest(`/api/messages/${data.messageId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ content: data.content })
-      });
+      return apiRequest(`/api/messages/${data.messageId}`, 'PATCH', { content: data.content });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/conversations', conversationId, 'messages'] });
@@ -276,7 +273,7 @@ export default function ChatPage() {
     } else {
       // Handle new message
       setIsLoading(true);
-      const receiverId = conversation.user1Id === currentUser?.id ? conversation.user2Id : conversation.user1Id;
+      const receiverId = (conversation as any)?.user1Id === (currentUser as any)?.id ? (conversation as any)?.user2Id : (conversation as any)?.user1Id;
       sendMessageMutation.mutate({ content, receiverId });
     }
   };
@@ -290,7 +287,7 @@ export default function ChatPage() {
 
   const getOtherUser = () => {
     if (!conversation || !currentUser) return null;
-    return conversation.user1Id === currentUser.id ? conversation.user2 : conversation.user1;
+    return (conversation as any)?.user1Id === (currentUser as any)?.id ? (conversation as any)?.user2 : (conversation as any)?.user1;
   };
 
   const otherUser = getOtherUser();
