@@ -115,7 +115,12 @@ import {
   InsertCoachingRequest,
   sprinthiaConversations,
   sprinthiaMessages,
-  videoAnalysis
+  videoAnalysis,
+  chatGroups,
+  chatGroupMembers,
+  chatGroupMessages,
+  telegramDirectMessages,
+  typingStatus
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, lt, gte, desc, asc, inArray, or, isNotNull, isNull, ne, sql, exists } from "drizzle-orm";
