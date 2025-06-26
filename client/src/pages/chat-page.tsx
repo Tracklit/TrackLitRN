@@ -21,7 +21,8 @@ import {
   Edit,
   Trash,
   Reply,
-  X
+  X,
+  Image
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
@@ -631,7 +632,7 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
     return new Promise((resolve) => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d')!;
-      const img = new Image();
+      const img = document.createElement('img');
       
       img.onload = () => {
         // Calculate new dimensions
@@ -922,7 +923,7 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
                 className="h-16 flex flex-col items-center justify-center space-y-1"
                 onClick={() => fileInputRef.current?.click()}
               >
-                <ImageIcon className="h-6 w-6 text-blue-500" />
+                <Image className="h-6 w-6 text-blue-500" />
                 <span className="text-xs">Photo</span>
               </Button>
             </div>
