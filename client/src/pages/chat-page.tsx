@@ -208,227 +208,134 @@ const ChatPage = () => {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Chat List Sidebar */}
-      <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
-        {/* Header */}
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center justify-between mb-3">
-            <h1 className="text-xl font-semibold text-gray-900">Chats</h1>
-            <Button
-              size="sm"
-              onClick={() => setShowCreateGroup(true)}
-              className="bg-blue-500 hover:bg-blue-600"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-          
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search chats..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+    <div className="h-screen bg-white flex flex-col">
+      {/* Header */}
+      <div className="p-4 border-b border-gray-200">
+        <div className="flex items-center justify-between mb-3">
+          <h1 className="text-xl font-semibold text-gray-900">Chats</h1>
+          <Button
+            size="sm"
+            onClick={() => setShowCreateGroup(true)}
+            className="bg-blue-500 hover:bg-blue-600"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
         </div>
+        
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Search chats..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      </div>
 
-        {/* Chat List */}
-        <ScrollArea className="flex-1">
-          <div className="space-y-1 p-2">
-            {/* Groups Section */}
-            {filteredGroups.length > 0 && (
-              <>
-                <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Groups
-                </div>
-                {filteredGroups.map((group: ChatGroup) => (
-                  <button
-                    key={group.id}
-                    onClick={() => setSelectedChat({ type: 'group', id: group.id })}
-                    className={cn(
-                      "w-full p-3 rounded-lg text-left hover:bg-gray-100 transition-colors",
-                      selectedChat?.type === 'group' && selectedChat?.id === group.id
-                        ? "bg-blue-50 border border-blue-200"
-                        : ""
-                    )}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="relative">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={group.image} />
-                          <AvatarFallback className="bg-blue-500 text-white">
-                            {group.isPrivate ? <Lock className="h-4 w-4" /> : <Hash className="h-4 w-4" />}
-                          </AvatarFallback>
-                        </Avatar>
-                        {group.isPrivate ? (
-                          <Lock className="absolute -bottom-1 -right-1 h-3 w-3 text-gray-500" />
-                        ) : (
-                          <Globe className="absolute -bottom-1 -right-1 h-3 w-3 text-green-500" />
-                        )}
+      {/* Chat List - Full Width */}
+      <ScrollArea className="flex-1">
+        <div className="divide-y divide-gray-100">
+          {/* Direct Messages Section */}
+          {conversations.length > 0 && (
+            <>
+              <div className="px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                Direct Messages
+              </div>
+              {conversations.map((conversation: Conversation) => (
+                <button
+                  key={conversation.id}
+                  onClick={() => setSelectedChat({ type: 'direct', id: conversation.id })}
+                  className="w-full p-4 text-left hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center space-x-3">
+                    <Avatar className="h-12 w-12">
+                      <AvatarFallback className="bg-gray-500 text-white">
+                        <MessageCircle className="h-5 w-5" />
+                      </AvatarFallback>
+                    </Avatar>
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-medium text-gray-900 truncate">Direct Chat</h3>
+                        <span className="text-xs text-gray-500">
+                          {formatLastMessageTime(conversation.lastMessageAt)}
+                        </span>
                       </div>
                       
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <h3 className="font-medium text-gray-900 truncate">{group.name}</h3>
-                          <span className="text-xs text-gray-500">
-                            {formatLastMessageTime(group.lastMessageAt)}
-                          </span>
-                        </div>
-                        
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm text-gray-500 truncate">
-                            {group.lastMessage || "No messages yet"}
-                          </p>
-                          <div className="flex items-center space-x-1">
-                            <Badge variant="secondary" className="text-xs">
-                              {group.memberIds.length}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
+                      <p className="text-sm text-gray-500 truncate">
+                        Click to view conversation
+                      </p>
                     </div>
-                  </button>
-                ))}
-              </>
-            )}
+                  </div>
+                </button>
+              ))}
+            </>
+          )}
 
-            {/* Direct Messages Section */}
-            {conversations.length > 0 && (
-              <>
-                <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Direct Messages
-                </div>
-                {conversations.map((conversation: Conversation) => (
-                  <button
-                    key={conversation.id}
-                    onClick={() => setSelectedChat({ type: 'direct', id: conversation.id })}
-                    className={cn(
-                      "w-full p-3 rounded-lg text-left hover:bg-gray-100 transition-colors",
-                      selectedChat?.type === 'direct' && selectedChat?.id === conversation.id
-                        ? "bg-blue-50 border border-blue-200"
-                        : ""
-                    )}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback className="bg-gray-500 text-white">
-                          <MessageCircle className="h-4 w-4" />
+          {/* Groups Section */}
+          {filteredGroups.length > 0 && (
+            <>
+              <div className="px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                Groups
+              </div>
+              {filteredGroups.map((group: ChatGroup) => (
+                <button
+                  key={group.id}
+                  onClick={() => setSelectedChat({ type: 'group', id: group.id })}
+                  className="w-full p-4 text-left hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="relative">
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage src={group.image} />
+                        <AvatarFallback className="bg-blue-500 text-white">
+                          {group.isPrivate ? <Lock className="h-5 w-5" /> : <Hash className="h-5 w-5" />}
                         </AvatarFallback>
                       </Avatar>
+                      {group.isPrivate ? (
+                        <Lock className="absolute -bottom-1 -right-1 h-3 w-3 text-gray-500" />
+                      ) : (
+                        <Globe className="absolute -bottom-1 -right-1 h-3 w-3 text-green-500" />
+                      )}
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-medium text-gray-900 truncate">{group.name}</h3>
+                        <span className="text-xs text-gray-500">
+                          {formatLastMessageTime(group.lastMessageAt)}
+                        </span>
+                      </div>
                       
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <h3 className="font-medium text-gray-900 truncate">Direct Chat</h3>
-                          <span className="text-xs text-gray-500">
-                            {formatLastMessageTime(conversation.lastMessageAt)}
-                          </span>
-                        </div>
-                        
+                      <div className="flex items-center justify-between">
                         <p className="text-sm text-gray-500 truncate">
-                          Click to view conversation
+                          {group.lastMessage || "No messages yet"}
                         </p>
+                        <div className="flex items-center space-x-1">
+                          <Badge variant="secondary" className="text-xs">
+                            {group.memberIds.length}
+                          </Badge>
+                        </div>
                       </div>
                     </div>
-                  </button>
-                ))}
-              </>
-            )}
-          </div>
-        </ScrollArea>
-      </div>
-
-      {/* Chat Area */}
-      <div className="flex-1 flex flex-col">
-        {selectedChat ? (
-          <>
-            {/* Chat Header */}
-            <div className="p-4 bg-white border-b border-gray-200 flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-blue-500 text-white">
-                    {selectedChat.type === 'group' ? <Hash className="h-4 w-4" /> : <MessageCircle className="h-4 w-4" />}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h2 className="font-semibold text-gray-900">
-                    {selectedChat.type === 'group' 
-                      ? filteredGroups.find((g: ChatGroup) => g.id === selectedChat.id)?.name 
-                      : "Direct Chat"}
-                  </h2>
-                  <p className="text-sm text-gray-500">
-                    {selectedChat.type === 'group' && (
-                      <>
-                        {filteredGroups.find((g: ChatGroup) => g.id === selectedChat.id)?.memberIds.length} members
-                      </>
-                    )}
-                  </p>
-                </div>
-              </div>
-              
-              <Button variant="ghost" size="sm">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </div>
-
-            {/* Messages Area */}
-            <ScrollArea className="flex-1 p-4">
-              <div className="space-y-4">
-                {messagesLoading ? (
-                  <div className="flex justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
                   </div>
-                ) : messages.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <MessageCircle className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-                    <p>No messages yet. Start the conversation!</p>
-                  </div>
-                ) : (
-                  messages.map((message: ChatMessage | DirectMessage) => (
-                    <MessageBubble
-                      key={message.id}
-                      message={message}
-                      isOwn={message.senderId === 1} // TODO: Get current user ID
-                    />
-                  ))
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-            </ScrollArea>
+                </button>
+              ))}
+            </>
+          )}
 
-            {/* Message Input */}
-            <form onSubmit={handleSendMessage} className="p-4 bg-white border-t border-gray-200">
-              <div className="flex items-center space-x-2">
-                <Input
-                  value={messageText}
-                  onChange={(e) => setMessageText(e.target.value)}
-                  placeholder="Type a message..."
-                  className="flex-1"
-                  disabled={sendMessageMutation.isPending}
-                />
-                <Button 
-                  type="submit" 
-                  disabled={!messageText.trim() || sendMessageMutation.isPending}
-                  className="bg-blue-500 hover:bg-blue-600"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
-            </form>
-          </>
-        ) : (
-          <div className="flex-1 flex items-center justify-center bg-gray-50">
-            <div className="text-center">
-              <MessageCircle className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Select a chat</h3>
-              <p className="text-gray-500">Choose a conversation from the sidebar to start messaging</p>
+          {/* Empty State */}
+          {filteredGroups.length === 0 && conversations.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+              <MessageCircle className="h-16 w-16 mb-4 text-gray-300" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No chats yet</h3>
+              <p className="text-center">Create a group or start a conversation to get started</p>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      </ScrollArea>
     </div>
   );
 };
