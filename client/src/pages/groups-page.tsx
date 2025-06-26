@@ -13,10 +13,7 @@ import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import type { GroupMessage, User, Group, ChatGroupMember } from "@shared/schema";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+// Removed dialog, label, textarea, and select imports as they're now in create-group-page
 import { useKeyboard } from "@/contexts/keyboard-context";
 
 interface GroupWithMembers extends Group {
@@ -33,7 +30,7 @@ export default function GroupsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { setKeyboardVisible } = useKeyboard();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   
   // Extract groupId from URL path
   const pathParts = location.split('/');
@@ -44,10 +41,7 @@ export default function GroupsPage() {
   const [selectedGroup, setSelectedGroup] = useState<number | null>(targetGroupId);
   const [newMessage, setNewMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [isCreating, setIsCreating] = useState(false);
-  const [newGroupName, setNewGroupName] = useState("");
-  const [newGroupDescription, setNewGroupDescription] = useState("");
-  const [newGroupPrivacy, setNewGroupPrivacy] = useState<"public" | "private">("private");
+  // Removed create group form state - now handled in create-group-page
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Fetch user's groups
@@ -109,32 +103,7 @@ export default function GroupsPage() {
     },
   });
 
-  // Create group mutation
-  const createGroupMutation = useMutation({
-    mutationFn: async (groupData: { name: string; description: string; isPrivate: boolean }) => {
-      const response = await apiRequest("POST", "/api/groups", groupData);
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/groups"] });
-      setIsCreating(false);
-      setNewGroupName("");
-      setNewGroupDescription("");
-      setNewGroupPrivacy("private");
-      toast({
-        title: "Group created",
-        description: "Your new group has been created successfully",
-      });
-    },
-    onError: (error) => {
-      console.error('Failed to create group:', error);
-      toast({
-        title: "Failed to create group",
-        description: "Please try again",
-        variant: "destructive",
-      });
-    },
-  });
+  // Removed create group mutation - now handled in create-group-page
 
   const handleSendMessage = () => {
     if (!newMessage.trim() || !selectedGroup) return;
@@ -145,15 +114,7 @@ export default function GroupsPage() {
     });
   };
 
-  const handleCreateGroup = () => {
-    if (!newGroupName.trim()) return;
-    
-    createGroupMutation.mutate({
-      name: newGroupName.trim(),
-      description: newGroupDescription.trim(),
-      isPrivate: newGroupPrivacy === "private",
-    });
-  };
+  // Removed handleCreateGroup - now handled in create-group-page
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -289,76 +250,14 @@ export default function GroupsPage() {
               <div className="flex items-center justify-between mb-6">
                 <h1 className="text-2xl font-bold text-white">Groups</h1>
                 {canCreateGroups && canCreateMore && (
-                  <Dialog open={isCreating} onOpenChange={setIsCreating}>
-                    <DialogTrigger asChild>
-                      <Button 
-                        size="sm" 
-                        className="bg-accent hover:bg-accent/90 text-accent-foreground"
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Create Group
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="bg-gray-800 border-gray-700">
-                      <DialogHeader>
-                        <DialogTitle className="text-white">Create Group</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="name" className="text-white">Group Name</Label>
-                          <Input
-                            id="name"
-                            value={newGroupName}
-                            onChange={(e) => setNewGroupName(e.target.value)}
-                            className="bg-gray-700 border-gray-600 text-white"
-                            placeholder="Enter group name"
-                            onFocus={() => setKeyboardVisible(true)}
-                            onBlur={() => setKeyboardVisible(false)}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="description" className="text-white">Description (Optional)</Label>
-                          <Textarea
-                            id="description"
-                            value={newGroupDescription}
-                            onChange={(e) => setNewGroupDescription(e.target.value)}
-                            className="bg-gray-700 border-gray-600 text-white"
-                            placeholder="Enter group description"
-                            onFocus={() => setKeyboardVisible(true)}
-                            onBlur={() => setKeyboardVisible(false)}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="privacy" className="text-white">Privacy</Label>
-                          <Select value={newGroupPrivacy} onValueChange={(value: "public" | "private") => setNewGroupPrivacy(value)}>
-                            <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-gray-700 border-gray-600">
-                              <SelectItem value="private" className="text-white">Private</SelectItem>
-                              <SelectItem value="public" className="text-white">Public</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="flex justify-end space-x-2">
-                          <Button
-                            variant="outline"
-                            onClick={() => setIsCreating(false)}
-                            className="border-gray-600 text-gray-300 hover:bg-gray-700"
-                          >
-                            Cancel
-                          </Button>
-                          <Button
-                            onClick={handleCreateGroup}
-                            disabled={createGroupMutation.isPending}
-                            className="bg-accent hover:bg-accent/90 text-accent-foreground"
-                          >
-                            {createGroupMutation.isPending ? "Creating..." : "Create Group"}
-                          </Button>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+                  <Button 
+                    size="sm" 
+                    className="bg-accent hover:bg-accent/90 text-accent-foreground"
+                    onClick={() => setLocation("/create-group")}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Group
+                  </Button>
                 )}
               </div>
 
