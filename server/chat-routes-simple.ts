@@ -103,9 +103,9 @@ router.get("/api/chat/groups", async (req: Request, res: Response) => {
     const userId = req.user!.id;
     console.log('FIXED: Fetching groups for user ID:', userId);
     
-    // Fixed SQL query with DISTINCT to prevent duplicates
+    // Fixed SQL query - use subquery to get distinct groups first, then order
     const groups = await db.execute(sql`
-      SELECT DISTINCT
+      SELECT 
         cg.id,
         cg.name,
         cg.description,
@@ -117,8 +117,11 @@ router.get("/api/chat/groups", async (req: Request, res: Response) => {
         cg.last_message_at::text,
         COALESCE(cg.message_count, 0) as message_count
       FROM chat_groups cg
-      INNER JOIN chat_group_members cgm ON cg.id = cgm.group_id
-      WHERE cgm.user_id = ${userId}
+      WHERE cg.id IN (
+        SELECT DISTINCT cgm.group_id 
+        FROM chat_group_members cgm 
+        WHERE cgm.user_id = ${userId}
+      )
       ORDER BY cg.last_message_at DESC NULLS LAST
     `);
     
