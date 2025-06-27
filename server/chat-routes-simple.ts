@@ -204,10 +204,10 @@ router.post("/api/chat/groups", upload.single('image'), async (req: Request, res
       }
     }
 
-    // Create group with direct SQL
+    // Create group with direct SQL - cast arrays to proper types
     const groupResult = await db.execute(sql`
       INSERT INTO chat_groups (name, description, image, creator_id, admin_ids, member_ids, is_private, invite_code)
-      VALUES (${name.trim()}, ${description || ''}, ${imageUrl}, ${userId}, ARRAY[${userId}], ${allMemberIds}, ${isPrivate === 'true'}, ${inviteCode})
+      VALUES (${name.trim()}, ${description || ''}, ${imageUrl}, ${userId}, ARRAY[${userId}]::integer[], ARRAY[${sql.join(allMemberIds, sql`, `)}]::integer[], ${isPrivate === 'true'}, ${inviteCode})
       RETURNING *
     `);
 
