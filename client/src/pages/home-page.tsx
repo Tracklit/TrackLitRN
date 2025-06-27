@@ -48,7 +48,6 @@ import { CommunityCarousel } from '@/components/community-carousel';
 
 import { BackgroundImageContainer, OptimizedBackgroundImage } from '@/components/optimized-background-image';
 import { ImageOptimizer, useImageOptimization } from '@/lib/image-optimizer';
-import SwipeWrapper from '@/components/swipe-wrapper';
 import { PreloadImages } from '@/components/preload-images';
 import '../styles/image-optimization.css';
 
@@ -339,8 +338,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <SwipeWrapper currentPage="dashboard">
-      <div className="h-screen text-foreground bg-background overflow-hidden" style={{ overscrollBehavior: 'none', marginTop: '-15px' }}>
+    <div className="h-screen text-foreground bg-background overflow-hidden" style={{ overscrollBehavior: 'none', marginTop: '-15px' }}>
       {/* Preload critical images */}
       <PreloadImages images={dashboardImages} quality={20} priority={true} />
       
@@ -750,7 +748,6 @@ export default function HomePage() {
         isOpen={isCreateMeetOpen}
         onClose={() => setIsCreateMeetOpen(false)}
       />
-      </div>
-    </SwipeWrapper>
+    </div>
   );
 }
