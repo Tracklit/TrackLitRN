@@ -5,11 +5,15 @@ import {
   BookOpen, 
   Trophy, 
   Clock, 
-  Star
+  Star,
+  Users
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { useKeyboard } from "@/contexts/keyboard-context";
+import { Badge } from "@/components/ui/badge";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
 
 // Navigation items based on dashboard card order
 const navItems = [
@@ -44,18 +48,10 @@ const navItems = [
     key: "tools"
   },
   { 
-    title: "Sprinthia", 
-    href: "/sprinthia", 
-    icon: (
-      <svg 
-        className="h-5 w-5 text-yellow-400 fill-yellow-400" 
-        viewBox="0 0 24 24" 
-        fill="currentColor"
-      >
-        <path d="M12 2L15 9L22 12L15 15L12 22L9 15L2 12L9 9Z" />
-      </svg>
-    ),
-    key: "sprinthia"
+    title: "Chat", 
+    href: "/chat", 
+    icon: <Users className="h-5 w-5" />,
+    key: "chat"
   }
 ];
 
@@ -65,9 +61,11 @@ interface NavItemProps {
   title: string;
   isActive: boolean;
   onClick?: () => void;
+  showBadge?: boolean;
+  badgeCount?: number;
 }
 
-function NavItem({ href, icon, title, isActive, onClick }: NavItemProps) {
+function NavItem({ href, icon, title, isActive, onClick, showBadge, badgeCount }: NavItemProps) {
   const handleClick = () => {
     if (onClick) onClick();
   };
@@ -75,7 +73,7 @@ function NavItem({ href, icon, title, isActive, onClick }: NavItemProps) {
   return (
     <Link href={href}>
       <div 
-        className="flex flex-col items-center justify-center h-full px-2 cursor-pointer transition-colors"
+        className="flex flex-col items-center justify-center h-full px-2 cursor-pointer transition-colors relative"
         onClick={handleClick}
       >
         <div className={cn(
@@ -86,6 +84,14 @@ function NavItem({ href, icon, title, isActive, onClick }: NavItemProps) {
             {icon}
           </div>
         </div>
+        {showBadge && badgeCount && badgeCount > 0 && (
+          <Badge 
+            variant="destructive" 
+            className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs font-medium min-w-[20px] rounded-full"
+          >
+            {badgeCount > 99 ? '99+' : badgeCount}
+          </Badge>
+        )}
       </div>
     </Link>
   );
@@ -97,6 +103,28 @@ export function BottomNavigation() {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const { isKeyboardVisible } = useKeyboard();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  // Fetch unread message count for chat badge
+  const { data: unreadCount = 0 } = useQuery({
+    queryKey: ['unread-chat-count'],
+    queryFn: async () => {
+      const response = await fetch('/api/chat/unread-count');
+      if (!response.ok) return 0;
+      return response.json();
+    },
+    enabled: !!user,
+    refetchInterval: 30000,
+    staleTime: 30000,
+  });
+
+  const handleChatClick = () => {
+    // Invalidate unread count when navigating to chat
+    setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: ['unread-chat-count'] });
+    }, 1000);
+  };
 
   // Update current index based on location
   useEffect(() => {
@@ -152,6 +180,9 @@ export function BottomNavigation() {
               icon={item.icon}
               title={item.title}
               isActive={index === currentIndex}
+              onClick={item.key === 'chat' ? handleChatClick : undefined}
+              showBadge={item.key === 'chat'}
+              badgeCount={item.key === 'chat' ? unreadCount : undefined}
             />
           ))}
         </div>
