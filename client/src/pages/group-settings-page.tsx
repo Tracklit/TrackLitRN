@@ -111,14 +111,15 @@ export default function GroupSettingsPage() {
       return response.json();
     },
     onSuccess: () => {
-      // Invalidate all group-related queries to ensure UI updates everywhere
-      queryClient.invalidateQueries({ queryKey: ['/api/chat/groups'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/chat/groups', groupId] });
-      queryClient.invalidateQueries({ queryKey: ['/api/chat/groups', groupId, 'members'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/chat/groups', groupId, 'messages'] });
+      // Force refresh of all group-related queries
+      queryClient.removeQueries({ queryKey: ['/api/chat/groups'] });
+      queryClient.removeQueries({ queryKey: ['/api/chat/groups', groupId] });
+      queryClient.removeQueries({ queryKey: ['/api/chat/groups', groupId, 'members'] });
+      queryClient.removeQueries({ queryKey: ['/api/chat/groups', groupId, 'messages'] });
+      queryClient.removeQueries({ queryKey: ['/api/conversations'] });
       
-      // Also invalidate any conversation queries that might cache group info
-      queryClient.invalidateQueries({ queryKey: ['/api/conversations'] });
+      // Immediately refetch the main group list
+      queryClient.refetchQueries({ queryKey: ['/api/chat/groups'] });
       
       toast({
         title: "Success",
@@ -128,7 +129,7 @@ export default function GroupSettingsPage() {
       // Navigate back to main chat page after successful update
       setTimeout(() => {
         setLocation('/chat');
-      }, 100);
+      }, 200);
     },
     onError: (error) => {
       toast({

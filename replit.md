@@ -108,6 +108,14 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
+- June 27, 2025: Fixed group settings functionality and cache invalidation issues
+  - Resolved "Access Denied" flash error by fixing property name mismatch (adminIds vs admin_ids)
+  - Enhanced server authorization logic to properly handle PostgreSQL admin_ids arrays
+  - Fixed routing issue - group settings now properly navigate back to /chat instead of invalid routes
+  - Implemented comprehensive cache invalidation using removeQueries and refetchQueries for immediate UI updates
+  - Added authentication credentials to PATCH requests to resolve 404 errors
+  - Group settings now save successfully and reflect changes immediately in chat channel list
+
 - June 26, 2025: Complete removal of all group/social functionality from the application
   - User explicitly requested removal of all group messaging and social features
   - Deleted group-related database tables (groups, chatGroupMembers, groupMessages) from schema
