@@ -342,6 +342,10 @@ router.get("/api/chat/groups/:groupId/members", async (req: Request, res: Respon
         cgm.joined_at ASC
     `);
 
+    console.log('=== GROUP MEMBERS API CALLED ===');
+    console.log('Group ID:', groupId);
+    console.log('Raw members result:', JSON.stringify(membersResult.rows, null, 2));
+    
     res.json(membersResult.rows);
   } catch (error) {
     console.error("Error fetching group members:", error);
