@@ -169,7 +169,7 @@ const ChatPage = () => {
   const queryClient = useQueryClient();
 
   // Fetch chat groups
-  const { data: chatGroups = [], isLoading: groupsLoading } = useQuery({
+  const { data: chatGroups = [], isLoading: groupsLoading, refetch: refetchGroups } = useQuery({
     queryKey: ['/api/chat/groups'],
     queryFn: async () => {
       console.log('Fetching chat groups...');
