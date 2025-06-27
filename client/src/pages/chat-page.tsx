@@ -293,7 +293,7 @@ const ChatPage = () => {
     } else {
       // Send new message
       const messageData = replyToMessage 
-        ? { text: messageText.trim(), reply_to_id: replyToMessage.id }
+        ? { text: messageText.trim(), replyToId: replyToMessage.id }
         : { text: messageText.trim() };
       
       sendMessageMutation.mutate(messageData);
@@ -618,7 +618,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     } else {
       // Send new message
       const messageData = replyToMessage 
-        ? { text: messageText.trim(), reply_to_id: replyToMessage.id }
+        ? { text: messageText.trim(), replyToId: replyToMessage.id }
         : { text: messageText.trim() };
       
       sendMessageMutation.mutate(messageData);
