@@ -648,6 +648,7 @@ router.get("/api/chat/groups/:groupId/messages", async (req: Request, res: Respo
       }
     }));
 
+    console.log('DEBUG: Sample message with user data:', JSON.stringify(transformedMessages[0], null, 2));
     res.json(transformedMessages);
   } catch (error) {
     console.error("Error fetching group messages:", error);

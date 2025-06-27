@@ -666,15 +666,21 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
             <p className="text-sm">Start the conversation!</p>
           </div>
         ) : (
-          messages.map((message: ChatMessage) => (
-            <MessageBubble
-              key={message.id}
-              message={message}
-              isOwn={currentUser?.id === message.user_id}
-              currentUser={currentUser}
-              onImageClick={setFullScreenImage}
-            />
-          ))
+          messages.map((message: ChatMessage) => {
+            // Debug logging for profile images
+            console.log('DEBUG: Message user data:', message.user);
+            console.log('DEBUG: Profile image URL:', message.user?.profile_image_url);
+            
+            return (
+              <MessageBubble
+                key={message.id}
+                message={message}
+                isOwn={currentUser?.id === message.user_id}
+                currentUser={currentUser}
+                onImageClick={setFullScreenImage}
+              />
+            );
+          })
         )}
         <div ref={messagesEndRef} />
       </div>
