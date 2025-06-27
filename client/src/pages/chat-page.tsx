@@ -173,7 +173,7 @@ const ChatPage = () => {
 
   // Fetch chat groups with cache-busting timestamp
   const { data: chatGroups = [], isLoading: groupsLoading, refetch: refetchGroups } = useQuery({
-    queryKey: ['/api/chat/groups', refreshKey, Date.now()], // Add timestamp to force fresh requests
+    queryKey: ['/api/chat/groups', refreshKey], // Remove timestamp from queryKey to prevent infinite loop
     queryFn: async () => {
       console.log('Fetching chat groups with cache buster...');
       
@@ -204,7 +204,7 @@ const ChatPage = () => {
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     staleTime: 0, // Always consider data stale
-    cacheTime: 0, // Don't cache at all
+    gcTime: 0, // Don't cache at all (v5 syntax)
   });
 
   // Use local groups state instead of direct React Query data

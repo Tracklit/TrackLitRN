@@ -2820,37 +2820,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/chat/groups", async (req: Request, res: Response) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    
-    try {
-      const userId = req.user!.id;
-      
-      // Direct SQL query to get groups
-      const groups = await db.execute(sql`
-        SELECT 
-          cg.id,
-          cg.name,
-          cg.description,
-          cg.avatar_url,
-          cg.creator_id,
-          cg.is_private,
-          cg.created_at,
-          cg.last_message,
-          cg.last_message_at,
-          cg.message_count
-        FROM chat_groups cg
-        INNER JOIN chat_group_members cgm ON cg.id = cgm.group_id
-        WHERE cgm.user_id = ${userId}
-        ORDER BY cg.last_message_at DESC
-      `);
-      
-      res.json(groups.rows);
-    } catch (error) {
-      console.error("Error fetching chat groups:", error);
-      res.status(500).json({ error: "Failed to fetch groups" });
-    }
-  });
+  // Chat groups route moved to chat-routes-simple.ts
 
   app.get("/api/chat/groups/:groupId", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
