@@ -6,6 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Link } from "wouter";
 import { NotificationBell } from "@/components/notification-bell";
 import { MessageButton } from "@/components/message-button";
+import { ChatButton } from "@/components/chat-button";
 import { InstallAppButton } from "@/components/install-app-button";
 import { Button } from "@/components/ui/button";
 import { useTicker } from "@/contexts/ticker-context";
@@ -44,6 +45,9 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
               
               {/* Direct Messages Panel */}
               <MessageButton />
+              
+              {/* Chat Groups */}
+              <ChatButton />
               
               {/* Ticker Toggle */}
               <Button

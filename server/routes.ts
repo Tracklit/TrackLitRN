@@ -2890,6 +2890,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get unread chat count across all channels
+  app.get("/api/chat/unread-count", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const userId = req.user!.id;
+      
+      // Count unread messages in chat groups where user is a member
+      const groupUnreadResult = await db.execute(sql`
+        SELECT COUNT(cgm.id) as group_unread_count
+        FROM chat_group_messages cgm
+        INNER JOIN chat_group_members cm ON cgm.group_id = cm.group_id
+        WHERE cm.user_id = ${userId}
+        AND cgm.user_id != ${userId}
+        AND (cm.last_read_message_id IS NULL OR cgm.id > cm.last_read_message_id)
+      `);
+      
+      // Count unread direct messages
+      const directUnreadResult = await db.execute(sql`
+        SELECT COUNT(dm.id) as direct_unread_count
+        FROM direct_messages dm
+        INNER JOIN conversations c ON dm.conversation_id = c.id
+        WHERE (c.user1_id = ${userId} OR c.user2_id = ${userId})
+        AND dm.sender_id != ${userId}
+        AND dm.is_read = false
+      `);
+      
+      const groupUnreadCount = parseInt(groupUnreadResult.rows[0]?.group_unread_count || '0');
+      const directUnreadCount = parseInt(directUnreadResult.rows[0]?.direct_unread_count || '0');
+      const totalUnreadCount = groupUnreadCount + directUnreadCount;
+      
+      res.json(totalUnreadCount);
+    } catch (error) {
+      console.error("Error fetching unread chat count:", error);
+      res.status(500).json({ error: "Failed to fetch unread count" });
+    }
+  });
+
   // Chat Group Messages - Handled by chat-routes-simple.ts
 
   // Group messages endpoint moved to chat-routes-simple.ts
