@@ -542,6 +542,15 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Fetch current user
+  const { data: currentUser } = useQuery({
+    queryKey: ['/api/user'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/user');
+      return response.json();
+    }
+  });
+
   // Fetch messages for selected chat
   const { data: messages = [], isLoading: messagesLoading, refetch: refetchMessages } = useQuery({
     queryKey: selectedChat?.type === 'group' 
@@ -661,7 +670,8 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
             <MessageBubble
               key={message.id}
               message={message}
-              isOwn={false} // Will need to determine based on current user
+              isOwn={currentUser?.id === message.user_id}
+              currentUser={currentUser}
               onImageClick={setFullScreenImage}
             />
           ))
@@ -707,10 +717,11 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
 interface MessageBubbleProps {
   message: ChatMessage;
   isOwn: boolean;
+  currentUser?: any;
   onImageClick?: (imageUrl: string) => void;
 }
 
-const MessageBubble = ({ message, isOwn, onImageClick }: MessageBubbleProps) => {
+const MessageBubble = ({ message, isOwn, currentUser, onImageClick }: MessageBubbleProps) => {
   const formatMessageTime = (timestamp: string) => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString('en-US', { 
@@ -722,6 +733,18 @@ const MessageBubble = ({ message, isOwn, onImageClick }: MessageBubbleProps) => 
 
   return (
     <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-4`}>
+      {/* Profile Image for received messages */}
+      {!isOwn && (
+        <div className="flex-shrink-0 mr-3">
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={message.user?.profile_image_url} />
+            <AvatarFallback className="bg-gray-500 text-white text-xs">
+              {message.user?.name?.slice(0, 2).toUpperCase() || 'U'}
+            </AvatarFallback>
+          </Avatar>
+        </div>
+      )}
+      
       <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
         isOwn 
           ? 'bg-blue-600 text-white' 
