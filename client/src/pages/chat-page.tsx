@@ -335,57 +335,63 @@ const ChatPage = () => {
 
       {/* Chat List - Full Width */}
       <div className="flex-1 overflow-y-auto">
-        <div className="divide-y divide-gray-100">
+        <div className="space-y-0">
           {groupsLoading || conversationsLoading ? (
             <div className="flex justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
             </div>
           ) : (
             <>
-              {filteredGroups.map((group: ChatGroup) => (
-                <button
-                  key={group.id}
-                  onClick={() => setSelectedChat({ type: 'group', id: group.id })}
-                  className="w-full p-4 hover:bg-gray-50 transition-colors text-left"
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="relative">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage src={group.avatar_url} />
-                        <AvatarFallback className="bg-blue-500 text-white">
-                          {group.name.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      
-                      {/* Privacy Indicator */}
-                      {group.is_private ? (
-                        <Lock className="absolute -bottom-1 -right-1 h-3 w-3 text-gray-500" />
-                      ) : (
-                        <Globe className="absolute -bottom-1 -right-1 h-3 w-3 text-green-500" />
-                      )}
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-medium text-gray-900 truncate">{group.name}</h3>
-                        <span className="text-xs text-gray-500">
-                          {group.last_message_at ? formatLastMessageTime(group.last_message_at) : ''}
-                        </span>
+              {filteredGroups.map((group: ChatGroup, index: number) => (
+                <div key={group.id} className="relative">
+                  <button
+                    onClick={() => setSelectedChat({ type: 'group', id: group.id })}
+                    className="w-full p-4 hover:bg-gray-50 transition-colors text-left"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="relative">
+                        <Avatar className="h-12 w-12">
+                          <AvatarImage src={group.avatar_url} />
+                          <AvatarFallback className="bg-blue-500 text-white">
+                            {group.name.slice(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        
+                        {/* Privacy Indicator */}
+                        {group.is_private ? (
+                          <Lock className="absolute -bottom-1 -right-1 h-3 w-3 text-gray-500" />
+                        ) : (
+                          <Globe className="absolute -bottom-1 -right-1 h-3 w-3 text-green-500" />
+                        )}
                       </div>
                       
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm text-gray-500 truncate">
-                          {group.last_message || "No messages yet"}
-                        </p>
-                        <div className="flex items-center space-x-1">
-                          <Badge variant="secondary" className="text-xs">
-                            {group.member_ids?.length || 0}
-                          </Badge>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-medium text-gray-900 truncate">{group.name}</h3>
+                          <span className="text-xs text-gray-500">
+                            {group.last_message_at ? formatLastMessageTime(group.last_message_at) : ''}
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm text-gray-500 truncate">
+                            {group.last_message || "No messages yet"}
+                          </p>
+                          <div className="flex items-center space-x-1">
+                            <Badge variant="secondary" className="text-xs">
+                              {group.member_ids?.length || 0}
+                            </Badge>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </button>
+                  </button>
+                  
+                  {/* Thin gray divider that stops before the channel image */}
+                  {index < filteredGroups.length - 1 && (
+                    <div className="ml-16 mr-4 border-b border-gray-300/50" style={{ borderWidth: '0.5px' }} />
+                  )}
+                </div>
               ))}
             </>
           )}
@@ -1342,11 +1348,13 @@ const CreateGroupForm = ({ onCancel, onSubmit }: CreateGroupFormProps) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-white flex flex-col w-screen h-screen">
-      <div className="p-4 border-b border-gray-200">
+    <div className="fixed inset-0 flex flex-col w-screen h-screen" style={{
+      background: 'linear-gradient(135deg, #000000 0%, #1a1a2e 50%, #16213e 70%, #4a148c 90%, #7b1fa2 100%)'
+    }}>
+      <div className="p-4 border-b border-gray-600/30 bg-black/20 backdrop-blur-sm">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-gray-900">Create Group</h1>
-          <Button variant="ghost" size="sm" onClick={onCancel}>
+          <h1 className="text-xl font-semibold text-white">Create Group</h1>
+          <Button variant="ghost" size="sm" onClick={onCancel} className="text-white hover:bg-white/10">
             <ArrowLeft className="h-5 w-5" />
           </Button>
         </div>
@@ -1355,25 +1363,27 @@ const CreateGroupForm = ({ onCancel, onSubmit }: CreateGroupFormProps) => {
       <div className="flex-1 p-4">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-white mb-2">
               Group Name *
             </label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter group name"
+              className="bg-white/10 border-gray-600/30 text-white placeholder:text-gray-400 focus:bg-white/20"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-white mb-2">
               Description (optional)
             </label>
             <Input
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Enter group description"
+              className="bg-white/10 border-gray-600/30 text-white placeholder:text-gray-400 focus:bg-white/20"
             />
           </div>
 
@@ -1383,15 +1393,15 @@ const CreateGroupForm = ({ onCancel, onSubmit }: CreateGroupFormProps) => {
               id="isPrivate"
               checked={isPrivate}
               onChange={(e) => setIsPrivate(e.target.checked)}
-              className="rounded border-gray-300"
+              className="rounded border-gray-600 bg-white/10"
             />
-            <label htmlFor="isPrivate" className="text-sm text-gray-700">
+            <label htmlFor="isPrivate" className="text-sm text-white">
               Make this group private
             </label>
           </div>
 
           <div className="flex space-x-3 pt-4">
-            <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
+            <Button type="button" variant="outline" onClick={onCancel} className="flex-1 border-gray-600 text-white hover:bg-white/10">
               Cancel
             </Button>
             <Button type="submit" disabled={!name.trim()} className="flex-1 bg-blue-500 hover:bg-blue-600">
