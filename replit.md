@@ -108,6 +108,15 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
+- June 27, 2025: Fixed chat functionality and updated UI design
+  - Fixed reply functionality - resolved parameter name mismatch between client (`reply_to_id`) and server (`replyToId`)
+  - Chat system now fully functional with working reply feature
+  - Updated chat interface to use solid purple-gray background (`bg-purple-800`) for both main chat page and individual channels
+  - Replaced complex gradient backgrounds with clean, solid purple theme as requested
+  - Chat channel display properly fixed after resolving TypeScript errors
+  - Message editing continues to use native input method
+  - System messages display without speech bubbles and handle all message types properly
+
 - June 27, 2025: Fixed group settings functionality and cache invalidation issues
   - Resolved "Access Denied" flash error by fixing property name mismatch (adminIds vs admin_ids)
   - Enhanced server authorization logic to properly handle PostgreSQL admin_ids arrays
