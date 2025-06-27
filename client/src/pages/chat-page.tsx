@@ -141,6 +141,8 @@ const ChatPage = () => {
   const [selectedChat, setSelectedChat] = useState<{ type: 'group' | 'direct'; id: number } | null>(null);
   const [messageText, setMessageText] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null);
+  const [replyToMessage, setReplyToMessage] = useState<ChatMessage | null>(null);
 
   const [refreshKey, setRefreshKey] = useState(0);
   const [componentKey, setComponentKey] = useState(Date.now());
@@ -250,6 +252,27 @@ const ChatPage = () => {
     },
     onSuccess: () => {
       setMessageText("");
+      setReplyToMessage(null);
+      queryClient.invalidateQueries({
+        queryKey: selectedChat?.type === 'group' 
+          ? ['/api/chat/groups', selectedChat.id, 'messages']
+          : ['/api/chat/direct', selectedChat?.id, 'messages']
+      });
+    }
+  });
+
+  // Edit message mutation
+  const editMessageMutation = useMutation({
+    mutationFn: async (data: { messageId: number; text: string }) => {
+      if (!selectedChat) return;
+      const response = await apiRequest('PATCH', `/api/chat/groups/${selectedChat.id}/messages/${data.messageId}`, {
+        text: data.text
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      setMessageText("");
+      setEditingMessage(null);
       queryClient.invalidateQueries({
         queryKey: selectedChat?.type === 'group' 
           ? ['/api/chat/groups', selectedChat.id, 'messages']
@@ -261,7 +284,40 @@ const ChatPage = () => {
   const handleSendMessage = () => {
     if (!messageText.trim() || !selectedChat) return;
     
-    sendMessageMutation.mutate({ text: messageText.trim() });
+    if (editingMessage) {
+      // Edit existing message
+      editMessageMutation.mutate({ 
+        messageId: editingMessage.id, 
+        text: messageText.trim() 
+      });
+    } else {
+      // Send new message
+      const messageData = replyToMessage 
+        ? { text: messageText.trim(), reply_to_id: replyToMessage.id }
+        : { text: messageText.trim() };
+      
+      sendMessageMutation.mutate(messageData);
+    }
+  };
+
+  const handleEditMessage = (message: ChatMessage) => {
+    setEditingMessage(message);
+    setMessageText(message.text || '');
+    setReplyToMessage(null);
+  };
+
+  const handleReplyToMessage = (message: ChatMessage) => {
+    setReplyToMessage(message);
+    setEditingMessage(null);
+  };
+
+  const cancelEdit = () => {
+    setEditingMessage(null);
+    setMessageText("");
+  };
+
+  const cancelReply = () => {
+    setReplyToMessage(null);
   };
 
   const formatMessageTime = (timestamp: string) => {
@@ -697,14 +753,13 @@ interface MessageBubbleProps {
   currentUser?: any;
   onImageClick?: (imageUrl: string) => void;
   onReply?: (message: ChatMessage) => void;
+  onEdit?: (message: ChatMessage) => void;
 }
 
-const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply }: MessageBubbleProps) => {
+const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply, onEdit }: MessageBubbleProps) => {
   const [showMenu, setShowMenu] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editText, setEditText] = useState(message.text || '');
   const [lastTap, setLastTap] = useState(0);
   const [showReaction, setShowReaction] = useState(false);
   
@@ -757,20 +812,6 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply }: M
     setLastTap(now);
   };
 
-  // Edit message mutation
-  const editMessageMutation = useMutation({
-    mutationFn: async (newText: string) => {
-      const response = await apiRequest('PATCH', `/api/chat/groups/${message.group_id}/messages/${message.id}`, {
-        text: newText
-      });
-      return response.json();
-    },
-    onSuccess: () => {
-      setIsEditing(false);
-      queryClient.invalidateQueries({ queryKey: ['/api/chat/groups', message.group_id, 'messages'] });
-    }
-  });
-
   const handleLongPressStart = () => {
     const timer = setTimeout(() => {
       setShowMenu(true);
@@ -791,8 +832,7 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply }: M
     switch (action) {
       case 'edit':
         if (isOwn) {
-          setIsEditing(true);
-          setEditText(message.text || '');
+          onEdit?.(message);
         }
         break;
       case 'reply':
@@ -814,19 +854,6 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply }: M
   const handleEmojiSelect = (emoji: string) => {
     addReactionMutation.mutate(emoji);
     setShowEmojiPicker(false);
-  };
-
-  const handleSaveEdit = () => {
-    if (editText.trim() && editText !== message.text) {
-      editMessageMutation.mutate(editText.trim());
-    } else {
-      setIsEditing(false);
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setIsEditing(false);
-    setEditText(message.text || '');
   };
 
   // Early return for system messages - render as centered text without bubble
