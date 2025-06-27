@@ -1019,23 +1019,7 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply, onE
         )}
       </div>
 
-      {/* Profile Image for own messages */}
-      {isOwn && (
-        <div className="flex-shrink-0 ml-3">
-          <Avatar className="h-8 w-8">
-            {currentUser?.profile_image_url ? (
-              <AvatarImage 
-                src={currentUser.profile_image_url} 
-                alt={currentUser.name}
-                className="object-cover"
-              />
-            ) : null}
-            <AvatarFallback className="bg-gradient-to-br from-green-500 to-blue-500 text-white text-xs font-medium">
-              {currentUser?.name?.slice(0, 2).toUpperCase() || 'ME'}
-            </AvatarFallback>
-          </Avatar>
-        </div>
-      )}
+
 
       {/* Long Press Menu */}
       {showMenu && (
