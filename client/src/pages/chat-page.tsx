@@ -127,7 +127,7 @@ const ChatPage = () => {
   const [selectedChat, setSelectedChat] = useState<{ type: 'group' | 'direct'; id: number } | null>(null);
   const [messageText, setMessageText] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [showCreateGroup, setShowCreateGroup] = useState(false);
+
   const [refreshKey, setRefreshKey] = useState(0);
   const [componentKey, setComponentKey] = useState(Date.now());
   const [localGroups, setLocalGroups] = useState<ChatGroup[]>([]);
@@ -222,16 +222,7 @@ const ChatPage = () => {
   });
 
   // Create group mutation
-  const createGroupMutation = useMutation({
-    mutationFn: async (data: { name: string; description?: string; isPrivate?: boolean }) => {
-      const response = await apiRequest('POST', '/api/chat/groups', data);
-      return response.json();
-    },
-    onSuccess: () => {
-      setShowCreateGroup(false);
-      refetchGroups();
-    }
-  });
+  // Group creation is now handled on dedicated page
 
   // Send message mutation
   const sendMessageMutation = useMutation({
@@ -290,9 +281,7 @@ const ChatPage = () => {
     group.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (showCreateGroup) {
-    return <CreateGroupForm onCancel={() => setShowCreateGroup(false)} onSubmit={createGroupMutation.mutate} />;
-  }
+
 
   // Handle chat selection - keep components in memory
   const handleSelectChat = (chat: { type: 'group' | 'direct'; id: number }) => {
@@ -339,14 +328,15 @@ const ChatPage = () => {
               </div>
 
               {/* Create Group Button */}
-              <Button 
-                onClick={() => setShowCreateGroup(true)}
-                size="sm"
-                className="bg-purple-600 hover:bg-purple-700 text-white border-none"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                New Group
-              </Button>
+              <Link href="/create-group">
+                <Button 
+                  size="sm"
+                  className="bg-purple-600 hover:bg-purple-700 text-white border-none"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Group
+                </Button>
+              </Link>
             </div>
           </div>
 
