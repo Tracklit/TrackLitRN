@@ -530,7 +530,10 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
   const [messageText, setMessageText] = useState("");
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
+  const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null);
+  const [replyToMessage, setReplyToMessage] = useState<ChatMessage | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
 
   // Fetch current user
   const { data: currentUser } = useQuery({
@@ -580,22 +583,57 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     onSuccess: () => {
       setMessageText("");
       setReplyingTo(null);
+      setReplyToMessage(null);
       refetchMessages();
+    }
+  });
+
+  // Edit message mutation
+  const editMessageMutation = useMutation({
+    mutationFn: async (data: { messageId: number; text: string }) => {
+      if (!selectedChat) return;
+      const response = await apiRequest('PATCH', `/api/chat/groups/${selectedChat.id}/messages/${data.messageId}`, {
+        text: data.text
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      setMessageText("");
+      setEditingMessage(null);
+      queryClient.invalidateQueries({
+        queryKey: selectedChat?.type === 'group' 
+          ? ['/api/chat/groups', selectedChat.id, 'messages']
+          : ['/api/chat/direct', selectedChat?.id, 'messages']
+      });
     }
   });
 
   const handleSendMessage = () => {
     if (!messageText.trim() || !selectedChat) return;
     
-    const messageData: { text: string; replyToId?: number } = { 
-      text: messageText.trim() 
-    };
-    
-    if (replyingTo) {
-      messageData.replyToId = replyingTo.id;
+    if (editingMessage) {
+      // Edit existing message
+      editMessageMutation.mutate({ 
+        messageId: editingMessage.id, 
+        text: messageText.trim() 
+      });
+    } else {
+      // Send new message
+      const messageData = replyToMessage 
+        ? { text: messageText.trim(), replyToId: replyToMessage.id }
+        : { text: messageText.trim() };
+      
+      sendMessageMutation.mutate(messageData);
     }
-    
-    sendMessageMutation.mutate(messageData);
+  };
+
+  const cancelEdit = () => {
+    setEditingMessage(null);
+    setMessageText("");
+  };
+
+  const cancelReply = () => {
+    setReplyToMessage(null);
   };
 
   const handleReply = (message: ChatMessage) => {
@@ -715,7 +753,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
             </div>
           </div>
           <Button
-            onClick={editingMessage ? cancelEdit : cancelReply}
+            onClick={() => editingMessage ? cancelEdit() : cancelReply()}
             size="sm"
             variant="ghost"
             className="text-gray-400 hover:text-white flex-shrink-0 ml-2"
