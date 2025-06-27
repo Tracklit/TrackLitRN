@@ -271,7 +271,7 @@ export default function GroupSettingsPage() {
 
   // Filter athletes not already in group
   const availableAthletes = athletes.filter((athlete: any) => 
-    !groupMembers.some((member: any) => member.user_id === athlete.id) &&
+    !groupMembers.some((member: any) => member.userId === athlete.id) &&
     athlete.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
