@@ -116,13 +116,18 @@ export default function GroupSettingsPage() {
       // Aggressive cache clearing
       queryClient.clear();
       
+      // Trigger custom event before navigation
+      window.dispatchEvent(new CustomEvent('chatDataUpdated'));
+      
       toast({
         title: "Success",
         description: "Group updated successfully!",
       });
       
-      // Force a complete page refresh to ensure UI updates
-      window.location.href = '/chat';
+      // Small delay to ensure event processing
+      setTimeout(() => {
+        setLocation('/chat');
+      }, 100);
     },
     onError: (error) => {
       toast({

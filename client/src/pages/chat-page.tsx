@@ -166,6 +166,7 @@ const ChatPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [componentKey, setComponentKey] = useState(Date.now());
   const [localGroups, setLocalGroups] = useState<ChatGroup[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
@@ -199,7 +200,8 @@ const ChatPage = () => {
     };
 
     const handleChatDataUpdate = async () => {
-      console.log('Chat data update event received, forcing refresh...');
+      console.log('Chat data update event received, forcing complete component remount...');
+      setComponentKey(Date.now());
       setRefreshKey(prev => prev + 1);
       
       // Force fetch fresh data and update local state immediately
@@ -343,7 +345,7 @@ const ChatPage = () => {
   }
 
   return (
-    <div className="fixed inset-0 flex flex-col w-screen h-screen" style={{
+    <div key={`chat-page-${componentKey}`} className="fixed inset-0 flex flex-col w-screen h-screen" style={{
       background: 'linear-gradient(135deg, #000000 0%, #1a1a2e 50%, #16213e 70%, #4a148c 90%, #7b1fa2 100%)'
     }}>
       {/* Header */}
