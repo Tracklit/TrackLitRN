@@ -88,7 +88,7 @@ interface ChatMessage {
   edited_at?: string;
   is_deleted: boolean;
   reply_to_id?: number;
-  message_type: 'text' | 'image' | 'file';
+  message_type: 'text' | 'image' | 'file' | 'system';
   media_url?: string;
   reactions?: Array<{
     emoji: string;
@@ -708,6 +708,9 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply }: M
   const [lastTap, setLastTap] = useState(0);
   const [showReaction, setShowReaction] = useState(false);
   
+  // Check if this is a system message
+  const isSystemMessage = message.message_type === 'system';
+  
   const queryClient = useQueryClient();
   
   const formatMessageTime = (timestamp: string) => {
@@ -825,6 +828,20 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply }: M
     setIsEditing(false);
     setEditText(message.text || '');
   };
+
+  // Early return for system messages - render as centered text without bubble
+  if (isSystemMessage) {
+    return (
+      <div className="flex justify-center mb-4">
+        <div className="text-center text-gray-400 text-sm italic px-4 py-2">
+          {message.text}
+          <div className="text-xs text-gray-500 mt-1">
+            {formatMessageTime(message.created_at)}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-4 relative`}>

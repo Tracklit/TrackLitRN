@@ -917,6 +917,62 @@ router.post("/api/chat/groups/:groupId/messages/:messageId/reactions", async (re
 });
 
 // Message Reactions Routes (legacy)
+// Add group message reaction route
+router.post("/api/chat/groups/:groupId/messages/:messageId/reactions", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) return res.sendStatus(401);
+  
+  try {
+    const { groupId, messageId } = req.params;
+    const { emoji = "👍" } = req.body;
+    const userId = req.user!.id;
+    const messageType = "group";
+
+    if (!messageId || !groupId) {
+      return res.status(400).json({ error: "Missing messageId or groupId" });
+    }
+
+    // Check if user already reacted with this emoji
+    const existingReaction = await db
+      .select()
+      .from(messageReactions)
+      .where(
+        and(
+          eq(messageReactions.messageId, parseInt(messageId)),
+          eq(messageReactions.messageType, messageType),
+          eq(messageReactions.userId, userId),
+          eq(messageReactions.emoji, emoji)
+        )
+      )
+      .limit(1);
+
+    if (existingReaction.length > 0) {
+      // Remove existing reaction (toggle off)
+      await db
+        .delete(messageReactions)
+        .where(eq(messageReactions.id, existingReaction[0].id));
+      
+      return res.json({ action: "removed", messageId, emoji });
+    } else {
+      // Add new reaction
+      const [newReaction] = await db
+        .insert(messageReactions)
+        .values({
+          messageId: parseInt(messageId),
+          messageType,
+          userId,
+          emoji
+        })
+        .returning();
+
+      return res.json({ action: "added", reaction: newReaction });
+    }
+  } catch (error) {
+    console.error("Error toggling group message reaction:", error);
+    res.status(500).json({ error: "Failed to toggle reaction" });
+  }
+});
+
+// Keep the generic route for backwards compatibility
 router.post("/messages/:messageId/:messageType/reactions", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) return res.sendStatus(401);
   
