@@ -48,7 +48,7 @@ router.get("/api/chat/groups", async (req: Request, res: Response) => {
         cg.id,
         cg.name,
         cg.description,
-        cg.avatar_url,
+        cg.image,
         cg.creator_id,
         cg.is_private,
         cg.created_at,
