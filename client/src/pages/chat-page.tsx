@@ -168,7 +168,7 @@ const ChatPage = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [componentKey, setComponentKey] = useState(Date.now());
   const [localGroups, setLocalGroups] = useState<ChatGroup[]>([]);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+
   const queryClient = useQueryClient();
 
   // Fetch chat groups with cache-busting timestamp
@@ -944,10 +944,8 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [initialScrollDone, setInitialScrollDone] = useState(false);
   const queryClient = useQueryClient();
 
   // Image compression function
@@ -1082,34 +1080,28 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
     }
   }, [selectedChat.id, selectedChat.type, currentUser, queryClient]);
 
-  // Scroll to bottom only on initial chat entry or new messages for current user
+  // Scroll to bottom when entering chat or when new messages arrive
   useEffect(() => {
-    if (messagesContainerRef.current && messages.length > 0 && !hasScrolledToBottom) {
+    if (messagesContainerRef.current && messages.length > 0) {
       const scrollToBottom = () => {
         if (messagesContainerRef.current) {
           const container = messagesContainerRef.current;
-          container.scrollTop = container.scrollHeight + 100;
+          container.scrollTop = container.scrollHeight;
           setHasScrolledToBottom(true);
         }
       };
 
-      setTimeout(scrollToBottom, 50);
-    }
-  }, [messages, hasScrolledToBottom]);
-
-  // Auto-scroll for new messages from current user
-  useEffect(() => {
-    if (hasScrolledToBottom && messages.length > 0 && messagesContainerRef.current) {
-      const lastMessage = messages[messages.length - 1];
-      const currentUserId = currentUser?.id;
-      
-      // Only auto-scroll if the last message is from current user (they sent it)
-      if (lastMessage.user_id === currentUserId) {
-        setTimeout(() => {
-          if (messagesContainerRef.current) {
-            messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight + 100;
-          }
-        }, 50);
+      // Immediate scroll for initial load
+      if (!hasScrolledToBottom) {
+        setTimeout(scrollToBottom, 100);
+      } else {
+        // Auto-scroll for new messages from current user
+        const lastMessage = messages[messages.length - 1];
+        const currentUserId = currentUser?.id;
+        
+        if (lastMessage && lastMessage.user_id === currentUserId) {
+          setTimeout(scrollToBottom, 50);
+        }
       }
     }
   }, [messages, hasScrolledToBottom, currentUser?.id]);
