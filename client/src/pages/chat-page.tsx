@@ -529,9 +529,8 @@ const ChatPage = () => {
 const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group' | 'direct'; id: number }; onBack: () => void }) => {
   const [messageText, setMessageText] = useState("");
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
-  const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
-  const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null);
   const [replyToMessage, setReplyToMessage] = useState<ChatMessage | null>(null);
+  const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
@@ -582,7 +581,6 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     },
     onSuccess: () => {
       setMessageText("");
-      setReplyingTo(null);
       setReplyToMessage(null);
       refetchMessages();
     }
@@ -620,7 +618,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     } else {
       // Send new message
       const messageData = replyToMessage 
-        ? { text: messageText.trim(), replyToId: replyToMessage.id }
+        ? { text: messageText.trim(), reply_to_id: replyToMessage.id }
         : { text: messageText.trim() };
       
       sendMessageMutation.mutate(messageData);
@@ -636,17 +634,9 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     setReplyToMessage(null);
   };
 
-  const handleReply = (message: ChatMessage) => {
-    setReplyingTo(message);
-  };
-
-  const handleCancelReply = () => {
-    setReplyingTo(null);
-  };
-
-  // Define the missing handler functions
+  // Define the handler functions
   const handleReplyToMessage = (message: ChatMessage) => {
-    setReplyingTo(message);
+    setReplyToMessage(message);
   };
 
   const handleEditMessage = (message: ChatMessage) => {
