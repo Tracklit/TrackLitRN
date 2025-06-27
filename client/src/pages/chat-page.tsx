@@ -726,10 +726,14 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply }: M
       });
       return response.json();
     },
-    onSuccess: () => {
-      // Don't invalidate queries to prevent scroll jump
+    onSuccess: (data) => {
+      // Show animation briefly and then refetch to show persistent emoji
       setShowReaction(true);
-      setTimeout(() => setShowReaction(false), 2000);
+      setTimeout(() => {
+        setShowReaction(false);
+        // Refetch messages to show the persistent reaction without scroll jump
+        queryClient.invalidateQueries({ queryKey: ['/api/chat/groups', message.group_id, 'messages'] });
+      }, 1000);
     }
   });
 
@@ -912,7 +916,19 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply }: M
           )}
         </div>
 
-        {/* Future: Reaction Circles will be displayed here */}
+        {/* Persistent Reaction Circles - stick to bottom of bubble */}
+        {message.reactions && message.reactions.length > 0 && (
+          <div className="absolute -bottom-2 left-2 flex gap-1 z-10">
+            {message.reactions.map((reaction: any, index: number) => (
+              <div key={index} className="bg-white rounded-full shadow-lg border border-gray-300 p-1 min-w-[28px] min-h-[28px] flex items-center justify-center">
+                <span className="text-sm">{reaction.emoji}</span>
+                {reaction.count > 1 && (
+                  <span className="text-xs text-gray-600 ml-1">{reaction.count}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Reaction Animation */}
         {showReaction && (

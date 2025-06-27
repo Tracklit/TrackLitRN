@@ -682,7 +682,43 @@ router.get("/api/chat/groups/:groupId/messages", async (req: Request, res: Respo
       LIMIT ${limit} OFFSET ${offset}
     `);
 
-    // Transform messages to include user object structure and reply-to data
+    // Get reactions for all messages
+    const messageIds = messages.rows.map((msg: any) => msg.id);
+    let reactionsData: any[] = [];
+    
+    if (messageIds.length > 0) {
+      const reactionsResult = await db.execute(sql`
+        SELECT 
+          message_id,
+          emoji,
+          user_id,
+          created_at
+        FROM message_reactions 
+        WHERE message_id = ANY(${messageIds}) AND message_type = 'group'
+        ORDER BY created_at ASC
+      `);
+      reactionsData = reactionsResult.rows;
+    }
+
+    // Group reactions by message ID and emoji
+    const reactionsByMessage = reactionsData.reduce((acc: any, reaction: any) => {
+      const messageId = reaction.message_id;
+      if (!acc[messageId]) {
+        acc[messageId] = {};
+      }
+      if (!acc[messageId][reaction.emoji]) {
+        acc[messageId][reaction.emoji] = {
+          emoji: reaction.emoji,
+          count: 0,
+          users: []
+        };
+      }
+      acc[messageId][reaction.emoji].count++;
+      acc[messageId][reaction.emoji].users.push(reaction.user_id);
+      return acc;
+    }, {});
+
+    // Transform messages to include user object structure, reply-to data, and reactions
     const transformedMessages = messages.rows.map((msg: any) => ({
       id: msg.id,
       group_id: msg.group_id,
@@ -694,6 +730,7 @@ router.get("/api/chat/groups/:groupId/messages", async (req: Request, res: Respo
       reply_to_id: msg.reply_to_id,
       is_edited: msg.is_edited,
       edited_at: msg.edited_at,
+      reactions: reactionsByMessage[msg.id] ? Object.values(reactionsByMessage[msg.id]) : [],
       user: {
         id: msg.user_id,
         name: msg.name,
