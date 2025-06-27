@@ -61,7 +61,15 @@ router.get("/api/chat/groups", async (req: Request, res: Response) => {
       ORDER BY cg.last_message_at DESC
     `);
     
-    console.log('Groups returned from database:', groups.rows);
+    console.log('Groups returned from database:', JSON.stringify(groups.rows, null, 2));
+    
+    // Force no-cache headers
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+    
     res.json(groups.rows);
   } catch (error) {
     console.error("Error fetching chat groups:", error);
