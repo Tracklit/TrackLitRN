@@ -81,16 +81,17 @@ router.get("/api/chat/groups/debug", async (req: Request, res: Response) => {
   }
 });
 
-// Get chat groups for user
+// Get chat groups for user - FIXED VERSION
 router.get("/api/chat/groups", async (req: Request, res: Response) => {
-  console.log('=== CHAT GROUPS API CALLED ===');
+  console.log('=== CHAT GROUPS API CALLED - FIXED ===');
   
-  // Force no-cache headers at the start
+  // Completely disable caching
   res.set({
-    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
     'Pragma': 'no-cache',
     'Expires': '0',
-    'ETag': Date.now().toString() // Force unique response
+    'ETag': `"${Date.now()}-${Math.random()}"`,
+    'Last-Modified': new Date().toUTCString()
   });
   
   if (!req.isAuthenticated()) {
@@ -100,38 +101,54 @@ router.get("/api/chat/groups", async (req: Request, res: Response) => {
   
   try {
     const userId = req.user!.id;
-    console.log('User ID:', userId);
+    console.log('FIXED: Fetching groups for user ID:', userId);
     
-    // Direct SQL query to get groups
+    // Direct SQL query with explicit image column selection
     const groups = await db.execute(sql`
       SELECT 
         cg.id,
         cg.name,
         cg.description,
-        cg.image as avatar_url,
+        cg.image,
         cg.creator_id,
         cg.is_private,
-        cg.created_at,
+        cg.created_at::text,
         cg.last_message,
-        cg.last_message_at,
-        cg.message_count
+        cg.last_message_at::text,
+        COALESCE(cg.message_count, 0) as message_count
       FROM chat_groups cg
       INNER JOIN chat_group_members cgm ON cg.id = cgm.group_id
       WHERE cgm.user_id = ${userId}
-      ORDER BY cg.last_message_at DESC
+      ORDER BY cg.last_message_at DESC NULLS LAST
     `);
     
-    console.log('Raw groups from database:', groups.rows);
-    console.log('Number of groups found:', groups.rows.length);
+    console.log('FIXED: Raw database results count:', groups.rows.length);
+    console.log('FIXED: Raw database results:', JSON.stringify(groups.rows, null, 2));
     
-    // Log each group individually to see the exact structure
-    groups.rows.forEach((group, index) => {
-      console.log(`Group ${index + 1}:`, JSON.stringify(group, null, 2));
+    // Transform results with explicit avatar_url mapping
+    const processedGroups = groups.rows.map((group: any) => {
+      const result = {
+        id: group.id,
+        name: group.name,
+        description: group.description,
+        avatar_url: group.image, // Map image to avatar_url
+        creator_id: group.creator_id,
+        is_private: group.is_private,
+        created_at: group.created_at,
+        last_message: group.last_message,
+        last_message_at: group.last_message_at,
+        message_count: group.message_count
+      };
+      
+      console.log(`FIXED: Group ${group.id} - image: "${group.image}" -> avatar_url: "${result.avatar_url}"`);
+      return result;
     });
     
-    res.json(groups.rows);
+    console.log('FIXED: Final processed groups:', JSON.stringify(processedGroups, null, 2));
+    
+    res.json(processedGroups);
   } catch (error) {
-    console.error("Error fetching chat groups:", error);
+    console.error("FIXED: Error fetching chat groups:", error);
     res.status(500).json({ error: "Failed to fetch groups" });
   }
 });
