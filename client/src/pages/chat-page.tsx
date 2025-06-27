@@ -498,6 +498,20 @@ const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages, onIm
   const [editedText, setEditedText] = useState('');
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   const [startPosition, setStartPosition] = useState<{ x: number; y: number } | null>(null);
+  
+  // Check if this is a system message
+  const isSystemMessage = (message as any).message_type === 'system' || (message as any).user_id === null;
+  
+  // Render system messages with special styling
+  if (isSystemMessage) {
+    return (
+      <div className="flex justify-center my-4">
+        <div className="bg-gray-200 text-gray-600 px-3 py-1 rounded-full text-sm">
+          {(message as any).text || (message as any).content || ''}
+        </div>
+      </div>
+    );
+  }
   const [hasScrolled, setHasScrolled] = useState(false);
   const [menuPosition, setMenuPosition] = useState<'bottom' | 'top'>('bottom');
   const [lastTap, setLastTap] = useState<number>(0);
