@@ -297,6 +297,13 @@ router.patch("/api/chat/groups/:groupId", upload.single('image'), async (req: Re
 
 // Get group members with details
 router.get("/api/chat/groups/:groupId/members", async (req: Request, res: Response) => {
+  // Force no caching for debugging
+  res.set({
+    'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
+  
   if (!req.isAuthenticated()) return res.sendStatus(401);
   
   try {
