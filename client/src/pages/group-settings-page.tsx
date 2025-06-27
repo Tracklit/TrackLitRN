@@ -125,9 +125,9 @@ export default function GroupSettingsPage() {
         description: "Group updated successfully!",
       });
       
-      // Navigate back to chat after successful update with a small delay to ensure cache updates
+      // Navigate back to main chat page after successful update
       setTimeout(() => {
-        setLocation(`/chat/group/${groupId}`);
+        setLocation('/chat');
       }, 100);
     },
     onError: (error) => {
