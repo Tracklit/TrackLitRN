@@ -67,9 +67,9 @@ export default function GroupSettingsPage() {
 
   // Fetch group members with details
   const { data: groupMembers = [], isLoading: membersLoading } = useQuery({
-    queryKey: ['/api/chat/groups', groupId, 'members', Date.now()], // Force fresh data
+    queryKey: ['/api/chat/groups', groupId, 'members'],
     queryFn: async () => {
-      const response = await apiRequest('GET', `/api/chat/groups/${groupId}/members?t=${Date.now()}`);
+      const response = await apiRequest('GET', `/api/chat/groups/${groupId}/members`);
       const memberData = await response.json();
       console.log('GROUP SETTINGS: Received member data:', memberData);
       return memberData;
@@ -480,14 +480,14 @@ export default function GroupSettingsPage() {
                 <div key={member.user_id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
                   <div className="flex items-center space-x-3">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={member.profile_image_url} />
+                      <AvatarImage src={member.user?.profileImageUrl} />
                       <AvatarFallback className="bg-blue-500 text-white text-sm">
-                        {member.name?.charAt(0)?.toUpperCase() || 'U'}
+                        {member.user?.name?.charAt(0)?.toUpperCase() || 'U'}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="text-white font-medium">{member.name}</p>
-                      <p className="text-gray-400 text-sm">@{member.username}</p>
+                      <p className="text-white font-medium">{member.user?.name}</p>
+                      <p className="text-gray-400 text-sm">@{member.user?.username}</p>
                     </div>
                   </div>
                   
