@@ -931,40 +931,39 @@ router.post("/api/chat/groups/:groupId/messages/:messageId/reactions", async (re
       return res.status(400).json({ error: "Missing messageId or groupId" });
     }
 
-    // Check if user already reacted with this emoji
-    const existingReaction = await db
-      .select()
-      .from(messageReactions)
-      .where(
-        and(
-          eq(messageReactions.messageId, parseInt(messageId)),
-          eq(messageReactions.messageType, messageType),
-          eq(messageReactions.userId, userId),
-          eq(messageReactions.emoji, emoji)
-        )
-      )
-      .limit(1);
+    console.log(`Checking reaction: messageId=${messageId}, userId=${userId}, emoji=${emoji}`);
 
-    if (existingReaction.length > 0) {
+    // Check if user already reacted with this emoji using raw SQL
+    const existingReactionResult = await db.execute(sql`
+      SELECT id FROM message_reactions 
+      WHERE message_id = ${parseInt(messageId)} 
+      AND message_type = ${messageType} 
+      AND user_id = ${userId} 
+      AND emoji = ${emoji}
+      LIMIT 1
+    `);
+
+    console.log(`Found ${existingReactionResult.rows.length} existing reactions`);
+
+    if (existingReactionResult.rows.length > 0) {
       // Remove existing reaction (toggle off)
-      await db
-        .delete(messageReactions)
-        .where(eq(messageReactions.id, existingReaction[0].id));
+      const reactionId = existingReactionResult.rows[0].id;
+      await db.execute(sql`
+        DELETE FROM message_reactions WHERE id = ${reactionId}
+      `);
       
+      console.log(`Removed reaction with ID ${reactionId}`);
       return res.json({ action: "removed", messageId, emoji });
     } else {
       // Add new reaction
-      const [newReaction] = await db
-        .insert(messageReactions)
-        .values({
-          messageId: parseInt(messageId),
-          messageType,
-          userId,
-          emoji
-        })
-        .returning();
+      const newReactionResult = await db.execute(sql`
+        INSERT INTO message_reactions (message_id, message_type, user_id, emoji, created_at)
+        VALUES (${parseInt(messageId)}, ${messageType}, ${userId}, ${emoji}, NOW())
+        RETURNING *
+      `);
 
-      return res.json({ action: "added", reaction: newReaction });
+      console.log(`Added new reaction:`, newReactionResult.rows[0]);
+      return res.json({ action: "added", reaction: newReactionResult.rows[0] });
     }
   } catch (error) {
     console.error("Error toggling group message reaction:", error);
