@@ -683,26 +683,27 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
               isOwn={currentUser?.id === message.user_id}
               currentUser={currentUser}
               onImageClick={setFullScreenImage}
-              onReply={handleReply}
+              onReply={handleReplyToMessage}
+              onEdit={handleEditMessage}
             />
           ))
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Reply Preview */}
-      {replyingTo && (
+      {/* Edit/Reply Preview */}
+      {(editingMessage || replyToMessage) && (
         <div className="p-3 bg-gray-700/50 border-t border-gray-600/30 flex items-center justify-between">
           <div className="flex-1 min-w-0">
             <div className="text-xs text-gray-400 mb-1">
-              Replying to {replyingTo.user?.name || 'Unknown'}
+              {editingMessage ? 'Editing message' : `Replying to ${replyToMessage?.user?.name || 'Unknown'}`}
             </div>
             <div className="text-sm text-gray-300 truncate">
-              {replyingTo.text}
+              {editingMessage ? editingMessage.text : replyToMessage?.text}
             </div>
           </div>
           <Button
-            onClick={handleCancelReply}
+            onClick={editingMessage ? cancelEdit : cancelReply}
             size="sm"
             variant="ghost"
             className="text-gray-400 hover:text-white flex-shrink-0 ml-2"
@@ -718,7 +719,13 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
           <Input
             value={messageText}
             onChange={(e) => setMessageText(e.target.value)}
-            placeholder={replyingTo ? `Reply to ${replyingTo.user?.name}...` : "Type a message..."}
+            placeholder={
+              editingMessage 
+                ? "Edit message..." 
+                : replyToMessage 
+                  ? `Reply to ${replyToMessage.user?.name}...` 
+                  : "Type a message..."
+            }
             className="flex-1 bg-gray-800/50 border-gray-600/50 text-white placeholder-gray-400"
             onKeyPress={(e) => {
               if (e.key === 'Enter') {
@@ -728,10 +735,10 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
           />
           <Button 
             onClick={handleSendMessage}
-            disabled={!messageText.trim() || sendMessageMutation.isPending}
+            disabled={!messageText.trim() || sendMessageMutation.isPending || editMessageMutation.isPending}
             className="bg-blue-600 hover:bg-blue-700"
           >
-            <Send className="h-4 w-4" />
+            {editingMessage ? <Edit className="h-4 w-4" /> : <Send className="h-4 w-4" />}
           </Button>
         </div>
       </div>
@@ -932,35 +939,8 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply, onE
           </div>
         ) : null}
         
-        {/* Message content - editable if in edit mode */}
-        {isEditing ? (
-          <div className="space-y-2">
-            <textarea
-              value={editText}
-              onChange={(e) => setEditText(e.target.value)}
-              className="w-full p-2 text-sm border rounded resize-none bg-gray-50 text-black"
-              rows={2}
-              autoFocus
-            />
-            <div className="flex gap-2">
-              <button
-                onClick={handleSaveEdit}
-                disabled={editMessageMutation.isPending}
-                className="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 disabled:opacity-50"
-              >
-                {editMessageMutation.isPending ? 'Saving...' : 'Save'}
-              </button>
-              <button
-                onClick={handleCancelEdit}
-                className="px-2 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="text-sm">{message.text}</div>
-        )}
+        {/* Message content */}
+        <div className="text-sm">{message.text}</div>
         
         <div className={`text-xs mt-1 ${isOwn ? 'text-gray-500' : 'text-gray-400'}`}>
           {formatMessageTime(message.created_at)}
