@@ -666,21 +666,15 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
             <p className="text-sm">Start the conversation!</p>
           </div>
         ) : (
-          messages.map((message: ChatMessage) => {
-            // Debug logging for profile images
-            console.log('DEBUG: Message user data:', message.user);
-            console.log('DEBUG: Profile image URL:', message.user?.profile_image_url);
-            
-            return (
-              <MessageBubble
-                key={message.id}
-                message={message}
-                isOwn={currentUser?.id === message.user_id}
-                currentUser={currentUser}
-                onImageClick={setFullScreenImage}
-              />
-            );
-          })
+          messages.map((message: ChatMessage) => (
+            <MessageBubble
+              key={message.id}
+              message={message}
+              isOwn={currentUser?.id === message.user_id}
+              currentUser={currentUser}
+              onImageClick={setFullScreenImage}
+            />
+          ))
         )}
         <div ref={messagesEndRef} />
       </div>
@@ -766,8 +760,14 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick }: MessageBub
       {!isOwn && (
         <div className="flex-shrink-0 mr-3">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={message.user?.profile_image_url} />
-            <AvatarFallback className="bg-gray-500 text-white text-xs">
+            {message.user?.profile_image_url ? (
+              <AvatarImage 
+                src={message.user.profile_image_url} 
+                alt={message.user.name}
+                className="object-cover"
+              />
+            ) : null}
+            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white text-xs font-medium">
               {message.user?.name?.slice(0, 2).toUpperCase() || 'U'}
             </AvatarFallback>
           </Avatar>
