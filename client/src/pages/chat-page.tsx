@@ -701,6 +701,7 @@ interface MessageBubbleProps {
 
 const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply }: MessageBubbleProps) => {
   const [showMenu, setShowMenu] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(message.text || '');
@@ -718,11 +719,11 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply }: M
     });
   };
 
-  // Reaction mutation
+  // Generic reaction mutation that accepts any emoji
   const addReactionMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (emoji: string) => {
       const response = await apiRequest('POST', `/api/chat/groups/${message.group_id}/messages/${message.id}/reactions`, {
-        emoji: '👍'
+        emoji
       });
       return response.json();
     },
@@ -747,7 +748,7 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply }: M
     
     if (now - lastTap < DOUBLE_TAP_DELAY) {
       // Double tap detected - add thumbs up reaction
-      addReactionMutation.mutate();
+      addReactionMutation.mutate('👍');
       console.log(`Double tap reaction on message ${message.id}`);
     }
     setLastTap(now);
@@ -795,6 +796,9 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply }: M
         onReply?.(message);
         console.log(`Reply to message ${message.id}`);
         break;
+      case 'reactions':
+        setShowEmojiPicker(true);
+        break;
       case 'delete':
         // TODO: Implement delete functionality
         console.log(`Delete message ${message.id}`);
@@ -802,6 +806,11 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply }: M
       default:
         console.log(`Menu action: ${action} for message ${message.id}`);
     }
+  };
+
+  const handleEmojiSelect = (emoji: string) => {
+    addReactionMutation.mutate(emoji);
+    setShowEmojiPicker(false);
   };
 
   const handleSaveEdit = () => {
@@ -951,6 +960,12 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply }: M
           >
             Reply
           </button>
+          <button 
+            onClick={() => handleMenuAction('reactions')}
+            className="w-full px-4 py-2 text-left text-white hover:bg-gray-700 text-sm"
+          >
+            Reactions
+          </button>
           {isOwn && (
             <>
               <button 
@@ -970,6 +985,31 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply }: M
           <button 
             onClick={() => setShowMenu(false)}
             className="w-full px-4 py-2 text-left text-gray-400 hover:bg-gray-700 text-sm"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
+      {/* Emoji Picker */}
+      {showEmojiPicker && (
+        <div className="absolute top-0 right-0 bg-gray-800 rounded-lg shadow-lg z-50 p-3 min-w-[240px]">
+          <div className="text-white text-sm mb-2 font-medium">Add Reaction</div>
+          <div className="grid grid-cols-6 gap-2">
+            {['👍', '❤️', '😂', '😮', '😢', '😡', '🔥', '👏', '🎉', '💯', '👀', '🙏'].map(emoji => (
+              <button
+                key={emoji}
+                onClick={() => handleEmojiSelect(emoji)}
+                className="w-8 h-8 flex items-center justify-center text-lg hover:bg-gray-700 rounded transition-colors"
+                disabled={addReactionMutation.isPending}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+          <button 
+            onClick={() => setShowEmojiPicker(false)}
+            className="w-full mt-3 px-3 py-1 text-left text-gray-400 hover:bg-gray-700 text-sm rounded"
           >
             Cancel
           </button>
