@@ -376,14 +376,14 @@ const ChatPage = () => {
   };
 
   return (
-    <div className="fixed inset-0 w-full h-full overflow-hidden bg-purple-800">
+    <div className="fixed inset-0 w-full h-full overflow-hidden bg-blue-900">
       {/* Channel List View - Always mounted but conditionally visible */}
       <div 
-        className={`absolute inset-0 w-full h-full transition-transform duration-300 ease-in-out bg-purple-800 ${
+        className={`absolute inset-0 w-full h-full transition-transform duration-300 ease-in-out bg-blue-900 ${
           viewState === 'list' ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div key={`chat-page-${componentKey}`} className="flex flex-col w-full h-full bg-purple-800">
+        <div key={`chat-page-${componentKey}`} className="flex flex-col w-full h-full bg-blue-900">
           {/* Header */}
           <div className="p-4 border-b border-gray-600/30 flex-shrink-0 bg-black/20 backdrop-blur-sm">
             <div className="flex items-center gap-4">
@@ -664,7 +664,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
   };
 
   return (
-    <div className="flex flex-col w-full h-full bg-purple-800">
+    <div className="flex flex-col w-full h-full bg-blue-900">
       {/* Chat Header */}
       <div className="p-4 border-b border-gray-600/30 flex-shrink-0 bg-black/20 backdrop-blur-sm">
         <div className="flex items-center justify-between">
