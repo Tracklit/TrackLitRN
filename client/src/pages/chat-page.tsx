@@ -643,6 +643,12 @@ interface MessageBubbleProps {
 const MessageBubble = ({ message, isOwn, currentUser, onImageClick }: MessageBubbleProps) => {
   const [showMenu, setShowMenu] = useState(false);
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState(message.text || '');
+  const [lastTap, setLastTap] = useState(0);
+  const [showReaction, setShowReaction] = useState(false);
+  
+  const queryClient = useQueryClient();
   
   const formatMessageTime = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -652,6 +658,36 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick }: MessageBub
       hour12: false 
     });
   };
+
+  // Double tap handler for thumbs up
+  const handleDoubleTap = () => {
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 300;
+    
+    if (now - lastTap < DOUBLE_TAP_DELAY) {
+      // Double tap detected - add thumbs up reaction
+      setShowReaction(true);
+      setTimeout(() => setShowReaction(false), 1500);
+      
+      // TODO: Send reaction to server
+      console.log(`Double tap reaction on message ${message.id}`);
+    }
+    setLastTap(now);
+  };
+
+  // Edit message mutation
+  const editMessageMutation = useMutation({
+    mutationFn: async (newText: string) => {
+      const response = await apiRequest('PATCH', `/api/chat/groups/${message.group_id}/messages/${message.id}`, {
+        text: newText
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      setIsEditing(false);
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/groups', message.group_id, 'messages'] });
+    }
+  });
 
   const handleLongPressStart = () => {
     const timer = setTimeout(() => {
@@ -669,8 +705,38 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick }: MessageBub
 
   const handleMenuAction = (action: string) => {
     setShowMenu(false);
-    // TODO: Implement menu actions (reply, edit, delete, etc.)
-    console.log(`Menu action: ${action} for message ${message.id}`);
+    
+    switch (action) {
+      case 'edit':
+        if (isOwn) {
+          setIsEditing(true);
+          setEditText(message.text || '');
+        }
+        break;
+      case 'reply':
+        // TODO: Implement reply functionality
+        console.log(`Reply to message ${message.id}`);
+        break;
+      case 'delete':
+        // TODO: Implement delete functionality
+        console.log(`Delete message ${message.id}`);
+        break;
+      default:
+        console.log(`Menu action: ${action} for message ${message.id}`);
+    }
+  };
+
+  const handleSaveEdit = () => {
+    if (editText.trim() && editText !== message.text) {
+      editMessageMutation.mutate(editText.trim());
+    } else {
+      setIsEditing(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditText(message.text || '');
   };
 
   return (
@@ -694,7 +760,7 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick }: MessageBub
       )}
       
       <div 
-        className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+        className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg relative ${
           isOwn 
             ? 'bg-white text-black shadow-md' 
             : 'bg-gray-700 text-white'
@@ -704,6 +770,7 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick }: MessageBub
         onMouseLeave={handleLongPressEnd}
         onTouchStart={handleLongPressStart}
         onTouchEnd={handleLongPressEnd}
+        onClick={handleDoubleTap}
       >
         {!isOwn && message.user && (
           <div className="text-xs text-gray-300 mb-1 font-medium">
@@ -722,10 +789,55 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick }: MessageBub
           </div>
         ) : null}
         
-        <div className="text-sm">{message.text}</div>
+        {/* Message content - editable if in edit mode */}
+        {isEditing ? (
+          <div className="space-y-2">
+            <textarea
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              className="w-full p-2 text-sm border rounded resize-none bg-gray-50 text-black"
+              rows={2}
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={handleSaveEdit}
+                disabled={editMessageMutation.isPending}
+                className="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 disabled:opacity-50"
+              >
+                {editMessageMutation.isPending ? 'Saving...' : 'Save'}
+              </button>
+              <button
+                onClick={handleCancelEdit}
+                className="px-2 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="text-sm">{message.text}</div>
+        )}
+        
         <div className={`text-xs mt-1 ${isOwn ? 'text-gray-500' : 'text-gray-400'}`}>
           {formatMessageTime(message.created_at)}
+          {(message as any).edited_at && (
+            <span className="ml-1 italic">(edited)</span>
+          )}
         </div>
+
+        {/* Reaction Animation */}
+        {showReaction && (
+          <div className={`absolute pointer-events-none z-50 transition-all duration-1000 ${
+            isOwn ? '-bottom-2 -right-2' : '-bottom-2 -left-2'
+          }`}>
+            <div className="animate-bounce">
+              <div className="bg-white rounded-full shadow-lg border border-gray-300 p-2 min-w-[36px] min-h-[36px] flex items-center justify-center">
+                <span className="text-xl">👍</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Long Press Menu */}

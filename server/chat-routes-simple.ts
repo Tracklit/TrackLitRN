@@ -779,6 +779,49 @@ router.post("/api/chat/groups/:groupId/messages", upload.single('image'), async 
   }
 });
 
+// Edit group message
+router.patch("/api/chat/groups/:groupId/messages/:messageId", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) return res.sendStatus(401);
+  
+  try {
+    const groupId = parseInt(req.params.groupId);
+    const messageId = parseInt(req.params.messageId);
+    const userId = req.user!.id;
+    const { text } = req.body;
+
+    if (isNaN(groupId) || isNaN(messageId)) {
+      return res.status(400).json({ error: "Invalid group ID or message ID" });
+    }
+
+    if (!text || !text.trim()) {
+      return res.status(400).json({ error: "Message text is required" });
+    }
+
+    // Check if message exists and user owns it
+    const messageCheck = await db.execute(sql`
+      SELECT * FROM chat_group_messages 
+      WHERE id = ${messageId} AND group_id = ${groupId} AND sender_id = ${userId}
+    `);
+
+    if (messageCheck.rows.length === 0) {
+      return res.status(404).json({ error: "Message not found or unauthorized" });
+    }
+
+    // Update the message
+    const updateResult = await db.execute(sql`
+      UPDATE chat_group_messages 
+      SET text = ${text.trim()}, edited_at = NOW()
+      WHERE id = ${messageId}
+      RETURNING *
+    `);
+
+    res.json(updateResult.rows[0]);
+  } catch (error) {
+    console.error("Error editing group message:", error);
+    res.status(500).json({ error: "Failed to edit message" });
+  }
+});
+
 // Message Reactions Routes
 router.post("/messages/:messageId/:messageType/reactions", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) return res.sendStatus(401);
