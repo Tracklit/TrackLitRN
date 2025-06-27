@@ -170,6 +170,7 @@ const ChatPage = () => {
   const [localGroups, setLocalGroups] = useState<ChatGroup[]>([]);
   const [isAnimating, setIsAnimating] = useState(false);
   const [animationDirection, setAnimationDirection] = useState<'enter' | 'exit'>('enter');
+  const [viewState, setViewState] = useState<'list' | 'chat'>('list'); // Track which view to show
 
   const queryClient = useQueryClient();
 
@@ -345,45 +346,41 @@ const ChatPage = () => {
     return <CreateGroupForm onCancel={() => setShowCreateGroup(false)} onSubmit={createGroupMutation.mutate} />;
   }
 
-  // Handle chat selection with animation
+  // Handle chat selection with animation - keep components in memory
   const handleSelectChat = (chat: { type: 'group' | 'direct'; id: number }) => {
     setIsAnimating(true);
     setAnimationDirection('enter');
     setSelectedChat(chat);
+    setViewState('chat'); // Switch to chat view without unmounting
     
     // Reset animation after transition
     setTimeout(() => {
       setIsAnimating(false);
     }, 300);
-  };
+  }
 
-  // Handle back navigation with animation
-  const handleBackFromChat = () => {
+  // Handle back to channel list - keep components in memory
+  const handleBackToList = () => {
     setIsAnimating(true);
     setAnimationDirection('exit');
+    setViewState('list'); // Switch to list view without unmounting
     
+    // Reset animation after transition
     setTimeout(() => {
-      setSelectedChat(null);
       setIsAnimating(false);
+      setSelectedChat(null); // Clear selection after animation
     }, 300);
   };
 
-  // Show chat interface if a chat is selected
-  if (selectedChat) {
-    return (
-      <div className={`fixed inset-0 w-full h-full ${
-        isAnimating && animationDirection === 'exit'
-          ? 'animate-slide-out-right'
-          : isAnimating && animationDirection === 'enter'
-          ? 'animate-slide-in-right'
-          : ''
-      }`}>
-        <ChatInterface selectedChat={selectedChat} onBack={handleBackFromChat} />
-      </div>
-    );
-  }
-
   return (
+    <div className="fixed inset-0 w-full h-full overflow-hidden">
+      {/* Channel List View - Always mounted but conditionally visible */}
+      <div 
+        className={`absolute inset-0 w-full h-full transition-transform duration-300 ease-in-out ${
+          viewState === 'list' ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        {/* Channel List Content */}
     <div key={`chat-page-${componentKey}`} className="fixed inset-0 flex flex-col w-screen h-screen" style={{
       background: 'linear-gradient(135deg, #000000 0%, #1a1a2e 50%, #16213e 70%, #4a148c 90%, #7b1fa2 100%)'
     }}>
@@ -497,7 +494,8 @@ const ChatPage = () => {
         </div>
       </div>
     </div>
-  );
+    );
+  }
 };
 
 // Message Bubble Component
