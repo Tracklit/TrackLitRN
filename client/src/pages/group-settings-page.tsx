@@ -100,10 +100,12 @@ export default function GroupSettingsPage() {
       const response = await fetch(`/api/chat/groups/${groupId}`, {
         method: 'PATCH',
         body: formData,
+        credentials: 'include',  // Include session cookies for authentication
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update group');
+        const errorText = await response.text();
+        throw new Error(`Failed to update group: ${response.status} ${errorText}`);
       }
 
       return response.json();
@@ -260,6 +262,19 @@ export default function GroupSettingsPage() {
   const isAdmin = currentUser && group && 
     (group.creatorId === currentUser.id || 
      (Array.isArray(group.adminIds) && group.adminIds.includes(currentUser.id)));
+
+  // Show loading while data is being fetched
+  if (groupLoading || !currentUser || !group) {
+    return (
+      <div className="fixed inset-0 flex flex-col w-screen h-screen" style={{
+        background: 'linear-gradient(135deg, #000000 0%, #1a1a2e 50%, #16213e 70%, #4a148c 90%, #7b1fa2 100%)'
+      }}>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAdmin) {
     return (
