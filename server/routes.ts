@@ -2897,14 +2897,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user!.id;
       
-      // Count unread messages in chat groups where user is a member (last 24 hours)
+      // Count unread messages in chat groups where user is a member
+      // Messages are unread if they were sent after the user's last_seen_at time for that group
       const groupUnreadResult = await db.execute(sql`
         SELECT CAST(COUNT(cgm.id) AS INTEGER) as group_unread_count
         FROM chat_group_messages cgm
         INNER JOIN chat_group_members cm ON cgm.group_id = cm.group_id
         WHERE cm.user_id = ${userId}
         AND cgm.sender_id != ${userId}
-        AND cgm.created_at > NOW() - INTERVAL '24 hours'
+        AND cgm.created_at > COALESCE(cm.last_seen_at, cm.joined_at, NOW() - INTERVAL '24 hours')
       `);
       
       // Count unread direct messages
@@ -2924,6 +2925,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching unread chat count:", error);
       res.status(500).json({ error: "Failed to fetch unread count" });
+    }
+  });
+
+  // Mark group messages as read when entering a group
+  app.post("/api/chat/groups/:groupId/mark-read", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const groupId = parseInt(req.params.groupId);
+      const userId = req.user!.id;
+
+      if (isNaN(groupId)) {
+        return res.status(400).json({ error: "Invalid group ID" });
+      }
+
+      // Verify user is a member of the group
+      const membershipResult = await db.execute(sql`
+        SELECT id FROM chat_group_members 
+        WHERE group_id = ${groupId} AND user_id = ${userId}
+      `);
+
+      if (membershipResult.rows.length === 0) {
+        return res.status(403).json({ error: "Not a member of this group" });
+      }
+
+      // Update the user's last seen time for this group
+      await db.execute(sql`
+        UPDATE chat_group_members 
+        SET last_seen_at = NOW()
+        WHERE group_id = ${groupId} AND user_id = ${userId}
+      `);
+      
+      res.json({ message: "Group messages marked as read" });
+    } catch (error) {
+      console.error("Error marking group messages as read:", error);
+      res.status(500).json({ error: "Failed to mark messages as read" });
+    }
+  });
+
+  // Mark direct messages as read when entering a conversation
+  app.post("/api/chat/direct/:conversationId/mark-read", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const conversationId = parseInt(req.params.conversationId);
+      const userId = req.user!.id;
+
+      if (isNaN(conversationId)) {
+        return res.status(400).json({ error: "Invalid conversation ID" });
+      }
+
+      // Mark all unread messages in this conversation as read for this user
+      await db.execute(sql`
+        UPDATE direct_messages 
+        SET is_read = true, read_at = NOW()
+        WHERE conversation_id = ${conversationId} 
+        AND receiver_id = ${userId}
+        AND is_read = false
+      `);
+
+      res.json({ message: "Direct messages marked as read" });
+    } catch (error) {
+      console.error("Error marking direct messages as read:", error);
+      res.status(500).json({ error: "Failed to mark messages as read" });
     }
   });
 

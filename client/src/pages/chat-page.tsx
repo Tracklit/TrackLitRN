@@ -953,6 +953,28 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
     setHasScrolledToBottom(false);
   }, [selectedChat.id]);
 
+  // Mark messages as read when entering a chat channel
+  useEffect(() => {
+    if (selectedChat && currentUser) {
+      const markAsRead = async () => {
+        try {
+          const endpoint = selectedChat.type === 'group'
+            ? `/api/chat/groups/${selectedChat.id}/mark-read`
+            : `/api/chat/direct/${selectedChat.id}/mark-read`;
+          
+          await apiRequest('POST', endpoint);
+          
+          // Invalidate unread count to update the chat button badge
+          queryClient.invalidateQueries({ queryKey: ['unread-chat-count'] });
+        } catch (error) {
+          console.error('Failed to mark messages as read:', error);
+        }
+      };
+
+      markAsRead();
+    }
+  }, [selectedChat.id, selectedChat.type, currentUser, queryClient]);
+
   // Scroll to bottom only on initial chat entry or new messages for current user
   useEffect(() => {
     if (messagesContainerRef.current && messages.length > 0 && !hasScrolledToBottom) {
