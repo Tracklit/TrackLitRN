@@ -2717,7 +2717,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create group with direct SQL
       const groupResult = await db.execute(sql`
         INSERT INTO chat_groups (name, description, creator_id, admin_ids, member_ids, is_private, invite_code)
-        VALUES (${name.trim()}, ${description || ''}, ${userId}, ARRAY[${userId}], ARRAY[${userId}], ${isPrivate || false}, ${inviteCode})
+        VALUES (${name.trim()}, ${description || ''}, ${userId}, ARRAY[${userId}]::integer[], ARRAY[${userId}]::integer[], ${isPrivate || false}, ${inviteCode})
         RETURNING *
       `);
 
