@@ -444,7 +444,7 @@ const ChatPage = () => {
                     <div key={`group-${group.id}-${index}`} className="relative">
                       <button
                         onClick={() => handleSelectChat({ type: 'group', id: group.id })}
-                        className="w-full p-4 hover:bg-gray-50 transition-colors text-left"
+                        className="w-full p-4 text-left"
                       >
                         <div className="flex items-center space-x-3">
                           <div className="relative">
