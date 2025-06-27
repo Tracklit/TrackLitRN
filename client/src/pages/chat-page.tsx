@@ -914,7 +914,7 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply, onE
   }
 
   return (
-    <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-4 relative`}>
+    <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-4 relative items-end`}>
       {/* Profile Image for received messages */}
       {!isOwn && (
         <div className="flex-shrink-0 mr-3">
@@ -946,13 +946,13 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply, onE
         onTouchEnd={handleLongPressEnd}
         onClick={handleDoubleTap}
       >
-        {/* Speech bubble tail pointing to profile image */}
+        {/* Speech bubble tail pointing to profile image at bottom */}
         {isOwn ? (
-          // Tail pointing right (to own profile image on the right)
-          <div className="absolute top-3 -right-2 w-0 h-0 border-l-8 border-l-white border-t-4 border-t-transparent border-b-4 border-b-transparent"></div>
+          // Tail pointing right (to own profile image on the right) at bottom
+          <div className="absolute bottom-2 -right-2 w-0 h-0 border-l-8 border-l-white border-t-4 border-t-transparent border-b-4 border-b-transparent"></div>
         ) : (
-          // Tail pointing left (to other user's profile image on the left)
-          <div className="absolute top-3 -left-2 w-0 h-0 border-r-8 border-r-gray-700 border-t-4 border-t-transparent border-b-4 border-b-transparent"></div>
+          // Tail pointing left (to other user's profile image on the left) at bottom  
+          <div className="absolute bottom-2 -left-2 w-0 h-0 border-r-8 border-r-gray-700 border-t-4 border-t-transparent border-b-4 border-b-transparent"></div>
         )}
         {!isOwn && message.user && (
           <div className="text-xs text-gray-300 mb-1 font-medium">
@@ -1018,6 +1018,24 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply, onE
           </div>
         )}
       </div>
+
+      {/* Profile Image for own messages */}
+      {isOwn && (
+        <div className="flex-shrink-0 ml-3">
+          <Avatar className="h-8 w-8">
+            {currentUser?.profile_image_url ? (
+              <AvatarImage 
+                src={currentUser.profile_image_url} 
+                alt={currentUser.name}
+                className="object-cover"
+              />
+            ) : null}
+            <AvatarFallback className="bg-gradient-to-br from-green-500 to-blue-500 text-white text-xs font-medium">
+              {currentUser?.name?.slice(0, 2).toUpperCase() || 'ME'}
+            </AvatarFallback>
+          </Avatar>
+        </div>
+      )}
 
       {/* Long Press Menu */}
       {showMenu && (
