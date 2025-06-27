@@ -3252,6 +3252,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Message Reactions Routes
+  // Specific group message reaction route (must be before generic route)
+  app.post("/api/chat/groups/:groupId/messages/:messageId/reactions", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const { groupId, messageId } = req.params;
+      const { emoji = "👍" } = req.body;
+      const userId = req.user!.id;
+      const messageType = "group";
+
+      if (!messageId || !groupId) {
+        return res.status(400).json({ error: "Missing messageId or groupId" });
+      }
+
+      console.log(`[GROUP REACTION] Checking reaction: messageId=${messageId}, userId=${userId}, emoji=${emoji}`);
+
+      // Check if user already reacted with this emoji using raw SQL
+      const existingReactionResult = await db.execute(sql`
+        SELECT id FROM message_reactions 
+        WHERE message_id = ${parseInt(messageId)} 
+        AND message_type = ${messageType} 
+        AND user_id = ${userId} 
+        AND emoji = ${emoji}
+        LIMIT 1
+      `);
+
+      console.log(`[GROUP REACTION] Found ${existingReactionResult.rows.length} existing reactions`);
+
+      if (existingReactionResult.rows.length > 0) {
+        // Remove existing reaction (toggle off)
+        const reactionId = existingReactionResult.rows[0].id;
+        await db.execute(sql`
+          DELETE FROM message_reactions WHERE id = ${reactionId}
+        `);
+        
+        console.log(`[GROUP REACTION] Removed reaction with ID ${reactionId}`);
+        return res.json({ action: "removed", messageId, emoji });
+      } else {
+        // Add new reaction
+        const newReactionResult = await db.execute(sql`
+          INSERT INTO message_reactions (message_id, message_type, user_id, emoji, created_at)
+          VALUES (${parseInt(messageId)}, ${messageType}, ${userId}, ${emoji}, NOW())
+          RETURNING *
+        `);
+
+        console.log(`[GROUP REACTION] Added new reaction:`, newReactionResult.rows[0]);
+        return res.json({ action: "added", reaction: newReactionResult.rows[0] });
+      }
+    } catch (error) {
+      console.error("Error toggling group message reaction:", error);
+      res.status(500).json({ error: "Failed to toggle reaction" });
+    }
+  });
+
+  // Generic message reaction route
   app.post("/api/chat/messages/:messageId/:messageType/reactions", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
