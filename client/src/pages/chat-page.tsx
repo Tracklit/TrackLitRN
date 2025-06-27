@@ -710,21 +710,22 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply }: M
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/chat/groups', message.group_id, 'messages'] });
+      // Don't invalidate queries to prevent scroll jump
+      setShowReaction(true);
+      setTimeout(() => setShowReaction(false), 2000);
     }
   });
 
   // Double tap handler for thumbs up
-  const handleDoubleTap = () => {
+  const handleDoubleTap = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     const now = Date.now();
     const DOUBLE_TAP_DELAY = 300;
     
     if (now - lastTap < DOUBLE_TAP_DELAY) {
       // Double tap detected - add thumbs up reaction
-      setShowReaction(true);
-      setTimeout(() => setShowReaction(false), 1500);
-      
-      // Send reaction to server
       addReactionMutation.mutate();
       console.log(`Double tap reaction on message ${message.id}`);
     }
@@ -882,14 +883,26 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply }: M
           )}
         </div>
 
+        {/* Reaction Circles - stick to bottom of bubble */}
+        {message.reactions && message.reactions.length > 0 && (
+          <div className="absolute -bottom-2 left-2 flex gap-1 z-10">
+            {message.reactions.map((reaction: any, index: number) => (
+              <div key={index} className="bg-white rounded-full shadow-lg border border-gray-300 p-1 min-w-[28px] min-h-[28px] flex items-center justify-center">
+                <span className="text-sm">{reaction.emoji}</span>
+                {reaction.count > 1 && (
+                  <span className="text-xs text-gray-600 ml-1">{reaction.count}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Reaction Animation */}
         {showReaction && (
-          <div className={`absolute pointer-events-none z-50 transition-all duration-1000 ${
-            isOwn ? '-bottom-2 -right-2' : '-bottom-2 -left-2'
-          }`}>
+          <div className="absolute -bottom-2 left-2 pointer-events-none z-20 transition-all duration-1000">
             <div className="animate-bounce">
-              <div className="bg-white rounded-full shadow-lg border border-gray-300 p-2 min-w-[36px] min-h-[36px] flex items-center justify-center">
-                <span className="text-xl">👍</span>
+              <div className="bg-white rounded-full shadow-lg border border-gray-300 p-1 min-w-[28px] min-h-[28px] flex items-center justify-center">
+                <span className="text-sm">👍</span>
               </div>
             </div>
           </div>

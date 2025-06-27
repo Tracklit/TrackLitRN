@@ -652,7 +652,7 @@ router.get("/api/chat/groups/:groupId/messages", async (req: Request, res: Respo
       return res.status(403).json({ error: "Access denied" });
     }
 
-    // Get messages with sender info - ORDER BY ASC for chronological order (oldest first)
+    // Get messages with sender info and reply-to message data - ORDER BY ASC for chronological order (oldest first)
     const messages = await db.execute(sql`
       SELECT 
         cgm.id,
@@ -667,15 +667,22 @@ router.get("/api/chat/groups/:groupId/messages", async (req: Request, res: Respo
         cgm.edited_at,
         u.name,
         u.username,
-        u.profile_image_url
+        u.profile_image_url,
+        -- Reply-to message data
+        reply_msg.text as reply_to_text,
+        reply_msg.message_type as reply_to_message_type,
+        reply_user.name as reply_to_user_name,
+        reply_user.id as reply_to_user_id
       FROM chat_group_messages cgm
       INNER JOIN users u ON cgm.sender_id = u.id
+      LEFT JOIN chat_group_messages reply_msg ON cgm.reply_to_id = reply_msg.id
+      LEFT JOIN users reply_user ON reply_msg.sender_id = reply_user.id
       WHERE cgm.group_id = ${groupId}
       ORDER BY cgm.created_at ASC
       LIMIT ${limit} OFFSET ${offset}
     `);
 
-    // Transform messages to include user object structure
+    // Transform messages to include user object structure and reply-to data
     const transformedMessages = messages.rows.map((msg: any) => ({
       id: msg.id,
       group_id: msg.group_id,
@@ -692,7 +699,16 @@ router.get("/api/chat/groups/:groupId/messages", async (req: Request, res: Respo
         name: msg.name,
         username: msg.username,
         profile_image_url: msg.profile_image_url
-      }
+      },
+      reply_to_message: msg.reply_to_id ? {
+        id: msg.reply_to_id,
+        text: msg.reply_to_text,
+        message_type: msg.reply_to_message_type,
+        user: {
+          id: msg.reply_to_user_id,
+          name: msg.reply_to_user_name
+        }
+      } : null
     }));
 
     res.json(transformedMessages);
