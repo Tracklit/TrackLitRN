@@ -1043,13 +1043,16 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
     return timeA - timeB;
   });
 
-  // Track if we've scrolled to bottom for this chat already
-  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
-
-  // Reset scroll flag when changing chats
-  useEffect(() => {
-    setHasScrolledToBottom(false);
-  }, [selectedChat.id]);
+  // Force scroll to bottom function - always scrolls to absolute bottom
+  const scrollToBottom = () => {
+    if (messagesContainerRef.current) {
+      const container = messagesContainerRef.current;
+      // Use requestAnimationFrame for smoother scrolling
+      requestAnimationFrame(() => {
+        container.scrollTop = container.scrollHeight;
+      });
+    }
+  };
 
   // Mark messages as read when entering a chat channel
   useEffect(() => {
@@ -1073,31 +1076,15 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
     }
   }, [selectedChat.id, selectedChat.type, currentUser, queryClient]);
 
-  // Scroll to bottom when entering chat or when new messages arrive
+  // Always scroll to bottom when messages change or chat changes
   useEffect(() => {
-    if (messagesContainerRef.current && messages.length > 0) {
-      const scrollToBottom = () => {
-        if (messagesContainerRef.current) {
-          const container = messagesContainerRef.current;
-          container.scrollTop = container.scrollHeight;
-          setHasScrolledToBottom(true);
-        }
-      };
-
-      // Immediate scroll for initial load
-      if (!hasScrolledToBottom) {
-        setTimeout(scrollToBottom, 100);
-      } else {
-        // Auto-scroll for new messages from current user
-        const lastMessage = messages[messages.length - 1];
-        const currentUserId = currentUser?.id;
-        
-        if (lastMessage && lastMessage.user_id === currentUserId) {
-          setTimeout(scrollToBottom, 50);
-        }
-      }
+    if (messages.length > 0) {
+      // Use multiple scroll attempts to ensure it reaches bottom
+      setTimeout(scrollToBottom, 50);
+      setTimeout(scrollToBottom, 150);
+      setTimeout(scrollToBottom, 300);
     }
-  }, [messages, hasScrolledToBottom, currentUser?.id]);
+  }, [messages, selectedChat.id]);
 
   // Send message mutation with optimistic updates
   const sendMessageMutation = useMutation({
