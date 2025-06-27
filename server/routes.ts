@@ -2911,8 +2911,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const directUnreadResult = await db.execute(sql`
         SELECT CAST(COUNT(dm.id) AS INTEGER) as direct_unread_count
         FROM direct_messages dm
-        INNER JOIN conversations c ON dm.conversation_id = c.id
-        WHERE (c.user1_id = ${userId} OR c.user2_id = ${userId})
+        WHERE dm.receiver_id = ${userId}
         AND dm.sender_id != ${userId}
         AND dm.is_read = false
       `);
