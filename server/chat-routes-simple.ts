@@ -111,6 +111,257 @@ router.post("/api/chat/groups", upload.single('image'), async (req: Request, res
   }
 });
 
+// Get specific group details
+router.get("/api/chat/groups/:groupId", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) return res.sendStatus(401);
+  
+  try {
+    const groupId = parseInt(req.params.groupId);
+    const userId = req.user!.id;
+
+    if (isNaN(groupId)) {
+      return res.status(400).json({ error: "Invalid group ID" });
+    }
+
+    // Get group details
+    const groupResult = await db.execute(sql`
+      SELECT * FROM chat_groups WHERE id = ${groupId}
+    `);
+
+    if (groupResult.rows.length === 0) {
+      return res.status(404).json({ error: "Group not found" });
+    }
+
+    const group = groupResult.rows[0];
+
+    // Check if user is a member
+    if (!(group as any).member_ids.includes(userId)) {
+      return res.status(403).json({ error: "Not a member of this group" });
+    }
+
+    res.json(group);
+  } catch (error) {
+    console.error("Error fetching group details:", error);
+    res.status(500).json({ error: "Failed to fetch group" });
+  }
+});
+
+// Update group details
+router.patch("/api/chat/groups/:groupId", upload.single('image'), async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) return res.sendStatus(401);
+  
+  try {
+    const groupId = parseInt(req.params.groupId);
+    const userId = req.user!.id;
+    const { name, description, isPrivate } = req.body;
+
+    if (isNaN(groupId)) {
+      return res.status(400).json({ error: "Invalid group ID" });
+    }
+
+    // Check if user is admin or creator
+    const groupResult = await db.execute(sql`
+      SELECT * FROM chat_groups WHERE id = ${groupId}
+    `);
+
+    if (groupResult.rows.length === 0) {
+      return res.status(404).json({ error: "Group not found" });
+    }
+
+    const group = groupResult.rows[0];
+    const isAdmin = group.creator_id === userId || (group as any).admin_ids.includes(userId);
+
+    if (!isAdmin) {
+      return res.status(403).json({ error: "Only admins can update group details" });
+    }
+
+    // Handle image upload
+    let imageUrl = group.image;
+    if (req.file) {
+      imageUrl = `/uploads/${req.file.filename}`;
+    }
+
+    // Update group
+    const updateResult = await db.execute(sql`
+      UPDATE chat_groups 
+      SET name = ${name || group.name}, 
+          description = ${description || group.description}, 
+          image = ${imageUrl},
+          is_private = ${isPrivate === 'true' ? true : (isPrivate === 'false' ? false : group.is_private)}
+      WHERE id = ${groupId}
+      RETURNING *
+    `);
+
+    res.json(updateResult.rows[0]);
+  } catch (error) {
+    console.error("Error updating group:", error);
+    res.status(500).json({ error: "Failed to update group" });
+  }
+});
+
+// Get group members with details
+router.get("/api/chat/groups/:groupId/members", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) return res.sendStatus(401);
+  
+  try {
+    const groupId = parseInt(req.params.groupId);
+    const userId = req.user!.id;
+
+    if (isNaN(groupId)) {
+      return res.status(400).json({ error: "Invalid group ID" });
+    }
+
+    // Check if user is a member
+    const groupResult = await db.execute(sql`
+      SELECT member_ids FROM chat_groups WHERE id = ${groupId}
+    `);
+
+    if (groupResult.rows.length === 0) {
+      return res.status(404).json({ error: "Group not found" });
+    }
+
+    const group = groupResult.rows[0];
+    if (!(group as any).member_ids.includes(userId)) {
+      return res.status(403).json({ error: "Not a member of this group" });
+    }
+
+    // Get member details
+    const membersResult = await db.execute(sql`
+      SELECT 
+        cgm.user_id,
+        cgm.role,
+        cgm.joined_at,
+        u.name,
+        u.username,
+        u.profile_image_url
+      FROM chat_group_members cgm
+      INNER JOIN users u ON cgm.user_id = u.id
+      WHERE cgm.group_id = ${groupId}
+      ORDER BY 
+        CASE cgm.role 
+          WHEN 'creator' THEN 1 
+          WHEN 'admin' THEN 2 
+          ELSE 3 
+        END,
+        cgm.joined_at ASC
+    `);
+
+    res.json(membersResult.rows);
+  } catch (error) {
+    console.error("Error fetching group members:", error);
+    res.status(500).json({ error: "Failed to fetch members" });
+  }
+});
+
+// Add member to group
+router.post("/api/chat/groups/:groupId/members", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) return res.sendStatus(401);
+  
+  try {
+    const groupId = parseInt(req.params.groupId);
+    const currentUserId = req.user!.id;
+    const { userId } = req.body;
+
+    if (isNaN(groupId) || !userId) {
+      return res.status(400).json({ error: "Invalid group ID or user ID" });
+    }
+
+    // Check if current user is admin or creator
+    const groupResult = await db.execute(sql`
+      SELECT * FROM chat_groups WHERE id = ${groupId}
+    `);
+
+    if (groupResult.rows.length === 0) {
+      return res.status(404).json({ error: "Group not found" });
+    }
+
+    const group = groupResult.rows[0];
+    const isAdmin = group.creator_id === currentUserId || (group as any).admin_ids.includes(currentUserId);
+
+    if (!isAdmin) {
+      return res.status(403).json({ error: "Only admins can add members" });
+    }
+
+    // Check if user is already a member
+    if ((group as any).member_ids.includes(userId)) {
+      return res.status(400).json({ error: "User is already a member" });
+    }
+
+    // Add user to group members array
+    await db.execute(sql`
+      UPDATE chat_groups 
+      SET member_ids = array_append(member_ids, ${userId})
+      WHERE id = ${groupId}
+    `);
+
+    // Add member record
+    await db.execute(sql`
+      INSERT INTO chat_group_members (group_id, user_id, role)
+      VALUES (${groupId}, ${userId}, 'member')
+    `);
+
+    res.json({ message: "Member added successfully" });
+  } catch (error) {
+    console.error("Error adding member:", error);
+    res.status(500).json({ error: "Failed to add member" });
+  }
+});
+
+// Remove member from group
+router.delete("/api/chat/groups/:groupId/members/:userId", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) return res.sendStatus(401);
+  
+  try {
+    const groupId = parseInt(req.params.groupId);
+    const targetUserId = parseInt(req.params.userId);
+    const currentUserId = req.user!.id;
+
+    if (isNaN(groupId) || isNaN(targetUserId)) {
+      return res.status(400).json({ error: "Invalid group ID or user ID" });
+    }
+
+    // Check if current user is admin or creator
+    const groupResult = await db.execute(sql`
+      SELECT * FROM chat_groups WHERE id = ${groupId}
+    `);
+
+    if (groupResult.rows.length === 0) {
+      return res.status(404).json({ error: "Group not found" });
+    }
+
+    const group = groupResult.rows[0];
+    const isAdmin = group.creator_id === currentUserId || group.admin_ids.includes(currentUserId);
+
+    if (!isAdmin) {
+      return res.status(403).json({ error: "Only admins can remove members" });
+    }
+
+    // Cannot remove creator
+    if (group.creator_id === targetUserId) {
+      return res.status(400).json({ error: "Cannot remove group creator" });
+    }
+
+    // Remove user from group members array
+    await db.execute(sql`
+      UPDATE chat_groups 
+      SET member_ids = array_remove(member_ids, ${targetUserId}),
+          admin_ids = array_remove(admin_ids, ${targetUserId})
+      WHERE id = ${groupId}
+    `);
+
+    // Remove member record
+    await db.execute(sql`
+      DELETE FROM chat_group_members 
+      WHERE group_id = ${groupId} AND user_id = ${targetUserId}
+    `);
+
+    res.json({ message: "Member removed successfully" });
+  } catch (error) {
+    console.error("Error removing member:", error);
+    res.status(500).json({ error: "Failed to remove member" });
+  }
+});
+
 // Get direct messages for conversation
 router.get("/api/chat/direct/:conversationId/messages", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) return res.sendStatus(401);
