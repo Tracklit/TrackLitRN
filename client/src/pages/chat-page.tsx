@@ -173,25 +173,15 @@ const ChatPage = () => {
 
   const queryClient = useQueryClient();
 
-  // Fetch chat groups with cache-busting timestamp
+  // Fetch chat groups with proper caching
   const { data: chatGroups = [], isLoading: groupsLoading, refetch: refetchGroups } = useQuery({
-    queryKey: ['/api/chat/groups', refreshKey], // Remove timestamp from queryKey to prevent infinite loop
+    queryKey: ['/api/chat/groups'],
     queryFn: async () => {
-      console.log('Fetching chat groups with cache buster...');
+      console.log('Fetching chat groups...');
       
-      // Force cache bypass with timestamp parameter
-      const cacheBuster = Date.now();
-      const url = `/api/chat/groups?_t=${cacheBuster}&_r=${Math.random()}`;
-      
-      const response = await fetch(url, {
+      const response = await fetch('/api/chat/groups', {
         method: 'GET',
-        credentials: 'include',
-        cache: 'no-cache',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
+        credentials: 'include'
       });
       
       if (!response.ok) {
@@ -199,14 +189,14 @@ const ChatPage = () => {
       }
       
       const data = await response.json();
-      console.log('Chat groups data (cache-busted):', data);
+      console.log('Chat groups data:', data);
       setLocalGroups(data);
       return data;
     },
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    staleTime: 0, // Always consider data stale
-    gcTime: 0, // Don't cache at all (v5 syntax)
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    refetchOnWindowFocus: false, // Don't refetch when window gains focus
+    refetchOnMount: false, // Don't refetch when component mounts if data exists
   });
 
   // Use local groups state instead of direct React Query data
@@ -436,7 +426,7 @@ const ChatPage = () => {
       {/* Chat List - Full Width */}
       <div className="flex-1 overflow-y-auto">
         <div className="space-y-0" key={`chat-list-${refreshKey}-${JSON.stringify(chatGroups)}`}>
-          {groupsLoading || conversationsLoading ? (
+          {(groupsLoading && chatGroups.length === 0) || (conversationsLoading && conversations.length === 0) ? (
             <div className="flex justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
             </div>
@@ -496,8 +486,8 @@ const ChatPage = () => {
             </>
           )}
 
-          {/* Empty State */}
-          {filteredGroups.length === 0 && conversations.length === 0 && (
+          {/* Empty State - Only show when not loading and no data */}
+          {!groupsLoading && !conversationsLoading && filteredGroups.length === 0 && conversations.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-gray-500">
               <MessageCircle className="h-16 w-16 mb-4 text-gray-300" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No chats yet</h3>
