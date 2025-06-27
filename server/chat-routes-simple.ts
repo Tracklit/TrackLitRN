@@ -35,6 +35,52 @@ const upload = multer({
   }
 });
 
+// Debug endpoint for chat groups
+router.get("/api/chat/groups/debug", async (req: Request, res: Response) => {
+  console.log('=== DEBUG CHAT GROUPS API CALLED ===');
+  
+  if (!req.isAuthenticated()) {
+    console.log('User not authenticated');
+    return res.sendStatus(401);
+  }
+  
+  try {
+    const userId = req.user!.id;
+    console.log('Debug User ID:', userId);
+    
+    // Test direct database query
+    const groups = await db.execute(sql`
+      SELECT 
+        cg.id,
+        cg.name,
+        cg.description,
+        cg.image as avatar_url,
+        cg.creator_id,
+        cg.is_private,
+        cg.created_at,
+        cg.last_message,
+        cg.last_message_at,
+        cg.message_count
+      FROM chat_groups cg
+      INNER JOIN chat_group_members cgm ON cg.id = cgm.group_id
+      WHERE cgm.user_id = ${userId}
+      ORDER BY cg.last_message_at DESC
+    `);
+    
+    console.log('DEBUG Raw groups from database:', groups.rows);
+    console.log('DEBUG Number of groups found:', groups.rows.length);
+    
+    groups.rows.forEach((group, index) => {
+      console.log(`DEBUG Group ${index + 1}:`, JSON.stringify(group, null, 2));
+    });
+    
+    res.json({ debug: true, groups: groups.rows });
+  } catch (error) {
+    console.error("DEBUG Error fetching chat groups:", error);
+    res.status(500).json({ error: "Failed to fetch groups" });
+  }
+});
+
 // Get chat groups for user
 router.get("/api/chat/groups", async (req: Request, res: Response) => {
   console.log('=== CHAT GROUPS API CALLED ===');

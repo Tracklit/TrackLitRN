@@ -176,6 +176,16 @@ const ChatPage = () => {
     queryKey: ['/api/chat/groups', refreshKey],
     queryFn: async () => {
       console.log('Fetching chat groups...');
+      
+      // Debug: Also call debug endpoint
+      try {
+        const debugResponse = await apiRequest('GET', '/api/chat/groups/debug');
+        const debugData = await debugResponse.json();
+        console.log('DEBUG API Response:', debugData);
+      } catch (debugError) {
+        console.log('Debug endpoint error:', debugError);
+      }
+      
       const response = await apiRequest('GET', '/api/chat/groups');
       const data = await response.json();
       console.log('Chat groups data:', data);
