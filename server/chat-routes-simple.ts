@@ -423,8 +423,8 @@ router.post("/api/chat/groups/:groupId/members", async (req: Request, res: Respo
       
       // Create system message announcing the new member
       await db.execute(sql`
-        INSERT INTO chat_group_messages (group_id, user_id, content, message_type, created_at)
-        VALUES (${groupId}, NULL, ${`${addedUser.name} was added to the group`}, 'system', NOW())
+        INSERT INTO chat_group_messages (group_id, sender_id, sender_name, text, message_type, created_at)
+        VALUES (${groupId}, NULL, 'System', ${`${addedUser.name} was added to the group`}, 'system', NOW())
       `);
     }
 
@@ -494,8 +494,8 @@ router.delete("/api/chat/groups/:groupId/members/:userId", async (req: Request, 
       const removedUser = removedUserResult.rows[0];
       
       await db.execute(sql`
-        INSERT INTO chat_group_messages (group_id, user_id, content, message_type, created_at)
-        VALUES (${groupId}, NULL, ${`${removedUser.name} was removed from the group`}, 'system', NOW())
+        INSERT INTO chat_group_messages (group_id, sender_id, sender_name, text, message_type, created_at)
+        VALUES (${groupId}, NULL, 'System', ${`${removedUser.name} was removed from the group`}, 'system', NOW())
       `);
     }
 
