@@ -69,6 +69,7 @@ export default function CreateGroupPage() {
       const response = await fetch('/api/chat/groups', {
         method: 'POST',
         body: formData,
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -203,7 +204,7 @@ export default function CreateGroupPage() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-6 pb-24">
         <div className="max-w-md mx-auto space-y-6">
           {/* Profile Image Section */}
           <div className="flex flex-col items-center space-y-4">

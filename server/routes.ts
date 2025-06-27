@@ -2783,42 +2783,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ============ TELEGRAM-STYLE CHAT SYSTEM API ROUTES ============
 
-  // Chat Groups Management
-  app.post("/api/chat/groups", async (req: Request, res: Response) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    
-    try {
-      const { name, description, isPrivate } = req.body;
-      const userId = req.user!.id;
-
-      if (!name || name.trim().length === 0) {
-        return res.status(400).json({ error: "Group name is required" });
-      }
-
-      // Generate invite code
-      const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-
-      // Create group with direct SQL
-      const groupResult = await db.execute(sql`
-        INSERT INTO chat_groups (name, description, creator_id, admin_ids, member_ids, is_private, invite_code)
-        VALUES (${name.trim()}, ${description || ''}, ${userId}, ARRAY[${userId}]::integer[], ARRAY[${userId}]::integer[], ${isPrivate || false}, ${inviteCode})
-        RETURNING *
-      `);
-
-      const group = groupResult.rows[0];
-
-      // Add creator as member
-      await db.execute(sql`
-        INSERT INTO chat_group_members (group_id, user_id, role)
-        VALUES (${group.id}, ${userId}, 'creator')
-      `);
-
-      res.status(201).json(group);
-    } catch (error) {
-      console.error("Error creating chat group:", error);
-      res.status(500).json({ error: "Failed to create group" });
-    }
-  });
+  // Chat Groups Management - Handled by chat-routes-simple.ts with FormData support
 
   // Chat groups route moved to chat-routes-simple.ts
 
