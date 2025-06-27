@@ -413,6 +413,21 @@ router.post("/api/chat/groups/:groupId/members", async (req: Request, res: Respo
       VALUES (${groupId}, ${userId}, 'member')
     `);
 
+    // Get the added user's name for the system message
+    const addedUserResult = await db.execute(sql`
+      SELECT name, username FROM users WHERE id = ${userId}
+    `);
+    
+    if (addedUserResult.rows.length > 0) {
+      const addedUser = addedUserResult.rows[0];
+      
+      // Create system message announcing the new member
+      await db.execute(sql`
+        INSERT INTO chat_group_messages (group_id, user_id, content, message_type, created_at)
+        VALUES (${groupId}, NULL, ${`${addedUser.name} was added to the group`}, 'system', NOW())
+      `);
+    }
+
     res.json({ message: "Member added successfully" });
   } catch (error) {
     console.error("Error adding member:", error);
