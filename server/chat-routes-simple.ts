@@ -694,7 +694,7 @@ router.get("/api/chat/groups/:groupId/messages", async (req: Request, res: Respo
           user_id,
           created_at
         FROM message_reactions 
-        WHERE message_id = ANY(${messageIds}) AND message_type = 'group'
+        WHERE message_id = ANY(ARRAY[${sql.join(messageIds, sql`, `)}]) AND message_type = 'group'
         ORDER BY created_at ASC
       `);
       reactionsData = reactionsResult.rows;
