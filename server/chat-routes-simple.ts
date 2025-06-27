@@ -197,8 +197,8 @@ router.post("/api/chat/groups", upload.single('image'), async (req: Request, res
         `);
         
         if (userResult.rows.length > 0) {
-          const foundUser = userResult.rows[0];
-          allMemberIds.push(foundUser.id);
+          const foundUser = userResult.rows[0] as any;
+          allMemberIds.push(Number(foundUser.id));
           validInviteMembers.push(foundUser);
         }
       }
