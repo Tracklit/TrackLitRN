@@ -504,11 +504,11 @@ export default function GroupSettingsPage() {
                         Admin
                       </Badge>
                     )}
-                    {member.role === 'member' && member.user_id !== currentUser?.id && (
+                    {member.role === 'member' && member.userId !== currentUser?.id && (
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => removeMemberMutation.mutate(member.user_id)}
+                        onClick={() => removeMemberMutation.mutate(member.userId)}
                         disabled={removeMemberMutation.isPending}
                         className="text-red-400 hover:text-red-300 hover:bg-red-500/20"
                       >

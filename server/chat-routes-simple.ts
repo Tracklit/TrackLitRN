@@ -478,11 +478,26 @@ router.delete("/api/chat/groups/:groupId/members/:userId", async (req: Request, 
       WHERE id = ${groupId}
     `);
 
+    // Get the removed user's name for the system message
+    const removedUserResult = await db.execute(sql`
+      SELECT name, username FROM users WHERE id = ${targetUserId}
+    `);
+
     // Remove member record
     await db.execute(sql`
       DELETE FROM chat_group_members 
       WHERE group_id = ${groupId} AND user_id = ${targetUserId}
     `);
+
+    // Create system message announcing the member removal
+    if (removedUserResult.rows.length > 0) {
+      const removedUser = removedUserResult.rows[0];
+      
+      await db.execute(sql`
+        INSERT INTO chat_group_messages (group_id, user_id, content, message_type, created_at)
+        VALUES (${groupId}, NULL, ${`${removedUser.name} was removed from the group`}, 'system', NOW())
+      `);
+    }
 
     res.json({ message: "Member removed successfully" });
   } catch (error) {
