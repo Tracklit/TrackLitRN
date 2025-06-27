@@ -459,6 +459,7 @@ const ChatPage = () => {
 const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group' | 'direct'; id: number }; onBack: () => void }) => {
   const [messageText, setMessageText] = useState("");
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
+  const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Fetch current user
@@ -498,7 +499,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
 
   // Send message mutation
   const sendMessageMutation = useMutation({
-    mutationFn: async (data: { text: string }) => {
+    mutationFn: async (data: { text: string; replyToId?: number }) => {
       if (!selectedChat) return;
       const endpoint = selectedChat.type === 'group'
         ? `/api/chat/groups/${selectedChat.id}/messages`
@@ -508,6 +509,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     },
     onSuccess: () => {
       setMessageText("");
+      setReplyingTo(null);
       refetchMessages();
     }
   });
@@ -638,9 +640,10 @@ interface MessageBubbleProps {
   isOwn: boolean;
   currentUser?: any;
   onImageClick?: (imageUrl: string) => void;
+  onReply?: (message: ChatMessage) => void;
 }
 
-const MessageBubble = ({ message, isOwn, currentUser, onImageClick }: MessageBubbleProps) => {
+const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply }: MessageBubbleProps) => {
   const [showMenu, setShowMenu] = useState(false);
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -659,6 +662,19 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick }: MessageBub
     });
   };
 
+  // Reaction mutation
+  const addReactionMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', `/api/chat/groups/${message.group_id}/messages/${message.id}/reactions`, {
+        emoji: '👍'
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/groups', message.group_id, 'messages'] });
+    }
+  });
+
   // Double tap handler for thumbs up
   const handleDoubleTap = () => {
     const now = Date.now();
@@ -669,7 +685,8 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick }: MessageBub
       setShowReaction(true);
       setTimeout(() => setShowReaction(false), 1500);
       
-      // TODO: Send reaction to server
+      // Send reaction to server
+      addReactionMutation.mutate();
       console.log(`Double tap reaction on message ${message.id}`);
     }
     setLastTap(now);
@@ -714,7 +731,7 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick }: MessageBub
         }
         break;
       case 'reply':
-        // TODO: Implement reply functionality
+        onReply?.(message);
         console.log(`Reply to message ${message.id}`);
         break;
       case 'delete':

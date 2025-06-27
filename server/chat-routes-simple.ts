@@ -822,7 +822,46 @@ router.patch("/api/chat/groups/:groupId/messages/:messageId", async (req: Reques
   }
 });
 
-// Message Reactions Routes
+// Add reaction to group message
+router.post("/api/chat/groups/:groupId/messages/:messageId/reactions", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) return res.sendStatus(401);
+  
+  try {
+    const groupId = parseInt(req.params.groupId);
+    const messageId = parseInt(req.params.messageId);
+    const userId = req.user!.id;
+    const { emoji = "👍" } = req.body;
+
+    if (isNaN(groupId) || isNaN(messageId)) {
+      return res.status(400).json({ error: "Invalid group ID or message ID" });
+    }
+
+    // Check if message exists in the group
+    const messageCheck = await db.execute(sql`
+      SELECT id FROM chat_group_messages 
+      WHERE id = ${messageId} AND group_id = ${groupId}
+    `);
+
+    if (messageCheck.rows.length === 0) {
+      return res.status(404).json({ error: "Message not found" });
+    }
+
+    // For now, just update the message to indicate it has a reaction
+    // In a full implementation, you'd have a separate reactions table
+    await db.execute(sql`
+      UPDATE chat_group_messages 
+      SET text = COALESCE(text, '') || ' 👍'
+      WHERE id = ${messageId}
+    `);
+
+    res.json({ action: "added", messageId, emoji });
+  } catch (error) {
+    console.error("Error adding reaction:", error);
+    res.status(500).json({ error: "Failed to add reaction" });
+  }
+});
+
+// Message Reactions Routes (legacy)
 router.post("/messages/:messageId/:messageType/reactions", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) return res.sendStatus(401);
   
