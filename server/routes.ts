@@ -20,95 +20,10 @@ import { GoogleSpreadsheet } from "google-spreadsheet";
 import { notificationSystem } from "./notification-system";
 import { insertAthleteProfileSchema } from "@shared/athlete-profile-schema";
 import { worldAthleticsService } from "./world-athletics";
-import journalRoutes from "./routes/journal";
-import worldAthleticsRoutes from "./routes/world-athletics";
-import rehabRoutes from "./routes/rehab";
 import communityRoutes from "./routes/community";
 import chatRoutes from "./chat-routes-simple";
 
-// Notifications API
-app.post("/api/notifications", async (req: Request, res: Response) => {
-  if (!req.isAuthenticated()) return res.sendStatus(401);
-  
-  try {
-    const { userId, type, title, message, actionUrl, relatedId, relatedType } = req.body;
-    
-    if (!userId || !type || !title || !message) {
-      return res.status(400).json({ error: "Missing required fields" });
-    }
-
-    const notification = await db.insert(notifications).values({
-      userId,
-      type,
-      title,
-      message,
-      actionUrl,
-      relatedId,
-      relatedType,
-      isRead: false
-    }).returning();
-
-    res.json(notification[0]);
-  } catch (error) {
-    console.error("Error creating notification:", error);
-    res.status(500).json({ error: "Failed to create notification" });
-  }
-});
-
-app.get("/api/notifications", async (req: Request, res: Response) => {
-  if (!req.isAuthenticated()) return res.sendStatus(401);
-  
-  try {
-    const userId = req.user!.id;
-    
-    const userNotifications = await db
-      .select()
-      .from(notifications)
-      .where(eq(notifications.userId, userId))
-      .orderBy(desc(notifications.createdAt))
-      .limit(50);
-
-    res.json(userNotifications);
-  } catch (error) {
-    console.error("Error fetching notifications:", error);
-    res.status(500).json({ error: "Failed to fetch notifications" });
-  }
-});
-
-// Coach-athlete relationship API
-app.get("/api/coach/athletes", async (req: Request, res: Response) => {
-  if (!req.isAuthenticated()) return res.sendStatus(401);
-  
-  try {
-    const userId = req.user!.id;
-    
-    // Check if user is a coach
-    const coach = await db.select().from(users).where(eq(users.id, userId)).limit(1);
-    if (!coach[0]?.isCoach) {
-      return res.status(403).json({ error: "Only coaches can access athlete list" });
-    }
-
-    // Get athletes connected to this coach
-    const athletes = await db.execute(sql`
-      SELECT DISTINCT
-        u.id,
-        u.name,
-        u.username,
-        u.email,
-        u.profile_image_url,
-        u.created_at
-      FROM users u
-      INNER JOIN coach_athletes ca ON u.id = ca.athlete_id
-      WHERE ca.coach_id = ${userId}
-      ORDER BY u.name ASC
-    `);
-
-    res.json(athletes.rows);
-  } catch (error) {
-    console.error("Error fetching coach athletes:", error);
-    res.status(500).json({ error: "Failed to fetch athletes" });
-  }
-});
+// Coach-athlete relationship API functions will be moved inside registerRoutes
 
 // Remove unused import
 
@@ -583,6 +498,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Serve static files from the uploads directory
   app.use('/uploads', express.static(uploadsDir));
+
+  // Notifications API
+  app.post("/api/notifications", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const { userId, type, title, message, actionUrl, relatedId, relatedType } = req.body;
+      
+      if (!userId || !type || !title || !message) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      const notification = await db.insert(notifications).values({
+        userId,
+        type,
+        title,
+        message,
+        actionUrl,
+        relatedId,
+        relatedType,
+        isRead: false
+      }).returning();
+
+      res.json(notification[0]);
+    } catch (error) {
+      console.error("Error creating notification:", error);
+      res.status(500).json({ error: "Failed to create notification" });
+    }
+  });
+
+  app.get("/api/notifications", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const userId = req.user!.id;
+      
+      const userNotifications = await db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.userId, userId))
+        .orderBy(desc(notifications.createdAt))
+        .limit(50);
+
+      res.json(userNotifications);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      res.status(500).json({ error: "Failed to fetch notifications" });
+    }
+  });
+
+  // Coach-athlete relationship API
+  app.get("/api/coach/athletes", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const userId = req.user!.id;
+      
+      // Check if user is a coach
+      const coach = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+      if (!coach[0]?.isCoach) {
+        return res.status(403).json({ error: "Only coaches can access athlete list" });
+      }
+
+      // Get athletes connected to this coach
+      const athletes = await db.execute(sql`
+        SELECT DISTINCT
+          u.id,
+          u.name,
+          u.username,
+          u.email,
+          u.profile_image_url,
+          u.created_at
+        FROM users u
+        INNER JOIN coach_athletes ca ON u.id = ca.athlete_id
+        WHERE ca.coach_id = ${userId}
+        ORDER BY u.name ASC
+      `);
+
+      res.json(athletes.rows);
+    } catch (error) {
+      console.error("Error fetching coach athletes:", error);
+      res.status(500).json({ error: "Failed to fetch athletes" });
+    }
+  });
   
   // Practice media routes
   // Get media for a completion
