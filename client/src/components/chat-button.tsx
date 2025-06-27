@@ -1,4 +1,4 @@
-import { MessageCircle } from "lucide-react";
+import { Users } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,7 +39,7 @@ export function ChatButton() {
         title="Chat"
         onClick={handleChatClick}
       >
-        <MessageCircle className="h-5 w-5" />
+        <Users className="h-5 w-5" />
         {unreadCount > 0 && (
           <Badge 
             variant="destructive" 
