@@ -38,7 +38,19 @@ const upload = multer({
 // Get chat groups for user
 router.get("/api/chat/groups", async (req: Request, res: Response) => {
   console.log('=== CHAT GROUPS API CALLED ===');
-  if (!req.isAuthenticated()) return res.sendStatus(401);
+  
+  // Force no-cache headers at the start
+  res.set({
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0',
+    'ETag': Date.now().toString() // Force unique response
+  });
+  
+  if (!req.isAuthenticated()) {
+    console.log('User not authenticated');
+    return res.sendStatus(401);
+  }
   
   try {
     const userId = req.user!.id;
@@ -64,13 +76,11 @@ router.get("/api/chat/groups", async (req: Request, res: Response) => {
     `);
     
     console.log('Raw groups from database:', groups.rows);
-    console.log('Groups returned from database:', JSON.stringify(groups.rows, null, 2));
+    console.log('Number of groups found:', groups.rows.length);
     
-    // Force no-cache headers
-    res.set({
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0'
+    // Log each group individually to see the exact structure
+    groups.rows.forEach((group, index) => {
+      console.log(`Group ${index + 1}:`, JSON.stringify(group, null, 2));
     });
     
     res.json(groups.rows);
