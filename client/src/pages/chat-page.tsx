@@ -367,14 +367,14 @@ const ChatPage = () => {
                       
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <h3 className="font-medium text-gray-900 truncate">{group.name}</h3>
-                          <span className="text-xs text-gray-500">
+                          <h3 className="font-medium text-white truncate">{group.name}</h3>
+                          <span className="text-xs text-gray-400">
                             {group.last_message_at ? formatLastMessageTime(group.last_message_at) : ''}
                           </span>
                         </div>
                         
                         <div className="flex items-center justify-between">
-                          <p className="text-sm text-gray-500 truncate">
+                          <p className="text-sm text-gray-400 truncate">
                             {group.last_message || "No messages yet"}
                           </p>
                           <div className="flex items-center space-x-1">
@@ -389,7 +389,7 @@ const ChatPage = () => {
                   
                   {/* Thin gray divider that stops before the channel image */}
                   {index < filteredGroups.length - 1 && (
-                    <div className="ml-16 mr-4 border-b border-gray-300/50" style={{ borderWidth: '0.5px' }} />
+                    <div className="ml-16 mr-4 border-b border-gray-400/50" style={{ borderWidth: '0.5px', opacity: '0.5' }} />
                   )}
                 </div>
               ))}
