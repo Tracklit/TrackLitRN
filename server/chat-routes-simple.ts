@@ -159,10 +159,20 @@ router.post("/api/chat/groups", upload.single('image'), async (req: Request, res
   
   try {
     const userId = req.user!.id;
-    const { name, description, isPrivate = false } = req.body;
+    const { name, description, isPrivate = false, members } = req.body;
 
     if (!name?.trim()) {
       return res.status(400).json({ error: "Group name is required" });
+    }
+
+    // Parse members if provided
+    let inviteMembers = [];
+    if (members) {
+      try {
+        inviteMembers = JSON.parse(members);
+      } catch (e) {
+        console.error("Error parsing members:", e);
+      }
     }
 
     // Generate invite code
@@ -174,10 +184,30 @@ router.post("/api/chat/groups", upload.single('image'), async (req: Request, res
       imageUrl = `/uploads/${req.file.filename}`;
     }
 
+    // Collect all member IDs (creator + invited members)
+    const allMemberIds = [userId];
+    const validInviteMembers = [];
+
+    // Process invited members
+    for (const member of inviteMembers) {
+      if (member.username && member.username !== req.user!.username) {
+        // Look up user by username
+        const userResult = await db.execute(sql`
+          SELECT id, name, username FROM users WHERE username = ${member.username}
+        `);
+        
+        if (userResult.rows.length > 0) {
+          const foundUser = userResult.rows[0];
+          allMemberIds.push(foundUser.id);
+          validInviteMembers.push(foundUser);
+        }
+      }
+    }
+
     // Create group with direct SQL
     const groupResult = await db.execute(sql`
       INSERT INTO chat_groups (name, description, image, creator_id, admin_ids, member_ids, is_private, invite_code)
-      VALUES (${name.trim()}, ${description || ''}, ${imageUrl}, ${userId}, ARRAY[${userId}], ARRAY[${userId}], ${isPrivate === 'true'}, ${inviteCode})
+      VALUES (${name.trim()}, ${description || ''}, ${imageUrl}, ${userId}, ARRAY[${userId}], ${allMemberIds}, ${isPrivate === 'true'}, ${inviteCode})
       RETURNING *
     `);
 
@@ -188,6 +218,20 @@ router.post("/api/chat/groups", upload.single('image'), async (req: Request, res
       INSERT INTO chat_group_members (group_id, user_id, role)
       VALUES (${group.id}, ${userId}, 'creator')
     `);
+
+    // Add invited members
+    for (const member of validInviteMembers) {
+      await db.execute(sql`
+        INSERT INTO chat_group_members (group_id, user_id, role)
+        VALUES (${group.id}, ${member.id}, 'member')
+      `);
+
+      // Create system message announcing the new member
+      await db.execute(sql`
+        INSERT INTO chat_group_messages (group_id, sender_id, sender_name, text, message_type, created_at)
+        VALUES (${group.id}, ${userId}, 'System', ${`${member.name} was added to the group`}, 'system', NOW())
+      `);
+    }
 
     res.json(group);
   } catch (error) {

@@ -9,8 +9,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Camera, ArrowLeft, Upload } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Camera, ArrowLeft, Upload, UserPlus, X, Users } from "lucide-react";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import flameLogoPath from "@assets/IMG_4720_1751015409604.png";
 
@@ -26,9 +28,23 @@ export default function CreateGroupPage() {
   const [, setLocation] = useLocation();
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [inviteUsername, setInviteUsername] = useState("");
+  const [selectedMembers, setSelectedMembers] = useState<Array<{id: number; name: string; username: string; profileImageUrl?: string}>>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Fetch coach's athletes for invitation
+  const { data: athletes = [] } = useQuery({
+    queryKey: ['/api/coach/athletes'],
+    queryFn: async () => {
+      const response = await fetch('/api/coach/athletes', {
+        credentials: 'include'
+      });
+      if (!response.ok) return [];
+      return response.json();
+    }
+  });
 
   const form = useForm<CreateGroupForm>({
     resolver: zodResolver(createGroupSchema),
@@ -40,12 +56,15 @@ export default function CreateGroupPage() {
   });
 
   const createGroupMutation = useMutation({
-    mutationFn: async (data: CreateGroupForm & { image?: File }) => {
+    mutationFn: async (data: CreateGroupForm & { image?: File; members?: Array<{id: number; name: string; username: string; profileImageUrl?: string}> }) => {
       const formData = new FormData();
       formData.append('name', data.name);
       if (data.description) formData.append('description', data.description);
       formData.append('isPrivate', data.isPrivate.toString());
       if (data.image) formData.append('image', data.image);
+      if (data.members && data.members.length > 0) {
+        formData.append('members', JSON.stringify(data.members));
+      }
 
       const response = await fetch('/api/chat/groups', {
         method: 'POST',
@@ -98,11 +117,63 @@ export default function CreateGroupPage() {
     }
   };
 
+  const handleAddMemberByUsername = () => {
+    if (!inviteUsername.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a username",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if already selected
+    if (selectedMembers.some(m => m.username === inviteUsername.trim())) {
+      toast({
+        title: "Error",
+        description: "This user is already selected",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Add placeholder member (will be resolved on server)
+    setSelectedMembers(prev => [...prev, {
+      id: Date.now(), // Temporary ID
+      name: inviteUsername.trim(),
+      username: inviteUsername.trim(),
+    }]);
+    setInviteUsername("");
+  };
+
+  const handleAddAthlete = (athlete: any) => {
+    if (selectedMembers.some(m => m.id === athlete.id)) {
+      toast({
+        title: "Error",
+        description: "This athlete is already selected",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSelectedMembers(prev => [...prev, {
+      id: athlete.id,
+      name: athlete.name,
+      username: athlete.username,
+      profileImageUrl: athlete.profileImageUrl,
+    }]);
+  };
+
+  const handleRemoveMember = (memberId: number) => {
+    setSelectedMembers(prev => prev.filter(m => m.id !== memberId));
+  };
+
   const onSubmit = (data: CreateGroupForm) => {
     createGroupMutation.mutate({
       ...data,
       image: selectedImage || undefined,
-    });
+      members: selectedMembers,
+    } as any);
   };
 
   return (
@@ -233,6 +304,116 @@ export default function CreateGroupPage() {
                   </FormItem>
                 )}
               />
+
+              {/* Member Invitation Section */}
+              <Card className="bg-white/5 border-white/20">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-white flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Invite Members
+                  </CardTitle>
+                  <p className="text-sm text-gray-400">Add members to your group (optional)</p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Add by Username */}
+                  <div className="space-y-2">
+                    <label className="text-sm text-white font-medium">Add by Username</label>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Enter username"
+                        value={inviteUsername}
+                        onChange={(e) => setInviteUsername(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddMemberByUsername();
+                          }
+                        }}
+                        className="bg-white/10 border-white/30 text-white placeholder:text-gray-400 focus:border-blue-400"
+                      />
+                      <Button
+                        type="button"
+                        onClick={handleAddMemberByUsername}
+                        size="sm"
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        <UserPlus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Athletes List (for coaches) */}
+                  {athletes.length > 0 && (
+                    <div className="space-y-2">
+                      <label className="text-sm text-white font-medium">Your Athletes</label>
+                      <div className="grid gap-2 max-h-40 overflow-y-auto">
+                        {athletes.map((athlete: any) => (
+                          <div
+                            key={athlete.id}
+                            className="flex items-center justify-between p-2 bg-white/5 rounded-lg border border-white/10"
+                          >
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-8 w-8">
+                                <AvatarImage src={athlete.profileImageUrl} />
+                                <AvatarFallback className="bg-gray-600 text-white text-xs">
+                                  {athlete.name?.charAt(0)?.toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="text-sm text-white font-medium">{athlete.name}</p>
+                                <p className="text-xs text-gray-400">@{athlete.username}</p>
+                              </div>
+                            </div>
+                            <Button
+                              type="button"
+                              onClick={() => handleAddAthlete(athlete)}
+                              size="sm"
+                              variant="outline"
+                              disabled={selectedMembers.some(m => m.id === athlete.id)}
+                              className="bg-transparent border-white/30 text-white hover:bg-white/10"
+                            >
+                              {selectedMembers.some(m => m.id === athlete.id) ? 'Added' : 'Add'}
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Selected Members */}
+                  {selectedMembers.length > 0 && (
+                    <div className="space-y-2">
+                      <label className="text-sm text-white font-medium">
+                        Selected Members ({selectedMembers.length})
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedMembers.map((member) => (
+                          <Badge
+                            key={member.id}
+                            variant="secondary"
+                            className="bg-blue-600/20 text-blue-100 border-blue-400/30 px-3 py-1 flex items-center gap-2"
+                          >
+                            <Avatar className="h-4 w-4">
+                              <AvatarImage src={member.profileImageUrl} />
+                              <AvatarFallback className="bg-blue-500 text-white text-xs">
+                                {member.name?.charAt(0)?.toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-xs">{member.name}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveMember(member.id)}
+                              className="ml-1 hover:text-red-300 transition-colors"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
               <div className="pt-4">
                 <Button
