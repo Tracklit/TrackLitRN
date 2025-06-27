@@ -90,6 +90,20 @@ interface ChatMessage {
   reply_to_id?: number;
   message_type: 'text' | 'image' | 'file';
   media_url?: string;
+  reactions?: Array<{
+    emoji: string;
+    count: number;
+    users?: number[];
+  }>;
+  reply_to_message?: {
+    id: number;
+    text: string;
+    message_type: string;
+    user: {
+      id: number;
+      name: string;
+    };
+  };
   user?: {
     id: number;
     name: string;
@@ -536,12 +550,15 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     setReplyingTo(null);
   };
 
-  // Auto scroll to bottom when new messages arrive
+  // Auto scroll to bottom when new messages arrive (not for reactions)
+  const [lastMessageCount, setLastMessageCount] = useState(0);
+  
   useLayoutEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'instant' });
+    if (messages.length > lastMessageCount && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      setLastMessageCount(messages.length);
     }
-  }, [messages]);
+  }, [messages, lastMessageCount]);
 
   const formatMessageTime = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -835,6 +852,18 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply }: M
           </div>
         )}
         
+        {/* Reply Preview */}
+        {message.reply_to_message && (
+          <div className="mb-2 p-2 bg-gray-100 border-l-4 border-blue-500 rounded text-sm">
+            <div className="text-xs text-gray-600 mb-1">
+              Replying to {message.reply_to_message.user.name}
+            </div>
+            <div className="text-gray-800 truncate">
+              {message.reply_to_message.message_type === 'image' ? '📷 Photo' : message.reply_to_message.text}
+            </div>
+          </div>
+        )}
+
         {message.message_type === 'image' && message.media_url ? (
           <div className="mb-2">
             <img 
@@ -883,19 +912,7 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply }: M
           )}
         </div>
 
-        {/* Reaction Circles - stick to bottom of bubble */}
-        {message.reactions && message.reactions.length > 0 && (
-          <div className="absolute -bottom-2 left-2 flex gap-1 z-10">
-            {message.reactions.map((reaction: any, index: number) => (
-              <div key={index} className="bg-white rounded-full shadow-lg border border-gray-300 p-1 min-w-[28px] min-h-[28px] flex items-center justify-center">
-                <span className="text-sm">{reaction.emoji}</span>
-                {reaction.count > 1 && (
-                  <span className="text-xs text-gray-600 ml-1">{reaction.count}</span>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+        {/* Future: Reaction Circles will be displayed here */}
 
         {/* Reaction Animation */}
         {showReaction && (
