@@ -946,6 +946,14 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply, onE
         onTouchEnd={handleLongPressEnd}
         onClick={handleDoubleTap}
       >
+        {/* Speech bubble tail pointing to profile image */}
+        {isOwn ? (
+          // Tail pointing right (to own profile image on the right)
+          <div className="absolute top-3 -right-2 w-0 h-0 border-l-8 border-l-white border-t-4 border-t-transparent border-b-4 border-b-transparent"></div>
+        ) : (
+          // Tail pointing left (to other user's profile image on the left)
+          <div className="absolute top-3 -left-2 w-0 h-0 border-r-8 border-r-gray-700 border-t-4 border-t-transparent border-b-4 border-b-transparent"></div>
+        )}
         {!isOwn && message.user && (
           <div className="text-xs text-gray-300 mb-1 font-medium">
             {message.user.name}
