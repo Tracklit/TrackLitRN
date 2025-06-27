@@ -276,8 +276,16 @@ const ChatPage = () => {
     }
   };
 
-  // Filter chats based on search
-  const filteredGroups = activeGroups.filter((group: ChatGroup) =>
+  // Deduplicate groups and filter based on search
+  const uniqueGroups = activeGroups.reduce((acc: ChatGroup[], current: ChatGroup) => {
+    const existing = acc.find(group => group.id === current.id);
+    if (!existing) {
+      acc.push(current);
+    }
+    return acc;
+  }, []);
+
+  const filteredGroups = uniqueGroups.filter((group: ChatGroup) =>
     group.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -363,7 +371,7 @@ const ChatPage = () => {
               ) : (
                 <>
                   {filteredGroups.map((group: ChatGroup, index: number) => (
-                    <div key={`${group.id}-${group.name}-${group.description}-${refreshKey}`} className="relative">
+                    <div key={`group-${group.id}-${index}`} className="relative">
                       <button
                         onClick={() => handleSelectChat({ type: 'group', id: group.id })}
                         className="w-full p-4 hover:bg-gray-50 transition-colors text-left"

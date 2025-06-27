@@ -79,7 +79,14 @@ export default function CreateGroupPage() {
       return response.json();
     },
     onSuccess: (data) => {
+      // Comprehensive cache invalidation
+      queryClient.removeQueries({ queryKey: ['/api/chat/groups'] });
+      queryClient.removeQueries({ queryKey: ['/api/conversations'] });
       queryClient.invalidateQueries({ queryKey: ['/api/chat/groups'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/conversations'] });
+      queryClient.refetchQueries({ queryKey: ['/api/chat/groups'] });
+      queryClient.refetchQueries({ queryKey: ['/api/conversations'] });
+      
       toast({
         title: "Success",
         description: "Group created successfully!",

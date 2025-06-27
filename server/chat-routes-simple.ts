@@ -103,9 +103,9 @@ router.get("/api/chat/groups", async (req: Request, res: Response) => {
     const userId = req.user!.id;
     console.log('FIXED: Fetching groups for user ID:', userId);
     
-    // Direct SQL query with explicit image column selection
+    // Fixed SQL query with DISTINCT to prevent duplicates
     const groups = await db.execute(sql`
-      SELECT 
+      SELECT DISTINCT
         cg.id,
         cg.name,
         cg.description,
