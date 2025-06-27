@@ -48,7 +48,7 @@ router.get("/api/chat/groups", async (req: Request, res: Response) => {
         cg.id,
         cg.name,
         cg.description,
-        cg.image,
+        cg.image as avatar_url,
         cg.creator_id,
         cg.is_private,
         cg.created_at,
@@ -61,13 +61,8 @@ router.get("/api/chat/groups", async (req: Request, res: Response) => {
       ORDER BY cg.last_message_at DESC
     `);
     
-    // Map image field to avatar_url for frontend compatibility
-    const mappedGroups = groups.rows.map(group => ({
-      ...group,
-      avatar_url: (group as any).image
-    }));
-    
-    res.json(mappedGroups);
+    console.log('Groups returned from database:', groups.rows);
+    res.json(groups.rows);
   } catch (error) {
     console.error("Error fetching chat groups:", error);
     res.status(500).json({ error: "Failed to fetch groups" });
