@@ -171,29 +171,40 @@ const ChatPage = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
-  // Fetch chat groups with refresh key to force re-renders
+  // Fetch chat groups with cache-busting timestamp
   const { data: chatGroups = [], isLoading: groupsLoading, refetch: refetchGroups } = useQuery({
-    queryKey: ['/api/chat/groups', refreshKey],
+    queryKey: ['/api/chat/groups', refreshKey, Date.now()], // Add timestamp to force fresh requests
     queryFn: async () => {
-      console.log('Fetching chat groups...');
+      console.log('Fetching chat groups with cache buster...');
       
-      // Debug: Also call debug endpoint
-      try {
-        const debugResponse = await apiRequest('GET', '/api/chat/groups/debug');
-        const debugData = await debugResponse.json();
-        console.log('DEBUG API Response:', debugData);
-      } catch (debugError) {
-        console.log('Debug endpoint error:', debugError);
+      // Force cache bypass with timestamp parameter
+      const cacheBuster = Date.now();
+      const url = `/api/chat/groups?_t=${cacheBuster}&_r=${Math.random()}`;
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        credentials: 'include',
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      const response = await apiRequest('GET', '/api/chat/groups');
       const data = await response.json();
-      console.log('Chat groups data:', data);
-      setLocalGroups(data); // Update local state to force re-render
+      console.log('Chat groups data (cache-busted):', data);
+      setLocalGroups(data);
       return data;
     },
     refetchOnWindowFocus: true,
     refetchOnMount: true,
+    staleTime: 0, // Always consider data stale
+    cacheTime: 0, // Don't cache at all
   });
 
   // Use local groups state instead of direct React Query data
