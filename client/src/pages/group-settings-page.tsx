@@ -111,25 +111,24 @@ export default function GroupSettingsPage() {
       return response.json();
     },
     onSuccess: () => {
-      // Force refresh of all group-related queries
-      queryClient.removeQueries({ queryKey: ['/api/chat/groups'] });
-      queryClient.removeQueries({ queryKey: ['/api/chat/groups', groupId] });
-      queryClient.removeQueries({ queryKey: ['/api/chat/groups', groupId, 'members'] });
-      queryClient.removeQueries({ queryKey: ['/api/chat/groups', groupId, 'messages'] });
-      queryClient.removeQueries({ queryKey: ['/api/conversations'] });
+      console.log('Group update successful, invalidating cache...');
       
-      // Immediately refetch the main group list
-      queryClient.refetchQueries({ queryKey: ['/api/chat/groups'] });
+      // Force complete cache reset and refetch
+      queryClient.resetQueries({ queryKey: ['/api/chat/groups'] });
+      queryClient.resetQueries({ queryKey: ['/api/chat/groups', groupId] });
+      queryClient.resetQueries({ queryKey: ['/api/chat/groups', groupId, 'members'] });
+      queryClient.resetQueries({ queryKey: ['/api/chat/groups', groupId, 'messages'] });
+      queryClient.resetQueries({ queryKey: ['/api/conversations'] });
       
       toast({
         title: "Success",
         description: "Group updated successfully!",
       });
       
-      // Navigate back to main chat page after successful update
+      // Navigate back to main chat page after cache reset
       setTimeout(() => {
         setLocation('/chat');
-      }, 200);
+      }, 300);
     },
     onError: (error) => {
       toast({

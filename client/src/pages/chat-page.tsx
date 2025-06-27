@@ -172,8 +172,11 @@ const ChatPage = () => {
   const { data: chatGroups = [], isLoading: groupsLoading } = useQuery({
     queryKey: ['/api/chat/groups'],
     queryFn: async () => {
+      console.log('Fetching chat groups...');
       const response = await apiRequest('GET', '/api/chat/groups');
-      return response.json();
+      const data = await response.json();
+      console.log('Chat groups data:', data);
+      return data;
     }
   });
 
