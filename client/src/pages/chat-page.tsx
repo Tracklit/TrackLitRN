@@ -383,9 +383,7 @@ const ChatPage = () => {
           viewState === 'list' ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div key={`chat-page-${componentKey}`} className="flex flex-col w-full h-full" style={{
-          background: 'linear-gradient(135deg, #000000 0%, #1a1a2e 50%, #16213e 70%, #4a148c 90%, #7b1fa2 100%)'
-        }}>
+        <div key={`chat-page-${componentKey}`} className="flex flex-col w-full h-full bg-purple-800">
           {/* Header */}
           <div className="p-4 border-b border-gray-600/30 flex-shrink-0 bg-black/20 backdrop-blur-sm">
             <div className="flex items-center gap-4">
