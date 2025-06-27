@@ -1654,6 +1654,8 @@ export const messageReactions = pgTable("message_reactions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+
+
 // Enhanced Direct Messages (for 1-on-1 chats)
 export const telegramDirectMessages = pgTable("telegram_direct_messages", {
   id: serial("id").primaryKey(),
@@ -1743,6 +1745,8 @@ export const messageReactionsRelations = relations(messageReactions, ({ one }) =
     references: [users.id],
   }),
 }));
+
+
 
 export const telegramDirectMessagesRelations = relations(telegramDirectMessages, ({ one, many }) => ({
   conversation: one(conversations, {
