@@ -303,7 +303,7 @@ const ChatPage = () => {
               <img 
                 src={flameLogoPath} 
                 alt="TrackLit Logo" 
-                className="h-8 w-8 hover:opacity-80 transition-opacity"
+                className="h-16 w-16 hover:opacity-80 transition-opacity"
               />
             </Link>
             <Link 

@@ -2905,7 +2905,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         INNER JOIN chat_group_members cm ON cgm.group_id = cm.group_id
         WHERE cm.user_id = ${userId}
         AND cgm.sender_id != ${userId}
-        AND cgm.created_at > COALESCE(cm."lastSeenAt", cm."joinedAt", NOW() - INTERVAL '24 hours')
+        AND cgm.created_at > COALESCE(cm."lastSeenAt", cm.joined_at, NOW() - INTERVAL '24 hours')
       `);
       
       // Count unread direct messages
