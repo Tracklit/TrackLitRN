@@ -168,6 +168,8 @@ const ChatPage = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [componentKey, setComponentKey] = useState(Date.now());
   const [localGroups, setLocalGroups] = useState<ChatGroup[]>([]);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [animationDirection, setAnimationDirection] = useState<'enter' | 'exit'>('enter');
 
   const queryClient = useQueryClient();
 
@@ -353,9 +355,39 @@ const ChatPage = () => {
     return <CreateGroupForm onCancel={() => setShowCreateGroup(false)} onSubmit={createGroupMutation.mutate} />;
   }
 
+  // Handle chat selection with animation
+  const handleSelectChat = (chat: { type: 'group' | 'direct'; id: number }) => {
+    setIsAnimating(true);
+    setAnimationDirection('enter');
+    
+    setTimeout(() => {
+      setSelectedChat(chat);
+      setIsAnimating(false);
+    }, 150);
+  };
+
+  // Handle back navigation with animation
+  const handleBackFromChat = () => {
+    setIsAnimating(true);
+    setAnimationDirection('exit');
+    
+    setTimeout(() => {
+      setSelectedChat(null);
+      setIsAnimating(false);
+    }, 150);
+  };
+
   // Show chat interface if a chat is selected
   if (selectedChat) {
-    return <ChatInterface selectedChat={selectedChat} onBack={() => setSelectedChat(null)} />;
+    return (
+      <div className={`transition-transform duration-300 ease-out ${
+        isAnimating && animationDirection === 'enter' 
+          ? 'transform translate-x-full' 
+          : 'transform translate-x-0'
+      }`}>
+        <ChatInterface selectedChat={selectedChat} onBack={handleBackFromChat} />
+      </div>
+    );
   }
 
   return (
@@ -410,7 +442,7 @@ const ChatPage = () => {
               {filteredGroups.map((group: ChatGroup, index: number) => (
                 <div key={`${group.id}-${group.name}-${group.description}-${refreshKey}`} className="relative">
                   <button
-                    onClick={() => setSelectedChat({ type: 'group', id: group.id })}
+                    onClick={() => handleSelectChat({ type: 'group', id: group.id })}
                     className="w-full p-4 hover:bg-gray-50 transition-colors text-left"
                   >
                     <div className="flex items-center space-x-3">
