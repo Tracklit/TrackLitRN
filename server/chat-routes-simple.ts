@@ -37,10 +37,12 @@ const upload = multer({
 
 // Get chat groups for user
 router.get("/api/chat/groups", async (req: Request, res: Response) => {
+  console.log('=== CHAT GROUPS API CALLED ===');
   if (!req.isAuthenticated()) return res.sendStatus(401);
   
   try {
     const userId = req.user!.id;
+    console.log('User ID:', userId);
     
     // Direct SQL query to get groups
     const groups = await db.execute(sql`
@@ -61,6 +63,7 @@ router.get("/api/chat/groups", async (req: Request, res: Response) => {
       ORDER BY cg.last_message_at DESC
     `);
     
+    console.log('Raw groups from database:', groups.rows);
     console.log('Groups returned from database:', JSON.stringify(groups.rows, null, 2));
     
     // Force no-cache headers
