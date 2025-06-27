@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useLayoutEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1043,16 +1043,24 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
     return timeA - timeB;
   });
 
-  // Force scroll to bottom function - always scrolls to absolute bottom
-  const scrollToBottom = () => {
+  // Aggressive force scroll to bottom - ensures absolute bottom position
+  const forceScrollToBottom = useCallback(() => {
     if (messagesContainerRef.current) {
       const container = messagesContainerRef.current;
-      // Use requestAnimationFrame for smoother scrolling
+      // Immediately set to max scroll position
+      container.scrollTop = container.scrollHeight;
+      
+      // Double-check with requestAnimationFrame
       requestAnimationFrame(() => {
         container.scrollTop = container.scrollHeight;
+        
+        // Triple-check after a brief delay
+        setTimeout(() => {
+          container.scrollTop = container.scrollHeight;
+        }, 10);
       });
     }
-  };
+  }, []);
 
   // Mark messages as read when entering a chat channel
   useEffect(() => {
@@ -1076,15 +1084,24 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
     }
   }, [selectedChat.id, selectedChat.type, currentUser, queryClient]);
 
-  // Always scroll to bottom when messages change or chat changes
-  useEffect(() => {
-    if (messages.length > 0) {
-      // Use multiple scroll attempts to ensure it reaches bottom
-      setTimeout(scrollToBottom, 50);
-      setTimeout(scrollToBottom, 150);
-      setTimeout(scrollToBottom, 300);
+  // Use layout effect to scroll before paint - prevents visual jump
+  useLayoutEffect(() => {
+    if (messagesContainerRef.current && messages.length > 0) {
+      const container = messagesContainerRef.current;
+      container.scrollTop = container.scrollHeight;
     }
   }, [messages, selectedChat.id]);
+
+  // Additional effect for persistent scrolling
+  useEffect(() => {
+    forceScrollToBottom();
+    
+    // Backup scroll attempts
+    const timeouts = [50, 150, 300];
+    timeouts.forEach(delay => {
+      setTimeout(forceScrollToBottom, delay);
+    });
+  }, [messages, selectedChat.id, forceScrollToBottom]);
 
   // Send message mutation with optimistic updates
   const sendMessageMutation = useMutation({
