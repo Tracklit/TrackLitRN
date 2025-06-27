@@ -351,7 +351,7 @@ const ChatPage = () => {
                     <div className="flex items-center space-x-3">
                       <div className="relative">
                         <Avatar className="h-12 w-12">
-                          <AvatarImage src={group.avatar_url} />
+                          <AvatarImage src={group.image || group.avatar_url} />
                           <AvatarFallback className="bg-blue-500 text-white">
                             {group.name.slice(0, 2).toUpperCase()}
                           </AvatarFallback>

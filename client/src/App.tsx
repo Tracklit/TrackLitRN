@@ -66,6 +66,7 @@ import SprinthiaPage from "@/pages/sprinthia-simple";
 import RehabPage from "@/pages/rehab-page";
 import ArcadePage from "@/pages/arcade-page";
 import ChatPage from "@/pages/chat-page";
+import CreateGroupPage from "@/pages/create-group-page";
 
 import HamstringRehabPage from "@/pages/rehab/acute-muscle/hamstring";
 import FootRehabPage from "@/pages/rehab/chronic-injuries/foot";
@@ -187,6 +188,7 @@ function Router() {
       <ProtectedRoute path="/club-management/:id" component={ClubManagementPage} />
       <ProtectedRoute path="/chat" component={ChatPage} />
       <ProtectedRoute path="/chats" component={ChatPage} />
+      <ProtectedRoute path="/chats/create" component={CreateGroupPage} />
 
 
       

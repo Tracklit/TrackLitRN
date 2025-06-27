@@ -69,7 +69,7 @@ router.get("/api/chat/groups", async (req: Request, res: Response) => {
 });
 
 // Create new chat group
-router.post("/api/chat/groups", async (req: Request, res: Response) => {
+router.post("/api/chat/groups", upload.single('image'), async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) return res.sendStatus(401);
   
   try {
@@ -83,10 +83,16 @@ router.post("/api/chat/groups", async (req: Request, res: Response) => {
     // Generate invite code
     const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
 
+    // Handle image upload
+    let imageUrl = null;
+    if (req.file) {
+      imageUrl = `/uploads/${req.file.filename}`;
+    }
+
     // Create group with direct SQL
     const groupResult = await db.execute(sql`
-      INSERT INTO chat_groups (name, description, creator_id, admin_ids, member_ids, is_private, invite_code)
-      VALUES (${name.trim()}, ${description || ''}, ${userId}, ARRAY[${userId}], ARRAY[${userId}], ${isPrivate}, ${inviteCode})
+      INSERT INTO chat_groups (name, description, image, creator_id, admin_ids, member_ids, is_private, invite_code)
+      VALUES (${name.trim()}, ${description || ''}, ${imageUrl}, ${userId}, ARRAY[${userId}], ARRAY[${userId}], ${isPrivate === 'true'}, ${inviteCode})
       RETURNING *
     `);
 
