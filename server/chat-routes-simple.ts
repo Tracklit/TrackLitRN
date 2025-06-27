@@ -61,7 +61,13 @@ router.get("/api/chat/groups", async (req: Request, res: Response) => {
       ORDER BY cg.last_message_at DESC
     `);
     
-    res.json(groups.rows);
+    // Map image field to avatar_url for frontend compatibility
+    const mappedGroups = groups.rows.map(group => ({
+      ...group,
+      avatar_url: (group as any).image
+    }));
+    
+    res.json(mappedGroups);
   } catch (error) {
     console.error("Error fetching chat groups:", error);
     res.status(500).json({ error: "Failed to fetch groups" });
