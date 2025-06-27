@@ -166,6 +166,7 @@ const ChatPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [localGroups, setLocalGroups] = useState<ChatGroup[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
@@ -177,9 +178,15 @@ const ChatPage = () => {
       const response = await apiRequest('GET', '/api/chat/groups');
       const data = await response.json();
       console.log('Chat groups data:', data);
+      setLocalGroups(data); // Update local state to force re-render
       return data;
-    }
+    },
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
+
+  // Use local groups state instead of direct React Query data
+  const activeGroups = localGroups.length > 0 ? localGroups : chatGroups;
 
   // Listen for navigation events and custom chat update events
   useEffect(() => {
@@ -191,9 +198,20 @@ const ChatPage = () => {
       }
     };
 
-    const handleChatDataUpdate = () => {
+    const handleChatDataUpdate = async () => {
       console.log('Chat data update event received, forcing refresh...');
       setRefreshKey(prev => prev + 1);
+      
+      // Force fetch fresh data and update local state immediately
+      try {
+        const response = await apiRequest('GET', '/api/chat/groups');
+        const freshData = await response.json();
+        console.log('Fresh groups data:', freshData);
+        setLocalGroups(freshData);
+      } catch (error) {
+        console.error('Error fetching fresh groups:', error);
+      }
+      
       refetchGroups();
     };
 
@@ -311,7 +329,7 @@ const ChatPage = () => {
   };
 
   // Filter chats based on search
-  const filteredGroups = chatGroups.filter((group: ChatGroup) =>
+  const filteredGroups = activeGroups.filter((group: ChatGroup) =>
     group.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -366,7 +384,7 @@ const ChatPage = () => {
 
       {/* Chat List - Full Width */}
       <div className="flex-1 overflow-y-auto">
-        <div className="space-y-0">
+        <div className="space-y-0" key={`chat-list-${refreshKey}-${JSON.stringify(chatGroups)}`}>
           {groupsLoading || conversationsLoading ? (
             <div className="flex justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
