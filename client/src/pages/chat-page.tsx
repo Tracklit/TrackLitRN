@@ -359,11 +359,12 @@ const ChatPage = () => {
   const handleSelectChat = (chat: { type: 'group' | 'direct'; id: number }) => {
     setIsAnimating(true);
     setAnimationDirection('enter');
+    setSelectedChat(chat);
     
+    // Reset animation after transition
     setTimeout(() => {
-      setSelectedChat(chat);
       setIsAnimating(false);
-    }, 150);
+    }, 300);
   };
 
   // Handle back navigation with animation
@@ -374,16 +375,18 @@ const ChatPage = () => {
     setTimeout(() => {
       setSelectedChat(null);
       setIsAnimating(false);
-    }, 150);
+    }, 300);
   };
 
   // Show chat interface if a chat is selected
   if (selectedChat) {
     return (
-      <div className={`transition-transform duration-300 ease-out ${
-        isAnimating && animationDirection === 'enter' 
-          ? 'transform translate-x-full' 
-          : 'transform translate-x-0'
+      <div className={`fixed inset-0 w-full h-full ${
+        isAnimating && animationDirection === 'exit'
+          ? 'animate-slide-out-right'
+          : isAnimating && animationDirection === 'enter'
+          ? 'animate-slide-in-right'
+          : ''
       }`}>
         <ChatInterface selectedChat={selectedChat} onBack={handleBackFromChat} />
       </div>
