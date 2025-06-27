@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 
 export function ChatButton() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   // Fetch unread message count across all chat groups and direct messages
   const { data: unreadCount = 0 } = useQuery({
@@ -21,6 +22,14 @@ export function ChatButton() {
     staleTime: 30000,
   });
 
+  const handleChatClick = () => {
+    // Invalidate unread count when navigating to chat
+    // This ensures count updates when user visits chat page
+    setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: ['unread-chat-count'] });
+    }, 1000);
+  };
+
   return (
     <Link href="/chat">
       <Button
@@ -28,6 +37,7 @@ export function ChatButton() {
         size="sm"
         className="h-9 w-9 p-0 text-gray-400 hover:text-white relative"
         title="Chat"
+        onClick={handleChatClick}
       >
         <MessageCircle className="h-5 w-5" />
         {unreadCount > 0 && (

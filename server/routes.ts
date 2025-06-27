@@ -2897,19 +2897,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user!.id;
       
-      // Count unread messages in chat groups where user is a member
+      // Count unread messages in chat groups where user is a member (last 24 hours)
       const groupUnreadResult = await db.execute(sql`
-        SELECT COUNT(cgm.id) as group_unread_count
+        SELECT CAST(COUNT(cgm.id) AS INTEGER) as group_unread_count
         FROM chat_group_messages cgm
         INNER JOIN chat_group_members cm ON cgm.group_id = cm.group_id
         WHERE cm.user_id = ${userId}
-        AND cgm.user_id != ${userId}
-        AND (cm.last_read_message_id IS NULL OR cgm.id > cm.last_read_message_id)
+        AND cgm.sender_id != ${userId}
+        AND cgm.created_at > NOW() - INTERVAL '24 hours'
       `);
       
       // Count unread direct messages
       const directUnreadResult = await db.execute(sql`
-        SELECT COUNT(dm.id) as direct_unread_count
+        SELECT CAST(COUNT(dm.id) AS INTEGER) as direct_unread_count
         FROM direct_messages dm
         INNER JOIN conversations c ON dm.conversation_id = c.id
         WHERE (c.user1_id = ${userId} OR c.user2_id = ${userId})
@@ -2917,8 +2917,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         AND dm.is_read = false
       `);
       
-      const groupUnreadCount = parseInt(groupUnreadResult.rows[0]?.group_unread_count || '0');
-      const directUnreadCount = parseInt(directUnreadResult.rows[0]?.direct_unread_count || '0');
+      const groupUnreadCount = Number(groupUnreadResult.rows[0]?.group_unread_count) || 0;
+      const directUnreadCount = Number(directUnreadResult.rows[0]?.direct_unread_count) || 0;
       const totalUnreadCount = groupUnreadCount + directUnreadCount;
       
       res.json(totalUnreadCount);
