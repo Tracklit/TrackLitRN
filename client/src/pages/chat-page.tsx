@@ -22,7 +22,8 @@ import {
   Trash,
   Reply,
   X,
-  Image
+  Image,
+  Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
@@ -104,6 +105,7 @@ interface ChatGroup {
   id: number;
   name: string;
   description?: string;
+  image?: string;
   avatar_url?: string;
   creator_id: number;
   admin_ids?: number[];
@@ -351,7 +353,7 @@ const ChatPage = () => {
                     <div className="flex items-center space-x-3">
                       <div className="relative">
                         <Avatar className="h-12 w-12">
-                          <AvatarImage src={group.image || group.avatar_url} />
+                          <AvatarImage src={(group as any).image || group.avatar_url} />
                           <AvatarFallback className="bg-blue-500 text-white">
                             {group.name.slice(0, 2).toUpperCase()}
                           </AvatarFallback>
@@ -1151,7 +1153,7 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
           </button>
           
           <Avatar className="h-8 w-8">
-            <AvatarImage src={selectedGroup?.avatar_url} />
+            <AvatarImage src={selectedGroup?.image || selectedGroup?.avatar_url} />
             <AvatarFallback className="bg-blue-500 text-white text-sm">
               {selectedGroup?.name.slice(0, 2).toUpperCase() || 'CH'}
             </AvatarFallback>
@@ -1166,9 +1168,15 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
             </p>
           </div>
           
-          <Button variant="ghost" size="sm">
-            <MoreVertical className="h-4 w-4" />
-          </Button>
+          {/* Settings icon - only show for group admins/creators */}
+          {selectedChat.type === 'group' && selectedGroup && currentUser && 
+           (selectedGroup.creator_id === currentUser.id || selectedGroup.admin_ids?.includes(currentUser.id)) && (
+            <Link href={`/chats/groups/${selectedChat.id}/settings`} className="text-gray-600 hover:text-gray-800 transition-colors">
+              <Button variant="ghost" size="sm">
+                <Settings className="h-4 w-4" />
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 
