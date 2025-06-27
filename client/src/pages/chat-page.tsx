@@ -517,7 +517,23 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
   const handleSendMessage = () => {
     if (!messageText.trim() || !selectedChat) return;
     
-    sendMessageMutation.mutate({ text: messageText.trim() });
+    const messageData: { text: string; replyToId?: number } = { 
+      text: messageText.trim() 
+    };
+    
+    if (replyingTo) {
+      messageData.replyToId = replyingTo.id;
+    }
+    
+    sendMessageMutation.mutate(messageData);
+  };
+
+  const handleReply = (message: ChatMessage) => {
+    setReplyingTo(message);
+  };
+
+  const handleCancelReply = () => {
+    setReplyingTo(null);
   };
 
   // Auto scroll to bottom when new messages arrive
@@ -594,11 +610,34 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
               isOwn={currentUser?.id === message.user_id}
               currentUser={currentUser}
               onImageClick={setFullScreenImage}
+              onReply={handleReply}
             />
           ))
         )}
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Reply Preview */}
+      {replyingTo && (
+        <div className="p-3 bg-gray-700/50 border-t border-gray-600/30 flex items-center justify-between">
+          <div className="flex-1 min-w-0">
+            <div className="text-xs text-gray-400 mb-1">
+              Replying to {replyingTo.user?.name || 'Unknown'}
+            </div>
+            <div className="text-sm text-gray-300 truncate">
+              {replyingTo.text}
+            </div>
+          </div>
+          <Button
+            onClick={handleCancelReply}
+            size="sm"
+            variant="ghost"
+            className="text-gray-400 hover:text-white flex-shrink-0 ml-2"
+          >
+            ×
+          </Button>
+        </div>
+      )}
 
       {/* Message Input */}
       <div className="p-4 border-t border-gray-600/30 bg-black/20 backdrop-blur-sm flex-shrink-0">
@@ -606,7 +645,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
           <Input
             value={messageText}
             onChange={(e) => setMessageText(e.target.value)}
-            placeholder="Type a message..."
+            placeholder={replyingTo ? `Reply to ${replyingTo.user?.name}...` : "Type a message..."}
             className="flex-1 bg-gray-800/50 border-gray-600/50 text-white placeholder-gray-400"
             onKeyPress={(e) => {
               if (e.key === 'Enter') {
