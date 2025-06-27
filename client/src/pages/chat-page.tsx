@@ -165,12 +165,13 @@ const ChatPage = () => {
   const [messageText, setMessageText] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateGroup, setShowCreateGroup] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
-  // Fetch chat groups
+  // Fetch chat groups with refresh key to force re-renders
   const { data: chatGroups = [], isLoading: groupsLoading, refetch: refetchGroups } = useQuery({
-    queryKey: ['/api/chat/groups'],
+    queryKey: ['/api/chat/groups', refreshKey],
     queryFn: async () => {
       console.log('Fetching chat groups...');
       const response = await apiRequest('GET', '/api/chat/groups');
@@ -179,6 +180,31 @@ const ChatPage = () => {
       return data;
     }
   });
+
+  // Listen for navigation events and custom chat update events
+  useEffect(() => {
+    const handleLocationChange = () => {
+      // Force refresh when navigating back to chat
+      if (window.location.pathname === '/chat') {
+        setRefreshKey(prev => prev + 1);
+        refetchGroups();
+      }
+    };
+
+    const handleChatDataUpdate = () => {
+      console.log('Chat data update event received, forcing refresh...');
+      setRefreshKey(prev => prev + 1);
+      refetchGroups();
+    };
+
+    window.addEventListener('popstate', handleLocationChange);
+    window.addEventListener('chatDataUpdated', handleChatDataUpdate);
+    
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+      window.removeEventListener('chatDataUpdated', handleChatDataUpdate);
+    };
+  }, [refetchGroups]);
 
   // Fetch conversations
   const { data: conversations = [], isLoading: conversationsLoading } = useQuery({
@@ -348,7 +374,7 @@ const ChatPage = () => {
           ) : (
             <>
               {filteredGroups.map((group: ChatGroup, index: number) => (
-                <div key={group.id} className="relative">
+                <div key={`${group.id}-${group.name}-${group.description}-${refreshKey}`} className="relative">
                   <button
                     onClick={() => setSelectedChat({ type: 'group', id: group.id })}
                     className="w-full p-4 hover:bg-gray-50 transition-colors text-left"

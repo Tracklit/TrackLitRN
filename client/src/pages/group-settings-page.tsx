@@ -116,6 +116,9 @@ export default function GroupSettingsPage() {
       // Aggressive cache clearing
       queryClient.clear();
       
+      // Trigger a custom event to force chat page refresh
+      window.dispatchEvent(new CustomEvent('chatDataUpdated'));
+      
       toast({
         title: "Success",
         description: "Group updated successfully!",
