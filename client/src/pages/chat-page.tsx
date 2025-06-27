@@ -299,13 +299,14 @@ const ChatPage = () => {
     }}>
       {/* Header */}
       <div className="p-4 border-b border-gray-600/30 flex-shrink-0 bg-black/20 backdrop-blur-sm">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex flex-col items-start">
+        <div className="flex items-center gap-4">
+          {/* Logo and Home Link */}
+          <div className="flex flex-col items-start flex-shrink-0">
             <Link href="/" className="block">
               <img 
                 src={flameLogoPath} 
                 alt="TrackLit Logo" 
-                className="h-16 w-16 hover:opacity-80 transition-opacity"
+                className="h-12 w-12 hover:opacity-80 transition-opacity"
               />
             </Link>
             <Link 
@@ -315,24 +316,26 @@ const ChatPage = () => {
               Back To Home
             </Link>
           </div>
+          
+          {/* Search Bar */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search chats..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 bg-white/10 border-gray-600/30 text-white placeholder:text-gray-400 focus:bg-white/20"
+            />
+          </div>
+          
+          {/* Add Button */}
           <Button
             size="sm"
             onClick={() => setShowCreateGroup(true)}
-            className="bg-blue-500 hover:bg-blue-600"
+            className="bg-blue-500 hover:bg-blue-600 flex-shrink-0"
           >
             <Plus className="h-4 w-4" />
           </Button>
-        </div>
-        
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="Search chats..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-white/10 border-gray-600/30 text-white placeholder:text-gray-400 focus:bg-white/20"
-          />
         </div>
       </div>
 
