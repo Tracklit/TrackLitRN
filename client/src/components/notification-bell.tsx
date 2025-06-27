@@ -62,7 +62,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
         variant="ghost"
         size="sm"
         onClick={handleOpenPanel}
-        className={`relative ${className}`}
+        className={`h-9 w-9 p-0 text-gray-400 hover:text-white relative ${className}`}
       >
         <Bell className="h-5 w-5" />
         {unreadCount > 0 && (
