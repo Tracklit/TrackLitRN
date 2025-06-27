@@ -26,6 +26,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
+import { Link } from "wouter";
+import flameLogoPath from "@assets/C26250FA-10A6-41F0-8745-73C14962FB04_1751014331647.png";
 
 // Full-screen image viewer component
 const FullScreenImageViewer = ({ 
@@ -296,7 +298,21 @@ const ChatPage = () => {
       {/* Header */}
       <div className="p-4 border-b border-gray-200 flex-shrink-0">
         <div className="flex items-center justify-between mb-3">
-          <h1 className="text-xl font-semibold text-gray-900">Chats</h1>
+          <div className="flex flex-col items-start">
+            <Link href="/" className="block">
+              <img 
+                src={flameLogoPath} 
+                alt="TrackLit Logo" 
+                className="h-8 w-8 hover:opacity-80 transition-opacity"
+              />
+            </Link>
+            <Link 
+              href="/" 
+              className="text-xs text-gray-500 hover:text-gray-700 transition-colors mt-1"
+            >
+              Back To Home
+            </Link>
+          </div>
           <Button
             size="sm"
             onClick={() => setShowCreateGroup(true)}
