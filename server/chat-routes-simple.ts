@@ -134,8 +134,12 @@ router.get("/api/chat/groups/:groupId", async (req: Request, res: Response) => {
 
     const group = groupResult.rows[0];
 
-    // Check if user is a member
-    if (!(group as any).member_ids.includes(userId)) {
+    // Check if user is a member (handle both array and null cases)
+    const memberIds = (group as any).member_ids || [];
+    const isMember = Array.isArray(memberIds) ? memberIds.includes(userId) : false;
+    const isCreator = (group as any).creator_id === userId;
+    
+    if (!isMember && !isCreator) {
       return res.status(403).json({ error: "Not a member of this group" });
     }
 
@@ -330,7 +334,8 @@ router.delete("/api/chat/groups/:groupId/members/:userId", async (req: Request, 
     }
 
     const group = groupResult.rows[0];
-    const isAdmin = group.creator_id === currentUserId || group.admin_ids.includes(currentUserId);
+    const adminIds = group.admin_ids ? (Array.isArray(group.admin_ids) ? group.admin_ids : []) : [];
+    const isAdmin = group.creator_id === currentUserId || adminIds.includes(currentUserId);
 
     if (!isAdmin) {
       return res.status(403).json({ error: "Only admins can remove members" });
