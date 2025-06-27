@@ -246,7 +246,8 @@ export default function GroupSettingsPage() {
 
   // Check if current user is admin
   const isAdmin = currentUser && group && 
-    (group.creator_id === currentUser.id || group.admin_ids?.includes(currentUser.id));
+    (group.creator_id === currentUser.id || 
+     (Array.isArray(group.admin_ids) && group.admin_ids.includes(currentUser.id)));
 
   if (!isAdmin) {
     return (

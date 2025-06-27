@@ -280,7 +280,8 @@ router.post("/api/chat/groups/:groupId/members", async (req: Request, res: Respo
     }
 
     const group = groupResult.rows[0];
-    const isAdmin = group.creator_id === currentUserId || (group as any).admin_ids.includes(currentUserId);
+    const adminIds = (group as any).admin_ids ? (Array.isArray((group as any).admin_ids) ? (group as any).admin_ids : []) : [];
+    const isAdmin = group.creator_id === currentUserId || adminIds.includes(currentUserId);
 
     if (!isAdmin) {
       return res.status(403).json({ error: "Only admins can add members" });
