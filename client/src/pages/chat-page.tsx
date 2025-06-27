@@ -301,19 +301,13 @@ const ChatPage = () => {
       <div className="p-4 border-b border-gray-600/30 flex-shrink-0 bg-black/20 backdrop-blur-sm">
         <div className="flex items-center gap-4">
           {/* Logo and Home Link */}
-          <div className="flex flex-col items-start flex-shrink-0">
+          <div className="flex-shrink-0">
             <Link href="/" className="block">
               <img 
                 src={flameLogoPath} 
                 alt="TrackLit Logo" 
                 className="h-12 w-12 hover:opacity-80 transition-opacity"
               />
-            </Link>
-            <Link 
-              href="/" 
-              className="text-xs text-gray-300 hover:text-white transition-colors mt-1"
-            >
-              Back To Home
             </Link>
           </div>
           
