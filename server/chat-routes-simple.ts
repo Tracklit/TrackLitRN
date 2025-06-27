@@ -605,7 +605,7 @@ router.get("/api/chat/groups/:groupId/messages", async (req: Request, res: Respo
       return res.status(403).json({ error: "Access denied" });
     }
 
-    // Get messages with sender info
+    // Get messages with sender info - ORDER BY ASC for chronological order (oldest first)
     const messages = await db.execute(sql`
       SELECT 
         cgm.id,
@@ -618,17 +618,37 @@ router.get("/api/chat/groups/:groupId/messages", async (req: Request, res: Respo
         cgm.reply_to_id,
         cgm.is_deleted as is_edited,
         cgm.edited_at,
-        u.name as sender_name,
-        u.username as sender_username,
-        u.profile_image_url as sender_profile_image
+        u.name,
+        u.username,
+        u.profile_image_url
       FROM chat_group_messages cgm
       INNER JOIN users u ON cgm.sender_id = u.id
       WHERE cgm.group_id = ${groupId}
-      ORDER BY cgm.created_at DESC
+      ORDER BY cgm.created_at ASC
       LIMIT ${limit} OFFSET ${offset}
     `);
 
-    res.json(messages.rows);
+    // Transform messages to include user object structure
+    const transformedMessages = messages.rows.map((msg: any) => ({
+      id: msg.id,
+      group_id: msg.group_id,
+      user_id: msg.user_id,
+      text: msg.text,
+      created_at: msg.created_at,
+      message_type: msg.message_type,
+      media_url: msg.media_url,
+      reply_to_id: msg.reply_to_id,
+      is_edited: msg.is_edited,
+      edited_at: msg.edited_at,
+      user: {
+        id: msg.user_id,
+        name: msg.name,
+        username: msg.username,
+        profile_image_url: msg.profile_image_url
+      }
+    }));
+
+    res.json(transformedMessages);
   } catch (error) {
     console.error("Error fetching group messages:", error);
     res.status(500).json({ error: "Failed to fetch messages" });

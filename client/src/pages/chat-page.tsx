@@ -722,6 +722,9 @@ interface MessageBubbleProps {
 }
 
 const MessageBubble = ({ message, isOwn, currentUser, onImageClick }: MessageBubbleProps) => {
+  const [showMenu, setShowMenu] = useState(false);
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  
   const formatMessageTime = (timestamp: string) => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString('en-US', { 
@@ -731,8 +734,28 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick }: MessageBub
     });
   };
 
+  const handleLongPressStart = () => {
+    const timer = setTimeout(() => {
+      setShowMenu(true);
+    }, 500); // 500ms long press
+    setLongPressTimer(timer);
+  };
+
+  const handleLongPressEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+
+  const handleMenuAction = (action: string) => {
+    setShowMenu(false);
+    // TODO: Implement menu actions (reply, edit, delete, etc.)
+    console.log(`Menu action: ${action} for message ${message.id}`);
+  };
+
   return (
-    <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-4`}>
+    <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-4 relative`}>
       {/* Profile Image for received messages */}
       {!isOwn && (
         <div className="flex-shrink-0 mr-3">
@@ -745,11 +768,18 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick }: MessageBub
         </div>
       )}
       
-      <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-        isOwn 
-          ? 'bg-blue-600 text-white' 
-          : 'bg-gray-700 text-white'
-      }`}>
+      <div 
+        className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+          isOwn 
+            ? 'bg-blue-600 text-white' 
+            : 'bg-gray-700 text-white'
+        }`}
+        onMouseDown={handleLongPressStart}
+        onMouseUp={handleLongPressEnd}
+        onMouseLeave={handleLongPressEnd}
+        onTouchStart={handleLongPressStart}
+        onTouchEnd={handleLongPressEnd}
+      >
         {!isOwn && message.user && (
           <div className="text-xs text-gray-300 mb-1 font-medium">
             {message.user.name}
@@ -772,6 +802,40 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick }: MessageBub
           {formatMessageTime(message.created_at)}
         </div>
       </div>
+
+      {/* Long Press Menu */}
+      {showMenu && (
+        <div className="absolute top-0 right-0 bg-gray-800 rounded-lg shadow-lg z-50 py-2 min-w-[120px]">
+          <button 
+            onClick={() => handleMenuAction('reply')}
+            className="w-full px-4 py-2 text-left text-white hover:bg-gray-700 text-sm"
+          >
+            Reply
+          </button>
+          {isOwn && (
+            <>
+              <button 
+                onClick={() => handleMenuAction('edit')}
+                className="w-full px-4 py-2 text-left text-white hover:bg-gray-700 text-sm"
+              >
+                Edit
+              </button>
+              <button 
+                onClick={() => handleMenuAction('delete')}
+                className="w-full px-4 py-2 text-left text-red-400 hover:bg-gray-700 text-sm"
+              >
+                Delete
+              </button>
+            </>
+          )}
+          <button 
+            onClick={() => setShowMenu(false)}
+            className="w-full px-4 py-2 text-left text-gray-400 hover:bg-gray-700 text-sm"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
     </div>
   );
 };
