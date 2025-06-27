@@ -27,7 +27,7 @@ import {
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
-import flameLogoPath from "@assets/C26250FA-10A6-41F0-8745-73C14962FB04_1751014331647.png";
+import flameLogoPath from "@assets/IMG_4720_1751015409604.png";
 
 // Full-screen image viewer component
 const FullScreenImageViewer = ({ 
