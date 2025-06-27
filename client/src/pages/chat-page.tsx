@@ -311,13 +311,6 @@ const ChatPage = () => {
     }
   });
 
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages]);
-
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!messageText.trim() || !selectedChat) return;
@@ -1192,13 +1185,6 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
     }
   });
 
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages]);
-
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!messageText.trim() && !selectedImage) return;
@@ -1282,7 +1268,7 @@ const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
               />
             ))
           )}
-          <div ref={messagesEndRef} />
+
         </div>
       </div>
 
