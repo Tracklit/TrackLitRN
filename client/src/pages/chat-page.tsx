@@ -606,6 +606,18 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     setReplyingTo(null);
   };
 
+  // Define the missing handler functions
+  const handleReplyToMessage = (message: ChatMessage) => {
+    setReplyingTo(message);
+  };
+
+  const handleEditMessage = (message: ChatMessage) => {
+    // Since we're using native input method instead of inline editing,
+    // this function sets up the message for editing in the main input field
+    console.log("Edit message requested:", message.id);
+    // TODO: Implement native input editing functionality
+  };
+
   // Auto scroll to bottom when new messages arrive (not for reactions)
   const [lastMessageCount, setLastMessageCount] = useState(0);
   
