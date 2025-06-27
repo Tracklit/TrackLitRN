@@ -39,7 +39,13 @@ export function ChatButton() {
         title="Chat"
         onClick={handleChatClick}
       >
-        <Users className="h-5 w-5" />
+        <svg 
+          className="h-5 w-5 text-yellow-400 fill-yellow-400" 
+          viewBox="0 0 24 24" 
+          fill="currentColor"
+        >
+          <path d="M12 2L15 9L22 12L15 15L12 22L9 15L2 12L9 9Z" />
+        </svg>
         {unreadCount > 0 && (
           <Badge 
             variant="destructive" 
