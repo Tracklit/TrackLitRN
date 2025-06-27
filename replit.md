@@ -108,11 +108,12 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
-- June 27, 2025: Fixed chat functionality and updated UI design
+- June 27, 2025: Fixed chat functionality and updated UI design with dark theme
   - Fixed reply functionality - resolved parameter name mismatch between client (`reply_to_id`) and server (`replyToId`)
   - Chat system now fully functional with working reply feature
-  - Updated chat interface to use solid purple-gray background (`bg-purple-800`) for both main chat page and individual channels
-  - Replaced complex gradient backgrounds with clean, solid purple theme as requested
+  - Updated chat interface to use consistent dark slate theme (`bg-slate-900`) throughout
+  - Replaced complex gradient backgrounds with clean, solid dark theme as requested
+  - Applied darker slate background to both chat channel list and individual channels
   - Chat channel display properly fixed after resolving TypeScript errors
   - Message editing continues to use native input method
   - System messages display without speech bubbles and handle all message types properly
