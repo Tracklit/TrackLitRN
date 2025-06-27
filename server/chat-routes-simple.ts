@@ -353,6 +353,11 @@ router.get("/api/chat/groups/:groupId/members", async (req: Request, res: Respon
     console.log('Group ID:', groupId);
     console.log('Raw members result:', JSON.stringify(membersResult.rows, null, 2));
     
+    // Debug profile image URLs specifically
+    membersResult.rows.forEach((member: any) => {
+      console.log(`Member ${member.name} (ID: ${member.user_id}): profile_image_url = "${member.profile_image_url}"`);
+    });
+    
     res.json(membersResult.rows);
   } catch (error) {
     console.error("Error fetching group members:", error);

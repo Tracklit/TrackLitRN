@@ -67,12 +67,16 @@ export default function GroupSettingsPage() {
 
   // Fetch group members with details
   const { data: groupMembers = [], isLoading: membersLoading } = useQuery({
-    queryKey: ['/api/chat/groups', groupId, 'members'],
+    queryKey: ['/api/chat/groups', groupId, 'members', Date.now()], // Force fresh data
     queryFn: async () => {
-      const response = await apiRequest('GET', `/api/chat/groups/${groupId}/members`);
-      return response.json();
+      const response = await apiRequest('GET', `/api/chat/groups/${groupId}/members?t=${Date.now()}`);
+      const memberData = await response.json();
+      console.log('GROUP SETTINGS: Received member data:', memberData);
+      return memberData;
     },
-    enabled: !!groupId
+    enabled: !!groupId,
+    staleTime: 0, // Always consider data stale
+    gcTime: 0, // Don't cache at all
   });
 
   const form = useForm<UpdateGroupForm>({
