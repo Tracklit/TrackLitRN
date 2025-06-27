@@ -682,8 +682,25 @@ router.get("/api/chat/groups/:groupId/messages", async (req: Request, res: Respo
       LIMIT ${limit} OFFSET ${offset}
     `);
 
-    // Skip reactions for now to fix the crash - will implement later
-    const reactionsData: any[] = [];
+    // Get reactions for all messages
+    const messageIds = messages.rows.map((msg: any) => msg.id);
+    let reactionsData: any[] = [];
+    
+    if (messageIds.length > 0) {
+      // Use a simple IN clause instead of ANY to avoid type issues
+      const placeholders = messageIds.map(() => '?').join(',');
+      const reactionsResult = await db.execute(sql`
+        SELECT 
+          message_id,
+          emoji,
+          user_id,
+          created_at
+        FROM message_reactions 
+        WHERE message_id IN (${sql.raw(messageIds.join(','))}) AND message_type = 'group'
+        ORDER BY created_at ASC
+      `);
+      reactionsData = reactionsResult.rows;
+    }
 
     // Group reactions by message ID and emoji
     const reactionsByMessage = reactionsData.reduce((acc: any, reaction: any) => {
