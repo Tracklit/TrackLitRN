@@ -223,7 +223,15 @@ export default function GroupSettingsPage() {
 
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+    console.log('Image selected:', file);
+    
     if (file) {
+      console.log('File details:', {
+        name: file.name,
+        size: file.size,
+        type: file.type
+      });
+      
       if (file.size > 5 * 1024 * 1024) { // 5MB limit
         toast({
           title: "Error",
@@ -234,17 +242,23 @@ export default function GroupSettingsPage() {
       }
 
       setSelectedImage(file);
+      console.log('Image set to selectedImage state');
       
       // Create preview
       const reader = new FileReader();
       reader.onload = (e) => {
         setImagePreview(e.target?.result as string);
+        console.log('Image preview created');
       };
       reader.readAsDataURL(file);
     }
   };
 
   const onSubmit = (data: UpdateGroupForm) => {
+    console.log('Form submitted with data:', data);
+    console.log('Selected image:', selectedImage);
+    console.log('Image preview:', imagePreview);
+    
     updateGroupMutation.mutate({
       ...data,
       image: selectedImage || undefined,

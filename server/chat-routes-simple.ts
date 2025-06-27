@@ -182,8 +182,14 @@ router.patch("/api/chat/groups/:groupId", upload.single('image'), async (req: Re
 
     // Handle image upload
     let imageUrl = group.image;
+    console.log('File upload received:', req.file);
+    console.log('Current group image:', group.image);
+    
     if (req.file) {
       imageUrl = `/uploads/${req.file.filename}`;
+      console.log('New image URL:', imageUrl);
+    } else {
+      console.log('No file uploaded in request');
     }
 
     // Update group
