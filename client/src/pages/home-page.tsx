@@ -353,7 +353,7 @@ export default function HomePage() {
       <PreloadImages images={dashboardImages} quality={20} priority={true} />
       
       {/* Fixed Community Activity Ticker - Below Header */}
-      <div className={`fixed top-[45px] left-5 right-5 z-40 transition-transform duration-300 ease-in-out ${isTickerVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+      <div className={`fixed top-[65px] left-5 right-5 z-40 transition-transform duration-300 ease-in-out ${isTickerVisible ? 'translate-y-0' : '-translate-y-full'}`}>
         <div className="mx-auto" style={{ maxWidth: "500px" }}>
           <div className="bg-gradient-to-br from-purple-500 to-blue-800 relative rounded-sm">
             {/* Control buttons with higher z-index */}
@@ -394,7 +394,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <main data-dashboard="true" className={`px-4 container mx-auto max-w-7xl overflow-hidden ${isTickerVisible ? 'pt-32' : 'pt-20'}`}>
+      <main data-dashboard="true" className={`px-4 container mx-auto max-w-7xl overflow-hidden ${isTickerVisible ? 'pt-40' : 'pt-20'}`}>
         {/* Logo will be placed here in the future */}
         <div className="h-1 mx-auto" style={{ maxWidth: "540px" }}>
           {/* Reserved space for logo */}
