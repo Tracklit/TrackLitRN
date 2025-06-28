@@ -156,6 +156,33 @@ export default function CheckoutPage() {
     );
   }
 
+  // Handle case where Stripe is not configured
+  if (!stripePromise) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Card className="max-w-md mx-auto">
+          <CardHeader>
+            <CardTitle>Payment Unavailable</CardTitle>
+            <CardDescription>
+              Payment processing is currently unavailable
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground mb-4">
+              Payment functionality is not configured. Please contact support to complete your purchase.
+            </p>
+            <Button asChild>
+              <Link href={`/programs/${programId}`}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Program
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-md mx-auto">
