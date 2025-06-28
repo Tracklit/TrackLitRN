@@ -31,7 +31,7 @@ export function ChatButton() {
   };
 
   return (
-    <Link href="/chats">
+    <Link href="/chat">
       <Button
         variant="ghost"
         size="sm"

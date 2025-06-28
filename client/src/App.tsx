@@ -191,6 +191,9 @@ function Router() {
       <ProtectedRoute path="/clubs" component={ClubsPage} />
       <ProtectedRoute path="/club/:id" component={ClubDetailPage} />
       <ProtectedRoute path="/club-management/:id" component={ClubManagementPage} />
+      <ProtectedRoute path="/chat" component={HomePage} />
+      <ProtectedRoute path="/chats" component={HomePage} />
+      <ProtectedRoute path="/chats/groups/:id" component={HomePage} />
       <ProtectedRoute path="/chats/create" component={CreateGroupPage} />
       <ProtectedRoute path="/create-group" component={CreateGroupPage} />
       <ProtectedRoute path="/chats/groups/:id/settings" component={GroupSettingsPage} />
