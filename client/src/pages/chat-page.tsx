@@ -144,7 +144,7 @@ const ChatPage = () => {
   const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null);
   const [replyToMessage, setReplyToMessage] = useState<ChatMessage | null>(null);
 
-  const [refreshKey, setRefreshKey] = useState(0);
+  // Removed refreshKey to prevent unnecessary re-renders and image reloading
   const [localGroups, setLocalGroups] = useState<ChatGroup[]>([]);
   const [viewState, setViewState] = useState<'list' | 'chat'>('list'); // Track which view to show
   const [searchBarVisible, setSearchBarVisible] = useState(false);
@@ -273,25 +273,21 @@ const ChatPage = () => {
       setLocalGroups(data);
       return data;
     },
-    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
-    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    staleTime: Infinity, // Never consider data stale to prevent image reloading
+    gcTime: Infinity, // Keep in cache permanently
     refetchOnWindowFocus: false, // Don't refetch when window gains focus
     refetchOnMount: false, // Don't refetch when component mounts if data exists
+    refetchOnReconnect: false, // Don't refetch on reconnect
   });
 
   const activeGroups = localGroups.length > 0 ? localGroups : chatGroups;
 
-  // Handle popstate and chat data updates - but without refreshKey to prevent image reloading
+  // Handle chat data updates only - stable component to prevent image reloading
   useEffect(() => {
-    const handleLocationChange = () => {
-      // Only update refresh key for data refresh, not component remounting
-      setRefreshKey(prev => prev + 1);
-    };
-
     const handleChatDataUpdate = async () => {
       console.log('Chat data update event received');
       
-      // Force fetch fresh data and update local state immediately
+      // Update local state without triggering component refresh
       try {
         const response = await apiRequest('GET', '/api/chat/groups');
         const freshData = await response.json();
@@ -301,14 +297,12 @@ const ChatPage = () => {
         console.error('Error fetching fresh groups:', error);
       }
       
-      refetchGroups();
+      // Don't refetch to prevent image reloading - local state update is sufficient
     };
 
-    window.addEventListener('popstate', handleLocationChange);
     window.addEventListener('chatDataUpdated', handleChatDataUpdate);
     
     return () => {
-      window.removeEventListener('popstate', handleLocationChange);
       window.removeEventListener('chatDataUpdated', handleChatDataUpdate);
     };
   }, [refetchGroups]);
