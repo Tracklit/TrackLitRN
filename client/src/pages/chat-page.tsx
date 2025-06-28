@@ -755,7 +755,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     // TODO: Implement native input editing functionality
   };
 
-  // Force scroll to absolute bottom using container scrollTop
+  // Force scroll to absolute bottom using precise calculation
   useEffect(() => {
     if (messages.length > 0 && messagesContainerRef.current) {
       console.log("Forcing scroll to bottom with", messages.length, "messages");
@@ -763,16 +763,18 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
       const scrollToAbsoluteBottom = () => {
         if (messagesContainerRef.current) {
           const container = messagesContainerRef.current;
-          // Set scroll position to maximum possible value
-          container.scrollTop = container.scrollHeight;
-          console.log("Scrolled to:", container.scrollTop, "of", container.scrollHeight);
+          // Calculate the exact maximum scroll position
+          const maxScrollTop = container.scrollHeight - container.clientHeight;
+          container.scrollTop = maxScrollTop;
+          console.log("Scrolled to:", container.scrollTop, "max possible:", maxScrollTop, "total height:", container.scrollHeight);
         }
       };
       
-      // Multiple attempts to ensure we reach the bottom
+      // Multiple attempts with longer delays to ensure DOM is fully settled
       scrollToAbsoluteBottom();
-      setTimeout(scrollToAbsoluteBottom, 50);
-      setTimeout(scrollToAbsoluteBottom, 150);
+      setTimeout(scrollToAbsoluteBottom, 100);
+      setTimeout(scrollToAbsoluteBottom, 250);
+      setTimeout(scrollToAbsoluteBottom, 500);
     }
   }, [messages, selectedChat.id]);
 
