@@ -108,6 +108,13 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
+- June 28, 2025: Fixed channel settings and image upload functionality
+  - Restored channel settings page with all prior functionality including group management, member administration, and profile image updates
+  - Fixed channel profile image updates - images now properly display in channel list after upload
+  - Improved cache invalidation strategy using removeQueries and refetchQueries for immediate UI updates
+  - Fixed routing from chat header settings button to proper `/chats/groups/{id}/settings` URL
+  - Channel settings page fully operational with proper navigation and data persistence
+
 - June 28, 2025: App startup issues resolved and fully operational
   - Fixed missing OpenAI API key for voice transcription functionality
   - Fixed missing Stripe API keys for payment processing

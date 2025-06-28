@@ -114,24 +114,31 @@ export default function GroupSettingsPage() {
 
       return response.json();
     },
-    onSuccess: async () => {
+    onSuccess: async (updatedGroup) => {
       console.log('Group update successful, invalidating cache...');
       
-      // Aggressive cache clearing
+      // Force complete cache reset for all group-related data
       queryClient.clear();
       
-      // Trigger custom event before navigation
-      window.dispatchEvent(new CustomEvent('chatDataUpdated'));
+      // Wait a moment for cache to clear
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Prefetch fresh data
+      await queryClient.prefetchQuery({
+        queryKey: ['/api/chat/groups'],
+        queryFn: async () => {
+          const response = await apiRequest('GET', '/api/chat/groups');
+          return response.json();
+        }
+      });
       
       toast({
         title: "Success",
         description: "Group updated successfully!",
       });
       
-      // Small delay to ensure event processing
-      setTimeout(() => {
-        setLocation('/chat');
-      }, 100);
+      // Navigate back to chat
+      setLocation('/chats');
     },
     onError: (error) => {
       toast({
