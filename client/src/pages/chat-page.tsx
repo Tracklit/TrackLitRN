@@ -315,9 +315,24 @@ const ChatPage = () => {
   // Create group mutation
   // Group creation is now handled on dedicated page
 
+  // Image upload mutation
+  const uploadImageMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('image', file);
+      const response = await fetch('/api/upload/image', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+      if (!response.ok) throw new Error('Upload failed');
+      return response.json();
+    },
+  });
+
   // Send message mutation
   const sendMessageMutation = useMutation({
-    mutationFn: async (data: { text: string }) => {
+    mutationFn: async (data: { text?: string; media_url?: string; message_type?: string }) => {
       if (!selectedChat) return;
       const endpoint = selectedChat.type === 'group'
         ? `/api/chat/groups/${selectedChat.id}/messages`
@@ -327,6 +342,8 @@ const ChatPage = () => {
     },
     onSuccess: () => {
       setMessageText("");
+      setSelectedImage(null);
+      setImagePreview(null);
       setReplyToMessage(null);
       queryClient.invalidateQueries({
         queryKey: selectedChat?.type === 'group' 
@@ -639,8 +656,11 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const [replyToMessage, setReplyToMessage] = useState<ChatMessage | null>(null);
   const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const hasInitiallyLoadedRef = useRef(false);
   const queryClient = useQueryClient();
 
@@ -716,8 +736,8 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     }
   });
 
-  const handleSendMessage = () => {
-    if (!messageText.trim() || !selectedChat) return;
+  const handleSendMessage = async () => {
+    if ((!messageText.trim() && !selectedImage) || !selectedChat) return;
     
     if (editingMessage) {
       // Edit existing message
@@ -727,11 +747,52 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
       });
     } else {
       // Send new message
-      const messageData = replyToMessage 
-        ? { text: messageText.trim(), replyToId: replyToMessage.id }
-        : { text: messageText.trim() };
-      
-      sendMessageMutation.mutate(messageData);
+      try {
+        let messageData: any = {};
+        
+        if (selectedImage) {
+          // Upload image first
+          const uploadResult = await uploadImageMutation.mutateAsync(selectedImage);
+          messageData = {
+            text: messageText.trim() || '',
+            media_url: uploadResult.url,
+            message_type: 'image'
+          };
+        } else {
+          messageData = {
+            text: messageText.trim(),
+            message_type: 'text'
+          };
+        }
+        
+        if (replyToMessage) {
+          messageData.replyToId = replyToMessage.id;
+        }
+        
+        sendMessageMutation.mutate(messageData);
+      } catch (error) {
+        console.error('Error sending message:', error);
+      }
+    }
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeSelectedImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
