@@ -529,7 +529,7 @@ const ChatPage = () => {
               ) : null}
             </div>
             {/* Spacing between pull indicator and chat list */}
-            <div className="h-4"></div>
+            <div className="h-8"></div>
             <div className="space-y-0" key={`chat-list-${refreshKey}-${JSON.stringify(chatGroups)}`}>
               {(groupsLoading && chatGroups.length === 0) || (conversationsLoading && conversations.length === 0) ? (
                 <div className="flex justify-center py-8">
