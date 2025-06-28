@@ -849,7 +849,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <Avatar className="h-10 w-10">
-              <AvatarImage src={groupDetails?.image || groupDetails?.avatar_url} />
+              <AvatarImage src={(groupDetails?.image || groupDetails?.avatar_url) ? `${groupDetails?.image || groupDetails?.avatar_url}?t=${Date.now()}` : undefined} />
               <AvatarFallback className="bg-blue-500 text-white">
                 {groupDetails?.name?.slice(0, 2).toUpperCase() || 'CH'}
               </AvatarFallback>
