@@ -759,50 +759,63 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   
-  // Reliable scroll to bottom function
+  // Reliable scroll to bottom function with debugging
   const scrollToBottom = useCallback(() => {
     if (messagesContainerRef.current) {
       const container = messagesContainerRef.current;
-      container.scrollTop = container.scrollHeight - container.clientHeight;
+      const maxScroll = container.scrollHeight - container.clientHeight;
+      console.log("Scrolling to bottom:", { scrollHeight: container.scrollHeight, clientHeight: container.clientHeight, maxScroll });
+      container.scrollTop = maxScroll;
     }
   }, []);
   
-  // Enhanced scroll to bottom with anti-bounce protection
-  const scrollToBottomWithProtection = useCallback(() => {
+  // Wait for DOM content to be fully rendered before scrolling
+  const scrollToBottomWhenReady = useCallback(() => {
     if (messagesContainerRef.current) {
       const container = messagesContainerRef.current;
       
-      // Multiple scroll attempts to ensure it reaches bottom
-      const doScroll = () => {
-        container.scrollTop = container.scrollHeight - container.clientHeight;
+      // Check if content is actually rendered
+      const checkAndScroll = () => {
+        if (container.scrollHeight > container.clientHeight) {
+          console.log("Content ready, scrolling to bottom");
+          container.scrollTop = container.scrollHeight - container.clientHeight;
+          return true;
+        }
+        return false;
       };
       
-      // Immediate scroll
-      doScroll();
-      
-      // Follow-up scrolls to catch any layout changes
-      requestAnimationFrame(() => {
-        doScroll();
-        setTimeout(doScroll, 50);
-        setTimeout(doScroll, 100);
-      });
+      // Try immediate scroll first
+      if (!checkAndScroll()) {
+        console.log("Content not ready, waiting...");
+        // If content not ready, wait for next frame
+        requestAnimationFrame(() => {
+          if (!checkAndScroll()) {
+            // If still not ready, try a few more times
+            setTimeout(() => checkAndScroll(), 50);
+            setTimeout(() => checkAndScroll(), 100);
+            setTimeout(() => checkAndScroll(), 200);
+          }
+        });
+      }
     }
   }, []);
   
-  // Initial scroll when first entering a channel
-  useLayoutEffect(() => {
+  // Initial scroll when first entering a channel - wait for messages to render
+  useEffect(() => {
     if (messages.length > 0 && isInitialLoad) {
-      // Use requestAnimationFrame to ensure DOM is fully rendered
-      requestAnimationFrame(() => {
-        scrollToBottomWithProtection();
-      });
+      console.log("Initial load with", messages.length, "messages");
+      // Wait a bit longer to ensure DOM is fully updated
+      setTimeout(() => {
+        scrollToBottomWhenReady();
+      }, 100);
       setIsInitialLoad(false);
       setLastMessageCount(messages.length);
     }
-  }, [messages, isInitialLoad, scrollToBottomWithProtection]);
+  }, [messages, isInitialLoad, scrollToBottomWhenReady]);
   
   // Reset for new channel
   useEffect(() => {
+    console.log("Resetting for new channel:", selectedChat.id);
     setIsInitialLoad(true);
     setLastMessageCount(0);
   }, [selectedChat.id]);
@@ -810,7 +823,8 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
   // Handle new messages in existing channels
   useEffect(() => {
     if (!isInitialLoad && messages.length > lastMessageCount && lastMessageCount > 0) {
-      scrollToBottom();
+      console.log("New messages, scrolling to bottom");
+      setTimeout(() => scrollToBottom(), 50);
       setLastMessageCount(messages.length);
     }
   }, [messages.length, lastMessageCount, isInitialLoad, scrollToBottom]);
