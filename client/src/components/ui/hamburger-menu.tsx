@@ -1,26 +1,27 @@
 import { useState, useEffect } from "react";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
-  Menu, 
-  X, 
-  Home, 
-  Calendar, 
-  Trophy, 
-  LineChart, 
-  Users, 
-  User,
-  UserCheck,
-  Settings, 
-  Award, 
-  Clock,
-  Dumbbell, 
-  MessagesSquare, 
-  Coins,
-  BookOpen,
-  Target,
-  Shield,
-  Heart,
-  Gamepad2
-} from "lucide-react";
+  faBars,
+  faTimes,
+  faHome,
+  faCalendarDays,
+  faTrophy,
+  faChartLine,
+  faUsers,
+  faUser,
+  faUserCheck,
+  faCog,
+  faAward,
+  faClock,
+  faDumbbell,
+  faComments,
+  faCoins,
+  faBook,
+  faBullseye,
+  faShield,
+  faHeart,
+  faGamepad
+} from '@fortawesome/free-solid-svg-icons';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useLocation, Link } from "wouter";
@@ -79,9 +80,9 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
         onClick={() => setIsOpen(!isOpen)}
       >
         {isOpen ? (
-          <X className="h-6 w-6 text-foreground" />
+          <FontAwesomeIcon icon={faTimes} className="h-6 w-6 text-foreground" />
         ) : (
-          <Menu className="h-6 w-6 text-foreground" />
+          <FontAwesomeIcon icon={faBars} className="h-6 w-6 text-foreground" />
         )}
         <span className="sr-only">Toggle menu</span>
       </Button>
@@ -111,7 +112,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                 )}
                 onClick={() => setIsOpen(false)}
               >
-                <Home className="h-4 w-4 mr-3" />
+                <FontAwesomeIcon icon={faHome} className="h-4 w-4 mr-3" />
                 Dashboard
               </div>
             </Link>
@@ -128,7 +129,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                 )}
                 onClick={() => setIsOpen(false)}
               >
-                <Dumbbell className="h-4 w-4 mr-3" />
+                <FontAwesomeIcon icon={faDumbbell} className="h-4 w-4 mr-3" />
                 Practice
               </div>
             </Link>
@@ -140,7 +141,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                 )}
                 onClick={() => setIsOpen(false)}
               >
-                <BookOpen className="h-4 w-4 mr-3" />
+                <FontAwesomeIcon icon={faBook} className="h-4 w-4 mr-3" />
                 Programs
               </div>
             </Link>
@@ -152,7 +153,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                 )}
                 onClick={() => setIsOpen(false)}
               >
-                <Clock className="h-4 w-4 mr-3" />
+                <FontAwesomeIcon icon={faClock} className="h-4 w-4 mr-3" />
                 Training Tools
               </div>
             </Link>
@@ -164,7 +165,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                 )}
                 onClick={() => setIsOpen(false)}
               >
-                <Heart className="h-4 w-4 mr-3" />
+                <FontAwesomeIcon icon={faHeart} className="h-4 w-4 mr-3" />
                 Rehabilitation
               </div>
             </Link>
@@ -182,7 +183,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                 )}
                 onClick={() => setIsOpen(false)}
               >
-                <Trophy className="h-4 w-4 mr-3" />
+                <FontAwesomeIcon icon={faTrophy} className="h-4 w-4 mr-3" />
                 Meets
               </div>
             </Link>

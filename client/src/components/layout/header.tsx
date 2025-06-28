@@ -1,6 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, Globe } from "lucide-react";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSignOutAlt, faGlobe } from '@fortawesome/free-solid-svg-icons';
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Link } from "wouter";
@@ -56,7 +57,7 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
                 onClick={() => toggleTickerVisibility(!isTickerVisible)}
                 title={isTickerVisible ? "Hide ticker" : "Show ticker"}
               >
-                <Globe className="h-5 w-5" />
+                <FontAwesomeIcon icon={faGlobe} className="h-5 w-5" />
               </Button>
             </div>
             
@@ -74,7 +75,7 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
                   <Link href="/profile" className="cursor-pointer">Profile</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-500">
-                  <LogOut className="mr-2 h-4 w-4" />
+                  <FontAwesomeIcon icon={faSignOutAlt} className="mr-2 h-4 w-4" />
                   <span>Logout</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
