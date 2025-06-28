@@ -342,8 +342,6 @@ const ChatPage = () => {
     },
     onSuccess: () => {
       setMessageText("");
-      setSelectedImage(null);
-      setImagePreview(null);
       setReplyToMessage(null);
       queryClient.invalidateQueries({
         queryKey: selectedChat?.type === 'group' 
@@ -758,6 +756,12 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
             media_url: uploadResult.url,
             message_type: 'image'
           };
+          // Clear image state after successful upload
+          setSelectedImage(null);
+          setImagePreview(null);
+          if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+          }
         } else {
           messageData = {
             text: messageText.trim(),
@@ -938,7 +942,74 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
 
       {/* Message Input */}
       <div className="p-4 border-t border-gray-600/30 bg-black/20 backdrop-blur-sm flex-shrink-0">
-        <div className="flex gap-2">
+        {/* Reply Preview */}
+        {replyToMessage && (
+          <div className="mb-3 bg-gray-800/50 border-l-4 border-blue-500 p-3 rounded-r-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <p className="text-sm text-gray-300 font-medium">
+                  Replying to {replyToMessage.user?.name}
+                </p>
+                <p className="text-sm text-gray-400 truncate">
+                  {replyToMessage.message_type === 'image' ? '📷 Photo' : replyToMessage.text}
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={cancelReply}
+                className="ml-2 p-1 h-6 w-6 text-gray-400 hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Image Preview */}
+        {imagePreview && (
+          <div className="mb-3 p-3 bg-gray-800/50 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-300">Image Preview</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={removeSelectedImage}
+                className="h-6 w-6 p-0 text-gray-400 hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <img 
+              src={imagePreview} 
+              alt="Preview" 
+              className="max-w-full h-auto max-h-32 rounded object-cover"
+            />
+          </div>
+        )}
+
+        <div className="flex gap-2 items-end">
+          {/* Image Upload Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="p-2 h-10 w-10 rounded-full text-gray-400 hover:text-white hover:bg-gray-700/50"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploadImageMutation.isPending}
+          >
+            <Image className="h-5 w-5" />
+          </Button>
+
+          {/* Hidden File Input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageSelect}
+            className="hidden"
+          />
+
+          {/* Message Input */}
           <Input
             value={messageText}
             onChange={(e) => setMessageText(e.target.value)}
@@ -956,9 +1027,11 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
               }
             }}
           />
+
+          {/* Send Button */}
           <Button 
             onClick={handleSendMessage}
-            disabled={!messageText.trim() || sendMessageMutation.isPending || editMessageMutation.isPending}
+            disabled={(!messageText.trim() && !selectedImage) || sendMessageMutation.isPending || editMessageMutation.isPending || uploadImageMutation.isPending}
             className="bg-blue-600 hover:bg-blue-700"
           >
             {editingMessage ? <Edit className="h-4 w-4" /> : <Send className="h-4 w-4" />}
