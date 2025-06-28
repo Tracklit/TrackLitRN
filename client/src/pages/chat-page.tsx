@@ -641,6 +641,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
   const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const hasInitiallyLoadedRef = useRef(false);
   const queryClient = useQueryClient();
 
   // Fetch current user
