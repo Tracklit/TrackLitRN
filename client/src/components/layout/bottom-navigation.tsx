@@ -51,7 +51,7 @@ const navItems = [
   { 
     title: "Chat", 
     href: "/chat", 
-    icon: <img src={flameIcon} alt="Chat" className="h-5 w-5" />,
+    icon: <img src={flameIcon} alt="Chat" className="h-10 w-10" />,
     key: "chat"
   }
 ];
@@ -81,7 +81,7 @@ function NavItem({ href, icon, title, isActive, onClick, showBadge, badgeCount }
           "transition-colors duration-200",
           isActive ? "text-accent" : "text-gray-300"
         )}>
-          <div className="w-5 h-5">
+          <div className="flex items-center justify-center">
             {icon}
           </div>
         </div>
@@ -107,24 +107,8 @@ export function BottomNavigation() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Fetch unread message count for chat badge
-  const { data: unreadCount = 0 } = useQuery({
-    queryKey: ['unread-chat-count'],
-    queryFn: async () => {
-      const response = await fetch('/api/chat/unread-count');
-      if (!response.ok) return 0;
-      return response.json();
-    },
-    enabled: !!user,
-    refetchInterval: 30000,
-    staleTime: 30000,
-  });
-
   const handleChatClick = () => {
-    // Invalidate unread count when navigating to chat
-    setTimeout(() => {
-      queryClient.invalidateQueries({ queryKey: ['unread-chat-count'] });
-    }, 1000);
+    // Handle chat navigation
   };
 
   // Update current index based on location
@@ -182,8 +166,8 @@ export function BottomNavigation() {
               title={item.title}
               isActive={index === currentIndex}
               onClick={item.key === 'chat' ? handleChatClick : undefined}
-              showBadge={item.key === 'chat'}
-              badgeCount={item.key === 'chat' ? unreadCount : undefined}
+              showBadge={false}
+              badgeCount={undefined}
             />
           ))}
         </div>
