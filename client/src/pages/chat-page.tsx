@@ -755,7 +755,45 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     // TODO: Implement native input editing functionality
   };
 
-  // No scroll positioning needed - flexbox column-reverse handles this automatically
+  // State for managing scroll position without visual animation
+  const [isMessagesVisible, setIsMessagesVisible] = useState(false);
+  const [currentChannelId, setCurrentChannelId] = useState(selectedChat.id);
+
+  // Handle channel changes
+  useEffect(() => {
+    if (selectedChat.id !== currentChannelId) {
+      setIsMessagesVisible(false);
+      setCurrentChannelId(selectedChat.id);
+    }
+  }, [selectedChat.id, currentChannelId]);
+
+  // Handle initial positioning and visibility
+  useEffect(() => {
+    if (messages.length > 0 && !isMessagesVisible && messagesContainerRef.current) {
+      const container = messagesContainerRef.current;
+      
+      // Set scroll position immediately before making visible
+      requestAnimationFrame(() => {
+        const maxScroll = container.scrollHeight - container.clientHeight;
+        container.scrollTop = maxScroll;
+        setIsMessagesVisible(true);
+      });
+    }
+  }, [messages, isMessagesVisible]);
+
+  // Auto-scroll for new messages when at bottom
+  useEffect(() => {
+    if (messages.length > 0 && isMessagesVisible && messagesContainerRef.current) {
+      const container = messagesContainerRef.current;
+      const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+      
+      if (isAtBottom) {
+        requestAnimationFrame(() => {
+          container.scrollTop = container.scrollHeight - container.clientHeight;
+        });
+      }
+    }
+  }, [messages.length, isMessagesVisible]);
 
   const formatMessageTime = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -805,11 +843,9 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
       {/* Messages Area */}
       <div 
         ref={messagesContainerRef} 
-        className="flex-1 overflow-y-auto p-4 space-y-4"
-        style={{
-          display: 'flex',
-          flexDirection: 'column-reverse'
-        }}
+        className={`flex-1 overflow-y-auto p-4 space-y-4 transition-opacity duration-200 ${
+          isMessagesVisible ? 'opacity-100' : 'opacity-0'
+        }`}
       >
         {messagesLoading ? (
           <div className="flex justify-center py-8">
@@ -822,7 +858,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
             <p className="text-sm">Start the conversation!</p>
           </div>
         ) : (
-          messages.slice().reverse().map((message: ChatMessage) => (
+          messages.map((message: ChatMessage) => (
             <MessageBubble
               key={message.id}
               message={message}
