@@ -53,7 +53,7 @@ const navItems = [
   { 
     title: "Chat", 
     href: "/chat", 
-    icon: <img src={chatBubbleIcon} alt="Chat" className="h-5 w-5" />,
+    icon: <img src={chatBubbleIcon} alt="Chat" className="h-7 w-7 brightness-0 invert" />,
     key: "chat"
   }
 ];

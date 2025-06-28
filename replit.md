@@ -122,7 +122,7 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
   - Replaced bottom navigation chat icon (Users) with custom flame icon while preserving red dot notification functionality
   - Removed badge functionality from chat icon and doubled its size (h-10 w-10)
   - Replaced flame icon with custom chat bubble icon (overlapping speech bubbles with dots) in bottom navigation
-  - Resized chat icon to match other navigation icons (h-5 w-5)
+  - Made chat icon larger (h-7 w-7) and white using brightness-0 invert classes
   - Removed floating icon completely from chat page
 
 - June 28, 2025: Fixed channel settings and image upload functionality
