@@ -148,7 +148,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               <div
                 className={cn(
                   "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
-                  location === "/training-tools" ? "bg-primary text-primary-foreground" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                  location === "/training-tools" ? "bg-primary text-primary-foreground" : "text-gray-300"
                 )}
                 onClick={() => setIsOpen(false)}
               >
@@ -160,7 +160,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               <div
                 className={cn(
                   "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
-                  location.startsWith("/rehab") ? "bg-primary text-primary-foreground" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                  location.startsWith("/rehab") ? "bg-primary text-primary-foreground" : "text-gray-300"
                 )}
                 onClick={() => setIsOpen(false)}
               >
@@ -178,7 +178,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               <div
                 className={cn(
                   "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
-                  location === "/meets" ? "bg-primary text-primary-foreground" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                  location === "/meets" ? "bg-primary text-primary-foreground" : "text-gray-300"
                 )}
                 onClick={() => setIsOpen(false)}
               >
@@ -190,7 +190,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               <div
                 className={cn(
                   "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
-                  location === "/results" ? "bg-primary text-primary-foreground" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                  location === "/results" ? "bg-primary text-primary-foreground" : "text-gray-300"
                 )}
                 onClick={() => setIsOpen(false)}
               >
@@ -207,7 +207,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               <div
                 className={cn(
                   "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
-                  location === "/arcade" ? "bg-primary text-primary-foreground" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                  location === "/arcade" ? "bg-primary text-primary-foreground" : "text-gray-300"
                 )}
                 onClick={() => setIsOpen(false)}
               >
@@ -224,7 +224,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               <div
                 className={cn(
                   "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
-                  location === "/connections" ? "bg-primary text-primary-foreground" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                  location === "/connections" ? "bg-primary text-primary-foreground" : "text-gray-300"
                 )}
                 onClick={() => setIsOpen(false)}
               >
@@ -236,7 +236,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               <div
                 className={cn(
                   "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
-                  location === "/chat" ? "bg-primary text-primary-foreground" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                  location === "/chat" ? "bg-primary text-primary-foreground" : "text-gray-300"
                 )}
                 onClick={() => setIsOpen(false)}
               >
@@ -249,7 +249,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                 <div
                   className={cn(
                     "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
-                    location === "/my-athletes" ? "bg-primary text-primary-foreground" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                    location === "/my-athletes" ? "bg-primary text-primary-foreground" : "text-gray-300"
                   )}
                   onClick={() => setIsOpen(false)}
                 >
