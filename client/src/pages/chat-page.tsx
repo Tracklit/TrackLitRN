@@ -168,32 +168,34 @@ const ChatPage = () => {
     const touch = e.touches[0];
     setDragStartY(touch.clientY);
     
-    // Only start drag detection if at the very top
+    // Don't set dragging state immediately - wait for actual movement
     if (container.scrollTop === 0) {
-      setIsDragging(true);
+      // Just store the start position, don't set dragging yet
     }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging) return;
-    
     const container = e.currentTarget as HTMLElement;
     const touch = e.touches[0];
     const deltaY = touch.clientY - dragStartY;
     
-    // Only handle downward pulls when at top
-    if (container.scrollTop === 0 && deltaY > 10) {
+    // Only start dragging if user has moved significantly and we're at top
+    if (container.scrollTop === 0 && deltaY > 20) {
+      if (!isDragging) {
+        setIsDragging(true);
+      }
+      
       e.preventDefault(); // Prevent bounce scroll
       e.stopPropagation();
       
-      const offset = Math.min(deltaY - 10, 100); // Subtract 10px threshold
+      const offset = Math.min(deltaY - 20, 100); // Subtract 20px threshold
       setDragOffset(Math.max(0, offset));
       
       // Show search bar when pulled down enough
-      if (offset > 30 && !searchBarVisible) {
+      if (offset > 40 && !searchBarVisible) {
         setSearchBarVisible(true);
       }
-    } else if (deltaY < -10) {
+    } else if (deltaY < -10 && isDragging) {
       // Reset if user drags up
       setIsDragging(false);
       setDragOffset(0);
@@ -209,7 +211,7 @@ const ChatPage = () => {
     setIsDragging(false);
     
     // Keep search bar visible if pulled far enough
-    if (dragOffset < 60) {
+    if (dragOffset < 70) {
       setSearchBarVisible(false);
     }
     
@@ -522,9 +524,9 @@ const ChatPage = () => {
                   <div className="text-xs text-blue-400 font-medium">Release to search</div>
                 </div>
               ) : isAtTop ? (
-                <div className="flex items-center gap-2 opacity-60">
-                  <div className="w-6 h-0.5 bg-gray-500 rounded-full"></div>
-                  <div className="text-xs text-gray-500">Pull down to search</div>
+                <div className="flex items-center gap-2 opacity-30">
+                  <div className="w-6 h-0.5 bg-gray-600 rounded-full"></div>
+                  <div className="text-xs text-gray-600">Pull down to search</div>
                 </div>
               ) : null}
             </div>
