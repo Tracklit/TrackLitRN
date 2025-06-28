@@ -756,20 +756,28 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     // TODO: Implement native input editing functionality
   };
 
-  // Force immediate scroll to bottom - runs before paint
+  // Prevent any scroll animation by setting position immediately
   useLayoutEffect(() => {
     const container = messagesContainerRef.current;
-    if (!container || messages.length === 0) return;
+    if (!container) return;
 
-    // Force scroll to bottom immediately with no animation
+    // Disable scroll behavior and set position immediately
+    const originalBehavior = container.style.scrollBehavior;
     container.style.scrollBehavior = 'auto';
     container.scrollTop = container.scrollHeight;
     
-    // Reset scroll behavior for future interactions
-    setTimeout(() => {
-      container.style.scrollBehavior = 'smooth';
-    }, 0);
+    // Keep it as auto to prevent any future animations
+    // Don't restore smooth scrolling
   }, [messages, selectedChat.id]);
+
+  // Initialize at bottom on mount
+  useLayoutEffect(() => {
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.style.scrollBehavior = 'auto';
+      container.scrollTop = container.scrollHeight;
+    }
+  }, []);
 
 
 
@@ -879,7 +887,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
               {editingMessage ? 'Editing message' : `Replying to ${replyToMessage?.user?.name || 'Unknown'}`}
             </div>
             <div className="text-sm text-gray-300 truncate">
-              {editingMessage ? editingMessage.text : replyToMessage?.text}
+              {editingMessage ? editingMessage?.text : replyToMessage?.text}
             </div>
           </div>
           <Button
