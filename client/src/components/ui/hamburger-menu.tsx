@@ -263,7 +263,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                 <div
                   className={cn(
                     "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
-                    location === "/roster-stats" ? "bg-primary text-primary-foreground" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                    location === "/roster-stats" ? "bg-primary text-primary-foreground" : "text-gray-300"
                   )}
                   onClick={() => setIsOpen(false)}
                 >
@@ -276,7 +276,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               <div
                 className={cn(
                   "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
-                  location === "/athletes" ? "bg-primary text-primary-foreground" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                  location === "/athletes" ? "bg-primary text-primary-foreground" : "text-gray-300"
                 )}
                 onClick={() => setIsOpen(false)}
               >
@@ -290,7 +290,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               <div
                 className={cn(
                   "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
-                  location === "/coaches" ? "bg-primary text-primary-foreground" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                  location === "/coaches" ? "bg-primary text-primary-foreground" : "text-gray-300"
                 )}
                 onClick={() => setIsOpen(false)}
               >
@@ -302,7 +302,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               <div
                 className={cn(
                   "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
-                  location === "/groups" ? "bg-primary text-primary-foreground" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                  location === "/groups" ? "bg-primary text-primary-foreground" : "text-gray-300"
                 )}
                 onClick={() => setIsOpen(false)}
               >
@@ -321,7 +321,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                   <div
                     className={cn(
                       "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
-                      location === "/admin-panel" ? "bg-primary text-primary-foreground" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                      location === "/admin-panel" ? "bg-primary text-primary-foreground" : "text-gray-300"
                     )}
                     onClick={() => setIsOpen(false)}
                   >
@@ -340,7 +340,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               <div
                 className={cn(
                   "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
-                  location === "/athlete-profile" ? "bg-primary text-primary-foreground" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                  location === "/athlete-profile" ? "bg-primary text-primary-foreground" : "text-gray-300"
                 )}
                 onClick={() => setIsOpen(false)}
               >
@@ -352,7 +352,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               <div
                 className={cn(
                   "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
-                  location === "/spikes" ? "bg-primary text-primary-foreground" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                  location === "/spikes" ? "bg-primary text-primary-foreground" : "text-gray-300"
                 )}
                 onClick={() => setIsOpen(false)}
               >
@@ -364,7 +364,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               <div
                 className={cn(
                   "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
-                  location === "/profile" ? "bg-primary text-primary-foreground" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                  location === "/profile" ? "bg-primary text-primary-foreground" : "text-gray-300"
                 )}
                 onClick={() => setIsOpen(false)}
               >
