@@ -755,7 +755,16 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     // TODO: Implement native input editing functionality
   };
 
-  // Force scroll to absolute bottom using precise calculation
+  // Reset scroll position immediately when channel changes to prevent bouncing
+  useEffect(() => {
+    if (messagesContainerRef.current) {
+      // Immediately reset scroll to top to prevent bouncing from previous position
+      messagesContainerRef.current.scrollTop = 0;
+      console.log("Reset scroll position for channel", selectedChat.id);
+    }
+  }, [selectedChat.id]);
+
+  // Force scroll to absolute bottom after messages load
   useEffect(() => {
     if (messages.length > 0 && messagesContainerRef.current) {
       console.log("Forcing scroll to bottom with", messages.length, "messages");
@@ -775,7 +784,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
       setTimeout(scrollToAbsoluteBottom, 400);
       setTimeout(scrollToAbsoluteBottom, 600);
     }
-  }, [messages, selectedChat.id]);
+  }, [messages]);
 
   const formatMessageTime = (timestamp: string) => {
     const date = new Date(timestamp);
