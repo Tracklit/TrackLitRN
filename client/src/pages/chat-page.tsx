@@ -755,9 +755,9 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     // TODO: Implement native input editing functionality
   };
 
-  // Track scroll and loading state
+  // Track scroll state
   const [userHasScrolledUp, setUserHasScrolledUp] = useState(false);
-  const [messagesReady, setMessagesReady] = useState(false);
+  const isInitialLoad = useRef(true);
 
   // Check if user is at bottom of chat
   const isAtBottom = useCallback(() => {
@@ -769,13 +769,13 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
 
   // Handle scroll events to detect user interaction
   const handleScroll = useCallback(() => {
-    if (!messagesContainerRef.current || !messagesReady) return;
+    if (!messagesContainerRef.current || isInitialLoad.current) return;
     
     const atBottom = isAtBottom();
     setUserHasScrolledUp(!atBottom);
-  }, [isAtBottom, messagesReady]);
+  }, [isAtBottom]);
 
-  // Position at bottom instantly without visible movement
+  // Position at bottom instantly
   const positionAtBottom = useCallback(() => {
     if (!messagesContainerRef.current) return;
     
@@ -786,43 +786,36 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
 
   // Reset state when changing channels
   useEffect(() => {
-    setMessagesReady(false);
+    isInitialLoad.current = true;
     setUserHasScrolledUp(false);
   }, [selectedChat.id]);
 
-  // Handle messages loading and positioning
+  // Force immediate bottom position on messages load
+  useLayoutEffect(() => {
+    if (messages.length > 0 && messagesContainerRef.current) {
+      positionAtBottom();
+      
+      if (isInitialLoad.current) {
+        isInitialLoad.current = false;
+      }
+    }
+  }, [messages, positionAtBottom]);
+
+  // Add scroll listener
   useEffect(() => {
-    if (messages.length === 0) {
-      setMessagesReady(false);
-      return;
-    }
-
-    // For channel entry, position immediately then show
-    if (!messagesReady) {
-      // Position at bottom before showing messages
-      setTimeout(() => {
-        positionAtBottom();
-        setMessagesReady(true);
-      }, 50);
-      return;
-    }
-
-    // For new messages, only scroll if user is at bottom
-    if (!userHasScrolledUp) {
-      setTimeout(positionAtBottom, 50);
-    }
-  }, [messages, messagesReady, userHasScrolledUp, positionAtBottom]);
-
-  // Add scroll listener only when messages are ready
-  useEffect(() => {
-    if (!messagesReady) return;
-    
     const container = messagesContainerRef.current;
     if (!container) return;
 
     container.addEventListener('scroll', handleScroll, { passive: true });
     return () => container.removeEventListener('scroll', handleScroll);
-  }, [handleScroll, messagesReady]);
+  }, [handleScroll]);
+
+  // Handle new messages - only auto-scroll if user is at bottom
+  useEffect(() => {
+    if (messages.length > 0 && !isInitialLoad.current && !userHasScrolledUp) {
+      positionAtBottom();
+    }
+  }, [messages.length, userHasScrolledUp, positionAtBottom]);
 
   const formatMessageTime = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -872,9 +865,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
       {/* Messages Area */}
       <div 
         ref={messagesContainerRef} 
-        className={`flex-1 overflow-y-auto p-4 space-y-4 transition-opacity duration-200 ${
-          messagesReady ? 'opacity-100' : 'opacity-0'
-        }`}
+        className="flex-1 overflow-y-auto p-4 space-y-4"
       >
         {messagesLoading ? (
           <div className="flex justify-center py-8">
