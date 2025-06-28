@@ -153,35 +153,39 @@ const ChatPage = () => {
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [isAtTop, setIsAtTop] = useState(true);
-  const [isEntering, setIsEntering] = useState(true); // Start with entrance animation
-  const [isExiting, setIsExiting] = useState(false); // Track exit animation
+  const [isVisible, setIsVisible] = useState(false); // Track if chat should be visible
+  const [isAnimating, setIsAnimating] = useState(false); // Track animation state
   
   const [location] = useLocation();
   const queryClient = useQueryClient();
 
-  // Handle entrance and exit animations based on route
+  // Check if we're on a chat route
   const isChatRoute = location.startsWith('/chat') || location.startsWith('/chats');
   
   useEffect(() => {
-    if (isChatRoute) {
-      // Entering chat - start with entering state, then animate in
-      setIsEntering(true);
-      setIsExiting(false);
+    if (isChatRoute && !isVisible) {
+      // Start entrance animation
+      setIsVisible(true);
+      setIsAnimating(true);
+      
+      // Complete entrance animation
       const timer = setTimeout(() => {
-        setIsEntering(false);
-      }, 50);
+        setIsAnimating(false);
+      }, 300);
+      
       return () => clearTimeout(timer);
-    } else {
-      // Exiting chat - start exit animation
-      if (!isEntering) { // Only exit if we're not currently entering
-        setIsExiting(true);
-        const timer = setTimeout(() => {
-          setIsExiting(false);
-        }, 300);
-        return () => clearTimeout(timer);
-      }
+    } else if (!isChatRoute && isVisible) {
+      // Start exit animation
+      setIsAnimating(true);
+      
+      const timer = setTimeout(() => {
+        setIsVisible(false);
+        setIsAnimating(false);
+      }, 300);
+      
+      return () => clearTimeout(timer);
     }
-  }, [isChatRoute, isEntering]);
+  }, [isChatRoute, isVisible]);
 
   // Scroll handler to track position
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -452,13 +456,10 @@ const ChatPage = () => {
     // Don't clear selectedChat immediately - let it persist in memory
   };
 
-  // Calculate if chat should be visible
-  const shouldShowChat = isChatRoute;
-  
   return (
     <div className={`w-full h-full overflow-hidden bg-slate-900 transition-transform duration-300 ease-in-out ${
-      !shouldShowChat || isEntering || isExiting ? 'translate-x-full' : 'translate-x-0'
-    } ${shouldShowChat ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+      !isVisible ? 'translate-x-full' : 'translate-x-0'
+    } ${isVisible ? 'pointer-events-auto' : 'pointer-events-none'}`}>
       {/* Channel List View - Always mounted but conditionally visible */}
       <div 
         className={`absolute inset-0 w-full h-full transition-transform duration-300 ease-in-out bg-slate-900 ${
