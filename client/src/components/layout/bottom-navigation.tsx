@@ -9,6 +9,7 @@ import {
   Users,
   MessageCircle
 } from "lucide-react";
+import chatBubbleIcon from "@assets/IMG_4748_1751143315595.png";
 
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
@@ -52,7 +53,7 @@ const navItems = [
   { 
     title: "Chat", 
     href: "/chat", 
-    icon: <MessageCircle className="h-10 w-10 fill-current" />,
+    icon: <img src={chatBubbleIcon} alt="Chat" className="h-5 w-5" />,
     key: "chat"
   }
 ];
