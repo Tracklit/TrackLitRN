@@ -770,11 +770,10 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
         }
       };
       
-      // Multiple attempts with longer delays to ensure DOM is fully settled
-      scrollToAbsoluteBottom();
-      setTimeout(scrollToAbsoluteBottom, 100);
-      setTimeout(scrollToAbsoluteBottom, 250);
-      setTimeout(scrollToAbsoluteBottom, 500);
+      // Wait for layout to be completely stable before scrolling
+      setTimeout(scrollToAbsoluteBottom, 200);
+      setTimeout(scrollToAbsoluteBottom, 400);
+      setTimeout(scrollToAbsoluteBottom, 600);
     }
   }, [messages, selectedChat.id]);
 
