@@ -121,9 +121,9 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
   - Reinstated InstallAppButton with full PWA installation functionality and Spikes reward system
   - Replaced bottom navigation chat icon (Users) with custom flame icon while preserving red dot notification functionality
   - Removed badge functionality from chat icon and doubled its size (h-10 w-10)
-  - Replaced flame icon with custom chat bubble icon (overlapping speech bubbles with dots) in bottom navigation
-  - Made chat icon larger (h-7 w-7) and white using brightness-0 invert classes
-  - Added left margin (-ml-1) to position chat icon 5px to the left
+  - Replaced all bottom navigation icons with Font Awesome solid equivalents
+  - Chat icon uses faComments (larger h-7 w-7 with left margin -ml-1)
+  - Dashboard, Practice, Programs, Race, and Tools use matching Font Awesome icons
   - Removed floating icon completely from chat page
 
 - June 28, 2025: Fixed channel settings and image upload functionality

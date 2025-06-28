@@ -1,15 +1,14 @@
 import { Link, useLocation } from "wouter";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
-  Home, 
-  Calendar, 
-  BookOpen, 
-  Trophy, 
-  Clock, 
-  Star,
-  Users,
-  MessageCircle
-} from "lucide-react";
-import chatBubbleIcon from "@assets/IMG_4748_1751143315595.png";
+  faHome,
+  faCalendarDays,
+  faBook,
+  faTrophy,
+  faClock,
+  faStar,
+  faComments
+} from '@fortawesome/free-solid-svg-icons';
 
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
@@ -23,37 +22,37 @@ const navItems = [
   { 
     title: "Dashboard", 
     href: "/", 
-    icon: <Home className="h-5 w-5" />,
+    icon: <FontAwesomeIcon icon={faHome} className="h-5 w-5" />,
     key: "dashboard"
   },
   { 
     title: "Practice", 
     href: "/practice", 
-    icon: <Calendar className="h-5 w-5" />,
+    icon: <FontAwesomeIcon icon={faCalendarDays} className="h-5 w-5" />,
     key: "practice"
   },
   { 
     title: "Programs", 
     href: "/programs", 
-    icon: <BookOpen className="h-5 w-5" />,
+    icon: <FontAwesomeIcon icon={faBook} className="h-5 w-5" />,
     key: "programs"
   },
   { 
     title: "Race", 
     href: "/meets", 
-    icon: <Trophy className="h-5 w-5" />,
+    icon: <FontAwesomeIcon icon={faTrophy} className="h-5 w-5" />,
     key: "race"
   },
   { 
     title: "Tools", 
     href: "/training-tools", 
-    icon: <Clock className="h-5 w-5" />,
+    icon: <FontAwesomeIcon icon={faClock} className="h-5 w-5" />,
     key: "tools"
   },
   { 
     title: "Chat", 
     href: "/chat", 
-    icon: <img src={chatBubbleIcon} alt="Chat" className="h-7 w-7 brightness-0 invert -ml-1" />,
+    icon: <FontAwesomeIcon icon={faComments} className="h-7 w-7 -ml-1" />,
     key: "chat"
   }
 ];
