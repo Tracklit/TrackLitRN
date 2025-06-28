@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import flameLogoPath from "@assets/IMG_4720_1751015409604.png";
 
 // Full-screen image viewer component
@@ -153,8 +153,21 @@ const ChatPage = () => {
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [isAtTop, setIsAtTop] = useState(true);
-
+  const [isEntering, setIsEntering] = useState(true); // Track entrance animation
+  
+  const [location] = useLocation();
   const queryClient = useQueryClient();
+
+  // Handle entrance animation
+  useEffect(() => {
+    // Start entrance animation on mount
+    setIsEntering(true);
+    const timer = setTimeout(() => {
+      setIsEntering(false);
+    }, 300); // Match transition duration
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   // Scroll handler to track position
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -426,7 +439,9 @@ const ChatPage = () => {
   };
 
   return (
-    <div className="fixed inset-0 w-full h-full overflow-hidden bg-slate-900">
+    <div className={`fixed inset-0 w-full h-full overflow-hidden bg-slate-900 transition-transform duration-300 ease-in-out ${
+      isEntering ? 'translate-x-full' : 'translate-x-0'
+    }`}>
       {/* Channel List View - Always mounted but conditionally visible */}
       <div 
         className={`absolute inset-0 w-full h-full transition-transform duration-300 ease-in-out bg-slate-900 ${
