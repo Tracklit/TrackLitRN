@@ -754,73 +754,66 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     // TODO: Implement native input editing functionality
   };
 
-  // Simple but effective scroll management
+  // Scroll management with proper timing
   const [lastMessageCount, setLastMessageCount] = useState(0);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const shouldStayAtBottom = useRef(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   
-  // Simple scroll to bottom function
+  // Reliable scroll to bottom function
   const scrollToBottom = useCallback(() => {
     if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      const container = messagesContainerRef.current;
+      container.scrollTop = container.scrollHeight - container.clientHeight;
     }
   }, []);
   
-  // Use ResizeObserver to maintain bottom position during layout changes
-  useEffect(() => {
-    const container = messagesContainerRef.current;
-    if (!container) return;
-    
-    const resizeObserver = new ResizeObserver(() => {
-      if (shouldStayAtBottom.current) {
-        scrollToBottom();
-      }
-    });
-    
-    const mutationObserver = new MutationObserver(() => {
-      if (shouldStayAtBottom.current) {
-        scrollToBottom();
-      }
-    });
-    
-    resizeObserver.observe(container);
-    mutationObserver.observe(container, { childList: true, subtree: true });
-    
-    return () => {
-      resizeObserver.disconnect();
-      mutationObserver.disconnect();
-    };
-  }, [scrollToBottom]);
-  
-  // Initial scroll when messages first load - set flag to maintain position
-  useEffect(() => {
-    if (messages.length > 0) {
-      shouldStayAtBottom.current = true;
-      scrollToBottom();
-      setLastMessageCount(messages.length);
+  // Enhanced scroll to bottom with anti-bounce protection
+  const scrollToBottomWithProtection = useCallback(() => {
+    if (messagesContainerRef.current) {
+      const container = messagesContainerRef.current;
       
-      // Only maintain bottom position for first 1 second after channel load
-      const timer = setTimeout(() => {
-        shouldStayAtBottom.current = false;
-      }, 1000);
+      // Multiple scroll attempts to ensure it reaches bottom
+      const doScroll = () => {
+        container.scrollTop = container.scrollHeight - container.clientHeight;
+      };
       
-      return () => clearTimeout(timer);
+      // Immediate scroll
+      doScroll();
+      
+      // Follow-up scrolls to catch any layout changes
+      requestAnimationFrame(() => {
+        doScroll();
+        setTimeout(doScroll, 50);
+        setTimeout(doScroll, 100);
+      });
     }
-  }, [selectedChat.id, scrollToBottom]); // Trigger on channel change
+  }, []);
+  
+  // Initial scroll when first entering a channel
+  useLayoutEffect(() => {
+    if (messages.length > 0 && isInitialLoad) {
+      // Use requestAnimationFrame to ensure DOM is fully rendered
+      requestAnimationFrame(() => {
+        scrollToBottomWithProtection();
+      });
+      setIsInitialLoad(false);
+      setLastMessageCount(messages.length);
+    }
+  }, [messages, isInitialLoad, scrollToBottomWithProtection]);
+  
+  // Reset for new channel
+  useEffect(() => {
+    setIsInitialLoad(true);
+    setLastMessageCount(0);
+  }, [selectedChat.id]);
   
   // Handle new messages in existing channels
   useEffect(() => {
-    if (messages.length > lastMessageCount && lastMessageCount > 0) {
+    if (!isInitialLoad && messages.length > lastMessageCount && lastMessageCount > 0) {
       scrollToBottom();
       setLastMessageCount(messages.length);
     }
-  }, [messages.length, lastMessageCount, scrollToBottom]);
-  
-  // Reset message count when changing channels
-  useEffect(() => {
-    setLastMessageCount(0);
-    shouldStayAtBottom.current = false;
-  }, [selectedChat.id]);
+  }, [messages.length, lastMessageCount, isInitialLoad, scrollToBottom]);
 
   const formatMessageTime = (timestamp: string) => {
     const date = new Date(timestamp);
