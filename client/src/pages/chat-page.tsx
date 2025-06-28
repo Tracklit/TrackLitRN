@@ -144,7 +144,7 @@ const ChatPage = () => {
   const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null);
   const [replyToMessage, setReplyToMessage] = useState<ChatMessage | null>(null);
 
-  // Removed refreshKey and componentKey to prevent unnecessary re-renders
+  const [refreshKey, setRefreshKey] = useState(0);
   const [localGroups, setLocalGroups] = useState<ChatGroup[]>([]);
   const [viewState, setViewState] = useState<'list' | 'chat'>('list'); // Track which view to show
   const [searchBarVisible, setSearchBarVisible] = useState(false);
@@ -281,8 +281,13 @@ const ChatPage = () => {
 
   const activeGroups = localGroups.length > 0 ? localGroups : chatGroups;
 
-  // Handle chat data updates without causing image reloading
+  // Handle popstate and chat data updates - but without refreshKey to prevent image reloading
   useEffect(() => {
+    const handleLocationChange = () => {
+      // Only update refresh key for data refresh, not component remounting
+      setRefreshKey(prev => prev + 1);
+    };
+
     const handleChatDataUpdate = async () => {
       console.log('Chat data update event received');
       
@@ -299,9 +304,11 @@ const ChatPage = () => {
       refetchGroups();
     };
 
+    window.addEventListener('popstate', handleLocationChange);
     window.addEventListener('chatDataUpdated', handleChatDataUpdate);
     
     return () => {
+      window.removeEventListener('popstate', handleLocationChange);
       window.removeEventListener('chatDataUpdated', handleChatDataUpdate);
     };
   }, [refetchGroups]);
@@ -537,7 +544,7 @@ const ChatPage = () => {
             </div>
             {/* Spacing between pull indicator and chat list */}
             <div className="h-8"></div>
-            <div className="space-y-0" key={`chat-list-${JSON.stringify(chatGroups)}`}>
+            <div className="space-y-0">
               {(groupsLoading && chatGroups.length === 0) || (conversationsLoading && conversations.length === 0) ? (
                 <div className="flex justify-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
