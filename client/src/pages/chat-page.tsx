@@ -756,6 +756,23 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     // TODO: Implement native input editing functionality
   };
 
+  // Force scroll to bottom immediately after DOM paint
+  useLayoutEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    if (!hasInitiallyLoadedRef.current && messages.length > 0) {
+      // Jump to bottom immediately after layout, no scroll animation
+      container.scrollTop = container.scrollHeight;
+      hasInitiallyLoadedRef.current = true;
+    }
+  }, [messages]);
+
+  // Reset initial load flag when changing channels
+  useEffect(() => {
+    hasInitiallyLoadedRef.current = false;
+  }, [selectedChat.id]);
+
 
 
 
