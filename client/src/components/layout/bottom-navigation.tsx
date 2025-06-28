@@ -8,6 +8,7 @@ import {
   Star,
   Users
 } from "lucide-react";
+import flameIcon from "@assets/IMG_4720_1751142021835.png";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { useKeyboard } from "@/contexts/keyboard-context";
@@ -50,7 +51,7 @@ const navItems = [
   { 
     title: "Chat", 
     href: "/chat", 
-    icon: <Users className="h-5 w-5" />,
+    icon: <img src={flameIcon} alt="Chat" className="h-5 w-5" />,
     key: "chat"
   }
 ];

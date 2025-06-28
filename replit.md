@@ -119,6 +119,7 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
   - Added 20px spacing above ticker (moved from top-[45px] to top-[65px]) and 20px below (increased padding from pt-32 to pt-40)
   - Removed ChatButton from top bar and temporarily removed InstallAppButton for cleaner interface
   - Reinstated InstallAppButton with full PWA installation functionality and Spikes reward system
+  - Replaced bottom navigation chat icon (Users) with custom flame icon while preserving red dot notification functionality
 
 - June 28, 2025: Fixed channel settings and image upload functionality
   - Restored channel settings page with all prior functionality including group management, member administration, and profile image updates
