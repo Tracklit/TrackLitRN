@@ -217,58 +217,7 @@ const ChatPage = () => {
     setDragStartY(0);
   };
 
-  // Global mouse move listener for desktop
-  useEffect(() => {
-    const handleGlobalMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
-      
-      const deltaY = e.clientY - dragStartY;
-      
-      if (deltaY > 0) {
-        const offset = Math.min(deltaY, 120);
-        setDragOffset(offset);
-        
-        if (offset > 40 && !searchBarVisible) {
-          setSearchBarVisible(true);
-        }
-      }
-    };
 
-    const handleGlobalMouseUp = () => {
-      if (!isDragging) return;
-      
-      setIsDragging(false);
-      
-      if (dragOffset < 80) {
-        setSearchBarVisible(false);
-      }
-      
-      setDragOffset(0);
-      setDragStartY(0);
-    };
-
-    if (isDragging) {
-      document.addEventListener('mousemove', handleGlobalMouseMove);
-      document.addEventListener('mouseup', handleGlobalMouseUp);
-    }
-
-    return () => {
-      document.removeEventListener('mousemove', handleGlobalMouseMove);
-      document.removeEventListener('mouseup', handleGlobalMouseUp);
-    };
-  }, [isDragging, dragStartY, dragOffset, searchBarVisible]);
-
-  // Mouse down handler for desktop
-  const handleMouseDown = (e: React.MouseEvent) => {
-    const container = e.currentTarget as HTMLElement;
-    const isAtTop = container.scrollTop <= 0;
-    
-    if (!isAtTop) return;
-    
-    setDragStartY(e.clientY);
-    setIsDragging(true);
-    e.preventDefault();
-  };
 
   // Fetch chat groups with proper caching
   const { data: chatGroups = [], isLoading: groupsLoading, refetch: refetchGroups } = useQuery({
@@ -557,14 +506,13 @@ const ChatPage = () => {
             </div>
           </div>
 
-          {/* Chat List - Full Width */}
+          {/* Chat List - Mobile Touch Only */}
           <div 
             className="flex-1 overflow-y-auto relative"
             onScroll={handleScroll}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
-            onMouseDown={handleMouseDown}
           >
             {/* Pull-to-reveal indicator at top */}
             <div className="absolute top-0 left-0 right-0 h-6 flex items-center justify-center z-20 bg-gradient-to-b from-slate-800/50 to-transparent">
