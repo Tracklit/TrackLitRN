@@ -755,27 +755,68 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     // TODO: Implement native input editing functionality
   };
 
-  // Position at bottom immediately without any scroll animation
+  // Track if user has manually scrolled up from bottom
+  const [userHasScrolledUp, setUserHasScrolledUp] = useState(false);
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
+
+  // Check if user is at bottom of chat
+  const isAtBottom = useCallback(() => {
+    if (!messagesContainerRef.current) return false;
+    const container = messagesContainerRef.current;
+    const threshold = 50; // 50px threshold for "at bottom"
+    return (container.scrollHeight - container.scrollTop - container.clientHeight) <= threshold;
+  }, []);
+
+  // Handle scroll events to detect user interaction
+  const handleScroll = useCallback(() => {
+    if (!messagesContainerRef.current) return;
+    
+    const atBottom = isAtBottom();
+    setUserHasScrolledUp(!atBottom);
+  }, [isAtBottom]);
+
+  // Smart scroll to bottom - only when appropriate
+  const scrollToBottom = useCallback(() => {
+    if (!messagesContainerRef.current) return;
+    
+    const container = messagesContainerRef.current;
+    const maxScrollTop = container.scrollHeight - container.clientHeight;
+    container.scrollTop = maxScrollTop;
+  }, []);
+
+  // Reset scroll state when changing channels
   useEffect(() => {
-    if (messages.length > 0 && messagesContainerRef.current) {
-      console.log("Positioning at bottom with", messages.length, "messages");
-      
-      const positionAtBottom = () => {
-        if (messagesContainerRef.current) {
-          const container = messagesContainerRef.current;
-          // Calculate and set bottom position instantly
-          const maxScrollTop = container.scrollHeight - container.clientHeight;
-          container.scrollTop = maxScrollTop;
-          console.log("Positioned at:", container.scrollTop, "max possible:", maxScrollTop);
-        }
-      };
-      
-      // Position immediately with no delay for instant appearance
-      positionAtBottom();
-      // One backup positioning after layout settles
-      setTimeout(positionAtBottom, 50);
+    setIsFirstLoad(true);
+    setUserHasScrolledUp(false);
+  }, [selectedChat.id]);
+
+  // Main scroll logic - handles both initial load and new messages
+  useEffect(() => {
+    if (messages.length === 0 || !messagesContainerRef.current) return;
+
+    // Always scroll to bottom on first load of a channel
+    if (isFirstLoad) {
+      setTimeout(() => {
+        scrollToBottom();
+        setIsFirstLoad(false);
+      }, 100);
+      return;
     }
-  }, [messages, selectedChat.id]);
+
+    // For new messages, only scroll if user is already at bottom
+    if (!userHasScrolledUp) {
+      setTimeout(scrollToBottom, 50);
+    }
+  }, [messages, isFirstLoad, userHasScrolledUp, scrollToBottom]);
+
+  // Add scroll listener
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
 
   const formatMessageTime = (timestamp: string) => {
     const date = new Date(timestamp);
