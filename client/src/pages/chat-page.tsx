@@ -755,20 +755,24 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     // TODO: Implement native input editing functionality
   };
 
-  // Scroll to bottom - simplified to prevent crashes
+  // Force scroll to absolute bottom using container scrollTop
   useEffect(() => {
-    if (messages.length > 0) {
-      console.log("Messages loaded:", messages.length);
-      // Simple timeout-based scroll
-      setTimeout(() => {
-        if (messagesEndRef.current) {
-          try {
-            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-          } catch (error) {
-            console.error("Scroll error:", error);
-          }
+    if (messages.length > 0 && messagesContainerRef.current) {
+      console.log("Forcing scroll to bottom with", messages.length, "messages");
+      
+      const scrollToAbsoluteBottom = () => {
+        if (messagesContainerRef.current) {
+          const container = messagesContainerRef.current;
+          // Set scroll position to maximum possible value
+          container.scrollTop = container.scrollHeight;
+          console.log("Scrolled to:", container.scrollTop, "of", container.scrollHeight);
         }
-      }, 100);
+      };
+      
+      // Multiple attempts to ensure we reach the bottom
+      scrollToAbsoluteBottom();
+      setTimeout(scrollToAbsoluteBottom, 50);
+      setTimeout(scrollToAbsoluteBottom, 150);
     }
   }, [messages, selectedChat.id]);
 
