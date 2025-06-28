@@ -225,12 +225,10 @@ function Router() {
       <Route component={NotFound} />
       </Switch>
       
-      {/* Chat Overlay - renders on top of main content when on chat routes */}
-      {isChatRoute && (
-        <div className="fixed inset-0 z-50">
-          <ChatPage />
-        </div>
-      )}
+      {/* Chat Overlay - always mounted to prevent remounting, controlled by internal state */}
+      <div className="fixed inset-0 z-50 pointer-events-none">
+        <ChatPage />
+      </div>
     </>
   );
 }

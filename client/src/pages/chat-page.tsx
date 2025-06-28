@@ -159,25 +159,29 @@ const ChatPage = () => {
   const [location] = useLocation();
   const queryClient = useQueryClient();
 
-  // Handle entrance animation on mount
-  useEffect(() => {
-    // Start entrance animation immediately
-    const timer = setTimeout(() => {
-      setIsEntering(false);
-    }, 50); // Small delay to ensure smooth transition
-    
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Handle navigation away from chat (exit animation)
+  // Handle entrance and exit animations based on route
   const isChatRoute = location.startsWith('/chat') || location.startsWith('/chats');
   
   useEffect(() => {
-    if (!isChatRoute) {
-      // Start exit animation when navigating away
-      setIsExiting(true);
+    if (isChatRoute) {
+      // Entering chat - start with entering state, then animate in
+      setIsEntering(true);
+      setIsExiting(false);
+      const timer = setTimeout(() => {
+        setIsEntering(false);
+      }, 50);
+      return () => clearTimeout(timer);
+    } else {
+      // Exiting chat - start exit animation
+      if (!isEntering) { // Only exit if we're not currently entering
+        setIsExiting(true);
+        const timer = setTimeout(() => {
+          setIsExiting(false);
+        }, 300);
+        return () => clearTimeout(timer);
+      }
     }
-  }, [isChatRoute]);
+  }, [isChatRoute, isEntering]);
 
   // Scroll handler to track position
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -448,10 +452,13 @@ const ChatPage = () => {
     // Don't clear selectedChat immediately - let it persist in memory
   };
 
+  // Calculate if chat should be visible
+  const shouldShowChat = isChatRoute;
+  
   return (
     <div className={`w-full h-full overflow-hidden bg-slate-900 transition-transform duration-300 ease-in-out ${
-      !isVisible || isExiting ? 'translate-x-full' : 'translate-x-0'
-    }`}>
+      !shouldShowChat || isEntering || isExiting ? 'translate-x-full' : 'translate-x-0'
+    } ${shouldShowChat ? 'pointer-events-auto' : 'pointer-events-none'}`}>
       {/* Channel List View - Always mounted but conditionally visible */}
       <div 
         className={`absolute inset-0 w-full h-full transition-transform duration-300 ease-in-out bg-slate-900 ${
