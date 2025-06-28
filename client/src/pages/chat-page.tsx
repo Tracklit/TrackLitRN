@@ -755,36 +755,45 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     // TODO: Implement native input editing functionality
   };
 
-  // State for managing initial load
-  const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
+  // State for scroll management
+  const [shouldShowMessages, setShouldShowMessages] = useState(false);
   const currentChannelRef = useRef(selectedChat.id);
 
-  // Reset state when channel changes
+  // Reset visibility when channel changes
   useEffect(() => {
     if (selectedChat.id !== currentChannelRef.current) {
-      setHasInitiallyLoaded(false);
+      setShouldShowMessages(false);
       currentChannelRef.current = selectedChat.id;
     }
   }, [selectedChat.id]);
 
-  // Force scroll position using useLayoutEffect before any paint
-  useLayoutEffect(() => {
-    if (messages.length > 0 && messagesContainerRef.current) {
-      const container = messagesContainerRef.current;
-      
-      if (!hasInitiallyLoaded) {
-        // Force immediate scroll to bottom on initial load
-        container.scrollTop = container.scrollHeight;
-        setHasInitiallyLoaded(true);
-      } else {
-        // Auto-scroll for new messages if at bottom
-        const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-        if (isAtBottom) {
+  // Handle messages loading and positioning
+  useEffect(() => {
+    if (messages.length > 0 && !shouldShowMessages) {
+      // Use a small delay to ensure DOM is fully updated
+      const timer = setTimeout(() => {
+        if (messagesContainerRef.current) {
+          const container = messagesContainerRef.current;
           container.scrollTop = container.scrollHeight;
+          setShouldShowMessages(true);
         }
+      }, 10);
+
+      return () => clearTimeout(timer);
+    }
+  }, [messages, shouldShowMessages]);
+
+  // Auto-scroll for new messages
+  useEffect(() => {
+    if (messages.length > 0 && shouldShowMessages && messagesContainerRef.current) {
+      const container = messagesContainerRef.current;
+      const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+      
+      if (isAtBottom) {
+        container.scrollTop = container.scrollHeight;
       }
     }
-  }, [messages, hasInitiallyLoaded]);
+  }, [messages.length, shouldShowMessages]);
 
 
 
@@ -836,7 +845,9 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
       {/* Messages Area */}
       <div 
         ref={messagesContainerRef} 
-        className="flex-1 overflow-y-auto p-4 space-y-4"
+        className={`flex-1 overflow-y-auto p-4 space-y-4 transition-opacity duration-100 ${
+          shouldShowMessages ? 'opacity-100' : 'opacity-0'
+        }`}
       >
         {messagesLoading ? (
           <div className="flex justify-center py-8">
