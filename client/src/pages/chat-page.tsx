@@ -153,7 +153,6 @@ const ChatPage = () => {
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [isAtTop, setIsAtTop] = useState(true);
-  const [isVisible, setIsVisible] = useState(false); // Track if chat should be visible
   const [isAnimating, setIsAnimating] = useState(false); // Track animation state
   
   const [location] = useLocation();
@@ -163,9 +162,8 @@ const ChatPage = () => {
   const isChatRoute = location.startsWith('/chat') || location.startsWith('/chats');
   
   useEffect(() => {
-    if (isChatRoute && !isVisible) {
+    if (isChatRoute) {
       // Start entrance animation
-      setIsVisible(true);
       setIsAnimating(true);
       
       // Complete entrance animation
@@ -174,18 +172,17 @@ const ChatPage = () => {
       }, 300);
       
       return () => clearTimeout(timer);
-    } else if (!isChatRoute && isVisible) {
-      // Start exit animation
+    } else {
+      // Start exit animation if we were visible
       setIsAnimating(true);
       
       const timer = setTimeout(() => {
-        setIsVisible(false);
         setIsAnimating(false);
       }, 300);
       
       return () => clearTimeout(timer);
     }
-  }, [isChatRoute, isVisible]);
+  }, [isChatRoute]);
 
   // Scroll handler to track position
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -289,7 +286,7 @@ const ChatPage = () => {
   useEffect(() => {
     const handleLocationChange = () => {
       setRefreshKey(prev => prev + 1);
-      setComponentKey(Date.now());
+      // Removed setComponentKey to prevent channel image reloading
     };
 
     const handleChatDataUpdate = async () => {
@@ -458,15 +455,15 @@ const ChatPage = () => {
 
   return (
     <div className={`w-full h-full overflow-hidden bg-slate-900 transition-transform duration-300 ease-in-out ${
-      !isVisible ? 'translate-x-full' : 'translate-x-0'
-    } ${isVisible ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+      !isChatRoute ? 'translate-x-full' : 'translate-x-0'
+    } ${isChatRoute ? 'pointer-events-auto' : 'pointer-events-none'}`}>
       {/* Channel List View - Always mounted but conditionally visible */}
       <div 
         className={`absolute inset-0 w-full h-full transition-transform duration-300 ease-in-out bg-slate-900 ${
           viewState === 'list' ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div key={`chat-page-${componentKey}`} className="flex flex-col w-full h-full bg-slate-900">
+        <div className="flex flex-col w-full h-full bg-slate-900">
           {/* Header */}
           <div className="p-4 border-b border-gray-600/30 flex-shrink-0 bg-black/20 backdrop-blur-sm">
             <div className="flex items-center gap-4">
