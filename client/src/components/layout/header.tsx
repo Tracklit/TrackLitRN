@@ -43,8 +43,7 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
               {/* Direct Messages Panel */}
               <MessageButton />
               
-              {/* Chat Groups */}
-              <ChatButton />
+
               
               {/* Ticker Toggle */}
               <Button
