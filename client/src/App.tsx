@@ -150,8 +150,20 @@ function Router() {
   return (
     <>
       <ScrollRestoration />
-      {/* Main App Routes - always rendered */}
-      <Switch>
+      {/* Main Content Container - stable positioning */}
+      <div 
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          overflow: 'hidden',
+          isolation: 'isolate'
+        }}
+      >
+        {/* Main App Routes - always rendered */}
+        <Switch>
       {/* Dashboard */}
       <ProtectedRoute path="/" component={HomePage} />
       
@@ -226,10 +238,22 @@ function Router() {
       {/* Auth */}
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
-      </Switch>
+        </Switch>
+      </div>
       
-      {/* Chat Overlay - always mounted to prevent remounting, controlled by internal state */}
-      <div className="fixed inset-0 z-50 pointer-events-none" style={{ contain: 'layout style paint' }}>
+      {/* Chat Overlay - completely isolated from main layout */}
+      <div 
+        className="fixed inset-0 z-50 pointer-events-none" 
+        style={{ 
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          contain: 'strict',
+          isolation: 'isolate'
+        }}
+      >
         <ChatPage />
       </div>
     </>

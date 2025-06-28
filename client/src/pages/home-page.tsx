@@ -343,8 +343,10 @@ export default function HomePage() {
       style={{ 
         overscrollBehavior: 'none', 
         marginTop: '-15px',
-        isolation: 'isolate',
-        contain: 'layout'
+        position: 'relative',
+        transform: 'translate3d(0, 0, 0)',
+        backfaceVisibility: 'hidden',
+        willChange: 'auto'
       }}
     >
       {/* Preload critical images */}
