@@ -755,36 +755,27 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     // TODO: Implement native input editing functionality
   };
 
-  // Reset scroll position immediately when channel changes to prevent bouncing
-  useEffect(() => {
-    if (messagesContainerRef.current) {
-      // Immediately reset scroll to top to prevent bouncing from previous position
-      messagesContainerRef.current.scrollTop = 0;
-      console.log("Reset scroll position for channel", selectedChat.id);
-    }
-  }, [selectedChat.id]);
-
-  // Force scroll to absolute bottom after messages load
+  // Position at bottom immediately without any scroll animation
   useEffect(() => {
     if (messages.length > 0 && messagesContainerRef.current) {
-      console.log("Forcing scroll to bottom with", messages.length, "messages");
+      console.log("Positioning at bottom with", messages.length, "messages");
       
-      const scrollToAbsoluteBottom = () => {
+      const positionAtBottom = () => {
         if (messagesContainerRef.current) {
           const container = messagesContainerRef.current;
-          // Calculate the exact maximum scroll position
+          // Calculate and set bottom position instantly
           const maxScrollTop = container.scrollHeight - container.clientHeight;
           container.scrollTop = maxScrollTop;
-          console.log("Scrolled to:", container.scrollTop, "max possible:", maxScrollTop, "total height:", container.scrollHeight);
+          console.log("Positioned at:", container.scrollTop, "max possible:", maxScrollTop);
         }
       };
       
-      // Wait for layout to be completely stable before scrolling
-      setTimeout(scrollToAbsoluteBottom, 200);
-      setTimeout(scrollToAbsoluteBottom, 400);
-      setTimeout(scrollToAbsoluteBottom, 600);
+      // Position immediately with no delay for instant appearance
+      positionAtBottom();
+      // One backup positioning after layout settles
+      setTimeout(positionAtBottom, 50);
     }
-  }, [messages]);
+  }, [messages, selectedChat.id]);
 
   const formatMessageTime = (timestamp: string) => {
     const date = new Date(timestamp);
