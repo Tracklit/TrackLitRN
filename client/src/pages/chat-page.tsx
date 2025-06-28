@@ -755,75 +755,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     // TODO: Implement native input editing functionality
   };
 
-  // Track scroll state and initialization
-  const [userHasScrolledUp, setUserHasScrolledUp] = useState(false);
-  const [isChannelReady, setIsChannelReady] = useState(false);
-  const initialChannelId = useRef(selectedChat.id);
-
-  // Check if user is at bottom of chat
-  const isAtBottom = useCallback(() => {
-    if (!messagesContainerRef.current) return false;
-    const container = messagesContainerRef.current;
-    const threshold = 50;
-    return (container.scrollHeight - container.scrollTop - container.clientHeight) <= threshold;
-  }, []);
-
-  // Handle scroll events to detect user interaction
-  const handleScroll = useCallback(() => {
-    if (!messagesContainerRef.current || !isChannelReady) return;
-    
-    const atBottom = isAtBottom();
-    setUserHasScrolledUp(!atBottom);
-  }, [isAtBottom, isChannelReady]);
-
-  // Position at bottom instantly
-  const positionAtBottom = useCallback(() => {
-    if (!messagesContainerRef.current) return;
-    
-    const container = messagesContainerRef.current;
-    const maxScrollTop = container.scrollHeight - container.clientHeight;
-    container.scrollTop = maxScrollTop;
-  }, []);
-
-  // Reset state when changing channels
-  useEffect(() => {
-    if (selectedChat.id !== initialChannelId.current) {
-      setIsChannelReady(false);
-      setUserHasScrolledUp(false);
-      initialChannelId.current = selectedChat.id;
-    }
-  }, [selectedChat.id]);
-
-  // Handle initial channel load with proper positioning
-  useEffect(() => {
-    if (messages.length > 0 && !isChannelReady && messagesContainerRef.current) {
-      // Force immediate positioning before any paint
-      const container = messagesContainerRef.current;
-      const maxScrollTop = container.scrollHeight - container.clientHeight;
-      container.scrollTop = maxScrollTop;
-      
-      // Mark channel as ready to prevent re-positioning
-      setIsChannelReady(true);
-    }
-  }, [messages, isChannelReady]);
-
-  // Handle new messages - only auto-scroll if user is at bottom
-  useEffect(() => {
-    if (messages.length > 0 && isChannelReady && !userHasScrolledUp) {
-      positionAtBottom();
-    }
-  }, [messages.length, isChannelReady, userHasScrolledUp, positionAtBottom]);
-
-  // Add scroll listener only when channel is ready
-  useEffect(() => {
-    if (!isChannelReady) return;
-    
-    const container = messagesContainerRef.current;
-    if (!container) return;
-
-    container.addEventListener('scroll', handleScroll, { passive: true });
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, [handleScroll, isChannelReady]);
+  // No scroll positioning needed - flexbox column-reverse handles this automatically
 
   const formatMessageTime = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -873,9 +805,11 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
       {/* Messages Area */}
       <div 
         ref={messagesContainerRef} 
-        className={`flex-1 overflow-y-auto p-4 space-y-4 transition-opacity duration-100 ${
-          isChannelReady ? 'opacity-100' : 'opacity-0'
-        }`}
+        className="flex-1 overflow-y-auto p-4 space-y-4"
+        style={{
+          display: 'flex',
+          flexDirection: 'column-reverse'
+        }}
       >
         {messagesLoading ? (
           <div className="flex justify-center py-8">
@@ -888,7 +822,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
             <p className="text-sm">Start the conversation!</p>
           </div>
         ) : (
-          messages.map((message: ChatMessage) => (
+          messages.slice().reverse().map((message: ChatMessage) => (
             <MessageBubble
               key={message.id}
               message={message}
