@@ -108,6 +108,13 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
+- June 28, 2025: Fixed dashboard positioning and chat overlay stability
+  - Resolved dashboard shifting during chat transitions by implementing stable layout container with absolute positioning
+  - Fixed dashboard vertical position - adjusted marginTop from -15px to 15px for proper content positioning
+  - Created isolated chat overlay system that prevents layout reflow in main content
+  - Chat transitions now maintain dashboard stability while preserving smooth animation effects
+  - Fixed JSX structure and indentation issues in App.tsx routing configuration
+
 - June 28, 2025: Fixed channel settings and image upload functionality
   - Restored channel settings page with all prior functionality including group management, member administration, and profile image updates
   - Fixed channel profile image updates - images now properly display in channel list after upload

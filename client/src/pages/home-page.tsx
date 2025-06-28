@@ -342,7 +342,7 @@ export default function HomePage() {
       className="h-screen text-foreground bg-background overflow-hidden" 
       style={{ 
         overscrollBehavior: 'none', 
-        marginTop: '-15px',
+        marginTop: '15px',
         position: 'relative',
         transform: 'translate3d(0, 0, 0)',
         backfaceVisibility: 'hidden',
