@@ -179,8 +179,8 @@ const ChatPage = () => {
     const touch = e.touches[0];
     const deltaY = touch.clientY - dragStartY;
     
-    // Only start dragging if user has moved significantly and we're at top
-    if (container.scrollTop === 0 && deltaY > 20) {
+    // Handle downward pulls when at top to show search bar
+    if (container.scrollTop === 0 && deltaY > 20 && !searchBarVisible) {
       if (!isDragging) {
         setIsDragging(true);
       }
@@ -192,31 +192,36 @@ const ChatPage = () => {
       setDragOffset(Math.max(0, offset));
       
       // Show search bar when pulled down enough
-      if (offset > 40 && !searchBarVisible) {
+      if (offset > 40) {
         setSearchBarVisible(true);
       }
-    } else if (deltaY < -10 && isDragging) {
-      // Reset if user drags up
+    }
+    // Handle upward drags when search bar is visible to hide it
+    else if (searchBarVisible && deltaY < -20) {
+      if (!isDragging) {
+        setIsDragging(true);
+      }
+      
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Hide search bar on upward drag
+      setSearchBarVisible(false);
       setIsDragging(false);
       setDragOffset(0);
-      if (searchBarVisible) {
-        setSearchBarVisible(false);
-      }
     }
   };
 
   const handleTouchEnd = () => {
-    if (!isDragging) return;
-    
     setIsDragging(false);
-    
-    // Keep search bar visible if pulled far enough
-    if (dragOffset < 70) {
-      setSearchBarVisible(false);
-    }
-    
     setDragOffset(0);
     setDragStartY(0);
+    
+    // For showing search bar: keep visible if pulled far enough during drag
+    if (!searchBarVisible && dragOffset >= 70) {
+      setSearchBarVisible(true);
+    }
+    // For hiding search bar: already handled in touchMove
   };
 
 
