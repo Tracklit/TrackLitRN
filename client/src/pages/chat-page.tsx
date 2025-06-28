@@ -486,25 +486,29 @@ const ChatPage = () => {
             </div>
           </div>
 
-          {/* Hidden Search Bar - positioned above content */}
+          {/* Search Bar - pushes content down when visible */}
           <div 
-            className="absolute top-0 left-0 right-0 z-30 p-4 border-b border-gray-600/30 bg-slate-900/95 backdrop-blur-sm transition-transform duration-300 ease-out"
+            className="w-full overflow-hidden transition-all duration-300 ease-out bg-slate-900/95 backdrop-blur-sm border-b border-gray-600/30"
             style={{ 
-              transform: isDragging 
-                ? `translateY(${80 + dragOffset}px)` 
+              height: isDragging 
+                ? `${Math.min(dragOffset, 60)}px` 
                 : searchBarVisible 
-                  ? 'translateY(80px)' 
-                  : 'translateY(-100%)'
+                  ? '60px' 
+                  : '0px'
             }}
           >
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Search chats..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-gray-800/50 border-gray-600/50 text-white placeholder-gray-400 focus:border-blue-500"
-              />
+            <div className="p-4 h-full flex items-center">
+              <div className="relative w-full">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <input
+                  type="text"
+                  placeholder="Search conversations..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 bg-gray-800 text-white placeholder-gray-400 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                  autoFocus={searchBarVisible}
+                />
+              </div>
             </div>
           </div>
 
