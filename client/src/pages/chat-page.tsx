@@ -317,26 +317,7 @@ const ChatPage = () => {
 
 
 
-  // Send message mutation
-  const sendMessageMutation = useMutation({
-    mutationFn: async (data: { text?: string; media_url?: string; message_type?: string }) => {
-      if (!selectedChat) return;
-      const endpoint = selectedChat.type === 'group'
-        ? `/api/chat/groups/${selectedChat.id}/messages`
-        : `/api/chat/direct/${selectedChat.id}/messages`;
-      const response = await apiRequest('POST', endpoint, data);
-      return response.json();
-    },
-    onSuccess: () => {
-      setMessageText("");
-      setReplyToMessage(null);
-      queryClient.invalidateQueries({
-        queryKey: selectedChat?.type === 'group' 
-          ? ['/api/chat/groups', selectedChat.id, 'messages']
-          : ['/api/chat/direct', selectedChat?.id, 'messages']
-      });
-    }
-  });
+
 
   // Edit message mutation
   const editMessageMutation = useMutation({
@@ -368,12 +349,8 @@ const ChatPage = () => {
         text: messageText.trim() 
       });
     } else {
-      // Send new message
-      const messageData = replyToMessage 
-        ? { text: messageText.trim(), replyToId: replyToMessage.id }
-        : { text: messageText.trim() };
-      
-      sendMessageMutation.mutate(messageData);
+      // Send new message - handled in ChatInterface component
+      console.log('Message sending handled in ChatInterface component');
     }
   };
 
@@ -660,6 +637,52 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     },
   });
 
+  // Send message mutation
+  const sendMessageMutation = useMutation({
+    mutationFn: async (data: { text?: string; image?: File; replyToId?: number }) => {
+      if (!selectedChat) return;
+      const endpoint = selectedChat.type === 'group'
+        ? `/api/chat/groups/${selectedChat.id}/messages`
+        : `/api/chat/direct/${selectedChat.id}/messages`;
+      
+      // Create FormData for file uploads
+      const formData = new FormData();
+      if (data.text) {
+        formData.append('text', data.text);
+      }
+      if (data.image) {
+        formData.append('image', data.image);
+        formData.append('messageType', 'image');
+      }
+      if (data.replyToId) {
+        formData.append('replyToId', data.replyToId.toString());
+      }
+      
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+      
+      if (!response.ok) throw new Error('Failed to send message');
+      return response.json();
+    },
+    onSuccess: () => {
+      setMessageText("");
+      setReplyToMessage(null);
+      setSelectedImage(null);
+      setImagePreview(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      queryClient.invalidateQueries({
+        queryKey: selectedChat?.type === 'group' 
+          ? ['/api/chat/groups', selectedChat.id, 'messages']
+          : ['/api/chat/direct', selectedChat?.id, 'messages']
+      });
+    }
+  });
+
   // Fetch current user
   const { data: currentUser } = useQuery({
     queryKey: ['/api/user'],
@@ -695,22 +718,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     enabled: selectedChat.type === 'group',
   });
 
-  // Send message mutation
-  const sendMessageMutation = useMutation({
-    mutationFn: async (data: { text: string; replyToId?: number }) => {
-      if (!selectedChat) return;
-      const endpoint = selectedChat.type === 'group'
-        ? `/api/chat/groups/${selectedChat.id}/messages`
-        : `/api/chat/direct/${selectedChat.id}/messages`;
-      const response = await apiRequest('POST', endpoint, data);
-      return response.json();
-    },
-    onSuccess: () => {
-      setMessageText("");
-      setReplyToMessage(null);
-      refetchMessages();
-    }
-  });
+
 
   // Edit message mutation
   const editMessageMutation = useMutation({
@@ -768,38 +776,19 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
       });
     } else {
       // Send new message
-      try {
-        let messageData: any = {};
-        
-        if (selectedImage) {
-          // Upload image first
-          const uploadResult = await uploadImageMutation.mutateAsync(selectedImage);
-          messageData = {
-            text: messageText.trim() || '',
-            media_url: uploadResult.url,
-            message_type: 'image'
-          };
-          // Clear image state after successful upload
-          setSelectedImage(null);
-          setImagePreview(null);
-          if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-          }
-        } else {
-          messageData = {
-            text: messageText.trim(),
-            message_type: 'text'
-          };
-        }
-        
-        if (replyToMessage) {
-          messageData.replyToId = replyToMessage.id;
-        }
-        
-        sendMessageMutation.mutate(messageData);
-      } catch (error) {
-        console.error('Error sending message:', error);
+      const messageData: any = {
+        text: messageText.trim()
+      };
+      
+      if (selectedImage) {
+        messageData.image = selectedImage;
       }
+      
+      if (replyToMessage) {
+        messageData.replyToId = replyToMessage.id;
+      }
+      
+      sendMessageMutation.mutate(messageData);
     }
   };
 
