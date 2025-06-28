@@ -195,7 +195,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                 )}
                 onClick={() => setIsOpen(false)}
               >
-                <LineChart className="h-4 w-4 mr-3" />
+                <FontAwesomeIcon icon={faChartLine} className="h-4 w-4 mr-3" />
                 Results
               </div>
             </Link>
@@ -212,7 +212,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                 )}
                 onClick={() => setIsOpen(false)}
               >
-                <Gamepad2 className="h-4 w-4 mr-3" />
+                <FontAwesomeIcon icon={faGamepad} className="h-4 w-4 mr-3" />
                 Arcade
               </div>
             </Link>
@@ -229,7 +229,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                 )}
                 onClick={() => setIsOpen(false)}
               >
-                <UserCheck className="h-4 w-4 mr-3" />
+                <FontAwesomeIcon icon={faUserCheck} className="h-4 w-4 mr-3" />
                 Connections
               </div>
             </Link>
@@ -241,7 +241,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                 )}
                 onClick={() => setIsOpen(false)}
               >
-                <MessagesSquare className="h-4 w-4 mr-3" />
+                <FontAwesomeIcon icon={faComments} className="h-4 w-4 mr-3" />
                 Group Chat
               </div>
             </Link>
@@ -254,7 +254,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                   )}
                   onClick={() => setIsOpen(false)}
                 >
-                  <Target className="h-4 w-4 mr-3" />
+                  <FontAwesomeIcon icon={faBullseye} className="h-4 w-4 mr-3" />
                   My Athletes
                 </div>
               </Link>
@@ -268,7 +268,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                   )}
                   onClick={() => setIsOpen(false)}
                 >
-                  <LineChart className="h-4 w-4 mr-3" />
+                  <FontAwesomeIcon icon={faChartLine} className="h-4 w-4 mr-3" />
                   Roster Stats
                 </div>
               </Link>
@@ -281,7 +281,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                 )}
                 onClick={() => setIsOpen(false)}
               >
-                <Users className="h-4 w-4 mr-3" />
+                <FontAwesomeIcon icon={faUsers} className="h-4 w-4 mr-3" />
                 Athletes
               </div>
             </Link>
@@ -295,7 +295,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                 )}
                 onClick={() => setIsOpen(false)}
               >
-                <Award className="h-4 w-4 mr-3" />
+                <FontAwesomeIcon icon={faAward} className="h-4 w-4 mr-3" />
                 Coaches
               </div>
             </Link>
@@ -307,7 +307,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                 )}
                 onClick={() => setIsOpen(false)}
               >
-                <Users className="h-4 w-4 mr-3" />
+                <FontAwesomeIcon icon={faUsers} className="h-4 w-4 mr-3" />
                 Groups
               </div>
             </Link>
@@ -326,7 +326,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                     )}
                     onClick={() => setIsOpen(false)}
                   >
-                    <Shield className="h-4 w-4 mr-3" />
+                    <FontAwesomeIcon icon={faShield} className="h-4 w-4 mr-3" />
                     Admin Panel
                   </div>
                 </Link>
@@ -345,7 +345,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                 )}
                 onClick={() => setIsOpen(false)}
               >
-                <User className="h-4 w-4 mr-3" />
+                <FontAwesomeIcon icon={faUser} className="h-4 w-4 mr-3" />
                 Athlete Profile
               </div>
             </Link>
@@ -357,7 +357,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                 )}
                 onClick={() => setIsOpen(false)}
               >
-                <Coins className="h-4 w-4 mr-3" />
+                <FontAwesomeIcon icon={faCoins} className="h-4 w-4 mr-3" />
                 Spikes
               </div>
             </Link>
