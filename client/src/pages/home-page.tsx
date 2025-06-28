@@ -338,7 +338,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="h-screen text-foreground bg-background overflow-hidden" style={{ overscrollBehavior: 'none', marginTop: '-15px' }}>
+    <div className="h-screen text-foreground bg-background overflow-hidden fixed inset-0" style={{ overscrollBehavior: 'none' }}>
       {/* Preload critical images */}
       <PreloadImages images={dashboardImages} quality={20} priority={true} />
       
