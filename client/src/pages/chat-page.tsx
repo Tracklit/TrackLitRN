@@ -758,43 +758,68 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
   const [lastMessageCount, setLastMessageCount] = useState(0);
   const [hasInitialScrolled, setHasInitialScrolled] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isScrollLocked = useRef(false);
   
-  // Force scroll to absolute bottom - more reliable than scrollIntoView
-  const scrollToBottom = useCallback((force = false) => {
+  // Force scroll to absolute bottom and lock position during initial load
+  const scrollToBottom = useCallback((lockPosition = false) => {
     if (messagesContainerRef.current) {
       const container = messagesContainerRef.current;
-      const targetScrollTop = container.scrollHeight - container.clientHeight;
       
-      // Clear any pending scroll timeouts to prevent conflicts
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
+      // Scroll to bottom immediately
+      container.scrollTop = container.scrollHeight;
       
-      // Immediate scroll
-      container.scrollTop = targetScrollTop;
-      
-      // For initial scroll, also prevent any subsequent scrolls for a brief period
-      if (force) {
-        // Lock scroll position for initial load to prevent bounce
-        const lockScroll = () => {
-          if (messagesContainerRef.current) {
-            messagesContainerRef.current.scrollTop = targetScrollTop;
+      if (lockPosition) {
+        isScrollLocked.current = true;
+        
+        // Aggressive scroll locking with multiple techniques
+        const maintainBottom = () => {
+          if (messagesContainerRef.current && isScrollLocked.current) {
+            messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
           }
         };
         
-        // Multiple enforcement attempts to prevent unwanted scroll adjustments
-        requestAnimationFrame(lockScroll);
-        scrollTimeoutRef.current = setTimeout(lockScroll, 50);
-        setTimeout(lockScroll, 100);
+        // Immediate enforcement
+        maintainBottom();
+        
+        // Multiple timed enforcements to catch any layout shifts
+        requestAnimationFrame(maintainBottom);
+        setTimeout(maintainBottom, 10);
+        setTimeout(maintainBottom, 50);
+        setTimeout(maintainBottom, 100);
+        setTimeout(maintainBottom, 200);
+        
+        // Release lock after sufficient time for layout to stabilize
+        setTimeout(() => {
+          isScrollLocked.current = false;
+        }, 500);
       }
     }
   }, []);
   
-  // Initial scroll to bottom when channel first loads - with force lock
+  // Prevent any scroll events during lock period
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    
+    const handleScroll = (e: Event) => {
+      if (isScrollLocked.current) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        container.scrollTop = container.scrollHeight;
+      }
+    };
+    
+    container.addEventListener('scroll', handleScroll, { passive: false });
+    
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+  
+  // Initial scroll to bottom when channel first loads
   useLayoutEffect(() => {
     if (messages.length > 0 && !hasInitialScrolled) {
-      scrollToBottom(true); // Force with scroll lock
+      scrollToBottom(true); // Lock position during initial load
       setHasInitialScrolled(true);
       setLastMessageCount(messages.length);
     }
@@ -804,28 +829,16 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
   useEffect(() => {
     setHasInitialScrolled(false);
     setLastMessageCount(0);
-    // Clear any scroll timeouts when changing channels
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current);
-    }
+    isScrollLocked.current = false;
   }, [selectedChat.id]);
   
-  // Auto scroll for new messages in existing channels (without force lock)
+  // Auto scroll for new messages in existing channels
   useLayoutEffect(() => {
     if (hasInitialScrolled && messages.length > lastMessageCount) {
-      scrollToBottom(false);
+      scrollToBottom(false); // Don't lock for new messages
       setLastMessageCount(messages.length);
     }
   }, [messages, lastMessageCount, hasInitialScrolled, scrollToBottom]);
-  
-  // Cleanup scroll timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-    };
-  }, []);
 
   const formatMessageTime = (timestamp: string) => {
     const date = new Date(timestamp);
