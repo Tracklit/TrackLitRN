@@ -315,20 +315,7 @@ const ChatPage = () => {
   // Create group mutation
   // Group creation is now handled on dedicated page
 
-  // Image upload mutation
-  const uploadImageMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append('image', file);
-      const response = await fetch('/api/upload/image', {
-        method: 'POST',
-        credentials: 'include',
-        body: formData,
-      });
-      if (!response.ok) throw new Error('Upload failed');
-      return response.json();
-    },
-  });
+
 
   // Send message mutation
   const sendMessageMutation = useMutation({
@@ -662,6 +649,21 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
   const hasInitiallyLoadedRef = useRef(false);
   const queryClient = useQueryClient();
 
+  // Image upload mutation
+  const uploadImageMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('image', file);
+      const response = await fetch('/api/upload/image', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+      if (!response.ok) throw new Error('Upload failed');
+      return response.json();
+    },
+  });
+
   // Fetch current user
   const { data: currentUser } = useQuery({
     queryKey: ['/api/user'],
@@ -734,6 +736,31 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     }
   });
 
+  // Image handling functions
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeSelectedImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const cancelReply = () => {
+    setReplyToMessage(null);
+  };
+
   const handleSendMessage = async () => {
     if ((!messageText.trim() && !selectedImage) || !selectedChat) return;
     
@@ -780,33 +807,9 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     }
   };
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedImage(file);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const removeSelectedImage = () => {
-    setSelectedImage(null);
-    setImagePreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
   const cancelEdit = () => {
     setEditingMessage(null);
     setMessageText("");
-  };
-
-  const cancelReply = () => {
-    setReplyToMessage(null);
   };
 
   // Define the handler functions
