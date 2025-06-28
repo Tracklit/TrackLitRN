@@ -754,80 +754,14 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     // TODO: Implement native input editing functionality
   };
 
-  // Scroll management with proper timing
-  const [lastMessageCount, setLastMessageCount] = useState(0);
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  
-  // Reliable scroll to bottom function with debugging
-  const scrollToBottom = useCallback(() => {
-    if (messagesContainerRef.current) {
-      const container = messagesContainerRef.current;
-      const maxScroll = container.scrollHeight - container.clientHeight;
-      console.log("Scrolling to bottom:", { scrollHeight: container.scrollHeight, clientHeight: container.clientHeight, maxScroll });
-      container.scrollTop = maxScroll;
-    }
-  }, []);
-  
-  // Wait for DOM content to be fully rendered before scrolling
-  const scrollToBottomWhenReady = useCallback(() => {
-    if (messagesContainerRef.current) {
-      const container = messagesContainerRef.current;
-      
-      // Check if content is actually rendered
-      const checkAndScroll = () => {
-        if (container.scrollHeight > container.clientHeight) {
-          console.log("Content ready, scrolling to bottom");
-          container.scrollTop = container.scrollHeight - container.clientHeight;
-          return true;
-        }
-        return false;
-      };
-      
-      // Try immediate scroll first
-      if (!checkAndScroll()) {
-        console.log("Content not ready, waiting...");
-        // If content not ready, wait for next frame
-        requestAnimationFrame(() => {
-          if (!checkAndScroll()) {
-            // If still not ready, try a few more times
-            setTimeout(() => checkAndScroll(), 50);
-            setTimeout(() => checkAndScroll(), 100);
-            setTimeout(() => checkAndScroll(), 200);
-          }
-        });
-      }
-    }
-  }, []);
-  
-  // Initial scroll when first entering a channel - wait for messages to render
+  // Scroll to bottom using the existing messagesEndRef
   useEffect(() => {
-    if (messages.length > 0 && isInitialLoad) {
-      console.log("Initial load with", messages.length, "messages");
-      // Wait a bit longer to ensure DOM is fully updated
-      setTimeout(() => {
-        scrollToBottomWhenReady();
-      }, 100);
-      setIsInitialLoad(false);
-      setLastMessageCount(messages.length);
+    if (messages.length > 0 && messagesEndRef.current) {
+      console.log("Scrolling to bottom with", messages.length, "messages");
+      // Use scrollIntoView with instant behavior for immediate positioning
+      messagesEndRef.current.scrollIntoView({ behavior: 'instant', block: 'end' });
     }
-  }, [messages, isInitialLoad, scrollToBottomWhenReady]);
-  
-  // Reset for new channel
-  useEffect(() => {
-    console.log("Resetting for new channel:", selectedChat.id);
-    setIsInitialLoad(true);
-    setLastMessageCount(0);
-  }, [selectedChat.id]);
-  
-  // Handle new messages in existing channels
-  useEffect(() => {
-    if (!isInitialLoad && messages.length > lastMessageCount && lastMessageCount > 0) {
-      console.log("New messages, scrolling to bottom");
-      setTimeout(() => scrollToBottom(), 50);
-      setLastMessageCount(messages.length);
-    }
-  }, [messages.length, lastMessageCount, isInitialLoad, scrollToBottom]);
+  }, [messages, selectedChat.id]); // Re-run when messages change or channel changes
 
   const formatMessageTime = (timestamp: string) => {
     const date = new Date(timestamp);
