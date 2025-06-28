@@ -754,15 +754,41 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     // TODO: Implement native input editing functionality
   };
 
-  // Auto scroll to bottom when new messages arrive (not for reactions)
+  // Track initial scroll and message count for proper scroll behavior
   const [lastMessageCount, setLastMessageCount] = useState(0);
+  const [hasInitialScrolled, setHasInitialScrolled] = useState(false);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   
+  // Force scroll to absolute bottom - more reliable than scrollIntoView
+  const scrollToBottom = useCallback(() => {
+    if (messagesContainerRef.current) {
+      const container = messagesContainerRef.current;
+      container.scrollTop = container.scrollHeight;
+    }
+  }, []);
+  
+  // Initial scroll to bottom when channel first loads
   useLayoutEffect(() => {
-    if (messages.length > lastMessageCount && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (messages.length > 0 && !hasInitialScrolled) {
+      scrollToBottom();
+      setHasInitialScrolled(true);
       setLastMessageCount(messages.length);
     }
-  }, [messages, lastMessageCount]);
+  }, [messages, hasInitialScrolled, scrollToBottom]);
+  
+  // Reset scroll state when changing channels
+  useEffect(() => {
+    setHasInitialScrolled(false);
+    setLastMessageCount(0);
+  }, [selectedChat.id]);
+  
+  // Auto scroll for new messages in existing channels
+  useLayoutEffect(() => {
+    if (hasInitialScrolled && messages.length > lastMessageCount) {
+      scrollToBottom();
+      setLastMessageCount(messages.length);
+    }
+  }, [messages, lastMessageCount, hasInitialScrolled, scrollToBottom]);
 
   const formatMessageTime = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -810,7 +836,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
         {messagesLoading ? (
           <div className="flex justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
