@@ -865,7 +865,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
           </div>
           <div className="flex items-center gap-2">
             {selectedChat.type === 'group' && (
-              <Link href={`/group-settings/${selectedChat.id}`}>
+              <Link href={`/chats/groups/${selectedChat.id}/settings`}>
                 <Button size="sm" variant="ghost" className="text-white">
                   <Settings className="h-4 w-4" />
                 </Button>
