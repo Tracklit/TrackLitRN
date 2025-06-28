@@ -755,26 +755,11 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     // TODO: Implement native input editing functionality
   };
 
-  // State to control visibility to prevent scroll animation
-  const [isMessagesVisible, setIsMessagesVisible] = useState(false);
-
-  // Position chat at bottom without visible scrolling
-  useEffect(() => {
-    if (messagesContainerRef.current && messages.length > 0) {
+  // Position chat at bottom immediately without animation
+  useLayoutEffect(() => {
+    if (messagesContainerRef.current) {
       const container = messagesContainerRef.current;
-      
-      // Hide container to prevent visible scroll
-      setIsMessagesVisible(false);
-      
-      // Position at bottom immediately
       container.scrollTop = container.scrollHeight;
-      
-      // Show container after positioning
-      requestAnimationFrame(() => {
-        setIsMessagesVisible(true);
-      });
-    } else if (messages.length === 0) {
-      setIsMessagesVisible(true);
     }
   }, [messages, selectedChat.id]);
 
@@ -829,10 +814,6 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
       <div 
         ref={messagesContainerRef} 
         className="flex-1 overflow-y-auto p-4 space-y-4"
-        style={{ 
-          opacity: isMessagesVisible ? 1 : 0,
-          transition: 'none'
-        }}
       >
         {messagesLoading ? (
           <div className="flex justify-center py-8">
