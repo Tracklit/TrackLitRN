@@ -640,6 +640,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
   const [replyToMessage, setReplyToMessage] = useState<ChatMessage | null>(null);
   const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
   // Fetch current user
@@ -754,14 +755,22 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     // TODO: Implement native input editing functionality
   };
 
-  // Scroll to bottom using the existing messagesEndRef
+  // Scroll to bottom - simplified to prevent crashes
   useEffect(() => {
-    if (messages.length > 0 && messagesEndRef.current) {
-      console.log("Scrolling to bottom with", messages.length, "messages");
-      // Use scrollIntoView with instant behavior for immediate positioning
-      messagesEndRef.current.scrollIntoView({ behavior: 'instant', block: 'end' });
+    if (messages.length > 0) {
+      console.log("Messages loaded:", messages.length);
+      // Simple timeout-based scroll
+      setTimeout(() => {
+        if (messagesEndRef.current) {
+          try {
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+          } catch (error) {
+            console.error("Scroll error:", error);
+          }
+        }
+      }, 100);
     }
-  }, [messages, selectedChat.id]); // Re-run when messages change or channel changes
+  }, [messages, selectedChat.id]);
 
   const formatMessageTime = (timestamp: string) => {
     const date = new Date(timestamp);
