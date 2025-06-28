@@ -229,7 +229,7 @@ function Router() {
       </Switch>
       
       {/* Chat Overlay - always mounted to prevent remounting, controlled by internal state */}
-      <div className="fixed inset-0 z-50 pointer-events-none">
+      <div className="fixed inset-0 z-50 pointer-events-none" style={{ contain: 'layout style paint' }}>
         <ChatPage />
       </div>
     </>

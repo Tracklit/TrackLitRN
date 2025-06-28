@@ -343,15 +343,15 @@ export default function HomePage() {
       style={{ 
         overscrollBehavior: 'none', 
         marginTop: '-15px',
-        transform: 'translateZ(0)', // Force GPU acceleration to prevent layout shifts
-        willChange: 'auto' // Optimize for transitions
+        isolation: 'isolate',
+        contain: 'layout'
       }}
     >
       {/* Preload critical images */}
       <PreloadImages images={dashboardImages} quality={20} priority={true} />
       
       {/* Fixed Community Activity Ticker - Below Header */}
-      <div className={`fixed top-[60px] left-5 right-5 z-40 transition-transform duration-300 ease-in-out ${isTickerVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+      <div className={`fixed top-[45px] left-5 right-5 z-40 transition-transform duration-300 ease-in-out ${isTickerVisible ? 'translate-y-0' : '-translate-y-full'}`}>
         <div className="mx-auto" style={{ maxWidth: "500px" }}>
           <div className="bg-gradient-to-br from-purple-500 to-blue-800 relative rounded-sm">
             {/* Control buttons with higher z-index */}
