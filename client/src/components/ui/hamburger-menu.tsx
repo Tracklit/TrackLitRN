@@ -369,7 +369,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                 )}
                 onClick={() => setIsOpen(false)}
               >
-                <Settings className="h-4 w-4 mr-3" />
+                <FontAwesomeIcon icon={faCog} className="h-4 w-4 mr-3" />
                 Settings
               </div>
             </Link>
