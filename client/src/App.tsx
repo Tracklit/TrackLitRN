@@ -144,9 +144,13 @@ function ScrollRestoration() {
 }
 
 function Router() {
+  const [location] = useLocation();
+  const isChatRoute = location.startsWith('/chat') || location.startsWith('/chats');
+  
   return (
     <>
       <ScrollRestoration />
+      {/* Main App Routes - always rendered */}
       <Switch>
       {/* Dashboard */}
       <ProtectedRoute path="/" component={HomePage} />
@@ -187,9 +191,6 @@ function Router() {
       <ProtectedRoute path="/clubs" component={ClubsPage} />
       <ProtectedRoute path="/club/:id" component={ClubDetailPage} />
       <ProtectedRoute path="/club-management/:id" component={ClubManagementPage} />
-      <ProtectedRoute path="/chat" component={ChatPage} />
-      <ProtectedRoute path="/chats" component={ChatPage} />
-      <ProtectedRoute path="/chats/groups/:id" component={ChatPage} />
       <ProtectedRoute path="/chats/create" component={CreateGroupPage} />
       <ProtectedRoute path="/create-group" component={CreateGroupPage} />
       <ProtectedRoute path="/chats/groups/:id/settings" component={GroupSettingsPage} />
@@ -223,6 +224,13 @@ function Router() {
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
       </Switch>
+      
+      {/* Chat Overlay - renders on top of main content when on chat routes */}
+      {isChatRoute && (
+        <div className="fixed inset-0 z-50">
+          <ChatPage />
+        </div>
+      )}
     </>
   );
 }

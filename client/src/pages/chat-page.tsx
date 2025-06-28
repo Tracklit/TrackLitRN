@@ -153,21 +153,31 @@ const ChatPage = () => {
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [isAtTop, setIsAtTop] = useState(true);
-  const [isEntering, setIsEntering] = useState(true); // Track entrance animation
+  const [isEntering, setIsEntering] = useState(true); // Start with entrance animation
+  const [isExiting, setIsExiting] = useState(false); // Track exit animation
   
   const [location] = useLocation();
   const queryClient = useQueryClient();
 
-  // Handle entrance animation
+  // Handle entrance animation on mount
   useEffect(() => {
-    // Start entrance animation on mount
-    setIsEntering(true);
+    // Start entrance animation immediately
     const timer = setTimeout(() => {
       setIsEntering(false);
-    }, 300); // Match transition duration
+    }, 50); // Small delay to ensure smooth transition
     
     return () => clearTimeout(timer);
   }, []);
+
+  // Handle navigation away from chat (exit animation)
+  const isChatRoute = location.startsWith('/chat') || location.startsWith('/chats');
+  
+  useEffect(() => {
+    if (!isChatRoute) {
+      // Start exit animation when navigating away
+      setIsExiting(true);
+    }
+  }, [isChatRoute]);
 
   // Scroll handler to track position
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -439,8 +449,8 @@ const ChatPage = () => {
   };
 
   return (
-    <div className={`fixed inset-0 w-full h-full overflow-hidden bg-slate-900 transition-transform duration-300 ease-in-out ${
-      isEntering ? 'translate-x-full' : 'translate-x-0'
+    <div className={`w-full h-full overflow-hidden bg-slate-900 transition-transform duration-300 ease-in-out ${
+      !isVisible || isExiting ? 'translate-x-full' : 'translate-x-0'
     }`}>
       {/* Channel List View - Always mounted but conditionally visible */}
       <div 
