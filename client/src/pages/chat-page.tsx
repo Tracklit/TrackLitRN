@@ -148,8 +148,108 @@ const ChatPage = () => {
   const [componentKey, setComponentKey] = useState(Date.now());
   const [localGroups, setLocalGroups] = useState<ChatGroup[]>([]);
   const [viewState, setViewState] = useState<'list' | 'chat'>('list'); // Track which view to show
+  const [searchBarVisible, setSearchBarVisible] = useState(false);
+  const [dragStartY, setDragStartY] = useState(0);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
 
   const queryClient = useQueryClient();
+
+  // Touch/drag handlers for search bar
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.target !== e.currentTarget && !(e.target as Element).closest('.drag-area')) return;
+    
+    const touch = e.touches[0];
+    setDragStartY(touch.clientY);
+    setIsDragging(true);
+    e.preventDefault();
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    
+    const touch = e.touches[0];
+    const deltaY = touch.clientY - dragStartY;
+    
+    // Only allow downward drag from the top of the scroll area
+    if (deltaY > 0) {
+      const container = e.currentTarget as HTMLElement;
+      const isAtTop = container.scrollTop <= 5; // Allow small scroll tolerance
+      
+      if (isAtTop) {
+        e.preventDefault(); // Prevent scrolling when revealing search
+        setDragOffset(Math.min(deltaY, 80));
+        
+        // Show search bar when dragged down enough
+        if (deltaY > 25 && !searchBarVisible) {
+          setSearchBarVisible(true);
+        }
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDragging) return;
+    
+    setIsDragging(false);
+    
+    // If dragged less than threshold, hide search bar
+    if (dragOffset < 50) {
+      setSearchBarVisible(false);
+    }
+    
+    setDragOffset(0);
+    setDragStartY(0);
+  };
+
+  // Global mouse move listener for desktop
+  useEffect(() => {
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      
+      const deltaY = e.clientY - dragStartY;
+      
+      if (deltaY > 0) {
+        setDragOffset(Math.min(deltaY, 80));
+        
+        if (deltaY > 25 && !searchBarVisible) {
+          setSearchBarVisible(true);
+        }
+      }
+    };
+
+    const handleGlobalMouseUp = () => {
+      if (!isDragging) return;
+      
+      setIsDragging(false);
+      
+      if (dragOffset < 50) {
+        setSearchBarVisible(false);
+      }
+      
+      setDragOffset(0);
+      setDragStartY(0);
+    };
+
+    if (isDragging) {
+      document.addEventListener('mousemove', handleGlobalMouseMove);
+      document.addEventListener('mouseup', handleGlobalMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleGlobalMouseMove);
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [isDragging, dragStartY, dragOffset, searchBarVisible]);
+
+  // Mouse down handler for desktop
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.target !== e.currentTarget && !(e.target as Element).closest('.drag-area')) return;
+    
+    setDragStartY(e.clientY);
+    setIsDragging(true);
+    e.preventDefault();
+  };
 
   // Fetch chat groups with proper caching
   const { data: chatGroups = [], isLoading: groupsLoading, refetch: refetchGroups } = useQuery({
@@ -416,8 +516,19 @@ const ChatPage = () => {
             </div>
           </div>
 
-          {/* Search Bar */}
-          <div className="p-4 border-b border-gray-600/30 bg-black/10 backdrop-blur-sm flex-shrink-0">
+          {/* Hidden Search Bar - positioned above content */}
+          <div 
+            className={`absolute top-0 left-0 right-0 z-10 p-4 border-b border-gray-600/30 bg-black/20 backdrop-blur-sm transform transition-transform duration-300 ease-out ${
+              searchBarVisible ? 'translate-y-20' : '-translate-y-full'
+            }`}
+            style={{ 
+              transform: isDragging 
+                ? `translateY(${Math.max(-80, -80 + dragOffset)}px)` 
+                : searchBarVisible 
+                  ? 'translateY(80px)' 
+                  : 'translateY(-100%)'
+            }}
+          >
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
@@ -430,7 +541,19 @@ const ChatPage = () => {
           </div>
 
           {/* Chat List - Full Width */}
-          <div className="flex-1 overflow-y-auto">
+          <div 
+            className="flex-1 overflow-y-auto relative"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onMouseDown={handleMouseDown}
+          >
+            {/* Drag area indicator - only visible when dragging */}
+            {isDragging && (
+              <div className="absolute top-0 left-0 right-0 h-8 bg-blue-500/20 flex items-center justify-center z-20">
+                <div className="w-8 h-1 bg-blue-400 rounded-full"></div>
+              </div>
+            )}
             <div className="space-y-0" key={`chat-list-${refreshKey}-${JSON.stringify(chatGroups)}`}>
               {(groupsLoading && chatGroups.length === 0) || (conversationsLoading && conversations.length === 0) ? (
                 <div className="flex justify-center py-8">
