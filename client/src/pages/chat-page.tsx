@@ -755,41 +755,16 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     // TODO: Implement native input editing functionality
   };
 
-  // Ref-based scroll management to avoid race conditions
-  const hasInitiallyLoadedRef = useRef(false);
-  const currentChannelRef = useRef(selectedChat.id);
-
-  // Reset on channel change
+  // Auto-scroll to bottom on messages or channel change
   useEffect(() => {
-    if (selectedChat.id !== currentChannelRef.current) {
-      hasInitiallyLoadedRef.current = false;
-      currentChannelRef.current = selectedChat.id;
-    }
-  }, [selectedChat.id]);
-
-  // Handle scroll positioning with useLayoutEffect
-  useLayoutEffect(() => {
-    if (messages.length > 0 && messagesContainerRef.current) {
+    if (messagesContainerRef.current) {
       const container = messagesContainerRef.current;
-
-      if (!hasInitiallyLoadedRef.current) {
-        // Initial load - scroll to bottom immediately
-        requestAnimationFrame(() => {
-          container.scrollTop = container.scrollHeight;
-          hasInitiallyLoadedRef.current = true;
-        });
-      } else {
-        // New messages - only auto-scroll if user is at bottom
-        const SCROLL_THRESHOLD = 50;
-        const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < SCROLL_THRESHOLD;
-        if (isAtBottom) {
-          requestAnimationFrame(() => {
-            container.scrollTop = container.scrollHeight;
-          });
-        }
-      }
+      // Small delay to ensure DOM is updated
+      setTimeout(() => {
+        container.scrollTop = container.scrollHeight;
+      }, 10);
     }
-  }, [messages]);
+  }, [messages, selectedChat.id]);
 
 
 
