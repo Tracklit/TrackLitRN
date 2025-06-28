@@ -29,7 +29,7 @@ import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
 import flameLogoPath from "@assets/IMG_4720_1751015409604.png";
-import flameIcon from "@assets/IMG_4720_1751142021835.png";
+
 
 // Full-screen image viewer component
 const FullScreenImageViewer = ({ 
@@ -611,13 +611,6 @@ const ChatPage = () => {
                 </div>
               )}
             </div>
-          </div>
-        </div>
-        
-        {/* Floating Flame Icon - positioned like bottom navigation */}
-        <div className="fixed bottom-14 right-5 z-20">
-          <div className="h-10 w-10 flex items-center justify-center">
-            <img src={flameIcon} alt="Chat" className="h-10 w-10" />
           </div>
         </div>
       </div>
