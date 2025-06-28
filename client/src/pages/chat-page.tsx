@@ -756,22 +756,20 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     // TODO: Implement native input editing functionality
   };
 
-  // Force scroll to bottom immediately after DOM paint
+  // Force immediate scroll to bottom - runs before paint
   useLayoutEffect(() => {
     const container = messagesContainerRef.current;
-    if (!container) return;
+    if (!container || messages.length === 0) return;
 
-    if (!hasInitiallyLoadedRef.current && messages.length > 0) {
-      // Jump to bottom immediately after layout, no scroll animation
-      container.scrollTop = container.scrollHeight;
-      hasInitiallyLoadedRef.current = true;
-    }
-  }, [messages]);
-
-  // Reset initial load flag when changing channels
-  useEffect(() => {
-    hasInitiallyLoadedRef.current = false;
-  }, [selectedChat.id]);
+    // Force scroll to bottom immediately with no animation
+    container.style.scrollBehavior = 'auto';
+    container.scrollTop = container.scrollHeight;
+    
+    // Reset scroll behavior for future interactions
+    setTimeout(() => {
+      container.style.scrollBehavior = 'smooth';
+    }, 0);
+  }, [messages, selectedChat.id]);
 
 
 
@@ -825,8 +823,15 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
       {/* Messages Area */}
       <div 
         ref={messagesContainerRef} 
-        className="flex-1 overflow-y-auto p-4 space-y-4"
+        className="flex-1 overflow-y-auto p-4 flex flex-col justify-end"
+        style={{ 
+          scrollBehavior: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'flex-end'
+        }}
       >
+        <div className="space-y-4">
         {messagesLoading ? (
           <div className="flex justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
@@ -839,18 +844,31 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
           </div>
         ) : (
           messages.map((message: ChatMessage) => (
-            <MessageBubble
-              key={message.id}
-              message={message}
-              isOwn={currentUser?.id === message.user_id}
-              currentUser={currentUser}
-              onImageClick={setFullScreenImage}
-              onReply={handleReplyToMessage}
-              onEdit={handleEditMessage}
-            />
+            <div key={message.id} className="message-item">
+              <div className={`flex ${currentUser?.id === message.user_id ? 'justify-end' : 'justify-start'} mb-4`}>
+                <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                  currentUser?.id === message.user_id 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-gray-700 text-white'
+                }`}>
+                  {message.reply_to_id && (
+                    <div className="text-xs opacity-75 mb-1 border-l-2 border-gray-400 pl-2">
+                      Reply to previous message
+                    </div>
+                  )}
+                  <div className="text-sm">{message.text}</div>
+                  <div className={`text-xs mt-1 ${
+                    currentUser?.id === message.user_id ? 'text-blue-100' : 'text-gray-400'
+                  }`}>
+                    {formatMessageTime(message.created_at)}
+                  </div>
+                </div>
+              </div>
+            </div>
           ))
         )}
         <div ref={messagesEndRef} />
+        </div>
       </div>
 
       {/* Edit/Reply Preview */}
