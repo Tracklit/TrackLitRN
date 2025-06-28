@@ -157,12 +157,14 @@ const ChatPage = () => {
 
   // Touch/drag handlers for search bar
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (e.target !== e.currentTarget && !(e.target as Element).closest('.drag-area')) return;
+    const container = e.currentTarget as HTMLElement;
+    const isAtTop = container.scrollTop <= 10;
+    
+    if (!isAtTop) return; // Only allow drag from top
     
     const touch = e.touches[0];
     setDragStartY(touch.clientY);
     setIsDragging(true);
-    e.preventDefault();
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -174,14 +176,14 @@ const ChatPage = () => {
     // Only allow downward drag from the top of the scroll area
     if (deltaY > 0) {
       const container = e.currentTarget as HTMLElement;
-      const isAtTop = container.scrollTop <= 5; // Allow small scroll tolerance
+      const isAtTop = container.scrollTop <= 10;
       
       if (isAtTop) {
         e.preventDefault(); // Prevent scrolling when revealing search
-        setDragOffset(Math.min(deltaY, 80));
+        setDragOffset(Math.min(deltaY, 100));
         
         // Show search bar when dragged down enough
-        if (deltaY > 25 && !searchBarVisible) {
+        if (deltaY > 30 && !searchBarVisible) {
           setSearchBarVisible(true);
         }
       }
@@ -194,7 +196,7 @@ const ChatPage = () => {
     setIsDragging(false);
     
     // If dragged less than threshold, hide search bar
-    if (dragOffset < 50) {
+    if (dragOffset < 70) {
       setSearchBarVisible(false);
     }
     
@@ -210,9 +212,9 @@ const ChatPage = () => {
       const deltaY = e.clientY - dragStartY;
       
       if (deltaY > 0) {
-        setDragOffset(Math.min(deltaY, 80));
+        setDragOffset(Math.min(deltaY, 100));
         
-        if (deltaY > 25 && !searchBarVisible) {
+        if (deltaY > 30 && !searchBarVisible) {
           setSearchBarVisible(true);
         }
       }
@@ -223,7 +225,7 @@ const ChatPage = () => {
       
       setIsDragging(false);
       
-      if (dragOffset < 50) {
+      if (dragOffset < 70) {
         setSearchBarVisible(false);
       }
       
@@ -244,7 +246,10 @@ const ChatPage = () => {
 
   // Mouse down handler for desktop
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.target !== e.currentTarget && !(e.target as Element).closest('.drag-area')) return;
+    const container = e.currentTarget as HTMLElement;
+    const isAtTop = container.scrollTop <= 10;
+    
+    if (!isAtTop) return; // Only allow drag from top
     
     setDragStartY(e.clientY);
     setIsDragging(true);
@@ -518,12 +523,10 @@ const ChatPage = () => {
 
           {/* Hidden Search Bar - positioned above content */}
           <div 
-            className={`absolute top-0 left-0 right-0 z-10 p-4 border-b border-gray-600/30 bg-black/20 backdrop-blur-sm transform transition-transform duration-300 ease-out ${
-              searchBarVisible ? 'translate-y-20' : '-translate-y-full'
-            }`}
+            className="absolute top-0 left-0 right-0 z-10 p-4 border-b border-gray-600/30 bg-black/20 backdrop-blur-sm transition-transform duration-300 ease-out"
             style={{ 
               transform: isDragging 
-                ? `translateY(${Math.max(-80, -80 + dragOffset)}px)` 
+                ? `translateY(${Math.max(-100, -100 + dragOffset)}px)` 
                 : searchBarVisible 
                   ? 'translateY(80px)' 
                   : 'translateY(-100%)'
