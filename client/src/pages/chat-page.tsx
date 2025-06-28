@@ -393,10 +393,6 @@ const ChatPage = () => {
     setMessageText("");
   };
 
-  const cancelReply = () => {
-    setReplyToMessage(null);
-  };
-
   const formatMessageTime = (timestamp: string) => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString('en-US', { 
