@@ -188,17 +188,17 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <Avatar className="h-10 w-10">
-              <AvatarImage src={groupDetails?.image || groupDetails?.avatar_url} />
+              <AvatarImage src={(groupDetails as any)?.image || (groupDetails as any)?.avatar_url} />
               <AvatarFallback className="bg-blue-500 text-white">
-                {groupDetails?.name?.slice(0, 2).toUpperCase() || 'CH'}
+                {(groupDetails as any)?.name?.slice(0, 2).toUpperCase() || 'CH'}
               </AvatarFallback>
             </Avatar>
             <div>
               <h3 className="font-medium text-white">
-                {groupDetails?.name || `Chat ${selectedChat.id}`}
+                {(groupDetails as any)?.name || `Chat ${selectedChat.id}`}
               </h3>
               <p className="text-sm text-gray-400">
-                {groupDetails?.member_count ? `${groupDetails.member_count} members` : 'Private chat'}
+                {(groupDetails as any)?.member_count ? `${(groupDetails as any).member_count} members` : 'Private chat'}
               </p>
             </div>
           </div>
