@@ -755,28 +755,28 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     // TODO: Implement native input editing functionality
   };
 
-  // Track if user has manually scrolled up from bottom
+  // Track scroll and loading state
   const [userHasScrolledUp, setUserHasScrolledUp] = useState(false);
-  const [isFirstLoad, setIsFirstLoad] = useState(true);
+  const [messagesReady, setMessagesReady] = useState(false);
 
   // Check if user is at bottom of chat
   const isAtBottom = useCallback(() => {
     if (!messagesContainerRef.current) return false;
     const container = messagesContainerRef.current;
-    const threshold = 50; // 50px threshold for "at bottom"
+    const threshold = 50;
     return (container.scrollHeight - container.scrollTop - container.clientHeight) <= threshold;
   }, []);
 
   // Handle scroll events to detect user interaction
   const handleScroll = useCallback(() => {
-    if (!messagesContainerRef.current) return;
+    if (!messagesContainerRef.current || !messagesReady) return;
     
     const atBottom = isAtBottom();
     setUserHasScrolledUp(!atBottom);
-  }, [isAtBottom]);
+  }, [isAtBottom, messagesReady]);
 
-  // Smart scroll to bottom - only when appropriate
-  const scrollToBottom = useCallback(() => {
+  // Position at bottom instantly without visible movement
+  const positionAtBottom = useCallback(() => {
     if (!messagesContainerRef.current) return;
     
     const container = messagesContainerRef.current;
@@ -784,39 +784,45 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     container.scrollTop = maxScrollTop;
   }, []);
 
-  // Reset scroll state when changing channels
+  // Reset state when changing channels
   useEffect(() => {
-    setIsFirstLoad(true);
+    setMessagesReady(false);
     setUserHasScrolledUp(false);
   }, [selectedChat.id]);
 
-  // Main scroll logic - handles both initial load and new messages
+  // Handle messages loading and positioning
   useEffect(() => {
-    if (messages.length === 0 || !messagesContainerRef.current) return;
-
-    // Always scroll to bottom on first load of a channel
-    if (isFirstLoad) {
-      setTimeout(() => {
-        scrollToBottom();
-        setIsFirstLoad(false);
-      }, 100);
+    if (messages.length === 0) {
+      setMessagesReady(false);
       return;
     }
 
-    // For new messages, only scroll if user is already at bottom
-    if (!userHasScrolledUp) {
-      setTimeout(scrollToBottom, 50);
+    // For channel entry, position immediately then show
+    if (!messagesReady) {
+      // Position at bottom before showing messages
+      setTimeout(() => {
+        positionAtBottom();
+        setMessagesReady(true);
+      }, 50);
+      return;
     }
-  }, [messages, isFirstLoad, userHasScrolledUp, scrollToBottom]);
 
-  // Add scroll listener
+    // For new messages, only scroll if user is at bottom
+    if (!userHasScrolledUp) {
+      setTimeout(positionAtBottom, 50);
+    }
+  }, [messages, messagesReady, userHasScrolledUp, positionAtBottom]);
+
+  // Add scroll listener only when messages are ready
   useEffect(() => {
+    if (!messagesReady) return;
+    
     const container = messagesContainerRef.current;
     if (!container) return;
 
     container.addEventListener('scroll', handleScroll, { passive: true });
     return () => container.removeEventListener('scroll', handleScroll);
-  }, [handleScroll]);
+  }, [handleScroll, messagesReady]);
 
   const formatMessageTime = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -864,7 +870,12 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
       </div>
 
       {/* Messages Area */}
-      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div 
+        ref={messagesContainerRef} 
+        className={`flex-1 overflow-y-auto p-4 space-y-4 transition-opacity duration-200 ${
+          messagesReady ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
         {messagesLoading ? (
           <div className="flex justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
