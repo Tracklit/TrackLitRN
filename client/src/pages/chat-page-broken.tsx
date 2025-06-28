@@ -48,19 +48,57 @@ const FullScreenImageViewer = ({
       onClick={onClose}
     >
       <button
+        className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-60"
         onClick={onClose}
-        className="absolute top-4 right-4 text-white hover:text-gray-300 z-10"
       >
-        <X className="h-8 w-8" />
+        <X size={32} />
       </button>
-      <img 
-        src={src} 
-        alt="Full screen view" 
+      <img
+        src={src}
+        alt="Full screen view"
         className="max-w-full max-h-full object-contain"
         onClick={(e) => e.stopPropagation()}
       />
     </div>
   );
+};
+
+// Simple image compression utility
+const compressImage = (file: File, maxWidth: number = 800, quality: number = 0.8): Promise<File> => {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d')!;
+    const img = document.createElement('img');
+    
+    img.onload = () => {
+      const aspectRatio = img.width / img.height;
+      let newWidth = maxWidth;
+      let newHeight = maxWidth / aspectRatio;
+      
+      canvas.width = newWidth;
+      canvas.height = newHeight;
+      
+      ctx.drawImage(img, 0, 0, newWidth, newHeight);
+      
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            const compressedFile = new File([blob], file.name, {
+              type: file.type,
+              lastModified: Date.now(),
+            });
+            resolve(compressedFile);
+          } else {
+            resolve(file);
+          }
+        },
+        file.type,
+        quality
+      );
+    };
+    
+    img.src = URL.createObjectURL(file);
+  });
 };
 
 interface ChatGroup {
@@ -69,51 +107,36 @@ interface ChatGroup {
   description?: string;
   image?: string;
   avatar_url?: string;
+  creator_id: number;
+  admin_ids?: number[];
+  member_ids?: number[];
   is_private: boolean;
-  created_by: number;
+  invite_code?: string;
   created_at: string;
   last_message_at?: string;
-  last_message_text?: string;
-  message_count: number;
-  admin_ids: number[];
-  member_count?: number;
+  last_message?: string;
+  message_count?: number;
 }
 
 interface ChatMessage {
   id: number;
   group_id: number;
   user_id: number;
+  sender_name: string;
+  sender_username?: string;
+  sender_profile_image?: string;
   text: string;
   created_at: string;
   edited_at?: string;
-  is_deleted: boolean;
+  is_edited?: boolean;
   reply_to_id?: number;
   message_type: 'text' | 'image' | 'file' | 'system';
   media_url?: string;
-  reactions?: Array<{
-    emoji: string;
-    count: number;
-    users?: number[];
-  }>;
-  reply_to_message?: {
-    id: number;
-    text: string;
-    message_type: string;
-    user: {
-      id: number;
-      name: string;
-    };
-  };
-  user?: {
-    id: number;
-    name: string;
-    username: string;
-    profile_image_url?: string;
-  };
 }
 
 interface DirectMessage {
   id: number;
+  conversationId: number;
   senderId: number;
   receiverId: number;
   text: string;
@@ -141,90 +164,15 @@ const ChatPage = () => {
   const [selectedChat, setSelectedChat] = useState<{ type: 'group' | 'direct'; id: number } | null>(null);
   const [messageText, setMessageText] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null);
-  const [replyToMessage, setReplyToMessage] = useState<ChatMessage | null>(null);
-
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [componentKey, setComponentKey] = useState(Date.now());
   const [localGroups, setLocalGroups] = useState<ChatGroup[]>([]);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [animationDirection, setAnimationDirection] = useState<'enter' | 'exit'>('enter');
   const [viewState, setViewState] = useState<'list' | 'chat'>('list'); // Track which view to show
-  const [searchBarVisible, setSearchBarVisible] = useState(false);
-  const [dragStartY, setDragStartY] = useState(0);
-  const [dragOffset, setDragOffset] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [isAtTop, setIsAtTop] = useState(true);
 
   const queryClient = useQueryClient();
-
-  // Scroll handler to track position
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const container = e.currentTarget;
-    setIsAtTop(container.scrollTop <= 5);
-  };
-
-  // Touch/drag handlers for search bar with overscroll detection
-  const handleTouchStart = (e: React.TouchEvent) => {
-    const container = e.currentTarget as HTMLElement;
-    const touch = e.touches[0];
-    setDragStartY(touch.clientY);
-    
-    // Don't set dragging state immediately - wait for actual movement
-    if (container.scrollTop === 0) {
-      // Just store the start position, don't set dragging yet
-    }
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    const container = e.currentTarget as HTMLElement;
-    const touch = e.touches[0];
-    const deltaY = touch.clientY - dragStartY;
-    
-    // Handle downward pulls when at top to show search bar
-    if (container.scrollTop === 0 && deltaY > 20 && !searchBarVisible) {
-      if (!isDragging) {
-        setIsDragging(true);
-      }
-      
-      e.preventDefault(); // Prevent bounce scroll
-      e.stopPropagation();
-      
-      const offset = Math.min(deltaY - 20, 100); // Subtract 20px threshold
-      setDragOffset(Math.max(0, offset));
-      
-      // Show search bar when pulled down enough
-      if (offset > 40) {
-        setSearchBarVisible(true);
-      }
-    }
-    // Handle upward drags when search bar is visible to hide it
-    else if (searchBarVisible && deltaY < -20) {
-      if (!isDragging) {
-        setIsDragging(true);
-      }
-      
-      e.preventDefault();
-      e.stopPropagation();
-      
-      // Hide search bar on upward drag
-      setSearchBarVisible(false);
-      setIsDragging(false);
-      setDragOffset(0);
-    }
-  };
-
-  const handleTouchEnd = () => {
-    setIsDragging(false);
-    setDragOffset(0);
-    setDragStartY(0);
-    
-    // For showing search bar: keep visible if pulled far enough during drag
-    if (!searchBarVisible && dragOffset >= 70) {
-      setSearchBarVisible(true);
-    }
-    // For hiding search bar: already handled in touchMove
-  };
-
-
 
   // Fetch chat groups with proper caching
   const { data: chatGroups = [], isLoading: groupsLoading, refetch: refetchGroups } = useQuery({
@@ -252,17 +200,22 @@ const ChatPage = () => {
     refetchOnMount: false, // Don't refetch when component mounts if data exists
   });
 
+  // Use local groups state instead of direct React Query data
   const activeGroups = localGroups.length > 0 ? localGroups : chatGroups;
 
-  // Handle popstate and chat data updates
+  // Listen for navigation events and custom chat update events
   useEffect(() => {
     const handleLocationChange = () => {
-      setRefreshKey(prev => prev + 1);
-      setComponentKey(Date.now());
+      // Force refresh when navigating back to chat
+      if (window.location.pathname === '/chat') {
+        setRefreshKey(prev => prev + 1);
+        refetchGroups();
+      }
     };
 
     const handleChatDataUpdate = async () => {
-      console.log('Chat data update event received');
+      console.log('Chat data update event received, forcing complete component remount...');
+      setComponentKey(Date.now());
       setRefreshKey(prev => prev + 1);
       
       // Force fetch fresh data and update local state immediately
@@ -309,90 +262,53 @@ const ChatPage = () => {
       const response = await apiRequest('GET', endpoint);
       return response.json();
     },
-    enabled: !!selectedChat,
+    enabled: !!selectedChat
   });
-
-  // Create group mutation
-  // Group creation is now handled on dedicated page
 
   // Send message mutation
   const sendMessageMutation = useMutation({
-    mutationFn: async (data: { text: string }) => {
-      if (!selectedChat) return;
+    mutationFn: async ({ text, replyToId }: { text: string; replyToId?: number }) => {
+      if (!selectedChat) throw new Error("No chat selected");
+      
       const endpoint = selectedChat.type === 'group'
         ? `/api/chat/groups/${selectedChat.id}/messages`
         : `/api/chat/direct/${selectedChat.id}/messages`;
-      const response = await apiRequest('POST', endpoint, data);
+      
+      const response = await apiRequest('POST', endpoint, { text, replyToId });
       return response.json();
     },
     onSuccess: () => {
       setMessageText("");
-      setReplyToMessage(null);
-      queryClient.invalidateQueries({
-        queryKey: selectedChat?.type === 'group' 
+      if (selectedChat) {
+        const queryKey = selectedChat.type === 'group' 
           ? ['/api/chat/groups', selectedChat.id, 'messages']
-          : ['/api/chat/direct', selectedChat?.id, 'messages']
-      });
+          : ['/api/chat/direct', selectedChat.id, 'messages'];
+        queryClient.invalidateQueries({ queryKey });
+        
+        // Also invalidate chat lists to update last message
+        queryClient.invalidateQueries({ queryKey: ['/api/chat/groups'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/conversations'] });
+      }
     }
   });
 
-  // Edit message mutation
-  const editMessageMutation = useMutation({
-    mutationFn: async (data: { messageId: number; text: string }) => {
-      if (!selectedChat) return;
-      const response = await apiRequest('PATCH', `/api/chat/groups/${selectedChat.id}/messages/${data.messageId}`, {
-        text: data.text
-      });
+  // Create group mutation
+  const createGroupMutation = useMutation({
+    mutationFn: async (groupData: { name: string; description?: string; isPrivate: boolean }) => {
+      const response = await apiRequest('POST', '/api/chat/groups', groupData);
       return response.json();
     },
     onSuccess: () => {
-      setMessageText("");
-      setEditingMessage(null);
-      queryClient.invalidateQueries({
-        queryKey: selectedChat?.type === 'group' 
-          ? ['/api/chat/groups', selectedChat.id, 'messages']
-          : ['/api/chat/direct', selectedChat?.id, 'messages']
-      });
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/groups'] });
+      setShowCreateGroup(false);
     }
   });
 
-  const handleSendMessage = () => {
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
     if (!messageText.trim() || !selectedChat) return;
     
-    if (editingMessage) {
-      // Edit existing message
-      editMessageMutation.mutate({ 
-        messageId: editingMessage.id, 
-        text: messageText.trim() 
-      });
-    } else {
-      // Send new message
-      const messageData = replyToMessage 
-        ? { text: messageText.trim(), replyToId: replyToMessage.id }
-        : { text: messageText.trim() };
-      
-      sendMessageMutation.mutate(messageData);
-    }
-  };
-
-  const handleEditMessage = (message: ChatMessage) => {
-    setEditingMessage(message);
-    setMessageText(message.text || '');
-    setReplyToMessage(null);
-  };
-
-  const handleReplyToMessage = (message: ChatMessage) => {
-    setReplyToMessage(message);
-    setEditingMessage(null);
-  };
-
-  const cancelEdit = () => {
-    setEditingMessage(null);
-    setMessageText("");
-  };
-
-  const cancelReply = () => {
-    setReplyToMessage(null);
+    sendMessageMutation.mutate({ text: messageText.trim() });
   };
 
   const formatMessageTime = (timestamp: string) => {
@@ -421,228 +337,691 @@ const ChatPage = () => {
     }
   };
 
-  // Deduplicate groups and filter based on search
-  const uniqueGroups = activeGroups.reduce((acc: ChatGroup[], current: ChatGroup) => {
-    const existing = acc.find(group => group.id === current.id);
-    if (!existing) {
-      acc.push(current);
-    }
-    return acc;
-  }, []);
-
-  const filteredGroups = uniqueGroups.filter((group: ChatGroup) =>
+  // Filter chats based on search
+  const filteredGroups = activeGroups.filter((group: ChatGroup) =>
     group.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  if (showCreateGroup) {
+    return <CreateGroupForm onCancel={() => setShowCreateGroup(false)} onSubmit={createGroupMutation.mutate} />;
+  }
 
-
-  // Handle chat selection - keep components in memory
+  // Handle chat selection with animation - keep components in memory
   const handleSelectChat = (chat: { type: 'group' | 'direct'; id: number }) => {
-    console.log('Selecting chat:', chat);
+    setIsAnimating(true);
+    setAnimationDirection('enter');
     setSelectedChat(chat);
     setViewState('chat'); // Switch to chat view without unmounting
-  };
+    
+    // Reset animation after transition
+    setTimeout(() => {
+      setIsAnimating(false);
+    }, 300);
+  }
 
   // Handle back to channel list - keep components in memory
   const handleBackToList = () => {
-    console.log('Back button clicked!');
+    setIsAnimating(true);
+    setAnimationDirection('exit');
     setViewState('list'); // Switch to list view without unmounting
-    // Don't clear selectedChat immediately - let it persist in memory
+    
+    // Reset animation after transition
+    setTimeout(() => {
+      setIsAnimating(false);
+      setSelectedChat(null); // Clear selection after animation
+    }, 300);
   };
 
   return (
-    <div className="fixed inset-0 w-full h-full overflow-hidden bg-slate-900">
+    <div className="fixed inset-0 w-full h-full overflow-hidden">
       {/* Channel List View - Always mounted but conditionally visible */}
       <div 
-        className={`absolute inset-0 w-full h-full transition-transform duration-300 ease-in-out bg-slate-900 ${
+        className={`absolute inset-0 w-full h-full transition-transform duration-300 ease-in-out ${
           viewState === 'list' ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div key={`chat-page-${componentKey}`} className="flex flex-col w-full h-full bg-slate-900">
-          {/* Header */}
-          <div className="p-4 border-b border-gray-600/30 flex-shrink-0 bg-black/20 backdrop-blur-sm">
-            <div className="flex items-center gap-4">
-              {/* Logo and Home Link */}
-              <div className="flex-shrink-0">
-                <Link href="/" className="block">
-                  <img 
-                    src={flameLogoPath} 
-                    alt="TrackLit Logo" 
-                    className="h-12 w-12 hover:opacity-80 transition-opacity"
-                  />
-                </Link>
-              </div>
-
-              {/* Title */}
-              <div className="flex-1">
-                <h1 className="text-xl font-semibold text-white">Chats</h1>
-              </div>
-
-              {/* Create Group Button */}
-              <Link href="/create-group">
-                <Button 
-                  size="sm"
-                  className="bg-purple-600 hover:bg-purple-700 text-white border-none"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Group
-                </Button>
-              </Link>
-            </div>
+        {/* Channel List Content */}
+    <div key={`chat-page-${componentKey}`} className="fixed inset-0 flex flex-col w-screen h-screen" style={{
+      background: 'linear-gradient(135deg, #000000 0%, #1a1a2e 50%, #16213e 70%, #4a148c 90%, #7b1fa2 100%)'
+    }}>
+      {/* Header */}
+      <div className="p-4 border-b border-gray-600/30 flex-shrink-0 bg-black/20 backdrop-blur-sm">
+        <div className="flex items-center gap-4">
+          {/* Logo and Home Link */}
+          <div className="flex-shrink-0">
+            <Link href="/" className="block">
+              <img 
+                src={flameLogoPath} 
+                alt="TrackLit Logo" 
+                className="h-12 w-12 hover:opacity-80 transition-opacity"
+              />
+            </Link>
           </div>
-
-          {/* Search Bar - pushes content down when visible */}
-          <div 
-            className="w-full overflow-hidden transition-all duration-300 ease-out bg-slate-900/95 backdrop-blur-sm border-b border-gray-600/30"
-            style={{ 
-              height: isDragging 
-                ? `${Math.min(dragOffset, 60)}px` 
-                : searchBarVisible 
-                  ? '60px' 
-                  : '0px'
-            }}
+          
+          {/* Search Bar */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search chats..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 bg-white/10 border-gray-600/30 text-white placeholder:text-gray-400 focus:bg-white/20"
+            />
+          </div>
+          
+          {/* Add Button */}
+          <Button
+            size="sm"
+            onClick={() => setShowCreateGroup(true)}
+            className="bg-blue-500 hover:bg-blue-600 flex-shrink-0"
           >
-            <div className="p-4 h-full flex items-center">
-              <div className="relative w-full">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <input
-                  type="text"
-                  placeholder="Search conversations..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 bg-gray-800 text-white placeholder-gray-400 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-                  autoFocus={searchBarVisible}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Chat List - Mobile Touch Only */}
-          <div 
-            className="flex-1 overflow-y-auto relative"
-            onScroll={handleScroll}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-          >
-            {/* Pull-to-reveal indicator at top */}
-            <div className="absolute top-0 left-0 right-0 h-6 flex items-center justify-center z-20 bg-gradient-to-b from-slate-800/50 to-transparent">
-              {isDragging ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-12 h-1 bg-blue-400 rounded-full animate-pulse"></div>
-                  <div className="text-xs text-blue-400 font-medium">Release to search</div>
-                </div>
-              ) : isAtTop ? (
-                <div className="flex items-center gap-2 opacity-30">
-                  <div className="w-6 h-0.5 bg-gray-600 rounded-full"></div>
-                  <div className="text-xs text-gray-600">Pull down to search</div>
-                </div>
-              ) : null}
-            </div>
-            {/* Spacing between pull indicator and chat list */}
-            <div className="h-8"></div>
-            <div className="space-y-0" key={`chat-list-${refreshKey}-${JSON.stringify(chatGroups)}`}>
-              {(groupsLoading && chatGroups.length === 0) || (conversationsLoading && conversations.length === 0) ? (
-                <div className="flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                </div>
-              ) : (
-                <>
-                  {filteredGroups.map((group: ChatGroup, index: number) => (
-                    <div key={`group-${group.id}-${index}`} className="relative">
-                      <button
-                        onClick={() => handleSelectChat({ type: 'group', id: group.id })}
-                        className="w-full p-4 text-left"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div className="relative">
-                            <Avatar className="h-12 w-12">
-                              <AvatarImage src={group.image || group.avatar_url} />
-                              <AvatarFallback className="bg-blue-500 text-white">
-                                {group.name.slice(0, 2).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            
-                            {/* Privacy Indicator */}
-                            {group.is_private ? (
-                              <Lock className="absolute -bottom-1 -right-1 h-3 w-3 text-gray-500" />
-                            ) : (
-                              <Globe className="absolute -bottom-1 -right-1 h-3 w-3 text-green-500" />
-                            )}
-                          </div>
-                          
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between">
-                              <h3 className="font-medium text-white truncate">{group.name}</h3>
-                              <span className="text-xs text-gray-400">
-                                {group.last_message_at ? formatLastMessageTime(group.last_message_at) : ''}
-                              </span>
-                            </div>
-                            
-                            <div className="flex items-center justify-between">
-                              <p className="text-sm text-gray-300 truncate">
-                                {group.last_message_text || group.description || 'No messages yet'}
-                              </p>
-                              
-                              {/* Message Count Badge */}
-                              {group.message_count > 0 && (
-                                <Badge variant="secondary" className="ml-2 bg-blue-500 text-white text-xs px-2 py-1">
-                                  {group.message_count}
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </button>
-                      
-                      {/* Thin gray divider that stops before the channel image */}
-                      {index < filteredGroups.length - 1 && (
-                        <div className="ml-16 mr-4 border-b border-gray-400/50" style={{ borderWidth: '0.5px', opacity: '0.5' }} />
-                      )}
-                    </div>
-                  ))}
-                </>
-              )}
-
-              {/* Empty State - Only show when not loading and no data */}
-              {!groupsLoading && !conversationsLoading && filteredGroups.length === 0 && conversations.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-                  <MessageCircle className="h-16 w-16 mb-4 text-gray-300" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No chats yet</h3>
-                  <p className="text-center">Create a group or start a conversation to get started</p>
-                </div>
-              )}
-            </div>
-          </div>
+            <Plus className="h-4 w-4" />
+          </Button>
         </div>
       </div>
+
+      {/* Chat List - Full Width */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="space-y-0" key={`chat-list-${refreshKey}-${JSON.stringify(chatGroups)}`}>
+          {(groupsLoading && chatGroups.length === 0) || (conversationsLoading && conversations.length === 0) ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+          ) : (
+            <>
+              {filteredGroups.map((group: ChatGroup, index: number) => (
+                <div key={`${group.id}-${group.name}-${group.description}-${refreshKey}`} className="relative">
+                  <button
+                    onClick={() => handleSelectChat({ type: 'group', id: group.id })}
+                    className="w-full p-4 hover:bg-gray-50 transition-colors text-left"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="relative">
+                        <Avatar className="h-12 w-12">
+                          <AvatarImage src={group.image || group.avatar_url} />
+                          <AvatarFallback className="bg-blue-500 text-white">
+                            {group.name.slice(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        
+                        {/* Privacy Indicator */}
+                        {group.is_private ? (
+                          <Lock className="absolute -bottom-1 -right-1 h-3 w-3 text-gray-500" />
+                        ) : (
+                          <Globe className="absolute -bottom-1 -right-1 h-3 w-3 text-green-500" />
+                        )}
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-medium text-white truncate">{group.name}</h3>
+                          <span className="text-xs text-gray-400">
+                            {group.last_message_at ? formatLastMessageTime(group.last_message_at) : ''}
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm text-gray-400 truncate">
+                            {group.last_message || "No messages yet"}
+                          </p>
+                          <div className="flex items-center space-x-1">
+                            <Badge variant="secondary" className="text-xs">
+                              {group.member_ids?.length || 0}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                  
+                  {/* Thin gray divider that stops before the channel image */}
+                  {index < filteredGroups.length - 1 && (
+                    <div className="ml-16 mr-4 border-b border-gray-400/50" style={{ borderWidth: '0.5px', opacity: '0.5' }} />
+                  )}
+                </div>
+              ))}
+            </>
+          )}
+
+          {/* Empty State - Only show when not loading and no data */}
+          {!groupsLoading && !conversationsLoading && filteredGroups.length === 0 && conversations.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+              <MessageCircle className="h-16 w-16 mb-4 text-gray-300" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No chats yet</h3>
+              <p className="text-center">Create a group or start a conversation to get started</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+    );
+  }
+};
+
+// Message Bubble Component
+interface MessageBubbleProps {
+  message: ChatMessage | DirectMessage;
+  isOwn: boolean;
+  currentUser?: any;
+  onReply?: (message: ChatMessage | DirectMessage) => void;
+  allMessages?: (ChatMessage | DirectMessage)[];
+  onImageClick?: (imageUrl: string) => void;
+}
+
+const MessageBubble = ({ message, isOwn, currentUser, onReply, allMessages, onImageClick }: MessageBubbleProps) => {
+  const [showMenu, setShowMenu] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedText, setEditedText] = useState('');
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [startPosition, setStartPosition] = useState<{ x: number; y: number } | null>(null);
+  
+  // Check if this is a system message
+  const isSystemMessage = (message as any).message_type === 'system' || (message as any).user_id === null;
+  
+  // Render system messages with special styling
+  if (isSystemMessage) {
+    return (
+      <div className="flex justify-center my-4">
+        <div className="bg-gray-200 text-gray-600 px-3 py-1 rounded-full text-sm">
+          {(message as any).text || (message as any).content || ''}
+        </div>
+      </div>
+    );
+  }
+  const [hasScrolled, setHasScrolled] = useState(false);
+  const [menuPosition, setMenuPosition] = useState<'bottom' | 'top'>('bottom');
+  const [lastTap, setLastTap] = useState<number>(0);
+  const [reactionAnimation, setReactionAnimation] = useState(false);
+  const [reactions, setReactions] = useState<any[]>([]);
+  const [reactionCooldown, setReactionCooldown] = useState(false);
+  const bubbleRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
+
+  const formatTime = (timestamp: string) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: false 
+    });
+  };
+
+  // Fetch reactions for this message
+  const messageType = (message as any).group_id || (message as any).groupId ? 'group' : 'direct';
+  const { data: messageReactions } = useQuery({
+    queryKey: ['reactions', message.id, messageType],
+    queryFn: async () => {
+      const response = await fetch(`/api/chat/messages/${message.id}/${messageType}/reactions`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    staleTime: 30000, // 30 seconds
+  });
+
+  // Reaction mutation
+  const reactionMutation = useMutation({
+    mutationFn: async ({ messageId, messageType, emoji }: { messageId: number; messageType: string; emoji: string }) => {
+      const response = await apiRequest('POST', `/api/chat/messages/${messageId}/${messageType}/reactions`, { emoji });
+      if (!response.ok) {
+        throw new Error('Failed to toggle reaction');
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      console.log('Reaction toggled:', data);
+      // Show animation for successful reaction
+      setReactionAnimation(true);
+      setTimeout(() => setReactionAnimation(false), 1000);
       
-      {/* Chat Interface View - Always mounted but conditionally visible */}
-      <div 
-        className={`absolute inset-0 w-full h-full transition-transform duration-300 ease-in-out ${
-          viewState === 'chat' ? 'translate-x-0' : 'translate-x-full'
-        }`}
-      >
-        {selectedChat && (
-          <ChatInterface selectedChat={selectedChat} onBack={handleBackToList} />
+      // Invalidate reactions query to refresh the display
+      queryClient.invalidateQueries({ queryKey: ['reactions', message.id, messageType] });
+    },
+    onError: (error) => {
+      console.error('Error toggling reaction:', error);
+    }
+  });
+
+  const handleReaction = () => {
+    // Prevent multiple reactions if one is already in progress or on cooldown
+    if (reactionMutation.isPending || reactionCooldown) {
+      return;
+    }
+    
+    // Set cooldown to prevent rapid toggles
+    setReactionCooldown(true);
+    setTimeout(() => setReactionCooldown(false), 1500); // 1.5 second cooldown
+    
+    // Detect message type based on message properties
+    const messageType = (message as any).group_id || (message as any).groupId ? 'group' : 'direct';
+    reactionMutation.mutate({
+      messageId: message.id,
+      messageType,
+      emoji: '👍'
+    });
+  };
+
+  const handlePressStart = (e: React.MouseEvent | React.TouchEvent) => {
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    
+    setStartPosition({ x: clientX, y: clientY });
+    setHasScrolled(false);
+    
+    // Handle double-tap for reactions
+    const currentTime = Date.now();
+    const timeDiff = currentTime - lastTap;
+    
+    if (timeDiff < 300 && timeDiff > 0) {
+      // Double tap detected - add thumbs up reaction
+      handleReaction();
+      setLastTap(0);
+      return;
+    }
+    
+    setLastTap(currentTime);
+    
+    const timer = setTimeout(() => {
+      if (!hasScrolled) {
+        // Check if menu would go below viewport
+        if (bubbleRef.current) {
+          const bubbleRect = bubbleRef.current.getBoundingClientRect();
+          const viewportHeight = window.innerHeight;
+          const menuHeight = 80; // Approximate menu height
+          
+          // If bubble is in bottom third of viewport, show menu above
+          if (bubbleRect.bottom + menuHeight > viewportHeight - 50) {
+            setMenuPosition('top');
+          } else {
+            setMenuPosition('bottom');
+          }
+        }
+        setShowMenu(true);
+      }
+    }, 500); // 500ms for long press
+    setLongPressTimer(timer);
+  };
+
+  const handlePressMove = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!startPosition) return;
+    
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    
+    const deltaX = Math.abs(clientX - startPosition.x);
+    const deltaY = Math.abs(clientY - startPosition.y);
+    
+    // If moved more than 10px in any direction, consider it scrolling
+    if (deltaX > 10 || deltaY > 10) {
+      setHasScrolled(true);
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        setLongPressTimer(null);
+      }
+    }
+  };
+
+  const handlePressEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+    setStartPosition(null);
+    setHasScrolled(false);
+  };
+
+  const startEdit = () => {
+    setIsEditing(true);
+    const messageText = (message as any).text || (message as any).content || '';
+    setEditedText(messageText);
+    setShowMenu(false);
+  };
+
+  const cancelEdit = () => {
+    setIsEditing(false);
+    setEditedText('');
+  };
+
+  const editMutation = useMutation({
+    mutationFn: async ({ messageId, text }: { messageId: number; text: string }) => {
+      const response = await apiRequest('PUT', `/api/chat/messages/${messageId}`, { text });
+      if (!response.ok) {
+        throw new Error('Failed to edit message');
+      }
+      return response.json();
+    },
+    onSuccess: (updatedMessage) => {
+      console.log('Edit success, updated message:', updatedMessage);
+      
+      // Update only the specific message in cache without full refetch
+      queryClient.setQueryData(['/api/chat/groups', 1, 'messages'], (oldData: any) => {
+        if (!oldData) return oldData;
+        return oldData.map((msg: any) => 
+          msg.id === updatedMessage.id ? {
+            ...msg,
+            text: updatedMessage.text,
+            edited_at: updatedMessage.edited_at,
+            is_edited: true
+          } : msg
+        ).sort((a: any, b: any) => {
+          const timeA = new Date(a.created_at).getTime();
+          const timeB = new Date(b.created_at).getTime();
+          return timeA - timeB;
+        });
+      });
+      
+      setIsEditing(false);
+      setEditedText('');
+    },
+    onError: (error) => {
+      console.error('Error editing message:', error);
+    }
+  });
+
+  const saveEdit = () => {
+    if (!editedText.trim()) return;
+    editMutation.mutate({ messageId: message.id, text: editedText.trim() });
+  };
+
+  const getProfileImage = () => {
+    if (isOwn && currentUser) {
+      return currentUser.profileImageUrl;
+    }
+    if ('sender_profile_image' in message) {
+      return message.sender_profile_image;
+    }
+    return null;
+  };
+
+  const getSenderName = () => {
+    if (isOwn && currentUser) {
+      return currentUser.name || currentUser.username;
+    }
+    if ('sender_name' in message) {
+      return String(message.sender_name);
+    }
+    return 'Unknown';
+  };
+
+  return (
+    <div className={cn(
+      "flex w-full mb-4 items-end gap-2 relative",
+      isOwn ? "justify-end" : "justify-start"
+    )}>
+      {/* Profile Image for other users (left side) */}
+      {!isOwn && (
+        <Avatar className="h-8 w-8 flex-shrink-0">
+          <AvatarImage src={getProfileImage() || undefined} />
+          <AvatarFallback className="bg-gray-400 text-white text-xs">
+            {getSenderName().slice(0, 2).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+      )}
+      
+      <div className="flex flex-col max-w-xs lg:max-w-md">
+        <div 
+          ref={bubbleRef}
+          className={cn(
+            "min-w-[100px] px-3 py-2 rounded-2xl bg-white text-black border border-gray-200 relative",
+            isOwn 
+              ? "rounded-br-none" 
+              : "rounded-bl-none",
+            ((message as any).edited_at || (message as any).editedAt) && "animate-pulse duration-1000"
+          )}
+          onMouseDown={handlePressStart}
+          onMouseUp={handlePressEnd}
+          onMouseLeave={handlePressEnd}
+          onMouseMove={handlePressMove}
+          onTouchStart={handlePressStart}
+          onTouchEnd={handlePressEnd}
+          onTouchCancel={handlePressEnd}
+          onTouchMove={handlePressMove}
+        >
+          {!isOwn && 'sender_name' in message && (
+            <div className="text-xs font-medium mb-1 text-gray-600">
+              {getSenderName()}
+            </div>
+          )}
+          
+          {/* Reply Preview */}
+          {('reply_to_id' in message && message.reply_to_id) && (
+            <div className="mb-2 p-2 bg-gray-100 border-l-2 border-blue-500 rounded-r">
+              <div className="text-xs text-gray-600 font-medium">
+                Replying to message
+              </div>
+              <div className="text-xs text-gray-700 truncate">
+                {allMessages?.find((m: ChatMessage | DirectMessage) => m.id === message.reply_to_id)?.text || 'Original message'}
+              </div>
+            </div>
+          )}
+          
+          {isEditing ? (
+            <div className="space-y-2">
+              <Input
+                value={editedText}
+                onChange={(e) => setEditedText(e.target.value)}
+                className="text-sm"
+                autoFocus
+              />
+              <div className="flex gap-2">
+                <Button size="sm" onClick={saveEdit}>Save</Button>
+                <Button size="sm" variant="outline" onClick={cancelEdit}>Cancel</Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {/* Image content */}
+              {(message as any).message_type === 'image' && (message as any).media_url && (
+                <div className="rounded-lg overflow-hidden">
+                  <img
+                    src={(message as any).media_url}
+                    alt="Shared image"
+                    className="w-full h-auto object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                    style={{ maxHeight: '450px', maxWidth: '288px' }}
+                    onClick={() => onImageClick?.((message as any).media_url)}
+                    loading="lazy"
+                  />
+                </div>
+              )}
+              
+              {/* Text content */}
+              {((message as any).text || (message as any).content) && (
+                <div className="text-sm break-words">
+                  {(message as any).text || (message as any).content || ''}
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Context Menu */}
+          {showMenu && (
+            <div className={cn(
+              "absolute right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-1",
+              menuPosition === 'bottom' ? "top-full -mt-1" : "bottom-full mb-1"
+            )}>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  onReply?.(message);
+                  setShowMenu(false);
+                }}
+                className="flex items-center gap-2 w-full justify-start"
+              >
+                <Reply className="h-3 w-3" />
+                Reply
+              </Button>
+              {isOwn && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={startEdit}
+                  className="flex items-center gap-2 w-full justify-start"
+                >
+                  <Edit className="h-3 w-3" />
+                  Edit
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+        
+        {/* Right-aligned timestamp */}
+        <div className="text-[8px] mt-1 text-gray-500 text-right">
+          {formatTime('created_at' in message ? message.created_at : message.createdAt)}
+          {((message as any).edited_at || (message as any).editedAt) && (
+            <span className="ml-1">(edited)</span>
+          )}
+        </div>
+        
+        {/* Persistent Reactions Display */}
+        {messageReactions && messageReactions.length > 0 && (
+          <div className={cn(
+            "flex flex-wrap gap-1 mt-1",
+            isOwn ? "justify-end" : "justify-start"
+          )}>
+            {messageReactions.map((reaction: any, index: number) => (
+              <div
+                key={`${reaction.emoji}-${index}`}
+                className="bg-gray-100 border border-gray-200 rounded-full px-2 py-1 flex items-center gap-1 text-xs shadow-sm"
+              >
+                <span>{reaction.emoji}</span>
+                <span className="text-gray-600 font-medium">{reaction.count}</span>
+              </div>
+            ))}
+          </div>
         )}
       </div>
+      
+      {/* Profile Image for current user (right side) */}
+      {isOwn && (
+        <Avatar className="h-8 w-8 flex-shrink-0">
+          <AvatarImage src={getProfileImage() || undefined} />
+          <AvatarFallback className="bg-blue-400 text-white text-xs">
+            {getSenderName().slice(0, 2).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+      )}
+      
+      {/* Reaction Animation - positioned on the bubble edge */}
+      {reactionAnimation && (
+        <div className={cn(
+          "absolute pointer-events-none z-50 transition-all duration-300",
+          isOwn 
+            ? "-bottom-2 -right-1" 
+            : "-bottom-2 -left-1"
+        )}>
+          <div className="relative animate-bounce">
+            {/* Main reaction bubble with enhanced depth */}
+            <div className="relative bg-white rounded-full shadow-xl border border-gray-300 p-2 min-w-[36px] min-h-[36px] flex items-center justify-center">
+              {/* Gradient overlay for depth */}
+              <div className="absolute inset-0 bg-gradient-to-b from-white to-gray-50 rounded-full opacity-80"></div>
+              
+              {/* Emoji */}
+              <div className="relative text-xl leading-none">👍</div>
+              
+              {/* Shine effect */}
+              <div className="absolute top-1 left-1 w-2 h-2 bg-white rounded-full opacity-60"></div>
+            </div>
+            
+            {/* Drop shadow */}
+            <div className="absolute inset-0 bg-black opacity-10 rounded-full blur-sm transform translate-y-1 -z-10"></div>
+            
+            {/* Subtle connecting line to message */}
+            <div className={cn(
+              "absolute top-1/2 w-1 h-1 bg-gray-300 rounded-full transform -translate-y-1/2 opacity-50",
+              isOwn ? "right-full mr-1" : "left-full ml-1"
+            )}></div>
+          </div>
+        </div>
+      )}
+      
+      {/* Click outside to close menu */}
+      {showMenu && (
+        <div 
+          className="fixed inset-0 z-40" 
+          onClick={() => setShowMenu(false)}
+        />
+      )}
     </div>
   );
 };
 
-
-
 // Chat Interface Component
-const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group' | 'direct'; id: number }; onBack: () => void }) => {
+interface ChatInterfaceProps {
+  selectedChat: { type: 'group' | 'direct'; id: number };
+  onBack: () => void;
+}
+
+const ChatInterface = ({ selectedChat, onBack }: ChatInterfaceProps) => {
   const [messageText, setMessageText] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
+  const [showAttachmentPane, setShowAttachmentPane] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
-  const [replyToMessage, setReplyToMessage] = useState<ChatMessage | null>(null);
-  const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const hasInitiallyLoadedRef = useRef(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+
+  // Image compression function
+  const compressImage = (file: File, maxWidth: number = 800, quality: number = 0.8): Promise<File> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d')!;
+      const img = document.createElement('img');
+      
+      img.onload = () => {
+        // Calculate new dimensions
+        const ratio = Math.min(maxWidth / img.width, maxWidth / img.height);
+        canvas.width = img.width * ratio;
+        canvas.height = img.height * ratio;
+        
+        // Draw and compress
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          const compressedFile = new File([blob!], file.name, {
+            type: 'image/jpeg',
+            lastModified: Date.now()
+          });
+          resolve(compressedFile);
+        }, 'image/jpeg', quality);
+      };
+      
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  // Handle image selection
+  const handleImageSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      // Compress the image
+      const compressedFile = await compressImage(file);
+      setSelectedImage(compressedFile);
+      
+      // Create preview
+      const previewUrl = URL.createObjectURL(compressedFile);
+      setImagePreview(previewUrl);
+      setShowAttachmentPane(false);
+    } catch (error) {
+      console.error('Error processing image:', error);
+    }
+  };
+
+  // Clear selected image
+  const clearSelectedImage = () => {
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   // Fetch current user
   const { data: currentUser } = useQuery({
@@ -653,286 +1032,388 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     }
   });
 
-  // Fetch messages for selected chat
-  const { data: messages = [], isLoading: messagesLoading, refetch: refetchMessages } = useQuery({
-    queryKey: selectedChat?.type === 'group' 
-      ? ['/api/chat/groups', selectedChat.id, 'messages']
-      : ['/api/chat/direct', selectedChat?.id, 'messages'],
+  // Fetch chat groups for group name
+  const { data: chatGroups = [] } = useQuery({
+    queryKey: ['/api/chat/groups'],
     queryFn: async () => {
-      if (!selectedChat) return [];
+      const response = await apiRequest('GET', '/api/chat/groups');
+      return response.json();
+    }
+  });
+
+  // Fetch messages for selected chat with improved caching
+  const { data: messagesData = [], isLoading: messagesLoading } = useQuery({
+    queryKey: selectedChat.type === 'group' 
+      ? ['/api/chat/groups', selectedChat.id, 'messages']
+      : ['/api/chat/direct', selectedChat.id, 'messages'],
+    queryFn: async () => {
       const endpoint = selectedChat.type === 'group'
         ? `/api/chat/groups/${selectedChat.id}/messages`
         : `/api/chat/direct/${selectedChat.id}/messages`;
       const response = await apiRequest('GET', endpoint);
       return response.json();
     },
-    enabled: !!selectedChat,
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
+    refetchOnMount: false, // Don't refetch on component mount if data exists
+    refetchOnReconnect: false // Don't refetch on network reconnect
   });
 
-  // Fetch group details if it's a group chat
-  const { data: groupDetails } = useQuery({
-    queryKey: ['/api/chat/groups', selectedChat.id],
-    queryFn: async () => {
-      const response = await apiRequest('GET', `/api/chat/groups/${selectedChat.id}`);
-      return response.json();
-    },
-    enabled: selectedChat.type === 'group',
+  // Sort messages by creation time to ensure newest appear at bottom
+  const messages = messagesData.sort((a: any, b: any) => {
+    const timeA = new Date(a.created_at).getTime();
+    const timeB = new Date(b.created_at).getTime();
+    return timeA - timeB;
   });
 
-  // Send message mutation
-  const sendMessageMutation = useMutation({
-    mutationFn: async (data: { text: string; replyToId?: number }) => {
-      if (!selectedChat) return;
-      const endpoint = selectedChat.type === 'group'
-        ? `/api/chat/groups/${selectedChat.id}/messages`
-        : `/api/chat/direct/${selectedChat.id}/messages`;
-      const response = await apiRequest('POST', endpoint, data);
-      return response.json();
-    },
-    onSuccess: () => {
-      setMessageText("");
-      setReplyToMessage(null);
-      refetchMessages();
-    }
-  });
-
-  // Edit message mutation
-  const editMessageMutation = useMutation({
-    mutationFn: async (data: { messageId: number; text: string }) => {
-      if (!selectedChat) return;
-      const response = await apiRequest('PATCH', `/api/chat/groups/${selectedChat.id}/messages/${data.messageId}`, {
-        text: data.text
-      });
-      return response.json();
-    },
-    onSuccess: () => {
-      setMessageText("");
-      setEditingMessage(null);
-      queryClient.invalidateQueries({
-        queryKey: selectedChat?.type === 'group' 
-          ? ['/api/chat/groups', selectedChat.id, 'messages']
-          : ['/api/chat/direct', selectedChat?.id, 'messages']
-      });
-    }
-  });
-
-  const handleSendMessage = () => {
-    if (!messageText.trim() || !selectedChat) return;
-    
-    if (editingMessage) {
-      // Edit existing message
-      editMessageMutation.mutate({ 
-        messageId: editingMessage.id, 
-        text: messageText.trim() 
-      });
-    } else {
-      // Send new message
-      const messageData = replyToMessage 
-        ? { text: messageText.trim(), replyToId: replyToMessage.id }
-        : { text: messageText.trim() };
-      
-      sendMessageMutation.mutate(messageData);
-    }
-  };
-
-  const cancelEdit = () => {
-    setEditingMessage(null);
-    setMessageText("");
-  };
-
-  const cancelReply = () => {
-    setReplyToMessage(null);
-  };
-
-  // Define the handler functions
-  const handleReplyToMessage = (message: ChatMessage) => {
-    setReplyToMessage(message);
-  };
-
-  const handleEditMessage = (message: ChatMessage) => {
-    // Since we're using native input method instead of inline editing,
-    // this function sets up the message for editing in the main input field
-    console.log("Edit message requested:", message.id);
-    // TODO: Implement native input editing functionality
-  };
-
-  // Prevent any scroll animation by setting position immediately
-  useLayoutEffect(() => {
-    const container = messagesContainerRef.current;
-    if (!container) return;
-
-    // Disable scroll behavior and set position immediately
-    const originalBehavior = container.style.scrollBehavior;
-    container.style.scrollBehavior = 'auto';
-    container.scrollTop = container.scrollHeight;
-    
-    // Keep it as auto to prevent any future animations
-    // Don't restore smooth scrolling
-  }, [messages, selectedChat.id]);
-
-  // Initialize at bottom on mount
-  useLayoutEffect(() => {
-    const container = messagesContainerRef.current;
-    if (container) {
-      container.style.scrollBehavior = 'auto';
+  // Aggressive force scroll to bottom - ensures absolute bottom position
+  const forceScrollToBottom = useCallback(() => {
+    if (messagesContainerRef.current) {
+      const container = messagesContainerRef.current;
+      // Immediately set to max scroll position
       container.scrollTop = container.scrollHeight;
+      
+      // Double-check with requestAnimationFrame
+      requestAnimationFrame(() => {
+        container.scrollTop = container.scrollHeight;
+        
+        // Triple-check after a brief delay
+        setTimeout(() => {
+          container.scrollTop = container.scrollHeight;
+        }, 10);
+      });
     }
   }, []);
 
+  // Mark messages as read when entering a chat channel
+  useEffect(() => {
+    if (selectedChat && currentUser) {
+      const markAsRead = async () => {
+        try {
+          const endpoint = selectedChat.type === 'group'
+            ? `/api/chat/groups/${selectedChat.id}/mark-read`
+            : `/api/chat/direct/${selectedChat.id}/mark-read`;
+          
+          await apiRequest('POST', endpoint);
+          
+          // Invalidate unread count to update the chat button badge
+          queryClient.invalidateQueries({ queryKey: ['unread-chat-count'] });
+        } catch (error) {
+          console.error('Failed to mark messages as read:', error);
+        }
+      };
 
+      markAsRead();
+    }
+  }, [selectedChat.id, selectedChat.type, currentUser, queryClient]);
 
+  // Use layout effect to scroll before paint - prevents visual jump
+  useLayoutEffect(() => {
+    if (messagesContainerRef.current && messages.length > 0) {
+      const container = messagesContainerRef.current;
+      container.scrollTop = container.scrollHeight;
+    }
+  }, [messages, selectedChat.id]);
 
+  // Additional effect for persistent scrolling
+  useEffect(() => {
+    forceScrollToBottom();
+    
+    // Backup scroll attempts
+    const timeouts = [50, 150, 300];
+    timeouts.forEach(delay => {
+      setTimeout(forceScrollToBottom, delay);
+    });
+  }, [messages, selectedChat.id, forceScrollToBottom]);
 
-  const formatMessageTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: false 
+  // Send message mutation with optimistic updates
+  const sendMessageMutation = useMutation({
+    mutationFn: async ({ text, replyToId, image }: { text?: string; replyToId?: number; image?: File }) => {
+      const endpoint = selectedChat.type === 'group'
+        ? `/api/chat/groups/${selectedChat.id}/messages`
+        : `/api/chat/direct/${selectedChat.id}/messages`;
+      
+      if (image) {
+        // Compress image before upload
+        const compressedImage = await compressImage(image, 800, 0.8);
+        
+        // Upload compressed image using FormData
+        const formData = new FormData();
+        formData.append('image', compressedImage);
+        if (text) formData.append('text', text);
+        if (replyToId) formData.append('replyToId', replyToId.toString());
+        formData.append('messageType', 'image');
+        
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          body: formData,
+          credentials: 'include'
+        });
+        return response.json();
+      } else {
+        // Send text message
+        const payload: any = { text };
+        if (replyToId) {
+          payload.replyToId = replyToId;
+        }
+        
+        const response = await apiRequest('POST', endpoint, payload);
+        return response.json();
+      }
+    },
+    onMutate: async ({ text, replyToId, image }) => {
+      // Cancel any outgoing refetches
+      const queryKey = selectedChat.type === 'group' 
+        ? ['/api/chat/groups', selectedChat.id, 'messages']
+        : ['/api/chat/direct', selectedChat.id, 'messages'];
+      await queryClient.cancelQueries({ queryKey });
+
+      // Snapshot the previous value
+      const previousMessages = queryClient.getQueryData(queryKey);
+
+      // Optimistically update with new message
+      if (text && !image) {
+        const optimisticMessage = {
+          id: Date.now(), // Temporary ID
+          group_id: selectedChat.type === 'group' ? selectedChat.id : undefined,
+          user_id: currentUser?.id,
+          sender_name: currentUser?.name || 'You',
+          sender_profile_image: currentUser?.profileImageUrl,
+          text: text,
+          created_at: new Date().toISOString(),
+          reply_to_id: replyToId,
+          message_type: 'text' as const,
+          isOptimistic: true // Flag to identify optimistic updates
+        };
+
+        queryClient.setQueryData(queryKey, (old: any[] = []) => [...old, optimisticMessage]);
+      }
+
+      return { previousMessages };
+    },
+    onSuccess: () => {
+      setMessageText("");
+      setReplyingTo(null);
+      clearSelectedImage();
+      // Refetch to get the real message with server ID
+      const queryKey = selectedChat.type === 'group' 
+        ? ['/api/chat/groups', selectedChat.id, 'messages']
+        : ['/api/chat/direct', selectedChat.id, 'messages'];
+      queryClient.invalidateQueries({ queryKey });
+    },
+    onError: (err, variables, context) => {
+      // Rollback on error
+      if (context?.previousMessages) {
+        const queryKey = selectedChat.type === 'group' 
+          ? ['/api/chat/groups', selectedChat.id, 'messages']
+          : ['/api/chat/direct', selectedChat.id, 'messages'];
+        queryClient.setQueryData(queryKey, context.previousMessages);
+      }
+    }
+  });
+
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!messageText.trim() && !selectedImage) return;
+    
+    sendMessageMutation.mutate({ 
+      text: messageText.trim() || undefined,
+      replyToId: replyingTo?.id,
+      image: selectedImage || undefined
     });
   };
+  
+  const selectedGroup = chatGroups.find((group: ChatGroup) => group.id === selectedChat.id);
 
   return (
-    <div className="flex flex-col w-full h-full bg-slate-900">
+    <div className="fixed inset-0 bg-white flex flex-col w-screen h-screen">
       {/* Chat Header */}
-      <div className="p-4 border-b border-gray-600/30 flex-shrink-0 bg-black/20 backdrop-blur-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Button onClick={onBack} size="sm" variant="ghost" className="text-white p-2">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={groupDetails?.image || groupDetails?.avatar_url} />
-              <AvatarFallback className="bg-blue-500 text-white">
-                {groupDetails?.name?.slice(0, 2).toUpperCase() || 'CH'}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h3 className="font-medium text-white">
-                {groupDetails?.name || `Chat ${selectedChat.id}`}
-              </h3>
-              <p className="text-sm text-gray-400">
-                {groupDetails?.member_count ? `${groupDetails.member_count} members` : 'Private chat'}
-              </p>
-            </div>
+      <div className="p-4 border-b border-gray-200 bg-white flex-shrink-0">
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={() => {
+              console.log('Back button clicked!');
+              onBack();
+            }}
+            className="p-3 hover:bg-gray-100 rounded-full flex-shrink-0 bg-gray-50 border border-gray-200"
+            type="button"
+          >
+            <ArrowLeft className="h-6 w-6 text-gray-900" />
+          </button>
+          
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={selectedGroup?.image || selectedGroup?.avatar_url} />
+            <AvatarFallback className="bg-blue-500 text-white text-sm">
+              {selectedGroup?.name.slice(0, 2).toUpperCase() || 'CH'}
+            </AvatarFallback>
+          </Avatar>
+          
+          <div className="flex-1">
+            <h2 className="font-semibold text-gray-900">
+              {selectedGroup?.name || 'Chat'}
+            </h2>
+            <p className="text-sm text-gray-500">
+              {selectedGroup?.member_ids?.length || 0} members
+            </p>
           </div>
-          <div className="flex items-center gap-2">
-            {selectedChat.type === 'group' && (
-              <Link href={`/group-settings/${selectedChat.id}`}>
-                <Button size="sm" variant="ghost" className="text-white">
-                  <Settings className="h-4 w-4" />
-                </Button>
-              </Link>
-            )}
-          </div>
+          
+          {/* Settings icon - only show for group admins/creators */}
+          {selectedChat.type === 'group' && selectedGroup && currentUser && 
+           (selectedGroup.creator_id === currentUser.id || selectedGroup.admin_ids?.includes(currentUser.id)) && (
+            <Link href={`/chats/groups/${selectedChat.id}/settings`} className="text-gray-600 hover:text-gray-800 transition-colors">
+              <Button variant="ghost" size="sm">
+                <Settings className="h-4 w-4" />
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 
       {/* Messages Area */}
-      <div 
-        ref={messagesContainerRef} 
-        className="flex-1 overflow-y-auto p-4 flex flex-col justify-end"
-        style={{ 
-          scrollBehavior: 'auto',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'flex-end'
-        }}
-      >
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 bg-gray-50">
         <div className="space-y-4">
-        {messagesLoading ? (
-          <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-          </div>
-        ) : messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-gray-400">
-            <MessageCircle className="h-16 w-16 mb-4 text-gray-300" />
-            <p>No messages yet</p>
-            <p className="text-sm">Start the conversation!</p>
-          </div>
-        ) : (
-          messages.map((message: ChatMessage) => (
-            <div key={message.id} className="message-item">
-              <div className={`flex ${currentUser?.id === message.user_id ? 'justify-end' : 'justify-start'} mb-4`}>
-                <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                  currentUser?.id === message.user_id 
-                    ? 'bg-blue-500 text-white' 
-                    : 'bg-gray-700 text-white'
-                }`}>
-                  {message.reply_to_id && (
-                    <div className="text-xs opacity-75 mb-1 border-l-2 border-gray-400 pl-2">
-                      Reply to previous message
-                    </div>
-                  )}
-                  <div className="text-sm">{message.text}</div>
-                  <div className={`text-xs mt-1 ${
-                    currentUser?.id === message.user_id ? 'text-blue-100' : 'text-gray-400'
-                  }`}>
-                    {formatMessageTime(message.created_at)}
-                  </div>
-                </div>
-              </div>
+          {messagesLoading ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
             </div>
-          ))
-        )}
-        <div ref={messagesEndRef} />
+          ) : messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+              <MessageCircle className="h-16 w-16 mb-4 text-gray-300" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No messages yet</h3>
+              <p className="text-center">Be the first to send a message!</p>
+            </div>
+          ) : (
+            messages.map((message: ChatMessage) => (
+              <MessageBubble
+                key={message.id}
+                message={message}
+                isOwn={message.user_id === currentUser?.id}
+                currentUser={currentUser}
+                onReply={(message) => setReplyingTo(message as ChatMessage)}
+                allMessages={messages}
+                onImageClick={setFullScreenImage}
+              />
+            ))
+          )}
+
         </div>
       </div>
 
-      {/* Edit/Reply Preview */}
-      {(editingMessage || replyToMessage) && (
-        <div className="p-3 bg-gray-700/50 border-t border-gray-600/30 flex items-center justify-between">
-          <div className="flex-1 min-w-0">
-            <div className="text-xs text-gray-400 mb-1">
-              {editingMessage ? 'Editing message' : `Replying to ${replyToMessage?.user?.name || 'Unknown'}`}
-            </div>
-            <div className="text-sm text-gray-300 truncate">
-              {editingMessage ? editingMessage?.text : replyToMessage?.text}
+      {/* Message Input */}
+      <div className="p-4 border-t border-gray-200 bg-white flex-shrink-0">
+        {/* Reply Preview */}
+        {replyingTo && (
+          <div className="mb-3 bg-gray-50 border-l-4 border-blue-500 p-3 rounded-r-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <p className="text-sm text-gray-600 font-medium">
+                  Replying to {('sender_name' in replyingTo) ? replyingTo.sender_name : 'Unknown'}
+                </p>
+                <p className="text-sm text-gray-800 truncate">
+                  {(replyingTo as any).text || (replyingTo as any).content || ''}
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setReplyingTo(null)}
+                className="ml-2 p-1 h-6 w-6"
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </div>
           </div>
-          <Button
-            onClick={() => editingMessage ? cancelEdit() : cancelReply()}
-            size="sm"
-            variant="ghost"
-            className="text-gray-400 hover:text-white flex-shrink-0 ml-2"
-          >
-            ×
-          </Button>
-        </div>
-      )}
+        )}
+        
+        {/* Image Preview */}
+        {imagePreview && (
+          <div className="mb-3 p-3 bg-gray-100 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-700">Image Preview</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearSelectedImage}
+                className="h-6 w-6 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="relative inline-block">
+              <img
+                src={imagePreview}
+                alt="Preview"
+                className="max-w-48 max-h-48 rounded-lg object-cover"
+              />
+            </div>
+          </div>
+        )}
 
-      {/* Message Input */}
-      <div className="p-4 border-t border-gray-600/30 bg-black/20 backdrop-blur-sm flex-shrink-0">
-        <div className="flex gap-2">
+        {/* Attachment Pane */}
+        {showAttachmentPane && !imagePreview && (
+          <div className="mb-3 p-4 bg-gray-100 rounded-lg">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-medium text-gray-700">Add Attachment</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAttachmentPane(false)}
+                className="h-6 w-6 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="grid grid-cols-4 gap-3">
+              <Button
+                variant="outline"
+                className="h-16 flex flex-col items-center justify-center space-y-1"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Image className="h-6 w-6 text-blue-500" />
+                <span className="text-xs">Photo</span>
+              </Button>
+            </div>
+          </div>
+        )}
+
+        <form onSubmit={handleSendMessage} className="flex space-x-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowAttachmentPane(!showAttachmentPane)}
+            className="p-2 h-10 w-10 flex-shrink-0"
+          >
+            <Plus className="h-5 w-5 text-gray-500" />
+          </Button>
           <Input
             value={messageText}
             onChange={(e) => setMessageText(e.target.value)}
-            placeholder={
-              editingMessage 
-                ? "Edit message..." 
-                : replyToMessage 
-                  ? `Reply to ${replyToMessage.user?.name}...` 
-                  : "Type a message..."
-            }
-            className="flex-1 bg-gray-800/50 border-gray-600/50 text-white placeholder-gray-400"
-            onKeyPress={(e) => {
-              if (e.key === 'Enter') {
-                handleSendMessage();
-              }
-            }}
+            placeholder={replyingTo ? "Type your reply..." : "Type a message..."}
+            className="flex-1 text-black"
+            disabled={sendMessageMutation.isPending}
           />
-          <Button 
-            onClick={handleSendMessage}
-            disabled={!messageText.trim() || sendMessageMutation.isPending || editMessageMutation.isPending}
-            className="bg-blue-600 hover:bg-blue-700"
+          <Button
+            type="submit"
+            disabled={(!messageText.trim() && !selectedImage) || sendMessageMutation.isPending}
+            className="bg-blue-500 hover:bg-blue-600"
           >
-            {editingMessage ? <Edit className="h-4 w-4" /> : <Send className="h-4 w-4" />}
+            <Send className="h-4 w-4" />
           </Button>
-        </div>
+        </form>
+
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleImageSelect}
+          className="hidden"
+        />
       </div>
 
-      {/* Full Screen Image Viewer */}
-      <FullScreenImageViewer
+      {/* Full-screen image viewer */}
+      <FullScreenImageViewer 
         src={fullScreenImage || ''}
         isOpen={!!fullScreenImage}
         onClose={() => setFullScreenImage(null)}
@@ -941,302 +1422,91 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
   );
 };
 
-// Message Bubble Component
-interface MessageBubbleProps {
-  message: ChatMessage;
-  isOwn: boolean;
-  currentUser?: any;
-  onImageClick?: (imageUrl: string) => void;
-  onReply?: (message: ChatMessage) => void;
-  onEdit?: (message: ChatMessage) => void;
+// Create Group Form Component
+interface CreateGroupFormProps {
+  onCancel: () => void;
+  onSubmit: (data: { name: string; description?: string; isPrivate: boolean }) => void;
 }
 
-const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply, onEdit }: MessageBubbleProps) => {
-  const [showMenu, setShowMenu] = useState(false);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
-  const [lastTap, setLastTap] = useState(0);
-  const [showReaction, setShowReaction] = useState(false);
-  
-  // Check if this is a system message
-  const isSystemMessage = message.message_type === 'system';
-  
-  const queryClient = useQueryClient();
-  
-  const formatMessageTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: false 
+const CreateGroupForm = ({ onCancel, onSubmit }: CreateGroupFormProps) => {
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [isPrivate, setIsPrivate] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+    
+    onSubmit({
+      name: name.trim(),
+      description: description.trim() || undefined,
+      isPrivate
     });
   };
 
-  // Generic reaction mutation that accepts any emoji
-  const addReactionMutation = useMutation({
-    mutationFn: async (emoji: string) => {
-      const response = await apiRequest('POST', `/api/chat/groups/${message.group_id}/messages/${message.id}/reactions`, {
-        emoji
-      });
-      return response.json();
-    },
-    onSuccess: (data) => {
-      // Show animation briefly and then refetch to show persistent emoji
-      setShowReaction(true);
-      setTimeout(() => {
-        setShowReaction(false);
-        // Refetch messages to show the persistent reaction without scroll jump
-        queryClient.invalidateQueries({ queryKey: ['/api/chat/groups', message.group_id, 'messages'] });
-      }, 1000);
-    }
-  });
-
-  // Double tap handler for thumbs up
-  const handleDoubleTap = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const now = Date.now();
-    const DOUBLE_TAP_DELAY = 300;
-    
-    if (now - lastTap < DOUBLE_TAP_DELAY) {
-      // Double tap detected - add thumbs up reaction
-      addReactionMutation.mutate('👍');
-      console.log(`Double tap reaction on message ${message.id}`);
-    }
-    setLastTap(now);
-  };
-
-  const handleLongPressStart = () => {
-    const timer = setTimeout(() => {
-      setShowMenu(true);
-    }, 500); // 500ms long press
-    setLongPressTimer(timer);
-  };
-
-  const handleLongPressEnd = () => {
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      setLongPressTimer(null);
-    }
-  };
-
-  const handleMenuAction = (action: string) => {
-    setShowMenu(false);
-    
-    switch (action) {
-      case 'edit':
-        if (isOwn) {
-          onEdit?.(message);
-        }
-        break;
-      case 'reply':
-        onReply?.(message);
-        console.log(`Reply to message ${message.id}`);
-        break;
-      case 'reactions':
-        setShowEmojiPicker(true);
-        break;
-      case 'delete':
-        // TODO: Implement delete functionality
-        console.log(`Delete message ${message.id}`);
-        break;
-      default:
-        console.log(`Menu action: ${action} for message ${message.id}`);
-    }
-  };
-
-  const handleEmojiSelect = (emoji: string) => {
-    addReactionMutation.mutate(emoji);
-    setShowEmojiPicker(false);
-  };
-
-  // Early return for system messages - render as centered text without bubble
-  if (isSystemMessage) {
-    return (
-      <div className="flex justify-center mb-4">
-        <div className="text-center text-gray-400 text-sm italic px-4 py-2">
-          {message.text}
-          <div className="text-xs text-gray-500 mt-1">
-            {formatMessageTime(message.created_at)}
-          </div>
+  return (
+    <div className="fixed inset-0 flex flex-col w-screen h-screen" style={{
+      background: 'linear-gradient(135deg, #000000 0%, #1a1a2e 50%, #16213e 70%, #4a148c 90%, #7b1fa2 100%)'
+    }}>
+      <div className="p-4 border-b border-gray-600/30 bg-black/20 backdrop-blur-sm">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-semibold text-white">Create Group</h1>
+          <Button variant="ghost" size="sm" onClick={onCancel} className="text-white hover:bg-white/10">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
         </div>
       </div>
-    );
-  }
 
-  return (
-    <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-4 relative items-end`}>
-      {/* Profile Image for received messages */}
-      {!isOwn && (
-        <div className="flex-shrink-0 mr-3">
-          <Avatar className="h-8 w-8">
-            {message.user?.profile_image_url ? (
-              <AvatarImage 
-                src={message.user.profile_image_url} 
-                alt={message.user.name}
-                className="object-cover"
-              />
-            ) : null}
-            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white text-xs font-medium">
-              {message.user?.name?.slice(0, 2).toUpperCase() || 'U'}
-            </AvatarFallback>
-          </Avatar>
-        </div>
-      )}
-      
-      <div 
-        className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg relative ${
-          isOwn 
-            ? 'bg-white text-black shadow-md' 
-            : 'bg-gray-700 text-white'
-        }`}
-        onMouseDown={handleLongPressStart}
-        onMouseUp={handleLongPressEnd}
-        onMouseLeave={handleLongPressEnd}
-        onTouchStart={handleLongPressStart}
-        onTouchEnd={handleLongPressEnd}
-        onClick={handleDoubleTap}
-      >
-        {/* Speech bubble tail pointing to profile image at bottom */}
-        {isOwn ? (
-          // Tail pointing right (to own profile image on the right) at bottom
-          <div className="absolute bottom-2 -right-2 w-0 h-0 border-l-8 border-l-white border-t-4 border-t-transparent border-b-4 border-b-transparent"></div>
-        ) : (
-          // Tail pointing left (to other user's profile image on the left) at bottom  
-          <div className="absolute bottom-2 -left-2 w-0 h-0 border-r-8 border-r-gray-700 border-t-4 border-t-transparent border-b-4 border-b-transparent"></div>
-        )}
-        {!isOwn && message.user && (
-          <div className="text-xs text-gray-300 mb-1 font-medium">
-            {message.user.name}
-          </div>
-        )}
-        
-        {/* Reply Preview */}
-        {message.reply_to_message && (
-          <div className="mb-2 p-2 bg-gray-100 border-l-4 border-blue-500 rounded text-sm">
-            <div className="text-xs text-gray-600 mb-1">
-              Replying to {message.reply_to_message.user.name}
-            </div>
-            <div className="text-gray-800 truncate">
-              {message.reply_to_message.message_type === 'image' ? '📷 Photo' : message.reply_to_message.text}
-            </div>
-          </div>
-        )}
-
-        {message.message_type === 'image' && message.media_url ? (
-          <div className="mb-2">
-            <img 
-              src={message.media_url} 
-              alt="Shared image" 
-              className="max-w-full h-auto rounded cursor-pointer"
-              onClick={() => onImageClick?.(message.media_url!)}
+      <div className="flex-1 p-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-white mb-2">
+              Group Name *
+            </label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter group name"
+              className="bg-white/10 border-gray-600/30 text-white placeholder:text-gray-400 focus:bg-white/20"
+              required
             />
           </div>
-        ) : null}
-        
-        {/* Message content */}
-        <div className="text-sm">{message.text}</div>
-        
-        <div className={`text-xs mt-1 ${isOwn ? 'text-gray-500' : 'text-gray-400'}`}>
-          {formatMessageTime(message.created_at)}
-          {(message as any).edited_at && (
-            <span className="ml-1 italic">(edited)</span>
-          )}
-        </div>
 
-        {/* Persistent Reaction Circles - stick to bottom of bubble */}
-        {message.reactions && message.reactions.length > 0 && (
-          <div className="absolute -bottom-2 left-2 flex gap-1 z-10">
-            {message.reactions.map((reaction: any, index: number) => (
-              <div key={index} className="bg-white rounded-full shadow-lg border border-gray-300 p-1 min-w-[28px] min-h-[28px] flex items-center justify-center">
-                <span className="text-sm">{reaction.emoji}</span>
-                {reaction.count > 1 && (
-                  <span className="text-xs text-gray-600 ml-1">{reaction.count}</span>
-                )}
-              </div>
-            ))}
+          <div>
+            <label className="block text-sm font-medium text-white mb-2">
+              Description (optional)
+            </label>
+            <Input
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Enter group description"
+              className="bg-white/10 border-gray-600/30 text-white placeholder:text-gray-400 focus:bg-white/20"
+            />
           </div>
-        )}
 
-        {/* Reaction Animation */}
-        {showReaction && (
-          <div className="absolute -bottom-2 left-2 pointer-events-none z-20 transition-all duration-1000">
-            <div className="animate-bounce">
-              <div className="bg-white rounded-full shadow-lg border border-gray-300 p-1 min-w-[28px] min-h-[28px] flex items-center justify-center">
-                <span className="text-sm">👍</span>
-              </div>
-            </div>
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="isPrivate"
+              checked={isPrivate}
+              onChange={(e) => setIsPrivate(e.target.checked)}
+              className="rounded border-gray-600 bg-white/10"
+            />
+            <label htmlFor="isPrivate" className="text-sm text-white">
+              Make this group private
+            </label>
           </div>
-        )}
+
+          <div className="flex space-x-3 pt-4">
+            <Button type="button" variant="outline" onClick={onCancel} className="flex-1 border-gray-600 text-white hover:bg-white/10">
+              Cancel
+            </Button>
+            <Button type="submit" disabled={!name.trim()} className="flex-1 bg-blue-500 hover:bg-blue-600">
+              Create Group
+            </Button>
+          </div>
+        </form>
       </div>
-
-
-
-      {/* Long Press Menu */}
-      {showMenu && (
-        <div className="absolute top-0 right-0 bg-gray-800 rounded-lg shadow-lg z-50 py-2 min-w-[120px]">
-          <button 
-            onClick={() => handleMenuAction('reply')}
-            className="w-full px-4 py-2 text-left text-white hover:bg-gray-700 text-sm"
-          >
-            Reply
-          </button>
-          <button 
-            onClick={() => handleMenuAction('reactions')}
-            className="w-full px-4 py-2 text-left text-white hover:bg-gray-700 text-sm"
-          >
-            Reactions
-          </button>
-          {isOwn && (
-            <>
-              <button 
-                onClick={() => handleMenuAction('edit')}
-                className="w-full px-4 py-2 text-left text-white hover:bg-gray-700 text-sm"
-              >
-                Edit
-              </button>
-              <button 
-                onClick={() => handleMenuAction('delete')}
-                className="w-full px-4 py-2 text-left text-red-400 hover:bg-gray-700 text-sm"
-              >
-                Delete
-              </button>
-            </>
-          )}
-          <button 
-            onClick={() => setShowMenu(false)}
-            className="w-full px-4 py-2 text-left text-gray-400 hover:bg-gray-700 text-sm"
-          >
-            Cancel
-          </button>
-        </div>
-      )}
-
-      {/* Emoji Picker */}
-      {showEmojiPicker && (
-        <div className="absolute top-0 right-0 bg-gray-800 rounded-lg shadow-lg z-50 p-3 min-w-[240px]">
-          <div className="text-white text-sm mb-2 font-medium">Add Reaction</div>
-          <div className="grid grid-cols-6 gap-2">
-            {['👍', '❤️', '😂', '😮', '😢', '😡', '🔥', '👏', '🎉', '💯', '👀', '🙏'].map(emoji => (
-              <button
-                key={emoji}
-                onClick={() => handleEmojiSelect(emoji)}
-                className="w-8 h-8 flex items-center justify-center text-lg hover:bg-gray-700 rounded transition-colors"
-                disabled={addReactionMutation.isPending}
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>
-          <button 
-            onClick={() => setShowEmojiPicker(false)}
-            className="w-full mt-3 px-3 py-1 text-left text-gray-400 hover:bg-gray-700 text-sm rounded"
-          >
-            Cancel
-          </button>
-        </div>
-      )}
     </div>
   );
 };
