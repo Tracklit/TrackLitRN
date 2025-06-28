@@ -755,45 +755,38 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     // TODO: Implement native input editing functionality
   };
 
-  // State for managing scroll position without visual animation
-  const [isMessagesVisible, setIsMessagesVisible] = useState(false);
-  const [currentChannelId, setCurrentChannelId] = useState(selectedChat.id);
+  // State for managing initial load
+  const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
+  const currentChannelRef = useRef(selectedChat.id);
 
-  // Handle channel changes
+  // Reset state when channel changes
   useEffect(() => {
-    if (selectedChat.id !== currentChannelId) {
-      setIsMessagesVisible(false);
-      setCurrentChannelId(selectedChat.id);
+    if (selectedChat.id !== currentChannelRef.current) {
+      setHasInitiallyLoaded(false);
+      currentChannelRef.current = selectedChat.id;
     }
-  }, [selectedChat.id, currentChannelId]);
+  }, [selectedChat.id]);
 
-  // Handle initial positioning and visibility
-  useEffect(() => {
-    if (messages.length > 0 && !isMessagesVisible && messagesContainerRef.current) {
+  // Force scroll position using useLayoutEffect before any paint
+  useLayoutEffect(() => {
+    if (messages.length > 0 && messagesContainerRef.current) {
       const container = messagesContainerRef.current;
       
-      // Set scroll position immediately before making visible
-      requestAnimationFrame(() => {
-        const maxScroll = container.scrollHeight - container.clientHeight;
-        container.scrollTop = maxScroll;
-        setIsMessagesVisible(true);
-      });
-    }
-  }, [messages, isMessagesVisible]);
-
-  // Auto-scroll for new messages when at bottom
-  useEffect(() => {
-    if (messages.length > 0 && isMessagesVisible && messagesContainerRef.current) {
-      const container = messagesContainerRef.current;
-      const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-      
-      if (isAtBottom) {
-        requestAnimationFrame(() => {
-          container.scrollTop = container.scrollHeight - container.clientHeight;
-        });
+      if (!hasInitiallyLoaded) {
+        // Force immediate scroll to bottom on initial load
+        container.scrollTop = container.scrollHeight;
+        setHasInitiallyLoaded(true);
+      } else {
+        // Auto-scroll for new messages if at bottom
+        const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+        if (isAtBottom) {
+          container.scrollTop = container.scrollHeight;
+        }
       }
     }
-  }, [messages.length, isMessagesVisible]);
+  }, [messages, hasInitiallyLoaded]);
+
+
 
   const formatMessageTime = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -843,9 +836,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
       {/* Messages Area */}
       <div 
         ref={messagesContainerRef} 
-        className={`flex-1 overflow-y-auto p-4 space-y-4 transition-opacity duration-200 ${
-          isMessagesVisible ? 'opacity-100' : 'opacity-0'
-        }`}
+        className="flex-1 overflow-y-auto p-4 space-y-4"
       >
         {messagesLoading ? (
           <div className="flex justify-center py-8">
