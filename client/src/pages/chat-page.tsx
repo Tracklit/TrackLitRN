@@ -152,40 +152,53 @@ const ChatPage = () => {
   const [dragStartY, setDragStartY] = useState(0);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [isAtTop, setIsAtTop] = useState(true);
 
   const queryClient = useQueryClient();
 
-  // Touch/drag handlers for search bar
+  // Scroll handler to track position
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const container = e.currentTarget;
+    setIsAtTop(container.scrollTop <= 5);
+  };
+
+  // Touch/drag handlers for search bar with overscroll detection
   const handleTouchStart = (e: React.TouchEvent) => {
     const container = e.currentTarget as HTMLElement;
-    const isAtTop = container.scrollTop <= 10;
-    
-    if (!isAtTop) return; // Only allow drag from top
-    
     const touch = e.touches[0];
     setDragStartY(touch.clientY);
-    setIsDragging(true);
+    
+    // Only start drag detection if at the very top
+    if (container.scrollTop === 0) {
+      setIsDragging(true);
+    }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging) return;
     
+    const container = e.currentTarget as HTMLElement;
     const touch = e.touches[0];
     const deltaY = touch.clientY - dragStartY;
     
-    // Only allow downward drag from the top of the scroll area
-    if (deltaY > 0) {
-      const container = e.currentTarget as HTMLElement;
-      const isAtTop = container.scrollTop <= 10;
+    // Only handle downward pulls when at top
+    if (container.scrollTop === 0 && deltaY > 10) {
+      e.preventDefault(); // Prevent bounce scroll
+      e.stopPropagation();
       
-      if (isAtTop) {
-        e.preventDefault(); // Prevent scrolling when revealing search
-        setDragOffset(Math.min(deltaY, 100));
-        
-        // Show search bar when dragged down enough
-        if (deltaY > 30 && !searchBarVisible) {
-          setSearchBarVisible(true);
-        }
+      const offset = Math.min(deltaY - 10, 100); // Subtract 10px threshold
+      setDragOffset(Math.max(0, offset));
+      
+      // Show search bar when pulled down enough
+      if (offset > 30 && !searchBarVisible) {
+        setSearchBarVisible(true);
+      }
+    } else if (deltaY < -10) {
+      // Reset if user drags up
+      setIsDragging(false);
+      setDragOffset(0);
+      if (searchBarVisible) {
+        setSearchBarVisible(false);
       }
     }
   };
@@ -195,8 +208,8 @@ const ChatPage = () => {
     
     setIsDragging(false);
     
-    // If dragged less than threshold, hide search bar
-    if (dragOffset < 70) {
+    // Keep search bar visible if pulled far enough
+    if (dragOffset < 60) {
       setSearchBarVisible(false);
     }
     
@@ -212,9 +225,10 @@ const ChatPage = () => {
       const deltaY = e.clientY - dragStartY;
       
       if (deltaY > 0) {
-        setDragOffset(Math.min(deltaY, 100));
+        const offset = Math.min(deltaY, 120);
+        setDragOffset(offset);
         
-        if (deltaY > 30 && !searchBarVisible) {
+        if (offset > 40 && !searchBarVisible) {
           setSearchBarVisible(true);
         }
       }
@@ -225,7 +239,7 @@ const ChatPage = () => {
       
       setIsDragging(false);
       
-      if (dragOffset < 70) {
+      if (dragOffset < 80) {
         setSearchBarVisible(false);
       }
       
@@ -247,9 +261,9 @@ const ChatPage = () => {
   // Mouse down handler for desktop
   const handleMouseDown = (e: React.MouseEvent) => {
     const container = e.currentTarget as HTMLElement;
-    const isAtTop = container.scrollTop <= 10;
+    const isAtTop = container.scrollTop <= 0;
     
-    if (!isAtTop) return; // Only allow drag from top
+    if (!isAtTop) return;
     
     setDragStartY(e.clientY);
     setIsDragging(true);
@@ -523,10 +537,10 @@ const ChatPage = () => {
 
           {/* Hidden Search Bar - positioned above content */}
           <div 
-            className="absolute top-0 left-0 right-0 z-10 p-4 border-b border-gray-600/30 bg-black/20 backdrop-blur-sm transition-transform duration-300 ease-out"
+            className="absolute top-0 left-0 right-0 z-30 p-4 border-b border-gray-600/30 bg-slate-900/95 backdrop-blur-sm transition-transform duration-300 ease-out"
             style={{ 
               transform: isDragging 
-                ? `translateY(${Math.max(-100, -100 + dragOffset)}px)` 
+                ? `translateY(${80 + dragOffset}px)` 
                 : searchBarVisible 
                   ? 'translateY(80px)' 
                   : 'translateY(-100%)'
@@ -546,17 +560,26 @@ const ChatPage = () => {
           {/* Chat List - Full Width */}
           <div 
             className="flex-1 overflow-y-auto relative"
+            onScroll={handleScroll}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
             onMouseDown={handleMouseDown}
           >
-            {/* Drag area indicator - only visible when dragging */}
-            {isDragging && (
-              <div className="absolute top-0 left-0 right-0 h-8 bg-blue-500/20 flex items-center justify-center z-20">
-                <div className="w-8 h-1 bg-blue-400 rounded-full"></div>
-              </div>
-            )}
+            {/* Pull-to-reveal indicator at top */}
+            <div className="absolute top-0 left-0 right-0 h-6 flex items-center justify-center z-20 bg-gradient-to-b from-slate-800/50 to-transparent">
+              {isDragging ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-12 h-1 bg-blue-400 rounded-full animate-pulse"></div>
+                  <div className="text-xs text-blue-400 font-medium">Release to search</div>
+                </div>
+              ) : isAtTop ? (
+                <div className="flex items-center gap-2 opacity-60">
+                  <div className="w-6 h-0.5 bg-gray-500 rounded-full"></div>
+                  <div className="text-xs text-gray-500">Pull down to search</div>
+                </div>
+              ) : null}
+            </div>
             <div className="space-y-0" key={`chat-list-${refreshKey}-${JSON.stringify(chatGroups)}`}>
               {(groupsLoading && chatGroups.length === 0) || (conversationsLoading && conversations.length === 0) ? (
                 <div className="flex justify-center py-8">
