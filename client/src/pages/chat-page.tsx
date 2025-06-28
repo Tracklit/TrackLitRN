@@ -613,6 +613,13 @@ const ChatPage = () => {
             </div>
           </div>
         </div>
+        
+        {/* Floating Flame Icon - positioned like bottom navigation */}
+        <div className="fixed bottom-14 right-5 z-20">
+          <div className="h-10 w-10 flex items-center justify-center">
+            <img src={flameIcon} alt="Chat" className="h-10 w-10" />
+          </div>
+        </div>
       </div>
       
       {/* Chat Interface View - Always mounted but conditionally visible */}
