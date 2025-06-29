@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell } from "lucide-react";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBell } from '@fortawesome/free-solid-svg-icons';
 import { NotificationPanel } from "@/components/notification-panel";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -64,7 +65,7 @@ export function NotificationBell({ className }: NotificationBellProps) {
         onClick={handleOpenPanel}
         className={`h-9 w-9 p-0 text-gray-400 hover:text-white relative ${className}`}
       >
-        <Bell className="h-5 w-5" />
+        <FontAwesomeIcon icon={faBell} className="h-5 w-5" />
         {unreadCount > 0 && (
           <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-xs min-w-[1.25rem] h-5 flex items-center justify-center rounded-full">
             {unreadCount > 99 ? '99+' : unreadCount}
