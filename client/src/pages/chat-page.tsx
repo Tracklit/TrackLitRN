@@ -72,13 +72,20 @@ interface ChatGroup {
   image?: string;
   avatar_url?: string;
   is_private: boolean;
+  is_public: boolean;
   created_by: number;
+  owner_id: number;
   created_at: string;
   last_message_at?: string;
   last_message_text?: string;
   message_count: number;
   admin_ids: number[];
   member_count?: number;
+  members?: Array<{
+    id: number;
+    name: string;
+    username: string;
+  }>;
 }
 
 interface ChatMessage {
@@ -310,11 +317,11 @@ const ChatPage = () => {
     // First apply group filter (my vs public)
     let matchesFilter = false;
     if (groupFilter === 'my') {
-      // Show groups where user is a member or owner
-      matchesFilter = group.members?.some((member: any) => member.id === user?.id) || group.owner_id === user?.id;
+      // Show groups where user is a member or owner (check admin_ids or created_by)
+      matchesFilter = group.admin_ids?.includes(user?.id || 0) || group.created_by === user?.id;
     } else {
-      // Show all public groups
-      matchesFilter = group.is_public;
+      // Show all public groups (not private)
+      matchesFilter = !group.is_private;
     }
     
     // Then apply search filter
@@ -470,11 +477,28 @@ const ChatPage = () => {
 
 
 
+  // Mark messages as read mutation
+  const markAsReadMutation = useMutation({
+    mutationFn: async (groupId: number) => {
+      const response = await apiRequest('PATCH', `/api/chat/groups/${groupId}/mark-read`);
+      return response.json();
+    },
+    onSuccess: () => {
+      // Invalidate unread counts to update the UI
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/groups/unread-counts'] });
+    }
+  });
+
   // Handle chat selection - keep components in memory
   const handleSelectChat = (chat: { type: 'group' | 'direct'; id: number }) => {
     console.log('Selecting chat:', chat);
     setSelectedChat(chat);
     setViewState('chat'); // Switch to chat view without unmounting
+    
+    // Mark messages as read when entering a group
+    if (chat.type === 'group') {
+      markAsReadMutation.mutate(chat.id);
+    }
   };
 
   // Handle back to channel list - keep components in memory
