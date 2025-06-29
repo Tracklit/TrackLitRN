@@ -108,9 +108,13 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
-- June 29, 2025: Fixed group creation database constraint error
-  - Corrected foreign key constraint in chat_group_members table to reference chat_groups instead of non-existent groups table
-  - Group creation functionality now working properly without constraint violations
+- June 29, 2025: Enhanced chat system with toggle filter and unread message tracking
+  - Added "My Groups" vs "Public Groups" toggle filter next to Create Group button
+  - Implemented comprehensive unread message count system replacing total message counts
+  - Added mark-as-read functionality when entering chat groups to update unread badges
+  - Enhanced chat groups API to include member information and admin IDs for proper filtering
+  - Red badges now only display for groups where user is actually a member with unread messages
+  - Fixed group creation database constraint error (chat_group_members foreign key)
   - Updated Messages icon in top bar to paper plane (faPaperPlane) with Font Awesome solid
   - Reordered top bar icons: Globe, Bell, Paper Plane (left to right)
 

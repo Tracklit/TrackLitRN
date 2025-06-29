@@ -317,8 +317,11 @@ const ChatPage = () => {
     // First apply group filter (my vs public)
     let matchesFilter = false;
     if (groupFilter === 'my') {
-      // Show groups where user is a member or owner (check admin_ids or created_by)
-      matchesFilter = group.admin_ids?.includes(user?.id || 0) || group.created_by === user?.id;
+      // Show groups where user is a member, admin, or owner
+      const isMember = group.members?.some((member: any) => member.id === user?.id);
+      const isAdmin = group.admin_ids?.includes(user?.id || 0);
+      const isOwner = group.created_by === user?.id;
+      matchesFilter = isMember || isAdmin || isOwner;
     } else {
       // Show all public groups (not private)
       matchesFilter = !group.is_private;
@@ -541,11 +544,11 @@ const ChatPage = () => {
               {/* Toggle Filter and Create Group Button */}
               <div className="flex items-center space-x-3">
                 {/* Group Filter Toggle */}
-                <div className="flex bg-gray-800/50 rounded-lg p-1">
+                <div className="flex bg-gray-800/50 rounded-md p-0.5">
                   <button
                     onClick={() => setGroupFilter('my')}
                     className={cn(
-                      "px-3 py-1.5 text-sm font-medium rounded-md transition-all",
+                      "px-2 py-1 text-xs font-medium rounded-sm transition-all",
                       groupFilter === 'my'
                         ? "bg-purple-600 text-white shadow-sm"
                         : "text-gray-400 hover:text-white hover:bg-gray-700/50"
@@ -556,7 +559,7 @@ const ChatPage = () => {
                   <button
                     onClick={() => setGroupFilter('public')}
                     className={cn(
-                      "px-3 py-1.5 text-sm font-medium rounded-md transition-all",
+                      "px-2 py-1 text-xs font-medium rounded-sm transition-all",
                       groupFilter === 'public'
                         ? "bg-purple-600 text-white shadow-sm"
                         : "text-gray-400 hover:text-white hover:bg-gray-700/50"
