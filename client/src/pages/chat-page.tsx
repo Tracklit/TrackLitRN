@@ -643,12 +643,23 @@ const ChatPage = () => {
                       >
                         <div className="flex items-center space-x-3">
                           <div className="relative">
-                            <Avatar className="h-12 w-12">
-                              <AvatarImage src={group.image || group.avatar_url || undefined} />
-                              <AvatarFallback className="bg-blue-500 text-white">
+                            <div className="h-12 w-12 rounded-full overflow-hidden bg-blue-500 flex items-center justify-center">
+                              {group.avatar_url ? (
+                                <img 
+                                  src={group.avatar_url} 
+                                  alt={group.name}
+                                  className="h-full w-full object-cover"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                    target.nextElementSibling?.classList.remove('hidden');
+                                  }}
+                                />
+                              ) : null}
+                              <div className={`text-white font-medium text-sm ${group.avatar_url ? 'hidden' : ''}`}>
                                 {group.name.slice(0, 2).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
+                              </div>
+                            </div>
                             
                             {/* Privacy Indicator */}
                             {group.is_private ? (
