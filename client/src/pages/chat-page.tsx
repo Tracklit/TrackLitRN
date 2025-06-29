@@ -573,9 +573,9 @@ const ChatPage = () => {
                 <Link href="/create-group">
                   <Button 
                     size="sm"
-                    className="bg-purple-600 hover:bg-purple-700 text-white border-none"
+                    className="bg-purple-600 hover:bg-purple-700 text-white border-none text-xs px-2 py-1"
                   >
-                    <Plus className="h-4 w-4 mr-2" />
+                    <Plus className="h-3 w-3 mr-1.5" />
                     New Group
                   </Button>
                 </Link>
