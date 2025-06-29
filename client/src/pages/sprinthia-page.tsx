@@ -118,7 +118,7 @@ export default function SprinthiaPage() {
   const activeConversation = conversations.find((c: SprinthiaConversation) => c.id === activeConversationId);
 
   return (
-    <PageContainer>
+    <PageContainer className="pt-20">
       <div className="flex-1 overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b border-border">
           <div className="flex items-center gap-3">
