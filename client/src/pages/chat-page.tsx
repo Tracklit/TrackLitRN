@@ -31,6 +31,52 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import flameLogoPath from "@assets/IMG_4720_1751015409604.png";
 
+// Stable GroupAvatar component to prevent image flashing
+const GroupAvatar = ({ group }: { group: any }) => {
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  
+  // Reset states when group changes
+  useEffect(() => {
+    setImageLoaded(false);
+    setImageError(false);
+  }, [group.id, group.avatar_url]);
+  
+  const showFallback = !group.avatar_url || imageError || !imageLoaded;
+  
+  return (
+    <div className="relative">
+      <div className="h-12 w-12 rounded-full overflow-hidden bg-blue-500 flex items-center justify-center relative">
+        {group.avatar_url && !imageError && (
+          <img 
+            src={group.avatar_url} 
+            alt={group.name}
+            className={`h-full w-full object-cover absolute inset-0 transition-opacity duration-200 ${
+              imageLoaded ? 'opacity-100' : 'opacity-0'
+            }`}
+            onLoad={() => setImageLoaded(true)}
+            onError={() => {
+              setImageError(true);
+              setImageLoaded(false);
+            }}
+          />
+        )}
+        <div className={`text-white font-medium text-sm transition-opacity duration-200 ${
+          showFallback ? 'opacity-100' : 'opacity-0'
+        }`}>
+          {group.name.slice(0, 2).toUpperCase()}
+        </div>
+      </div>
+      
+      {/* Privacy Indicator */}
+      {group.is_private ? (
+        <Lock className="absolute -bottom-1 -right-1 h-3 w-3 text-gray-500" />
+      ) : (
+        <Globe className="absolute -bottom-1 -right-1 h-3 w-3 text-green-500" />
+      )}
+    </div>
+  );
+};
 
 // Full-screen image viewer component
 const FullScreenImageViewer = ({ 
@@ -642,32 +688,7 @@ const ChatPage = () => {
                         className="w-full p-4 text-left"
                       >
                         <div className="flex items-center space-x-3">
-                          <div className="relative">
-                            <div className="h-12 w-12 rounded-full overflow-hidden bg-blue-500 flex items-center justify-center">
-                              {group.avatar_url ? (
-                                <img 
-                                  src={group.avatar_url} 
-                                  alt={group.name}
-                                  className="h-full w-full object-cover"
-                                  onError={(e) => {
-                                    const target = e.target as HTMLImageElement;
-                                    target.style.display = 'none';
-                                    target.nextElementSibling?.classList.remove('hidden');
-                                  }}
-                                />
-                              ) : null}
-                              <div className={`text-white font-medium text-sm ${group.avatar_url ? 'hidden' : ''}`}>
-                                {group.name.slice(0, 2).toUpperCase()}
-                              </div>
-                            </div>
-                            
-                            {/* Privacy Indicator */}
-                            {group.is_private ? (
-                              <Lock className="absolute -bottom-1 -right-1 h-3 w-3 text-gray-500" />
-                            ) : (
-                              <Globe className="absolute -bottom-1 -right-1 h-3 w-3 text-green-500" />
-                            )}
-                          </div>
+                          <GroupAvatar group={group} />
                           
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
