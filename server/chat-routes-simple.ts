@@ -140,45 +140,34 @@ router.get("/api/chat/groups", async (req: Request, res: Response) => {
     const userId = req.user!.id;
     console.log('FIXED: Fetching groups for user ID:', userId);
     
-    // Get all groups (both user's groups and public groups) with member info
+    // Get all groups using existing structure with member_ids arrays
     const groups = await db.execute(sql`
-      SELECT DISTINCT
-        cg.id,
-        cg.name,
-        cg.description,
-        cg.image,
-        cg.creator_id as created_by,
-        cg.is_private,
-        cg.created_at::text,
-        cg.last_message,
-        cg.last_message_at::text,
-        COALESCE(cg.message_count, 0) as message_count,
-        CASE WHEN cgm.user_id = ${userId} THEN true ELSE false END as is_member
-      FROM chat_groups cg
-      LEFT JOIN chat_group_members cgm ON cg.id = cgm.group_id AND cgm.user_id = ${userId}
-      WHERE cgm.user_id = ${userId} OR cg.is_private = false
-      ORDER BY cg.last_message_at DESC NULLS LAST
+      SELECT 
+        id,
+        name,
+        description,
+        image,
+        creator_id as created_by,
+        admin_ids,
+        member_ids,
+        is_private,
+        created_at::text,
+        last_message,
+        last_message_at::text,
+        COALESCE(message_count, 0) as message_count
+      FROM chat_groups
+      WHERE ${userId} = ANY(member_ids) OR is_private = false
+      ORDER BY last_message_at DESC NULLS LAST
     `);
     
     console.log('FIXED: Raw database results count:', groups.rows.length);
     console.log('FIXED: Raw database results:', JSON.stringify(groups.rows, null, 2));
     
-    // Get admin IDs and member info for each group
-    const processedGroups = await Promise.all(groups.rows.map(async (group: any) => {
-      // Get admin IDs for this group
-      const adminResult = await db.execute(sql`
-        SELECT array_agg(user_id) as admin_ids
-        FROM chat_group_members 
-        WHERE group_id = ${group.id} AND is_admin = true
-      `);
-      
-      // Get member info for this group
-      const membersResult = await db.execute(sql`
-        SELECT u.id, u.name, u.username
-        FROM users u
-        JOIN chat_group_members cgm ON u.id = cgm.user_id
-        WHERE cgm.group_id = ${group.id}
-      `);
+    // Process groups with member information
+    const processedGroups = groups.rows.map((group: any) => {
+      const isMember = group.member_ids?.includes(userId) || false;
+      const isAdmin = group.admin_ids?.includes(userId) || false;
+      const isOwner = group.created_by === userId;
       
       const result = {
         id: group.id,
@@ -186,19 +175,21 @@ router.get("/api/chat/groups", async (req: Request, res: Response) => {
         description: group.description,
         avatar_url: group.image, // Map image to avatar_url
         created_by: group.created_by,
+        admin_ids: group.admin_ids || [],
         is_private: group.is_private,
         created_at: group.created_at,
         last_message: group.last_message,
         last_message_at: group.last_message_at,
         message_count: group.message_count,
-        is_member: group.is_member,
-        admin_ids: adminResult.rows[0]?.admin_ids || [],
-        members: membersResult.rows || []
+        is_member: isMember,
+        is_admin: isAdmin,
+        is_owner: isOwner,
+        members: [] // Will be populated if needed
       };
       
-      console.log(`FIXED: Group ${group.id} - image: "${group.image}" -> avatar_url: "${result.avatar_url}"`);
+      console.log(`FIXED: Group ${group.id} - member: ${isMember}, admin: ${isAdmin}, owner: ${isOwner}`);
       return result;
-    }));
+    });
     
     console.log('FIXED: Final processed groups:', JSON.stringify(processedGroups, null, 2));
     

@@ -313,14 +313,14 @@ const ChatPage = () => {
   const activeGroups = localGroups.length > 0 ? localGroups : chatGroups;
   
   // Filter groups based on the toggle selection and search query
-  const filteredGroups = activeGroups?.filter((group: ChatGroup) => {
+  const filteredGroups = activeGroups?.filter((group: any) => {
     // First apply group filter (my vs public)
     let matchesFilter = false;
     if (groupFilter === 'my') {
       // Show groups where user is a member, admin, or owner
-      const isMember = group.members?.some((member: any) => member.id === user?.id);
-      const isAdmin = group.admin_ids?.includes(user?.id || 0);
-      const isOwner = group.created_by === user?.id;
+      const isMember = group.is_member || false;
+      const isAdmin = group.is_admin || false;
+      const isOwner = group.is_owner || false;
       matchesFilter = isMember || isAdmin || isOwner;
     } else {
       // Show all public groups (not private)
@@ -534,11 +534,6 @@ const ChatPage = () => {
                     className="h-12 w-12 hover:opacity-80 transition-opacity"
                   />
                 </Link>
-              </div>
-
-              {/* Title */}
-              <div className="flex-1">
-                <h1 className="text-xl font-semibold text-white">Chats</h1>
               </div>
 
               {/* Toggle Filter and Create Group Button */}
