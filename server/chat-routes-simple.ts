@@ -1107,4 +1107,28 @@ router.get("/messages/:messageId/:messageType/reactions", async (req: Request, r
   }
 });
 
+// Mark group messages as read when user enters a group
+router.patch("/api/chat/groups/:groupId/mark-read", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.sendStatus(401);
+  }
+  
+  try {
+    const userId = req.user!.id;
+    const groupId = parseInt(req.params.groupId);
+    
+    // Update the user's last_seen_at timestamp for this group
+    await db.execute(sql`
+      UPDATE chat_group_members 
+      SET last_seen_at = NOW()
+      WHERE group_id = ${groupId} AND user_id = ${userId}
+    `);
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error marking group messages as read:", error);
+    res.status(500).json({ error: "Failed to mark messages as read" });
+  }
+});
+
 export default router;
