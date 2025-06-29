@@ -281,7 +281,7 @@ export default function MeetsPage() {
     <>
       <div className="min-h-screen bg-background text-foreground">
         <main className="pb-6">
-          <div className="max-w-3xl mx-auto px-4 pt-12">
+          <div className="max-w-3xl mx-auto px-4 pt-16">
 
             {/* Ticker Messages - Dashboard Style */}
             {isTickerVisible && (

@@ -109,7 +109,7 @@ export default function WorkoutToolsPage() {
   ];
   
   return (
-    <div className="container max-w-screen-xl mx-auto p-4 pt-16 pb-10">
+    <div className="container max-w-screen-xl mx-auto p-4 pt-20 pb-10">
       {/* Preload tool card images */}
       <PreloadImages images={toolBackgrounds} quality={20} priority={true} />
 

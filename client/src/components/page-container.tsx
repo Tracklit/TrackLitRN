@@ -19,7 +19,7 @@ export function PageContainer({
   className,
 }: PageContainerProps) {
   return (
-    <div className={cn("container px-4 pt-12 pb-3 md:pt-16 md:pb-4", className)}>
+    <div className={cn("container px-4 pt-16 pb-3 md:pt-20 md:pb-4", className)}>
       {breadcrumbs.length > 0 && <Breadcrumb segments={breadcrumbs} />}
       
       {title && (
