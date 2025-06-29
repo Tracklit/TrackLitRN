@@ -33,54 +33,17 @@ import flameLogoPath from "@assets/IMG_4720_1751015409604.png";
 
 // Stable MessageAvatar component to prevent image flashing in chat messages
 const MessageAvatar = ({ user }: { user?: any }) => {
-  const [imageReady, setImageReady] = useState(false);
-  const [imageError, setImageError] = useState(false);
-  
-  // Preload image and only show component when ready
-  useEffect(() => {
-    if (!user?.profile_image_url) {
-      setImageReady(true); // No image to load, show fallback immediately
-      return;
-    }
-    
-    setImageReady(false);
-    setImageError(false);
-    
-    const img = new Image();
-    img.onload = () => setImageReady(true);
-    img.onerror = () => {
-      setImageError(true);
-      setImageReady(true);
-    };
-    img.src = user.profile_image_url;
-    
-    return () => {
-      img.onload = null;
-      img.onerror = null;
-    };
-  }, [user?.id, user?.profile_image_url]);
-  
-  // Don't render until image is ready or determined to be unavailable
-  if (!imageReady) {
-    return <div className="h-8 w-8" />;
-  }
-  
-  const hasValidImage = user?.profile_image_url && !imageError;
-  
   return (
-    <div className="h-8 w-8 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
-      {hasValidImage ? (
-        <img 
-          src={user.profile_image_url} 
-          alt={user.name}
-          className="h-full w-full object-cover"
-        />
-      ) : (
-        <div className="text-white font-medium text-xs">
-          {user?.name?.slice(0, 2).toUpperCase() || 'U'}
-        </div>
-      )}
-    </div>
+    <Avatar className="h-8 w-8">
+      <AvatarImage 
+        src={user?.profile_image_url || undefined} 
+        alt={user?.name}
+        className="object-cover"
+      />
+      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white text-xs font-medium">
+        {user?.name?.slice(0, 2).toUpperCase() || 'U'}
+      </AvatarFallback>
+    </Avatar>
   );
 };
 
