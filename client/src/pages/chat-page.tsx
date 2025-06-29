@@ -155,6 +155,7 @@ const ChatPage = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [isAtTop, setIsAtTop] = useState(true);
   const [isAnimating, setIsAnimating] = useState(false); // Track animation state
+  const [groupFilter, setGroupFilter] = useState<'my' | 'public'>('my'); // Filter for groups
   
   const [location] = useLocation();
   const queryClient = useQueryClient();
@@ -303,6 +304,24 @@ const ChatPage = () => {
   });
 
   const activeGroups = localGroups.length > 0 ? localGroups : chatGroups;
+  
+  // Filter groups based on the toggle selection and search query
+  const filteredGroups = activeGroups?.filter((group: ChatGroup) => {
+    // First apply group filter (my vs public)
+    let matchesFilter = false;
+    if (groupFilter === 'my') {
+      // Show groups where user is a member or owner
+      matchesFilter = group.members?.some((member: any) => member.id === user?.id) || group.owner_id === user?.id;
+    } else {
+      // Show all public groups
+      matchesFilter = group.is_public;
+    }
+    
+    // Then apply search filter
+    const matchesSearch = group.name.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    return matchesFilter && matchesSearch;
+  }) || [];
 
   // Handle chat data updates only - stable component to prevent image reloading
   useEffect(() => {
@@ -447,9 +466,7 @@ const ChatPage = () => {
     return acc;
   }, []);
 
-  const filteredGroups = uniqueGroups.filter((group: ChatGroup) =>
-    group.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+
 
 
 
@@ -497,16 +514,45 @@ const ChatPage = () => {
                 <h1 className="text-xl font-semibold text-white">Chats</h1>
               </div>
 
-              {/* Create Group Button */}
-              <Link href="/create-group">
-                <Button 
-                  size="sm"
-                  className="bg-purple-600 hover:bg-purple-700 text-white border-none"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Group
-                </Button>
-              </Link>
+              {/* Toggle Filter and Create Group Button */}
+              <div className="flex items-center space-x-3">
+                {/* Group Filter Toggle */}
+                <div className="flex bg-gray-800/50 rounded-lg p-1">
+                  <button
+                    onClick={() => setGroupFilter('my')}
+                    className={cn(
+                      "px-3 py-1.5 text-sm font-medium rounded-md transition-all",
+                      groupFilter === 'my'
+                        ? "bg-purple-600 text-white shadow-sm"
+                        : "text-gray-400 hover:text-white hover:bg-gray-700/50"
+                    )}
+                  >
+                    My Groups
+                  </button>
+                  <button
+                    onClick={() => setGroupFilter('public')}
+                    className={cn(
+                      "px-3 py-1.5 text-sm font-medium rounded-md transition-all",
+                      groupFilter === 'public'
+                        ? "bg-purple-600 text-white shadow-sm"
+                        : "text-gray-400 hover:text-white hover:bg-gray-700/50"
+                    )}
+                  >
+                    Public Groups
+                  </button>
+                </div>
+
+                {/* Create Group Button */}
+                <Link href="/create-group">
+                  <Button 
+                    size="sm"
+                    className="bg-purple-600 hover:bg-purple-700 text-white border-none"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    New Group
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
 
