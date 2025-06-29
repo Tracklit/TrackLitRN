@@ -28,6 +28,7 @@ import {
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
 import flameLogoPath from "@assets/IMG_4720_1751015409604.png";
 
 
@@ -157,6 +158,7 @@ const ChatPage = () => {
   
   const [location] = useLocation();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   // Check if we're on a chat route
   const isChatRoute = location.startsWith('/chat') || location.startsWith('/chats');
@@ -279,6 +281,25 @@ const ChatPage = () => {
     refetchOnWindowFocus: false, // Don't refetch when window gains focus
     refetchOnMount: false, // Don't refetch when component mounts if data exists
     refetchOnReconnect: false, // Don't refetch on reconnect
+  });
+
+  // Fetch unread message counts per group
+  const { data: unreadCounts = {} } = useQuery({
+    queryKey: ['/api/chat/groups/unread-counts'],
+    queryFn: async () => {
+      const response = await fetch('/api/chat/groups/unread-counts', {
+        method: 'GET',
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return response.json();
+    },
+    enabled: !!user,
+    refetchInterval: 30000, // Refetch every 30 seconds to keep counts current
   });
 
   const activeGroups = localGroups.length > 0 ? localGroups : chatGroups;
@@ -582,12 +603,16 @@ const ChatPage = () => {
                                 {group.last_message_text || group.description || 'No messages yet'}
                               </p>
                               
-                              {/* Message Count Badge */}
-                              {group.message_count > 0 && (
-                                <Badge variant="secondary" className="ml-2 bg-blue-500 text-white text-xs px-2 py-1">
-                                  {group.message_count}
-                                </Badge>
-                              )}
+                              {/* Unread Message Count Badge - only show for members with unread messages */}
+                              {(() => {
+                                const unreadCount = unreadCounts[group.id] || 0;
+                                // Only show badge if user has unread messages in this group
+                                return unreadCount > 0 && (
+                                  <Badge variant="secondary" className="ml-2 bg-red-500 text-white text-xs px-2 py-1">
+                                    {unreadCount > 99 ? '99+' : unreadCount}
+                                  </Badge>
+                                );
+                              })()}
                             </div>
                           </div>
                         </div>

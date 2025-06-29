@@ -81,6 +81,43 @@ router.get("/api/chat/groups/debug", async (req: Request, res: Response) => {
   }
 });
 
+// Get unread message counts per group for user
+router.get("/api/chat/groups/unread-counts", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.sendStatus(401);
+  }
+  
+  try {
+    const userId = req.user!.id;
+    
+    // Get unread message counts for each group where user is a member
+    const unreadCounts = await db.execute(sql`
+      SELECT 
+        cgm.group_id,
+        COALESCE(COUNT(messages.id), 0) as unread_count
+      FROM chat_group_members cgm
+      LEFT JOIN chat_group_messages messages ON (
+        messages.group_id = cgm.group_id 
+        AND messages.sender_id != ${userId}
+        AND messages.created_at > COALESCE(cgm.last_seen_at, cgm.joined_at, NOW() - INTERVAL '24 hours')
+      )
+      WHERE cgm.user_id = ${userId}
+      GROUP BY cgm.group_id
+    `);
+    
+    // Transform to object for easy lookup
+    const unreadCountsMap = unreadCounts.rows.reduce((acc: any, row: any) => {
+      acc[row.group_id] = Number(row.unread_count);
+      return acc;
+    }, {});
+    
+    res.json(unreadCountsMap);
+  } catch (error) {
+    console.error("Error fetching unread counts:", error);
+    res.status(500).json({ error: "Failed to fetch unread counts" });
+  }
+});
+
 // Get chat groups for user - FIXED VERSION
 router.get("/api/chat/groups", async (req: Request, res: Response) => {
   console.log('=== CHAT GROUPS API CALLED - FIXED ===');
