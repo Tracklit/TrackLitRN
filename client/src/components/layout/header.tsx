@@ -42,13 +42,6 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
             </div>
             
             <div className="flex items-center ml-auto">
-              <NotificationBell />
-              
-              {/* Direct Messages Panel */}
-              <MessageButton />
-              
-
-              
               {/* Ticker Toggle */}
               <Button
                 variant="ghost"
@@ -59,6 +52,11 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
               >
                 <FontAwesomeIcon icon={faGlobe} className="h-5 w-5" />
               </Button>
+              
+              <NotificationBell />
+              
+              {/* Direct Messages Panel */}
+              <MessageButton />
             </div>
             
             <DropdownMenu>
