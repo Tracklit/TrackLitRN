@@ -33,38 +33,53 @@ import flameLogoPath from "@assets/IMG_4720_1751015409604.png";
 
 // Stable MessageAvatar component to prevent image flashing in chat messages
 const MessageAvatar = ({ user }: { user?: any }) => {
-  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageReady, setImageReady] = useState(false);
   const [imageError, setImageError] = useState(false);
   
-  // Reset states when user changes
+  // Preload image and only show component when ready
   useEffect(() => {
-    setImageLoaded(false);
+    if (!user?.profile_image_url) {
+      setImageReady(true); // No image to load, show fallback immediately
+      return;
+    }
+    
+    setImageReady(false);
     setImageError(false);
+    
+    const img = new Image();
+    img.onload = () => setImageReady(true);
+    img.onerror = () => {
+      setImageError(true);
+      setImageReady(true);
+    };
+    img.src = user.profile_image_url;
+    
+    return () => {
+      img.onload = null;
+      img.onerror = null;
+    };
   }, [user?.id, user?.profile_image_url]);
   
-  const showFallback = !user?.profile_image_url || imageError || !imageLoaded;
+  // Don't render until image is ready or determined to be unavailable
+  if (!imageReady) {
+    return <div className="h-8 w-8" />;
+  }
+  
+  const hasValidImage = user?.profile_image_url && !imageError;
   
   return (
-    <div className="h-8 w-8 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center relative">
-      {user?.profile_image_url && !imageError && (
+    <div className="h-8 w-8 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+      {hasValidImage ? (
         <img 
           src={user.profile_image_url} 
           alt={user.name}
-          className={`h-full w-full object-cover absolute inset-0 transition-opacity duration-200 ${
-            imageLoaded ? 'opacity-100' : 'opacity-0'
-          }`}
-          onLoad={() => setImageLoaded(true)}
-          onError={() => {
-            setImageError(true);
-            setImageLoaded(false);
-          }}
+          className="h-full w-full object-cover"
         />
+      ) : (
+        <div className="text-white font-medium text-xs">
+          {user?.name?.slice(0, 2).toUpperCase() || 'U'}
+        </div>
       )}
-      <div className={`text-white font-medium text-xs transition-opacity duration-200 ${
-        showFallback ? 'opacity-100' : 'opacity-0'
-      }`}>
-        {user?.name?.slice(0, 2).toUpperCase() || 'U'}
-      </div>
     </div>
   );
 };
