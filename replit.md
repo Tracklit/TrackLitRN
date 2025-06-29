@@ -108,6 +108,12 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
+- June 29, 2025: Fixed group creation database constraint error
+  - Corrected foreign key constraint in chat_group_members table to reference chat_groups instead of non-existent groups table
+  - Group creation functionality now working properly without constraint violations
+  - Updated Messages icon in top bar to paper plane (faPaperPlane) with Font Awesome solid
+  - Reordered top bar icons: Globe, Bell, Paper Plane (left to right)
+
 - June 28, 2025: Fixed dashboard positioning and chat overlay stability
   - Resolved dashboard shifting during chat transitions by implementing stable layout container with absolute positioning
   - Fixed dashboard vertical position - adjusted marginTop from -15px to 115px for optimal content positioning
