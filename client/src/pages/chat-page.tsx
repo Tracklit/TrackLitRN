@@ -31,66 +31,22 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import flameLogoPath from "@assets/IMG_4720_1751015409604.png";
 
-// Image cache to store preloaded images
-const imageCache = new Map<string, boolean>();
-
-// Preload image utility
-const preloadImage = (src: string): Promise<boolean> => {
-  if (imageCache.has(src)) {
-    return Promise.resolve(imageCache.get(src)!);
-  }
-  
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => {
-      imageCache.set(src, true);
-      resolve(true);
-    };
-    img.onerror = () => {
-      imageCache.set(src, false);
-      resolve(false);
-    };
-    img.src = src;
-  });
-};
-
-// Stable MessageAvatar component with instant loading
+// Stable MessageAvatar component with faster loading
 const MessageAvatar = ({ user }: { user?: any }) => {
-  const [imageLoaded, setImageLoaded] = useState(false);
-  
-  useEffect(() => {
-    if (!user?.profile_image_url) {
-      setImageLoaded(false);
-      return;
-    }
-    
-    // Check if image is already cached
-    if (imageCache.has(user.profile_image_url)) {
-      setImageLoaded(imageCache.get(user.profile_image_url)!);
-      return;
-    }
-    
-    // Preload the image
-    preloadImage(user.profile_image_url).then((loaded) => {
-      setImageLoaded(loaded);
-    });
-  }, [user?.profile_image_url]);
-  
-  const shouldShowImage = user?.profile_image_url && imageLoaded;
-  
   return (
-    <div className="h-8 w-8 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
-      {shouldShowImage ? (
+    <div className="h-8 w-8 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center relative">
+      {user?.profile_image_url && (
         <img 
           src={user.profile_image_url} 
           alt={user.name}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover absolute inset-0"
+          loading="eager"
+          style={{ display: 'block' }}
         />
-      ) : (
-        <div className="text-white font-medium text-xs">
-          {user?.name?.slice(0, 2).toUpperCase() || 'U'}
-        </div>
       )}
+      <div className="text-white font-medium text-xs flex items-center justify-center h-full w-full">
+        {user?.name?.slice(0, 2).toUpperCase() || 'U'}
+      </div>
     </div>
   );
 };
@@ -345,14 +301,6 @@ const ChatPage = () => {
       const data = await response.json();
       console.log('Chat groups data:', data);
       setLocalGroups(data);
-      
-      // Preload all group avatar images immediately
-      data.forEach((group: any) => {
-        if (group.avatar_url) {
-          preloadImage(group.avatar_url);
-        }
-      });
-      
       return data;
     },
     staleTime: Infinity, // Never consider data stale to prevent image reloading
@@ -890,16 +838,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
         ? `/api/chat/groups/${selectedChat.id}/messages`
         : `/api/chat/direct/${selectedChat.id}/messages`;
       const response = await apiRequest('GET', endpoint);
-      const data = await response.json();
-      
-      // Preload all user profile images from messages
-      data.forEach((message: any) => {
-        if (message.user?.profile_image_url) {
-          preloadImage(message.user.profile_image_url);
-        }
-      });
-      
-      return data;
+      return response.json();
     },
     enabled: !!selectedChat,
   });
