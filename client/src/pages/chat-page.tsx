@@ -31,16 +31,58 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import flameLogoPath from "@assets/IMG_4720_1751015409604.png";
 
-// Stable MessageAvatar component with faster loading
+// Global image cache to prevent reloading
+const imageCache = new Map<string, HTMLImageElement>();
+
+// Preload and cache image
+const preloadImage = (src: string): Promise<HTMLImageElement> => {
+  if (imageCache.has(src)) {
+    return Promise.resolve(imageCache.get(src)!);
+  }
+  
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      imageCache.set(src, img);
+      resolve(img);
+    };
+    img.onerror = reject;
+    img.src = src;
+  });
+};
+
+// Static cached avatar component
 const MessageAvatar = ({ user }: { user?: any }) => {
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user?.profile_image_url) {
+      // Check if image is already cached
+      if (imageCache.has(user.profile_image_url)) {
+        setImageSrc(user.profile_image_url);
+        setImageLoaded(true);
+      } else {
+        // Preload and cache the image
+        preloadImage(user.profile_image_url)
+          .then(() => {
+            setImageSrc(user.profile_image_url);
+            setImageLoaded(true);
+          })
+          .catch(() => {
+            // Keep showing initials if image fails
+          });
+      }
+    }
+  }, [user?.profile_image_url]);
+
   return (
     <div className="h-8 w-8 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center relative">
-      {user?.profile_image_url && (
+      {imageLoaded && imageSrc && (
         <img 
-          src={user.profile_image_url} 
-          alt={user.name}
+          src={imageSrc}
+          alt={user?.name}
           className="h-full w-full object-cover absolute inset-0"
-          loading="eager"
           style={{ display: 'block' }}
         />
       )}
