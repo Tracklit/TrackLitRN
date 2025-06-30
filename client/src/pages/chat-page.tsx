@@ -40,8 +40,8 @@ const preloadImage = (src: string): Promise<HTMLImageElement> => {
     return Promise.resolve(imageCache.get(src)!);
   }
   
-  return new Promise((resolve, reject) => {
-    const img = new Image();
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const img = document.createElement('img');
     img.onload = () => {
       imageCache.set(src, img);
       resolve(img);
@@ -691,8 +691,28 @@ const ChatPage = () => {
             <div className="h-8"></div>
             <div className="space-y-0">
               {(groupsLoading && chatGroups.length === 0) || (conversationsLoading && conversations.length === 0) ? (
-                <div className="flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                <div className="space-y-0">
+                  {/* Channel skeleton loaders */}
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="w-full p-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="relative">
+                          <div className="h-12 w-12 rounded-full bg-gray-600 animate-pulse"></div>
+                          <div className="absolute -bottom-1 -right-1 h-3 w-3 rounded-full bg-gray-700 animate-pulse"></div>
+                        </div>
+                        <div className="flex-1 min-w-0 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className={`h-4 bg-gray-600 rounded animate-pulse ${i % 3 === 0 ? 'w-24' : i % 3 === 1 ? 'w-32' : 'w-20'}`}></div>
+                            <div className="h-3 bg-gray-700 rounded animate-pulse w-12"></div>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div className={`h-3 bg-gray-700 rounded animate-pulse ${i % 2 === 0 ? 'w-40' : 'w-28'}`}></div>
+                            {i % 3 === 0 && <div className="h-5 w-5 rounded-full bg-red-500/50 animate-pulse"></div>}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <>
@@ -1026,12 +1046,21 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h3 className="font-medium text-white">
-                {groupDetails?.name || `Chat ${selectedChat.id}`}
-              </h3>
-              <p className="text-sm text-gray-400">
-                {groupDetails?.member_count ? `${groupDetails.member_count} members` : 'Private chat'}
-              </p>
+              {groupDetails ? (
+                <>
+                  <h3 className="font-medium text-white">
+                    {groupDetails.name}
+                  </h3>
+                  <p className="text-sm text-gray-400">
+                    {groupDetails.member_count ? `${groupDetails.member_count} members` : 'Private chat'}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="h-5 bg-gray-600 rounded animate-pulse w-32"></div>
+                  <div className="h-4 bg-gray-700 rounded animate-pulse w-20 mt-1"></div>
+                </>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -1052,8 +1081,19 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
         className="flex-1 overflow-y-auto p-4 space-y-4"
       >
         {messagesLoading ? (
-          <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          <div className="space-y-4">
+            {/* Message skeleton loaders */}
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className={`flex ${i % 2 === 0 ? 'justify-end' : 'justify-start'}`}>
+                <div className={`flex gap-3 max-w-[85%] ${i % 2 === 0 ? 'flex-row-reverse' : ''}`}>
+                  <div className="h-8 w-8 rounded-full bg-gray-600 animate-pulse flex-shrink-0"></div>
+                  <div className="space-y-2">
+                    <div className={`h-4 bg-gray-600 rounded animate-pulse ${i % 3 === 0 ? 'w-32' : i % 3 === 1 ? 'w-48' : 'w-24'}`}></div>
+                    <div className={`h-4 bg-gray-700 rounded animate-pulse ${i % 2 === 0 ? 'w-20' : 'w-36'}`}></div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-gray-400">
