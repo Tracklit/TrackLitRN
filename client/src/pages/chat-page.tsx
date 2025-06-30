@@ -835,7 +835,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     },
   });
 
-  // Send message mutation
+  // Send message mutation with optimistic updates
   const sendMessageMutation = useMutation({
     mutationFn: async (data: { text?: string; image?: File; replyToId?: number }) => {
       if (!selectedChat) return;
@@ -865,7 +865,41 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
       if (!response.ok) throw new Error('Failed to send message');
       return response.json();
     },
+    onMutate: async (data) => {
+      // Cancel outgoing refetches
+      const queryKey = selectedChat?.type === 'group' 
+        ? ['/api/chat/groups', selectedChat.id, 'messages']
+        : ['/api/chat/direct', selectedChat?.id, 'messages'];
+      
+      await queryClient.cancelQueries({ queryKey });
+      
+      // Snapshot previous value
+      const previousMessages = queryClient.getQueryData(queryKey);
+      
+      // Optimistically update with new message
+      if (data.text) {
+        const optimisticMessage = {
+          id: Date.now(), // Temporary ID
+          group_id: selectedChat.type === 'group' ? selectedChat.id : undefined,
+          user_id: currentUser?.id,
+          text: data.text,
+          created_at: new Date().toISOString(),
+          reply_to_id: data.replyToId,
+          message_type: 'text' as const,
+          user: {
+            id: currentUser?.id,
+            name: currentUser?.name || 'You',
+            username: currentUser?.username || 'you'
+          }
+        };
+        
+        queryClient.setQueryData(queryKey, (old: any[] = []) => [...old, optimisticMessage]);
+      }
+      
+      return { previousMessages };
+    },
     onSuccess: () => {
+      // Clear form state without affecting focus
       setMessageText("");
       setReplyToMessage(null);
       setSelectedImage(null);
@@ -873,15 +907,24 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-      // Maintain focus on message input to keep keyboard open
-      if (messageInputRef.current) {
-        messageInputRef.current.focus();
-      }
-      queryClient.invalidateQueries({
-        queryKey: selectedChat?.type === 'group' 
+      
+      // Refetch to get real message with server ID (background update)
+      setTimeout(() => {
+        queryClient.invalidateQueries({
+          queryKey: selectedChat?.type === 'group' 
+            ? ['/api/chat/groups', selectedChat.id, 'messages']
+            : ['/api/chat/direct', selectedChat?.id, 'messages']
+        });
+      }, 100);
+    },
+    onError: (err, variables, context) => {
+      // Rollback on error
+      if (context?.previousMessages) {
+        const queryKey = selectedChat?.type === 'group' 
           ? ['/api/chat/groups', selectedChat.id, 'messages']
-          : ['/api/chat/direct', selectedChat?.id, 'messages']
-      });
+          : ['/api/chat/direct', selectedChat?.id, 'messages'];
+        queryClient.setQueryData(queryKey, context.previousMessages);
+      }
     }
   });
 
