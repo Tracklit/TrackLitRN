@@ -597,14 +597,14 @@ const ChatPage = () => {
                 </Link>
               </div>
 
-              {/* Toggle Filter and Create Group Button */}
-              <div className="flex items-center space-x-3">
+              {/* Toggle Filter and Create Group Button - Right Aligned */}
+              <div className="flex items-center space-x-3 ml-auto">
                 {/* Group Filter Toggle */}
-                <div className="flex bg-gray-800/50 rounded-md p-0.5">
+                <div className="flex bg-gray-800/50 rounded-md p-0.5 h-8">
                   <button
                     onClick={() => setGroupFilter('my')}
                     className={cn(
-                      "px-2 py-1 text-xs font-medium rounded-sm transition-all",
+                      "px-2 py-1.5 text-xs font-medium rounded-sm transition-all h-7 flex items-center",
                       groupFilter === 'my'
                         ? "bg-purple-600 text-white shadow-sm"
                         : "text-gray-400 hover:text-white hover:bg-gray-700/50"
@@ -615,7 +615,7 @@ const ChatPage = () => {
                   <button
                     onClick={() => setGroupFilter('public')}
                     className={cn(
-                      "px-2 py-1 text-xs font-medium rounded-sm transition-all",
+                      "px-2 py-1.5 text-xs font-medium rounded-sm transition-all h-7 flex items-center",
                       groupFilter === 'public'
                         ? "bg-purple-600 text-white shadow-sm"
                         : "text-gray-400 hover:text-white hover:bg-gray-700/50"
@@ -629,7 +629,7 @@ const ChatPage = () => {
                 <Link href="/create-group">
                   <Button 
                     size="sm"
-                    className="bg-purple-600 hover:bg-purple-700 text-white border-none text-xs px-2 py-1"
+                    className="bg-purple-600 hover:bg-purple-700 text-white border-none text-xs px-2 py-1.5 h-8 flex items-center"
                   >
                     <Plus className="h-3 w-3 mr-1.5" />
                     New Group
