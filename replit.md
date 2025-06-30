@@ -108,6 +108,15 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
+- June 30, 2025: Improved chat loading experience with comprehensive skeleton loaders
+  - Fixed channel title showing "Chat X" fallback by implementing skeleton loaders in header
+  - Added realistic skeleton loaders for chat channel list with avatar placeholders and varying content widths
+  - Added conversation-style skeleton loaders for chat messages with alternating positions
+  - Removed group profile images from inside chat channels for cleaner interface
+  - Fixed TypeScript errors with Image constructor and proper promise typing
+  - Enhanced MessageAvatar component with global image caching to prevent reloading on channel entry
+  - Loading states now provide smooth visual feedback without jarring text changes
+
 - June 29, 2025: Enhanced chat system with toggle filter and unread message tracking
   - Added "My Groups" vs "Public Groups" toggle filter next to Create Group button
   - Implemented comprehensive unread message count system replacing total message counts
