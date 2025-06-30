@@ -1013,6 +1013,10 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
   const handleSendMessage = async () => {
     if ((!messageText.trim() && !selectedImage) || !selectedChat) return;
     
+    // Store current focus state
+    const inputElement = messageInputRef.current;
+    const wasInputFocused = inputElement && document.activeElement === inputElement;
+    
     if (editingMessage) {
       // Edit existing message
       editMessageMutation.mutate({ 
@@ -1034,6 +1038,19 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
       }
       
       sendMessageMutation.mutate(messageData);
+    }
+    
+    // Restore focus immediately if it was focused before
+    if (wasInputFocused && inputElement) {
+      inputElement.focus();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      handleSendMessage();
     }
   };
 
@@ -1269,11 +1286,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
                   : "Type a message..."
             }
             className="flex-1 bg-gray-800/50 border-gray-600/50 text-white placeholder-gray-400"
-            onKeyPress={(e) => {
-              if (e.key === 'Enter') {
-                handleSendMessage();
-              }
-            }}
+            onKeyDown={handleKeyDown}
           />
 
           {/* Send Button */}
