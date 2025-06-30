@@ -835,7 +835,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     },
   });
 
-  // Send message mutation with optimistic updates
+  // Send message mutation with minimal re-renders
   const sendMessageMutation = useMutation({
     mutationFn: async (data: { text?: string; image?: File; replyToId?: number }) => {
       if (!selectedChat) return;
@@ -865,42 +865,8 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
       if (!response.ok) throw new Error('Failed to send message');
       return response.json();
     },
-    onMutate: async (data) => {
-      // Cancel outgoing refetches
-      const queryKey = selectedChat?.type === 'group' 
-        ? ['/api/chat/groups', selectedChat.id, 'messages']
-        : ['/api/chat/direct', selectedChat?.id, 'messages'];
-      
-      await queryClient.cancelQueries({ queryKey });
-      
-      // Snapshot previous value
-      const previousMessages = queryClient.getQueryData(queryKey);
-      
-      // Optimistically update with new message
-      if (data.text) {
-        const optimisticMessage = {
-          id: Date.now(), // Temporary ID
-          group_id: selectedChat.type === 'group' ? selectedChat.id : undefined,
-          user_id: currentUser?.id,
-          text: data.text,
-          created_at: new Date().toISOString(),
-          reply_to_id: data.replyToId,
-          message_type: 'text' as const,
-          user: {
-            id: currentUser?.id,
-            name: currentUser?.name || 'You',
-            username: currentUser?.username || 'you'
-          }
-        };
-        
-        queryClient.setQueryData(queryKey, (old: any[] = []) => [...old, optimisticMessage]);
-      }
-      
-      return { previousMessages };
-    },
     onSuccess: () => {
-      // Clear form state without affecting focus
-      setMessageText("");
+      // Clear remaining form state (input already cleared via DOM)
       setReplyToMessage(null);
       setSelectedImage(null);
       setImagePreview(null);
@@ -908,23 +874,12 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
         fileInputRef.current.value = '';
       }
       
-      // Refetch to get real message with server ID (background update)
-      setTimeout(() => {
-        queryClient.invalidateQueries({
-          queryKey: selectedChat?.type === 'group' 
-            ? ['/api/chat/groups', selectedChat.id, 'messages']
-            : ['/api/chat/direct', selectedChat?.id, 'messages']
-        });
-      }, 100);
-    },
-    onError: (err, variables, context) => {
-      // Rollback on error
-      if (context?.previousMessages) {
-        const queryKey = selectedChat?.type === 'group' 
+      // Refresh messages without interrupting UI flow
+      queryClient.invalidateQueries({
+        queryKey: selectedChat?.type === 'group' 
           ? ['/api/chat/groups', selectedChat.id, 'messages']
-          : ['/api/chat/direct', selectedChat?.id, 'messages'];
-        queryClient.setQueryData(queryKey, context.previousMessages);
-      }
+          : ['/api/chat/direct', selectedChat?.id, 'messages']
+      });
     }
   });
 
@@ -1013,46 +968,68 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
   const handleSendMessage = async () => {
     if ((!messageText.trim() && !selectedImage) || !selectedChat) return;
     
-    // Store current focus state
     const inputElement = messageInputRef.current;
-    const wasInputFocused = inputElement && document.activeElement === inputElement;
+    if (!inputElement) return;
     
-    if (editingMessage) {
-      // Edit existing message
-      editMessageMutation.mutate({ 
-        messageId: editingMessage.id, 
-        text: messageText.trim() 
-      });
-    } else {
-      // Send new message
-      const messageData: any = {
-        text: messageText.trim()
-      };
-      
-      if (selectedImage) {
-        messageData.image = selectedImage;
-      }
-      
-      if (replyToMessage) {
-        messageData.replyToId = replyToMessage.id;
-      }
-      
-      sendMessageMutation.mutate(messageData);
-    }
+    // Use direct DOM manipulation to maintain keyboard visibility
+    const originalValue = inputElement.value;
+    const selectionStart = inputElement.selectionStart;
+    const selectionEnd = inputElement.selectionEnd;
     
-    // Restore focus immediately if it was focused before
-    if (wasInputFocused && inputElement) {
-      inputElement.focus();
+    // Keep input focused by preventing any blur events during the send process
+    const preventBlur = (e: FocusEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.target === inputElement) {
+        setTimeout(() => inputElement.focus(), 0);
+      }
+    };
+    
+    inputElement.addEventListener('blur', preventBlur);
+    
+    try {
+      if (editingMessage) {
+        // Edit existing message
+        editMessageMutation.mutate({ 
+          messageId: editingMessage.id, 
+          text: messageText.trim() 
+        });
+      } else {
+        // Send new message
+        const messageData: any = {
+          text: messageText.trim()
+        };
+        
+        if (selectedImage) {
+          messageData.image = selectedImage;
+        }
+        
+        if (replyToMessage) {
+          messageData.replyToId = replyToMessage.id;
+        }
+        
+        // Clear the input immediately via DOM to prevent React re-render delays
+        inputElement.value = '';
+        setMessageText('');
+        
+        sendMessageMutation.mutate(messageData);
+      }
+    } finally {
+      // Remove the blur prevention after a short delay
+      setTimeout(() => {
+        inputElement.removeEventListener('blur', preventBlur);
+        // Ensure input stays focused
+        if (document.activeElement !== inputElement) {
+          inputElement.focus();
+          if (selectionStart !== null && selectionEnd !== null) {
+            inputElement.setSelectionRange(0, 0);
+          }
+        }
+      }, 100);
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      e.stopPropagation();
-      handleSendMessage();
-    }
-  };
+
 
   const cancelEdit = () => {
     setEditingMessage(null);
@@ -1252,9 +1229,17 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
           </div>
         )}
 
-        <div className="flex gap-2 items-end">
+        <form 
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleSendMessage();
+          }}
+          className="flex gap-2 items-end"
+        >
           {/* Image Upload Button */}
           <Button
+            type="button"
             variant="ghost"
             size="sm"
             className="p-2 h-10 w-10 rounded-full text-gray-400 hover:text-white hover:bg-gray-700/50"
@@ -1286,18 +1271,21 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
                   : "Type a message..."
             }
             className="flex-1 bg-gray-800/50 border-gray-600/50 text-white placeholder-gray-400"
-            onKeyDown={handleKeyDown}
+            autoComplete="off"
+            autoCorrect="off" 
+            autoCapitalize="off"
+            spellCheck="false"
           />
 
           {/* Send Button */}
           <Button 
-            onClick={handleSendMessage}
+            type="submit"
             disabled={(!messageText.trim() && !selectedImage) || sendMessageMutation.isPending || editMessageMutation.isPending || uploadImageMutation.isPending}
             className="bg-blue-600 hover:bg-blue-700"
           >
             {editingMessage ? <Edit className="h-4 w-4" /> : <Send className="h-4 w-4" />}
           </Button>
-        </div>
+        </form>
       </div>
 
       {/* Full Screen Image Viewer */}
