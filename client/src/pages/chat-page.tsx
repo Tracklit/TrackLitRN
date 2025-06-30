@@ -866,7 +866,12 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
       return response.json();
     },
     onSuccess: () => {
-      // Clear remaining form state (input already cleared via DOM)
+      // Keep input focused during state updates
+      const input = messageInputRef.current;
+      const wasFocused = document.activeElement === input;
+      
+      // Clear form state
+      setMessageText("");
       setReplyToMessage(null);
       setSelectedImage(null);
       setImagePreview(null);
@@ -874,7 +879,15 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
         fileInputRef.current.value = '';
       }
       
-      // Refresh messages without interrupting UI flow
+      // Restore focus immediately if it was focused
+      if (wasFocused && input) {
+        // Use requestAnimationFrame to ensure DOM updates are complete
+        requestAnimationFrame(() => {
+          input.focus();
+        });
+      }
+      
+      // Refresh messages
       queryClient.invalidateQueries({
         queryKey: selectedChat?.type === 'group' 
           ? ['/api/chat/groups', selectedChat.id, 'messages']
@@ -968,64 +981,27 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
   const handleSendMessage = async () => {
     if ((!messageText.trim() && !selectedImage) || !selectedChat) return;
     
-    const inputElement = messageInputRef.current;
-    if (!inputElement) return;
-    
-    // Use direct DOM manipulation to maintain keyboard visibility
-    const originalValue = inputElement.value;
-    const selectionStart = inputElement.selectionStart;
-    const selectionEnd = inputElement.selectionEnd;
-    
-    // Keep input focused by preventing any blur events during the send process
-    const preventBlur = (e: FocusEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (e.target === inputElement) {
-        setTimeout(() => inputElement.focus(), 0);
+    if (editingMessage) {
+      // Edit existing message
+      editMessageMutation.mutate({ 
+        messageId: editingMessage.id, 
+        text: messageText.trim() 
+      });
+    } else {
+      // Send new message
+      const messageData: any = {
+        text: messageText.trim()
+      };
+      
+      if (selectedImage) {
+        messageData.image = selectedImage;
       }
-    };
-    
-    inputElement.addEventListener('blur', preventBlur);
-    
-    try {
-      if (editingMessage) {
-        // Edit existing message
-        editMessageMutation.mutate({ 
-          messageId: editingMessage.id, 
-          text: messageText.trim() 
-        });
-      } else {
-        // Send new message
-        const messageData: any = {
-          text: messageText.trim()
-        };
-        
-        if (selectedImage) {
-          messageData.image = selectedImage;
-        }
-        
-        if (replyToMessage) {
-          messageData.replyToId = replyToMessage.id;
-        }
-        
-        // Clear the input immediately via DOM to prevent React re-render delays
-        inputElement.value = '';
-        setMessageText('');
-        
-        sendMessageMutation.mutate(messageData);
+      
+      if (replyToMessage) {
+        messageData.replyToId = replyToMessage.id;
       }
-    } finally {
-      // Remove the blur prevention after a short delay
-      setTimeout(() => {
-        inputElement.removeEventListener('blur', preventBlur);
-        // Ensure input stays focused
-        if (document.activeElement !== inputElement) {
-          inputElement.focus();
-          if (selectionStart !== null && selectionEnd !== null) {
-            inputElement.setSelectionRange(0, 0);
-          }
-        }
-      }, 100);
+      
+      sendMessageMutation.mutate(messageData);
     }
   };
 
@@ -1259,7 +1235,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
           />
 
           {/* Message Input */}
-          <Input
+          <input
             ref={messageInputRef}
             value={messageText}
             onChange={(e) => setMessageText(e.target.value)}
@@ -1270,11 +1246,12 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
                   ? `Reply to ${replyToMessage.user?.name}...` 
                   : "Type a message..."
             }
-            className="flex-1 bg-gray-800/50 border-gray-600/50 text-white placeholder-gray-400"
+            className="flex-1 bg-gray-800/50 border border-gray-600/50 text-white placeholder-gray-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             autoComplete="off"
             autoCorrect="off" 
             autoCapitalize="off"
             spellCheck="false"
+            inputMode="text"
           />
 
           {/* Send Button */}
