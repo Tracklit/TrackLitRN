@@ -816,6 +816,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const messageInputRef = useRef<HTMLInputElement>(null);
   const hasInitiallyLoadedRef = useRef(false);
   const queryClient = useQueryClient();
 
@@ -871,6 +872,10 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
       setImagePreview(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
+      }
+      // Maintain focus on message input to keep keyboard open
+      if (messageInputRef.current) {
+        messageInputRef.current.focus();
       }
       queryClient.invalidateQueries({
         queryKey: selectedChat?.type === 'group' 
@@ -1210,6 +1215,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
 
           {/* Message Input */}
           <Input
+            ref={messageInputRef}
             value={messageText}
             onChange={(e) => setMessageText(e.target.value)}
             placeholder={
