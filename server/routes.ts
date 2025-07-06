@@ -3066,34 +3066,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Direct Messages (Telegram-style)
-  app.post("/api/chat/direct/:conversationId/messages", async (req: Request, res: Response) => {
+  app.post("/api/chat/direct/:conversationId/messages", upload.single('image'), async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     try {
       const conversationId = parseInt(req.params.conversationId);
       const userId = req.user!.id;
-      const { text, receiverId, replyToId, messageType = "text", mediaUrl } = req.body;
+      const { text, receiverId, replyToId, messageType = "text" } = req.body;
+      const file = req.file;
+
+      console.log('Direct message upload debug:', {
+        text: text,
+        file: file ? { filename: file.filename, size: file.size } : null,
+        messageType,
+        hasText: !!text?.trim(),
+        hasFile: !!file
+      });
 
       if (isNaN(conversationId)) {
         return res.status(400).json({ error: "Invalid conversation ID" });
       }
 
-      if (!text || text.trim().length === 0) {
-        return res.status(400).json({ error: "Message text is required" });
+      // Validate that we have either text or a file
+      if (!text?.trim() && !file) {
+        return res.status(400).json({ error: "Message text or image is required" });
       }
 
       if (!receiverId) {
         return res.status(400).json({ error: "Receiver ID is required" });
       }
 
+      let mediaUrl = null;
+      let finalMessageType = messageType;
+
+      // Handle image upload if present
+      if (file) {
+        try {
+          const fileName = `direct-${userId}-${Date.now()}${path.extname(file.originalname)}`;
+          const finalPath = path.join('uploads/messages', fileName);
+          
+          // Ensure the messages directory exists
+          const messagesDir = path.join('uploads/messages');
+          if (!fs.existsSync(messagesDir)) {
+            fs.mkdirSync(messagesDir, { recursive: true });
+          }
+          
+          // Move file to final location
+          fs.renameSync(file.path, finalPath);
+          
+          // Compress the image
+          const compressedFileName = `compressed_${fileName}`;
+          const compressedPath = path.join('uploads/messages', compressedFileName);
+          
+          try {
+            await sharp(finalPath)
+              .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
+              .jpeg({ quality: 85, progressive: true })
+              .toFile(compressedPath);
+            
+            // Remove original uncompressed file
+            fs.unlinkSync(finalPath);
+            
+            mediaUrl = `/uploads/messages/${compressedFileName}`;
+          } catch (compressionError) {
+            console.error('Direct message image compression failed, using original:', compressionError);
+            mediaUrl = `/uploads/messages/${fileName}`;
+          }
+          
+          finalMessageType = 'image';
+        } catch (uploadError) {
+          console.error('Error processing direct message image:', uploadError);
+          return res.status(500).json({ error: "Failed to process image" });
+        }
+      }
+
       const messageData = {
         conversationId,
         senderId: userId,
         receiverId,
-        text: text.trim(),
+        text: text?.trim() || (file ? '' : ''),
         replyToId: replyToId || null,
-        messageType,
-        mediaUrl: mediaUrl || null,
+        messageType: finalMessageType,
+        mediaUrl,
       };
 
       const message = await dbStorage.sendTelegramDirectMessage(messageData);
