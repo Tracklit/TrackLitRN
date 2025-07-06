@@ -3360,7 +3360,7 @@ export class DatabaseStorage implements IStorage {
         eq(telegramDirectMessages.conversationId, conversationId),
         eq(telegramDirectMessages.isDeleted, false)
       ))
-      .orderBy(desc(telegramDirectMessages.createdAt))
+      .orderBy(telegramDirectMessages.createdAt)
       .limit(limit)
       .offset(offset);
 
