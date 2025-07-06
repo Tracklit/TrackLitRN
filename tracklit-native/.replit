@@ -1,0 +1,28 @@
+hidden = [".expo", "node_modules", ".git", ".upm"]
+modules = ["nodejs-20"]
+
+[packager]
+language = "nodejs"
+
+[env]
+XDG_CONFIG_HOME = "/home/runner/.config"
+PATH = "/home/runner/$REPL_SLUG/.config/npm/node_global/bin:/home/runner/$REPL_SLUG/node_modules/.bin"
+
+[gitHubImport]
+requiredFiles = [".replit", "replit.nix"]
+
+[languages]
+
+[languages.javascript]
+pattern = "**/{*.js,*.jsx,*.ts,*.tsx,*.mjs,*.cjs}"
+
+[languages.javascript.languageServer]
+start = "typescript-language-server --stdio"
+
+[deployment]
+run = ["npm", "run", "web"]
+deploymentTarget = "static"
+
+[[ports]]
+localPort = 8081
+externalPort = 3000

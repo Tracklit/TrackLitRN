@@ -48,6 +48,7 @@ import { Component as ProgramsPage } from "@/pages/programs-page";
 import { Component as ProgramCreatePage } from "@/pages/program-create-page";
 import { Component as ProgramDetailPage } from "@/pages/program-detail-page";
 import { Component as ProgramEditorPage } from "@/pages/program-editor-page";
+import { ReactNativePreview } from "@/pages/react-native-preview";
 import { Component as DocumentProgramViewer } from "@/pages/document-program-viewer";
 import CompetitionCalendarPage from "@/pages/competition-calendar-page";
 import { Component as AssignedProgramsPage } from "@/pages/assigned-programs-page";
@@ -218,6 +219,9 @@ function Router() {
         {/* AI */}
         <ProtectedRoute path="/sprinthia" component={SprinthiaPage} />
         <ProtectedRoute path="/video-player/:id" component={VideoPlayerPage} />
+        
+        {/* React Native Preview */}
+        <ProtectedRoute path="/react-native-preview" component={ReactNativePreview} />
         
         {/* Arcade Games */}
         <ProtectedRoute path="/arcade" component={ArcadePage} />
