@@ -2445,6 +2445,25 @@ export class DatabaseStorage implements IStorage {
     return conversation;
   }
 
+  async getConversation(conversationId: number, userId: number): Promise<any> {
+    const conversation = await db
+      .select()
+      .from(conversations)
+      .where(and(
+        eq(conversations.id, conversationId),
+        or(
+          eq(conversations.user1Id, userId),
+          eq(conversations.user2Id, userId)
+        )
+      ));
+
+    if (!conversation.length) {
+      throw new Error("Conversation not found or access denied");
+    }
+
+    return conversation[0];
+  }
+
   async getConversationMessages(conversationId: number, userId: number): Promise<any[]> {
     // Get the conversation to find the other participant
     const conversation = await db
