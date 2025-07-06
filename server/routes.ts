@@ -3118,10 +3118,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify user is part of this conversation
-      const conversation = await dbStorage.getConversation(conversationId);
-      if (!conversation || (conversation.user1Id !== userId && conversation.user2Id !== userId)) {
-        return res.status(403).json({ error: "Access denied" });
-      }
+      console.log(`DEBUG: Attempting to access conversation ${conversationId} for user ${userId}`);
+      const conversation = await dbStorage.getConversation(conversationId, userId);
+      console.log(`DEBUG: Conversation found:`, conversation);
 
       const messages = await dbStorage.getTelegramDirectMessages(conversationId, limit, offset);
       res.json(messages);

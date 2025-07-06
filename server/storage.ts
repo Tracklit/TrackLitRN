@@ -2446,6 +2446,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getConversation(conversationId: number, userId: number): Promise<any> {
+    console.log(`DEBUG STORAGE: Looking for conversation ${conversationId} with user ${userId}`);
+    
     const conversation = await db
       .select()
       .from(conversations)
@@ -2456,6 +2458,8 @@ export class DatabaseStorage implements IStorage {
           eq(conversations.user2Id, userId)
         )
       ));
+
+    console.log(`DEBUG STORAGE: Found ${conversation.length} conversations:`, conversation);
 
     if (!conversation.length) {
       throw new Error("Conversation not found or access denied");
