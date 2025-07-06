@@ -6662,6 +6662,43 @@ Keep the response professional, evidence-based, and specific to track and field 
     }
   });
 
+  app.post("/api/conversations/create", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const { otherUserId } = req.body;
+      const currentUserId = req.user.id;
+
+      if (!otherUserId || currentUserId === otherUserId) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+
+      // Check if conversation already exists
+      const existingConversations = await dbStorage.getUserConversations(currentUserId);
+      const existingConversation = existingConversations.find(
+        (conv: any) => conv.otherUser.id === otherUserId
+      );
+
+      if (existingConversation) {
+        return res.json(existingConversation);
+      }
+
+      // Create new conversation
+      const conversation = await dbStorage.createConversation({
+        user1Id: Math.min(currentUserId, otherUserId),
+        user2Id: Math.max(currentUserId, otherUserId),
+        lastMessageAt: new Date()
+      });
+
+      res.status(201).json(conversation);
+    } catch (error) {
+      console.error("Error creating conversation:", error);
+      res.status(500).json({ error: "Failed to create conversation" });
+    }
+  });
+
   app.get("/api/conversations/:conversationId/messages", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) {
       return res.sendStatus(401);

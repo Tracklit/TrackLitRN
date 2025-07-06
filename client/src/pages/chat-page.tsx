@@ -28,6 +28,7 @@ import {
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
+
 import { useAuth } from "@/hooks/use-auth";
 import flameLogoPath from "@assets/IMG_4720_1751015409604.png";
 
@@ -217,6 +218,8 @@ const ChatPage = () => {
   const [selectedChat, setSelectedChat] = useState<{ type: 'group' | 'direct'; id: number } | null>(null);
   const [messageText, setMessageText] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [showCreateOptions, setShowCreateOptions] = useState(false);
+  const [showConnectionsList, setShowConnectionsList] = useState(false);
   const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null);
   const [replyToMessage, setReplyToMessage] = useState<ChatMessage | null>(null);
 
@@ -616,7 +619,7 @@ const ChatPage = () => {
                         : "text-gray-400 hover:text-white hover:bg-gray-700/50"
                     )}
                   >
-                    My Groups
+                    My Chats
                   </button>
                   <button
                     onClick={() => setGroupFilter('public')}
@@ -627,20 +630,18 @@ const ChatPage = () => {
                         : "text-gray-400 hover:text-white hover:bg-gray-700/50"
                     )}
                   >
-                    Public Groups
+                    Public Chats
                   </button>
                 </div>
 
-                {/* Create Group Button */}
-                <Link href="/create-group">
-                  <Button 
-                    size="sm"
-                    className="bg-yellow-500 hover:bg-yellow-600 text-black border-none text-xs px-2 py-1.5 h-8 flex items-center font-medium"
-                  >
-                    <Plus className="h-3 w-3 mr-1.5" />
-                    New Group
-                  </Button>
-                </Link>
+                {/* Create Chat Button */}
+                <button
+                  onClick={() => setShowCreateOptions(true)}
+                  className="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors"
+                  aria-label="Create new chat"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
               </div>
             </div>
           </div>
@@ -1028,6 +1029,29 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     // this function sets up the message for editing in the main input field
     console.log("Edit message requested:", message.id);
     // TODO: Implement native input editing functionality
+  };
+
+  const handleDirectMessage = async (userId: number) => {
+    try {
+      // Create or get a conversation between the current user and the selected user
+      const response = await fetch('/api/conversations/create', {
+        method: 'POST',
+        body: JSON.stringify({ otherUserId: userId }),
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      });
+      
+      const conversation = await response.json();
+      
+      if (conversation.id) {
+        // Navigate to the direct message conversation
+        // This will be handled by the existing chat system
+        queryClient.invalidateQueries({ queryKey: ['/api/chat/groups'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/conversations'] });
+      }
+    } catch (error) {
+      console.error('Error creating direct message:', error);
+    }
   };
 
   // Force scroll to bottom immediately after DOM paint
@@ -1566,6 +1590,123 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply, onE
           </button>
         </div>
       )}
+
+      {/* Create Options Modal */}
+      {showCreateOptions && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-slate-800 rounded-lg p-6 mx-4 w-full max-w-sm">
+            <h2 className="text-xl font-bold text-white mb-4">Create New Chat</h2>
+            <div className="space-y-3">
+              <Link href="/create-group" className="block">
+                <button
+                  onClick={() => setShowCreateOptions(false)}
+                  className="w-full p-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg flex items-center space-x-3 transition-colors"
+                >
+                  <Users className="h-5 w-5" />
+                  <span>Create a Chat</span>
+                </button>
+              </Link>
+              <button
+                onClick={() => {
+                  setShowCreateOptions(false);
+                  setShowConnectionsList(true);
+                }}
+                className="w-full p-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg flex items-center space-x-3 transition-colors"
+              >
+                <MessageCircle className="h-5 w-5" />
+                <span>Message Connection</span>
+              </button>
+            </div>
+            <button
+              onClick={() => setShowCreateOptions(false)}
+              className="mt-4 w-full p-2 text-gray-400 hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Connections List Modal */}
+      {showConnectionsList && (
+        <ConnectionsList
+          onClose={() => setShowConnectionsList(false)}
+          onMessageUser={(userId) => {
+            setShowConnectionsList(false);
+            // Handle direct message creation
+            handleDirectMessage(userId);
+          }}
+        />
+      )}
+    </div>
+  );
+};
+
+// Connections List Component
+const ConnectionsList = ({ onClose, onMessageUser }: { onClose: () => void; onMessageUser: (userId: number) => void }) => {
+  const { data: connections, isLoading } = useQuery<any[]>({
+    queryKey: ['/api/connections'],
+    enabled: true,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div className="bg-slate-800 rounded-lg p-6 mx-4 w-full max-w-md">
+          <div className="text-center text-white">Loading connections...</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div className="bg-slate-800 rounded-lg p-6 mx-4 w-full max-w-md max-h-[70vh] overflow-hidden">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-white">Message Connection</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        
+        <div className="space-y-2 overflow-y-auto max-h-[50vh]">
+          {connections && connections.length > 0 ? (
+            connections.map((connection) => (
+              <div
+                key={connection.id}
+                className="flex items-center justify-between p-3 bg-slate-700 rounded-lg"
+              >
+                <div className="flex items-center space-x-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={connection.profile_image_url} />
+                    <AvatarFallback className="bg-blue-500 text-white">
+                      {connection.name?.slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <div className="text-white font-medium">{connection.name}</div>
+                    <div className="text-gray-400 text-sm">@{connection.username}</div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => onMessageUser(connection.id)}
+                  className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-colors"
+                >
+                  <Send className="h-4 w-4" />
+                </button>
+              </div>
+            ))
+          ) : (
+            <div className="text-center text-gray-400 py-8">
+              <Users className="h-12 w-12 mx-auto mb-2 text-gray-500" />
+              <p>No connections found</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

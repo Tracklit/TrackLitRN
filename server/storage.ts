@@ -74,6 +74,8 @@ import {
   InsertWorkoutSessionPreview,
   CommunityActivity,
   InsertCommunityActivity,
+  Conversation,
+  InsertConversation,
   exerciseLibrary,
   users,
   meets,
@@ -2436,6 +2438,11 @@ export class DatabaseStorage implements IStorage {
     );
 
     return conversationsWithUsers;
+  }
+
+  async createConversation(conversationData: InsertConversation): Promise<Conversation> {
+    const [conversation] = await db.insert(conversations).values(conversationData).returning();
+    return conversation;
   }
 
   async getConversationMessages(conversationId: number, userId: number): Promise<any[]> {

@@ -167,42 +167,42 @@ router.get("/api/chat/groups", async (req: Request, res: Response) => {
         'direct' as channel_type,
         c.id,
         CASE 
-          WHEN c.user1_id = ${userId} THEN u2.name
+          WHEN c."user1_id" = ${userId} THEN u2.name
           ELSE u1.name
         END as name,
         'Direct message' as description,
         CASE 
-          WHEN c.user1_id = ${userId} THEN u2.profile_image_url
-          ELSE u1.profile_image_url
+          WHEN c."user1_id" = ${userId} THEN u2."profile_image_url"
+          ELSE u1."profile_image_url"
         END as image,
         null as created_by,
         ARRAY[]::integer[] as admin_ids,
         ARRAY[${userId}]::integer[] as member_ids,
         true as is_private,
-        c.created_at::text,
+        c."created_at"::text,
         (
-          SELECT dm.text 
+          SELECT dm.content 
           FROM direct_messages dm 
-          WHERE (dm.sender_id = c.user1_id AND dm.receiver_id = c.user2_id) 
-             OR (dm.sender_id = c.user2_id AND dm.receiver_id = c.user1_id)
-          ORDER BY dm.created_at DESC 
+          WHERE (dm."sender_id" = c."user1_id" AND dm."receiver_id" = c."user2_id") 
+             OR (dm."sender_id" = c."user2_id" AND dm."receiver_id" = c."user1_id")
+          ORDER BY dm."created_at" DESC 
           LIMIT 1
         ) as last_message,
-        c.last_message_at::text,
+        c."last_message_at"::text,
         (
           SELECT COUNT(*)::integer 
           FROM direct_messages dm 
-          WHERE (dm.sender_id = c.user1_id AND dm.receiver_id = c.user2_id) 
-             OR (dm.sender_id = c.user2_id AND dm.receiver_id = c.user1_id)
+          WHERE (dm."sender_id" = c."user1_id" AND dm."receiver_id" = c."user2_id") 
+             OR (dm."sender_id" = c."user2_id" AND dm."receiver_id" = c."user1_id")
         ) as message_count,
         CASE 
-          WHEN c.user1_id = ${userId} THEN c.user2_id
-          ELSE c.user1_id
+          WHEN c."user1_id" = ${userId} THEN c."user2_id"
+          ELSE c."user1_id"
         END as other_user_id
       FROM conversations c
-      LEFT JOIN users u1 ON c.user1_id = u1.id
-      LEFT JOIN users u2 ON c.user2_id = u2.id
-      WHERE c.user1_id = ${userId} OR c.user2_id = ${userId}
+      LEFT JOIN users u1 ON c."user1_id" = u1.id
+      LEFT JOIN users u2 ON c."user2_id" = u2.id
+      WHERE c."user1_id" = ${userId} OR c."user2_id" = ${userId}
     `);
     
     console.log('UNIFIED: Found', groups.rows.length, 'groups and', conversations.rows.length, 'direct conversations');
