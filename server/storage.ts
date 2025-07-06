@@ -3290,7 +3290,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Direct Messages (Telegram-style)
-  async sendTelegramDirectMessage(messageData: NewTelegramDirectMessage): Promise<TelegramDirectMessage> {
+  async sendTelegramDirectMessage(messageData: NewTelegramDirectMessage): Promise<any> {
     const [message] = await db
       .insert(telegramDirectMessages)
       .values(messageData)
@@ -3305,28 +3305,48 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(conversations.id, messageData.conversationId));
 
-    return message;
+    // Get the user info for the sender to return a complete message object
+    const userInfo = await db
+      .select({
+        id: users.id,
+        name: users.name,
+        username: users.username,
+        profile_image_url: users.profileImageUrl
+      })
+      .from(users)
+      .where(eq(users.id, message.senderId))
+      .limit(1);
+
+    // Return message in same format as group messages
+    return {
+      id: message.id,
+      group_id: message.conversationId, // Map conversationId to group_id for frontend compatibility
+      user_id: message.senderId, // Map senderId to user_id for frontend compatibility
+      text: message.text,
+      created_at: message.createdAt,
+      edited_at: message.editedAt,
+      is_deleted: message.isDeleted,
+      reply_to_id: message.replyToId,
+      message_type: message.messageType,
+      media_url: message.mediaUrl,
+      user: userInfo[0] || null
+    };
   }
 
-  async getTelegramDirectMessages(conversationId: number, limit: number = 50, offset: number = 0): Promise<TelegramDirectMessage[]> {
-    // First, try to get messages from the new telegram_direct_messages table with user info
-    const telegramMessages = await db
+  async getTelegramDirectMessages(conversationId: number, limit: number = 50, offset: number = 0): Promise<any[]> {
+    // Get messages from telegram_direct_messages table with user info (same pattern as group messages)
+    const messages = await db
       .select({
         id: telegramDirectMessages.id,
-        conversationId: telegramDirectMessages.conversationId,
-        senderId: telegramDirectMessages.senderId,
-        receiverId: telegramDirectMessages.receiverId,
+        group_id: telegramDirectMessages.conversationId, // Map conversationId to group_id for frontend compatibility
         user_id: telegramDirectMessages.senderId, // Map senderId to user_id for frontend compatibility
         text: telegramDirectMessages.text,
-        createdAt: telegramDirectMessages.createdAt,
-        editedAt: telegramDirectMessages.editedAt,
-        isDeleted: telegramDirectMessages.isDeleted,
-        isRead: telegramDirectMessages.isRead,
-        readAt: telegramDirectMessages.readAt,
-        replyToId: telegramDirectMessages.replyToId,
-        messageType: telegramDirectMessages.messageType,
-        mediaUrl: telegramDirectMessages.mediaUrl,
-        linkPreview: telegramDirectMessages.linkPreview,
+        created_at: telegramDirectMessages.createdAt,
+        edited_at: telegramDirectMessages.editedAt,
+        is_deleted: telegramDirectMessages.isDeleted,
+        reply_to_id: telegramDirectMessages.replyToId,
+        message_type: telegramDirectMessages.messageType,
+        media_url: telegramDirectMessages.mediaUrl,
         user: {
           id: users.id,
           name: users.name,
@@ -3344,71 +3364,7 @@ export class DatabaseStorage implements IStorage {
       .limit(limit)
       .offset(offset);
 
-    // If no messages found in new table, fall back to old direct_messages table with user info
-    if (telegramMessages.length === 0) {
-      // Get the conversation to know the user IDs
-      const conversation = await db
-        .select()
-        .from(conversations)
-        .where(eq(conversations.id, conversationId))
-        .limit(1);
-
-      if (conversation.length > 0) {
-        const { user1Id, user2Id } = conversation[0];
-        
-        // Get messages from old direct_messages table with user info
-        const oldMessagesWithUsers = await db
-          .select({
-            id: directMessages.id,
-            senderId: directMessages.senderId,
-            receiverId: directMessages.receiverId,
-            user_id: directMessages.senderId, // Map senderId to user_id for frontend compatibility
-            content: directMessages.content,
-            createdAt: directMessages.createdAt,
-            isRead: directMessages.isRead,
-            readAt: directMessages.readAt,
-            user: {
-              id: users.id,
-              name: users.name,
-              username: users.username,
-              profile_image_url: users.profileImageUrl
-            }
-          })
-          .from(directMessages)
-          .innerJoin(users, eq(directMessages.senderId, users.id))
-          .where(and(
-            or(
-              and(eq(directMessages.senderId, user1Id), eq(directMessages.receiverId, user2Id)),
-              and(eq(directMessages.senderId, user2Id), eq(directMessages.receiverId, user1Id))
-            )
-          ))
-          .orderBy(desc(directMessages.createdAt))
-          .limit(limit)
-          .offset(offset);
-
-        // Transform old messages to match new format with user info
-        return oldMessagesWithUsers.map(msg => ({
-          id: msg.id,
-          conversationId: conversationId,
-          senderId: msg.senderId,
-          receiverId: msg.receiverId,
-          user_id: msg.senderId, // Map senderId to user_id for frontend compatibility
-          text: msg.content,
-          createdAt: msg.createdAt,
-          editedAt: null,
-          isDeleted: false,
-          isRead: msg.isRead || false,
-          readAt: msg.readAt,
-          replyToId: null,
-          messageType: 'text' as const,
-          mediaUrl: null,
-          linkPreview: null,
-          user: msg.user
-        }));
-      }
-    }
-
-    return telegramMessages;
+    return messages;
   }
 
   async editTelegramDirectMessage(messageId: number, senderId: number, newText: string): Promise<TelegramDirectMessage | undefined> {
