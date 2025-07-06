@@ -581,6 +581,25 @@ const ChatPage = () => {
     // Don't clear selectedChat immediately - let it persist in memory
   };
 
+  // Handle direct message creation
+  const handleDirectMessage = async (userId: number) => {
+    try {
+      // Create or get existing conversation
+      const response = await apiRequest('POST', '/api/conversations', {
+        body: JSON.stringify({ otherUserId: userId })
+      });
+      
+      if (response.ok) {
+        const conversation = await response.json();
+        // Select the direct message chat
+        setSelectedChat({ type: 'direct', id: conversation.id });
+        setViewState('chat');
+      }
+    } catch (error) {
+      console.error('Error creating direct message:', error);
+    }
+  };
+
   return (
     <div className={`w-full h-full overflow-hidden bg-slate-900 transition-transform duration-300 ease-in-out ${
       !isChatRoute ? 'translate-x-full' : 'translate-x-0'
@@ -806,6 +825,54 @@ const ChatPage = () => {
           <ChatInterface selectedChat={selectedChat} onBack={handleBackToList} />
         )}
       </div>
+
+      {/* Create Options Modal */}
+      {showCreateOptions && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-slate-800 rounded-lg p-6 mx-4 w-full max-w-sm">
+            <h2 className="text-xl font-bold text-white mb-4">Create New Chat</h2>
+            <div className="space-y-3">
+              <Link href="/create-group" className="block">
+                <button 
+                  onClick={() => setShowCreateOptions(false)}
+                  className="w-full p-3 bg-slate-700 rounded-lg text-white text-left hover:bg-slate-600 transition-colors"
+                >
+                  <span className="font-medium">Create a Chat</span>
+                  <p className="text-sm text-gray-300 mt-1">Start a new group conversation</p>
+                </button>
+              </Link>
+              <button 
+                onClick={() => {
+                  setShowCreateOptions(false);
+                  setShowConnectionsList(true);
+                }}
+                className="w-full p-3 bg-slate-700 rounded-lg text-white text-left hover:bg-slate-600 transition-colors"
+              >
+                <span className="font-medium">Message Connection</span>
+                <p className="text-sm text-gray-300 mt-1">Send a direct message to a connection</p>
+              </button>
+            </div>
+            <button 
+              onClick={() => setShowCreateOptions(false)}
+              className="w-full mt-3 px-3 py-1 text-left text-gray-400 hover:bg-gray-700 text-sm rounded"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Connections List Modal */}
+      {showConnectionsList && (
+        <ConnectionsList
+          onClose={() => setShowConnectionsList(false)}
+          onMessageUser={(userId) => {
+            setShowConnectionsList(false);
+            // Handle direct message creation
+            handleDirectMessage(userId);
+          }}
+        />
+      )}
     </div>
   );
 };
@@ -1590,54 +1657,6 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply, onE
           </button>
         </div>
       )}
-
-      {/* Create Options Modal */}
-      {showCreateOptions && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-          <div className="bg-slate-800 rounded-lg p-6 mx-4 w-full max-w-sm">
-            <h2 className="text-xl font-bold text-white mb-4">Create New Chat</h2>
-            <div className="space-y-3">
-              <Link href="/create-group" className="block">
-                <button
-                  onClick={() => setShowCreateOptions(false)}
-                  className="w-full p-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg flex items-center space-x-3 transition-colors"
-                >
-                  <Users className="h-5 w-5" />
-                  <span>Create a Chat</span>
-                </button>
-              </Link>
-              <button
-                onClick={() => {
-                  setShowCreateOptions(false);
-                  setShowConnectionsList(true);
-                }}
-                className="w-full p-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg flex items-center space-x-3 transition-colors"
-              >
-                <MessageCircle className="h-5 w-5" />
-                <span>Message Connection</span>
-              </button>
-            </div>
-            <button
-              onClick={() => setShowCreateOptions(false)}
-              className="mt-4 w-full p-2 text-gray-400 hover:text-white transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Connections List Modal */}
-      {showConnectionsList && (
-        <ConnectionsList
-          onClose={() => setShowConnectionsList(false)}
-          onMessageUser={(userId) => {
-            setShowConnectionsList(false);
-            // Handle direct message creation
-            handleDirectMessage(userId);
-          }}
-        />
-      )}
     </div>
   );
 };
@@ -1666,43 +1685,38 @@ const ConnectionsList = ({ onClose, onMessageUser }: { onClose: () => void; onMe
           <h2 className="text-xl font-bold text-white">Message Connection</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
+            className="text-gray-400 hover:text-white"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
         
-        <div className="space-y-2 overflow-y-auto max-h-[50vh]">
+        <div className="overflow-y-auto max-h-[50vh]">
           {connections && connections.length > 0 ? (
-            connections.map((connection) => (
-              <div
-                key={connection.id}
-                className="flex items-center justify-between p-3 bg-slate-700 rounded-lg"
-              >
-                <div className="flex items-center space-x-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={connection.profile_image_url} />
-                    <AvatarFallback className="bg-blue-500 text-white">
-                      {connection.name?.slice(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <div className="text-white font-medium">{connection.name}</div>
-                    <div className="text-gray-400 text-sm">@{connection.username}</div>
-                  </div>
-                </div>
+            <div className="space-y-2">
+              {connections.map((connection: any) => (
                 <button
+                  key={connection.id}
                   onClick={() => onMessageUser(connection.id)}
-                  className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-colors"
+                  className="w-full p-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg flex items-center space-x-3 transition-colors"
                 >
-                  <Send className="h-4 w-4" />
+                  <div className="h-8 w-8 bg-blue-500 rounded-full flex items-center justify-center">
+                    <span className="text-sm font-medium text-white">
+                      {connection.name?.charAt(0) || 'U'}
+                    </span>
+                  </div>
+                  <div className="flex-1 text-left">
+                    <div className="font-medium">{connection.name}</div>
+                    <div className="text-sm text-gray-300">@{connection.username}</div>
+                  </div>
                 </button>
-              </div>
-            ))
+              ))}
+            </div>
           ) : (
-            <div className="text-center text-gray-400 py-8">
-              <Users className="h-12 w-12 mx-auto mb-2 text-gray-500" />
+            <div className="text-center py-8 text-gray-400">
+              <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
               <p>No connections found</p>
+              <p className="text-sm mt-1">Add some connections to start messaging</p>
             </div>
           )}
         </div>
