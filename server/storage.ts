@@ -3309,10 +3309,33 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTelegramDirectMessages(conversationId: number, limit: number = 50, offset: number = 0): Promise<TelegramDirectMessage[]> {
-    // First, try to get messages from the new telegram_direct_messages table
+    // First, try to get messages from the new telegram_direct_messages table with user info
     const telegramMessages = await db
-      .select()
+      .select({
+        id: telegramDirectMessages.id,
+        conversationId: telegramDirectMessages.conversationId,
+        senderId: telegramDirectMessages.senderId,
+        receiverId: telegramDirectMessages.receiverId,
+        user_id: telegramDirectMessages.senderId, // Map senderId to user_id for frontend compatibility
+        text: telegramDirectMessages.text,
+        createdAt: telegramDirectMessages.createdAt,
+        editedAt: telegramDirectMessages.editedAt,
+        isDeleted: telegramDirectMessages.isDeleted,
+        isRead: telegramDirectMessages.isRead,
+        readAt: telegramDirectMessages.readAt,
+        replyToId: telegramDirectMessages.replyToId,
+        messageType: telegramDirectMessages.messageType,
+        mediaUrl: telegramDirectMessages.mediaUrl,
+        linkPreview: telegramDirectMessages.linkPreview,
+        user: {
+          id: users.id,
+          name: users.name,
+          username: users.username,
+          profile_image_url: users.profileImageUrl
+        }
+      })
       .from(telegramDirectMessages)
+      .innerJoin(users, eq(telegramDirectMessages.senderId, users.id))
       .where(and(
         eq(telegramDirectMessages.conversationId, conversationId),
         eq(telegramDirectMessages.isDeleted, false)
@@ -3321,7 +3344,7 @@ export class DatabaseStorage implements IStorage {
       .limit(limit)
       .offset(offset);
 
-    // If no messages found in new table, fall back to old direct_messages table
+    // If no messages found in new table, fall back to old direct_messages table with user info
     if (telegramMessages.length === 0) {
       // Get the conversation to know the user IDs
       const conversation = await db
@@ -3333,10 +3356,26 @@ export class DatabaseStorage implements IStorage {
       if (conversation.length > 0) {
         const { user1Id, user2Id } = conversation[0];
         
-        // Get messages from old direct_messages table
-        const oldMessages = await db
-          .select()
+        // Get messages from old direct_messages table with user info
+        const oldMessagesWithUsers = await db
+          .select({
+            id: directMessages.id,
+            senderId: directMessages.senderId,
+            receiverId: directMessages.receiverId,
+            user_id: directMessages.senderId, // Map senderId to user_id for frontend compatibility
+            content: directMessages.content,
+            createdAt: directMessages.createdAt,
+            isRead: directMessages.isRead,
+            readAt: directMessages.readAt,
+            user: {
+              id: users.id,
+              name: users.name,
+              username: users.username,
+              profile_image_url: users.profileImageUrl
+            }
+          })
           .from(directMessages)
+          .innerJoin(users, eq(directMessages.senderId, users.id))
           .where(and(
             or(
               and(eq(directMessages.senderId, user1Id), eq(directMessages.receiverId, user2Id)),
@@ -3347,12 +3386,13 @@ export class DatabaseStorage implements IStorage {
           .limit(limit)
           .offset(offset);
 
-        // Transform old messages to match new format
-        return oldMessages.map(msg => ({
+        // Transform old messages to match new format with user info
+        return oldMessagesWithUsers.map(msg => ({
           id: msg.id,
           conversationId: conversationId,
           senderId: msg.senderId,
           receiverId: msg.receiverId,
+          user_id: msg.senderId, // Map senderId to user_id for frontend compatibility
           text: msg.content,
           createdAt: msg.createdAt,
           editedAt: null,
@@ -3362,7 +3402,8 @@ export class DatabaseStorage implements IStorage {
           replyToId: null,
           messageType: 'text' as const,
           mediaUrl: null,
-          linkPreview: null
+          linkPreview: null,
+          user: msg.user
         }));
       }
     }
