@@ -3335,35 +3335,35 @@ export class DatabaseStorage implements IStorage {
         
         // Get messages from old direct_messages table
         const oldMessages = await db
-          .select({
-            id: directMessages.id,
-            conversationId: sql<number>`${conversationId}`,
-            senderId: directMessages.senderId,
-            receiverId: directMessages.receiverId,
-            text: directMessages.content,
-            createdAt: directMessages.createdAt,
-            editedAt: directMessages.editedAt,
-            isDeleted: directMessages.isDeleted,
-            isRead: directMessages.isRead,
-            readAt: directMessages.readAt,
-            replyToId: sql<number | null>`NULL`,
-            messageType: sql<string>`'text'`,
-            mediaUrl: sql<string | null>`NULL`,
-            linkPreview: sql<any>`NULL`
-          })
+          .select()
           .from(directMessages)
           .where(and(
             or(
               and(eq(directMessages.senderId, user1Id), eq(directMessages.receiverId, user2Id)),
               and(eq(directMessages.senderId, user2Id), eq(directMessages.receiverId, user1Id))
-            ),
-            eq(directMessages.isDeleted, false)
+            )
           ))
           .orderBy(desc(directMessages.createdAt))
           .limit(limit)
           .offset(offset);
 
-        return oldMessages;
+        // Transform old messages to match new format
+        return oldMessages.map(msg => ({
+          id: msg.id,
+          conversationId: conversationId,
+          senderId: msg.senderId,
+          receiverId: msg.receiverId,
+          text: msg.content,
+          createdAt: msg.createdAt,
+          editedAt: null,
+          isDeleted: false,
+          isRead: msg.isRead || false,
+          readAt: msg.readAt,
+          replyToId: null,
+          messageType: 'text' as const,
+          mediaUrl: null,
+          linkPreview: null
+        }));
       }
     }
 
