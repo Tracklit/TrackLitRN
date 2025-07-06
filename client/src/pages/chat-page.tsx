@@ -1140,7 +1140,10 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
   const scrollToBottom = useCallback(() => {
     const container = messagesContainerRef.current;
     if (container) {
-      container.scrollTop = container.scrollHeight;
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: 'smooth'
+      });
       setShowScrollToBottom(false);
     }
   }, []);

@@ -108,6 +108,14 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
+- July 6, 2025: Implemented smooth scroll-to-bottom button for chat channels ✅
+  - Added Telegram-style scroll-to-bottom button positioned on bottom right
+  - Button appears when user scrolls up from bottom (10px threshold detection)
+  - Button disappears when user is at bottom of messages
+  - Smooth scroll animation using scrollTo with behavior: 'smooth'
+  - Blue circular design with ArrowDown icon
+  - Fully functional across all chat channels
+  
 - January 6, 2025: React Native Migration Fully Completed ✅
   - Complete React Native project structure in tracklit-native directory
   - All core screen components implemented: HomeScreen, ChatScreen, PracticeScreen, ProgramsScreen, RaceScreen
