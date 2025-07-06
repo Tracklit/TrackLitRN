@@ -3092,9 +3092,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Message text or image is required" });
       }
 
-      if (!receiverId) {
-        return res.status(400).json({ error: "Receiver ID is required" });
+      // Get conversation details to determine receiver ID
+      const conversation = await dbStorage.getConversation(conversationId, userId);
+      if (!conversation) {
+        return res.status(404).json({ error: "Conversation not found" });
       }
+
+      // Determine receiver ID (the other user in the conversation)
+      const determinedReceiverId = conversation.user1Id === userId ? conversation.user2Id : conversation.user1Id;
 
       let mediaUrl = null;
       let finalMessageType = messageType;
@@ -3143,7 +3148,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const messageData = {
         conversationId,
         senderId: userId,
-        receiverId,
+        receiverId: determinedReceiverId,
         text: text?.trim() || (file ? '' : ''),
         replyToId: replyToId || null,
         messageType: finalMessageType,
