@@ -1,0 +1,32 @@
+{
+  "cli": {
+    "version": ">= 7.8.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal"
+    },
+    "production": {
+      "ios": {
+        "bundleIdentifier": "com.tracklit.app"
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "bundleIdentifier": "com.tracklit.app"
+      },
+      "android": {
+        "packageName": "com.tracklit.app"
+      }
+    }
+  }
+}

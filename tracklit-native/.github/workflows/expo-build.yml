@@ -1,0 +1,93 @@
+name: TrackLit React Native Build
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: tracklit-native/package-lock.json
+    
+    - name: Setup Expo
+      uses: expo/expo-github-action@v7
+      with:
+        expo-version: latest
+        token: ${{ secrets.EXPO_TOKEN }}
+    
+    - name: Install dependencies
+      run: |
+        cd tracklit-native
+        npm ci
+    
+    - name: Build for iOS
+      run: |
+        cd tracklit-native
+        eas build --platform ios --non-interactive
+      env:
+        EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+    
+    - name: Build for Android
+      run: |
+        cd tracklit-native
+        eas build --platform android --non-interactive
+      env:
+        EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: tracklit-native/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        cd tracklit-native
+        npm ci
+    
+    - name: Run tests
+      run: |
+        cd tracklit-native
+        npm test -- --watchAll=false
+
+  deploy-testflight:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Setup Expo
+      uses: expo/expo-github-action@v7
+      with:
+        expo-version: latest
+        token: ${{ secrets.EXPO_TOKEN }}
+    
+    - name: Submit to TestFlight
+      run: |
+        cd tracklit-native
+        eas submit --platform ios --non-interactive
+      env:
+        EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
