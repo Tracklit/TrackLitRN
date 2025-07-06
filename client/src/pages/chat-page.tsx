@@ -23,7 +23,9 @@ import {
   Reply,
   X,
   Image,
-  Settings
+  Settings,
+  ArrowDown,
+  ChevronDown
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
@@ -889,6 +891,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
   const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1123,6 +1126,25 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     }
   };
 
+  // Check scroll position to show/hide scroll-to-bottom button
+  const handleScroll = useCallback(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const isAtBottom = scrollTop + clientHeight >= scrollHeight - 10; // 10px threshold
+    setShowScrollToBottom(!isAtBottom);
+  }, []);
+
+  // Scroll to bottom function
+  const scrollToBottom = useCallback(() => {
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+      setShowScrollToBottom(false);
+    }
+  }, []);
+
   // Force scroll to bottom immediately after DOM paint
   useLayoutEffect(() => {
     const container = messagesContainerRef.current;
@@ -1132,12 +1154,14 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
       // Jump to bottom immediately after layout, no scroll animation
       container.scrollTop = container.scrollHeight;
       hasInitiallyLoadedRef.current = true;
+      setShowScrollToBottom(false);
     }
   }, [messages]);
 
   // Reset initial load flag when changing channels
   useEffect(() => {
     hasInitiallyLoadedRef.current = false;
+    setShowScrollToBottom(false);
   }, [selectedChat.id]);
 
 
@@ -1198,6 +1222,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
       <div 
         ref={messagesContainerRef} 
         className="flex-1 overflow-y-auto p-4 space-y-4"
+        onScroll={handleScroll}
       >
         {messagesLoading ? (
           <div className="space-y-4">
@@ -1235,6 +1260,20 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
         )}
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Scroll to Bottom Button */}
+      {showScrollToBottom && (
+        <div className="absolute bottom-24 right-4 z-10">
+          <Button
+            onClick={scrollToBottom}
+            size="sm"
+            variant="ghost"
+            className="h-10 w-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg border-2 border-blue-500"
+          >
+            <ArrowDown className="h-5 w-5" />
+          </Button>
+        </div>
+      )}
 
       {/* Edit/Reply Preview */}
       {(editingMessage || replyToMessage) && (
