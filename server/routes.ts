@@ -6830,8 +6830,20 @@ Keep the response professional, evidence-based, and specific to track and field 
     }
 
     try {
-      const { participantId, otherUserId } = req.body;
-      console.log("POST /api/conversations - Body:", req.body);
+      console.log("POST /api/conversations - Raw Body:", req.body);
+      
+      // Handle case where body might be double-encoded
+      let bodyData = req.body;
+      if (req.body.body && typeof req.body.body === 'string') {
+        try {
+          bodyData = JSON.parse(req.body.body);
+        } catch (e) {
+          bodyData = req.body;
+        }
+      }
+      
+      const { participantId, otherUserId } = bodyData;
+      console.log("POST /api/conversations - Parsed Body:", bodyData);
       
       // Handle both field names for compatibility
       const targetUserId = participantId || otherUserId;
