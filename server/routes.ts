@@ -6831,11 +6831,18 @@ Keep the response professional, evidence-based, and specific to track and field 
 
     try {
       const { participantId } = req.body;
+      console.log("POST /api/conversations - Body:", req.body);
+      console.log("POST /api/conversations - participantId:", participantId, "user ID:", req.user.id);
+      
+      if (!participantId) {
+        return res.status(400).json({ error: "participantId is required" });
+      }
+      
       const conversation = await dbStorage.createOrGetConversation(req.user.id, participantId);
       res.json(conversation);
     } catch (error) {
       console.error("Error creating conversation:", error);
-      res.status(500).send("Error creating conversation");
+      res.status(500).json({ error: "Failed to create conversation" });
     }
   });
 
