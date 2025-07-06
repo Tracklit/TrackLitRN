@@ -206,6 +206,7 @@ router.get("/api/chat/groups", async (req: Request, res: Response) => {
     `);
     
     console.log('UNIFIED: Found', groups.rows.length, 'groups and', conversations.rows.length, 'direct conversations');
+    console.log('UNIFIED: Raw conversations:', conversations.rows);
     
     // Process all channels
     const processedChannels = [...groups.rows, ...conversations.rows].map((channel: any) => {
@@ -244,6 +245,7 @@ router.get("/api/chat/groups", async (req: Request, res: Response) => {
     });
     
     console.log('UNIFIED: Final processed channels:', processedChannels.length);
+    console.log('UNIFIED: Channel IDs:', processedChannels.map(c => ({ id: c.id, name: c.name, type: c.channel_type })));
     
     res.json(processedChannels);
   } catch (error) {
