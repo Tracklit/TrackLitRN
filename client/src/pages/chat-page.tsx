@@ -512,7 +512,9 @@ const ChatPage = () => {
   };
 
   const formatMessageTime = (timestamp: string) => {
+    if (!timestamp) return '';
     const date = new Date(timestamp);
+    if (isNaN(date.getTime())) return '';
     return date.toLocaleTimeString('en-US', { 
       hour: '2-digit', 
       minute: '2-digit',
@@ -1143,7 +1145,9 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
 
 
   const formatMessageTime = (timestamp: string) => {
+    if (!timestamp) return '';
     const date = new Date(timestamp);
+    if (isNaN(date.getTime())) return '';
     return date.toLocaleTimeString('en-US', { 
       hour: '2-digit', 
       minute: '2-digit',
@@ -1395,7 +1399,9 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply, onE
   const queryClient = useQueryClient();
   
   const formatMessageTime = (timestamp: string) => {
+    if (!timestamp) return '';
     const date = new Date(timestamp);
+    if (isNaN(date.getTime())) return '';
     return date.toLocaleTimeString('en-US', { 
       hour: '2-digit', 
       minute: '2-digit',
