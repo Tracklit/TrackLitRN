@@ -118,9 +118,9 @@ router.get("/api/chat/groups/unread-counts", async (req: Request, res: Response)
   }
 });
 
-// Get chat groups for user - FIXED VERSION
+// Get unified chat channels (groups + direct messages) for user - TELEGRAM STYLE
 router.get("/api/chat/groups", async (req: Request, res: Response) => {
-  console.log('=== CHAT GROUPS API CALLED - FIXED ===');
+  console.log('=== UNIFIED CHAT CHANNELS API CALLED ===');
   
   // Completely disable caching
   res.set({
@@ -138,11 +138,12 @@ router.get("/api/chat/groups", async (req: Request, res: Response) => {
   
   try {
     const userId = req.user!.id;
-    console.log('FIXED: Fetching groups for user ID:', userId);
+    console.log('UNIFIED: Fetching channels for user ID:', userId);
     
-    // Get all groups using existing structure with member_ids arrays
+    // Get chat groups using existing structure with member_ids arrays
     const groups = await db.execute(sql`
       SELECT 
+        'group' as channel_type,
         id,
         name,
         description,
@@ -154,49 +155,100 @@ router.get("/api/chat/groups", async (req: Request, res: Response) => {
         created_at::text,
         last_message,
         last_message_at::text,
-        COALESCE(message_count, 0) as message_count
+        COALESCE(message_count, 0) as message_count,
+        null as other_user_id
       FROM chat_groups
       WHERE ${userId} = ANY(member_ids) OR is_private = false
-      ORDER BY last_message_at DESC NULLS LAST
     `);
     
-    console.log('FIXED: Raw database results count:', groups.rows.length);
-    console.log('FIXED: Raw database results:', JSON.stringify(groups.rows, null, 2));
+    // Get direct message conversations as channels
+    const conversations = await db.execute(sql`
+      SELECT 
+        'direct' as channel_type,
+        c.id,
+        CASE 
+          WHEN c.user1_id = ${userId} THEN u2.name
+          ELSE u1.name
+        END as name,
+        'Direct message' as description,
+        CASE 
+          WHEN c.user1_id = ${userId} THEN u2.profile_image_url
+          ELSE u1.profile_image_url
+        END as image,
+        null as created_by,
+        ARRAY[]::integer[] as admin_ids,
+        ARRAY[${userId}]::integer[] as member_ids,
+        true as is_private,
+        c.created_at::text,
+        (
+          SELECT dm.text 
+          FROM direct_messages dm 
+          WHERE (dm.sender_id = c.user1_id AND dm.receiver_id = c.user2_id) 
+             OR (dm.sender_id = c.user2_id AND dm.receiver_id = c.user1_id)
+          ORDER BY dm.created_at DESC 
+          LIMIT 1
+        ) as last_message,
+        c.last_message_at::text,
+        (
+          SELECT COUNT(*)::integer 
+          FROM direct_messages dm 
+          WHERE (dm.sender_id = c.user1_id AND dm.receiver_id = c.user2_id) 
+             OR (dm.sender_id = c.user2_id AND dm.receiver_id = c.user1_id)
+        ) as message_count,
+        CASE 
+          WHEN c.user1_id = ${userId} THEN c.user2_id
+          ELSE c.user1_id
+        END as other_user_id
+      FROM conversations c
+      LEFT JOIN users u1 ON c.user1_id = u1.id
+      LEFT JOIN users u2 ON c.user2_id = u2.id
+      WHERE c.user1_id = ${userId} OR c.user2_id = ${userId}
+    `);
     
-    // Process groups with member information
-    const processedGroups = groups.rows.map((group: any) => {
-      const isMember = group.member_ids?.includes(userId) || false;
-      const isAdmin = group.admin_ids?.includes(userId) || false;
-      const isOwner = group.created_by === userId;
+    console.log('UNIFIED: Found', groups.rows.length, 'groups and', conversations.rows.length, 'direct conversations');
+    
+    // Process all channels
+    const processedChannels = [...groups.rows, ...conversations.rows].map((channel: any) => {
+      const isMember = channel.channel_type === 'direct' ? true : (channel.member_ids?.includes(userId) || false);
+      const isAdmin = channel.channel_type === 'direct' ? false : (channel.admin_ids?.includes(userId) || false);
+      const isOwner = channel.channel_type === 'direct' ? false : (channel.created_by === userId);
       
       const result = {
-        id: group.id,
-        name: group.name,
-        description: group.description,
-        avatar_url: group.image, // Map image to avatar_url
-        created_by: group.created_by,
-        admin_ids: group.admin_ids || [],
-        is_private: group.is_private,
-        created_at: group.created_at,
-        last_message: group.last_message,
-        last_message_at: group.last_message_at,
-        message_count: group.message_count,
+        channel_type: channel.channel_type,
+        id: channel.id,
+        name: channel.name,
+        description: channel.description,
+        avatar_url: channel.image,
+        created_by: channel.created_by,
+        admin_ids: channel.admin_ids || [],
+        is_private: channel.is_private,
+        created_at: channel.created_at,
+        last_message: channel.last_message,
+        last_message_at: channel.last_message_at,
+        message_count: channel.message_count,
         is_member: isMember,
         is_admin: isAdmin,
         is_owner: isOwner,
-        members: [] // Will be populated if needed
+        other_user_id: channel.other_user_id,
+        members: []
       };
       
-      console.log(`FIXED: Group ${group.id} - member: ${isMember}, admin: ${isAdmin}, owner: ${isOwner}`);
       return result;
     });
     
-    console.log('FIXED: Final processed groups:', JSON.stringify(processedGroups, null, 2));
+    // Sort by last message time (most recent first)
+    processedChannels.sort((a, b) => {
+      const timeA = new Date(a.last_message_at || a.created_at || 0).getTime();
+      const timeB = new Date(b.last_message_at || b.created_at || 0).getTime();
+      return timeB - timeA;
+    });
     
-    res.json(processedGroups);
+    console.log('UNIFIED: Final processed channels:', processedChannels.length);
+    
+    res.json(processedChannels);
   } catch (error) {
-    console.error("FIXED: Error fetching chat groups:", error);
-    res.status(500).json({ error: "Failed to fetch groups" });
+    console.error("UNIFIED: Error fetching chat channels:", error);
+    res.status(500).json({ error: "Failed to fetch channels" });
   }
 });
 
@@ -597,7 +649,84 @@ router.delete("/api/chat/groups/:groupId/members/:userId", async (req: Request, 
   }
 });
 
-// Get direct messages for conversation
+// Get messages for channels - handles both groups and direct messages
+router.get("/api/chat/channels/:channelId/messages", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) return res.sendStatus(401);
+  
+  try {
+    const channelId = parseInt(req.params.channelId);
+    const channelType = req.query.type as string; // 'group' or 'direct'
+    const limit = parseInt(req.query.limit as string) || 50;
+    const offset = parseInt(req.query.offset as string) || 0;
+
+    if (isNaN(channelId)) {
+      return res.status(400).json({ error: "Invalid channel ID" });
+    }
+
+    let messages;
+    
+    if (channelType === 'direct') {
+      // Get direct messages for conversation
+      messages = await db.execute(sql`
+        SELECT 
+          dm.id,
+          dm.conversation_id,
+          dm.sender_id,
+          dm.receiver_id,
+          dm.text,
+          dm.created_at,
+          dm.is_read,
+          u.name as sender_name,
+          u.profile_image_url as sender_profile_image,
+          'direct' as message_type
+        FROM direct_messages dm
+        INNER JOIN users u ON dm.sender_id = u.id
+        WHERE dm.conversation_id = ${channelId}
+        ORDER BY dm.created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `);
+    } else {
+      // Get group messages
+      messages = await db.execute(sql`
+        SELECT 
+          cgm.id,
+          cgm.group_id,
+          cgm.sender_id,
+          cgm.text,
+          cgm.created_at,
+          cgm.sender_name,
+          cgm.sender_profile_image,
+          cgm.message_type,
+          cgm.reply_to_id,
+          cgm.reply_to_text,
+          cgm.reply_to_sender_name,
+          cgm.image_url,
+          cgm.video_url,
+          cgm.audio_url,
+          cgm.audio_duration,
+          cgm.is_voice_message,
+          cgm.is_system_message,
+          cgm.is_edited,
+          cgm.edited_at,
+          cgm.is_deleted,
+          cgm.deleted_at,
+          cgm.reaction_counts,
+          cgm.user_reactions
+        FROM chat_group_messages cgm
+        WHERE cgm.group_id = ${channelId}
+        ORDER BY cgm.created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `);
+    }
+
+    res.json(messages.rows);
+  } catch (error) {
+    console.error("Error fetching channel messages:", error);
+    res.status(500).json({ error: "Failed to fetch messages" });
+  }
+});
+
+// Legacy endpoint for direct messages - kept for backward compatibility
 router.get("/api/chat/direct/:conversationId/messages", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) return res.sendStatus(401);
   
@@ -622,7 +751,7 @@ router.get("/api/chat/direct/:conversationId/messages", async (req: Request, res
         dm.is_read,
         u.name as sender_name,
         u.profile_image_url as sender_profile_image
-      FROM telegram_direct_messages dm
+      FROM direct_messages dm
       INNER JOIN users u ON dm.sender_id = u.id
       WHERE dm.conversation_id = ${conversationId}
       ORDER BY dm.created_at DESC

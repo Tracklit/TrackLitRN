@@ -126,7 +126,7 @@ const FullScreenImageViewer = ({
   );
 };
 
-interface ChatGroup {
+interface ChatChannel {
   id: number;
   name: string;
   description?: string;
@@ -139,6 +139,7 @@ interface ChatGroup {
   created_at: string;
   last_message_at?: string;
   last_message_text?: string;
+  last_message?: string;
   message_count: number;
   admin_ids: number[];
   member_count?: number;
@@ -147,6 +148,11 @@ interface ChatGroup {
     name: string;
     username: string;
   }>;
+  channel_type: 'group' | 'direct';
+  other_user_id?: number;
+  is_member: boolean;
+  is_admin: boolean;
+  is_owner: boolean;
 }
 
 interface ChatMessage {
@@ -215,7 +221,7 @@ const ChatPage = () => {
   const [replyToMessage, setReplyToMessage] = useState<ChatMessage | null>(null);
 
   // Removed refreshKey to prevent unnecessary re-renders and image reloading
-  const [localGroups, setLocalGroups] = useState<ChatGroup[]>([]);
+  const [localChannels, setLocalChannels] = useState<ChatChannel[]>([]);
   const [viewState, setViewState] = useState<'list' | 'chat'>('list'); // Track which view to show
   const [searchBarVisible, setSearchBarVisible] = useState(false);
   const [dragStartY, setDragStartY] = useState(0);
@@ -325,11 +331,11 @@ const ChatPage = () => {
 
 
 
-  // Fetch chat groups with proper caching
-  const { data: chatGroups = [], isLoading: groupsLoading, refetch: refetchGroups } = useQuery({
+  // Fetch chat channels (groups + direct messages) with proper caching
+  const { data: chatChannels = [], isLoading: channelsLoading, refetch: refetchChannels } = useQuery({
     queryKey: ['/api/chat/groups'],
     queryFn: async () => {
-      console.log('Fetching chat groups...');
+      console.log('Fetching chat channels...');
       
       const response = await fetch('/api/chat/groups', {
         method: 'GET',
@@ -341,8 +347,8 @@ const ChatPage = () => {
       }
       
       const data = await response.json();
-      console.log('Chat groups data:', data);
-      setLocalGroups(data);
+      console.log('Chat channels data:', data);
+      setLocalChannels(data);
       return data;
     },
     staleTime: Infinity, // Never consider data stale to prevent image reloading
@@ -371,25 +377,25 @@ const ChatPage = () => {
     refetchInterval: 30000, // Refetch every 30 seconds to keep counts current
   });
 
-  const activeGroups = localGroups.length > 0 ? localGroups : chatGroups;
+  const activeChannels = localChannels.length > 0 ? localChannels : chatChannels;
   
-  // Filter groups based on the toggle selection and search query
-  const filteredGroups = activeGroups?.filter((group: any) => {
+  // Filter channels based on the toggle selection and search query
+  const filteredChannels = activeChannels?.filter((channel: any) => {
     // First apply group filter (my vs public)
     let matchesFilter = false;
     if (groupFilter === 'my') {
       // Show groups where user is a member, admin, or owner
-      const isMember = group.is_member || false;
-      const isAdmin = group.is_admin || false;
-      const isOwner = group.is_owner || false;
+      const isMember = channel.is_member || false;
+      const isAdmin = channel.is_admin || false;
+      const isOwner = channel.is_owner || false;
       matchesFilter = isMember || isAdmin || isOwner;
     } else {
       // Show all public groups (not private)
-      matchesFilter = !group.is_private;
+      matchesFilter = !channel.is_private;
     }
     
     // Then apply search filter
-    const matchesSearch = group.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = channel.name.toLowerCase().includes(searchQuery.toLowerCase());
     
     return matchesFilter && matchesSearch;
   }) || [];
@@ -403,10 +409,10 @@ const ChatPage = () => {
       try {
         const response = await apiRequest('GET', '/api/chat/groups');
         const freshData = await response.json();
-        console.log('Fresh groups data:', freshData);
-        setLocalGroups(freshData);
+        console.log('Fresh channels data:', freshData);
+        setLocalChannels(freshData);
       } catch (error) {
-        console.error('Error fetching fresh groups:', error);
+        console.error('Error fetching fresh channels:', error);
       }
       
       // Don't refetch to prevent image reloading - local state update is sufficient
@@ -417,7 +423,7 @@ const ChatPage = () => {
     return () => {
       window.removeEventListener('chatDataUpdated', handleChatDataUpdate);
     };
-  }, [refetchGroups]);
+  }, [refetchChannels]);
 
   // Fetch conversations
   const { data: conversations = [], isLoading: conversationsLoading } = useQuery({
@@ -528,9 +534,9 @@ const ChatPage = () => {
     }
   };
 
-  // Deduplicate groups and filter based on search
-  const uniqueGroups = activeGroups.reduce((acc: ChatGroup[], current: ChatGroup) => {
-    const existing = acc.find(group => group.id === current.id);
+  // Deduplicate channels and filter based on search
+  const uniqueChannels = activeChannels.reduce((acc: ChatChannel[], current: ChatChannel) => {
+    const existing = acc.find(channel => channel.id === current.id);
     if (!existing) {
       acc.push(current);
     }
@@ -690,7 +696,7 @@ const ChatPage = () => {
             {/* Spacing between pull indicator and chat list */}
             <div className="h-8"></div>
             <div className="space-y-0">
-              {(groupsLoading && chatGroups.length === 0) || (conversationsLoading && conversations.length === 0) ? (
+              {(channelsLoading && chatChannels.length === 0) || (conversationsLoading && conversations.length === 0) ? (
                 <div className="space-y-0">
                   {/* Channel skeleton loaders */}
                   {[1, 2, 3, 4, 5].map((i) => (
@@ -716,23 +722,23 @@ const ChatPage = () => {
                 </div>
               ) : (
                 <>
-                  {filteredGroups.map((group: ChatGroup, index: number) => (
-                    <div key={`group-${group.id}-${index}`} className="relative">
+                  {filteredChannels.map((channel: ChatChannel, index: number) => (
+                    <div key={`channel-${channel.id}-${index}`} className="relative">
                       <button
-                        onClick={() => handleSelectChat({ type: 'group', id: group.id })}
+                        onClick={() => handleSelectChat({ type: channel.channel_type, id: channel.id })}
                         className="w-full p-4 text-left"
                       >
                         <div className="flex items-center space-x-3">
                           <div className="relative">
                             <Avatar className="h-12 w-12">
-                              <AvatarImage src={group.avatar_url || undefined} />
+                              <AvatarImage src={channel.avatar_url || undefined} />
                               <AvatarFallback className="bg-blue-500 text-white">
-                                {group.name.slice(0, 2).toUpperCase()}
+                                {channel.name.slice(0, 2).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
                             
                             {/* Privacy Indicator */}
-                            {group.is_private ? (
+                            {channel.is_private ? (
                               <Lock className="absolute -bottom-1 -right-1 h-3 w-3 text-gray-500" />
                             ) : (
                               <Globe className="absolute -bottom-1 -right-1 h-3 w-3 text-green-500" />
@@ -741,20 +747,20 @@ const ChatPage = () => {
                           
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
-                              <h3 className="font-medium text-white truncate">{group.name}</h3>
+                              <h3 className="font-medium text-white truncate">{channel.name}</h3>
                               <span className="text-xs text-gray-400">
-                                {group.last_message_at ? formatLastMessageTime(group.last_message_at) : ''}
+                                {channel.last_message_at ? formatLastMessageTime(channel.last_message_at) : ''}
                               </span>
                             </div>
                             
                             <div className="flex items-center justify-between">
                               <p className="text-sm text-gray-300 truncate">
-                                {group.last_message_text || group.description || 'No messages yet'}
+                                {channel.last_message_text || channel.description || 'No messages yet'}
                               </p>
                               
                               {/* Unread Message Count Badge - only show for members with unread messages */}
                               {(() => {
-                                const unreadCount = unreadCounts[group.id] || 0;
+                                const unreadCount = unreadCounts[channel.id] || 0;
                                 // Only show badge if user has unread messages in this group
                                 return unreadCount > 0 && (
                                   <Badge variant="secondary" className="ml-2 bg-red-500 text-white text-xs px-2 py-1">
@@ -768,7 +774,7 @@ const ChatPage = () => {
                       </button>
                       
                       {/* Thin gray divider that stops before the channel image */}
-                      {index < filteredGroups.length - 1 && (
+                      {index < filteredChannels.length - 1 && (
                         <div className="ml-16 mr-4 border-b border-gray-400/50" style={{ borderWidth: '0.5px', opacity: '0.5' }} />
                       )}
                     </div>
@@ -777,7 +783,7 @@ const ChatPage = () => {
               )}
 
               {/* Empty State - Only show when not loading and no data */}
-              {!groupsLoading && !conversationsLoading && filteredGroups.length === 0 && conversations.length === 0 && (
+              {!channelsLoading && !conversationsLoading && filteredChannels.length === 0 && conversations.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-12 text-gray-500">
                   <MessageCircle className="h-16 w-16 mb-4 text-gray-300" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No chats yet</h3>

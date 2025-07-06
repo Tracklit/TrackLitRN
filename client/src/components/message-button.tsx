@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
-import { MessagePanel } from "./message-panel";
+
 import { useLocation } from "wouter";
 import type { DirectMessage, Conversation, User } from "@shared/schema";
 
@@ -19,7 +19,6 @@ interface ConversationWithUser extends Conversation {
 }
 
 export function MessageButton({ className, targetUserId }: MessageButtonProps) {
-  const [showPanel, setShowPanel] = useState(false);
   const [location, setLocation] = useLocation();
 
   // Fetch conversations to get unread count
@@ -41,31 +40,23 @@ export function MessageButton({ className, targetUserId }: MessageButtonProps) {
     e.preventDefault();
     e.stopPropagation();
     
-    console.log('Speech bubble clicked, opening message panel');
-    setShowPanel(true);
+    console.log('Paper plane clicked, navigating to chat');
+    setLocation('/chat');
   };
 
   return (
-    <>
-      <button
-        type="button"
-        onClick={handleClick}
-        className={`h-9 w-9 p-0 text-gray-400 hover:text-white relative inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${className}`}
-        aria-label="Messages"
-      >
-        <FontAwesomeIcon icon={faPaperPlane} className="h-5 w-5" />
-        {unreadCount > 0 && (
-          <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-xs min-w-[1.25rem] h-5 flex items-center justify-center rounded-full">
-            {unreadCount > 99 ? '99+' : unreadCount}
-          </Badge>
-        )}
-      </button>
-
-      <MessagePanel
-        isOpen={showPanel}
-        onClose={() => setShowPanel(false)}
-        targetUserId={targetUserId}
-      />
-    </>
+    <button
+      type="button"
+      onClick={handleClick}
+      className={`h-9 w-9 p-0 text-gray-400 hover:text-white relative inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${className}`}
+      aria-label="Messages"
+    >
+      <FontAwesomeIcon icon={faPaperPlane} className="h-5 w-5" />
+      {unreadCount > 0 && (
+        <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-xs min-w-[1.25rem] h-5 flex items-center justify-center rounded-full">
+          {unreadCount > 99 ? '99+' : unreadCount}
+        </Badge>
+      )}
+    </button>
   );
 }
