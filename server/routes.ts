@@ -6830,15 +6830,18 @@ Keep the response professional, evidence-based, and specific to track and field 
     }
 
     try {
-      const { participantId } = req.body;
+      const { participantId, otherUserId } = req.body;
       console.log("POST /api/conversations - Body:", req.body);
-      console.log("POST /api/conversations - participantId:", participantId, "user ID:", req.user.id);
       
-      if (!participantId) {
-        return res.status(400).json({ error: "participantId is required" });
+      // Handle both field names for compatibility
+      const targetUserId = participantId || otherUserId;
+      console.log("POST /api/conversations - targetUserId:", targetUserId, "user ID:", req.user.id);
+      
+      if (!targetUserId) {
+        return res.status(400).json({ error: "participantId or otherUserId is required" });
       }
       
-      const conversation = await dbStorage.createOrGetConversation(req.user.id, participantId);
+      const conversation = await dbStorage.createOrGetConversation(req.user.id, targetUserId);
       res.json(conversation);
     } catch (error) {
       console.error("Error creating conversation:", error);
