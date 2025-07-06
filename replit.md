@@ -108,7 +108,17 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
-- July 6, 2025: Implemented smooth scroll-to-bottom button for chat channels ✅
+- July 6, 2025: Enhanced React Native chat with native device UI components ✅
+  - Implemented Telegram-style keyboard persistence and behavior
+  - Created custom ChatInput component with native TextInput optimizations
+  - Added animated keyboard height detection and smooth transitions
+  - Input stays focused after sending messages (just like Telegram)
+  - Keyboard dismisses only when tapping outside input area
+  - Native auto-scroll to bottom functionality with proper timing
+  - Enhanced message bubbles with shadows and iOS-style design
+  - Optimized for both iOS and Android native behavior
+  
+- July 6, 2025: Implemented smooth scroll-to-bottom button for web chat channels ✅
   - Added Telegram-style scroll-to-bottom button positioned on bottom right
   - Button appears when user scrolls up from bottom (10px threshold detection)
   - Button disappears when user is at bottom of messages

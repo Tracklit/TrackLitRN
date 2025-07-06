@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, Platform, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import ChatInput from '../components/ChatInput';
 
 interface Message {
   id: string;
@@ -18,19 +19,29 @@ const ChatScreen: React.FC = () => {
       timestamp: new Date(),
     },
   ]);
-  const [inputText, setInputText] = useState('');
+  const flatListRef = useRef<FlatList>(null);
 
-  const sendMessage = () => {
-    if (inputText.trim()) {
-      const newMessage: Message = {
-        id: Date.now().toString(),
-        text: inputText,
-        sender: 'user',
-        timestamp: new Date(),
-      };
-      setMessages([...messages, newMessage]);
-      setInputText('');
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (flatListRef.current && messages.length > 0) {
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
     }
+  }, [messages]);
+
+  const handleSendMessage = (text: string) => {
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      text: text,
+      sender: 'user',
+      timestamp: new Date(),
+    };
+    setMessages([...messages, newMessage]);
+  };
+
+  const dismissKeyboard = () => {
+    Keyboard.dismiss();
   };
 
   const renderMessage = ({ item }: { item: Message }) => (
@@ -53,33 +64,27 @@ const ChatScreen: React.FC = () => {
         <Text style={styles.title}>Chat</Text>
       </View>
       
-      <KeyboardAvoidingView 
-        style={styles.chatContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <FlatList
-          data={messages}
-          renderItem={renderMessage}
-          keyExtractor={(item) => item.id}
-          style={styles.messagesList}
-          contentContainerStyle={styles.messagesContent}
-        />
-        
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.textInput}
-            value={inputText}
-            onChangeText={setInputText}
-            placeholder="Type a message..."
-            placeholderTextColor="#9ca3af"
-            multiline
-            maxLength={500}
+      <View style={styles.chatContainer}>
+        <TouchableWithoutFeedback onPress={dismissKeyboard}>
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            renderItem={renderMessage}
+            keyExtractor={(item) => item.id}
+            style={styles.messagesList}
+            contentContainerStyle={styles.messagesContent}
+            showsVerticalScrollIndicator={false}
+            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+            onLayout={() => flatListRef.current?.scrollToEnd({ animated: false })}
           />
-          <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
-            <Text style={styles.sendButtonText}>Send</Text>
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
+        
+        <ChatInput 
+          onSendMessage={handleSendMessage}
+          placeholder="Type a message..."
+          maxLength={1000}
+        />
+      </View>
     </SafeAreaView>
   );
 };
@@ -107,20 +112,31 @@ const styles = StyleSheet.create({
   },
   messagesContent: {
     padding: 16,
+    paddingBottom: 8,
   },
   messageContainer: {
     marginVertical: 4,
     padding: 12,
-    borderRadius: 12,
+    borderRadius: 18,
     maxWidth: '80%',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
   },
   userMessage: {
     alignSelf: 'flex-end',
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#007AFF',
+    marginLeft: '20%',
   },
   otherMessage: {
     alignSelf: 'flex-start',
     backgroundColor: '#374151',
+    marginRight: '20%',
   },
   messageText: {
     fontSize: 16,
@@ -131,35 +147,6 @@ const styles = StyleSheet.create({
   },
   otherText: {
     color: '#ffffff',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#374151',
-    alignItems: 'flex-end',
-  },
-  textInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#374151',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    color: '#ffffff',
-    backgroundColor: '#1f2937',
-    marginRight: 12,
-    maxHeight: 100,
-  },
-  sendButton: {
-    backgroundColor: '#3b82f6',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 20,
-  },
-  sendButtonText: {
-    color: '#ffffff',
-    fontWeight: '600',
   },
 });
 
