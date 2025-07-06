@@ -1066,6 +1066,15 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
         messageId: editingMessage.id, 
         text: messageText.trim() 
       });
+      setEditingMessage(null);
+      setMessageText("");
+      
+      // Keep input focused after editing (native-style behavior)
+      setTimeout(() => {
+        if (messageInputRef.current) {
+          messageInputRef.current.focus();
+        }
+      }, 50);
     } else {
       // Send new message
       const messageData: any = {
@@ -1081,6 +1090,19 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
       }
       
       sendMessageMutation.mutate(messageData);
+      setMessageText("");
+      setReplyToMessage(null);
+      removeSelectedImage();
+      
+      // Keep input focused after sending (Telegram-style behavior)
+      setTimeout(() => {
+        if (messageInputRef.current) {
+          messageInputRef.current.focus();
+        }
+      }, 50);
+      
+      // Scroll to bottom after sending
+      scrollToBottom();
     }
   };
 
@@ -1389,12 +1411,19 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
                   ? `Reply to ${replyToMessage.user?.name}...` 
                   : "Type a message..."
             }
-            className="flex-1 bg-gray-800/50 border border-gray-600/50 text-white placeholder-gray-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="flex-1 bg-gray-800/50 border border-gray-600/50 text-white placeholder-gray-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
             autoComplete="off"
-            autoCorrect="off" 
-            autoCapitalize="off"
-            spellCheck="false"
+            autoCorrect="on" 
+            autoCapitalize="sentences"
+            spellCheck="true"
             inputMode="text"
+            enterKeyHint="send"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage();
+              }
+            }}
           />
 
           {/* Send Button */}
