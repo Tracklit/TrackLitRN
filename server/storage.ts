@@ -3309,7 +3309,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTelegramDirectMessages(conversationId: number, limit: number = 50, offset: number = 0): Promise<TelegramDirectMessage[]> {
-    return await db
+    // First, try to get messages from the new telegram_direct_messages table
+    const telegramMessages = await db
       .select()
       .from(telegramDirectMessages)
       .where(and(
@@ -3319,6 +3320,54 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(telegramDirectMessages.createdAt))
       .limit(limit)
       .offset(offset);
+
+    // If no messages found in new table, fall back to old direct_messages table
+    if (telegramMessages.length === 0) {
+      // Get the conversation to know the user IDs
+      const conversation = await db
+        .select()
+        .from(conversations)
+        .where(eq(conversations.id, conversationId))
+        .limit(1);
+
+      if (conversation.length > 0) {
+        const { user1Id, user2Id } = conversation[0];
+        
+        // Get messages from old direct_messages table
+        const oldMessages = await db
+          .select({
+            id: directMessages.id,
+            conversationId: sql<number>`${conversationId}`,
+            senderId: directMessages.senderId,
+            receiverId: directMessages.receiverId,
+            text: directMessages.content,
+            createdAt: directMessages.createdAt,
+            editedAt: directMessages.editedAt,
+            isDeleted: directMessages.isDeleted,
+            isRead: directMessages.isRead,
+            readAt: directMessages.readAt,
+            replyToId: sql<number | null>`NULL`,
+            messageType: sql<string>`'text'`,
+            mediaUrl: sql<string | null>`NULL`,
+            linkPreview: sql<any>`NULL`
+          })
+          .from(directMessages)
+          .where(and(
+            or(
+              and(eq(directMessages.senderId, user1Id), eq(directMessages.receiverId, user2Id)),
+              and(eq(directMessages.senderId, user2Id), eq(directMessages.receiverId, user1Id))
+            ),
+            eq(directMessages.isDeleted, false)
+          ))
+          .orderBy(desc(directMessages.createdAt))
+          .limit(limit)
+          .offset(offset);
+
+        return oldMessages;
+      }
+    }
+
+    return telegramMessages;
   }
 
   async editTelegramDirectMessage(messageId: number, senderId: number, newText: string): Promise<TelegramDirectMessage | undefined> {
