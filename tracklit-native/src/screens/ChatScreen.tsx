@@ -55,6 +55,26 @@ const ChatScreen: React.FC = () => {
       ]}>
         {item.text}
       </Text>
+      
+      {/* Timestamp and Reactions Container */}
+      <View style={styles.timestampContainer}>
+        <Text style={[styles.timestamp, item.sender === 'user' ? styles.userTimestamp : styles.otherTimestamp]}>
+          {item.timestamp.toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: false 
+          })}
+        </Text>
+        
+        {/* Sample reaction emoji to show layout */}
+        {Math.random() > 0.7 && (
+          <View style={styles.reactionsContainer}>
+            <View style={styles.reactionBubble}>
+              <Text style={styles.reactionText}>👍</Text>
+            </View>
+          </View>
+        )}
+      </View>
     </View>
   );
 
@@ -147,6 +167,48 @@ const styles = StyleSheet.create({
   },
   otherText: {
     color: '#ffffff',
+  },
+  timestampContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  timestamp: {
+    fontSize: 11,
+    opacity: 0.7,
+  },
+  userTimestamp: {
+    color: '#ffffff',
+  },
+  otherTimestamp: {
+    color: '#9CA3AF',
+  },
+  reactionsContainer: {
+    flexDirection: 'row',
+    gap: 4,
+    marginLeft: 12,
+  },
+  reactionBubble: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    minWidth: 20,
+    minHeight: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+    elevation: 1,
+  },
+  reactionText: {
+    fontSize: 12,
   },
 });
 

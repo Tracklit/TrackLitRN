@@ -70,9 +70,29 @@ export const ReactNativePreview = () => {
             : 'mr-[20%] bg-gray-700 self-start'
         }`}
       >
-        <p className={`text-base leading-5 ${isOwn ? 'text-white' : 'text-white'}`}>
+        <p className={`text-base leading-5 mb-2 ${isOwn ? 'text-white' : 'text-white'}`}>
           {item.text}
         </p>
+        
+        {/* Timestamp and Reactions Container */}
+        <div className="flex items-center justify-between">
+          <div className={`text-xs ${isOwn ? 'text-blue-100' : 'text-gray-300'}`}>
+            {item.timestamp.toLocaleTimeString('en-US', { 
+              hour: '2-digit', 
+              minute: '2-digit',
+              hour12: false 
+            })}
+          </div>
+          
+          {/* Sample reaction emoji to show layout */}
+          {Math.random() > 0.7 && (
+            <div className="flex gap-1 ml-3">
+              <div className="bg-white rounded-full shadow-sm border border-gray-300 p-1 min-w-[20px] min-h-[20px] flex items-center justify-center">
+                <span className="text-xs">👍</span>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     );
   };

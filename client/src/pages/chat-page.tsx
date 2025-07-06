@@ -1635,30 +1635,33 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply, onE
         {/* Message content */}
         <div className="text-sm">{message.text}</div>
         
-        <div className={`text-xs mt-1 ${isOwn ? 'text-gray-500' : 'text-gray-400'}`}>
-          {formatMessageTime(message.created_at)}
-          {(message as any).edited_at && (
-            <span className="ml-1 italic">(edited)</span>
+        {/* Timestamp and Reactions Container */}
+        <div className="flex items-center justify-between mt-2">
+          <div className={`text-xs ${isOwn ? 'text-gray-500' : 'text-gray-400'}`}>
+            {formatMessageTime(message.created_at)}
+            {(message as any).edited_at && (
+              <span className="ml-1 italic">(edited)</span>
+            )}
+          </div>
+          
+          {/* Persistent Reaction Circles - positioned next to timestamp */}
+          {message.reactions && message.reactions.length > 0 && (
+            <div className="flex gap-1 ml-3">
+              {message.reactions.map((reaction: any, index: number) => (
+                <div key={index} className="bg-white rounded-full shadow-sm border border-gray-300 p-1 min-w-[24px] min-h-[24px] flex items-center justify-center">
+                  <span className="text-xs">{reaction.emoji}</span>
+                  {reaction.count > 1 && (
+                    <span className="text-xs text-gray-600 ml-1">{reaction.count}</span>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
         </div>
 
-        {/* Persistent Reaction Circles - stick to bottom of bubble */}
-        {message.reactions && message.reactions.length > 0 && (
-          <div className="absolute -bottom-2 left-2 flex gap-1 z-10">
-            {message.reactions.map((reaction: any, index: number) => (
-              <div key={index} className="bg-white rounded-full shadow-lg border border-gray-300 p-1 min-w-[28px] min-h-[28px] flex items-center justify-center">
-                <span className="text-sm">{reaction.emoji}</span>
-                {reaction.count > 1 && (
-                  <span className="text-xs text-gray-600 ml-1">{reaction.count}</span>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Reaction Animation */}
+        {/* Reaction Animation - positioned below timestamp row */}
         {showReaction && (
-          <div className="absolute -bottom-2 left-2 pointer-events-none z-20 transition-all duration-1000">
+          <div className="absolute -bottom-3 left-2 pointer-events-none z-20 transition-all duration-1000">
             <div className="animate-bounce">
               <div className="bg-white rounded-full shadow-lg border border-gray-300 p-1 min-w-[28px] min-h-[28px] flex items-center justify-center">
                 <span className="text-sm">👍</span>
