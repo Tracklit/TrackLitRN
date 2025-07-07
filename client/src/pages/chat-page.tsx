@@ -243,7 +243,7 @@ const ChatPage = () => {
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [isAtTop, setIsAtTop] = useState(true);
-  const [isAnimating, setIsAnimating] = useState(false); // Track animation state
+  // Removed animation state - no more slide animations
   const [groupFilter, setGroupFilter] = useState<'my' | 'public'>('my'); // Filter for groups
 
   
@@ -255,28 +255,7 @@ const ChatPage = () => {
   // Check if we're on a chat route (but exclude settings routes)
   const isChatRoute = (location.startsWith('/chat') || location.startsWith('/chats')) && !location.includes('/settings');
   
-  useEffect(() => {
-    if (isChatRoute) {
-      // Start entrance animation
-      setIsAnimating(true);
-      
-      // Complete entrance animation
-      const timer = setTimeout(() => {
-        setIsAnimating(false);
-      }, 300);
-      
-      return () => clearTimeout(timer);
-    } else {
-      // Start exit animation if we were visible
-      setIsAnimating(true);
-      
-      const timer = setTimeout(() => {
-        setIsAnimating(false);
-      }, 300);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [isChatRoute]);
+  // Removed animation logic - no more entrance/exit animations
 
   // Scroll handler to track position
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -619,12 +598,12 @@ const ChatPage = () => {
   };
 
   return (
-    <div className={`w-full h-full overflow-hidden bg-slate-900 transition-transform duration-300 ease-in-out ${
+    <div className={`w-full h-full overflow-hidden bg-slate-900 ${
       !isChatRoute ? 'translate-x-full' : 'translate-x-0'
     } ${isChatRoute ? 'pointer-events-auto' : 'pointer-events-none'}`}>
       {/* Channel List View - Always mounted but conditionally visible */}
       <div 
-        className={`absolute inset-0 w-full h-full transition-transform duration-300 ease-in-out bg-slate-900 ${
+        className={`absolute inset-0 w-full h-full bg-slate-900 ${
           viewState === 'list' ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -835,7 +814,7 @@ const ChatPage = () => {
       
       {/* Chat Interface View - Always mounted but conditionally visible */}
       <div 
-        className={`absolute inset-0 w-full h-full transition-transform duration-300 ease-in-out ${
+        className={`absolute inset-0 w-full h-full ${
           viewState === 'chat' ? 'translate-x-0' : 'translate-x-full'
         }`}
       >

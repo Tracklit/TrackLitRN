@@ -37,32 +37,7 @@ html, body, #root, main, div, section, article {
   }
 }
 
-/* Chat slide-in animations */
-@keyframes slide-in-right {
-  from {
-    transform: translateX(100%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-
-@keyframes slide-out-right {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(100%);
-  }
-}
-
-.animate-slide-in-right {
-  animation: slide-in-right 0.3s ease-out forwards;
-}
-
-.animate-slide-out-right {
-  animation: slide-out-right 0.3s ease-out forwards;
-}
+/* Removed chat slide animations */
 
 /* Custom card shadow with strong visibility */
 .shadow-md {
@@ -603,11 +578,7 @@ article::-webkit-scrollbar,
   background-color: hsl(var(--background)) !important;
 }
 
-/* iOS-style navigation transitions */
-.page-transition-container {
-  perspective: 1000px;
-  transform-style: preserve-3d;
-}
+/* Removed iOS-style navigation transitions */
 
 /* Smooth hardware acceleration for transitions */
 .motion-page {
