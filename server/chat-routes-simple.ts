@@ -388,7 +388,12 @@ router.patch("/api/chat/groups/:groupId", upload.single('image'), async (req: Re
     const groupId = parseInt(req.params.groupId);
     const userId = req.user!.id;
     const { name, description, isPrivate, is_private } = req.body;
-    console.log('Update group request body:', req.body);
+    console.log('=== PATCH GROUP REQUEST ===');
+    console.log('Group ID:', groupId);
+    console.log('User ID:', userId);
+    console.log('Request body:', req.body);
+    console.log('Request file:', req.file);
+    console.log('All req.body keys:', Object.keys(req.body));
     
     // Handle both isPrivate and is_private field names
     const privateValue = isPrivate !== undefined ? isPrivate : is_private;
@@ -433,6 +438,14 @@ router.patch("/api/chat/groups/:groupId", upload.single('image'), async (req: Re
     
     console.log('Final privacy value:', finalPrivateValue, 'from input:', privateValue);
     
+    console.log('About to execute update query with:', {
+      name: name || (group as any).name,
+      description: description || (group as any).description,
+      imageUrl,
+      finalPrivateValue,
+      groupId
+    });
+
     const updateResult = await db.execute(sql`
       UPDATE chat_groups 
       SET name = ${name || (group as any).name}, 
@@ -443,6 +456,7 @@ router.patch("/api/chat/groups/:groupId", upload.single('image'), async (req: Re
       RETURNING *
     `);
 
+    console.log('Update result:', updateResult.rows[0]);
     res.json(updateResult.rows[0]);
   } catch (error) {
     console.error("Error updating group:", error);
