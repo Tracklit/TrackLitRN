@@ -1307,7 +1307,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
                 <DropdownMenuContent align="end" className="w-48">
                   {selectedChat.type === 'group' && (
                     <>
-                      {(selectedChat.is_admin || selectedChat.is_owner || (user?.id && selectedChat.admin_ids?.includes(user.id))) && (
+                      {(groupDetails?.is_admin || groupDetails?.is_owner || (user?.id && groupDetails?.admin_ids?.includes(user.id))) && (
                         <DropdownMenuItem
                           onClick={() => {
                             console.log('Settings clicked for group:', selectedChat.id);
