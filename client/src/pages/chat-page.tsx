@@ -240,8 +240,8 @@ const ChatPage = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  // Check if we're on a chat route
-  const isChatRoute = location.startsWith('/chat') || location.startsWith('/chats');
+  // Check if we're on a chat route (but exclude settings routes)
+  const isChatRoute = (location.startsWith('/chat') || location.startsWith('/chats')) && !location.includes('/settings');
   
   useEffect(() => {
     if (isChatRoute) {
