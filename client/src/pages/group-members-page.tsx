@@ -89,7 +89,7 @@ export default function GroupMembersPage() {
 
   if (groupLoading || membersLoading) {
     return (
-      <div className={`fixed inset-0 flex flex-col w-screen h-screen bg-gray-50 transition-transform duration-300 ease-in-out ${
+      <div className={`fixed inset-0 flex flex-col w-screen h-screen bg-gray-50 transition-transform duration-300 ease-in-out z-50 ${
         isExiting ? 'translate-y-full' : 'translate-y-0 animate-in slide-in-from-bottom'
       }`}>
         <div className="flex-1 flex items-center justify-center">
@@ -104,7 +104,7 @@ export default function GroupMembersPage() {
 
   if (!group) {
     return (
-      <div className={`fixed inset-0 flex flex-col w-screen h-screen bg-gray-50 transition-transform duration-300 ease-in-out ${
+      <div className={`fixed inset-0 flex flex-col w-screen h-screen bg-gray-50 transition-transform duration-300 ease-in-out z-50 ${
         isExiting ? 'translate-y-full' : 'translate-y-0 animate-in slide-in-from-bottom'
       }`}>
         <div className="flex-1 flex items-center justify-center">
@@ -121,7 +121,7 @@ export default function GroupMembersPage() {
   }
 
   return (
-    <div className={`fixed inset-0 flex flex-col w-screen h-screen bg-gray-50 transition-transform duration-300 ease-in-out ${
+    <div className={`fixed inset-0 flex flex-col w-screen h-screen bg-gray-50 transition-transform duration-300 ease-in-out z-50 ${
       isExiting ? 'translate-y-full' : 'translate-y-0 animate-in slide-in-from-bottom'
     }`}>
       {/* Header */}

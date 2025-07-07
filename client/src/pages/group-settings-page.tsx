@@ -351,7 +351,7 @@ export default function GroupSettingsPage() {
   }
 
   return (
-    <div className={`fixed inset-0 flex flex-col w-screen h-screen transition-transform duration-300 ease-in-out ${
+    <div className={`fixed inset-0 flex flex-col w-screen h-screen transition-transform duration-300 ease-in-out z-50 ${
       isExiting ? 'translate-y-full' : 'translate-y-0 animate-in slide-in-from-bottom'
     }`} style={{
       background: 'linear-gradient(135deg, #000000 0%, #1a1a2e 50%, #16213e 70%, #4a148c 90%, #7b1fa2 100%)'

@@ -108,6 +108,13 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
+- July 7, 2025: Fixed chat settings page slide animation layering issue ✅
+  - Added z-50 to both settings and members pages to ensure proper overlay behavior
+  - Settings page now slides over the chat channel instead of displacing it
+  - Eliminated visual bug where chat channel would slide away before settings appeared
+  - Both pages now properly slide from bottom and overlay the underlying chat interface
+  - Consistent smooth animation experience across all modal-style pages
+  
 - July 6, 2025: Enhanced both web and React Native chat with native device UI components ✅
   - Web version: Added Telegram-style keyboard persistence behavior
   - Input stays focused after sending messages (just like Telegram)
