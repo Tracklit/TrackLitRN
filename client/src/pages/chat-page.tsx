@@ -470,53 +470,7 @@ const ChatPage = () => {
   // Create group mutation
   // Group creation is now handled on dedicated page
 
-  // Leave chat mutation
-  const leaveChatMutation = useMutation({
-    mutationFn: async () => {
-      if (!selectedChat || selectedChat.type !== 'group') return;
-      const response = await apiRequest('DELETE', `/api/chat/groups/${selectedChat.id}/members/${user?.id}`);
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Left chat",
-        description: "You have successfully left the chat group.",
-      });
-      setSelectedChat(null);
-      queryClient.invalidateQueries({ queryKey: ['/api/chat/groups'] });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to leave the chat. Please try again.",
-        variant: "destructive",
-      });
-    }
-  });
 
-  // Block user mutation
-  const blockUserMutation = useMutation({
-    mutationFn: async () => {
-      if (!selectedChat || selectedChat.type !== 'direct') return;
-      const response = await apiRequest('POST', `/api/chat/direct/${selectedChat.id}/block`);
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "User blocked",
-        description: "You have blocked this user. No more messages can be sent.",
-      });
-      setSelectedChat(null);
-      queryClient.invalidateQueries({ queryKey: ['/api/chat/direct'] });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to block the user. Please try again.",
-        variant: "destructive",
-      });
-    }
-  });
 
 
 
@@ -959,6 +913,56 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
   const hasInitiallyLoadedRef = useRef(false);
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  // Leave chat mutation
+  const leaveChatMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedChat || selectedChat.type !== 'group') return;
+      const response = await apiRequest('DELETE', `/api/chat/groups/${selectedChat.id}/members/${user?.id}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Left chat",
+        description: "You have successfully left the chat group.",
+      });
+      onBack(); // Go back to chat list
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/groups'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to leave the chat. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Block user mutation
+  const blockUserMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedChat || selectedChat.type !== 'direct') return;
+      const response = await apiRequest('POST', `/api/chat/direct/${selectedChat.id}/block`);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "User blocked",
+        description: "You have blocked this user. No more messages can be sent.",
+      });
+      onBack(); // Go back to chat list
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/direct'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to block the user. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
 
   // Image upload mutation
   const uploadImageMutation = useMutation({
