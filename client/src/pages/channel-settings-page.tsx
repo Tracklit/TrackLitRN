@@ -83,23 +83,29 @@ export default function ChannelSettingsPage() {
   // Update channel mutation
   const updateChannelMutation = useMutation({
     mutationFn: async (data: { name?: string; description?: string; is_private?: boolean; image?: File }) => {
+      console.log('Updating channel with data:', data);
       const formData = new FormData();
       if (data.name) formData.append('name', data.name);
       if (data.description) formData.append('description', data.description);
       if (data.is_private !== undefined) formData.append('is_private', data.is_private.toString());
       if (data.image) formData.append('image', data.image);
 
-      return apiRequest(`/api/chat/groups/${channelId}`, {
+      const response = await apiRequest(`/api/chat/groups/${channelId}`, {
         method: 'PATCH',
         body: formData,
       });
+      
+      console.log('Channel update response:', response);
+      return response;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Channel update success:', data);
       toast({ title: "Channel updated successfully" });
       queryClient.invalidateQueries({ queryKey: [`/api/chat/groups/${channelId}`] });
       queryClient.invalidateQueries({ queryKey: ['/api/chat/groups'] });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Channel update error:', error);
       toast({ title: "Failed to update channel", variant: "destructive" });
     },
   });
@@ -125,15 +131,21 @@ export default function ChannelSettingsPage() {
   // Remove member mutation
   const removeMemberMutation = useMutation({
     mutationFn: async (userId: number) => {
-      return apiRequest(`/api/chat/groups/${channelId}/members/${userId}`, {
+      console.log('Removing member:', userId, 'from channel:', channelId);
+      const response = await apiRequest(`/api/chat/groups/${channelId}/members/${userId}`, {
         method: 'DELETE',
       });
+      console.log('Remove member response:', response);
+      return response;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Member removal success:', data);
       toast({ title: "Member removed successfully" });
       queryClient.invalidateQueries({ queryKey: [`/api/chat/groups/${channelId}/members`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/chat/groups/${channelId}`] });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Member removal error:', error);
       toast({ title: "Failed to remove member", variant: "destructive" });
     },
   });
@@ -184,11 +196,29 @@ export default function ChannelSettingsPage() {
   };
 
   const handleSaveChanges = () => {
+    console.log('Saving channel changes:', {
+      name: channelName,
+      description: channelDescription,
+      is_private: isPrivate,
+      hasImage: !!selectedFile
+    });
     updateChannelMutation.mutate({
       name: channelName,
       description: channelDescription,
       is_private: isPrivate,
       image: selectedFile || undefined,
+    });
+  };
+
+  // Handle immediate privacy toggle save
+  const handlePrivacyToggle = (checked: boolean) => {
+    console.log('Privacy toggle changed:', checked);
+    setIsPrivate(checked);
+    // Auto-save privacy changes immediately
+    updateChannelMutation.mutate({
+      name: channelName,
+      description: channelDescription,
+      is_private: checked,
     });
   };
 
@@ -302,10 +332,7 @@ export default function ChannelSettingsPage() {
               <Switch
                 id="private-channel"
                 checked={isPrivate}
-                onCheckedChange={(checked) => {
-                  console.log('Privacy toggle changed:', checked);
-                  setIsPrivate(checked);
-                }}
+                onCheckedChange={handlePrivacyToggle}
                 disabled={!isCurrentUserAdmin}
                 className="data-[state=checked]:bg-blue-600"
               />
