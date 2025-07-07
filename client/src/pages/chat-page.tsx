@@ -898,6 +898,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
   const messageInputRef = useRef<HTMLInputElement>(null);
   const hasInitiallyLoadedRef = useRef(false);
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   // Image upload mutation
   const uploadImageMutation = useMutation({
@@ -1233,11 +1234,17 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
           </div>
           <div className="flex items-center gap-2">
             {selectedChat.type === 'group' && (
-              <Link href={`/chats/groups/${selectedChat.id}/settings`}>
-                <Button size="sm" variant="ghost" className="text-white">
-                  <Settings className="h-4 w-4" />
-                </Button>
-              </Link>
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                className="text-white"
+                onClick={() => {
+                  console.log('Settings button clicked for group:', selectedChat.id);
+                  setLocation(`/chats/groups/${selectedChat.id}/settings`);
+                }}
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
             )}
           </div>
         </div>
