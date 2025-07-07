@@ -287,9 +287,19 @@ export default function GroupSettingsPage() {
   );
 
   // Check if current user is admin
+  console.log('GROUP SETTINGS DEBUG:', {
+    currentUser: currentUser,
+    group: group,
+    groupCreatorId: group?.creatorId,
+    groupAdminIds: group?.adminIds,
+    currentUserId: currentUser?.id
+  });
+  
   const isAdmin = currentUser && group && 
-    (group.created_by === currentUser.id || 
-     (Array.isArray(group.admin_ids) && group.admin_ids.includes(currentUser.id)));
+    (group.creatorId === currentUser.id || 
+     (Array.isArray(group.adminIds) && group.adminIds.includes(currentUser.id)));
+     
+  console.log('IS ADMIN CHECK:', isAdmin);
 
   // Handle error states
   if (groupError) {
