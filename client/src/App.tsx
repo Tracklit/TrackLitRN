@@ -303,25 +303,25 @@ function MainApp() {
   
   return (
     <div className="min-h-screen text-foreground">
-      {/* Top Header Bar - Hide for chat routes */}
-      {!location.startsWith('/chat') && <Header />}
+      {/* Top Header Bar - Hide for chat routes and auth page */}
+      {!location.startsWith('/chat') && location !== '/auth' && <Header />}
       
-      {/* Hamburger Menu for all screens - Hide for chat routes */}
-      {!location.startsWith('/chat') && (
+      {/* Hamburger Menu for all screens - Hide for chat routes and auth page */}
+      {!location.startsWith('/chat') && location !== '/auth' && (
         <div className="fixed top-4 left-4 z-50">
           <HamburgerMenu />
         </div>
       )}
       
       {/* Main Content */}
-      <main className={location.startsWith('/chat') ? '' : 'pt-20 pb-16 md:pb-0'}>
-        <div className={location.startsWith('/chat') ? '' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'}>
+      <main className={location.startsWith('/chat') || location === '/auth' ? '' : 'pt-20 pb-16 md:pb-0'}>
+        <div className={location.startsWith('/chat') || location === '/auth' ? '' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'}>
           <Router />
         </div>
       </main>
       
-      {/* Bottom Navigation - Hide for chat routes */}
-      {!location.startsWith('/chat') && <BottomNavigation />}
+      {/* Bottom Navigation - Hide for chat routes and auth page */}
+      {!location.startsWith('/chat') && location !== '/auth' && <BottomNavigation />}
       
       {/* Onboarding flow - Only show for logged in users who haven't seen it */}
       {user && showOnboarding && (
