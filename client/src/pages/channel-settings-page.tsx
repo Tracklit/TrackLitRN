@@ -235,35 +235,39 @@ export default function ChannelSettingsPage() {
           <div className="space-y-4">
             <h2 className="text-lg font-semibold">Channel Profile</h2>
             
-            <div className="flex items-center gap-4 p-4 bg-slate-800 rounded-lg">
-              <div className="relative">
-                <Avatar className="w-20 h-20">
-                  <AvatarImage src={imagePreview || channel.avatar_url} />
-                  <AvatarFallback className="bg-blue-600 text-white text-xl">
-                    {channel.name?.charAt(0)?.toUpperCase() || "C"}
-                  </AvatarFallback>
-                </Avatar>
-                {isCurrentUserAdmin && (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Camera className="h-4 w-4" />
-                  </Button>
-                )}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="hidden"
-                />
+            <div className="p-4 bg-slate-800 rounded-lg space-y-4">
+              {/* Centered Profile Image */}
+              <div className="flex justify-center">
+                <div className="relative">
+                  <Avatar className="w-24 h-24">
+                    <AvatarImage src={imagePreview || channel.avatar_url} />
+                    <AvatarFallback className="bg-blue-600 text-white text-2xl">
+                      {channel.name?.charAt(0)?.toUpperCase() || "C"}
+                    </AvatarFallback>
+                  </Avatar>
+                  {isCurrentUserAdmin && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Camera className="h-4 w-4" />
+                    </Button>
+                  )}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                </div>
               </div>
               
-              <div className="flex-1 space-y-2">
+              {/* Name and Description Fields */}
+              <div className="space-y-3">
                 <div>
                   <Label htmlFor="channelName">Channel Name</Label>
                   <Input
@@ -292,14 +296,18 @@ export default function ChannelSettingsPage() {
             {/* Privacy Settings */}
             <div className="flex items-center justify-between p-4 bg-slate-800 rounded-lg">
               <div>
-                <Label htmlFor="private-channel">Private Channel</Label>
+                <Label htmlFor="private-channel" className="text-white">Private Channel</Label>
                 <p className="text-sm text-gray-400">Only invited members can join</p>
               </div>
               <Switch
                 id="private-channel"
                 checked={isPrivate}
-                onCheckedChange={setIsPrivate}
+                onCheckedChange={(checked) => {
+                  console.log('Privacy toggle changed:', checked);
+                  setIsPrivate(checked);
+                }}
                 disabled={!isCurrentUserAdmin}
+                className="data-[state=checked]:bg-blue-600"
               />
             </div>
 
@@ -370,24 +378,44 @@ export default function ChannelSettingsPage() {
                             role: role as 'admin' | 'member' 
                           })}
                         >
-                          <SelectTrigger className="w-24 bg-slate-700 border-slate-600">
+                          <SelectTrigger className="w-24 bg-slate-700 border-slate-600 text-white">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="member">Member</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
+                          <SelectContent className="bg-slate-700 border-slate-600">
+                            <SelectItem value="member" className="text-white hover:bg-slate-600">Member</SelectItem>
+                            <SelectItem value="admin" className="text-white hover:bg-slate-600">Admin</SelectItem>
                           </SelectContent>
                         </Select>
                         
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => removeMemberMutation.mutate(member.id)}
+                          onClick={() => {
+                            console.log('Removing member:', member.id);
+                            removeMemberMutation.mutate(member.id);
+                          }}
+                          disabled={removeMemberMutation.isPending}
                           className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
+                    )}
+                    
+                    {/* Show remove button for current user if they're not the owner */}
+                    {!isCurrentUserAdmin && member.id === currentUser?.id && member.id !== channel.created_by && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          console.log('Leaving channel');
+                          removeMemberMutation.mutate(member.id);
+                        }}
+                        disabled={removeMemberMutation.isPending}
+                        className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                      >
+                        <LogOut className="h-4 w-4" />
+                      </Button>
                     )}
                   </div>
                 ))}
