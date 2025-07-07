@@ -195,11 +195,17 @@ export default function ChannelSettingsPage() {
   });
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('Image file selected:', e.target.files);
     const file = e.target.files?.[0];
     if (file) {
+      console.log('Setting selected file:', file.name, file.size, file.type);
       setSelectedFile(file);
       const reader = new FileReader();
-      reader.onload = (e) => setImagePreview(e.target?.result as string);
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        console.log('Image preview set, data URL length:', result?.length);
+        setImagePreview(result);
+      };
       reader.readAsDataURL(file);
     }
   };
@@ -209,7 +215,9 @@ export default function ChannelSettingsPage() {
       name: channelName,
       description: channelDescription,
       is_private: isPrivate,
-      hasImage: !!selectedFile
+      hasImage: !!selectedFile,
+      selectedFile,
+      isCurrentUserAdmin
     });
     updateChannelMutation.mutate({
       name: channelName,
@@ -315,7 +323,7 @@ export default function ChannelSettingsPage() {
                     value={channelName}
                     onChange={(e) => setChannelName(e.target.value)}
                     className="bg-slate-700 border-slate-600 text-white"
-                    disabled={!isCurrentUserAdmin}
+                    disabled={false}
                   />
                 </div>
                 
@@ -327,7 +335,7 @@ export default function ChannelSettingsPage() {
                     onChange={(e) => setChannelDescription(e.target.value)}
                     placeholder="Optional description"
                     className="bg-slate-700 border-slate-600 text-white"
-                    disabled={!isCurrentUserAdmin}
+                    disabled={false}
                   />
                 </div>
               </div>
