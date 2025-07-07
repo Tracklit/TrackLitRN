@@ -5,6 +5,7 @@ import { messageReactions } from "@shared/schema";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import sharp from "sharp";
 
 const router = Router();
 
@@ -34,6 +35,25 @@ const upload = multer({
     }
   }
 });
+
+// Helper function to compress and optimize uploaded images
+async function compressAndOptimizeImage(inputPath: string, outputPath: string, maxSize: number = 96): Promise<void> {
+  try {
+    await sharp(inputPath)
+      .resize(maxSize, maxSize, { 
+        fit: 'cover',
+        position: 'center'
+      })
+      .webp({ quality: 90 })
+      .toFile(outputPath);
+    
+    // Remove original file
+    fs.unlinkSync(inputPath);
+  } catch (error) {
+    console.error('Error compressing image:', error);
+    throw error;
+  }
+}
 
 // Debug endpoint for chat groups
 router.get("/api/chat/groups/debug", async (req: Request, res: Response) => {
@@ -279,10 +299,21 @@ router.post("/api/chat/groups", upload.single('image'), async (req: Request, res
     // Generate invite code
     const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
 
-    // Handle image upload
+    // Handle image upload with compression
     let imageUrl = null;
     if (req.file) {
-      imageUrl = `/uploads/${req.file.filename}`;
+      try {
+        const originalPath = req.file.path;
+        const optimizedFilename = req.file.filename.replace(/\.[^/.]+$/, '.webp');
+        const optimizedPath = path.join(path.dirname(originalPath), optimizedFilename);
+        
+        await compressAndOptimizeImage(originalPath, optimizedPath, 96);
+        imageUrl = `/uploads/${optimizedFilename}`;
+      } catch (error) {
+        console.error('Error processing image:', error);
+        // Fallback to original if compression fails
+        imageUrl = `/uploads/${req.file.filename}`;
+      }
     }
 
     // Collect all member IDs (creator + invited members)
@@ -419,14 +450,25 @@ router.patch("/api/chat/groups/:groupId", upload.single('image'), async (req: Re
       return res.status(403).json({ error: "Only admins can update group details" });
     }
 
-    // Handle image upload
+    // Handle image upload with compression
     let imageUrl = group.image;
     console.log('File upload received:', req.file);
     console.log('Current group image:', group.image);
     
     if (req.file) {
-      imageUrl = `/uploads/${req.file.filename}`;
-      console.log('New image URL:', imageUrl);
+      try {
+        const originalPath = req.file.path;
+        const optimizedFilename = req.file.filename.replace(/\.[^/.]+$/, '.webp');
+        const optimizedPath = path.join(path.dirname(originalPath), optimizedFilename);
+        
+        await compressAndOptimizeImage(originalPath, optimizedPath, 96);
+        imageUrl = `/uploads/${optimizedFilename}`;
+        console.log('New compressed image URL:', imageUrl);
+      } catch (error) {
+        console.error('Error processing image:', error);
+        // Fallback to original if compression fails
+        imageUrl = `/uploads/${req.file.filename}`;
+      }
     } else {
       console.log('No file uploaded in request');
     }
@@ -1001,10 +1043,25 @@ router.post("/api/chat/groups/:groupId/messages", upload.single('image'), async 
     `);
     const user = userResult.rows[0];
 
-    // Determine message type and media URL
+    // Determine message type and media URL with compression
     const finalMessageType = file ? "image" : "text";
-    const mediaUrl = file ? `/uploads/${file.filename}` : null;
+    let mediaUrl = null;
     const messageText = text?.trim() || "";
+    
+    if (file) {
+      try {
+        const originalPath = file.path;
+        const optimizedFilename = file.filename.replace(/\.[^/.]+$/, '.webp');
+        const optimizedPath = path.join(path.dirname(originalPath), optimizedFilename);
+        
+        await compressAndOptimizeImage(originalPath, optimizedPath, 400); // Larger for message images
+        mediaUrl = `/uploads/${optimizedFilename}`;
+      } catch (error) {
+        console.error('Error processing message image:', error);
+        // Fallback to original if compression fails
+        mediaUrl = `/uploads/${file.filename}`;
+      }
+    }
 
     // Insert message
     const messageResult = await db.execute(sql`

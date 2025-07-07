@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { X, Camera, Trash2, UserPlus, Users, Crown, Shield, User, LogOut } from "lucide-react";
+import { compressImageWithPreset } from "@/lib/image-utils";
+import { OptimizedAvatar } from "@/components/ui/optimized-avatar";
 
 interface ChannelMember {
   id: number;
@@ -252,19 +254,33 @@ export default function ChannelSettingsPage() {
     },
   });
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     console.log('Image file selected:', e.target.files);
     const file = e.target.files?.[0];
     if (file) {
       console.log('Setting selected file:', file.name, file.size, file.type);
-      setSelectedFile(file);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        console.log('Image preview set, data URL length:', result?.length);
-        setImagePreview(result);
-      };
-      reader.readAsDataURL(file);
+      
+      try {
+        // Compress image for optimal loading
+        const compressedFile = await compressImageWithPreset(file, 'avatar');
+        console.log('Compressed image:', compressedFile.name, compressedFile.size, compressedFile.type);
+        
+        setSelectedFile(compressedFile);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const result = e.target?.result as string;
+          console.log('Image preview set, data URL length:', result?.length);
+          setImagePreview(result);
+        };
+        reader.readAsDataURL(compressedFile);
+      } catch (error) {
+        console.error('Error compressing image:', error);
+        toast({
+          title: "Error",
+          description: "Failed to process image. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -303,8 +319,68 @@ export default function ChannelSettingsPage() {
 
   if (channelLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-900 text-white">
-        <div>Loading channel settings...</div>
+      <div className="min-h-screen bg-slate-900 text-white">
+        {/* Header Skeleton */}
+        <div className="p-4 border-b border-gray-600/30 flex-shrink-0 bg-black/20 backdrop-blur-sm">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 bg-gray-700 rounded-md animate-pulse"></div>
+          </div>
+        </div>
+
+        <div className="p-6 space-y-8 max-w-2xl mx-auto">
+          {/* Channel Profile Skeleton */}
+          <div className="space-y-4">
+            <div className="h-6 w-32 bg-gray-700 rounded animate-pulse"></div>
+            
+            <div className="p-4 bg-slate-800 rounded-lg space-y-4">
+              {/* Profile Image Skeleton */}
+              <div className="flex justify-center">
+                <div className="relative">
+                  <div className="w-24 h-24 bg-gray-600 rounded-full animate-pulse"></div>
+                  <div className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full bg-gray-700 animate-pulse"></div>
+                </div>
+              </div>
+              
+              {/* Form Fields Skeleton */}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <div className="h-4 w-16 bg-gray-700 rounded animate-pulse"></div>
+                  <div className="h-10 w-full bg-gray-700 rounded animate-pulse"></div>
+                </div>
+                <div className="space-y-2">
+                  <div className="h-4 w-20 bg-gray-700 rounded animate-pulse"></div>
+                  <div className="h-20 w-full bg-gray-700 rounded animate-pulse"></div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="h-5 w-9 bg-gray-700 rounded-full animate-pulse"></div>
+                  <div className="h-4 w-24 bg-gray-700 rounded animate-pulse"></div>
+                </div>
+              </div>
+              
+              {/* Button Skeleton */}
+              <div className="h-10 w-full bg-gray-700 rounded animate-pulse"></div>
+            </div>
+          </div>
+
+          {/* Members Section Skeleton */}
+          <div className="space-y-4">
+            <div className="h-6 w-24 bg-gray-700 rounded animate-pulse"></div>
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center justify-between p-3 bg-slate-800 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 bg-gray-600 rounded-full animate-pulse"></div>
+                    <div className="space-y-1">
+                      <div className="h-4 w-24 bg-gray-700 rounded animate-pulse"></div>
+                      <div className="h-3 w-16 bg-gray-700 rounded animate-pulse"></div>
+                    </div>
+                  </div>
+                  <div className="h-8 w-20 bg-gray-700 rounded animate-pulse"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -343,16 +419,12 @@ export default function ChannelSettingsPage() {
               {/* Centered Profile Image */}
               <div className="flex justify-center">
                 <div className="relative">
-                  <Avatar className="w-24 h-24">
-                    <AvatarImage 
-                      src={imagePreview || channel.image} 
-                      onError={() => console.log('Avatar failed to load:', imagePreview || channel.image)}
-                      onLoad={() => console.log('Avatar loaded:', imagePreview || channel.image)}
-                    />
-                    <AvatarFallback className="bg-blue-600 text-white text-2xl">
-                      {channel.name?.charAt(0)?.toUpperCase() || "C"}
-                    </AvatarFallback>
-                  </Avatar>
+                  <OptimizedAvatar
+                    src={imagePreview || channel.image}
+                    fallback={channel.name?.charAt(0)?.toUpperCase() || "C"}
+                    size="xl"
+                    lazy={false}
+                  />
                   <Button
                     type="button"
                     size="sm"
@@ -454,18 +526,31 @@ export default function ChannelSettingsPage() {
             </div>
 
             {membersLoading ? (
-              <div className="text-center py-8">Loading members...</div>
+              <div className="space-y-2">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center justify-between p-3 bg-slate-800 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 bg-gray-600 rounded-full animate-pulse"></div>
+                      <div className="space-y-1">
+                        <div className="h-4 w-24 bg-gray-700 rounded animate-pulse"></div>
+                        <div className="h-3 w-16 bg-gray-700 rounded animate-pulse"></div>
+                      </div>
+                    </div>
+                    <div className="h-8 w-20 bg-gray-700 rounded animate-pulse"></div>
+                  </div>
+                ))}
+              </div>
             ) : (
               <div className="space-y-2">
                 {members?.map((member: any) => (
                   <div key={member.user_id} className="flex items-center justify-between p-3 bg-slate-800 rounded-lg">
                     <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarImage src={member.profile_image_url} />
-                        <AvatarFallback className="bg-blue-600 text-white">
-                          {member.name?.charAt(0)?.toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
+                      <OptimizedAvatar
+                        src={member.profile_image_url}
+                        fallback={member.name?.charAt(0)?.toUpperCase() || "U"}
+                        size="md"
+                        lazy={true}
+                      />
                       <div>
                         <p className="font-medium">{member.name}</p>
                         <p className="text-sm text-gray-400">@{member.username}</p>

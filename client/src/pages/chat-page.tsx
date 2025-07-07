@@ -42,6 +42,7 @@ import { useToast } from "@/hooks/use-toast";
 
 import { useAuth } from "@/hooks/use-auth";
 import flameLogoPath from "@assets/IMG_4720_1751015409604.png";
+import { OptimizedAvatar } from "@/components/ui/optimized-avatar";
 
 
 // Global image cache to prevent reloading
@@ -747,12 +748,12 @@ const ChatPage = () => {
                       >
                         <div className="flex items-center space-x-3">
                           <div className="relative">
-                            <Avatar className="h-12 w-12">
-                              <AvatarImage src={channel.avatar_url || undefined} />
-                              <AvatarFallback className="bg-blue-500 text-white">
-                                {channel.name.slice(0, 2).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
+                            <OptimizedAvatar
+                              src={channel.avatar_url}
+                              fallback={channel.name.slice(0, 2).toUpperCase()}
+                              size="md"
+                              lazy={true}
+                            />
                             
                             {/* Privacy Indicator */}
                             {channel.is_private ? (
