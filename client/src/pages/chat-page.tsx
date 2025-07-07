@@ -1239,8 +1239,10 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
               <Button 
                 size="sm" 
                 variant="ghost" 
-                className="text-white"
-                onClick={() => {
+                className="text-white relative z-10"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                   console.log('Settings button clicked for group:', selectedChat.id);
                   setSettingsModalOpen(true);
                 }}
