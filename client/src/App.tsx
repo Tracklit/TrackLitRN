@@ -67,10 +67,7 @@ import SprinthiaPage from "@/pages/sprinthia-simple";
 import RehabPage from "@/pages/rehab-page";
 import ArcadePage from "@/pages/arcade-page";
 import ChatPage from "@/pages/chat-page";
-import CreateGroupPage from "@/pages/create-group-page";
-import GroupSettingsPage from "@/pages/group-settings-page";
-
-import GroupMembersPage from "@/pages/group-members-page";
+import ChannelSettingsPage from "@/pages/channel-settings-page";
 
 import HamstringRehabPage from "@/pages/rehab/acute-muscle/hamstring";
 import FootRehabPage from "@/pages/rehab/chronic-injuries/foot";
@@ -207,13 +204,8 @@ function Router() {
         <ProtectedRoute path="/club-management/:id" component={ClubManagementPage} />
         <ProtectedRoute path="/chat" component={ChatPage} />
         <ProtectedRoute path="/chats" component={ChatPage} />
-        <ProtectedRoute path="/chats/create" component={CreateGroupPage} />
-        <ProtectedRoute path="/create-group" component={CreateGroupPage} />
-
-        {/* More specific routes must come before general ones */}
-        <ProtectedRoute path="/chats/groups/:id/members" component={GroupMembersPage} />
-        <ProtectedRoute path="/chats/groups/:id/settings" component={GroupSettingsPage} />
-        <ProtectedRoute path="/chats/groups/:id" component={ChatPage} />
+        <ProtectedRoute path="/chats/channels/:id/settings" component={ChannelSettingsPage} />
+        <ProtectedRoute path="/chats/channels/:id" component={ChatPage} />
 
         
         {/* Rehab */}

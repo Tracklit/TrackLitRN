@@ -1325,8 +1325,8 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
                       })() && (
                         <DropdownMenuItem
                           onClick={() => {
-                            console.log('Navigating to settings for group:', selectedChat.id);
-                            setLocation(`/chats/groups/${selectedChat.id}/settings`);
+                            console.log('Navigating to settings for channel:', selectedChat.id);
+                            setLocation(`/chats/channels/${selectedChat.id}/settings`);
                           }}
                         >
                           <Settings className="h-4 w-4 mr-2" />
