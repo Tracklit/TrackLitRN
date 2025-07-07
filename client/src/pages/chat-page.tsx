@@ -1248,6 +1248,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
                   e.preventDefault();
                   e.stopPropagation();
                   console.log('Settings button touched for group:', selectedChat.id);
+                  console.log('Setting modal open to true');
                   setSettingsModalOpen(true);
                 }}
               >

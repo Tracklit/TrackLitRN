@@ -33,6 +33,7 @@ interface GroupSettingsModalProps {
 }
 
 export default function GroupSettingsModal({ groupId, isOpen, onClose }: GroupSettingsModalProps) {
+  console.log('GroupSettingsModal props:', { groupId, isOpen, onClose });
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
