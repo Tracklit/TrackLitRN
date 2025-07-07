@@ -387,7 +387,11 @@ router.patch("/api/chat/groups/:groupId", upload.single('image'), async (req: Re
   try {
     const groupId = parseInt(req.params.groupId);
     const userId = req.user!.id;
-    const { name, description, isPrivate } = req.body;
+    const { name, description, isPrivate, is_private } = req.body;
+    console.log('Update group request body:', req.body);
+    
+    // Handle both isPrivate and is_private field names
+    const privateValue = isPrivate !== undefined ? isPrivate : is_private;
 
     if (isNaN(groupId)) {
       return res.status(400).json({ error: "Invalid group ID" });
@@ -422,13 +426,19 @@ router.patch("/api/chat/groups/:groupId", upload.single('image'), async (req: Re
       console.log('No file uploaded in request');
     }
 
-    // Update group
+    // Update group - handle boolean conversion properly
+    const finalPrivateValue = privateValue === 'true' || privateValue === true ? true : 
+                              privateValue === 'false' || privateValue === false ? false : 
+                              (group as any).is_private;
+    
+    console.log('Final privacy value:', finalPrivateValue, 'from input:', privateValue);
+    
     const updateResult = await db.execute(sql`
       UPDATE chat_groups 
-      SET name = ${name || group.name}, 
-          description = ${description || group.description}, 
+      SET name = ${name || (group as any).name}, 
+          description = ${description || (group as any).description}, 
           image = ${imageUrl},
-          is_private = ${isPrivate === 'true' ? true : (isPrivate === 'false' ? false : group.is_private)}
+          is_private = ${finalPrivateValue}
       WHERE id = ${groupId}
       RETURNING *
     `);
