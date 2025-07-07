@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Camera, Trash2, UserPlus, Users, Crown, Shield, User, LogOut } from "lucide-react";
+import { X, Camera, Trash2, UserPlus, Users, Crown, Shield, User, LogOut } from "lucide-react";
 
 interface ChannelMember {
   id: number;
@@ -328,7 +328,7 @@ export default function ChannelSettingsPage() {
             onClick={() => setLocation(`/chats/channels/${channelId}`)}
             className="text-white hover:bg-white/10"
           >
-            <ArrowLeft className="h-5 w-5" />
+            <X className="h-5 w-5" />
           </Button>
         </div>
       </div>
@@ -421,7 +421,7 @@ export default function ChannelSettingsPage() {
             <Button 
               onClick={handleSaveChanges}
               disabled={updateChannelMutation.isPending || !hasChanges}
-              className={`w-full transition-all duration-200 ${
+              className={`w-full ${
                 hasChanges
                   ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
                   : 'bg-gray-600 hover:bg-gray-700 text-gray-300 cursor-not-allowed'
