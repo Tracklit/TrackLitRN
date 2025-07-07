@@ -7,13 +7,18 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { 
   MessageCircle, 
   Users, 
   Send, 
   Plus, 
   Search,
-  MoreVertical,
   Hash,
   Lock,
   Globe,
@@ -25,11 +30,14 @@ import {
   Image,
   Settings,
   ArrowDown,
-  ChevronDown
+  ChevronDown,
+  MoreVertical,
+  LogOut
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
 
 import { useAuth } from "@/hooks/use-auth";
 import flameLogoPath from "@assets/IMG_4720_1751015409604.png";
@@ -241,6 +249,7 @@ const ChatPage = () => {
   const [location] = useLocation();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { toast } = useToast();
 
   // Check if we're on a chat route (but exclude settings routes)
   const isChatRoute = (location.startsWith('/chat') || location.startsWith('/chats')) && !location.includes('/settings');
@@ -459,6 +468,30 @@ const ChatPage = () => {
 
   // Create group mutation
   // Group creation is now handled on dedicated page
+
+  // Leave chat mutation
+  const leaveChatMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedChat || selectedChat.type !== 'group') return;
+      const response = await apiRequest('DELETE', `/api/chat/groups/${selectedChat.id}/members/${user?.id}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Left chat",
+        description: "You have successfully left the chat group.",
+      });
+      setSelectedChat(null);
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/groups'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to leave the chat. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
 
 
 
@@ -1236,19 +1269,37 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
           </div>
           <div className="flex items-center gap-2">
             {selectedChat.type === 'group' && (
-              <div
-                className="p-2 cursor-pointer hover:bg-white/10 rounded-lg relative z-10"
-                onClick={() => {
-                  console.log('Settings button clicked for group:', selectedChat.id);
-                  setSettingsModalOpen(true);
-                }}
-                onTouchStart={() => {
-                  console.log('Settings button touched for group:', selectedChat.id);
-                  setSettingsModalOpen(true);
-                }}
-              >
-                <Settings className="h-4 w-4 text-white" />
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <div className="p-2 cursor-pointer hover:bg-white/10 rounded-lg relative z-10">
+                    <MoreVertical className="h-4 w-4 text-white" />
+                  </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  {selectedChat.is_admin && (
+                    <DropdownMenuItem
+                      onClick={() => {
+                        console.log('Settings clicked for group:', selectedChat.id);
+                        setSettingsModalOpen(true);
+                      }}
+                    >
+                      <Settings className="h-4 w-4 mr-2" />
+                      Settings
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem
+                    onClick={() => {
+                      if (confirm('Are you sure you want to leave this chat?')) {
+                        leaveChatMutation.mutate();
+                      }
+                    }}
+                    className="text-red-600"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Leave Chat
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
         </div>
