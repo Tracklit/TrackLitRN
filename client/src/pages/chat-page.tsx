@@ -43,6 +43,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import flameLogoPath from "@assets/IMG_4720_1751015409604.png";
 import { OptimizedAvatar } from "@/components/ui/optimized-avatar";
+import { OptimizedMessageImage } from "@/components/ui/optimized-message-image";
 
 
 // Global image cache to prevent reloading
@@ -1725,12 +1726,14 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply, onE
         )}
 
         {message.message_type === 'image' && message.media_url ? (
-          <div className="mb-2">
-            <img 
-              src={message.media_url} 
-              alt="Shared image" 
-              className="max-w-full h-auto rounded cursor-pointer"
-              onClick={() => onImageClick?.(message.media_url!)}
+          <div className="mb-2 cursor-pointer" onClick={() => onImageClick?.(message.media_url!)}>
+            <OptimizedMessageImage
+              src={message.media_url}
+              alt="Shared image"
+              className="rounded-lg"
+              lazy={true}
+              maxWidth={300}
+              maxHeight={400}
             />
           </div>
         ) : null}
