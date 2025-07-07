@@ -46,13 +46,17 @@ export default function GroupSettingsPage() {
   });
 
   // Fetch group details
-  const { data: group, isLoading: groupLoading } = useQuery({
+  const { data: group, isLoading: groupLoading, error: groupError } = useQuery({
     queryKey: ['/api/chat/groups', groupId],
     queryFn: async () => {
       const response = await apiRequest('GET', `/api/chat/groups/${groupId}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch group: ${response.status}`);
+      }
       return response.json();
     },
-    enabled: !!groupId
+    enabled: !!groupId,
+    retry: 1
   });
 
   // Fetch coach's athletes for adding to group
@@ -284,8 +288,27 @@ export default function GroupSettingsPage() {
 
   // Check if current user is admin
   const isAdmin = currentUser && group && 
-    (group.creatorId === currentUser.id || 
-     (Array.isArray(group.adminIds) && group.adminIds.includes(currentUser.id)));
+    (group.created_by === currentUser.id || 
+     (Array.isArray(group.admin_ids) && group.admin_ids.includes(currentUser.id)));
+
+  // Handle error states
+  if (groupError) {
+    return (
+      <div className="fixed inset-0 flex flex-col w-screen h-screen" style={{
+        background: 'linear-gradient(135deg, #000000 0%, #1a1a2e 50%, #16213e 70%, #4a148c 90%, #7b1fa2 100%)'
+      }}>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center text-white">
+            <h1 className="text-2xl font-bold mb-4">Error Loading Group</h1>
+            <p className="text-gray-300 mb-6">Unable to load group settings. The group may not exist or you may not have access.</p>
+            <Link href="/chats">
+              <Button className="bg-blue-600 hover:bg-blue-700">Back to Chats</Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Show loading while data is being fetched
   if (groupLoading || !currentUser || !group) {
