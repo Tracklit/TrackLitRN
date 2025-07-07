@@ -583,14 +583,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Connected users API (friends + connections)
+  // Connected users API (for now, return coach's connections - could be enhanced with a proper friendship system later)
   app.get("/api/users/connected", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     try {
       const userId = req.user!.id;
       
-      // Get friends and connections for this user
+      // For now, return users that are connected through coach-athlete relationships
       const connectedUsers = await db.execute(sql`
         SELECT DISTINCT
           u.id,
@@ -600,11 +600,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           u.profile_image_url,
           u.created_at
         FROM users u
-        INNER JOIN friendships f ON (
-          (f.user_id = ${userId} AND f.friend_id = u.id) OR
-          (f.friend_id = ${userId} AND f.user_id = u.id)
+        WHERE u.id != ${userId}
+        AND (
+          u.id IN (
+            SELECT ca.athlete_id FROM coach_athletes ca WHERE ca.coach_id = ${userId}
+          )
+          OR u.id IN (
+            SELECT ca.coach_id FROM coach_athletes ca WHERE ca.athlete_id = ${userId}
+          )
         )
-        WHERE f.status = 'accepted'
         ORDER BY u.name ASC
       `);
 
