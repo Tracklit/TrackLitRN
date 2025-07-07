@@ -582,6 +582,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to fetch athletes" });
     }
   });
+
+  // Connected users API (friends + connections)
+  app.get("/api/users/connected", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const userId = req.user!.id;
+      
+      // Get friends and connections for this user
+      const connectedUsers = await db.execute(sql`
+        SELECT DISTINCT
+          u.id,
+          u.name,
+          u.username,
+          u.email,
+          u.profile_image_url,
+          u.created_at
+        FROM users u
+        INNER JOIN friendships f ON (
+          (f.user_id = ${userId} AND f.friend_id = u.id) OR
+          (f.friend_id = ${userId} AND f.user_id = u.id)
+        )
+        WHERE f.status = 'accepted'
+        ORDER BY u.name ASC
+      `);
+
+      res.json(connectedUsers.rows);
+    } catch (error) {
+      console.error("Error fetching connected users:", error);
+      res.status(500).json({ error: "Failed to fetch connected users" });
+    }
+  });
   
   // Practice media routes
   // Get media for a completion

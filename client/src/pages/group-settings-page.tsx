@@ -54,10 +54,16 @@ export default function GroupSettingsPage() {
     enabled: !!groupId,
   });
 
-  // Fetch all users for adding members
-  const { data: allUsers = [] } = useQuery({
-    queryKey: ['/api/coach/athletes'],
+  // Fetch connected users for inviting
+  const { data: connectedUsers = [] } = useQuery({
+    queryKey: ['/api/users/connected'],
     enabled: !!groupId,
+  });
+
+  // Fetch coach's athletes for inviting
+  const { data: coachAthletes = [] } = useQuery({
+    queryKey: ['/api/coach/athletes'],
+    enabled: !!groupId && currentUser?.isCoach,
   });
 
   const form = useForm<UpdateGroupForm>({
@@ -80,10 +86,26 @@ export default function GroupSettingsPage() {
     }
   }, [group, form]);
 
-  // Filter available users (exclude current members)
-  const availableUsers = allUsers.filter(user => 
-    !groupMembers.some((member: any) => member.id === user.id) &&
-    user.username.toLowerCase().includes(searchQuery.toLowerCase())
+  // Check if current user is admin
+  const isCurrentUserAdmin = currentUser && group && (
+    group.creator_id === currentUser.id ||
+    group.admin_ids?.includes(currentUser.id)
+  );
+
+  // Combine connected users and coach's athletes for inviting
+  const invitableUsers = [
+    ...(connectedUsers || []),
+    ...(coachAthletes || [])
+  ].filter((user, index, self) => 
+    // Remove duplicates and current members
+    index === self.findIndex(u => u.id === user.id) &&
+    !groupMembers.some(member => member.id === user.id)
+  );
+
+  // Filter invitable users based on search query
+  const filteredInvitableUsers = invitableUsers.filter(user =>
+    user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.username?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Image handling
@@ -199,8 +221,26 @@ export default function GroupSettingsPage() {
     },
   });
 
-  // Check if current user is admin
-  const isCurrentUserAdmin = group?.admin_ids?.includes(currentUser?.id) || group?.created_by === currentUser?.id;
+  // Delete group mutation
+  const deleteGroupMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('DELETE', `/api/chat/groups/${groupId}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Group deleted successfully" });
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/groups'] });
+      setLocation('/chat');
+    },
+    onError: () => {
+      toast({ 
+        title: "Failed to delete group", 
+        variant: "destructive" 
+      });
+    },
+  });
+
+
 
   if (!match || !groupId) {
     return <div>Group not found</div>;
@@ -348,9 +388,21 @@ export default function GroupSettingsPage() {
 
               {searchQuery && (
                 <div className="space-y-2 max-h-40 overflow-y-auto">
-                  {availableUsers.map((user: any) => (
+                  {filteredInvitableUsers.map((user: any) => (
                     <div key={user.id} className="flex items-center justify-between p-2 bg-gray-800/30 rounded">
-                      <span className="text-white">{user.username}</span>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
+                          <span className="text-white text-sm font-medium">
+                            {user.name?.slice(0, 2).toUpperCase() || user.username?.slice(0, 2).toUpperCase()}
+                          </span>
+                        </div>
+                        <div>
+                          <div className="text-white font-medium">{user.name || user.username}</div>
+                          <div className="text-gray-400 text-sm">
+                            {connectedUsers.some(u => u.id === user.id) ? 'Connected User' : 'Your Athlete'}
+                          </div>
+                        </div>
+                      </div>
                       <Button
                         size="sm"
                         onClick={() => addMemberMutation.mutate(user.id)}
@@ -360,11 +412,18 @@ export default function GroupSettingsPage() {
                       </Button>
                     </div>
                   ))}
-                  {availableUsers.length === 0 && (
+                  {filteredInvitableUsers.length === 0 && (
                     <div className="text-center text-gray-400 py-4">
-                      No users found
+                      {searchQuery ? 'No users found' : 'Only connected users and your athletes can be invited'}
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Show hint when no search query */}
+              {!searchQuery && (
+                <div className="text-center text-gray-400 py-4 text-sm">
+                  Search to invite connected users and your athletes
                 </div>
               )}
             </div>
@@ -473,13 +532,13 @@ export default function GroupSettingsPage() {
                 className="w-full"
                 onClick={() => {
                   if (confirm('Are you sure you want to delete this group? This action cannot be undone.')) {
-                    // TODO: Implement delete group
-                    console.log('Delete group');
+                    deleteGroupMutation.mutate();
                   }
                 }}
+                disabled={deleteGroupMutation.isPending}
               >
                 <Trash2 className="h-4 w-4 mr-2" />
-                Delete Group
+                {deleteGroupMutation.isPending ? 'Deleting...' : 'Delete Group'}
               </Button>
             </div>
           )}
