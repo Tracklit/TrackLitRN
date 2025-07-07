@@ -1300,7 +1300,10 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
             {(selectedChat.type === 'group' || selectedChat.type === 'direct') && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <div className="p-2 cursor-pointer hover:bg-white/10 rounded-lg relative z-10">
+                  <div 
+                    className="p-2 cursor-pointer hover:bg-white/10 rounded-lg relative z-10"
+                    onClick={() => console.log('THREE DOT MENU CLICKED!')}
+                  >
                     <MoreVertical className="h-4 w-4 text-white" />
                   </div>
                 </DropdownMenuTrigger>
