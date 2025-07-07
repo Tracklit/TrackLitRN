@@ -69,6 +69,7 @@ import ArcadePage from "@/pages/arcade-page";
 import ChatPage from "@/pages/chat-page";
 import CreateGroupPage from "@/pages/create-group-page";
 import GroupSettingsPage from "@/pages/group-settings-page";
+import GroupMembersPage from "@/pages/group-members-page";
 
 import HamstringRehabPage from "@/pages/rehab/acute-muscle/hamstring";
 import FootRehabPage from "@/pages/rehab/chronic-injuries/foot";
@@ -209,6 +210,7 @@ function Router() {
         <ProtectedRoute path="/chats/create" component={CreateGroupPage} />
         <ProtectedRoute path="/create-group" component={CreateGroupPage} />
         <ProtectedRoute path="/chats/groups/:id/settings" component={GroupSettingsPage} />
+        <ProtectedRoute path="/chats/groups/:id/members" component={GroupMembersPage} />
 
         
         {/* Rehab */}

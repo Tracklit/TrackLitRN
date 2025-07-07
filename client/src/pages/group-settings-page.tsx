@@ -287,19 +287,9 @@ export default function GroupSettingsPage() {
   );
 
   // Check if current user is admin
-  console.log('GROUP SETTINGS DEBUG:', {
-    currentUser: currentUser,
-    group: group,
-    groupCreatorId: group?.creatorId,
-    groupAdminIds: group?.adminIds,
-    currentUserId: currentUser?.id
-  });
-  
   const isAdmin = currentUser && group && 
     (group.creatorId === currentUser.id || 
      (Array.isArray(group.adminIds) && group.adminIds.includes(currentUser.id)));
-     
-  console.log('IS ADMIN CHECK:', isAdmin);
 
   // Handle error states
   if (groupError) {
@@ -334,21 +324,9 @@ export default function GroupSettingsPage() {
   }
 
   if (!isAdmin) {
-    return (
-      <div className="fixed inset-0 flex flex-col w-screen h-screen" style={{
-        background: 'linear-gradient(135deg, #000000 0%, #1a1a2e 50%, #16213e 70%, #4a148c 90%, #7b1fa2 100%)'
-      }}>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center text-white">
-            <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
-            <p className="text-gray-300 mb-6">You don't have permission to manage this group.</p>
-            <Link href="/chats">
-              <Button className="bg-blue-600 hover:bg-blue-700">Back to Chats</Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
+    // Redirect non-admin users to the member list page
+    setLocation(`/chats/groups/${groupId}/members`);
+    return null;
   }
 
   if (groupLoading) {
