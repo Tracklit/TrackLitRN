@@ -128,7 +128,6 @@ export default function ChannelSettingsPage() {
     },
     onSuccess: (data) => {
       console.log('Channel update success:', data);
-      toast({ title: "Channel updated successfully" });
       
       // Clear the selected file and preview after successful update
       setSelectedFile(null);
@@ -303,7 +302,6 @@ export default function ChannelSettingsPage() {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-semibold">Channel Settings</h1>
         </div>
       </div>
 
