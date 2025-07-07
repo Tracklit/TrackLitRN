@@ -1321,7 +1321,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
                           includesUser: user?.id && groupDetails?.admin_ids?.includes(user.id),
                           finalResult: groupDetails?.is_admin || groupDetails?.is_owner || (user?.id && groupDetails?.admin_ids?.includes(user.id))
                         });
-                        return (groupDetails?.is_admin || groupDetails?.is_owner || (user?.id && groupDetails?.admin_ids?.includes(user.id)));
+                        return true; // TEMPORARILY SHOWING FOR ALL USERS FOR TESTING
                       })() && (
                         <DropdownMenuItem
                           onClick={() => {
