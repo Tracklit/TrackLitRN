@@ -1,9 +1,10 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
@@ -43,6 +44,21 @@ export default function ChannelSettingsPage() {
   const [isPrivate, setIsPrivate] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  
+  // Track original values to detect changes
+  const [originalName, setOriginalName] = useState("");
+  const [originalDescription, setOriginalDescription] = useState("");
+  const [originalIsPrivate, setOriginalIsPrivate] = useState(false);
+  
+  // Calculate if changes have been made
+  const hasChanges = useMemo(() => {
+    return (
+      channelName !== originalName ||
+      channelDescription !== originalDescription ||
+      isPrivate !== originalIsPrivate ||
+      selectedFile !== null
+    );
+  }, [channelName, originalName, channelDescription, originalDescription, isPrivate, originalIsPrivate, selectedFile]);
 
   const channelId = parseInt(id || "0");
 
@@ -87,9 +103,16 @@ export default function ChannelSettingsPage() {
       console.log('Channel image field:', channel.image);
       console.log('Channel avatar_url field:', channel.avatar_url);
       console.log('Image preview state:', imagePreview);
+      
+      // Set current values
       setChannelName(channel.name || "");
       setChannelDescription(channel.description || "");
       setIsPrivate(channel.is_private || false);
+      
+      // Set original values for change detection
+      setOriginalName(channel.name || "");
+      setOriginalDescription(channel.description || "");
+      setOriginalIsPrivate(channel.is_private || false);
     }
   }, [channel]);
 
@@ -132,6 +155,11 @@ export default function ChannelSettingsPage() {
       // Clear the selected file and preview after successful update
       setSelectedFile(null);
       setImagePreview(null);
+      
+      // Reset original values to current values (no more changes detected)
+      setOriginalName(channelName);
+      setOriginalDescription(channelDescription);
+      setOriginalIsPrivate(isPrivate);
       
       // Invalidate all related cache queries
       queryClient.invalidateQueries({ queryKey: [`/api/chat/groups/${channelId}`] });
@@ -392,8 +420,12 @@ export default function ChannelSettingsPage() {
 
             <Button 
               onClick={handleSaveChanges}
-              disabled={updateChannelMutation.isPending}
-              className="w-full"
+              disabled={updateChannelMutation.isPending || !hasChanges}
+              className={`w-full transition-all duration-200 ${
+                hasChanges
+                  ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
+                  : 'bg-gray-600 hover:bg-gray-700 text-gray-300 cursor-not-allowed'
+              }`}
             >
               {updateChannelMutation.isPending ? 'Saving...' : 'Save Changes'}
             </Button>
