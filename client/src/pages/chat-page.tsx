@@ -1236,19 +1236,23 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
           </div>
           <div className="flex items-center gap-2">
             {selectedChat.type === 'group' && (
-              <Button 
-                size="sm" 
-                variant="ghost" 
-                className="text-white relative z-10"
+              <div
+                className="p-2 cursor-pointer hover:bg-white/10 rounded-lg relative z-10"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   console.log('Settings button clicked for group:', selectedChat.id);
                   setSettingsModalOpen(true);
                 }}
+                onTouchStart={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('Settings button touched for group:', selectedChat.id);
+                  setSettingsModalOpen(true);
+                }}
               >
-                <Settings className="h-4 w-4" />
-              </Button>
+                <Settings className="h-4 w-4 text-white" />
+              </div>
             )}
           </div>
         </div>
