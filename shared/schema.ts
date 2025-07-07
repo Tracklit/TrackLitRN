@@ -1903,6 +1903,36 @@ export type InsertExerciseLibrary = z.infer<typeof insertExerciseLibrarySchema>;
 export type InsertExerciseShare = z.infer<typeof insertExerciseShareSchema>;
 export type InsertLibraryShare = z.infer<typeof insertLibraryShareSchema>;
 
+// Blocked users table for user blocking functionality
+export const blockedUsers = pgTable("blocked_users", {
+  id: serial("id").primaryKey(),
+  blockerId: integer("blocker_id").notNull().references(() => users.id),
+  blockedId: integer("blocked_id").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const blockedUsersRelations = relations(blockedUsers, ({ one }) => ({
+  blocker: one(users, {
+    fields: [blockedUsers.blockerId],
+    references: [users.id],
+    relationName: "blocker"
+  }),
+  blocked: one(users, {
+    fields: [blockedUsers.blockedId],
+    references: [users.id],
+    relationName: "blocked"
+  }),
+}));
+
+// Schema and types for blocked users
+export const insertBlockedUserSchema = createInsertSchema(blockedUsers).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type BlockedUser = typeof blockedUsers.$inferSelect;
+export type InsertBlockedUser = z.infer<typeof insertBlockedUserSchema>;
+
 // Additional relations for users with spikes system
 export const usersSpikesRelations = relations(users, ({ many, one }) => ({
   userAchievements: many(userAchievements),
@@ -1915,4 +1945,6 @@ export const usersSpikesRelations = relations(users, ({ many, one }) => ({
   exerciseLibrary: many(exerciseLibrary),
   exerciseSharesSent: many(exerciseShares, { relationName: "shared_exercises_sent" }),
   exerciseSharesReceived: many(exerciseShares, { relationName: "shared_exercises_received" }),
+  blockedByMe: many(blockedUsers, { relationName: "blocker" }),
+  blockedMe: many(blockedUsers, { relationName: "blocked" }),
 }));

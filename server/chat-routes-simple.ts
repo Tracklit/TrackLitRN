@@ -1269,4 +1269,47 @@ router.patch("/api/chat/groups/:groupId/mark-read", async (req: Request, res: Re
   }
 });
 
+// Block user in direct chat
+router.post("/api/chat/direct/:conversationId/block", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.sendStatus(401);
+  }
+  
+  try {
+    const userId = req.user!.id;
+    const conversationId = parseInt(req.params.conversationId);
+    
+    if (isNaN(conversationId)) {
+      return res.status(400).json({ error: "Invalid conversation ID" });
+    }
+    
+    // Get the conversation to find the other user
+    const conversation = await db.execute(sql`
+      SELECT user1_id, user2_id 
+      FROM conversations 
+      WHERE id = ${conversationId} 
+      AND (user1_id = ${userId} OR user2_id = ${userId})
+    `);
+    
+    if (conversation.rows.length === 0) {
+      return res.status(404).json({ error: "Conversation not found" });
+    }
+    
+    const conv = conversation.rows[0] as any;
+    const otherUserId = conv.user1_id === userId ? conv.user2_id : conv.user1_id;
+    
+    // Create or update blocked user entry
+    await db.execute(sql`
+      INSERT INTO blocked_users (blocker_id, blocked_id, created_at)
+      VALUES (${userId}, ${otherUserId}, NOW())
+      ON CONFLICT (blocker_id, blocked_id) DO NOTHING
+    `);
+    
+    res.json({ success: true, message: "User blocked successfully" });
+  } catch (error) {
+    console.error("Error blocking user:", error);
+    res.status(500).json({ error: "Failed to block user" });
+  }
+});
+
 export default router;

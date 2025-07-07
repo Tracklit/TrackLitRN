@@ -32,7 +32,8 @@ import {
   ArrowDown,
   ChevronDown,
   MoreVertical,
-  LogOut
+  LogOut,
+  Ban
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
@@ -488,6 +489,30 @@ const ChatPage = () => {
       toast({
         title: "Error",
         description: "Failed to leave the chat. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Block user mutation
+  const blockUserMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedChat || selectedChat.type !== 'direct') return;
+      const response = await apiRequest('POST', `/api/chat/direct/${selectedChat.id}/block`);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "User blocked",
+        description: "You have blocked this user. No more messages can be sent.",
+      });
+      setSelectedChat(null);
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/direct'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to block the user. Please try again.",
         variant: "destructive",
       });
     }
@@ -1268,7 +1293,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {selectedChat.type === 'group' && (
+            {(selectedChat.type === 'group' || selectedChat.type === 'direct') && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <div className="p-2 cursor-pointer hover:bg-white/10 rounded-lg relative z-10">
@@ -1276,28 +1301,45 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
                   </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  {selectedChat.is_admin && (
+                  {selectedChat.type === 'group' && (
+                    <>
+                      {(selectedChat.is_admin || selectedChat.is_owner || (user?.id && selectedChat.admin_ids?.includes(user.id))) && (
+                        <DropdownMenuItem
+                          onClick={() => {
+                            console.log('Settings clicked for group:', selectedChat.id);
+                            setSettingsModalOpen(true);
+                          }}
+                        >
+                          <Settings className="h-4 w-4 mr-2" />
+                          Settings
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem
+                        onClick={() => {
+                          if (confirm('Are you sure you want to leave this chat?')) {
+                            leaveChatMutation.mutate();
+                          }
+                        }}
+                        className="text-red-600"
+                      >
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Leave Chat
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  {selectedChat.type === 'direct' && (
                     <DropdownMenuItem
                       onClick={() => {
-                        console.log('Settings clicked for group:', selectedChat.id);
-                        setSettingsModalOpen(true);
+                        if (confirm('Are you sure you want to block this user? You will no longer be able to send or receive messages.')) {
+                          blockUserMutation.mutate();
+                        }
                       }}
+                      className="text-red-600"
                     >
-                      <Settings className="h-4 w-4 mr-2" />
-                      Settings
+                      <Ban className="h-4 w-4 mr-2" />
+                      Block User
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem
-                    onClick={() => {
-                      if (confirm('Are you sure you want to leave this chat?')) {
-                        leaveChatMutation.mutate();
-                      }
-                    }}
-                    className="text-red-600"
-                  >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Leave Chat
-                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
