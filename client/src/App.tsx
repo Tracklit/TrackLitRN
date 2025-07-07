@@ -207,12 +207,13 @@ function Router() {
         <ProtectedRoute path="/club-management/:id" component={ClubManagementPage} />
         <ProtectedRoute path="/chat" component={ChatPage} />
         <ProtectedRoute path="/chats" component={ChatPage} />
-        <ProtectedRoute path="/chats/groups/:id" component={ChatPage} />
         <ProtectedRoute path="/chats/create" component={CreateGroupPage} />
         <ProtectedRoute path="/create-group" component={CreateGroupPage} />
 
+        {/* More specific routes must come before general ones */}
         <ProtectedRoute path="/chats/groups/:id/members" component={GroupMembersPage} />
         <ProtectedRoute path="/chats/groups/:id/settings" component={GroupSettingsPage} />
+        <ProtectedRoute path="/chats/groups/:id" component={ChatPage} />
 
         
         {/* Rehab */}
