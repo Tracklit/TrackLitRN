@@ -18,6 +18,15 @@ export default function GroupMembersPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isLeaving, setIsLeaving] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
+
+  // Handle back navigation with exit animation
+  const handleBack = () => {
+    setIsExiting(true);
+    setTimeout(() => {
+      setLocation(`/chats/groups/${groupId}`);
+    }, 300); // Match animation duration
+  };
 
   // Fetch group data
   const { data: group, isLoading: groupLoading } = useQuery({
@@ -80,10 +89,14 @@ export default function GroupMembersPage() {
 
   if (groupLoading || membersLoading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading members...</p>
+      <div className={`fixed inset-0 flex flex-col w-screen h-screen bg-gray-50 transition-transform duration-300 ease-in-out ${
+        isExiting ? 'translate-y-full' : 'translate-y-0 animate-in slide-in-from-bottom'
+      }`}>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading members...</p>
+          </div>
         </div>
       </div>
     );
@@ -91,27 +104,33 @@ export default function GroupMembersPage() {
 
   if (!group) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600 mb-4">Chat channel not found</p>
-          <Button onClick={() => setLocation("/chat")} variant="outline">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Chats
-          </Button>
+      <div className={`fixed inset-0 flex flex-col w-screen h-screen bg-gray-50 transition-transform duration-300 ease-in-out ${
+        isExiting ? 'translate-y-full' : 'translate-y-0 animate-in slide-in-from-bottom'
+      }`}>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-gray-600 mb-4">Chat channel not found</p>
+            <Button onClick={handleBack} variant="outline">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Chat
+            </Button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 bg-gray-50 overflow-y-auto">
+    <div className={`fixed inset-0 flex flex-col w-screen h-screen bg-gray-50 transition-transform duration-300 ease-in-out ${
+      isExiting ? 'translate-y-full' : 'translate-y-0 animate-in slide-in-from-bottom'
+    }`}>
       {/* Header */}
       <div className="bg-white border-b sticky top-0 z-10">
         <div className="flex items-center gap-4 p-4">
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setLocation(`/chats/groups/${groupId}`)}
+            onClick={handleBack}
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -127,7 +146,7 @@ export default function GroupMembersPage() {
       </div>
 
       {/* Content */}
-      <div className="p-4 space-y-4">
+      <div className="p-4 space-y-4 overflow-y-auto flex-1">
         {/* Members List */}
         <Card>
           <CardHeader>

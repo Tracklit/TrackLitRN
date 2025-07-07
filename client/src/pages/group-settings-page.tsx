@@ -32,9 +32,18 @@ export default function GroupSettingsPage() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isExiting, setIsExiting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Handle back navigation with exit animation
+  const handleBack = () => {
+    setIsExiting(true);
+    setTimeout(() => {
+      setLocation("/chats");
+    }, 300); // Match animation duration
+  };
 
   // Fetch current user
   const { data: currentUser } = useQuery({
@@ -342,15 +351,17 @@ export default function GroupSettingsPage() {
   }
 
   return (
-    <div className="fixed inset-0 flex flex-col w-screen h-screen" style={{
+    <div className={`fixed inset-0 flex flex-col w-screen h-screen transition-transform duration-300 ease-in-out ${
+      isExiting ? 'translate-y-full' : 'translate-y-0 animate-in slide-in-from-bottom'
+    }`} style={{
       background: 'linear-gradient(135deg, #000000 0%, #1a1a2e 50%, #16213e 70%, #4a148c 90%, #7b1fa2 100%)'
     }}>
       {/* Header */}
       <div className="p-4 border-b border-gray-600/30 flex-shrink-0 bg-black/20 backdrop-blur-sm">
         <div className="flex items-center gap-4">
-          <Link href="/chats" className="text-white hover:text-gray-300 transition-colors">
+          <button onClick={handleBack} className="text-white hover:text-gray-300 transition-colors">
             <ArrowLeft className="h-6 w-6" />
-          </Link>
+          </button>
           
           <div className="flex-shrink-0">
             <img 
