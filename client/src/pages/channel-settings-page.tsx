@@ -124,14 +124,15 @@ export default function ChannelSettingsPage() {
       return apiRequest(`/api/chat/groups/${channelId}/members`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId }),
+        body: JSON.stringify({ userId: userId }),
       });
     },
     onSuccess: () => {
       toast({ title: "Member added successfully" });
       queryClient.invalidateQueries({ queryKey: [`/api/chat/groups/${channelId}/members`] });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Add member error:', error);
       toast({ title: "Failed to add member", variant: "destructive" });
     },
   });
@@ -368,7 +369,7 @@ export default function ChannelSettingsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {connectedUsers?.filter(user => 
-                      !members?.some((member: any) => member.id === user.id)
+                      !members?.some((member: any) => member.user_id === user.id)
                     ).map((user: any) => (
                       <SelectItem key={user.id} value={user.id.toString()}>
                         {user.name}
@@ -384,7 +385,7 @@ export default function ChannelSettingsPage() {
             ) : (
               <div className="space-y-2">
                 {members?.map((member: any) => (
-                  <div key={member.id} className="flex items-center justify-between p-3 bg-slate-800 rounded-lg">
+                  <div key={member.user_id} className="flex items-center justify-between p-3 bg-slate-800 rounded-lg">
                     <div className="flex items-center gap-3">
                       <Avatar>
                         <AvatarImage src={member.profile_image_url} />
@@ -396,20 +397,20 @@ export default function ChannelSettingsPage() {
                         <p className="font-medium">{member.name}</p>
                         <p className="text-sm text-gray-400">@{member.username}</p>
                       </div>
-                      {channel.created_by === member.id && (
+                      {channel.created_by === member.user_id && (
                         <Crown className="h-4 w-4 text-yellow-500" />
                       )}
-                      {channel.admin_ids?.includes(member.id) && channel.created_by !== member.id && (
+                      {channel.admin_ids?.includes(member.user_id) && channel.created_by !== member.user_id && (
                         <Shield className="h-4 w-4 text-blue-500" />
                       )}
                     </div>
 
-                    {isCurrentUserAdmin && member.id !== channel.created_by && (
+                    {isCurrentUserAdmin && member.user_id !== channel.created_by && (
                       <div className="flex items-center gap-2">
                         <Select
-                          value={channel.admin_ids?.includes(member.id) ? 'admin' : 'member'}
+                          value={channel.admin_ids?.includes(member.user_id) ? 'admin' : 'member'}
                           onValueChange={(role) => updateMemberRoleMutation.mutate({ 
-                            userId: member.id, 
+                            userId: member.user_id, 
                             role: role as 'admin' | 'member' 
                           })}
                         >
@@ -426,8 +427,8 @@ export default function ChannelSettingsPage() {
                           variant="ghost"
                           size="icon"
                           onClick={() => {
-                            console.log('Removing member:', member.id, 'from channel:', channelId);
-                            removeMemberMutation.mutate(member.id);
+                            console.log('Removing member:', member.user_id, 'from channel:', channelId);
+                            removeMemberMutation.mutate(member.user_id);
                           }}
                           disabled={removeMemberMutation.isPending}
                           className="text-red-400 hover:text-red-300 hover:bg-red-900/20 h-8 w-8"
@@ -438,13 +439,13 @@ export default function ChannelSettingsPage() {
                     )}
                     
                     {/* Show remove button for current user if they're not the owner */}
-                    {!isCurrentUserAdmin && member.id === currentUser?.id && member.id !== channel.created_by && (
+                    {!isCurrentUserAdmin && member.user_id === currentUser?.id && member.user_id !== channel.created_by && (
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => {
                           console.log('Leaving channel');
-                          removeMemberMutation.mutate(member.id);
+                          removeMemberMutation.mutate(member.user_id);
                         }}
                         disabled={removeMemberMutation.isPending}
                         className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
