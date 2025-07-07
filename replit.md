@@ -108,12 +108,14 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
-- July 7, 2025: Fixed chat settings page slide animation layering issue ✅
-  - Added z-50 to both settings and members pages to ensure proper overlay behavior
-  - Settings page now slides over the chat channel instead of displacing it
-  - Eliminated visual bug where chat channel would slide away before settings appeared
-  - Both pages now properly slide from bottom and overlay the underlying chat interface
-  - Consistent smooth animation experience across all modal-style pages
+- July 7, 2025: Converted chat settings to modal dialog system ✅
+  - Replaced full-page settings overlay with proper Dialog modal component
+  - Created new GroupSettingsModal component with responsive scrollable layout
+  - Eliminated animation layering issues by using shadcn Dialog primitives
+  - Settings now appear as overlay modal instead of page navigation
+  - Removed old group-settings-page route and navigation completely
+  - Modal includes all functionality: group editing, member management, role assignment
+  - Fixed mobile UX with proper modal backdrop and responsive design
   
 - July 6, 2025: Enhanced both web and React Native chat with native device UI components ✅
   - Web version: Added Telegram-style keyboard persistence behavior

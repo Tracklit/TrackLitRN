@@ -33,6 +33,7 @@ import { Link, useLocation } from "wouter";
 
 import { useAuth } from "@/hooks/use-auth";
 import flameLogoPath from "@assets/IMG_4720_1751015409604.png";
+import GroupSettingsModal from "@/components/group-settings-modal";
 
 // Global image cache to prevent reloading
 const imageCache = new Map<string, HTMLImageElement>();
@@ -235,6 +236,7 @@ const ChatPage = () => {
   const [isAtTop, setIsAtTop] = useState(true);
   const [isAnimating, setIsAnimating] = useState(false); // Track animation state
   const [groupFilter, setGroupFilter] = useState<'my' | 'public'>('my'); // Filter for groups
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false); // Settings modal state
   
   const [location] = useLocation();
   const queryClient = useQueryClient();
@@ -1240,7 +1242,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
                 className="text-white"
                 onClick={() => {
                   console.log('Settings button clicked for group:', selectedChat.id);
-                  setLocation(`/chats/groups/${selectedChat.id}/settings`);
+                  setSettingsModalOpen(true);
                 }}
               >
                 <Settings className="h-4 w-4" />
@@ -1808,6 +1810,15 @@ const ConnectionsList = ({ onClose, onMessageUser }: { onClose: () => void; onMe
           )}
         </div>
       </div>
+      
+      {/* Settings Modal */}
+      {selectedChat?.type === 'group' && (
+        <GroupSettingsModal
+          groupId={selectedChat.id}
+          isOpen={settingsModalOpen}
+          onClose={() => setSettingsModalOpen(false)}
+        />
+      )}
     </div>
   );
 };
