@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Camera, Trash2, UserPlus, Users, Crown, Shield, User } from "lucide-react";
+import { ArrowLeft, Camera, Trash2, UserPlus, Users, Crown, Shield, User, LogOut } from "lucide-react";
 
 interface ChannelMember {
   id: number;
@@ -280,8 +280,11 @@ export default function ChannelSettingsPage() {
                       type="button"
                       size="sm"
                       variant="secondary"
-                      className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0"
-                      onClick={() => fileInputRef.current?.click()}
+                      className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0 bg-blue-600 hover:bg-blue-700 text-white border-2 border-white"
+                      onClick={() => {
+                        console.log('Camera button clicked');
+                        fileInputRef.current?.click();
+                      }}
                     >
                       <Camera className="h-4 w-4" />
                     </Button>
@@ -334,7 +337,7 @@ export default function ChannelSettingsPage() {
                 checked={isPrivate}
                 onCheckedChange={handlePrivacyToggle}
                 disabled={!isCurrentUserAdmin}
-                className="data-[state=checked]:bg-blue-600"
+                className="data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-slate-600"
               />
             </div>
 
@@ -418,11 +421,11 @@ export default function ChannelSettingsPage() {
                           variant="ghost"
                           size="icon"
                           onClick={() => {
-                            console.log('Removing member:', member.id);
+                            console.log('Removing member:', member.id, 'from channel:', channelId);
                             removeMemberMutation.mutate(member.id);
                           }}
                           disabled={removeMemberMutation.isPending}
-                          className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                          className="text-red-400 hover:text-red-300 hover:bg-red-900/20 h-8 w-8"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
