@@ -1326,7 +1326,9 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
                         <DropdownMenuItem
                           onClick={() => {
                             console.log('Settings clicked for group:', selectedChat.id);
+                            console.log('Current settingsModalOpen state:', settingsModalOpen);
                             setSettingsModalOpen(true);
+                            console.log('Set settingsModalOpen to true');
                           }}
                         >
                           <Settings className="h-4 w-4 mr-2" />
@@ -1926,11 +1928,22 @@ const ConnectionsList = ({ onClose, onMessageUser }: { onClose: () => void; onMe
       </div>
       
       {/* Settings Modal */}
-      {selectedChat?.type === 'group' && (
+      {(() => {
+        console.log('Settings Modal render check:', {
+          selectedChatType: selectedChat?.type,
+          selectedChatId: selectedChat?.id,
+          settingsModalOpen: settingsModalOpen,
+          shouldRender: selectedChat?.type === 'group' && settingsModalOpen
+        });
+        return selectedChat?.type === 'group';
+      })() && (
         <GroupSettingsModal
           groupId={selectedChat.id}
           isOpen={settingsModalOpen}
-          onClose={() => setSettingsModalOpen(false)}
+          onClose={() => {
+            console.log('Modal close clicked');
+            setSettingsModalOpen(false);
+          }}
         />
       )}
     </div>
