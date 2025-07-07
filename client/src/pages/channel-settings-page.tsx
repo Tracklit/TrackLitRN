@@ -98,13 +98,28 @@ export default function ChannelSettingsPage() {
       if (data.is_private !== undefined) formData.append('is_private', data.is_private.toString());
       if (data.image) formData.append('image', data.image);
 
-      const response = await apiRequest(`/api/chat/groups/${channelId}`, {
+      console.log('FormData contents:');
+      for (let [key, value] of formData.entries()) {
+        console.log(key, ':', value);
+      }
+
+      const response = await fetch(`/api/chat/groups/${channelId}`, {
         method: 'PATCH',
         body: formData,
+        credentials: 'include',
       });
       
-      console.log('Channel update response:', response);
-      return response;
+      console.log('Raw response:', response);
+      
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response:', errorData);
+        throw new Error(`HTTP ${response.status}: ${errorData}`);
+      }
+      
+      const result = await response.json();
+      console.log('Channel update response:', result);
+      return result;
     },
     onSuccess: (data) => {
       console.log('Channel update success:', data);
