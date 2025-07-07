@@ -108,7 +108,7 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
-- July 7, 2025: Comprehensive image optimization and animation removal ✅
+- July 7, 2025: Comprehensive image optimization and chat scroll behavior ✅
   - Created client-side image compression utility with WebP format and automatic resizing
   - Built OptimizedAvatar component with lazy loading and skeleton placeholders for fast loading
   - Built OptimizedMessageImage component for chat images with intersection observer lazy loading
@@ -116,6 +116,9 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
   - Replaced channel settings spinner with comprehensive skeleton loading states
   - Applied optimized components throughout chat pages, settings, and message displays
   - Removed all slide animations from CSS and chat navigation for instant transitions
+  - Implemented automatic scroll-to-bottom when posting messages or images
+  - Added keyboard detection and height adjustment for mobile chat
+  - Messages container now adjusts padding when keyboard is visible to keep new messages above keyboard
   - Images now load significantly faster with automatic compression and proper sizing
 
 - July 7, 2025: Enhanced channel settings with dynamic save button and cleaner interface ✅

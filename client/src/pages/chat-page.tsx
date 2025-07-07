@@ -887,6 +887,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1018,6 +1019,11 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
           ? ['/api/chat/groups', selectedChat.id, 'messages']
           : ['/api/chat/direct', selectedChat?.id, 'messages']
       });
+      
+      // Scroll to bottom after message is sent and DOM updates
+      setTimeout(() => {
+        scrollToBottom(false);
+      }, 100);
     }
   });
 
@@ -1147,8 +1153,8 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
         }
       }, 50);
       
-      // Scroll to bottom after sending
-      scrollToBottom();
+      // Scroll to bottom after sending (immediate for local feedback)
+      scrollToBottom(false);
     }
   };
 
@@ -1204,16 +1210,54 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     setShowScrollToBottom(!isAtBottom);
   }, []);
 
-  // Scroll to bottom function
-  const scrollToBottom = useCallback(() => {
+  // Enhanced scroll to bottom function that accounts for keyboard
+  const scrollToBottom = useCallback((immediate: boolean = false) => {
     const container = messagesContainerRef.current;
     if (container) {
-      container.scrollTo({
-        top: container.scrollHeight,
-        behavior: 'smooth'
-      });
+      // Calculate scroll position accounting for keyboard
+      const scrollTop = container.scrollHeight - container.clientHeight;
+      
+      if (immediate) {
+        container.scrollTop = scrollTop;
+      } else {
+        container.scrollTo({
+          top: scrollTop,
+          behavior: 'smooth'
+        });
+      }
       setShowScrollToBottom(false);
     }
+  }, []);
+
+  // Keyboard detection for mobile devices
+  useEffect(() => {
+    const handleResize = () => {
+      // Detect keyboard on mobile by checking viewport height change
+      const viewportHeight = window.visualViewport?.height || window.innerHeight;
+      const documentHeight = document.documentElement.clientHeight;
+      const heightDiff = documentHeight - viewportHeight;
+      
+      if (heightDiff > 150) { // Keyboard is likely visible
+        setKeyboardHeight(heightDiff);
+      } else {
+        setKeyboardHeight(0);
+      }
+    };
+
+    // Listen for visual viewport changes (more reliable for keyboard detection)
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
+    } else {
+      window.addEventListener('resize', handleResize);
+    }
+
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleResize);
+      } else {
+        window.removeEventListener('resize', handleResize);
+      }
+    };
   }, []);
 
   // Force scroll to bottom immediately after DOM paint
@@ -1228,6 +1272,16 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
       setShowScrollToBottom(false);
     }
   }, [messages]);
+
+  // Auto-scroll when keyboard height changes
+  useEffect(() => {
+    if (keyboardHeight > 0) {
+      // Keyboard appeared - scroll to bottom to keep new messages visible
+      setTimeout(() => {
+        scrollToBottom(false);
+      }, 100);
+    }
+  }, [keyboardHeight, scrollToBottom]);
 
   // Reset initial load flag when changing channels
   useEffect(() => {
@@ -1352,6 +1406,9 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
         ref={messagesContainerRef} 
         className="flex-1 overflow-y-auto p-4 space-y-4"
         onScroll={handleScroll}
+        style={{
+          paddingBottom: keyboardHeight > 0 ? `${keyboardHeight + 20}px` : '16px'
+        }}
       >
         {messagesLoading ? (
           <div className="space-y-4">
