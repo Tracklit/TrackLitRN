@@ -26,7 +26,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ 
   storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit (increased for mobile photos)
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) {
       cb(null, true);
@@ -1001,6 +1001,9 @@ router.get("/api/chat/groups/:groupId/messages", async (req: Request, res: Respo
 // Send group message
 router.post("/api/chat/groups/:groupId/messages", upload.single('image'), async (req: Request, res: Response) => {
   console.log('=== GROUP MESSAGE ROUTE HIT ===');
+  console.log('Request authenticated:', req.isAuthenticated());
+  console.log('User:', req.user);
+  
   if (!req.isAuthenticated()) return res.sendStatus(401);
   
   try {
@@ -1063,6 +1066,8 @@ router.post("/api/chat/groups/:groupId/messages", upload.single('image'), async 
       }
     }
 
+    console.log('About to insert message:', { groupId, userId, messageText, finalMessageType, mediaUrl });
+
     // Insert message
     const messageResult = await db.execute(sql`
       INSERT INTO chat_group_messages (group_id, sender_id, sender_name, sender_profile_image, text, message_type, media_url, reply_to_id)
@@ -1086,7 +1091,8 @@ router.post("/api/chat/groups/:groupId/messages", upload.single('image'), async 
     res.json(message);
   } catch (error) {
     console.error("Error sending group message:", error);
-    res.status(500).json({ error: "Failed to send message" });
+    console.error("Error details:", error.message, error.stack);
+    res.status(500).json({ error: "Failed to send message", details: error.message });
   }
 });
 
