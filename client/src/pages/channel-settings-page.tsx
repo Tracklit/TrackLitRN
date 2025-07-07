@@ -82,6 +82,11 @@ export default function ChannelSettingsPage() {
   // Initialize form data when channel loads
   useEffect(() => {
     if (channel) {
+      console.log('=== CHANNEL SETTINGS DATA ===');
+      console.log('Full channel object:', channel);
+      console.log('Channel image field:', channel.image);
+      console.log('Channel avatar_url field:', channel.avatar_url);
+      console.log('Image preview state:', imagePreview);
       setChannelName(channel.name || "");
       setChannelDescription(channel.description || "");
       setIsPrivate(channel.is_private || false);
@@ -124,8 +129,19 @@ export default function ChannelSettingsPage() {
     onSuccess: (data) => {
       console.log('Channel update success:', data);
       toast({ title: "Channel updated successfully" });
+      
+      // Clear the selected file and preview after successful update
+      setSelectedFile(null);
+      setImagePreview(null);
+      
+      // Invalidate all related cache queries
       queryClient.invalidateQueries({ queryKey: [`/api/chat/groups/${channelId}`] });
       queryClient.invalidateQueries({ queryKey: ['/api/chat/groups'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/conversations'] });
+      
+      // Force refetch the channel data
+      queryClient.refetchQueries({ queryKey: [`/api/chat/groups/${channelId}`] });
+      queryClient.refetchQueries({ queryKey: ['/api/chat/groups'] });
     },
     onError: (error) => {
       console.error('Channel update error:', error);
@@ -302,7 +318,11 @@ export default function ChannelSettingsPage() {
               <div className="flex justify-center">
                 <div className="relative">
                   <Avatar className="w-24 h-24">
-                    <AvatarImage src={imagePreview || channel.avatar_url} />
+                    <AvatarImage 
+                      src={imagePreview || channel.image} 
+                      onError={() => console.log('Avatar failed to load:', imagePreview || channel.image)}
+                      onLoad={() => console.log('Avatar loaded:', imagePreview || channel.image)}
+                    />
                     <AvatarFallback className="bg-blue-600 text-white text-2xl">
                       {channel.name?.charAt(0)?.toUpperCase() || "C"}
                     </AvatarFallback>
