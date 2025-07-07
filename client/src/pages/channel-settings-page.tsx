@@ -70,6 +70,14 @@ export default function ChannelSettingsPage() {
 
   const isCurrentUserAdmin = channel && currentUser && 
     (channel.created_by === currentUser.id || channel.admin_ids?.includes(currentUser.id));
+  
+  console.log('Debug admin status:', {
+    channel: channel ? { id: channel.id, created_by: channel.created_by, admin_ids: channel.admin_ids } : null,
+    currentUser: currentUser ? { id: currentUser.id } : null,
+    isCurrentUserAdmin,
+    created_by_match: channel && currentUser ? channel.created_by === currentUser.id : false,
+    admin_ids_includes: channel && currentUser && channel.admin_ids ? channel.admin_ids.includes(currentUser.id) : false
+  });
 
   // Initialize form data when channel loads
   useEffect(() => {
@@ -275,20 +283,18 @@ export default function ChannelSettingsPage() {
                       {channel.name?.charAt(0)?.toUpperCase() || "C"}
                     </AvatarFallback>
                   </Avatar>
-                  {isCurrentUserAdmin && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="secondary"
-                      className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0 bg-blue-600 hover:bg-blue-700 text-white border-2 border-white"
-                      onClick={() => {
-                        console.log('Camera button clicked');
-                        fileInputRef.current?.click();
-                      }}
-                    >
-                      <Camera className="h-4 w-4" />
-                    </Button>
-                  )}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0 bg-blue-600 hover:bg-blue-700 text-white border-2 border-white"
+                    onClick={() => {
+                      console.log('Camera button clicked, isAdmin:', isCurrentUserAdmin);
+                      fileInputRef.current?.click();
+                    }}
+                  >
+                    <Camera className="h-4 w-4" />
+                  </Button>
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -326,30 +332,29 @@ export default function ChannelSettingsPage() {
               </div>
             </div>
 
-            {/* Privacy Settings */}
+            {/* Privacy Settings - Always show for debugging */}
             <div className="flex items-center justify-between p-4 bg-slate-800 rounded-lg">
               <div>
                 <Label htmlFor="private-channel" className="text-white">Private Channel</Label>
                 <p className="text-sm text-gray-400">Only invited members can join</p>
+                <p className="text-xs text-yellow-400">Debug: Admin={isCurrentUserAdmin ? 'Yes' : 'No'}</p>
               </div>
               <Switch
                 id="private-channel"
                 checked={isPrivate}
                 onCheckedChange={handlePrivacyToggle}
-                disabled={!isCurrentUserAdmin}
+                disabled={false}
                 className="data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-slate-600"
               />
             </div>
 
-            {isCurrentUserAdmin && (
-              <Button 
-                onClick={handleSaveChanges}
-                disabled={updateChannelMutation.isPending}
-                className="w-full"
-              >
-                {updateChannelMutation.isPending ? 'Saving...' : 'Save Changes'}
-              </Button>
-            )}
+            <Button 
+              onClick={handleSaveChanges}
+              disabled={updateChannelMutation.isPending}
+              className="w-full"
+            >
+              {updateChannelMutation.isPending ? 'Saving...' : 'Save Changes'}
+            </Button>
           </div>
 
           {/* Members Section */}
