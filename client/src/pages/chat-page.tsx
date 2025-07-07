@@ -42,7 +42,7 @@ import { useToast } from "@/hooks/use-toast";
 
 import { useAuth } from "@/hooks/use-auth";
 import flameLogoPath from "@assets/IMG_4720_1751015409604.png";
-import GroupSettingsModal from "@/components/group-settings-modal";
+
 
 // Global image cache to prevent reloading
 const imageCache = new Map<string, HTMLImageElement>();
@@ -245,9 +245,9 @@ const ChatPage = () => {
   const [isAtTop, setIsAtTop] = useState(true);
   const [isAnimating, setIsAnimating] = useState(false); // Track animation state
   const [groupFilter, setGroupFilter] = useState<'my' | 'public'>('my'); // Filter for groups
-  const [settingsModalOpen, setSettingsModalOpen] = useState(false); // Settings modal state
+
   
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -1325,10 +1325,8 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
                       })() && (
                         <DropdownMenuItem
                           onClick={() => {
-                            console.log('Settings clicked for group:', selectedChat.id);
-                            console.log('Current settingsModalOpen state:', settingsModalOpen);
-                            setSettingsModalOpen(true);
-                            console.log('Set settingsModalOpen to true');
+                            console.log('Navigating to settings for group:', selectedChat.id);
+                            setLocation(`/chats/groups/${selectedChat.id}/settings`);
                           }}
                         >
                           <Settings className="h-4 w-4 mr-2" />
@@ -1927,25 +1925,7 @@ const ConnectionsList = ({ onClose, onMessageUser }: { onClose: () => void; onMe
         </div>
       </div>
       
-      {/* Settings Modal */}
-      {(() => {
-        console.log('Settings Modal render check:', {
-          selectedChatType: selectedChat?.type,
-          selectedChatId: selectedChat?.id,
-          settingsModalOpen: settingsModalOpen,
-          shouldRender: selectedChat?.type === 'group' && settingsModalOpen
-        });
-        return selectedChat?.type === 'group';
-      })() && (
-        <GroupSettingsModal
-          groupId={selectedChat.id}
-          isOpen={settingsModalOpen}
-          onClose={() => {
-            console.log('Modal close clicked');
-            setSettingsModalOpen(false);
-          }}
-        />
-      )}
+
     </div>
   );
 };
