@@ -117,6 +117,7 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
   - Media button shows spinner during upload and message sending operations
   - Upload states prevent interaction with close buttons during processing
   - Video upload fully functional with 50MB server limit supporting MP4, MOV, AVI, WEBM formats
+  - Reinstated slide animations for chat entering/exiting with smooth transform transitions
 
 - July 7, 2025: Comprehensive image optimization and chat scroll behavior ✅
   - Created client-side image compression utility with WebP format and automatic resizing
