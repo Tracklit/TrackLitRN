@@ -598,7 +598,11 @@ const ChatPage = () => {
   const handleSelectChat = (chat: { type: 'group' | 'direct'; id: number }) => {
     console.log('Selecting chat:', chat);
     setSelectedChat(chat);
-    setViewState('chat'); // Switch to chat view without unmounting
+    
+    // Use requestAnimationFrame to ensure the chat renders in the off-screen position first
+    requestAnimationFrame(() => {
+      setViewState('chat'); // Switch to chat view without unmounting
+    });
     
     // Mark messages as read when entering a group
     if (chat.type === 'group') {
@@ -625,7 +629,11 @@ const ChatPage = () => {
         const conversation = await response.json();
         // Select the direct message chat
         setSelectedChat({ type: 'direct', id: conversation.id });
-        setViewState('chat');
+        
+        // Use requestAnimationFrame to ensure the chat renders in the off-screen position first
+        requestAnimationFrame(() => {
+          setViewState('chat');
+        });
       }
     } catch (error) {
       console.error('Error creating direct message:', error);
