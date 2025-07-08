@@ -41,7 +41,7 @@ export default function WorkoutToolsPage() {
     {
       title: "Video Analysis",
       description: "AI-powered race video analysis with Sprinthia",
-      icon: <Camera className="h-6 w-6 text-white" />,
+      icon: <Camera className="h-6 w-6" />,
       href: "/tools/video-analysis",
       disabled: false,
       backgroundImage: toolBackgrounds[0],
@@ -50,7 +50,7 @@ export default function WorkoutToolsPage() {
     {
       title: "Photo Finish",
       description: "Analyze race videos with timing overlays",
-      icon: <Video className="h-6 w-6 text-white" />,
+      icon: <Video className="h-6 w-6" />,
       href: "/tools/photo-finish",
       disabled: false,
       backgroundImage: toolBackgrounds[1],
@@ -59,7 +59,7 @@ export default function WorkoutToolsPage() {
     {
       title: "Start Gun",
       description: "Simulate a race start signal",
-      icon: <Volume2 className="h-6 w-6 text-white" />,
+      icon: <Volume2 className="h-6 w-6" />,
       href: "/tools/start-gun",
       disabled: false,
       backgroundImage: toolBackgrounds[2],
@@ -68,7 +68,7 @@ export default function WorkoutToolsPage() {
     {
       title: "Stopwatch",
       description: "Track your time with precision",
-      icon: <Timer className="h-6 w-6 text-white" />,
+      icon: <Timer className="h-6 w-6" />,
       href: "/tools/stopwatch",
       disabled: false,
       backgroundImage: toolBackgrounds[3],
@@ -77,7 +77,7 @@ export default function WorkoutToolsPage() {
     {
       title: "Journal",
       description: "View and search your workout notes",
-      icon: <BookOpen className="h-6 w-6 text-white" />,
+      icon: <BookOpen className="h-6 w-6" />,
       href: "/tools/journal",
       disabled: false,
       backgroundImage: toolBackgrounds[4],
@@ -86,7 +86,7 @@ export default function WorkoutToolsPage() {
     {
       title: "Exercise Library",
       description: "Store and organize your training videos",
-      icon: <Video className="h-6 w-6 text-white" />,
+      icon: <Video className="h-6 w-6" />,
       href: "/tools/exercise-library",
       disabled: false,
       backgroundImage: toolBackgrounds[5],
@@ -149,7 +149,8 @@ export default function WorkoutToolsPage() {
               // Enabled card
               <Link key={index} href={card.href}>
                 <Card 
-                  className="cursor-pointer h-[140px] mx-auto mb-2 overflow-hidden relative group hover:scale-105 transition-all duration-300 border border-gray-400/20 opacity-80"
+                  className="cursor-pointer h-[140px] mx-auto mb-2 overflow-hidden relative group hover:scale-105 transition-all duration-300 bg-primary/5"
+                  style={{ border: '0.5px solid rgba(168, 85, 247, 0.25)', borderRadius: '6px' }}
                 >
                   {/* Background Image */}
                   {card.hasBackground && card.backgroundImage && (
@@ -168,8 +169,8 @@ export default function WorkoutToolsPage() {
                   <CardContent className="p-2.5 relative h-full flex flex-col justify-center z-10">
                     <div className="flex flex-col items-center text-center gap-2">
                       <div>
-                        <h2 className="text-base font-bold mb-0.5 text-white">{card.title}</h2>
-                        <p className="text-white/80 text-xs px-1 line-clamp-2 overflow-hidden">{card.description}</p>
+                        <h2 className="text-base font-bold mb-0.5">{card.title}</h2>
+                        <p className="text-muted-foreground text-xs px-1 line-clamp-2 overflow-hidden">{card.description}</p>
                       </div>
                     </div>
                   </CardContent>
