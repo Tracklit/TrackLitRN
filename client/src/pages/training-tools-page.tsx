@@ -122,7 +122,10 @@ export default function WorkoutToolsPage() {
               <div key={index}>
                 <Card 
                   className="cursor-not-allowed h-[140px] mx-auto mb-2 overflow-hidden relative bg-muted/30"
-                  style={{ borderRadius: '6px' }}
+                  style={{ 
+                    borderRadius: '6px',
+                    boxShadow: '0 0 20px rgba(168, 85, 247, 0.5)'
+                  }}
                 >
                   <div className="absolute inset-0 bg-background/50"></div>
                   <CardContent className="p-2.5 relative h-full flex flex-col justify-center">
@@ -151,7 +154,11 @@ export default function WorkoutToolsPage() {
               <Link key={index} href={card.href}>
                 <Card 
                   className="cursor-pointer h-[140px] mx-auto mb-2 overflow-hidden relative group hover:scale-105 transition-all duration-300 bg-primary/5"
-                  style={{ border: '0.5px solid rgba(168, 85, 247, 0.25)', borderRadius: '6px' }}
+                  style={{ 
+                    border: '0.5px solid rgba(168, 85, 247, 0.25)', 
+                    borderRadius: '6px',
+                    boxShadow: '0 0 20px rgba(168, 85, 247, 0.5)'
+                  }}
                 >
                   {/* Background Image */}
                   {card.hasBackground && card.backgroundImage && (

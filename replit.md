@@ -108,6 +108,12 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
+- July 8, 2025: Enhanced Tools page with purple glow and added Sprinthia to navigation ✅
+  - Added purple outer glow to all Tools page cards matching ticker glow effect
+  - Applied boxShadow: '0 0 20px rgba(168, 85, 247, 0.5)' to both enabled and disabled cards
+  - Added Sprinthia as 6th bottom navigation item with robot icon
+  - Updated navigation grid from 5 to 6 columns to accommodate Sprinthia
+  - Bottom navigation now includes: Home, Practice, Programs, Race, Tools, Sprinthia
 - July 8, 2025: Updated Tools page cards to use 6px corner rounding ✅
   - Added 6px border radius to disabled tool cards for consistency
   - Enabled cards already had 6px rounding in inline styles

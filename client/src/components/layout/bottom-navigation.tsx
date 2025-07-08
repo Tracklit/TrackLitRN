@@ -7,6 +7,7 @@ import {
   faTrophy,
   faImage,
   faStar,
+  faRobot,
 } from '@fortawesome/free-solid-svg-icons';
 
 import { cn } from "@/lib/utils";
@@ -45,6 +46,12 @@ const navItems = [
     href: "/training-tools", 
     icon: <FontAwesomeIcon icon={faImage} className="h-4 w-4" />,
     key: "tools"
+  },
+  { 
+    title: "Sprinthia", 
+    href: "/sprinthia", 
+    icon: <FontAwesomeIcon icon={faRobot} className="h-4 w-4" />,
+    key: "sprinthia"
   }
 ];
 
@@ -145,7 +152,7 @@ export function BottomNavigation() {
       )}
     >
       <nav className="bg-gray-900 shadow-lg border-t border-gray-700 h-16">
-        <div className="grid grid-cols-5 h-full">
+        <div className="grid grid-cols-6 h-full">
           {navItems.map((item, index) => (
             <NavItem
               key={item.key}
