@@ -5,7 +5,7 @@ import {
   faCalendarDays,
   faBook,
   faTrophy,
-  faClock,
+  faImage,
   faStar,
 } from '@fortawesome/free-solid-svg-icons';
 
@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 // Navigation items based on dashboard card order
 const navItems = [
   { 
-    title: "Dashboard", 
+    title: "Home", 
     href: "/", 
     icon: <FontAwesomeIcon icon={faHome} className="h-4 w-4" />,
     key: "dashboard"
@@ -43,7 +43,7 @@ const navItems = [
   { 
     title: "Tools", 
     href: "/training-tools", 
-    icon: <FontAwesomeIcon icon={faClock} className="h-4 w-4" />,
+    icon: <FontAwesomeIcon icon={faImage} className="h-4 w-4" />,
     key: "tools"
   }
 ];
