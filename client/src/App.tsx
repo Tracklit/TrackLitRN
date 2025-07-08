@@ -147,6 +147,16 @@ function Router() {
   const [location] = useLocation();
   const isChatRoute = location.startsWith('/chat') || location.startsWith('/chats');
   
+  // For chat routes, determine the base route to keep mounted
+  const baseRoute = isChatRoute ? (
+    location === '/chat' || location === '/chats' ? '/' : 
+    location.includes('/practice') ? '/practice' :
+    location.includes('/programs') ? '/programs' :
+    location.includes('/meets') ? '/meets' :
+    location.includes('/tools') ? '/tools' :
+    '/' // Default to dashboard
+  ) : location;
+  
   return (
     <>
       <ScrollRestoration />
@@ -161,8 +171,8 @@ function Router() {
           isolation: 'isolate'
         }}
       >
-        {/* Main App Routes - always rendered */}
-        <Switch>
+        {/* Main App Routes - always rendered, but use baseRoute for chat scenarios */}
+        <Switch location={isChatRoute ? baseRoute : location}>
         {/* Dashboard */}
         <ProtectedRoute path="/" component={HomePage} />
       
@@ -202,10 +212,7 @@ function Router() {
         <ProtectedRoute path="/clubs" component={ClubsPage} />
         <ProtectedRoute path="/club/:id" component={ClubDetailPage} />
         <ProtectedRoute path="/club-management/:id" component={ClubManagementPage} />
-        <ProtectedRoute path="/chat" component={ChatPage} />
-        <ProtectedRoute path="/chats" component={ChatPage} />
         <ProtectedRoute path="/chats/channels/:id/settings" component={ChannelSettingsPage} />
-        <ProtectedRoute path="/chats/channels/:id" component={ChatPage} />
 
         
         {/* Rehab */}
