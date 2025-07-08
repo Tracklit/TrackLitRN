@@ -19,31 +19,31 @@ const navItems = [
   { 
     title: "Dashboard", 
     href: "/", 
-    icon: <FontAwesomeIcon icon={faHome} className="h-3 w-3" />,
+    icon: <FontAwesomeIcon icon={faHome} className="h-4 w-4" />,
     key: "dashboard"
   },
   { 
     title: "Practice", 
     href: "/practice", 
-    icon: <FontAwesomeIcon icon={faCalendarDays} className="h-3 w-3" />,
+    icon: <FontAwesomeIcon icon={faCalendarDays} className="h-4 w-4" />,
     key: "practice"
   },
   { 
     title: "Programs", 
     href: "/programs", 
-    icon: <FontAwesomeIcon icon={faBook} className="h-3 w-3" />,
+    icon: <FontAwesomeIcon icon={faBook} className="h-4 w-4" />,
     key: "programs"
   },
   { 
     title: "Race", 
     href: "/meets", 
-    icon: <FontAwesomeIcon icon={faTrophy} className="h-3 w-3" />,
+    icon: <FontAwesomeIcon icon={faTrophy} className="h-4 w-4" />,
     key: "race"
   },
   { 
     title: "Tools", 
     href: "/training-tools", 
-    icon: <FontAwesomeIcon icon={faClock} className="h-3 w-3" />,
+    icon: <FontAwesomeIcon icon={faClock} className="h-4 w-4" />,
     key: "tools"
   }
 ];
@@ -77,7 +77,7 @@ function NavItem({ href, icon, title, isActive, onClick, showBadge, badgeCount }
           <div className="flex items-center justify-center">
             {icon}
           </div>
-          <span className="text-xs font-medium">{title}</span>
+          <span className="font-medium" style={{ fontSize: '8px' }}>{title}</span>
         </div>
         {showBadge && badgeCount && badgeCount > 0 && (
           <Badge 
