@@ -302,41 +302,14 @@ export default function HomePage() {
 
   // Quote removed as requested
 
-  // Prevent scrolling on dashboard content only
-  useEffect(() => {
-    const preventWheelScroll = (e: Event) => {
-      e.preventDefault();
-      e.stopPropagation();
-    };
 
-    const preventTouchScroll = (e: Event) => {
-      e.preventDefault();
-      e.stopPropagation();
-    };
-
-    // Prevent scrolling on the main dashboard container
-    const mainElement = document.querySelector('main[data-dashboard="true"]') as HTMLElement;
-    if (mainElement) {
-      mainElement.addEventListener('wheel', preventWheelScroll, { passive: false });
-      mainElement.addEventListener('touchmove', preventTouchScroll, { passive: false });
-
-      return () => {
-        mainElement.removeEventListener('wheel', preventWheelScroll);
-        mainElement.removeEventListener('touchmove', preventTouchScroll);
-      };
-    }
-  }, []);
 
   return (
     <div 
-      className="h-screen text-foreground bg-background overflow-hidden" 
+      className="min-h-screen text-foreground bg-background" 
       style={{ 
-        overscrollBehavior: 'none', 
         marginTop: '15px',
-        position: 'relative',
-        transform: 'translate3d(0, 0, 0)',
-        backfaceVisibility: 'hidden',
-        willChange: 'auto'
+        position: 'relative'
       }}
     >
       {/* Preload critical images */}
@@ -384,7 +357,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <main data-dashboard="true" className={`px-4 container mx-auto max-w-7xl overflow-hidden ${isTickerVisible ? 'pt-40' : 'pt-20'}`}>
+      <main data-dashboard="true" className={`px-4 container mx-auto max-w-7xl ${isTickerVisible ? 'pt-40' : 'pt-20'}`}>
         {/* Logo will be placed here in the future */}
         <div className="h-1 mx-auto" style={{ maxWidth: "540px" }}>
           {/* Reserved space for logo */}
@@ -396,11 +369,11 @@ export default function HomePage() {
 
         
         {/* Main Category Cards - Single Column Full Width */}
-        <section className="mb-4 overflow-hidden">
+        <section className="mb-4">
           <div className="mx-auto px-5" style={{ maxWidth: "480px" }}>
             {categoryCards.map((card, index) => 
               card.disabled ? (
-                <Card key={index} className={`h-[90px] overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 shadow-2xl ${index > 0 ? 'mt-3' : ''}`} style={{ border: '0.5px solid rgba(168, 85, 247, 0.25)', borderRadius: '6px' }}>
+                <Card key={index} className={`h-[90px] overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 shadow-2xl ${index > 0 ? 'mt-6' : ''}`} style={{ border: '0.5px solid rgba(168, 85, 247, 0.25)', borderRadius: '6px' }}>
                   <CardContent className="p-4 relative h-full flex flex-col justify-center opacity-50">
                     <div className="flex items-center justify-between">
                       <div className="text-left">
@@ -416,7 +389,7 @@ export default function HomePage() {
                 </Card>
               ) : (
                 <Link href={card.href} key={index}>
-                  <Card className={`cursor-pointer shadow-2xl h-[90px] overflow-hidden group relative bg-primary/5 ${index > 0 ? 'mt-3' : ''}`} style={{ border: '0.5px solid rgba(168, 85, 247, 0.25)', borderRadius: '6px' }}>
+                  <Card className={`cursor-pointer shadow-2xl h-[90px] overflow-hidden group relative bg-primary/5 ${index > 0 ? 'mt-6' : ''}`} style={{ border: '0.5px solid rgba(168, 85, 247, 0.25)', borderRadius: '6px' }}>
                     
                     {/* Special Practice Session - Full Width */}
                     {card.isSpecial ? (
