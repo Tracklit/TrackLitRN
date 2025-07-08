@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { HamburgerMenu } from '@/components/ui/hamburger-menu';
 import { Meet, Result, WorkoutSessionPreview } from '@shared/schema';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -64,10 +64,12 @@ import sprinthiaBackground from '@assets/image_1750019864190.png';
 
 export default function HomePage() {
   const { user } = useAuth();
+  const [location] = useLocation();
   const [isCreateMeetOpen, setIsCreateMeetOpen] = useState(false);
   const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
   const [isCarouselPaused, setIsCarouselPaused] = useState(false);
   const [showPracticePulse, setShowPracticePulse] = useState(false);
+  const [animationKey, setAnimationKey] = useState(0);
 
   // Critical dashboard images for preloading with 80% compression
   const dashboardImages = [
@@ -237,16 +239,28 @@ export default function HomePage() {
 
   const todaysSession = activeSessionData;
 
-  // Trigger practice card pulse animation on component mount
+  // Trigger practice card pulse animation every time user navigates to home
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowPracticePulse(true);
-      // Turn off the pulse after animation completes
-      setTimeout(() => setShowPracticePulse(false), 3000);
-    }, 500); // Small delay to ensure page is loaded
-    
-    return () => clearTimeout(timer);
-  }, []);
+    if (location === '/' || location === '') {
+      console.log('Home page navigation detected, triggering practice pulse animation');
+      // Increment animation key to force re-render
+      setAnimationKey(prev => prev + 1);
+      
+      // Reset and start pulse animation
+      setShowPracticePulse(false);
+      const timer = setTimeout(() => {
+        console.log('Starting practice pulse animation');
+        setShowPracticePulse(true);
+        // Turn off the pulse after animation completes
+        setTimeout(() => {
+          console.log('Stopping practice pulse animation');
+          setShowPracticePulse(false);
+        }, 3000);
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [location]); // Trigger on location change
 
   // Get next scheduled meet
   const nextMeet = meets?.find(meet => new Date(meet.date) > new Date());
@@ -401,7 +415,7 @@ export default function HomePage() {
                 </Card>
               ) : (
                 <Link href={card.href} key={index}>
-                  <Card className={`cursor-pointer shadow-2xl h-[90px] overflow-hidden group relative bg-primary/5 ${index > 0 ? 'mt-6' : ''} ${card.isSpecial && showPracticePulse ? 'practice-pulse' : ''}`} style={{ border: '0.5px solid rgba(168, 85, 247, 0.25)', borderRadius: '6px' }}>
+                  <Card key={card.isSpecial ? `practice-${animationKey}` : index} className={`cursor-pointer shadow-2xl h-[90px] overflow-hidden group relative bg-primary/5 ${index > 0 ? 'mt-6' : ''} ${card.isSpecial && showPracticePulse ? 'practice-pulse' : ''}`} style={{ border: '0.5px solid rgba(168, 85, 247, 0.25)', borderRadius: '6px' }}>
                     
                     {/* Special Practice Session - Full Width */}
                     {card.isSpecial ? (
