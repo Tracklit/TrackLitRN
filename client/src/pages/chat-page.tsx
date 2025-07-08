@@ -638,7 +638,7 @@ const ChatPage = () => {
     } ${isChatRoute ? 'pointer-events-auto' : 'pointer-events-none'}`}>
       {/* Channel List View - Always mounted but conditionally visible */}
       <div 
-        className={`absolute inset-0 w-full h-full bg-slate-900 transition-transform duration-300 ease-in-out ${
+        className={`absolute inset-0 w-full h-full bg-slate-900 transition-transform duration-300 ease-in-out z-10 ${
           viewState === 'list' ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -849,7 +849,7 @@ const ChatPage = () => {
       
       {/* Chat Interface View - Always mounted but conditionally visible */}
       <div 
-        className={`absolute inset-0 w-full h-full transition-transform duration-300 ease-in-out ${
+        className={`absolute inset-0 w-full h-full bg-slate-900 transition-transform duration-300 ease-in-out z-20 ${
           viewState === 'chat' ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
