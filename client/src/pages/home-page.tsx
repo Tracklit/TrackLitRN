@@ -249,11 +249,11 @@ export default function HomePage() {
       // Reset and start pulse animation
       setShowPracticePulse(false);
       const timer = setTimeout(() => {
-        console.log('Starting practice pulse animation - setting showPracticePulse to true');
+        console.log('Starting practice pulse animation');
         setShowPracticePulse(true);
         // Turn off the pulse after animation completes
         setTimeout(() => {
-          console.log('Stopping practice pulse animation - setting showPracticePulse to false');
+          console.log('Stopping practice pulse animation');
           setShowPracticePulse(false);
         }, 3000);
       }, 500);
@@ -415,7 +415,7 @@ export default function HomePage() {
                 </Card>
               ) : (
                 <Link href={card.href} key={index}>
-                  <Card key={card.isSpecial ? `practice-${animationKey}` : index} className={`cursor-pointer shadow-2xl h-[90px] overflow-hidden group relative bg-primary/5 ${index > 0 ? 'mt-6' : ''} ${card.isSpecial && showPracticePulse ? 'practice-pulse' : ''}`} style={{ borderRadius: '6px' }} onClick={() => card.isSpecial && console.log('Practice card clicked - showPracticePulse:', showPracticePulse, 'class applied:', card.isSpecial && showPracticePulse)}>
+                  <Card key={card.isSpecial ? `practice-${animationKey}` : index} className={`cursor-pointer shadow-2xl h-[90px] overflow-hidden group relative bg-primary/5 ${index > 0 ? 'mt-6' : ''} ${card.isSpecial && showPracticePulse ? 'practice-pulse' : ''}`} style={{ border: '0.5px solid rgba(168, 85, 247, 0.25)', borderRadius: '6px' }}>
                     
                     {/* Special Practice Session - Full Width */}
                     {card.isSpecial ? (
