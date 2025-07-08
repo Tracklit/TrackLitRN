@@ -2296,6 +2296,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Video upload endpoint for messages
+  const messageVideoUpload = multer({
+    dest: 'uploads/messages/',
+    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit for videos
+    fileFilter: (req, file, cb) => {
+      const allowedTypes = /mp4|mov|avi|webm/;
+      const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+      const mimetype = file.mimetype.startsWith('video/');
+      
+      if (mimetype && extname) {
+        return cb(null, true);
+      } else {
+        cb(new Error('Only video files (MP4, MOV, AVI, WEBM) are allowed'));
+      }
+    }
+  });
+
+  app.post("/api/upload/video", messageVideoUpload.single('video'), async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No video file provided" });
+      }
+
+      const fileName = `video-${req.user!.id}-${Date.now()}${path.extname(req.file.originalname)}`;
+      const finalPath = path.join('uploads/messages', fileName);
+      
+      // Ensure the messages directory exists
+      const messagesDir = path.join('uploads/messages');
+      if (!fs.existsSync(messagesDir)) {
+        fs.mkdirSync(messagesDir, { recursive: true });
+      }
+      
+      // Move file to final location
+      fs.renameSync(req.file.path, finalPath);
+      
+      res.json({ 
+        url: `/uploads/messages/${fileName}`,
+        filename: fileName
+      });
+    } catch (error: any) {
+      console.error('Video upload error:', error);
+      res.status(500).json({ error: 'Video upload failed' });
+    }
+  });
+
   // Club endpoints
   app.get("/api/clubs", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);

@@ -26,12 +26,12 @@ const storage = multer.diskStorage({
 
 const upload = multer({ 
   storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit (increased for mobile photos)
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit (increased for videos)
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
+    if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/')) {
       cb(null, true);
     } else {
-      cb(new Error('Only image files are allowed'));
+      cb(new Error('Only image and video files are allowed'));
     }
   }
 });
@@ -999,7 +999,7 @@ router.get("/api/chat/groups/:groupId/messages", async (req: Request, res: Respo
 });
 
 // Send group message
-router.post("/api/chat/groups/:groupId/messages", upload.single('image'), async (req: Request, res: Response) => {
+router.post("/api/chat/groups/:groupId/messages", upload.single('media'), async (req: Request, res: Response) => {
   console.log('=== GROUP MESSAGE ROUTE HIT ===');
   console.log('Request authenticated:', req.isAuthenticated());
   console.log('User:', req.user);
@@ -1027,7 +1027,7 @@ router.post("/api/chat/groups/:groupId/messages", upload.single('image'), async 
     // Validate that we have either text or a file
     if (!text?.trim() && !file) {
       console.log('Validation failed: no text and no file');
-      return res.status(400).json({ error: "Message text or image is required" });
+      return res.status(400).json({ error: "Message text or media is required" });
     }
 
     // Check if user is a member of this group using the member_ids array
@@ -1047,22 +1047,31 @@ router.post("/api/chat/groups/:groupId/messages", upload.single('image'), async 
     const user = userResult.rows[0];
 
     // Determine message type and media URL with compression
-    const finalMessageType = file ? "image" : "text";
+    let finalMessageType = "text";
     let mediaUrl = null;
     const messageText = text?.trim() || "";
     
     if (file) {
-      try {
-        const originalPath = file.path;
-        const optimizedFilename = file.filename.replace(/\.[^/.]+$/, '.webp');
-        const optimizedPath = path.join(path.dirname(originalPath), optimizedFilename);
-        
-        await compressAndOptimizeImage(originalPath, optimizedPath, 400); // Larger for message images
-        mediaUrl = `/uploads/${optimizedFilename}`;
-      } catch (error) {
-        console.error('Error processing message image:', error);
-        // Fallback to original if compression fails
+      const isVideo = file.mimetype.startsWith('video/');
+      const isImage = file.mimetype.startsWith('image/');
+      
+      if (isVideo) {
+        finalMessageType = "video";
         mediaUrl = `/uploads/${file.filename}`;
+      } else if (isImage) {
+        finalMessageType = "image";
+        try {
+          const originalPath = file.path;
+          const optimizedFilename = file.filename.replace(/\.[^/.]+$/, '.webp');
+          const optimizedPath = path.join(path.dirname(originalPath), optimizedFilename);
+          
+          await compressAndOptimizeImage(originalPath, optimizedPath, 400); // Larger for message images
+          mediaUrl = `/uploads/${optimizedFilename}`;
+        } catch (error) {
+          console.error('Error processing message image:', error);
+          // Fallback to original if compression fails
+          mediaUrl = `/uploads/${file.filename}`;
+        }
       }
     }
 

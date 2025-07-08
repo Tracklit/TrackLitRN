@@ -141,6 +141,39 @@ const FullScreenImageViewer = ({
   );
 };
 
+const FullScreenVideoViewer = ({ 
+  src, 
+  isOpen, 
+  onClose 
+}: { 
+  src: string; 
+  isOpen: boolean; 
+  onClose: () => void; 
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div 
+      className="fixed inset-0 z-50 bg-black flex items-center justify-center"
+      onClick={onClose}
+    >
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 text-white hover:text-gray-300 z-10"
+      >
+        <X className="h-8 w-8" />
+      </button>
+      <video 
+        src={src} 
+        controls
+        autoPlay
+        className="max-w-full max-h-full object-contain"
+        onClick={(e) => e.stopPropagation()}
+      />
+    </div>
+  );
+};
+
 interface ChatChannel {
   id: number;
   name: string;
@@ -179,7 +212,7 @@ interface ChatMessage {
   edited_at?: string;
   is_deleted: boolean;
   reply_to_id?: number;
-  message_type: 'text' | 'image' | 'file' | 'system';
+  message_type: 'text' | 'image' | 'video' | 'file' | 'system';
   media_url?: string;
   reactions?: Array<{
     emoji: string;
@@ -882,15 +915,19 @@ const ChatPage = () => {
 const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group' | 'direct'; id: number }; onBack: () => void }) => {
   const [messageText, setMessageText] = useState("");
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
+  const [fullScreenVideo, setFullScreenVideo] = useState<string | null>(null);
   const [replyToMessage, setReplyToMessage] = useState<ChatMessage | null>(null);
   const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
+  const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
   const messageInputRef = useRef<HTMLInputElement>(null);
   const hasInitiallyLoadedRef = useRef(false);
   const queryClient = useQueryClient();
@@ -961,9 +998,24 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     },
   });
 
+  // Video upload mutation
+  const uploadVideoMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('video', file);
+      const response = await fetch('/api/upload/video', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+      if (!response.ok) throw new Error('Video upload failed');
+      return response.json();
+    },
+  });
+
   // Send message mutation with minimal re-renders
   const sendMessageMutation = useMutation({
-    mutationFn: async (data: { text?: string; image?: File; replyToId?: number }) => {
+    mutationFn: async (data: { text?: string; image?: File; video?: File; replyToId?: number }) => {
       if (!selectedChat) return;
       const endpoint = selectedChat.type === 'group'
         ? `/api/chat/groups/${selectedChat.id}/messages`
@@ -975,8 +1027,12 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
         formData.append('text', data.text);
       }
       if (data.image) {
-        formData.append('image', data.image);
+        formData.append('media', data.image);
         formData.append('messageType', 'image');
+      }
+      if (data.video) {
+        formData.append('media', data.video);
+        formData.append('messageType', 'video');
       }
       if (data.replyToId) {
         formData.append('replyToId', data.replyToId.toString());
@@ -1097,6 +1153,18 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     }
   };
 
+  const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedVideo(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setVideoPreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const removeSelectedImage = () => {
     setSelectedImage(null);
     setImagePreview(null);
@@ -1105,12 +1173,20 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     }
   };
 
+  const removeSelectedVideo = () => {
+    setSelectedVideo(null);
+    setVideoPreview(null);
+    if (videoInputRef.current) {
+      videoInputRef.current.value = '';
+    }
+  };
+
   const cancelReply = () => {
     setReplyToMessage(null);
   };
 
   const handleSendMessage = async () => {
-    if ((!messageText.trim() && !selectedImage) || !selectedChat) return;
+    if ((!messageText.trim() && !selectedImage && !selectedVideo) || !selectedChat) return;
     
     if (editingMessage) {
       // Edit existing message
@@ -1137,6 +1213,10 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
         messageData.image = selectedImage;
       }
       
+      if (selectedVideo) {
+        messageData.video = selectedVideo;
+      }
+      
       if (replyToMessage) {
         messageData.replyToId = replyToMessage.id;
       }
@@ -1145,6 +1225,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
       setMessageText("");
       setReplyToMessage(null);
       removeSelectedImage();
+      removeSelectedVideo();
       
       // Keep input focused after sending (Telegram-style behavior)
       setTimeout(() => {
@@ -1615,6 +1696,37 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
           </div>
         )}
 
+        {/* Video Preview */}
+        {videoPreview && (
+          <div className="mb-3 p-3 bg-gray-800/50 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-300">Video Preview</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={removeSelectedVideo}
+                className="h-6 w-6 p-0 text-gray-400 hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="relative">
+              <video 
+                src={videoPreview} 
+                className="max-w-full h-auto max-h-32 rounded object-cover"
+                style={{ display: 'block' }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded">
+                <div className="bg-white bg-opacity-80 rounded-full p-2">
+                  <svg className="w-6 h-6 text-black" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <form 
           onSubmit={(e) => {
             e.preventDefault();
@@ -1635,12 +1747,33 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
             <Image className="h-5 w-5" />
           </Button>
 
-          {/* Hidden File Input */}
+          {/* Video Upload Button */}
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="p-2 h-10 w-10 rounded-full text-gray-400 hover:text-white hover:bg-gray-700/50"
+            onClick={() => videoInputRef.current?.click()}
+            disabled={uploadVideoMutation.isPending}
+          >
+            <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M17 10.5V7a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1v-3.5l4 4v-11l-4 4z"/>
+            </svg>
+          </Button>
+
+          {/* Hidden File Inputs */}
           <input
             ref={fileInputRef}
             type="file"
             accept="image/*"
             onChange={handleImageSelect}
+            className="hidden"
+          />
+          <input
+            ref={videoInputRef}
+            type="file"
+            accept="video/*"
+            onChange={handleVideoSelect}
             className="hidden"
           />
 
@@ -1686,7 +1819,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
           {/* Send Button */}
           <Button 
             type="submit"
-            disabled={(!messageText.trim() && !selectedImage) || sendMessageMutation.isPending || editMessageMutation.isPending || uploadImageMutation.isPending}
+            disabled={(!messageText.trim() && !selectedImage && !selectedVideo) || sendMessageMutation.isPending || editMessageMutation.isPending || uploadImageMutation.isPending || uploadVideoMutation.isPending}
             className="bg-blue-600 hover:bg-blue-700"
           >
             {editingMessage ? <Edit className="h-4 w-4" /> : <Send className="h-4 w-4" />}
@@ -1699,6 +1832,13 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
         src={fullScreenImage || ''}
         isOpen={!!fullScreenImage}
         onClose={() => setFullScreenImage(null)}
+      />
+
+      {/* Full Screen Video Viewer */}
+      <FullScreenVideoViewer
+        src={fullScreenVideo || ''}
+        isOpen={!!fullScreenVideo}
+        onClose={() => setFullScreenVideo(null)}
       />
     </div>
   );
@@ -1840,10 +1980,11 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply, onE
       )}
       
       <div 
-        className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg relative ${
-          isOwn 
-            ? 'bg-white text-black shadow-md' 
-            : 'bg-gray-700 text-white'
+        className={`max-w-xs lg:max-w-md relative ${
+          // Only show speech bubble for non-image/video messages
+          (message.message_type === 'image' || message.message_type === 'video') ? 
+            '' : 
+            `px-4 py-2 rounded-lg ${isOwn ? 'bg-white text-black shadow-md' : 'bg-gray-700 text-white'}`
         }`}
         onMouseDown={handleLongPressStart}
         onMouseUp={handleLongPressEnd}
@@ -1852,13 +1993,17 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply, onE
         onTouchEnd={handleLongPressEnd}
         onClick={handleDoubleTap}
       >
-        {/* Speech bubble tail pointing to profile image at bottom */}
-        {isOwn ? (
-          // Tail pointing right (to own profile image on the right) at bottom
-          <div className="absolute bottom-2 -right-2 w-0 h-0 border-l-8 border-l-white border-t-4 border-t-transparent border-b-4 border-b-transparent"></div>
-        ) : (
-          // Tail pointing left (to other user's profile image on the left) at bottom  
-          <div className="absolute bottom-2 -left-2 w-0 h-0 border-r-8 border-r-gray-700 border-t-4 border-t-transparent border-b-4 border-b-transparent"></div>
+        {/* Speech bubble tail - only for non-image/video messages */}
+        {message.message_type !== 'image' && message.message_type !== 'video' && (
+          <>
+            {isOwn ? (
+              // Tail pointing right (to own profile image on the right) at bottom
+              <div className="absolute bottom-2 -right-2 w-0 h-0 border-l-8 border-l-white border-t-4 border-t-transparent border-b-4 border-b-transparent"></div>
+            ) : (
+              // Tail pointing left (to other user's profile image on the left) at bottom  
+              <div className="absolute bottom-2 -left-2 w-0 h-0 border-r-8 border-r-gray-700 border-t-4 border-t-transparent border-b-4 border-b-transparent"></div>
+            )}
+          </>
         )}
         {!isOwn && message.user && (
           <div className="text-xs text-gray-300 mb-1 font-medium">
@@ -1883,11 +2028,31 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply, onE
             <OptimizedMessageImage
               src={message.media_url}
               alt="Shared image"
-              className="rounded-lg"
+              className="border border-gray-300 rounded-sm"
+              style={{ borderRadius: '3px' }}
               lazy={true}
               maxWidth={300}
               maxHeight={400}
             />
+          </div>
+        ) : message.message_type === 'video' && message.media_url ? (
+          <div 
+            className="mb-2 cursor-pointer relative border border-gray-300 rounded-sm overflow-hidden"
+            style={{ borderRadius: '3px' }}
+            onClick={() => setFullScreenVideo(message.media_url!)}
+          >
+            <video 
+              src={message.media_url}
+              className="w-full max-w-[300px] max-h-[400px] object-cover"
+              style={{ display: 'block' }}
+            />
+            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+              <div className="bg-white bg-opacity-80 rounded-full p-3">
+                <svg className="w-8 h-8 text-black" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+              </div>
+            </div>
           </div>
         ) : null}
         
