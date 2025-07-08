@@ -108,6 +108,12 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
+- July 8, 2025: Updated Practice card greeting and unlocked Home page scroll ✅
+  - Changed Practice card text from "Ready to train?" to "Ready to work out?"
+  - Removed scroll prevention code to enable natural page scrolling
+  - Doubled card spacing from 12px (mt-3) to 24px (mt-6) between dashboard cards
+  - Home page now has full scroll functionality with improved card spacing
+
 - July 8, 2025: Completed bottom navigation redesign for mobile-optimized experience ✅
   - Removed chat icon completely from bottom navigation (chat accessible only through overlay)
   - Updated layout from 6-column to 5-column grid with increased height (h-16)

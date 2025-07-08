@@ -401,7 +401,7 @@ export default function HomePage() {
                                 <div className="flex items-center justify-between">
                                   <div className="text-left">
                                     <h2 className="font-bold mb-2" style={{ fontSize: '16px' }}>
-                                      Hi {user?.name?.split(' ')[0] || user?.username || 'there'} <span className="text-base">👋</span> Ready to train?
+                                      Hi {user?.name?.split(' ')[0] || user?.username || 'there'} <span className="text-base">👋</span> Ready to work out?
                                     </h2>
                                     <p className="text-muted-foreground text-sm flex items-center gap-2">
                                       <div className="w-2 h-2 bg-blue-400 rounded-full" />
