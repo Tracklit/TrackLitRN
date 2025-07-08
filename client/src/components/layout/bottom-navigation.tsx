@@ -16,6 +16,7 @@ import { useKeyboard } from "@/contexts/keyboard-context";
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
+import { chatNavigationState } from "@/lib/navigation-state";
 
 // Navigation items based on dashboard card order
 const navItems = [
@@ -68,22 +69,15 @@ interface NavItemProps {
 }
 
 function NavItem({ href, icon, title, isActive, onClick, showBadge, badgeCount }: NavItemProps) {
-  const [isNavigating, setIsNavigating] = useState(false);
   
   const handleClick = (e: React.MouseEvent) => {
-    // Prevent double navigation for chat route
-    if (href === '/chat' && isNavigating) {
-      e.preventDefault();
-      return;
-    }
-    
+    // Use global navigation state to prevent double mounting for chat route
     if (href === '/chat') {
-      setIsNavigating(true);
+      if (!chatNavigationState.startNavigation()) {
+        e.preventDefault();
+        return; // Navigation blocked
+      }
       console.log('Bottom navigation chat clicked');
-      // Reset navigation state after a brief delay
-      setTimeout(() => {
-        setIsNavigating(false);
-      }, 500);
     }
     
     if (onClick) onClick();
@@ -121,22 +115,12 @@ export function BottomNavigation() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-  const [isNavigating, setIsNavigating] = useState(false);
   const { isKeyboardVisible } = useKeyboard();
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const handleChatClick = () => {
-    // Prevent double navigation
-    if (isNavigating) return;
-    
-    setIsNavigating(true);
-    console.log('Bottom navigation chat clicked');
-    
-    // Reset navigation state after a brief delay
-    setTimeout(() => {
-      setIsNavigating(false);
-    }, 500);
+    // This function is now handled by the global navigation state in NavItem
   };
 
   // Update current index based on location

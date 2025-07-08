@@ -7,6 +7,7 @@ import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
 
 import { useLocation } from "wouter";
 import type { DirectMessage, Conversation, User } from "@shared/schema";
+import { chatNavigationState } from "@/lib/navigation-state";
 
 interface MessageButtonProps {
   className?: string;
@@ -20,7 +21,6 @@ interface ConversationWithUser extends Conversation {
 
 export function MessageButton({ className, targetUserId }: MessageButtonProps) {
   const [location, setLocation] = useLocation();
-  const [isNavigating, setIsNavigating] = useState(false);
 
   // Fetch conversations to get unread count
   const { data: conversations = [] } = useQuery<ConversationWithUser[]>({
@@ -41,17 +41,13 @@ export function MessageButton({ className, targetUserId }: MessageButtonProps) {
     e.preventDefault();
     e.stopPropagation();
     
-    // Prevent double navigation
-    if (isNavigating) return;
+    // Use global navigation state to prevent double mounting
+    if (!chatNavigationState.startNavigation()) {
+      return; // Navigation blocked
+    }
     
-    setIsNavigating(true);
     console.log('Paper plane clicked, navigating to chat');
     setLocation('/chat');
-    
-    // Reset navigation state after a brief delay
-    setTimeout(() => {
-      setIsNavigating(false);
-    }, 500);
   };
 
   return (
