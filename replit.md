@@ -108,6 +108,10 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
+- July 8, 2025: Updated Tools page cards to use 6px corner rounding ✅
+  - Added 6px border radius to disabled tool cards for consistency
+  - Enabled cards already had 6px rounding in inline styles
+  - All Tools page cards now have consistent corner rounding
 - July 8, 2025: Enhanced athletes page with gold connect buttons and real profile images ✅
   - Updated User interface to include profileImageUrl field
   - Replaced hardcoded "/default-avatar.png" with actual user profile images

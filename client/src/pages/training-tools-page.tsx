@@ -122,6 +122,7 @@ export default function WorkoutToolsPage() {
               <div key={index}>
                 <Card 
                   className="cursor-not-allowed h-[140px] mx-auto mb-2 overflow-hidden relative bg-muted/30"
+                  style={{ borderRadius: '6px' }}
                 >
                   <div className="absolute inset-0 bg-background/50"></div>
                   <CardContent className="p-2.5 relative h-full flex flex-col justify-center">
