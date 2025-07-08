@@ -7,54 +7,44 @@ import {
   faTrophy,
   faClock,
   faStar,
-  faComments
 } from '@fortawesome/free-solid-svg-icons';
 
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { useKeyboard } from "@/contexts/keyboard-context";
 import { Badge } from "@/components/ui/badge";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/use-auth";
-import { chatNavigationState } from "@/lib/navigation-state";
 
 // Navigation items based on dashboard card order
 const navItems = [
   { 
     title: "Dashboard", 
     href: "/", 
-    icon: <FontAwesomeIcon icon={faHome} className="h-5 w-5" />,
+    icon: <FontAwesomeIcon icon={faHome} className="h-3 w-3" />,
     key: "dashboard"
   },
   { 
     title: "Practice", 
     href: "/practice", 
-    icon: <FontAwesomeIcon icon={faCalendarDays} className="h-5 w-5" />,
+    icon: <FontAwesomeIcon icon={faCalendarDays} className="h-3 w-3" />,
     key: "practice"
   },
   { 
     title: "Programs", 
     href: "/programs", 
-    icon: <FontAwesomeIcon icon={faBook} className="h-5 w-5" />,
+    icon: <FontAwesomeIcon icon={faBook} className="h-3 w-3" />,
     key: "programs"
   },
   { 
     title: "Race", 
     href: "/meets", 
-    icon: <FontAwesomeIcon icon={faTrophy} className="h-5 w-5" />,
+    icon: <FontAwesomeIcon icon={faTrophy} className="h-3 w-3" />,
     key: "race"
   },
   { 
     title: "Tools", 
     href: "/training-tools", 
-    icon: <FontAwesomeIcon icon={faClock} className="h-5 w-5" />,
+    icon: <FontAwesomeIcon icon={faClock} className="h-3 w-3" />,
     key: "tools"
-  },
-  { 
-    title: "Chat", 
-    href: "/chat", 
-    icon: <FontAwesomeIcon icon={faComments} className="h-7 w-7 -ml-1" />,
-    key: "chat"
   }
 ];
 
@@ -71,15 +61,6 @@ interface NavItemProps {
 function NavItem({ href, icon, title, isActive, onClick, showBadge, badgeCount }: NavItemProps) {
   
   const handleClick = (e: React.MouseEvent) => {
-    // Use global navigation state to prevent double mounting for chat route
-    if (href === '/chat') {
-      if (!chatNavigationState.startNavigation()) {
-        e.preventDefault();
-        return; // Navigation blocked
-      }
-      console.log('Bottom navigation chat clicked');
-    }
-    
     if (onClick) onClick();
   };
 
@@ -90,12 +71,13 @@ function NavItem({ href, icon, title, isActive, onClick, showBadge, badgeCount }
         onClick={handleClick}
       >
         <div className={cn(
-          "transition-colors duration-200",
+          "transition-colors duration-200 flex flex-col items-center gap-1",
           isActive ? "text-accent" : "text-gray-300"
         )}>
           <div className="flex items-center justify-center">
             {icon}
           </div>
+          <span className="text-xs font-medium">{title}</span>
         </div>
         {showBadge && badgeCount && badgeCount > 0 && (
           <Badge 
@@ -116,12 +98,6 @@ export function BottomNavigation() {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const { isKeyboardVisible } = useKeyboard();
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
-
-  const handleChatClick = () => {
-    // This function is now handled by the global navigation state in NavItem
-  };
 
   // Update current index based on location
   useEffect(() => {
@@ -168,8 +144,8 @@ export function BottomNavigation() {
         isVisible ? "translate-y-0" : "translate-y-full"
       )}
     >
-      <nav className="bg-gray-900 shadow-lg border-t border-gray-700 h-14">
-        <div className="grid grid-cols-6 h-full">
+      <nav className="bg-gray-900 shadow-lg border-t border-gray-700 h-16">
+        <div className="grid grid-cols-5 h-full">
           {navItems.map((item, index) => (
             <NavItem
               key={item.key}
@@ -177,7 +153,6 @@ export function BottomNavigation() {
               icon={item.icon}
               title={item.title}
               isActive={index === currentIndex}
-              onClick={item.key === 'chat' ? handleChatClick : undefined}
               showBadge={false}
               badgeCount={undefined}
             />
