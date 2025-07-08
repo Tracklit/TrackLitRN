@@ -1245,6 +1245,14 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
         const currentViewportHeight = window.visualViewport?.height || window.innerHeight;
         const heightDiff = initialViewportHeight - currentViewportHeight;
         
+        // Debug logging
+        console.log('Keyboard detection:', {
+          initialViewportHeight,
+          currentViewportHeight,
+          heightDiff,
+          keyboardHeight: heightDiff > 50 ? heightDiff : 0
+        });
+        
         // Set keyboard height to exact pixel difference
         // Only consider it a keyboard if height difference is substantial (>50px)
         if (heightDiff > 50) {
@@ -1269,9 +1277,30 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
       window.addEventListener('resize', handleViewportChange);
     }
 
+    // Additional input focus detection for better keyboard tracking
+    const handleInputFocus = () => {
+      setTimeout(() => {
+        updateInitialHeight();
+        handleViewportChange();
+      }, 300); // Delay to allow keyboard animation
+    };
+
+    const handleInputBlur = () => {
+      setTimeout(() => {
+        handleViewportChange();
+      }, 300);
+    };
+
     // Update initial height when page loads or regains focus
     window.addEventListener('focus', updateInitialHeight);
     window.addEventListener('pageshow', updateInitialHeight);
+    
+    // Listen for input focus/blur events
+    const inputElements = document.querySelectorAll('input, textarea');
+    inputElements.forEach(input => {
+      input.addEventListener('focus', handleInputFocus);
+      input.addEventListener('blur', handleInputBlur);
+    });
 
     return () => {
       if (rafId) {
@@ -1287,6 +1316,12 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
       
       window.removeEventListener('focus', updateInitialHeight);
       window.removeEventListener('pageshow', updateInitialHeight);
+      
+      // Clean up input listeners
+      inputElements.forEach(input => {
+        input.removeEventListener('focus', handleInputFocus);
+        input.removeEventListener('blur', handleInputBlur);
+      });
     };
   }, []);
 
@@ -1445,8 +1480,8 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
         onScroll={handleScroll}
         style={{
           // Telegram-style: Move entire container up by keyboard height
-          transform: keyboardHeight > 0 ? `translateY(-${keyboardHeight}px)` : 'none',
-          transition: 'transform 0.15s ease-out',
+          transform: keyboardHeight > 0 ? `translateY(-${keyboardHeight}px)` : 'translateY(0)',
+          transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           paddingBottom: '16px'
         }}
       >
@@ -1528,8 +1563,10 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
         className="p-4 border-t border-gray-600/30 bg-black/20 backdrop-blur-sm flex-shrink-0"
         style={{
           // Telegram-style: Move input bar up by keyboard height
-          transform: keyboardHeight > 0 ? `translateY(-${keyboardHeight}px)` : 'none',
-          transition: 'transform 0.15s ease-out'
+          transform: keyboardHeight > 0 ? `translateY(-${keyboardHeight}px)` : 'translateY(0)',
+          transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          position: 'relative',
+          zIndex: 10
         }}
       >
         {/* Reply Preview */}
@@ -1631,6 +1668,18 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
                 e.preventDefault();
                 handleSendMessage();
               }
+            }}
+            onFocus={() => {
+              // Trigger keyboard detection when input is focused
+              setTimeout(() => {
+                const currentViewportHeight = window.visualViewport?.height || window.innerHeight;
+                const initialViewportHeight = window.innerHeight;
+                const heightDiff = initialViewportHeight - currentViewportHeight;
+                console.log('Input focused - keyboard check:', { heightDiff });
+                if (heightDiff > 50) {
+                  setKeyboardHeight(heightDiff);
+                }
+              }, 100);
             }}
           />
 
