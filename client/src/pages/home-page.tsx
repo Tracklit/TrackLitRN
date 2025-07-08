@@ -397,7 +397,7 @@ export default function HomePage() {
         
         {/* Main Category Cards - Single Column Full Width */}
         <section className="mb-4 overflow-hidden">
-          <div className="mx-auto" style={{ maxWidth: "500px" }}>
+          <div className="mx-auto" style={{ maxWidth: "490px" }}>
             {categoryCards.map((card, index) => 
               card.disabled ? (
                 <Card key={index} className={`h-[90px] overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 shadow-2xl ${index > 0 ? 'mt-3' : ''}`} style={{ border: '0.5px solid rgba(168, 85, 247, 0.25)', borderRadius: '6px' }}>
