@@ -108,11 +108,13 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
-- July 8, 2025: Fixed athletes page profile images to use actual user data ✅
+- July 8, 2025: Enhanced athletes page with gold connect buttons and real profile images ✅
   - Updated User interface to include profileImageUrl field
   - Replaced hardcoded "/default-avatar.png" with actual user profile images
   - Now displays real user profile images when available
   - Falls back to color-coded initials when no profile image exists
+  - Changed connect buttons from transparent to theme gold color (bg-yellow-500/600)
+  - Connect buttons now have proper visual prominence with black text on gold background
   - Maintains consistent avatar styling with improved data integrity
 - July 8, 2025: Removed install app functionality completely ✅
   - Removed /install-app route from App.tsx and deleted install-app-page.tsx

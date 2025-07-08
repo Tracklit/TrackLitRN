@@ -407,9 +407,8 @@ export default function AthletesPage() {
                       <Button
                         onClick={() => handleSendFriendRequest(athlete.id)}
                         disabled={pendingFriendRequests.has(athlete.id) || isAlreadyFriend(athlete.id) || hasPendingFriendRequest(athlete.id)}
-                        variant="outline"
                         size="sm"
-                        className="border-gray-600 text-gray-400 hover:bg-gray-600/20"
+                        className="bg-yellow-500 hover:bg-yellow-600 text-black border-yellow-500 hover:border-yellow-600"
                       >
                         {pendingFriendRequests.has(athlete.id) ? "Sending..." : "Connect"}
                       </Button>
