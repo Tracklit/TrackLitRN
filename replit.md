@@ -114,6 +114,7 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
   - Increased card corner rounding from default to 6px for modern appearance
   - Cards now use clean background colors without image overlays
   - Enhanced dashboard visual consistency with simplified design approach
+  - Fixed card width alignment with ticker to match exactly (500px max-width for both)
 
 - July 8, 2025: Enhanced video upload functionality with unified media interface ✅
   - Fixed video full-screen viewer functionality by adding onVideoClick prop to MessageBubble component
