@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Smartphone, ArrowRight, Download, Info, ExternalLink, AlertCircle } from "lucide-react";
+import { Sparkles, Smartphone, ArrowRight, Info, ExternalLink, AlertCircle } from "lucide-react";
 
 export type OnboardingStep = {
   title: string;
@@ -25,7 +25,7 @@ interface OnboardingFlowProps {
 export function OnboardingFlow({ onComplete, isFirstTimeUser = true }: OnboardingFlowProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [showFlow, setShowFlow] = useState(isFirstTimeUser);
-  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+
   
   // A-Z animation class for entrance
   const animationClass = "animate-in fade-in-0 slide-in-from-bottom-5 duration-300";
@@ -122,7 +122,7 @@ export function OnboardingFlow({ onComplete, isFirstTimeUser = true }: Onboardin
       setCurrentStep(currentStep + 1);
     } else {
       setShowFlow(false);
-      setShowInstallPrompt(true);
+      onComplete();
     }
   };
 
@@ -131,10 +131,7 @@ export function OnboardingFlow({ onComplete, isFirstTimeUser = true }: Onboardin
     onComplete();
   };
 
-  const handleCompleteInstall = () => {
-    setShowInstallPrompt(false);
-    onComplete();
-  };
+
 
   // Check if we should show onboarding at all
   useEffect(() => {
@@ -149,10 +146,10 @@ export function OnboardingFlow({ onComplete, isFirstTimeUser = true }: Onboardin
 
   // When flow complete, store in localStorage
   useEffect(() => {
-    if (!showFlow && !showInstallPrompt) {
+    if (!showFlow) {
       localStorage.setItem('hasCompletedOnboarding', 'true');
     }
-  }, [showFlow, showInstallPrompt]);
+  }, [showFlow]);
 
   return (
     <>
@@ -217,36 +214,7 @@ export function OnboardingFlow({ onComplete, isFirstTimeUser = true }: Onboardin
         </DialogContent>
       </Dialog>
 
-      {/* Install App Prompt Overlay */}
-      {showInstallPrompt && (
-        <div className="fixed inset-0 bg-background/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-4">
-          <div className="max-w-md w-full bg-card rounded-lg border border-border shadow-lg p-6 relative">
-            <h2 className="text-xl font-semibold mb-4 text-center">Install TrackLit Now</h2>
-            
-            <div className="text-center mb-6">
-              <p className="mb-4">Add TrackLit to your home screen for the best experience and earn 15 Spikes!</p>
-              
-              <div className="inline-block">
-                <Button 
-                  size="lg" 
-                  className="gap-2"
-                >
-                  <Download className="h-5 w-5" />
-                  Add to Home Screen
-                </Button>
-              </div>
-            </div>
-            
-            <Button 
-              variant="outline" 
-              onClick={handleCompleteInstall} 
-              className="w-full mt-4"
-            >
-              I'll do this later
-            </Button>
-          </div>
-        </div>
-      )}
+
     </>
   );
 }

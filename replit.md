@@ -108,6 +108,14 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
+- July 8, 2025: Removed install app functionality completely ✅
+  - Removed /install-app route from App.tsx and deleted install-app-page.tsx
+  - Deleted install-app-button.tsx component completely
+  - Removed install app prompt overlay from onboarding flow
+  - Removed showInstallPrompt state and related functionality from onboarding
+  - Cleaned up all install app imports and references
+  - Onboarding flow now completes directly without install app step
+  - Web app now has no PWA installation prompts or functionality
 - July 8, 2025: Enhanced Tools page with consistent Home page styling ✅
   - Removed background images from all Tools page cards by setting hasBackground: false
   - Updated cards to use same background color as Home page cards (bg-primary/5)
