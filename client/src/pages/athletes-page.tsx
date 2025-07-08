@@ -16,6 +16,7 @@ interface User {
   name: string;
   email: string;
   bio?: string;
+  profileImageUrl?: string;
   isFollowing?: boolean;
   isFollower?: boolean;
 }
@@ -332,7 +333,7 @@ export default function AthletesPage() {
               {displayAthletes.map((athlete) => (
                 <div key={athlete.id} className="flex items-center py-4 px-4 hover:bg-gray-800/50 transition-colors border-b border-gray-800 last:border-b-0">
                   <Avatar className="h-7 w-7 mr-4">
-                    <AvatarImage src="/default-avatar.png" />
+                    <AvatarImage src={athlete.profileImageUrl} />
                     <AvatarFallback className="bg-blue-600 text-white text-xs">
                       {(athlete.name || athlete.username)?.charAt(0)?.toUpperCase()}
                     </AvatarFallback>
