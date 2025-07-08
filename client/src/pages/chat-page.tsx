@@ -1229,34 +1229,64 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     }
   }, []);
 
-  // Keyboard detection for mobile devices
+  // Telegram-style keyboard detection with exact pixel tracking
   useEffect(() => {
-    const handleResize = () => {
-      // Detect keyboard on mobile by checking viewport height change
-      const viewportHeight = window.visualViewport?.height || window.innerHeight;
-      const documentHeight = document.documentElement.clientHeight;
-      const heightDiff = documentHeight - viewportHeight;
-      
-      if (heightDiff > 150) { // Keyboard is likely visible
-        setKeyboardHeight(heightDiff);
-      } else {
-        setKeyboardHeight(0);
+    let initialViewportHeight = window.visualViewport?.height || window.innerHeight;
+    let rafId: number | null = null;
+    
+    const handleViewportChange = () => {
+      // Cancel any pending animation frame
+      if (rafId) {
+        cancelAnimationFrame(rafId);
       }
+      
+      // Use requestAnimationFrame for smooth updates
+      rafId = requestAnimationFrame(() => {
+        const currentViewportHeight = window.visualViewport?.height || window.innerHeight;
+        const heightDiff = initialViewportHeight - currentViewportHeight;
+        
+        // Set keyboard height to exact pixel difference
+        // Only consider it a keyboard if height difference is substantial (>50px)
+        if (heightDiff > 50) {
+          setKeyboardHeight(heightDiff);
+        } else {
+          setKeyboardHeight(0);
+        }
+      });
     };
 
-    // Listen for visual viewport changes (more reliable for keyboard detection)
+    // Store initial viewport height
+    const updateInitialHeight = () => {
+      initialViewportHeight = window.visualViewport?.height || window.innerHeight;
+    };
+
+    // Listen for visual viewport changes (most reliable for keyboard detection)
     if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleResize);
+      window.visualViewport.addEventListener('resize', handleViewportChange);
+      window.visualViewport.addEventListener('scroll', handleViewportChange);
     } else {
-      window.addEventListener('resize', handleResize);
+      // Fallback for browsers without visualViewport support
+      window.addEventListener('resize', handleViewportChange);
     }
 
+    // Update initial height when page loads or regains focus
+    window.addEventListener('focus', updateInitialHeight);
+    window.addEventListener('pageshow', updateInitialHeight);
+
     return () => {
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', handleResize);
-      } else {
-        window.removeEventListener('resize', handleResize);
+      if (rafId) {
+        cancelAnimationFrame(rafId);
       }
+      
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleViewportChange);
+        window.visualViewport.removeEventListener('scroll', handleViewportChange);
+      } else {
+        window.removeEventListener('resize', handleViewportChange);
+      }
+      
+      window.removeEventListener('focus', updateInitialHeight);
+      window.removeEventListener('pageshow', updateInitialHeight);
     };
   }, []);
 
@@ -1273,15 +1303,22 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     }
   }, [messages]);
 
-  // Auto-scroll when keyboard height changes
+  // Auto-scroll when keyboard height changes (Telegram-style)
   useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
     if (keyboardHeight > 0) {
-      // Keyboard appeared - scroll to bottom to keep new messages visible
-      setTimeout(() => {
-        scrollToBottom(false);
-      }, 100);
+      // Keyboard appeared - immediately scroll to bottom to keep messages above keyboard
+      // Use RAF to ensure DOM has updated with new keyboard height
+      requestAnimationFrame(() => {
+        container.scrollTop = container.scrollHeight - container.clientHeight;
+      });
+    } else {
+      // Keyboard disappeared - maintain current scroll position
+      // No need to auto-scroll when keyboard closes
     }
-  }, [keyboardHeight, scrollToBottom]);
+  }, [keyboardHeight]);
 
   // Reset initial load flag when changing channels
   useEffect(() => {
@@ -1407,7 +1444,10 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
         className="flex-1 overflow-y-auto p-4 space-y-4"
         onScroll={handleScroll}
         style={{
-          paddingBottom: keyboardHeight > 0 ? `${keyboardHeight + 20}px` : '16px'
+          // Telegram-style: Move entire container up by keyboard height
+          transform: keyboardHeight > 0 ? `translateY(-${keyboardHeight}px)` : 'none',
+          transition: 'transform 0.15s ease-out',
+          paddingBottom: '16px'
         }}
       >
         {messagesLoading ? (
@@ -1484,7 +1524,14 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
       )}
 
       {/* Message Input */}
-      <div className="p-4 border-t border-gray-600/30 bg-black/20 backdrop-blur-sm flex-shrink-0">
+      <div 
+        className="p-4 border-t border-gray-600/30 bg-black/20 backdrop-blur-sm flex-shrink-0"
+        style={{
+          // Telegram-style: Move input bar up by keyboard height
+          transform: keyboardHeight > 0 ? `translateY(-${keyboardHeight}px)` : 'none',
+          transition: 'transform 0.15s ease-out'
+        }}
+      >
         {/* Reply Preview */}
         {replyToMessage && (
           <div className="mb-3 bg-gray-800/50 border-l-4 border-blue-500 p-3 rounded-r-lg">
