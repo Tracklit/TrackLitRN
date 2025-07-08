@@ -344,7 +344,7 @@ export default function HomePage() {
       
       {/* Fixed Community Activity Ticker - Below Header */}
       <div className={`fixed top-[65px] left-5 right-5 z-40 transition-transform duration-300 ease-in-out ${isTickerVisible ? 'translate-y-0' : '-translate-y-full'}`}>
-        <div className="mx-auto" style={{ maxWidth: "500px" }}>
+        <div className="mx-auto" style={{ maxWidth: "480px" }}>
           <div className="bg-gradient-to-br from-purple-500 to-blue-800 relative rounded-sm" style={{ boxShadow: '0 0 20px rgba(168, 85, 247, 0.5)' }}>
             {/* Control buttons with higher z-index */}
             <div className="absolute left-2 top-1/2 transform -translate-y-1/2 z-[80]">
@@ -397,7 +397,7 @@ export default function HomePage() {
         
         {/* Main Category Cards - Single Column Full Width */}
         <section className="mb-4 overflow-hidden">
-          <div className="mx-auto" style={{ maxWidth: "500px" }}>
+          <div className="mx-auto" style={{ maxWidth: "480px" }}>
             {categoryCards.map((card, index) => 
               card.disabled ? (
                 <Card key={index} className={`h-[90px] overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 shadow-2xl ${index > 0 ? 'mt-3' : ''}`} style={{ border: '0.5px solid rgba(168, 85, 247, 0.25)', borderRadius: '6px' }}>
