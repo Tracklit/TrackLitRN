@@ -267,8 +267,6 @@ export default function HomePage() {
       href: "/practice",
       disabled: false,
       isSpecial: true,
-      backgroundImage: practiceBackground,
-      hasBackground: true,
       hasPreview: true
     },
     {
@@ -276,27 +274,21 @@ export default function HomePage() {
       description: programsDescription,
       icon: <BookOpen className="h-6 w-6 text-primary" />,
       href: "/programs",
-      disabled: false,
-      backgroundImage: practiceBackground,
-      hasBackground: true
+      disabled: false
     },
     {
       title: "Race",
       description: raceDescription,
       icon: <Trophy className="h-6 w-6 text-primary" />,
       href: "/meets",
-      disabled: false,
-      backgroundImage: practiceBackground,
-      hasBackground: true
+      disabled: false
     },
     {
       title: "Tools",
       description: "Training and performance tools",
       icon: <Clock className="h-6 w-6 text-primary" />,
       href: "/training-tools",
-      disabled: false,
-      backgroundImage: practiceBackground,
-      hasBackground: true
+      disabled: false
     },
     {
       title: "Sprinthia",
@@ -304,8 +296,6 @@ export default function HomePage() {
       icon: <MessageCircle className="h-6 w-6 text-primary" />,
       href: "/sprinthia",
       disabled: false,
-      backgroundImage: practiceBackground,
-      hasBackground: true,
       showStar: true
     }
   ];
@@ -355,7 +345,7 @@ export default function HomePage() {
       {/* Fixed Community Activity Ticker - Below Header */}
       <div className={`fixed top-[65px] left-5 right-5 z-40 transition-transform duration-300 ease-in-out ${isTickerVisible ? 'translate-y-0' : '-translate-y-full'}`}>
         <div className="mx-auto" style={{ maxWidth: "500px" }}>
-          <div className="bg-gradient-to-br from-purple-500 to-blue-800 relative rounded-sm">
+          <div className="bg-gradient-to-br from-purple-500 to-blue-800 relative rounded-sm" style={{ boxShadow: '0 0 20px rgba(168, 85, 247, 0.5)' }}>
             {/* Control buttons with higher z-index */}
             <div className="absolute left-2 top-1/2 transform -translate-y-1/2 z-[80]">
               <button
@@ -410,7 +400,7 @@ export default function HomePage() {
           <div className="max-w-2xl mx-auto">
             {categoryCards.map((card, index) => 
               card.disabled ? (
-                <Card key={index} className={`h-[90px] overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 shadow-2xl ${index > 0 ? 'mt-3' : ''}`} style={{ border: '0.5px solid rgba(168, 85, 247, 0.25)' }}>
+                <Card key={index} className={`h-[90px] overflow-hidden opacity-30 cursor-not-allowed bg-muted/30 shadow-2xl ${index > 0 ? 'mt-3' : ''}`} style={{ border: '0.5px solid rgba(168, 85, 247, 0.25)', borderRadius: '6px' }}>
                   <CardContent className="p-4 relative h-full flex flex-col justify-center opacity-50">
                     <div className="flex items-center justify-between">
                       <div className="text-left">
@@ -426,17 +416,7 @@ export default function HomePage() {
                 </Card>
               ) : (
                 <Link href={card.href} key={index}>
-                  <Card className={`cursor-pointer shadow-2xl h-[90px] overflow-hidden group relative bg-primary/5 ${index > 0 ? 'mt-3' : ''}`} style={{ border: '0.5px solid rgba(168, 85, 247, 0.25)' }}>
-                    {/* Background image for cards that have it */}
-                    {card.hasBackground && (
-                      <div 
-                        className="absolute inset-0 bg-cover bg-bottom bg-no-repeat opacity-80"
-                        style={{
-                          backgroundImage: `url(${card.backgroundImage})`,
-                          zIndex: 0
-                        }}
-                      />
-                    )}
+                  <Card className={`cursor-pointer shadow-2xl h-[90px] overflow-hidden group relative bg-primary/5 ${index > 0 ? 'mt-3' : ''}`} style={{ border: '0.5px solid rgba(168, 85, 247, 0.25)', borderRadius: '6px' }}>
                     
                     {/* Special Practice Session - Full Width */}
                     {card.isSpecial ? (
