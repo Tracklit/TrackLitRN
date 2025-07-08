@@ -20,6 +20,7 @@ interface ConversationWithUser extends Conversation {
 
 export function MessageButton({ className, targetUserId }: MessageButtonProps) {
   const [location, setLocation] = useLocation();
+  const [isNavigating, setIsNavigating] = useState(false);
 
   // Fetch conversations to get unread count
   const { data: conversations = [] } = useQuery<ConversationWithUser[]>({
@@ -40,8 +41,17 @@ export function MessageButton({ className, targetUserId }: MessageButtonProps) {
     e.preventDefault();
     e.stopPropagation();
     
+    // Prevent double navigation
+    if (isNavigating) return;
+    
+    setIsNavigating(true);
     console.log('Paper plane clicked, navigating to chat');
     setLocation('/chat');
+    
+    // Reset navigation state after a brief delay
+    setTimeout(() => {
+      setIsNavigating(false);
+    }, 500);
   };
 
   return (

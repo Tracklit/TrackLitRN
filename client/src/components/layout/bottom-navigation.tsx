@@ -68,7 +68,24 @@ interface NavItemProps {
 }
 
 function NavItem({ href, icon, title, isActive, onClick, showBadge, badgeCount }: NavItemProps) {
-  const handleClick = () => {
+  const [isNavigating, setIsNavigating] = useState(false);
+  
+  const handleClick = (e: React.MouseEvent) => {
+    // Prevent double navigation for chat route
+    if (href === '/chat' && isNavigating) {
+      e.preventDefault();
+      return;
+    }
+    
+    if (href === '/chat') {
+      setIsNavigating(true);
+      console.log('Bottom navigation chat clicked');
+      // Reset navigation state after a brief delay
+      setTimeout(() => {
+        setIsNavigating(false);
+      }, 500);
+    }
+    
     if (onClick) onClick();
   };
 
@@ -104,12 +121,22 @@ export function BottomNavigation() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [isNavigating, setIsNavigating] = useState(false);
   const { isKeyboardVisible } = useKeyboard();
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const handleChatClick = () => {
-    // Handle chat navigation
+    // Prevent double navigation
+    if (isNavigating) return;
+    
+    setIsNavigating(true);
+    console.log('Bottom navigation chat clicked');
+    
+    // Reset navigation state after a brief delay
+    setTimeout(() => {
+      setIsNavigating(false);
+    }, 500);
   };
 
   // Update current index based on location
