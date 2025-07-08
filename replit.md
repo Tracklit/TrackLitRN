@@ -112,7 +112,9 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
   - Changed Practice card text from "Ready to train?" to "Ready to work out?"
   - Removed scroll prevention code to enable natural page scrolling
   - Doubled card spacing from 12px (mt-3) to 24px (mt-6) between dashboard cards
-  - Home page now has full scroll functionality with improved card spacing
+  - Added light pulse animation around Practice card border on Home page entry
+  - Purple border pulse activates 500ms after page load, runs for 3 seconds
+  - Home page now has full scroll functionality with improved card spacing and engaging Practice card highlight
 
 - July 8, 2025: Completed bottom navigation redesign for mobile-optimized experience ✅
   - Removed chat icon completely from bottom navigation (chat accessible only through overlay)

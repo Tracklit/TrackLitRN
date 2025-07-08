@@ -67,6 +67,7 @@ export default function HomePage() {
   const [isCreateMeetOpen, setIsCreateMeetOpen] = useState(false);
   const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
   const [isCarouselPaused, setIsCarouselPaused] = useState(false);
+  const [showPracticePulse, setShowPracticePulse] = useState(false);
 
   // Critical dashboard images for preloading with 80% compression
   const dashboardImages = [
@@ -236,6 +237,17 @@ export default function HomePage() {
 
   const todaysSession = activeSessionData;
 
+  // Trigger practice card pulse animation on component mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowPracticePulse(true);
+      // Turn off the pulse after animation completes
+      setTimeout(() => setShowPracticePulse(false), 3000);
+    }, 500); // Small delay to ensure page is loaded
+    
+    return () => clearTimeout(timer);
+  }, []);
+
   // Get next scheduled meet
   const nextMeet = meets?.find(meet => new Date(meet.date) > new Date());
   const raceDescription = nextMeet 
@@ -389,7 +401,7 @@ export default function HomePage() {
                 </Card>
               ) : (
                 <Link href={card.href} key={index}>
-                  <Card className={`cursor-pointer shadow-2xl h-[90px] overflow-hidden group relative bg-primary/5 ${index > 0 ? 'mt-6' : ''}`} style={{ border: '0.5px solid rgba(168, 85, 247, 0.25)', borderRadius: '6px' }}>
+                  <Card className={`cursor-pointer shadow-2xl h-[90px] overflow-hidden group relative bg-primary/5 ${index > 0 ? 'mt-6' : ''} ${card.isSpecial && showPracticePulse ? 'practice-pulse' : ''}`} style={{ border: '0.5px solid rgba(168, 85, 247, 0.25)', borderRadius: '6px' }}>
                     
                     {/* Special Practice Session - Full Width */}
                     {card.isSpecial ? (
