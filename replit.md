@@ -108,6 +108,11 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
+- July 8, 2025: Enhanced Tools page with cleaner card styling ✅
+  - Removed background images from all Tools page cards by setting hasBackground: false
+  - Added 80% opacity to all enabled cards for softer visual appearance
+  - Cards now display with clean backgrounds and transparent styling
+  - Maintained hover effects and functionality while improving visual design
 - July 8, 2025: Updated Practice card greeting and unlocked Home page scroll ✅
   - Changed Practice card text from "Ready to train?" to "Ready to work out?"
   - Removed scroll prevention code to enable natural page scrolling

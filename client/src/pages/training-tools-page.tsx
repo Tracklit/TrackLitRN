@@ -45,7 +45,7 @@ export default function WorkoutToolsPage() {
       href: "/tools/video-analysis",
       disabled: false,
       backgroundImage: toolBackgrounds[0],
-      hasBackground: true
+      hasBackground: false
     },
     {
       title: "Photo Finish",
@@ -54,7 +54,7 @@ export default function WorkoutToolsPage() {
       href: "/tools/photo-finish",
       disabled: false,
       backgroundImage: toolBackgrounds[1],
-      hasBackground: true
+      hasBackground: false
     },
     {
       title: "Start Gun",
@@ -63,7 +63,7 @@ export default function WorkoutToolsPage() {
       href: "/tools/start-gun",
       disabled: false,
       backgroundImage: toolBackgrounds[2],
-      hasBackground: true
+      hasBackground: false
     },
     {
       title: "Stopwatch",
@@ -72,7 +72,7 @@ export default function WorkoutToolsPage() {
       href: "/tools/stopwatch",
       disabled: false,
       backgroundImage: toolBackgrounds[3],
-      hasBackground: true
+      hasBackground: false
     },
     {
       title: "Journal",
@@ -81,7 +81,7 @@ export default function WorkoutToolsPage() {
       href: "/tools/journal",
       disabled: false,
       backgroundImage: toolBackgrounds[4],
-      hasBackground: true
+      hasBackground: false
     },
     {
       title: "Exercise Library",
@@ -90,7 +90,7 @@ export default function WorkoutToolsPage() {
       href: "/tools/exercise-library",
       disabled: false,
       backgroundImage: toolBackgrounds[5],
-      hasBackground: true
+      hasBackground: false
     },
     {
       title: "Rep Starter",
@@ -149,7 +149,7 @@ export default function WorkoutToolsPage() {
               // Enabled card
               <Link key={index} href={card.href}>
                 <Card 
-                  className="cursor-pointer h-[140px] mx-auto mb-2 overflow-hidden relative group hover:scale-105 transition-all duration-300 border border-gray-400/20"
+                  className="cursor-pointer h-[140px] mx-auto mb-2 overflow-hidden relative group hover:scale-105 transition-all duration-300 border border-gray-400/20 opacity-80"
                 >
                   {/* Background Image */}
                   {card.hasBackground && card.backgroundImage && (
