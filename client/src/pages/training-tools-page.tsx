@@ -124,7 +124,7 @@ export default function WorkoutToolsPage() {
                   className="cursor-not-allowed h-[140px] mx-auto mb-2 overflow-hidden relative bg-muted/30"
                   style={{ 
                     borderRadius: '6px',
-                    boxShadow: '0 0 20px rgba(168, 85, 247, 0.5)'
+                    boxShadow: '0 0 10px rgba(168, 85, 247, 0.25)'
                   }}
                 >
                   <div className="absolute inset-0 bg-background/50"></div>
@@ -157,7 +157,7 @@ export default function WorkoutToolsPage() {
                   style={{ 
                     border: '0.5px solid rgba(168, 85, 247, 0.25)', 
                     borderRadius: '6px',
-                    boxShadow: '0 0 20px rgba(168, 85, 247, 0.5)'
+                    boxShadow: '0 0 10px rgba(168, 85, 247, 0.25)'
                   }}
                 >
                   {/* Background Image */}
