@@ -928,6 +928,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+  const mediaInputRef = useRef<HTMLInputElement>(null);
   const messageInputRef = useRef<HTMLInputElement>(null);
   const hasInitiallyLoadedRef = useRef(false);
   const queryClient = useQueryClient();
@@ -1165,11 +1166,39 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     }
   };
 
+  const handleMediaSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.type.startsWith('image/')) {
+        setSelectedImage(file);
+        setSelectedVideo(null);
+        setVideoPreview(null);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setImagePreview(e.target?.result as string);
+        };
+        reader.readAsDataURL(file);
+      } else if (file.type.startsWith('video/')) {
+        setSelectedVideo(file);
+        setSelectedImage(null);
+        setImagePreview(null);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setVideoPreview(e.target?.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  };
+
   const removeSelectedImage = () => {
     setSelectedImage(null);
     setImagePreview(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
+    }
+    if (mediaInputRef.current) {
+      mediaInputRef.current.value = '';
     }
   };
 
@@ -1178,6 +1207,9 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
     setVideoPreview(null);
     if (videoInputRef.current) {
       videoInputRef.current.value = '';
+    }
+    if (mediaInputRef.current) {
+      mediaInputRef.current.value = '';
     }
   };
 
@@ -1595,6 +1627,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
               isOwn={currentUser?.id === message.user_id}
               currentUser={currentUser}
               onImageClick={setFullScreenImage}
+              onVideoClick={setFullScreenVideo}
               onReply={handleReplyToMessage}
               onEdit={handleEditMessage}
             />
@@ -1678,21 +1711,34 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
         {imagePreview && (
           <div className="mb-3 p-3 bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-300">Image Preview</span>
+              <span className="text-sm font-medium text-gray-300">
+                Image Preview
+                {(uploadImageMutation.isPending || sendMessageMutation.isPending) && (
+                  <span className="ml-2 text-xs text-blue-400">Uploading...</span>
+                )}
+              </span>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={removeSelectedImage}
                 className="h-6 w-6 p-0 text-gray-400 hover:text-white"
+                disabled={uploadImageMutation.isPending || sendMessageMutation.isPending}
               >
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <img 
-              src={imagePreview} 
-              alt="Preview" 
-              className="max-w-full h-auto max-h-32 rounded object-cover"
-            />
+            <div className="relative">
+              <img 
+                src={imagePreview} 
+                alt="Preview" 
+                className="max-w-full h-auto max-h-32 rounded object-cover"
+              />
+              {(uploadImageMutation.isPending || sendMessageMutation.isPending) && (
+                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded">
+                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-white border-t-transparent"></div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -1700,12 +1746,18 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
         {videoPreview && (
           <div className="mb-3 p-3 bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-300">Video Preview</span>
+              <span className="text-sm font-medium text-gray-300">
+                Video Preview
+                {(uploadVideoMutation.isPending || sendMessageMutation.isPending) && (
+                  <span className="ml-2 text-xs text-blue-400">Uploading...</span>
+                )}
+              </span>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={removeSelectedVideo}
                 className="h-6 w-6 p-0 text-gray-400 hover:text-white"
+                disabled={uploadVideoMutation.isPending || sendMessageMutation.isPending}
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -1717,11 +1769,15 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
                 style={{ display: 'block' }}
               />
               <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded">
-                <div className="bg-white bg-opacity-80 rounded-full p-2">
-                  <svg className="w-6 h-6 text-black" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z"/>
-                  </svg>
-                </div>
+                {(uploadVideoMutation.isPending || sendMessageMutation.isPending) ? (
+                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-white border-t-transparent"></div>
+                ) : (
+                  <div className="bg-white bg-opacity-80 rounded-full p-2">
+                    <svg className="w-6 h-6 text-black" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1735,45 +1791,28 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
           }}
           className="flex gap-2 items-end"
         >
-          {/* Image Upload Button */}
+          {/* Media Upload Button (Images & Videos) */}
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            className="p-2 h-10 w-10 rounded-full text-gray-400 hover:text-white hover:bg-gray-700/50"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploadImageMutation.isPending}
+            className="p-2 h-10 w-10 rounded-full text-gray-400 hover:text-white hover:bg-gray-700/50 relative"
+            onClick={() => mediaInputRef.current?.click()}
+            disabled={uploadImageMutation.isPending || uploadVideoMutation.isPending || sendMessageMutation.isPending}
           >
-            <Image className="h-5 w-5" />
+            {(uploadImageMutation.isPending || uploadVideoMutation.isPending || sendMessageMutation.isPending) ? (
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-400 border-t-white"></div>
+            ) : (
+              <Image className="h-5 w-5" />
+            )}
           </Button>
 
-          {/* Video Upload Button */}
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="p-2 h-10 w-10 rounded-full text-gray-400 hover:text-white hover:bg-gray-700/50"
-            onClick={() => videoInputRef.current?.click()}
-            disabled={uploadVideoMutation.isPending}
-          >
-            <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M17 10.5V7a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1v-3.5l4 4v-11l-4 4z"/>
-            </svg>
-          </Button>
-
-          {/* Hidden File Inputs */}
+          {/* Hidden Media Input (Images & Videos) */}
           <input
-            ref={fileInputRef}
+            ref={mediaInputRef}
             type="file"
-            accept="image/*"
-            onChange={handleImageSelect}
-            className="hidden"
-          />
-          <input
-            ref={videoInputRef}
-            type="file"
-            accept="video/*"
-            onChange={handleVideoSelect}
+            accept="image/*,video/*"
+            onChange={handleMediaSelect}
             className="hidden"
           />
 
@@ -1850,11 +1889,12 @@ interface MessageBubbleProps {
   isOwn: boolean;
   currentUser?: any;
   onImageClick?: (imageUrl: string) => void;
+  onVideoClick?: (videoUrl: string) => void;
   onReply?: (message: ChatMessage) => void;
   onEdit?: (message: ChatMessage) => void;
 }
 
-const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply, onEdit }: MessageBubbleProps) => {
+const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onVideoClick, onReply, onEdit }: MessageBubbleProps) => {
   const [showMenu, setShowMenu] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
@@ -2039,7 +2079,7 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onReply, onE
           <div 
             className="mb-2 cursor-pointer relative border border-gray-300 rounded-sm overflow-hidden"
             style={{ borderRadius: '3px' }}
-            onClick={() => setFullScreenVideo(message.media_url!)}
+            onClick={() => onVideoClick?.(message.media_url!)}
           >
             <video 
               src={message.media_url}

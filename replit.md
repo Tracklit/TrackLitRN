@@ -108,6 +108,16 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
+- July 8, 2025: Enhanced video upload functionality with unified media interface ✅
+  - Fixed video full-screen viewer functionality by adding onVideoClick prop to MessageBubble component
+  - Merged image and video upload buttons into single media button with Image icon
+  - Added visual upload progress indicators with spinning loader animations
+  - Enhanced media previews with "Uploading..." text and overlay loading states
+  - Combined file input to accept both images and videos (image/*,video/*) for streamlined UX
+  - Media button shows spinner during upload and message sending operations
+  - Upload states prevent interaction with close buttons during processing
+  - Video upload fully functional with 50MB server limit supporting MP4, MOV, AVI, WEBM formats
+
 - July 7, 2025: Comprehensive image optimization and chat scroll behavior ✅
   - Created client-side image compression utility with WebP format and automatic resizing
   - Built OptimizedAvatar component with lazy loading and skeleton placeholders for fast loading
