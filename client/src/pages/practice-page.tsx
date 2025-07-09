@@ -361,7 +361,7 @@ function PracticePage() {
                   {/* Text-based program display */}
                   {selectedProgram.program?.isTextBased ? (
                     <div className="space-y-3">
-                      <div className="p-3 bg-background/80 border border-border/50" style={{ borderRadius: '6px' }}>
+                      <div className="p-3 bg-primary/5" style={{ borderRadius: '6px' }}>
                         <div className="space-y-3">
                           <div className="flex items-center gap-2 mb-3">
                             <ClipboardList className="h-5 w-5 text-primary" />
@@ -382,10 +382,10 @@ function PracticePage() {
                     </div>
                   ) : isLoadingProgramSessions ? (
                     <div className="space-y-3">
-                      <div className="p-3 bg-background/80 border border-border/50" style={{ borderRadius: '6px' }}>
+                      <div className="p-3 bg-primary/5" style={{ borderRadius: '6px' }}>
                         <div className="space-y-3">
                           {/* Skeleton loader for daily workout data */}
-                          <div className="p-2 bg-background/50 rounded border border-border/50">
+                          <div className="p-2 bg-primary/5" style={{ borderRadius: "6px" }}>
                             <div className="flex items-start">
                               <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
                                 <Dumbbell className="h-4 w-4 text-primary" />
@@ -397,7 +397,7 @@ function PracticePage() {
                               </div>
                             </div>
                           </div>
-                          <div className="p-2 bg-background/50 rounded border border-border/50">
+                          <div className="p-2 bg-primary/5" style={{ borderRadius: "6px" }}>
                             <div className="flex items-start">
                               <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
                                 <Dumbbell className="h-4 w-4 text-primary" />
@@ -410,7 +410,7 @@ function PracticePage() {
                               </div>
                             </div>
                           </div>
-                          <div className="p-2 bg-background/50 rounded border border-border/50">
+                          <div className="p-2 bg-primary/5" style={{ borderRadius: "6px" }}>
                             <div className="flex items-start">
                               <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
                                 <Dumbbell className="h-4 w-4 text-primary" />
@@ -427,7 +427,7 @@ function PracticePage() {
                     </div>
                   ) : activeSessionData ? (
                     <div className="space-y-3">
-                      <div className="p-3 bg-background/80 border border-border/50" style={{ borderRadius: '6px' }}>
+                      <div className="p-3 bg-primary/5" style={{ borderRadius: '6px' }}>
                         <div className="space-y-3">
                           {activeSessionData.isRestDay || 
                            !activeSessionData.date || 
@@ -445,7 +445,7 @@ function PracticePage() {
                             <>
                               {/* Pre-activation exercises */}
                               {activeSessionData.preActivation1 && activeSessionData.preActivation1.trim() !== "" && (
-                                <div className="p-2 bg-background/50 rounded border border-border/50">
+                                <div className="p-2 bg-primary/5" style={{ borderRadius: "6px" }}>
                                   <p className="font-medium text-sm mb-2">Pre-Activation</p>
                                   <div className="whitespace-pre-line text-sm mt-1 pl-2 border-l-2 border-primary/30">
                                     {activeSessionData.preActivation1.replace(/^"|"$/g, '')}
@@ -460,7 +460,7 @@ function PracticePage() {
                                 (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
                                  !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
                                  !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
-                                <div className="p-2 bg-background/50 rounded border border-border/50">
+                                <div className="p-2 bg-primary/5" style={{ borderRadius: "6px" }}>
                                   <div className="flex items-start">
                                     <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
                                       <Dumbbell className="h-4 w-4 text-primary" />
@@ -481,7 +481,7 @@ function PracticePage() {
                                 (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
                                  !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
                                  !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
-                                <div className="p-2 bg-background/50 rounded border border-border/50">
+                                <div className="p-2 bg-primary/5" style={{ borderRadius: "6px" }}>
                                   <div className="flex items-start">
                                     <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
                                       <Dumbbell className="h-4 w-4 text-primary" />
@@ -502,7 +502,7 @@ function PracticePage() {
                                 (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
                                  !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
                                  !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
-                                <div className="p-2 bg-background/50 rounded border border-border/50">
+                                <div className="p-2 bg-primary/5" style={{ borderRadius: "6px" }}>
                                   <div className="flex items-start">
                                     <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
                                       <Dumbbell className="h-4 w-4 text-primary" />
@@ -519,7 +519,7 @@ function PracticePage() {
                               
                               {/* Gym Exercises Section - Dynamic Loading */}
                               {isLoadingGymData && currentProgramId && currentDayNumber && (
-                                <div className="p-2 bg-background/50 rounded border border-border/50">
+                                <div className="p-2 bg-primary/5" style={{ borderRadius: "6px" }}>
                                   <div className="flex items-start">
                                     <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
                                       <Dumbbell className="h-4 w-4 text-primary" />
@@ -535,7 +535,7 @@ function PracticePage() {
                               )}
                               
                               {gymDataResponse?.gymData && gymDataResponse.gymData.length > 0 && (
-                                <div className="p-2 bg-background/50 rounded border border-border/50">
+                                <div className="p-2 bg-primary/5" style={{ borderRadius: "6px" }}>
                                   <div className="flex items-start">
                                     <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
                                       <Dumbbell className="h-4 w-4 text-primary" />
