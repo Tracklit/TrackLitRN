@@ -382,7 +382,7 @@ function PracticePage() {
                     </div>
                   ) : isLoadingProgramSessions ? (
                     <div className="space-y-3">
-                      <div className="p-3 bg-primary/5" style={{ borderRadius: '6px' }}>
+                      <div className="p-3 bg-primary/5 overflow-y-auto" style={{ borderRadius: '6px', height: '25vh' }}>
                         <div className="space-y-3">
                           {/* Skeleton loader for daily workout data */}
                           <div className="p-2 bg-primary/5" style={{ borderRadius: "6px" }}>
@@ -427,7 +427,7 @@ function PracticePage() {
                     </div>
                   ) : activeSessionData ? (
                     <div className="space-y-3">
-                      <div className="p-3 bg-primary/5" style={{ borderRadius: '6px', opacity: '0.9' }}>
+                      <div className="p-3 bg-primary/5 overflow-y-auto" style={{ borderRadius: '6px', opacity: '0.9', height: '25vh' }}>
                         <div className="space-y-3">
                           {activeSessionData.isRestDay || 
                            !activeSessionData.date || 
@@ -591,7 +591,7 @@ function PracticePage() {
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      <div className="p-4 bg-background/80 rounded border border-border/50">
+                      <div className="p-4 bg-background/80 rounded border border-border/50 overflow-y-auto" style={{ height: '25vh' }}>
                         <p className="mb-2 font-medium">{selectedProgram.program?.title}</p>
                         <p className="text-sm text-muted-foreground mb-3">{selectedProgram.program?.description}</p>
                         
@@ -616,8 +616,8 @@ function PracticePage() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <div className="p-6 bg-background/50 border border-border/50 text-center" style={{ borderRadius: '6px' }}>
-                    <div className="flex flex-col items-center gap-3 py-4">
+                  <div className="p-6 bg-background/50 border border-border/50 text-center overflow-y-auto" style={{ borderRadius: '6px', height: '25vh' }}>
+                    <div className="flex flex-col items-center justify-center gap-3 h-full">
                       <CalendarRange className="h-10 w-10 text-muted-foreground opacity-70" />
                       <p className="text-sm text-muted-foreground">No program assigned, tap to assign one</p>
                       <Button asChild variant="outline" size="sm" className="mt-2">

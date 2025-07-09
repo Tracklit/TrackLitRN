@@ -115,6 +115,7 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
   - Distance headers now styled with primary color for better hierarchy
   - Updated daily session card and Training Journal card to use consistent background with 90% opacity
   - Removed inner boxes from workout sections to display content directly on main card
+  - Fixed daily session card height to 25% of viewport with scrollable overflow for long content
 - July 9, 2025: Removed login success toast notification ✅
   - Removed success toast that appeared after user login
   - Login process now completes silently without popup notifications
