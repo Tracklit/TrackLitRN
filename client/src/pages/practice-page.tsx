@@ -60,6 +60,7 @@ function PracticePage() {
   const [currentDay, setCurrentDay] = useState<"yesterday" | "today" | "tomorrow">("today");
   const [currentDayOffset, setCurrentDayOffset] = useState<number>(0); // 0 = today, -1 = yesterday, 1 = tomorrow
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [isTransitioning, setIsTransitioning] = useState(false);
   
   // State for session data
   const [activeSessionData, setActiveSessionData] = useState<any>(null);
@@ -253,51 +254,68 @@ function PracticePage() {
 
   useEffect(() => {
     if (programSessions && programSessions.length > 0) {
-      // Calculate the target date based on current day offset
-      const today = new Date();
-      const targetDate = new Date(today.getTime() + currentDayOffset * 24 * 60 * 60 * 1000);
-      
-      // Format target date to match session date format (e.g., "Jun-3")
-      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      const targetDateString = `${monthNames[targetDate.getMonth()]}-${targetDate.getDate()}`;
-      
-      console.log(`Looking for session with date: ${targetDateString}`);
-      console.log('Available sessions:', programSessions.slice(0, 5).map(s => ({ date: s.date, hasWorkout: !!(s.shortDistanceWorkout || s.mediumDistanceWorkout || s.longDistanceWorkout) })));
-      
-      // Find session that matches the target date
-      let session = programSessions.find(s => s.date === targetDateString);
-      
-      // If no session found for this date, create a rest day session
-      if (!session) {
-        console.log(`No session found for ${targetDateString}, creating rest day`);
-        session = {
-          dayNumber: null, // Don't assign a day number for rest days
-          date: targetDateString,
-          preActivation1: null,
-          preActivation2: null,
-          shortDistanceWorkout: null,
-          mediumDistanceWorkout: null,
-          longDistanceWorkout: null,
-          extraSession: null,
-          title: "Rest Day",
-          description: "Rest and Recovery",
-          notes: null,
-          completed: false,
-          completed_at: null,
-          isRestDay: true
-        };
-      } else {
-        console.log(`Found session for ${targetDateString}:`, { 
-          date: session.date, 
-          dayNumber: session.dayNumber,
-          hasWorkout: !!(session.shortDistanceWorkout || session.mediumDistanceWorkout || session.longDistanceWorkout),
-          isRestDay: session.isRestDay 
-        });
+      try {
+        // Calculate the target date based on current day offset
+        const today = new Date();
+        const targetDate = new Date(today.getTime() + currentDayOffset * 24 * 60 * 60 * 1000);
+        
+        // Format target date to match session date format (e.g., "Jun-3")
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const targetDateString = `${monthNames[targetDate.getMonth()]}-${targetDate.getDate()}`;
+        
+        console.log(`Looking for session with date: ${targetDateString}`);
+        console.log('Available sessions:', programSessions.slice(0, 5).map(s => ({ date: s.date, hasWorkout: !!(s.shortDistanceWorkout || s.mediumDistanceWorkout || s.longDistanceWorkout) })));
+        
+        // Find session that matches the target date
+        let session = programSessions.find(s => s.date === targetDateString);
+        
+        // If no session found for this date, create a rest day session
+        if (!session) {
+          console.log(`No session found for ${targetDateString}, creating rest day`);
+          session = {
+            dayNumber: null, // Don't assign a day number for rest days
+            date: targetDateString,
+            preActivation1: null,
+            preActivation2: null,
+            shortDistanceWorkout: null,
+            mediumDistanceWorkout: null,
+            longDistanceWorkout: null,
+            extraSession: null,
+            title: "Rest Day",
+            description: "Rest and Recovery",
+            notes: null,
+            completed: false,
+            completed_at: null,
+            isRestDay: true
+          };
+        } else {
+          console.log(`Found session for ${targetDateString}:`, { 
+            date: session.date, 
+            dayNumber: session.dayNumber,
+            hasWorkout: !!(session.shortDistanceWorkout || session.mediumDistanceWorkout || session.longDistanceWorkout),
+            isRestDay: session.isRestDay 
+          });
+        }
+        
+        setActiveSessionData(session);
+        setIsTransitioning(false);
+      } catch (error) {
+        console.error('Error processing session data:', error);
+        setIsTransitioning(false);
       }
-      
-      setActiveSessionData(session);
     }
   }, [programSessions, currentDayOffset]);
+
+  // Helper function to handle date navigation with transition
+  const handleDateNavigation = (direction: 'prev' | 'next') => {
+    setIsTransitioning(true);
+    setFadeTransition(false);
+    
+    setTimeout(() => {
+      setCurrentDayOffset(prev => direction === 'prev' ? prev - 1 : prev + 1);
+      setFadeTransition(true);
+    }, 100);
+  };
 
   return (
     <PageContainer className="pb-24">
@@ -333,7 +351,13 @@ function PracticePage() {
       {!hasMeetsToday && (
         <>
           {/* Daily Session Content */}
-          <div className={`space-y-4 transition-opacity duration-200 ${fadeTransition ? 'opacity-100' : 'opacity-0'}`}>
+          {isTransitioning && (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          )}
+          
+          <div className={`space-y-4 transition-opacity duration-200 ${(fadeTransition && !isTransitioning) ? 'opacity-100' : 'opacity-0'}`}>
             <div className="bg-muted/40 p-3" style={{ borderRadius: '6px' }}>
               {selectedProgram && assignedPrograms && assignedPrograms.length > 0 ? (
                 <div className="space-y-4">
@@ -621,7 +645,8 @@ function PracticePage() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setCurrentDayOffset(prev => prev - 1)}
+                  onClick={() => handleDateNavigation('prev')}
+                  disabled={isTransitioning}
                   className="h-8 w-8"
                 >
                   <ChevronLeft className="h-4 w-4" />
@@ -644,7 +669,8 @@ function PracticePage() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setCurrentDayOffset(prev => prev + 1)}
+                  onClick={() => handleDateNavigation('next')}
+                  disabled={isTransitioning}
                   className="h-8 w-8"
                 >
                   <ChevronRight className="h-4 w-4" />
