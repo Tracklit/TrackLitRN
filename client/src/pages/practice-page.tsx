@@ -355,26 +355,26 @@ function PracticePage() {
         <>
           {/* Daily Session Content */}
           <div className={`space-y-4 transition-opacity duration-200 ${fadeTransition ? 'opacity-100' : 'opacity-0'}`}>
-            <div className="bg-muted/40 p-3 rounded-md">
+            <div className="bg-muted/40 p-3" style={{ borderRadius: '6px' }}>
               {selectedProgram && assignedPrograms && assignedPrograms.length > 0 ? (
                 <div className="space-y-4">
                   {/* Text-based program display */}
                   {selectedProgram.program?.isTextBased ? (
                     <div className="space-y-3">
-                      <div className="p-3 bg-background/80 rounded-md border border-border/50">
+                      <div className="p-3 bg-background/80 border border-border/50" style={{ borderRadius: '6px' }}>
                         <div className="space-y-3">
                           <div className="flex items-center gap-2 mb-3">
                             <ClipboardList className="h-5 w-5 text-primary" />
                             <h3 className="font-medium">Program Content</h3>
                           </div>
                           
-                          <div className="bg-muted/30 rounded-md p-4 max-h-[60vh] overflow-y-auto">
+                          <div className="bg-muted/30 p-4 max-h-[60vh] overflow-y-auto" style={{ borderRadius: '6px' }}>
                             <div className="whitespace-pre-wrap text-sm font-mono leading-relaxed">
                               {selectedProgram.program.textContent}
                             </div>
                           </div>
                           
-                          <div className="text-xs text-muted-foreground mt-2 p-2 bg-muted/20 rounded">
+                          <div className="text-xs text-muted-foreground mt-2 p-2 bg-muted/20" style={{ borderRadius: '6px' }}>
                             <p>This is a text-based program. Scroll through the content above to find your training sessions and instructions.</p>
                           </div>
                         </div>
@@ -382,7 +382,7 @@ function PracticePage() {
                     </div>
                   ) : isLoadingProgramSessions ? (
                     <div className="space-y-3">
-                      <div className="p-3 bg-background/80 rounded-md border border-border/50">
+                      <div className="p-3 bg-background/80 border border-border/50" style={{ borderRadius: '6px' }}>
                         <div className="space-y-3">
                           {/* Skeleton loader for daily workout data */}
                           <div className="p-2 bg-background/50 rounded border border-border/50">
@@ -427,7 +427,7 @@ function PracticePage() {
                     </div>
                   ) : activeSessionData ? (
                     <div className="space-y-3">
-                      <div className="p-3 bg-background/80 rounded-md border border-border/50">
+                      <div className="p-3 bg-background/80 border border-border/50" style={{ borderRadius: '6px' }}>
                         <div className="space-y-3">
                           {activeSessionData.isRestDay || 
                            !activeSessionData.date || 
@@ -435,7 +435,7 @@ function PracticePage() {
                            (!activeSessionData.shortDistanceWorkout && 
                             !activeSessionData.mediumDistanceWorkout && 
                             !activeSessionData.longDistanceWorkout) ? (
-                            <div className="p-3 bg-muted/30 rounded-md">
+                            <div className="p-3 bg-muted/30" style={{ borderRadius: '6px' }}>
                               <p className="text-center font-medium">Rest Day</p>
                               <p className="text-sm text-center text-muted-foreground">
                                 Take time to recover and prepare for your next training session.
@@ -594,7 +594,7 @@ function PracticePage() {
                         <p className="text-sm text-muted-foreground mb-3">{selectedProgram.program?.description}</p>
                         
                         {selectedProgram.notes && (
-                          <div className="p-3 bg-muted/30 rounded-md mb-3">
+                          <div className="p-3 bg-muted/30 mb-3" style={{ borderRadius: '6px' }}>
                             <h5 className="text-xs font-medium mb-1">Assignment Notes:</h5>
                             <p className="text-sm">{selectedProgram.notes}</p>
                           </div>
@@ -614,7 +614,7 @@ function PracticePage() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <div className="p-6 bg-background/50 rounded border border-border/50 text-center">
+                  <div className="p-6 bg-background/50 border border-border/50 text-center" style={{ borderRadius: '6px' }}>
                     <div className="flex flex-col items-center gap-3 py-4">
                       <CalendarRange className="h-10 w-10 text-muted-foreground opacity-70" />
                       <p className="text-sm text-muted-foreground">No program assigned, tap to assign one</p>
@@ -633,7 +633,8 @@ function PracticePage() {
             <Collapsible 
               open={calculatorOpen}
               onOpenChange={setCalculatorOpen}
-              className="bg-muted/40 p-3 rounded-md"
+              className="bg-muted/40 p-3"
+              style={{ borderRadius: '6px' }}
             >
               <CollapsibleTrigger asChild>
                 <div className="flex items-center justify-between cursor-pointer">
@@ -649,7 +650,7 @@ function PracticePage() {
                 </div>
               </CollapsibleTrigger>
               <CollapsibleContent className="mt-3 space-y-2 animate-in fade-in-0 slide-in-from-top-5">
-                <div className="flex flex-col space-y-2 bg-muted/30 p-2 rounded mb-2">
+                <div className="flex flex-col space-y-2 bg-muted/30 p-2 rounded-md mb-2" style={{ borderRadius: '6px' }}>
                   <div className="text-xs font-medium">Timing Options</div>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="flex items-center space-x-2">
@@ -681,7 +682,7 @@ function PracticePage() {
                   </div>
                 </div>
                 
-                <div className="overflow-hidden rounded-md border border-amber-500/70">
+                <div className="overflow-hidden border border-amber-500/70" style={{ borderRadius: '6px' }}>
                   <div className="bg-[#111827] text-white px-3 py-2">
                     <p className="text-sm text-blue-200">
                       {useFirstFootTiming ? '100% column shows first foot contact (-0.55s)' : 'Target times based on your profile goals'}
@@ -835,7 +836,7 @@ function PracticePage() {
               
               <div className="space-y-4">
                 {/* Mood Tracking Slider */}
-                <div className="p-3 bg-muted/30 rounded-md">
+                <div className="p-3 bg-muted/30" style={{ borderRadius: '6px' }}>
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-sm font-medium">How did you feel today?</div>
                     <div className="text-lg font-bold">{moodValue}/10</div>
@@ -900,7 +901,7 @@ function PracticePage() {
                       </div>
                       
                       {transcription && (
-                        <div className="p-3 bg-muted/30 rounded-md border">
+                        <div className="p-3 bg-muted/30 border" style={{ borderRadius: '6px' }}>
                           <p className="text-sm">{transcription}</p>
                         </div>
                       )}
@@ -954,7 +955,7 @@ function PracticePage() {
           </Card>
 
           {/* Media Upload Section - Collapsible */}
-          <Collapsible className="mb-6 border border-border/30 rounded-md overflow-hidden">
+          <Collapsible className="mb-6 border border-border/30 overflow-hidden" style={{ borderRadius: '6px' }}>
             <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-3 bg-muted/30 hover:bg-muted/40 transition-colors">
               <div className="flex items-center gap-2">
                 <Camera className="h-4 w-4 text-muted-foreground" />
@@ -1011,7 +1012,7 @@ function PracticePage() {
           </DialogHeader>
           
           <div className="space-y-4 py-4">
-            <div className="bg-muted/30 p-3 rounded-md space-y-2">
+            <div className="bg-muted/30 p-3 space-y-2" style={{ borderRadius: '6px' }}>
               <h3 className="font-medium text-sm">With Premium Voice You Get:</h3>
               <ul className="text-sm space-y-1.5">
                 <li className="flex items-center gap-2">
@@ -1070,7 +1071,7 @@ function PracticePage() {
           </DialogHeader>
           
           <div className="space-y-4 py-4">
-            <div className="bg-muted/30 p-3 rounded-md space-y-2">
+            <div className="bg-muted/30 p-3 space-y-2" style={{ borderRadius: '6px' }}>
               <h3 className="font-medium text-sm">With Premium Media You Get:</h3>
               <ul className="text-sm space-y-1.5">
                 <li className="flex items-center gap-2">
@@ -1124,7 +1125,7 @@ function PracticePage() {
             </DialogDescription>
           </DialogHeader>
           
-          <div className="bg-muted/30 p-4 rounded-md mb-4">
+          <div className="bg-muted/30 p-4 mb-4" style={{ borderRadius: '6px' }}>
             <h3 className="font-medium mb-2">Training Session</h3>
             
             {/* Display the mood rating */}
@@ -1215,11 +1216,12 @@ function PracticePage() {
                 assignedPrograms.map((assignment) => (
                   <div
                     key={assignment.id}
-                    className={`p-3 rounded-md border cursor-pointer transition-colors ${
+                    className={`p-3 border cursor-pointer transition-colors ${
                       selectedProgram?.id === assignment.id
                         ? 'border-primary bg-primary/5'
                         : 'border-border hover:border-primary/50 hover:bg-muted/30'
                     }`}
+                    style={{ borderRadius: '6px' }}
                     onClick={() => setSelectedProgram(assignment)}
                   >
                     <div className="flex items-center justify-between">
@@ -1230,7 +1232,7 @@ function PracticePage() {
                         </p>
                         
                         {assignment.notes && (
-                          <div className="mt-2 p-2 bg-muted/30 rounded text-xs">
+                          <div className="mt-2 p-2 bg-muted/30 text-xs" style={{ borderRadius: '6px' }}>
                             <span className="font-medium">Notes: </span>
                             {assignment.notes}
                           </div>
