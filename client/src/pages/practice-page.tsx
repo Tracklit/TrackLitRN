@@ -813,9 +813,9 @@ function PracticePage() {
             </Collapsible>
           </div>
 
-          {/* Date navigation - moved below track workout card, aligned left and scaled to 33% */}
-          <div className="flex justify-start mb-6">
-            <div className="flex items-center justify-between max-w-xs text-center scale-[0.33] origin-left">
+          {/* Date navigation - positioned above Training Journal, aligned right and scaled to 50% */}
+          <div className="flex justify-end mb-4">
+            <div className="flex items-center justify-between max-w-xs text-center scale-[0.5] origin-right">
               <Button
                 variant="ghost"
                 size="icon"
