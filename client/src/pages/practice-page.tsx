@@ -60,6 +60,7 @@ function PracticePage() {
   const [currentDay, setCurrentDay] = useState<"yesterday" | "today" | "tomorrow">("today");
   const [currentDayOffset, setCurrentDayOffset] = useState<number>(0); // 0 = today, -1 = yesterday, 1 = tomorrow
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
   
   // State for session data
   const [activeSessionData, setActiveSessionData] = useState<any>(null);
@@ -382,7 +383,7 @@ function PracticePage() {
                     </div>
                   ) : isLoadingProgramSessions ? (
                     <div className="space-y-3">
-                      <div className="p-3 bg-gradient-to-br from-purple-500 to-blue-800 overflow-y-auto" style={{ borderRadius: '6px', height: '25vh', boxShadow: '0 0 20px rgba(168, 85, 247, 0.5)' }}>
+                      <div className="p-3 bg-gradient-to-br from-purple-500 to-blue-800 overflow-y-auto relative" style={{ borderRadius: '6px', height: '33vh', boxShadow: '0 0 20px rgba(168, 85, 247, 0.5)' }}>
                         <div className="space-y-3">
                           {/* Skeleton loader for daily workout data */}
                           <div className="p-2 bg-white/10" style={{ borderRadius: "6px" }}>
@@ -427,8 +428,13 @@ function PracticePage() {
                     </div>
                   ) : activeSessionData ? (
                     <div className="space-y-3">
-                      <div className="p-3 bg-gradient-to-br from-purple-500 to-blue-800 overflow-y-auto" style={{ borderRadius: '6px', height: '25vh', boxShadow: '0 0 20px rgba(168, 85, 247, 0.5)' }}>
+                      <div className="p-3 bg-gradient-to-br from-purple-500 to-blue-800 overflow-y-auto relative" style={{ borderRadius: '6px', height: '33vh', boxShadow: '0 0 20px rgba(168, 85, 247, 0.5)' }}>
                         <div className="space-y-3">
+                          {/* Scroll indicator */}
+                          <div className="absolute bottom-2 right-2 opacity-50">
+                            <ChevronDown className="h-4 w-4 text-white animate-bounce" />
+                          </div>
+                          
                           {activeSessionData.isRestDay || 
                            !activeSessionData.date || 
                            activeSessionData.date.trim() === '' ||
@@ -591,7 +597,7 @@ function PracticePage() {
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      <div className="p-4 bg-gradient-to-br from-purple-500 to-blue-800 overflow-y-auto" style={{ borderRadius: '6px', height: '25vh', boxShadow: '0 0 20px rgba(168, 85, 247, 0.5)' }}>
+                      <div className="p-4 bg-gradient-to-br from-purple-500 to-blue-800 overflow-y-auto relative" style={{ borderRadius: '6px', height: '33vh', boxShadow: '0 0 20px rgba(168, 85, 247, 0.5)' }}>
                         <p className="mb-2 font-medium text-white">{selectedProgram.program?.title}</p>
                         <p className="text-sm text-white/80 mb-3">{selectedProgram.program?.description}</p>
                         
@@ -616,7 +622,7 @@ function PracticePage() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <div className="p-6 bg-gradient-to-br from-purple-500 to-blue-800 text-center overflow-y-auto" style={{ borderRadius: '6px', height: '25vh', boxShadow: '0 0 20px rgba(168, 85, 247, 0.5)' }}>
+                  <div className="p-6 bg-gradient-to-br from-purple-500 to-blue-800 text-center overflow-y-auto relative" style={{ borderRadius: '6px', height: '33vh', boxShadow: '0 0 20px rgba(168, 85, 247, 0.5)' }}>
                     <div className="flex flex-col items-center justify-center gap-3 h-full">
                       <CalendarRange className="h-10 w-10 text-white/70" />
                       <p className="text-sm text-white/80">No program assigned, tap to assign one</p>
@@ -828,6 +834,47 @@ function PracticePage() {
               </CollapsibleContent>
             </Collapsible>
           </div>
+
+          {/* Compact Date Picker - positioned below track workout */}
+          <div className="flex justify-end mb-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowDatePicker(!showDatePicker)}
+              className="flex items-center gap-2 text-xs"
+            >
+              <Calendar className="h-3 w-3" />
+              {new Date(new Date().setDate(new Date().getDate() + currentDayOffset)).toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric' 
+              })}
+            </Button>
+          </div>
+          
+          {/* Date picker dropdown */}
+          {showDatePicker && (
+            <div className="flex justify-end mb-4">
+              <div className="bg-background border rounded-lg p-3 shadow-lg">
+                <DayPicker
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => {
+                    if (date) {
+                      setSelectedDate(date);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      date.setHours(0, 0, 0, 0);
+                      const diffTime = date.getTime() - today.getTime();
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                      setCurrentDayOffset(diffDays);
+                    }
+                    setShowDatePicker(false);
+                  }}
+                  className="scale-75"
+                />
+              </div>
+            </div>
+          )}
 
           {/* Training Journal Section */}
           <Card className="mb-6 bg-primary/5" style={{ borderRadius: '6px', opacity: '0.9' }}>
