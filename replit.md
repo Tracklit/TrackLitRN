@@ -108,14 +108,15 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
-- July 9, 2025: Fixed date navigation to work correctly with both workout sessions and meets ✅
+- July 9, 2025: Enhanced date navigation with smooth skeleton loading and eliminated visual jitter ✅
   - Fixed critical bug where page would break when changing dates to days with meets instead of training sessions
-  - Moved date navigation to always be visible at top of page, not hidden when meets are present
+  - Moved date navigation to always be visible (under workout card for workouts, top for meets)
   - Enhanced session data processing to handle both meet days and workout days correctly
   - Added comprehensive error handling for date calculations and meet detection
-  - Implemented proper transition states to prevent page breaks during date changes
-  - Added loading state indicator during date navigation transitions
-  - Date navigation now works seamlessly for all date combinations (workouts, meets, rest days)
+  - Replaced spinner with skeleton loading to prevent card position shifts and visual jitter
+  - Implemented smooth fade transitions with skeleton components that match actual content structure
+  - Added skeleton loading for workout cards, Target Times section, and Training Journal
+  - Date navigation now works seamlessly for all date combinations with smooth visual transitions
 - July 9, 2025: Fixed gym data fetching and display issues ✅
   - Fixed "Gym data loading" message to only show on actual gym workout dates
   - Fixed 404 errors when fetching gym data for non-existent sessions

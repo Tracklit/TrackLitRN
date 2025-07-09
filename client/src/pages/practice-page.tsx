@@ -433,15 +433,53 @@ function PracticePage() {
       {!hasMeetsToday && (
         <>
           {/* Daily Session Content */}
-          {isTransitioning && (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          )}
-          
-          <div className={`space-y-4 transition-opacity duration-200 ${(fadeTransition && !isTransitioning) ? 'opacity-100' : 'opacity-0'}`}>
+          <div className={`space-y-4 transition-opacity duration-300 ${(fadeTransition && !isTransitioning) ? 'opacity-100' : 'opacity-30'}`}>
             <div className="bg-muted/40 p-3" style={{ borderRadius: '6px' }}>
-              {selectedProgram && assignedPrograms && assignedPrograms.length > 0 ? (
+              {isTransitioning ? (
+                /* Skeleton loader for daily workout data */
+                <div className="space-y-3">
+                  <div className="p-3 bg-gradient-to-br from-purple-500 to-blue-800 overflow-y-auto relative" style={{ borderRadius: '6px', height: '33vh', boxShadow: '0 0 20px rgba(168, 85, 247, 0.5)' }}>
+                    <div className="space-y-3">
+                      <div className="p-2 bg-white/10" style={{ borderRadius: "6px" }}>
+                        <div className="flex items-start">
+                          <div className="bg-white/20 p-1.5 rounded-full mr-3 mt-0.5">
+                            <Dumbbell className="h-4 w-4 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <Skeleton className="h-4 w-16 mb-2 bg-white/20" />
+                            <Skeleton className="h-3 w-32 mb-2 bg-white/20" />
+                            <Skeleton className="h-3 w-24 bg-white/20" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-2 bg-white/10" style={{ borderRadius: "6px" }}>
+                        <div className="flex items-start">
+                          <div className="bg-white/20 p-1.5 rounded-full mr-3 mt-0.5">
+                            <Target className="h-4 w-4 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <Skeleton className="h-4 w-20 mb-2 bg-white/20" />
+                            <Skeleton className="h-3 w-40 mb-2 bg-white/20" />
+                            <Skeleton className="h-3 w-28 bg-white/20" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-2 bg-white/10" style={{ borderRadius: "6px" }}>
+                        <div className="flex items-start">
+                          <div className="bg-white/20 p-1.5 rounded-full mr-3 mt-0.5">
+                            <Timer className="h-4 w-4 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <Skeleton className="h-4 w-24 mb-2 bg-white/20" />
+                            <Skeleton className="h-3 w-36 mb-2 bg-white/20" />
+                            <Skeleton className="h-3 w-20 bg-white/20" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : selectedProgram && assignedPrograms && assignedPrograms.length > 0 ? (
                 <div className="space-y-4">
                   {/* Text-based program display */}
                   {selectedProgram.program?.isTextBased ? (
@@ -770,7 +808,9 @@ function PracticePage() {
                     <Calculator className="h-4 w-4 text-primary" />
                     <span>Target Times</span>
                   </div>
-                  {calculatorOpen ? (
+                  {isTransitioning ? (
+                    <Skeleton className="h-4 w-4 bg-muted-foreground/30" />
+                  ) : calculatorOpen ? (
                     <ChevronUp className="h-4 w-4 text-muted-foreground" />
                   ) : (
                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -969,7 +1009,13 @@ function PracticePage() {
                 <div className="p-3 bg-muted/30" style={{ borderRadius: '6px' }}>
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-sm font-medium">How did you feel today?</div>
-                    <div className="text-lg font-bold">{moodValue}/10</div>
+                    <div className="text-lg font-bold">
+                      {isTransitioning ? (
+                        <Skeleton className="h-5 w-8 inline-block" />
+                      ) : (
+                        `${moodValue}/10`
+                      )}
+                    </div>
                   </div>
                   <div className="px-1">
                     <Slider
