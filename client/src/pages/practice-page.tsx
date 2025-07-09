@@ -427,7 +427,7 @@ function PracticePage() {
                     </div>
                   ) : activeSessionData ? (
                     <div className="space-y-3">
-                      <div className="p-3 bg-primary/5" style={{ borderRadius: '6px' }}>
+                      <div className="p-3 bg-primary/5" style={{ borderRadius: '6px', opacity: '0.9' }}>
                         <div className="space-y-3">
                           {activeSessionData.isRestDay || 
                            !activeSessionData.date || 
@@ -838,7 +838,7 @@ function PracticePage() {
           </div>
 
           {/* Training Journal Section */}
-          <Card className="mb-6 bg-primary/5" style={{ borderRadius: '6px' }}>
+          <Card className="mb-6 bg-primary/5" style={{ borderRadius: '6px', opacity: '0.9' }}>
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-medium">Training Journal</h3>

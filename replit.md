@@ -113,6 +113,7 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
   - Consolidated distance sections (60m/100m, 200m, 400m) into single "Track Workout" visual box
   - Maintained proper spacing between distance categories while unifying visual presentation
   - Distance headers now styled with primary color for better hierarchy
+  - Updated daily session card and Training Journal card to use consistent background with 90% opacity
 - July 9, 2025: Removed login success toast notification ✅
   - Removed success toast that appeared after user login
   - Login process now completes silently without popup notifications
