@@ -382,43 +382,43 @@ function PracticePage() {
                     </div>
                   ) : isLoadingProgramSessions ? (
                     <div className="space-y-3">
-                      <div className="p-3 bg-primary/5 overflow-y-auto" style={{ borderRadius: '6px', height: '25vh' }}>
+                      <div className="p-3 bg-gradient-to-br from-purple-500 to-blue-800 overflow-y-auto" style={{ borderRadius: '6px', height: '25vh', boxShadow: '0 0 20px rgba(168, 85, 247, 0.5)' }}>
                         <div className="space-y-3">
                           {/* Skeleton loader for daily workout data */}
-                          <div className="p-2 bg-primary/5" style={{ borderRadius: "6px" }}>
+                          <div className="p-2 bg-white/10" style={{ borderRadius: "6px" }}>
                             <div className="flex items-start">
-                              <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
-                                <Dumbbell className="h-4 w-4 text-primary" />
+                              <div className="bg-white/20 p-1.5 rounded-full mr-3 mt-0.5">
+                                <Dumbbell className="h-4 w-4 text-white" />
                               </div>
                               <div className="flex-1">
-                                <Skeleton className="h-4 w-16 mb-2" />
-                                <Skeleton className="h-3 w-full mb-1" />
-                                <Skeleton className="h-3 w-4/5" />
+                                <Skeleton className="h-4 w-16 mb-2 bg-white/20" />
+                                <Skeleton className="h-3 w-full mb-1 bg-white/20" />
+                                <Skeleton className="h-3 w-4/5 bg-white/20" />
                               </div>
                             </div>
                           </div>
-                          <div className="p-2 bg-primary/5" style={{ borderRadius: "6px" }}>
+                          <div className="p-2 bg-white/10" style={{ borderRadius: "6px" }}>
                             <div className="flex items-start">
-                              <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
-                                <Dumbbell className="h-4 w-4 text-primary" />
+                              <div className="bg-white/20 p-1.5 rounded-full mr-3 mt-0.5">
+                                <Dumbbell className="h-4 w-4 text-white" />
                               </div>
                               <div className="flex-1">
-                                <Skeleton className="h-4 w-12 mb-2" />
-                                <Skeleton className="h-3 w-full mb-1" />
-                                <Skeleton className="h-3 w-3/4 mb-1" />
-                                <Skeleton className="h-3 w-5/6" />
+                                <Skeleton className="h-4 w-12 mb-2 bg-white/20" />
+                                <Skeleton className="h-3 w-full mb-1 bg-white/20" />
+                                <Skeleton className="h-3 w-3/4 mb-1 bg-white/20" />
+                                <Skeleton className="h-3 w-5/6 bg-white/20" />
                               </div>
                             </div>
                           </div>
-                          <div className="p-2 bg-primary/5" style={{ borderRadius: "6px" }}>
+                          <div className="p-2 bg-white/10" style={{ borderRadius: "6px" }}>
                             <div className="flex items-start">
-                              <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
-                                <Dumbbell className="h-4 w-4 text-primary" />
+                              <div className="bg-white/20 p-1.5 rounded-full mr-3 mt-0.5">
+                                <Dumbbell className="h-4 w-4 text-white" />
                               </div>
                               <div className="flex-1">
-                                <Skeleton className="h-4 w-14 mb-2" />
-                                <Skeleton className="h-3 w-full mb-1" />
-                                <Skeleton className="h-3 w-2/3" />
+                                <Skeleton className="h-4 w-14 mb-2 bg-white/20" />
+                                <Skeleton className="h-3 w-full mb-1 bg-white/20" />
+                                <Skeleton className="h-3 w-2/3 bg-white/20" />
                               </div>
                             </div>
                           </div>
@@ -427,7 +427,7 @@ function PracticePage() {
                     </div>
                   ) : activeSessionData ? (
                     <div className="space-y-3">
-                      <div className="p-3 bg-primary/5 overflow-y-auto" style={{ borderRadius: '6px', opacity: '0.9', height: '25vh' }}>
+                      <div className="p-3 bg-gradient-to-br from-purple-500 to-blue-800 overflow-y-auto" style={{ borderRadius: '6px', height: '25vh', boxShadow: '0 0 20px rgba(168, 85, 247, 0.5)' }}>
                         <div className="space-y-3">
                           {activeSessionData.isRestDay || 
                            !activeSessionData.date || 
@@ -446,8 +446,8 @@ function PracticePage() {
                               {/* Pre-activation exercises */}
                               {activeSessionData.preActivation1 && activeSessionData.preActivation1.trim() !== "" && (
                                 <div>
-                                  <p className="font-medium text-sm mb-2">Pre-Activation</p>
-                                  <div className="whitespace-pre-line text-sm mt-1 pl-2 border-l-2 border-primary/30">
+                                  <p className="font-medium text-sm mb-2 text-white">Pre-Activation</p>
+                                  <div className="whitespace-pre-line text-sm mt-1 pl-2 border-l-2 border-white/30 text-white/80">
                                     {activeSessionData.preActivation1.replace(/^"|"$/g, '')}
                                   </div>
                                 </div>
@@ -473,11 +473,11 @@ function PracticePage() {
                                   !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
                                   !athleteProfile.hurdles400m && !athleteProfile.otherEvent))) ? (
                                 <div className="flex items-start">
-                                  <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
-                                    <Dumbbell className="h-4 w-4 text-primary" />
+                                  <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
+                                    <Dumbbell className="h-4 w-4 text-white" />
                                   </div>
                                   <div className="flex-1">
-                                    <p className="font-medium text-sm mb-3">Track Workout</p>
+                                    <p className="font-medium text-sm mb-3 text-white">Track Workout</p>
                                     <div className="space-y-4">
                                       {activeSessionData.shortDistanceWorkout && 
                                        activeSessionData.shortDistanceWorkout.trim() !== "" && 
@@ -486,8 +486,8 @@ function PracticePage() {
                                          !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
                                          !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
                                         <div>
-                                          <p className="font-medium text-sm text-primary">60m/100m</p>
-                                          <div className="whitespace-pre-line text-sm mt-1">
+                                          <p className="font-medium text-sm text-white">60m/100m</p>
+                                          <div className="whitespace-pre-line text-sm mt-1 text-white/80">
                                             {activeSessionData.shortDistanceWorkout.replace(/^"|"$/g, '')}
                                           </div>
                                         </div>
@@ -500,8 +500,8 @@ function PracticePage() {
                                          !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
                                          !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
                                         <div>
-                                          <p className="font-medium text-sm text-primary">200m</p>
-                                          <div className="whitespace-pre-line text-sm mt-1">
+                                          <p className="font-medium text-sm text-white">200m</p>
+                                          <div className="whitespace-pre-line text-sm mt-1 text-white/80">
                                             {activeSessionData.mediumDistanceWorkout.replace(/^"|"$/g, '')}
                                           </div>
                                         </div>
@@ -514,8 +514,8 @@ function PracticePage() {
                                          !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
                                          !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
                                         <div>
-                                          <p className="font-medium text-sm text-primary">400m</p>
-                                          <div className="whitespace-pre-line text-sm mt-1">
+                                          <p className="font-medium text-sm text-white">400m</p>
+                                          <div className="whitespace-pre-line text-sm mt-1 text-white/80">
                                             {activeSessionData.longDistanceWorkout.replace(/^"|"$/g, '')}
                                           </div>
                                         </div>
@@ -528,11 +528,11 @@ function PracticePage() {
                               {/* Gym Exercises Section - Dynamic Loading */}
                               {isLoadingGymData && currentProgramId && currentDayNumber && (
                                 <div className="flex items-start">
-                                  <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
-                                    <Dumbbell className="h-4 w-4 text-primary" />
+                                  <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
+                                    <Dumbbell className="h-4 w-4 text-white" />
                                   </div>
                                   <div className="flex-1">
-                                    <p className="font-medium text-sm">Loading Gym Exercises...</p>
+                                    <p className="font-medium text-sm text-white">Loading Gym Exercises...</p>
                                     <div className="mt-2">
                                       <div className="animate-pulse h-4 bg-muted rounded w-3/4"></div>
                                     </div>
@@ -591,9 +591,9 @@ function PracticePage() {
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      <div className="p-4 bg-background/80 rounded border border-border/50 overflow-y-auto" style={{ height: '25vh' }}>
-                        <p className="mb-2 font-medium">{selectedProgram.program?.title}</p>
-                        <p className="text-sm text-muted-foreground mb-3">{selectedProgram.program?.description}</p>
+                      <div className="p-4 bg-gradient-to-br from-purple-500 to-blue-800 overflow-y-auto" style={{ borderRadius: '6px', height: '25vh', boxShadow: '0 0 20px rgba(168, 85, 247, 0.5)' }}>
+                        <p className="mb-2 font-medium text-white">{selectedProgram.program?.title}</p>
+                        <p className="text-sm text-white/80 mb-3">{selectedProgram.program?.description}</p>
                         
                         {selectedProgram.notes && (
                           <div className="p-3 bg-muted/30 mb-3" style={{ borderRadius: '6px' }}>
@@ -616,10 +616,10 @@ function PracticePage() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <div className="p-6 bg-background/50 border border-border/50 text-center overflow-y-auto" style={{ borderRadius: '6px', height: '25vh' }}>
+                  <div className="p-6 bg-gradient-to-br from-purple-500 to-blue-800 text-center overflow-y-auto" style={{ borderRadius: '6px', height: '25vh', boxShadow: '0 0 20px rgba(168, 85, 247, 0.5)' }}>
                     <div className="flex flex-col items-center justify-center gap-3 h-full">
-                      <CalendarRange className="h-10 w-10 text-muted-foreground opacity-70" />
-                      <p className="text-sm text-muted-foreground">No program assigned, tap to assign one</p>
+                      <CalendarRange className="h-10 w-10 text-white/70" />
+                      <p className="text-sm text-white/80">No program assigned, tap to assign one</p>
                       <Button asChild variant="outline" size="sm" className="mt-2">
                         <Link href="/programs">
                           Browse Programs
