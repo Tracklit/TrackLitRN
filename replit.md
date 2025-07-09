@@ -108,6 +108,11 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
+- July 9, 2025: Enhanced Practice page layout and workout display ✅
+  - Added bottom padding (pb-24) to prevent Your Programs card from being covered by navigation
+  - Consolidated distance sections (60m/100m, 200m, 400m) into single "Track Workout" visual box
+  - Maintained proper spacing between distance categories while unifying visual presentation
+  - Distance headers now styled with primary color for better hierarchy
 - July 9, 2025: Removed login success toast notification ✅
   - Removed success toast that appeared after user login
   - Login process now completes silently without popup notifications

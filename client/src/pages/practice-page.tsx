@@ -287,7 +287,7 @@ function PracticePage() {
   }, [programSessions, currentDayOffset]);
 
   return (
-    <PageContainer>
+    <PageContainer className="pb-24">
       {/* Day navigation */}
       <div className="flex items-center justify-between mb-6 max-w-xs mx-auto text-center">
         <Button
@@ -454,68 +454,78 @@ function PracticePage() {
                               )}
                             
                               {/* Show imported workout information with proper hierarchy, filtered by athlete profile */}
-                              {activeSessionData.shortDistanceWorkout && 
-                               activeSessionData.shortDistanceWorkout.trim() !== "" && 
-                               (!athleteProfile || athleteProfile.sprint60m100m !== false || 
-                                (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
-                                 !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
-                                 !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
+                              {(activeSessionData.shortDistanceWorkout && 
+                                activeSessionData.shortDistanceWorkout.trim() !== "" && 
+                                (!athleteProfile || athleteProfile.sprint60m100m !== false || 
+                                 (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
+                                  !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
+                                  !athleteProfile.hurdles400m && !athleteProfile.otherEvent))) ||
+                               (activeSessionData.mediumDistanceWorkout && 
+                                activeSessionData.mediumDistanceWorkout.trim() !== "" && 
+                                (!athleteProfile || athleteProfile.sprint200m || 
+                                 (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
+                                  !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
+                                  !athleteProfile.hurdles400m && !athleteProfile.otherEvent))) ||
+                               (activeSessionData.longDistanceWorkout && 
+                                activeSessionData.longDistanceWorkout.trim() !== "" && 
+                                (!athleteProfile || athleteProfile.sprint400m || 
+                                 (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
+                                  !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
+                                  !athleteProfile.hurdles400m && !athleteProfile.otherEvent))) ? (
                                 <div className="p-2 bg-primary/5" style={{ borderRadius: "6px" }}>
                                   <div className="flex items-start">
                                     <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
                                       <Dumbbell className="h-4 w-4 text-primary" />
                                     </div>
-                                    <div>
-                                      <p className="font-medium text-sm">60m/100m</p>
-                                      <div className="whitespace-pre-line text-sm mt-1">
-                                        {activeSessionData.shortDistanceWorkout.replace(/^"|"$/g, '')}
+                                    <div className="flex-1">
+                                      <p className="font-medium text-sm mb-3">Track Workout</p>
+                                      <div className="space-y-4">
+                                        {activeSessionData.shortDistanceWorkout && 
+                                         activeSessionData.shortDistanceWorkout.trim() !== "" && 
+                                         (!athleteProfile || athleteProfile.sprint60m100m !== false || 
+                                          (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
+                                           !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
+                                           !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
+                                          <div>
+                                            <p className="font-medium text-sm text-primary">60m/100m</p>
+                                            <div className="whitespace-pre-line text-sm mt-1">
+                                              {activeSessionData.shortDistanceWorkout.replace(/^"|"$/g, '')}
+                                            </div>
+                                          </div>
+                                        )}
+                                        
+                                        {activeSessionData.mediumDistanceWorkout && 
+                                         activeSessionData.mediumDistanceWorkout.trim() !== "" && 
+                                         (!athleteProfile || athleteProfile.sprint200m || 
+                                          (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
+                                           !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
+                                           !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
+                                          <div>
+                                            <p className="font-medium text-sm text-primary">200m</p>
+                                            <div className="whitespace-pre-line text-sm mt-1">
+                                              {activeSessionData.mediumDistanceWorkout.replace(/^"|"$/g, '')}
+                                            </div>
+                                          </div>
+                                        )}
+                                        
+                                        {activeSessionData.longDistanceWorkout && 
+                                         activeSessionData.longDistanceWorkout.trim() !== "" && 
+                                         (!athleteProfile || athleteProfile.sprint400m || 
+                                          (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
+                                           !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
+                                           !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
+                                          <div>
+                                            <p className="font-medium text-sm text-primary">400m</p>
+                                            <div className="whitespace-pre-line text-sm mt-1">
+                                              {activeSessionData.longDistanceWorkout.replace(/^"|"$/g, '')}
+                                            </div>
+                                          </div>
+                                        )}
                                       </div>
                                     </div>
                                   </div>
                                 </div>
-                              )}
-                              
-                              {activeSessionData.mediumDistanceWorkout && 
-                               activeSessionData.mediumDistanceWorkout.trim() !== "" && 
-                               (!athleteProfile || athleteProfile.sprint200m || 
-                                (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
-                                 !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
-                                 !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
-                                <div className="p-2 bg-primary/5" style={{ borderRadius: "6px" }}>
-                                  <div className="flex items-start">
-                                    <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
-                                      <Dumbbell className="h-4 w-4 text-primary" />
-                                    </div>
-                                    <div>
-                                      <p className="font-medium text-sm">200m</p>
-                                      <div className="whitespace-pre-line text-sm mt-1">
-                                        {activeSessionData.mediumDistanceWorkout.replace(/^"|"$/g, '')}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-                              
-                              {activeSessionData.longDistanceWorkout && 
-                               activeSessionData.longDistanceWorkout.trim() !== "" && 
-                               (!athleteProfile || athleteProfile.sprint400m || 
-                                (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
-                                 !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
-                                 !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
-                                <div className="p-2 bg-primary/5" style={{ borderRadius: "6px" }}>
-                                  <div className="flex items-start">
-                                    <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
-                                      <Dumbbell className="h-4 w-4 text-primary" />
-                                    </div>
-                                    <div>
-                                      <p className="font-medium text-sm">400m</p>
-                                      <div className="whitespace-pre-line text-sm mt-1">
-                                        {activeSessionData.longDistanceWorkout.replace(/^"|"$/g, '')}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
+                              ) : null}
                               
                               {/* Gym Exercises Section - Dynamic Loading */}
                               {isLoadingGymData && currentProgramId && currentDayNumber && (
