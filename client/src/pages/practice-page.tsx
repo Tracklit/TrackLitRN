@@ -828,7 +828,7 @@ function PracticePage() {
           </div>
 
           {/* Training Journal Section */}
-          <Card className="mb-6 border border-border/30">
+          <Card className="mb-6 bg-primary/5" style={{ borderRadius: '6px' }}>
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-medium">Training Journal</h3>

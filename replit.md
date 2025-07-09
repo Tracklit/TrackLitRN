@@ -112,6 +112,7 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
   - Applied 6px border radius to all Card components and div elements with rounded corners
   - Updated session containers, modal dialogs, and premium feature cards
   - Removed borders from workout session cards and applied bg-primary/5 background to match home page cards
+  - Updated Training Journal section with same borderless styling and bg-primary/5 background
   - Consistent corner rounding and styling across entire Practice page interface
   - All elements now match the design system with 6px border radius and unified card styling
 - July 8, 2025: Enhanced Tools page with consistent drop shadow and added Sprinthia to navigation ✅
