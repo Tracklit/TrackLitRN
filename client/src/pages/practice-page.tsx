@@ -362,43 +362,47 @@ function PracticePage() {
 
   return (
     <PageContainer className="pb-24">
-      {/* Date navigation - Always visible, positioned at top */}
-      <div className="flex justify-end mb-6">
-        <div className="flex items-center justify-between max-w-xs text-center">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => handleDateNavigation('prev')}
-            disabled={isTransitioning}
-            className="h-8 w-8"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          
-          <div className="flex items-center gap-2 mx-3">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium min-w-[60px]">
-              {currentDayOffset === 0 ? 'Today' : 
-               currentDayOffset === -1 ? 'Yesterday' :
-               currentDayOffset === 1 ? 'Tomorrow' :
-               currentDayOffset < 0 ? `${Math.abs(currentDayOffset)} days ago` :
-               `${currentDayOffset} days ahead`}
-            </span>
-          </div>
-          
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => handleDateNavigation('next')}
-            disabled={isTransitioning}
-            className="h-8 w-8"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
       {/* Show meets if any exist for the current day */}
+      {hasMeetsToday && (
+        <>
+          {/* Date navigation - Always visible for meet days */}
+          <div className="flex justify-end mb-6">
+            <div className="flex items-center justify-between max-w-xs text-center">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleDateNavigation('prev')}
+                disabled={isTransitioning}
+                className="h-8 w-8"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              
+              <div className="flex items-center gap-2 mx-3">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium min-w-[60px]">
+                  {currentDayOffset === 0 ? 'Today' : 
+                   currentDayOffset === -1 ? 'Yesterday' :
+                   currentDayOffset === 1 ? 'Tomorrow' :
+                   currentDayOffset < 0 ? `${Math.abs(currentDayOffset)} days ago` :
+                   `${currentDayOffset} days ahead`}
+                </span>
+              </div>
+              
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleDateNavigation('next')}
+                disabled={isTransitioning}
+                className="h-8 w-8"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
+
       {hasMeetsToday && (
         <div className="mb-6">
           <h3 className="text-lg font-medium mb-3">Today's Meets</h3>
@@ -715,6 +719,42 @@ function PracticePage() {
                   </div>
                 </div>
               )}
+            </div>
+            
+            {/* Date navigation - positioned above Target Times, aligned right and full size */}
+            <div className="flex justify-end mb-6">
+              <div className="flex items-center justify-between max-w-xs text-center">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleDateNavigation('prev')}
+                  disabled={isTransitioning}
+                  className="h-8 w-8"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                
+                <div className="flex items-center gap-2 mx-3">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium min-w-[60px]">
+                    {currentDayOffset === 0 ? 'Today' : 
+                     currentDayOffset === -1 ? 'Yesterday' :
+                     currentDayOffset === 1 ? 'Tomorrow' :
+                     currentDayOffset < 0 ? `${Math.abs(currentDayOffset)} days ago` :
+                     `${currentDayOffset} days ahead`}
+                  </span>
+                </div>
+                
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleDateNavigation('next')}
+                  disabled={isTransitioning}
+                  className="h-8 w-8"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
             
             {/* Target Times Calculator */}
