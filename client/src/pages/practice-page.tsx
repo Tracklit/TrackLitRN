@@ -445,7 +445,7 @@ function PracticePage() {
                             <>
                               {/* Pre-activation exercises */}
                               {activeSessionData.preActivation1 && activeSessionData.preActivation1.trim() !== "" && (
-                                <div className="p-2 bg-primary/5" style={{ borderRadius: "6px" }}>
+                                <div>
                                   <p className="font-medium text-sm mb-2">Pre-Activation</p>
                                   <div className="whitespace-pre-line text-sm mt-1 pl-2 border-l-2 border-primary/30">
                                     {activeSessionData.preActivation1.replace(/^"|"$/g, '')}
@@ -472,56 +472,54 @@ function PracticePage() {
                                  (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
                                   !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
                                   !athleteProfile.hurdles400m && !athleteProfile.otherEvent))) ? (
-                                <div className="p-2 bg-primary/5" style={{ borderRadius: "6px" }}>
-                                  <div className="flex items-start">
-                                    <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
-                                      <Dumbbell className="h-4 w-4 text-primary" />
-                                    </div>
-                                    <div className="flex-1">
-                                      <p className="font-medium text-sm mb-3">Track Workout</p>
-                                      <div className="space-y-4">
-                                        {activeSessionData.shortDistanceWorkout && 
-                                         activeSessionData.shortDistanceWorkout.trim() !== "" && 
-                                         (!athleteProfile || athleteProfile.sprint60m100m !== false || 
-                                          (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
-                                           !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
-                                           !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
-                                          <div>
-                                            <p className="font-medium text-sm text-primary">60m/100m</p>
-                                            <div className="whitespace-pre-line text-sm mt-1">
-                                              {activeSessionData.shortDistanceWorkout.replace(/^"|"$/g, '')}
-                                            </div>
+                                <div className="flex items-start">
+                                  <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
+                                    <Dumbbell className="h-4 w-4 text-primary" />
+                                  </div>
+                                  <div className="flex-1">
+                                    <p className="font-medium text-sm mb-3">Track Workout</p>
+                                    <div className="space-y-4">
+                                      {activeSessionData.shortDistanceWorkout && 
+                                       activeSessionData.shortDistanceWorkout.trim() !== "" && 
+                                       (!athleteProfile || athleteProfile.sprint60m100m !== false || 
+                                        (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
+                                         !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
+                                         !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
+                                        <div>
+                                          <p className="font-medium text-sm text-primary">60m/100m</p>
+                                          <div className="whitespace-pre-line text-sm mt-1">
+                                            {activeSessionData.shortDistanceWorkout.replace(/^"|"$/g, '')}
                                           </div>
-                                        )}
-                                        
-                                        {activeSessionData.mediumDistanceWorkout && 
-                                         activeSessionData.mediumDistanceWorkout.trim() !== "" && 
-                                         (!athleteProfile || athleteProfile.sprint200m || 
-                                          (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
-                                           !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
-                                           !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
-                                          <div>
-                                            <p className="font-medium text-sm text-primary">200m</p>
-                                            <div className="whitespace-pre-line text-sm mt-1">
-                                              {activeSessionData.mediumDistanceWorkout.replace(/^"|"$/g, '')}
-                                            </div>
+                                        </div>
+                                      )}
+                                      
+                                      {activeSessionData.mediumDistanceWorkout && 
+                                       activeSessionData.mediumDistanceWorkout.trim() !== "" && 
+                                       (!athleteProfile || athleteProfile.sprint200m || 
+                                        (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
+                                         !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
+                                         !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
+                                        <div>
+                                          <p className="font-medium text-sm text-primary">200m</p>
+                                          <div className="whitespace-pre-line text-sm mt-1">
+                                            {activeSessionData.mediumDistanceWorkout.replace(/^"|"$/g, '')}
                                           </div>
-                                        )}
-                                        
-                                        {activeSessionData.longDistanceWorkout && 
-                                         activeSessionData.longDistanceWorkout.trim() !== "" && 
-                                         (!athleteProfile || athleteProfile.sprint400m || 
-                                          (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
-                                           !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
-                                           !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
-                                          <div>
-                                            <p className="font-medium text-sm text-primary">400m</p>
-                                            <div className="whitespace-pre-line text-sm mt-1">
-                                              {activeSessionData.longDistanceWorkout.replace(/^"|"$/g, '')}
-                                            </div>
+                                        </div>
+                                      )}
+                                      
+                                      {activeSessionData.longDistanceWorkout && 
+                                       activeSessionData.longDistanceWorkout.trim() !== "" && 
+                                       (!athleteProfile || athleteProfile.sprint400m || 
+                                        (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
+                                         !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
+                                         !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
+                                        <div>
+                                          <p className="font-medium text-sm text-primary">400m</p>
+                                          <div className="whitespace-pre-line text-sm mt-1">
+                                            {activeSessionData.longDistanceWorkout.replace(/^"|"$/g, '')}
                                           </div>
-                                        )}
-                                      </div>
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
                                 </div>
@@ -529,39 +527,35 @@ function PracticePage() {
                               
                               {/* Gym Exercises Section - Dynamic Loading */}
                               {isLoadingGymData && currentProgramId && currentDayNumber && (
-                                <div className="p-2 bg-primary/5" style={{ borderRadius: "6px" }}>
-                                  <div className="flex items-start">
-                                    <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
-                                      <Dumbbell className="h-4 w-4 text-primary" />
-                                    </div>
-                                    <div className="flex-1">
-                                      <p className="font-medium text-sm">Loading Gym Exercises...</p>
-                                      <div className="mt-2">
-                                        <div className="animate-pulse h-4 bg-muted rounded w-3/4"></div>
-                                      </div>
+                                <div className="flex items-start">
+                                  <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
+                                    <Dumbbell className="h-4 w-4 text-primary" />
+                                  </div>
+                                  <div className="flex-1">
+                                    <p className="font-medium text-sm">Loading Gym Exercises...</p>
+                                    <div className="mt-2">
+                                      <div className="animate-pulse h-4 bg-muted rounded w-3/4"></div>
                                     </div>
                                   </div>
                                 </div>
                               )}
                               
                               {gymDataResponse?.gymData && gymDataResponse.gymData.length > 0 && (
-                                <div className="p-2 bg-primary/5" style={{ borderRadius: "6px" }}>
-                                  <div className="flex items-start">
-                                    <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
-                                      <Dumbbell className="h-4 w-4 text-primary" />
-                                    </div>
-                                    <div className="flex-1">
-                                      <p className="font-medium text-sm">Gym Exercises</p>
-                                      <div className="space-y-1 mt-2">
-                                        {gymDataResponse.gymData.map((exercise: string, index: number) => (
-                                          <div key={index} className="flex items-start gap-2 text-sm">
-                                            <span className="text-primary font-mono text-xs mt-0.5 min-w-[20px]">
-                                              {(index + 1).toString().padStart(2, '0')}
-                                            </span>
-                                            <span className="flex-1">{exercise}</span>
-                                          </div>
-                                        ))}
-                                      </div>
+                                <div className="flex items-start">
+                                  <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
+                                    <Dumbbell className="h-4 w-4 text-primary" />
+                                  </div>
+                                  <div className="flex-1">
+                                    <p className="font-medium text-sm">Gym Exercises</p>
+                                    <div className="space-y-1 mt-2">
+                                      {gymDataResponse.gymData.map((exercise: string, index: number) => (
+                                        <div key={index} className="flex items-start gap-2 text-sm">
+                                          <span className="text-primary font-mono text-xs mt-0.5 min-w-[20px]">
+                                            {(index + 1).toString().padStart(2, '0')}
+                                          </span>
+                                          <span className="flex-1">{exercise}</span>
+                                        </div>
+                                      ))}
                                     </div>
                                   </div>
                                 </div>
@@ -572,19 +566,17 @@ function PracticePage() {
                                (activeSessionData?.shortDistanceWorkout?.toLowerCase().includes('gym') ||
                                 activeSessionData?.mediumDistanceWorkout?.toLowerCase().includes('gym') ||
                                 activeSessionData?.longDistanceWorkout?.toLowerCase().includes('gym')) && (
-                                <div className="p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded border border-yellow-200 dark:border-yellow-800">
-                                  <div className="flex items-start">
-                                    <div className="bg-yellow-100 dark:bg-yellow-900/50 p-1.5 rounded-full mr-3 mt-0.5">
-                                      <Dumbbell className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
-                                    </div>
-                                    <div className="flex-1">
-                                      <p className="font-medium text-sm text-yellow-800 dark:text-yellow-200 mb-1">
-                                        Gym Exercises Not Available
-                                      </p>
-                                      <p className="text-xs text-yellow-700 dark:text-yellow-300">
-                                        To display gym exercises, create a tab named "Gym" in your Google Sheets with the exercise details.
-                                      </p>
-                                    </div>
+                                <div className="flex items-start">
+                                  <div className="bg-yellow-100 dark:bg-yellow-900/50 p-1.5 rounded-full mr-3 mt-0.5">
+                                    <Dumbbell className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                                  </div>
+                                  <div className="flex-1">
+                                    <p className="font-medium text-sm text-yellow-800 dark:text-yellow-200 mb-1">
+                                      Gym Exercises Not Available
+                                    </p>
+                                    <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                                      To display gym exercises, create a tab named "Gym" in your Google Sheets with the exercise details.
+                                    </p>
                                   </div>
                                 </div>
                               )}
