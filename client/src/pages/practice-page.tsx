@@ -105,11 +105,16 @@ function PracticePage() {
 
   // Function to get meets for the current workout day
   const getMeetsForCurrentDay = () => {
-    const currentDate = new Date(new Date().setDate(new Date().getDate() + currentDayOffset));
-    return meets.filter(meet => {
-      const meetDate = new Date(meet.date);
-      return meetDate.toDateString() === currentDate.toDateString();
-    });
+    try {
+      const currentDate = new Date(new Date().setDate(new Date().getDate() + currentDayOffset));
+      return meets.filter(meet => {
+        const meetDate = new Date(meet.date);
+        return meetDate.toDateString() === currentDate.toDateString();
+      });
+    } catch (error) {
+      console.error('Error getting meets for current day:', error);
+      return [];
+    }
   };
 
   // Check if current day has meets (this hides daily workout sessions)
@@ -253,17 +258,19 @@ function PracticePage() {
   }, [assignedPrograms, selectedProgram]);
 
   useEffect(() => {
-    if (programSessions && programSessions.length > 0) {
-      try {
-        // Calculate the target date based on current day offset
-        const today = new Date();
-        const targetDate = new Date(today.getTime() + currentDayOffset * 24 * 60 * 60 * 1000);
-        
-        // Format target date to match session date format (e.g., "Jun-3")
-        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        const targetDateString = `${monthNames[targetDate.getMonth()]}-${targetDate.getDate()}`;
-        
-        console.log(`Looking for session with date: ${targetDateString}`);
+    try {
+      // Always try to set session data, even if there are meets
+      const today = new Date();
+      const targetDate = new Date(today.getTime() + currentDayOffset * 24 * 60 * 60 * 1000);
+      
+      // Format target date to match session date format (e.g., "Jun-3")
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const targetDateString = `${monthNames[targetDate.getMonth()]}-${targetDate.getDate()}`;
+      
+      console.log(`Looking for session with date: ${targetDateString}`);
+      
+      // If we have program sessions, try to find a matching session
+      if (programSessions && programSessions.length > 0) {
         console.log('Available sessions:', programSessions.slice(0, 5).map(s => ({ date: s.date, hasWorkout: !!(s.shortDistanceWorkout || s.mediumDistanceWorkout || s.longDistanceWorkout) })));
         
         // Find session that matches the target date
@@ -298,27 +305,98 @@ function PracticePage() {
         }
         
         setActiveSessionData(session);
-        setIsTransitioning(false);
-      } catch (error) {
-        console.error('Error processing session data:', error);
-        setIsTransitioning(false);
+      } else {
+        // No program sessions available, create a basic rest day
+        console.log(`No program sessions available, creating rest day for ${targetDateString}`);
+        const restDaySession = {
+          dayNumber: null,
+          date: targetDateString,
+          preActivation1: null,
+          preActivation2: null,
+          shortDistanceWorkout: null,
+          mediumDistanceWorkout: null,
+          longDistanceWorkout: null,
+          extraSession: null,
+          title: "Rest Day",
+          description: "Rest and Recovery",
+          notes: null,
+          completed: false,
+          completed_at: null,
+          isRestDay: true
+        };
+        setActiveSessionData(restDaySession);
       }
+      
+      setIsTransitioning(false);
+    } catch (error) {
+      console.error('Error processing session data:', error);
+      setIsTransitioning(false);
     }
   }, [programSessions, currentDayOffset]);
 
   // Helper function to handle date navigation with transition
   const handleDateNavigation = (direction: 'prev' | 'next') => {
+    if (isTransitioning) return; // Prevent multiple rapid clicks
+    
     setIsTransitioning(true);
     setFadeTransition(false);
     
     setTimeout(() => {
       setCurrentDayOffset(prev => direction === 'prev' ? prev - 1 : prev + 1);
-      setFadeTransition(true);
+      setTimeout(() => {
+        setFadeTransition(true);
+      }, 50);
     }, 100);
   };
 
+  // Effect to handle the transition completion
+  useEffect(() => {
+    if (isTransitioning) {
+      // After data has been processed, complete the transition
+      const timer = setTimeout(() => {
+        setIsTransitioning(false);
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [activeSessionData, currentDayMeets]);
+
   return (
     <PageContainer className="pb-24">
+      {/* Date navigation - Always visible, positioned at top */}
+      <div className="flex justify-end mb-6">
+        <div className="flex items-center justify-between max-w-xs text-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => handleDateNavigation('prev')}
+            disabled={isTransitioning}
+            className="h-8 w-8"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          
+          <div className="flex items-center gap-2 mx-3">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium min-w-[60px]">
+              {currentDayOffset === 0 ? 'Today' : 
+               currentDayOffset === -1 ? 'Yesterday' :
+               currentDayOffset === 1 ? 'Tomorrow' :
+               currentDayOffset < 0 ? `${Math.abs(currentDayOffset)} days ago` :
+               `${currentDayOffset} days ahead`}
+            </span>
+          </div>
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => handleDateNavigation('next')}
+            disabled={isTransitioning}
+            className="h-8 w-8"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
 
       {/* Show meets if any exist for the current day */}
       {hasMeetsToday && (
@@ -637,45 +715,6 @@ function PracticePage() {
                   </div>
                 </div>
               )}
-            </div>
-            
-            {/* Date navigation - positioned above Target Times, aligned right and full size */}
-            <div className="flex justify-end mb-6">
-              <div className="flex items-center justify-between max-w-xs text-center">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDateNavigation('prev')}
-                  disabled={isTransitioning}
-                  className="h-8 w-8"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                
-                <div className="flex flex-col items-center min-w-0 px-4">
-                  <span className="text-lg font-medium">
-                    {new Date(new Date().setDate(new Date().getDate() + currentDayOffset)).toLocaleDateString('en-US', { 
-                      month: 'short', 
-                      day: 'numeric' 
-                    })}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(new Date().setDate(new Date().getDate() + currentDayOffset)).toLocaleDateString('en-US', { 
-                      weekday: 'long' 
-                    })}
-                  </span>
-                </div>
-                
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDateNavigation('next')}
-                  disabled={isTransitioning}
-                  className="h-8 w-8"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
             </div>
             
             {/* Target Times Calculator */}
