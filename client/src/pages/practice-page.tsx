@@ -60,7 +60,6 @@ function PracticePage() {
   const [currentDay, setCurrentDay] = useState<"yesterday" | "today" | "tomorrow">("today");
   const [currentDayOffset, setCurrentDayOffset] = useState<number>(0); // 0 = today, -1 = yesterday, 1 = tomorrow
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
   
   // State for session data
   const [activeSessionData, setActiveSessionData] = useState<any>(null);
@@ -302,40 +301,6 @@ function PracticePage() {
 
   return (
     <PageContainer className="pb-24">
-      {/* Day navigation */}
-      <div className="flex items-center justify-between mb-6 max-w-xs mx-auto text-center">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setCurrentDayOffset(prev => prev - 1)}
-          className="h-8 w-8"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        
-        <div className="flex flex-col items-center min-w-0">
-          <span className="text-lg font-medium">
-            {new Date(new Date().setDate(new Date().getDate() + currentDayOffset)).toLocaleDateString('en-US', { 
-              month: 'short', 
-              day: 'numeric' 
-            })}
-          </span>
-          <span className="text-xs text-muted-foreground">
-            {new Date(new Date().setDate(new Date().getDate() + currentDayOffset)).toLocaleDateString('en-US', { 
-              weekday: 'long' 
-            })}
-          </span>
-        </div>
-        
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setCurrentDayOffset(prev => prev + 1)}
-          className="h-8 w-8"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-      </div>
 
       {/* Show meets if any exist for the current day */}
       {hasMeetsToday && (
@@ -848,46 +813,42 @@ function PracticePage() {
             </Collapsible>
           </div>
 
-          {/* Compact Date Picker - positioned below track workout */}
-          <div className="flex justify-end mb-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowDatePicker(!showDatePicker)}
-              className="flex items-center gap-2 text-xs"
-            >
-              <Calendar className="h-3 w-3" />
-              {new Date(new Date().setDate(new Date().getDate() + currentDayOffset)).toLocaleDateString('en-US', { 
-                month: 'short', 
-                day: 'numeric' 
-              })}
-            </Button>
-          </div>
-          
-          {/* Date picker dropdown */}
-          {showDatePicker && (
-            <div className="flex justify-end mb-4">
-              <div className="bg-background border rounded-lg p-3 shadow-lg">
-                <DayPicker
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={(date) => {
-                    if (date) {
-                      setSelectedDate(date);
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      date.setHours(0, 0, 0, 0);
-                      const diffTime = date.getTime() - today.getTime();
-                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                      setCurrentDayOffset(diffDays);
-                    }
-                    setShowDatePicker(false);
-                  }}
-                  className="scale-75"
-                />
+          {/* Date navigation - moved below track workout card, aligned left and scaled to 33% */}
+          <div className="flex justify-start mb-6">
+            <div className="flex items-center justify-between max-w-xs text-center scale-[0.33] origin-left">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setCurrentDayOffset(prev => prev - 1)}
+                className="h-8 w-8"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              
+              <div className="flex flex-col items-center min-w-0 px-4">
+                <span className="text-lg font-medium">
+                  {new Date(new Date().setDate(new Date().getDate() + currentDayOffset)).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric' 
+                  })}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {new Date(new Date().setDate(new Date().getDate() + currentDayOffset)).toLocaleDateString('en-US', { 
+                    weekday: 'long' 
+                  })}
+                </span>
               </div>
+              
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setCurrentDayOffset(prev => prev + 1)}
+                className="h-8 w-8"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
-          )}
+          </div>
 
           {/* Training Journal Section */}
           <Card className="mb-6 bg-primary/5" style={{ borderRadius: '6px', opacity: '0.9' }}>

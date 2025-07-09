@@ -108,6 +108,12 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
+- July 9, 2025: Relocated date picker navigation below Track Workout card ✅
+  - Moved existing date navigation from top of page to below Track Workout card
+  - Applied left alignment instead of center alignment
+  - Scaled date picker to 33% of original size using scale-[0.33] with origin-left
+  - Maintained all existing functionality including day offset navigation
+  - Removed temporary duplicate date picker implementation
 - July 9, 2025: Fixed gym data fetching and display issues ✅
   - Fixed "Gym data loading" message to only show on actual gym workout dates
   - Fixed 404 errors when fetching gym data for non-existent sessions
