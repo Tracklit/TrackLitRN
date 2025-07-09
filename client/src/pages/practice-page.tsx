@@ -615,6 +615,43 @@ function PracticePage() {
               )}
             </div>
             
+            {/* Date navigation - positioned above Target Times, aligned right and full size */}
+            <div className="flex justify-end mb-6">
+              <div className="flex items-center justify-between max-w-xs text-center">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setCurrentDayOffset(prev => prev - 1)}
+                  className="h-8 w-8"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                
+                <div className="flex flex-col items-center min-w-0 px-4">
+                  <span className="text-lg font-medium">
+                    {new Date(new Date().setDate(new Date().getDate() + currentDayOffset)).toLocaleDateString('en-US', { 
+                      month: 'short', 
+                      day: 'numeric' 
+                    })}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(new Date().setDate(new Date().getDate() + currentDayOffset)).toLocaleDateString('en-US', { 
+                      weekday: 'long' 
+                    })}
+                  </span>
+                </div>
+                
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setCurrentDayOffset(prev => prev + 1)}
+                  className="h-8 w-8"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            
             {/* Target Times Calculator */}
             <Collapsible 
               open={calculatorOpen}
@@ -813,42 +850,7 @@ function PracticePage() {
             </Collapsible>
           </div>
 
-          {/* Date navigation - positioned above Training Journal, aligned right and scaled to 50% */}
-          <div className="flex justify-end mb-4">
-            <div className="flex items-center justify-between max-w-xs text-center scale-[0.5] origin-right">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setCurrentDayOffset(prev => prev - 1)}
-                className="h-8 w-8"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              
-              <div className="flex flex-col items-center min-w-0 px-4">
-                <span className="text-lg font-medium">
-                  {new Date(new Date().setDate(new Date().getDate() + currentDayOffset)).toLocaleDateString('en-US', { 
-                    month: 'short', 
-                    day: 'numeric' 
-                  })}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {new Date(new Date().setDate(new Date().getDate() + currentDayOffset)).toLocaleDateString('en-US', { 
-                    weekday: 'long' 
-                  })}
-                </span>
-              </div>
-              
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setCurrentDayOffset(prev => prev + 1)}
-                className="h-8 w-8"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+
 
           {/* Training Journal Section */}
           <Card className="mb-6 bg-primary/5" style={{ borderRadius: '6px', opacity: '0.9' }}>
