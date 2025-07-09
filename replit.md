@@ -108,6 +108,13 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
+- July 9, 2025: Fixed gym data fetching and display issues ✅
+  - Fixed "Gym data loading" message to only show on actual gym workout dates
+  - Fixed 404 errors when fetching gym data for non-existent sessions
+  - Updated rest day sessions to not have day numbers to prevent unnecessary API calls
+  - Added proper gym content detection before attempting to fetch gym data
+  - Enhanced useGymData hook to handle 404 errors gracefully
+  - Gym data now only loads and displays when workout sessions actually contain gym exercises
 - July 9, 2025: Enhanced Practice page daily session card with ticker styling and improved layout ✅
   - Applied same purple-blue gradient background and outer glow as community ticker to daily session card
   - Increased card height from 25vh to 33vh for better content display

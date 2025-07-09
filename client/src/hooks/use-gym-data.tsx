@@ -12,6 +12,10 @@ export function useGymData(programId: number | null, dayNumber: number | null) {
       
       const response = await fetch(`/api/programs/${programId}/days/${dayNumber}/gym-data`);
       if (!response.ok) {
+        // If session not found (404), return empty gym data instead of throwing error
+        if (response.status === 404) {
+          return { gymData: [] };
+        }
         throw new Error('Failed to fetch gym data');
       }
       return response.json();

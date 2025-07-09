@@ -83,8 +83,20 @@ function PracticePage() {
   const currentProgramId = selectedProgram?.programId || null;
   const currentDayNumber = activeSessionData?.dayNumber || null;
   
-  // Fetch gym exercises for the current session
-  const { data: gymDataResponse, isLoading: isLoadingGymData } = useGymData(currentProgramId, currentDayNumber);
+  // Fetch gym exercises for the current session - only if we have a valid session with gym content
+  const shouldFetchGymData = currentProgramId && currentDayNumber && (
+    activeSessionData?.shortDistanceWorkout?.toLowerCase().includes('gym') ||
+    activeSessionData?.mediumDistanceWorkout?.toLowerCase().includes('gym') ||
+    activeSessionData?.longDistanceWorkout?.toLowerCase().includes('gym') ||
+    activeSessionData?.preActivation1?.toLowerCase().includes('gym') ||
+    activeSessionData?.preActivation2?.toLowerCase().includes('gym') ||
+    activeSessionData?.extraSession?.toLowerCase().includes('gym')
+  );
+  
+  const { data: gymDataResponse, isLoading: isLoadingGymData } = useGymData(
+    shouldFetchGymData ? currentProgramId : null, 
+    shouldFetchGymData ? currentDayNumber : null
+  );
 
   // Fetch meets to show on workout day
   const { data: meets = [] } = useQuery<Meet[]>({
@@ -260,7 +272,7 @@ function PracticePage() {
       if (!session) {
         console.log(`No session found for ${targetDateString}, creating rest day`);
         session = {
-          dayNumber: Math.abs(currentDayOffset) + 1,
+          dayNumber: null, // Don't assign a day number for rest days
           date: targetDateString,
           preActivation1: null,
           preActivation2: null,
@@ -278,6 +290,7 @@ function PracticePage() {
       } else {
         console.log(`Found session for ${targetDateString}:`, { 
           date: session.date, 
+          dayNumber: session.dayNumber,
           hasWorkout: !!(session.shortDistanceWorkout || session.mediumDistanceWorkout || session.longDistanceWorkout),
           isRestDay: session.isRestDay 
         });
@@ -532,7 +545,7 @@ function PracticePage() {
                               ) : null}
                               
                               {/* Gym Exercises Section - Dynamic Loading */}
-                              {isLoadingGymData && currentProgramId && currentDayNumber && (
+                              {isLoadingGymData && shouldFetchGymData && (
                                 <div className="flex items-start">
                                   <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
                                     <Dumbbell className="h-4 w-4 text-white" />
@@ -540,7 +553,7 @@ function PracticePage() {
                                   <div className="flex-1">
                                     <p className="font-medium text-sm text-white">Loading Gym Exercises...</p>
                                     <div className="mt-2">
-                                      <div className="animate-pulse h-4 bg-muted rounded w-3/4"></div>
+                                      <div className="animate-pulse h-4 bg-white/20 rounded w-3/4"></div>
                                     </div>
                                   </div>
                                 </div>
