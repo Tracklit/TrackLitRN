@@ -61,6 +61,7 @@ function PracticePage() {
   const [currentDayOffset, setCurrentDayOffset] = useState<number>(0); // 0 = today, -1 = yesterday, 1 = tomorrow
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [fadeTransition, setFadeTransition] = useState(true);
   
   // State for session data
   const [activeSessionData, setActiveSessionData] = useState<any>(null);
@@ -137,9 +138,6 @@ function PracticePage() {
   const [moodValue, setMoodValue] = useState(5);
   const [diaryNotes, setDiaryNotes] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-  
-  // Fade transition state
-  const [fadeTransition, setFadeTransition] = useState(true);
   
   // Check if user is premium (Pro or Star subscription)
   const isPremiumUser = athleteProfile?.subscription === 'pro' || athleteProfile?.subscription === 'star';
@@ -338,15 +336,20 @@ function PracticePage() {
   const handleDateNavigation = (direction: 'prev' | 'next') => {
     if (isTransitioning) return; // Prevent multiple rapid clicks
     
-    setIsTransitioning(true);
     setFadeTransition(false);
     
     setTimeout(() => {
       setCurrentDayOffset(prev => direction === 'prev' ? prev - 1 : prev + 1);
+      
+      // Update selected date
+      const newDate = new Date();
+      newDate.setDate(newDate.getDate() + (direction === 'prev' ? currentDayOffset - 1 : currentDayOffset + 1));
+      setSelectedDate(newDate);
+      
       setTimeout(() => {
         setFadeTransition(true);
-      }, 50);
-    }, 100);
+      }, 400);
+    }, 200);
   };
 
   // Effect to handle the transition completion
@@ -380,12 +383,15 @@ function PracticePage() {
               
               <div className="flex items-center gap-2 mx-3">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium min-w-[60px]">
-                  {currentDayOffset === 0 ? 'Today' : 
-                   currentDayOffset === -1 ? 'Yesterday' :
-                   currentDayOffset === 1 ? 'Tomorrow' :
-                   currentDayOffset < 0 ? `${Math.abs(currentDayOffset)} days ago` :
-                   `${currentDayOffset} days ahead`}
+                <span className="text-sm font-medium min-w-[80px]">
+                  {(() => {
+                    const date = new Date();
+                    date.setDate(date.getDate() + currentDayOffset);
+                    return date.toLocaleDateString('en-US', { 
+                      month: 'short', 
+                      day: 'numeric'
+                    });
+                  })()}
                 </span>
               </div>
               
@@ -433,53 +439,9 @@ function PracticePage() {
       {!hasMeetsToday && (
         <>
           {/* Daily Session Content */}
-          <div className={`space-y-4 transition-opacity duration-300 ${(fadeTransition && !isTransitioning) ? 'opacity-100' : 'opacity-30'}`}>
+          <div className={`space-y-4 transition-opacity duration-500 ${fadeTransition ? 'opacity-100' : 'opacity-0'}`}>
             <div className="bg-muted/40 p-3" style={{ borderRadius: '6px' }}>
-              {isTransitioning ? (
-                /* Skeleton loader for daily workout data */
-                <div className="space-y-3">
-                  <div className="p-3 bg-gradient-to-br from-purple-500 to-blue-800 overflow-y-auto relative" style={{ borderRadius: '6px', height: '33vh', boxShadow: '0 0 20px rgba(168, 85, 247, 0.5)' }}>
-                    <div className="space-y-3">
-                      <div className="p-2 bg-white/10" style={{ borderRadius: "6px" }}>
-                        <div className="flex items-start">
-                          <div className="bg-white/20 p-1.5 rounded-full mr-3 mt-0.5">
-                            <Dumbbell className="h-4 w-4 text-white" />
-                          </div>
-                          <div className="flex-1">
-                            <Skeleton className="h-4 w-16 mb-2 bg-white/20" />
-                            <Skeleton className="h-3 w-32 mb-2 bg-white/20" />
-                            <Skeleton className="h-3 w-24 bg-white/20" />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="p-2 bg-white/10" style={{ borderRadius: "6px" }}>
-                        <div className="flex items-start">
-                          <div className="bg-white/20 p-1.5 rounded-full mr-3 mt-0.5">
-                            <Target className="h-4 w-4 text-white" />
-                          </div>
-                          <div className="flex-1">
-                            <Skeleton className="h-4 w-20 mb-2 bg-white/20" />
-                            <Skeleton className="h-3 w-40 mb-2 bg-white/20" />
-                            <Skeleton className="h-3 w-28 bg-white/20" />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="p-2 bg-white/10" style={{ borderRadius: "6px" }}>
-                        <div className="flex items-start">
-                          <div className="bg-white/20 p-1.5 rounded-full mr-3 mt-0.5">
-                            <Timer className="h-4 w-4 text-white" />
-                          </div>
-                          <div className="flex-1">
-                            <Skeleton className="h-4 w-24 mb-2 bg-white/20" />
-                            <Skeleton className="h-3 w-36 mb-2 bg-white/20" />
-                            <Skeleton className="h-3 w-20 bg-white/20" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : selectedProgram && assignedPrograms && assignedPrograms.length > 0 ? (
+              {selectedProgram && assignedPrograms && assignedPrograms.length > 0 ? (
                 <div className="space-y-4">
                   {/* Text-based program display */}
                   {selectedProgram.program?.isTextBased ? (
@@ -774,12 +736,15 @@ function PracticePage() {
                 
                 <div className="flex items-center gap-2 mx-3">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium min-w-[60px]">
-                    {currentDayOffset === 0 ? 'Today' : 
-                     currentDayOffset === -1 ? 'Yesterday' :
-                     currentDayOffset === 1 ? 'Tomorrow' :
-                     currentDayOffset < 0 ? `${Math.abs(currentDayOffset)} days ago` :
-                     `${currentDayOffset} days ahead`}
+                  <span className="text-sm font-medium min-w-[80px]">
+                    {(() => {
+                      const date = new Date();
+                      date.setDate(date.getDate() + currentDayOffset);
+                      return date.toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric'
+                      });
+                    })()}
                   </span>
                 </div>
                 
@@ -808,9 +773,7 @@ function PracticePage() {
                     <Calculator className="h-4 w-4 text-primary" />
                     <span>Target Times</span>
                   </div>
-                  {isTransitioning ? (
-                    <Skeleton className="h-4 w-4 bg-muted-foreground/30" />
-                  ) : calculatorOpen ? (
+                  {calculatorOpen ? (
                     <ChevronUp className="h-4 w-4 text-muted-foreground" />
                   ) : (
                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -1009,13 +972,7 @@ function PracticePage() {
                 <div className="p-3 bg-muted/30" style={{ borderRadius: '6px' }}>
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-sm font-medium">How did you feel today?</div>
-                    <div className="text-lg font-bold">
-                      {isTransitioning ? (
-                        <Skeleton className="h-5 w-8 inline-block" />
-                      ) : (
-                        `${moodValue}/10`
-                      )}
-                    </div>
+                    <div className="text-lg font-bold">{moodValue}/10</div>
                   </div>
                   <div className="px-1">
                     <Slider
