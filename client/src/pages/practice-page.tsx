@@ -258,7 +258,8 @@ function PracticePage() {
         if (!ratio) return "-";
         
         const baseTimeForDistance = adjusted100m * ratio;
-        const adjustedTime = baseTimeForDistance * (percentage / 100);
+        // Percentage represents speed percentage - so 80% speed means 100/80 = 1.25x the time
+        const adjustedTime = baseTimeForDistance * (100 / percentage);
         return adjustedTime.toFixed(2);
       }
     };
@@ -525,32 +526,40 @@ function PracticePage() {
               <div className="space-y-2">
                 <label className="text-xs font-medium">Target Times</label>
                 <div className="bg-muted/20 rounded-md overflow-hidden">
-                  <div className="overflow-x-auto">
+                  <div className="relative">
                     {(() => {
                       const data = calculateTargetTimes();
                       return (
-                        <div className="grid gap-px bg-border text-xs min-w-fit" style={{ gridTemplateColumns: `80px repeat(${data.percentages.length}, 60px)` }}>
-                          {/* Header row */}
-                          <div className="bg-background px-2 py-1.5 font-medium text-center">Distance</div>
-                          {data.percentages.map((percentage) => (
-                            <div key={`header-${percentage}`} className="bg-background px-1 py-1.5 font-medium text-center">
-                              {percentage}%
+                        <div className="flex">
+                          {/* Frozen Distance Column */}
+                          <div className="flex-shrink-0 bg-background border-r border-border">
+                            <div className="w-20 px-2 py-1.5 text-xs font-medium text-center bg-muted/50 border-b border-border">
+                              Distance
                             </div>
-                          ))}
-                          
-                          {/* Data rows */}
-                          {data.distances.map((distance) => (
-                            <>
-                              <div key={`${distance}-label`} className="bg-background px-2 py-1.5 font-medium text-center">
+                            {data.distances.map((distance) => (
+                              <div key={`frozen-${distance}`} className="w-20 px-2 py-1.5 text-xs font-medium text-center bg-background border-b border-border last:border-b-0">
                                 {distance}
                               </div>
+                            ))}
+                          </div>
+                          
+                          {/* Scrollable Percentage Columns */}
+                          <div className="overflow-x-auto flex-1">
+                            <div className="flex min-w-fit">
                               {data.percentages.map((percentage) => (
-                                <div key={`${distance}-${percentage}`} className="bg-background px-1 py-1.5 text-center font-mono text-[10px]">
-                                  {data.getTime(distance, percentage)}
+                                <div key={`col-${percentage}`} className="flex-shrink-0 w-16">
+                                  <div className="px-1 py-1.5 text-xs font-medium text-center bg-muted/50 border-b border-border">
+                                    {percentage}%
+                                  </div>
+                                  {data.distances.map((distance) => (
+                                    <div key={`${distance}-${percentage}`} className="px-1 py-1.5 text-xs text-center font-mono bg-background border-b border-border last:border-b-0">
+                                      {data.getTime(distance, percentage)}
+                                    </div>
+                                  ))}
                                 </div>
                               ))}
-                            </>
-                          ))}
+                            </div>
+                          </div>
                         </div>
                       );
                     })()}
