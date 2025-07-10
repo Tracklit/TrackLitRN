@@ -763,205 +763,165 @@ function PracticePage() {
               </div>
             </div>
             
-            {/* Target Times Calculator */}
-            <Collapsible 
-              open={calculatorOpen}
-              onOpenChange={setCalculatorOpen}
-              className="bg-muted/40 p-3"
-              style={{ borderRadius: '6px' }}
-            >
-              <CollapsibleTrigger asChild>
-                <div className="flex items-center justify-between cursor-pointer">
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <Calculator className="h-4 w-4 text-primary" />
-                    <span>Target Times</span>
-                  </div>
-                  {calculatorOpen ? (
-                    <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </div>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-3 space-y-2 animate-in fade-in-0 slide-in-from-top-5">
-                <div className="flex flex-col space-y-2 bg-muted/30 p-2 rounded-md mb-2" style={{ borderRadius: '6px' }}>
-                  <div className="text-xs font-medium">Timing Options</div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="first-foot" 
-                        checked={useFirstFootTiming}
-                        onCheckedChange={(checked) => setUseFirstFootTiming(checked === true)}
-                      />
-                      <label 
-                        htmlFor="first-foot" 
-                        className="text-xs cursor-pointer"
-                      >
-                        First foot (-0.55s)
-                      </label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="track-adjust" 
-                        checked={adjustForTrackType}
-                        onCheckedChange={(checked) => setAdjustForTrackType(checked === true)}
-                      />
-                      <label 
-                        htmlFor="track-adjust" 
-                        className="text-xs cursor-pointer"
-                      >
-                        On Movement
-                      </label>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="overflow-hidden border border-amber-500/70" style={{ borderRadius: '6px' }}>
-                  <div className="bg-[#111827] text-white px-3 py-2">
-                    <p className="text-sm text-blue-200">
-                      {useFirstFootTiming ? '100% column shows first foot contact (-0.55s)' : 'Target times based on your profile goals'}
-                    </p>
-                  </div>
-                  
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="bg-[#111827] text-white border-b border-transparent">
-                          <th className="sticky left-0 z-10 bg-inherit whitespace-nowrap px-3 py-2 text-left font-bold">
-                            Distance
-                          </th>
-                          <th className="px-3 py-2 text-right font-bold">80%</th>
-                          <th className="px-3 py-2 text-right font-bold">90%</th>
-                          <th className="px-3 py-2 text-right font-bold">95%</th>
-                          <th className="px-3 py-2 text-right font-bold">98%</th>
-                          <th className="px-3 py-2 text-right font-bold">100%</th>
-                          <th className="px-3 py-2 text-right font-bold">Goal</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(() => {
-                          const distances = [
-                            "50m", "60m", "80m", "100m", "120m", 
-                            "150m", "200m", "250m", "300m", "400m"
-                          ];
-                          
-                          // Calculate all times for all distances
-                          const timesByDistance = new Map();
-                          
-                          // Start with the direct goal times from athlete profile
-                          if (athleteProfile?.sprint60m100mGoal) {
-                            // Determine if it's 60m or 100m based on the value
-                            const value = parseFloat(athleteProfile.sprint60m100mGoal);
-                            if (value < 10) {
-                              timesByDistance.set("60m", value);
-                              // Calculate the corresponding 100m time
-                              timesByDistance.set("100m", value * 1.67);
-                            } else {
-                              timesByDistance.set("100m", value);
-                              // Calculate the corresponding 60m time
-                              timesByDistance.set("60m", value * 0.6);
-                            }
-                            // Calculate 50m and 80m based on 100m time
-                            timesByDistance.set("50m", timesByDistance.get("100m") * 0.5);
-                            timesByDistance.set("80m", timesByDistance.get("100m") * 0.8);
-                          }
-                          
-                          if (athleteProfile?.sprint200mGoal) {
-                            timesByDistance.set("200m", parseFloat(athleteProfile.sprint200mGoal));
-                          }
-                          
-                          if (athleteProfile?.sprint400mGoal) {
-                            timesByDistance.set("400m", parseFloat(athleteProfile.sprint400mGoal));
-                          }
-                          
-                          // Create cascading calculation for distances not directly set by user
-                          if (!timesByDistance.has("120m") && timesByDistance.has("100m")) {
-                            timesByDistance.set("120m", timesByDistance.get("100m") * 1.2);
-                          }
-                          
-                          if (!timesByDistance.has("150m") && timesByDistance.has("120m")) {
-                            timesByDistance.set("150m", timesByDistance.get("120m") * 1.25);
-                          } else if (!timesByDistance.has("150m") && timesByDistance.has("100m")) {
-                            timesByDistance.set("150m", timesByDistance.get("100m") * 1.5);
-                          }
-                          
-                          if (!timesByDistance.has("200m") && timesByDistance.has("150m")) {
-                            timesByDistance.set("200m", timesByDistance.get("150m") * 1.33);
-                          }
-                          
-                          if (!timesByDistance.has("250m") && timesByDistance.has("200m")) {
-                            timesByDistance.set("250m", timesByDistance.get("200m") * 1.25);
-                          }
-                          
-                          if (!timesByDistance.has("300m") && timesByDistance.has("250m")) {
-                            timesByDistance.set("300m", timesByDistance.get("250m") * 1.2);
-                          }
-                          
-                          if (!timesByDistance.has("400m") && timesByDistance.has("300m")) {
-                            timesByDistance.set("400m", timesByDistance.get("300m") * 1.33);
-                          }
-                        
-                          // Use fallback times if no athleteProfile data available
-                          if (timesByDistance.size === 0) {
-                            // Default times based on average performance
-                            timesByDistance.set("50m", 6.5);
-                            timesByDistance.set("60m", 7.8);
-                            timesByDistance.set("80m", 10.4);
-                            timesByDistance.set("100m", 13.0);
-                            timesByDistance.set("120m", 15.6);
-                            timesByDistance.set("150m", 19.5);
-                            timesByDistance.set("200m", 26.0);
-                            timesByDistance.set("250m", 32.5);
-                            timesByDistance.set("300m", 39.0);
-                            timesByDistance.set("400m", 52.0);
-                          }
-                          
-                          // Render the rows with alternating backgrounds
-                          return distances.map((distance, index) => {
-                            const time = timesByDistance.get(distance);
-                            if (!time) return null;
-                            
-                            // Calculate percentages
-                            const percent80 = (time / 0.8).toFixed(2);
-                            const percent90 = (time / 0.9).toFixed(2);
-                            const percent95 = (time / 0.95).toFixed(2);
-                            const percent98 = (time / 0.98).toFixed(2);
-                            
-                            // Apply timing adjustments for 100% column
-                            let percent100 = time;
-                            if (useFirstFootTiming) percent100 -= 0.55;
-                            percent100 = Math.max(percent100, 0).toFixed(2);
-                            
-                            // Alternating backgrounds for even/odd rows
-                            const isEvenRow = index % 2 === 0;
-                            const rowBgClass = isEvenRow ? 
-                              "bg-[#111827] text-white" : 
-                              "bg-[#1e293b] text-white";
-                            
-                            return (
-                              <tr key={distance} className={`${rowBgClass} border-b border-transparent`}>
-                                <td className="sticky left-0 z-10 bg-inherit whitespace-nowrap px-3 py-2 font-bold">
-                                  {distance}
-                                </td>
-                                <td className="px-3 py-2 text-right">{percent80}s</td>
-                                <td className="px-3 py-2 text-right">{percent90}s</td>
-                                <td className="px-3 py-2 text-right">{percent95}s</td>
-                                <td className="px-3 py-2 text-right">{percent98}s</td>
-                                <td className="px-3 py-2 text-right">{percent100}s</td>
-                                <td className="px-3 py-2 text-right font-bold">{time.toFixed(2)}s</td>
-                              </tr>
-                            );
-                          });
-                        })()}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
           </div>
 
-
+          {/* Target Times Calculator - Static outside fade transition */}
+          <Collapsible 
+            open={calculatorOpen}
+            onOpenChange={setCalculatorOpen}
+            className="bg-muted/40 p-3 mb-6"
+            style={{ borderRadius: '6px' }}
+          >
+            <CollapsibleTrigger asChild>
+              <div className="flex items-center justify-between cursor-pointer">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Calculator className="h-4 w-4 text-primary" />
+                  <span>Target Times</span>
+                </div>
+                {calculatorOpen ? (
+                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                )}
+              </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-3 space-y-2 animate-in fade-in-0 slide-in-from-top-5">
+              <div className="flex flex-col space-y-2 bg-muted/30 p-2 rounded-md mb-2" style={{ borderRadius: '6px' }}>
+                <div className="text-xs font-medium">Timing Options</div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="first-foot" 
+                      checked={useFirstFootTiming}
+                      onCheckedChange={(checked) => setUseFirstFootTiming(checked === true)}
+                    />
+                    <label 
+                      htmlFor="first-foot" 
+                      className="text-xs cursor-pointer"
+                    >
+                      First foot (-0.55s)
+                    </label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="track-adjust" 
+                      checked={adjustForTrackType}
+                      onCheckedChange={(checked) => setAdjustForTrackType(checked === true)}
+                    />
+                    <label 
+                      htmlFor="track-adjust" 
+                      className="text-xs cursor-pointer"
+                    >
+                      On Movement
+                    </label>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="overflow-hidden border border-amber-500/70" style={{ borderRadius: '6px' }}>
+                <div className="bg-[#111827] text-white px-3 py-2">
+                  <p className="text-sm text-blue-200">
+                    {useFirstFootTiming ? '100% column shows first foot contact (-0.55s)' : 'Target times based on your profile goals'}
+                  </p>
+                </div>
+                
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-[#111827] text-white border-b border-transparent">
+                        <th className="sticky left-0 z-10 bg-inherit whitespace-nowrap px-3 py-2 text-left font-bold">
+                          Distance
+                        </th>
+                        <th className="px-3 py-2 text-right font-bold">80%</th>
+                        <th className="px-3 py-2 text-right font-bold">90%</th>
+                        <th className="px-3 py-2 text-right font-bold">95%</th>
+                        <th className="px-3 py-2 text-right font-bold">98%</th>
+                        <th className="px-3 py-2 text-right font-bold">100%</th>
+                        <th className="px-3 py-2 text-right font-bold">Goal</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(() => {
+                        const distances = [
+                          "50m", "60m", "80m", "100m", "120m", 
+                          "150m", "200m", "250m", "300m", "400m"
+                        ];
+                        
+                        // Calculate all times for all distances
+                        const timesByDistance = new Map();
+                        
+                        // Profile-based calculations
+                        if (athleteProfile?.specialtyEvent && athleteProfile?.personalBests) {
+                          const pbData = athleteProfile.personalBests;
+                          
+                          // Base times from profile
+                          if (pbData.fifty) timesByDistance.set("50m", pbData.fifty);
+                          if (pbData.sixty) timesByDistance.set("60m", pbData.sixty);
+                          if (pbData.eighty) timesByDistance.set("80m", pbData.eighty);
+                          if (pbData.hundred) timesByDistance.set("100m", pbData.hundred);
+                          if (pbData.onetwenty) timesByDistance.set("120m", pbData.onetwenty);
+                          if (pbData.onefifty) timesByDistance.set("150m", pbData.onefifty);
+                          if (pbData.twohundred) timesByDistance.set("200m", pbData.twohundred);
+                          if (pbData.twofifty) timesByDistance.set("250m", pbData.twofifty);
+                          if (pbData.threehundred) timesByDistance.set("300m", pbData.threehundred);
+                          if (pbData.fourhundred) timesByDistance.set("400m", pbData.fourhundred);
+                        } else {
+                          // Default fallback times
+                          timesByDistance.set("50m", 6.20);
+                          timesByDistance.set("60m", 7.40);
+                          timesByDistance.set("80m", 9.80);
+                          timesByDistance.set("100m", 12.40);
+                          timesByDistance.set("120m", 15.6);
+                          timesByDistance.set("150m", 19.5);
+                          timesByDistance.set("200m", 26.0);
+                          timesByDistance.set("250m", 32.5);
+                          timesByDistance.set("300m", 39.0);
+                          timesByDistance.set("400m", 52.0);
+                        }
+                        
+                        // Render the rows with alternating backgrounds
+                        return distances.map((distance, index) => {
+                          const time = timesByDistance.get(distance);
+                          if (!time) return null;
+                          
+                          // Calculate percentages
+                          const percent80 = (time / 0.8).toFixed(2);
+                          const percent90 = (time / 0.9).toFixed(2);
+                          const percent95 = (time / 0.95).toFixed(2);
+                          const percent98 = (time / 0.98).toFixed(2);
+                          
+                          // Apply timing adjustments for 100% column
+                          let percent100 = time;
+                          if (useFirstFootTiming) percent100 -= 0.55;
+                          percent100 = Math.max(percent100, 0).toFixed(2);
+                          
+                          // Alternating backgrounds for even/odd rows
+                          const isEvenRow = index % 2 === 0;
+                          const rowBgClass = isEvenRow ? 
+                            "bg-[#111827] text-white" : 
+                            "bg-[#1e293b] text-white";
+                          
+                          return (
+                            <tr key={distance} className={`${rowBgClass} border-b border-transparent`}>
+                              <td className="sticky left-0 z-10 bg-inherit whitespace-nowrap px-3 py-2 font-bold">
+                                {distance}
+                              </td>
+                              <td className="px-3 py-2 text-right">{percent80}s</td>
+                              <td className="px-3 py-2 text-right">{percent90}s</td>
+                              <td className="px-3 py-2 text-right">{percent95}s</td>
+                              <td className="px-3 py-2 text-right">{percent98}s</td>
+                              <td className="px-3 py-2 text-right">{percent100}s</td>
+                              <td className="px-3 py-2 text-right font-bold">{time.toFixed(2)}s</td>
+                            </tr>
+                          );
+                        });
+                      })()}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
           {/* Training Journal Section */}
           <Card className="mb-6 bg-primary/5" style={{ borderRadius: '6px', opacity: '0.9' }}>
