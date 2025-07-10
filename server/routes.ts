@@ -5136,9 +5136,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Not authenticated" });
       }
       
-      // Get both purchased programs and assigned programs
+      // Get purchased programs, assigned programs, and created programs
       const purchases = await dbStorage.getUserPurchasedPrograms(req.user!.id);
       const assignedPrograms = await dbStorage.getAssignedPrograms(req.user!.id);
+      const createdPrograms = await dbStorage.getProgramsByUserId(req.user!.id);
       
       console.log('Assigned programs for user', req.user!.id, ':', assignedPrograms);
       
@@ -5197,8 +5198,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('Assigned as purchased after processing:', assignedAsPurchased);
       
-      // Combine purchased and assigned programs
-      const allPrograms = [...purchases, ...assignedAsPurchased];
+      // Convert created programs to match the same format
+      const createdAsPurchased = createdPrograms.map(program => ({
+        id: `created-${program.id}`, // Prefix to avoid ID conflicts
+        programId: program.id,
+        userId: req.user!.id,
+        price: 0,
+        isFree: true,
+        purchasedAt: program.createdAt,
+        program: program,
+        creator: {
+          username: req.user!.username || 'You'
+        },
+        isCreated: true, // Flag to indicate this is a created program
+        creatorName: 'You (Creator)'
+      }));
+      
+      console.log('Created programs:', createdAsPurchased);
+      
+      // Combine purchased, assigned, and created programs
+      const allPrograms = [...purchases, ...assignedAsPurchased, ...createdAsPurchased];
       
       console.log('Final combined programs:', allPrograms);
       
