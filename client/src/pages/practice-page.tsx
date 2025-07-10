@@ -496,6 +496,12 @@ function PracticePage() {
     }
   }, []);
 
+  // Handle date navigation for the old card system (keeping for compatibility)
+  const handleDateNavigation = (direction: 'prev' | 'next') => {
+    const newOffset = direction === 'prev' ? currentDayOffset - 1 : currentDayOffset + 1;
+    setCurrentDayOffset(newOffset);
+  };
+
 
 
   return (
@@ -877,7 +883,6 @@ function PracticePage() {
                   variant="ghost"
                   size="icon"
                   onClick={() => handleDateNavigation('prev')}
-                  disabled={isTransitioning}
                   className="h-8 w-8"
                 >
                   <ChevronLeft className="h-4 w-4" />
@@ -900,7 +905,6 @@ function PracticePage() {
                   variant="ghost"
                   size="icon"
                   onClick={() => handleDateNavigation('next')}
-                  disabled={isTransitioning}
                   className="h-8 w-8"
                 >
                   <ChevronRight className="h-4 w-4" />
