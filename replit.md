@@ -108,21 +108,20 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
-- July 10, 2025: Enhanced Track Workout card styling and transitions ✅
-  - Weakened outer glow from 20px to 8px opacity for subtler appearance
-  - Changed background gradient from purple-to-blue to blue-to-purple for different visual flow
-  - Replaced fade transitions with slide-out/slide-in animations for smoother page changes
-  - Updated transition from opacity-based to transform-based with translate-x movement
-  - Target Times calculator now positioned outside fade transition area for static behavior
-  - Implemented interactive swipe gestures where content follows finger movement during drag
-  - Added 30% threshold snap behavior: content snaps out of view when moved 30% of container width
-  - Content smoothly returns to original position if swipe doesn't reach 30% threshold
-  - Enhanced touch event handling with horizontal swipe detection and scroll prevention
-  - Swipe left for next day, swipe right for previous day with visual feedback during drag
-  - Disabled smooth transitions during active dragging for immediate finger-following response
-  - Added slide-in animation for new content entering from opposite side of screen
-  - Swipe right: content exits right, new content enters from left
-  - Swipe left: content exits left, new content enters from right
+- July 10, 2025: Redesigned Practice page with vertical card layout ✅
+  - Completely removed swipe navigation code for simpler interaction
+  - Implemented vertical scrolling list of Track Workout cards (7 days ahead)
+  - Added centered card view with haptic feedback for card snapping
+  - Organized cards chronologically: later dates down, older dates up
+  - Added Target Times calculator as modal opened from calculator icon on each card
+  - Added Journal entry modal with media support opened from book icon on each card
+  - Moved Your Programs to top-right dropdown menu for easy program switching
+  - Enhanced card design with blue-to-purple gradient and improved typography
+  - Added proper meet day detection and display with location and time
+  - Implemented haptic feedback using navigator.vibrate() for card interactions
+  - Cards show training sessions with categorized workouts (short/medium/long distance)
+  - Rest days display with calendar icon and appropriate messaging
+  - Removed old static Target Times, Your Programs, and Journal Entry components
 - July 9, 2025: Enhanced date navigation with smooth fade transitions and cleaner interface ✅
   - Fixed critical bug where page would break when changing dates to days with meets instead of training sessions
   - Moved date navigation to always be visible (under workout card for workouts, top for meets)

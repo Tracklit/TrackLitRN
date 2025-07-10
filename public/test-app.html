@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test App</title>
+</head>
+<body>
+    <h1>Test App Loading</h1>
+    <div id="test">Loading...</div>
+    <script>
+        console.log('Test script loaded');
+        document.getElementById('test').textContent = 'JavaScript is working!';
+        
+        // Test fetch to /api/user
+        fetch('/api/user', { credentials: 'include' })
+            .then(response => {
+                console.log('API user response:', response.status);
+                return response.text();
+            })
+            .then(data => {
+                console.log('API user data:', data);
+            })
+            .catch(error => {
+                console.error('API user error:', error);
+            });
+    </script>
+</body>
+</html>
