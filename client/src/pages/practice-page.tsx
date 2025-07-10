@@ -132,11 +132,8 @@ function PracticePage() {
   const [selectedProgram, setSelectedProgram] = useState<any>(null);
   const [showAssignedPrograms, setShowAssignedPrograms] = useState<boolean>(false);
   
-  // State for current day navigation
-  const [currentDay, setCurrentDay] = useState<"yesterday" | "today" | "tomorrow">("today");
+  // State for current day navigation - simplified for horizontal cards
   const [currentDayOffset, setCurrentDayOffset] = useState<number>(0); // 0 = today, -1 = yesterday, 1 = tomorrow
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [isTransitioning, setIsTransitioning] = useState(false);
   
   // Horizontal scroll states
   const [centeredCardIndex, setCenteredCardIndex] = useState<number>(3); // Today is at index 3
@@ -407,10 +404,8 @@ function PracticePage() {
         setActiveSessionData(restDaySession);
       }
       
-      setIsTransitioning(false);
     } catch (error) {
       console.error('Error processing session data:', error);
-      setIsTransitioning(false);
     }
   }, [programSessions, currentDayOffset]);
 
@@ -501,16 +496,7 @@ function PracticePage() {
     }
   }, []);
 
-  // Effect to handle the transition completion
-  useEffect(() => {
-    if (isTransitioning) {
-      // After data has been processed, complete the transition
-      const timer = setTimeout(() => {
-        setIsTransitioning(false);
-      }, 200);
-      return () => clearTimeout(timer);
-    }
-  }, [activeSessionData, currentDayMeets]);
+
 
   return (
     <PageContainer className="pb-24">
@@ -602,16 +588,7 @@ function PracticePage() {
       {!hasMeetsToday && (
         <>
           {/* Daily Session Content */}
-          <div 
-            ref={containerRef}
-            className={`space-y-4 ${!isDragging || isSliding ? 'transition-transform duration-300 ease-out' : ''}`}
-            style={{
-              transform: `translateX(${currentTranslateX}px)`,
-            }}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-          >
+          <div className="space-y-4">
             <div className="bg-muted/40 p-3" style={{ borderRadius: '6px' }}>
               {selectedProgram && assignedPrograms && assignedPrograms.length > 0 ? (
                 <div className="space-y-4">
