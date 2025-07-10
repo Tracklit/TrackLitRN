@@ -443,7 +443,7 @@ function PracticePage() {
       {!hasMeetsToday && (
         <>
           {/* Daily Session Content */}
-          <div className={`space-y-4 transition-opacity duration-300 ${fadeTransition ? 'opacity-100' : 'opacity-0'}`}>
+          <div className={`space-y-4 transition-transform duration-300 ${fadeTransition ? 'transform translate-x-0' : 'transform translate-x-full'}`}>
             <div className="bg-muted/40 p-3" style={{ borderRadius: '6px' }}>
               {selectedProgram && assignedPrograms && assignedPrograms.length > 0 ? (
                 <div className="space-y-4">
@@ -471,7 +471,7 @@ function PracticePage() {
                     </div>
                   ) : isLoadingProgramSessions ? (
                     <div className="space-y-3">
-                      <div className="p-3 bg-gradient-to-br from-purple-500 to-blue-800 overflow-y-auto relative" style={{ borderRadius: '6px', height: '33vh', boxShadow: '0 0 20px rgba(168, 85, 247, 0.5)' }}>
+                      <div className="p-3 bg-gradient-to-br from-blue-800 to-purple-400 overflow-y-auto relative" style={{ borderRadius: '6px', height: '33vh', boxShadow: '0 0 8px rgba(168, 85, 247, 0.2)' }}>
                         <div className="space-y-3">
                           {/* Skeleton loader for daily workout data */}
                           <div className="p-2 bg-white/10" style={{ borderRadius: "6px" }}>
@@ -516,7 +516,7 @@ function PracticePage() {
                     </div>
                   ) : activeSessionData ? (
                     <div className="space-y-3">
-                      <div className="p-3 bg-gradient-to-br from-purple-500 to-blue-800 overflow-y-auto relative" style={{ borderRadius: '6px', height: '33vh', boxShadow: '0 0 20px rgba(168, 85, 247, 0.5)' }}>
+                      <div className="p-3 bg-gradient-to-br from-blue-800 to-purple-400 overflow-y-auto relative" style={{ borderRadius: '6px', height: '33vh', boxShadow: '0 0 8px rgba(168, 85, 247, 0.2)' }}>
                         <div className="space-y-3">
                           {/* Scroll indicator */}
                           <div className="absolute bottom-2 right-2 opacity-50">
