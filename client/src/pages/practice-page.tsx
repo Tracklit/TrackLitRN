@@ -40,7 +40,7 @@ import { DayPicker } from "react-day-picker";
 import { Textarea } from "@/components/ui/textarea";
 
 // Component to render workout content within each card
-function WorkoutCardContent({ sessionData, athleteProfile }: { sessionData: any, athleteProfile: any }) {
+function WorkoutCardContent({ sessionData, athleteProfile, gymData }: { sessionData: any, athleteProfile: any, gymData?: any }) {
   if (!sessionData) return null;
 
   if (sessionData.isRestDay || 
@@ -60,17 +60,19 @@ function WorkoutCardContent({ sessionData, athleteProfile }: { sessionData: any,
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {/* Pre-activation exercises */}
       {sessionData.preActivation1 && sessionData.preActivation1.trim() !== "" && (
-        <div className="flex items-start">
-          <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
-            <CheckCircle className="h-4 w-4 text-white" />
-          </div>
-          <div className="flex-1">
-            <p className="font-medium text-sm text-white mb-1">Pre-Activation</p>
-            <div className="whitespace-pre-line text-sm text-white/80 leading-relaxed">
-              {sessionData.preActivation1.replace(/^"|"$/g, '')}
+        <div className="p-4 bg-white/10 rounded-lg">
+          <div className="flex items-start">
+            <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
+              <CheckCircle className="h-4 w-4 text-white" />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-sm text-white mb-1">Pre-Activation</p>
+              <div className="whitespace-pre-line text-sm text-white/80 leading-relaxed">
+                {sessionData.preActivation1.replace(/^"|"$/g, '')}
+              </div>
             </div>
           </div>
         </div>
@@ -83,14 +85,16 @@ function WorkoutCardContent({ sessionData, athleteProfile }: { sessionData: any,
         (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
          !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
          !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
-        <div className="flex items-start">
-          <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
-            <Dumbbell className="h-4 w-4 text-white" />
-          </div>
-          <div className="flex-1">
-            <p className="font-medium text-sm text-white mb-1">60m/100m Sprint</p>
-            <div className="whitespace-pre-line text-sm text-white/80 leading-relaxed">
-              {sessionData.shortDistanceWorkout.replace(/^"|"$/g, '')}
+        <div className="p-4 bg-white/10 rounded-lg">
+          <div className="flex items-start">
+            <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
+              <Dumbbell className="h-4 w-4 text-white" />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-sm text-white mb-1">60m/100m Sprint</p>
+              <div className="whitespace-pre-line text-sm text-white/80 leading-relaxed">
+                {sessionData.shortDistanceWorkout.replace(/^"|"$/g, '')}
+              </div>
             </div>
           </div>
         </div>
@@ -103,14 +107,16 @@ function WorkoutCardContent({ sessionData, athleteProfile }: { sessionData: any,
         (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
          !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
          !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
-        <div className="flex items-start">
-          <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
-            <Dumbbell className="h-4 w-4 text-white" />
-          </div>
-          <div className="flex-1">
-            <p className="font-medium text-sm text-white mb-1">200m Sprint</p>
-            <div className="whitespace-pre-line text-sm text-white/80 leading-relaxed">
-              {sessionData.mediumDistanceWorkout.replace(/^"|"$/g, '')}
+        <div className="p-4 bg-white/10 rounded-lg">
+          <div className="flex items-start">
+            <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
+              <Dumbbell className="h-4 w-4 text-white" />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-sm text-white mb-1">200m Sprint</p>
+              <div className="whitespace-pre-line text-sm text-white/80 leading-relaxed">
+                {sessionData.mediumDistanceWorkout.replace(/^"|"$/g, '')}
+              </div>
             </div>
           </div>
         </div>
@@ -123,14 +129,37 @@ function WorkoutCardContent({ sessionData, athleteProfile }: { sessionData: any,
         (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
          !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
          !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
-        <div className="flex items-start">
-          <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
-            <Dumbbell className="h-4 w-4 text-white" />
+        <div className="p-4 bg-white/10 rounded-lg">
+          <div className="flex items-start">
+            <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
+              <Dumbbell className="h-4 w-4 text-white" />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-sm text-white mb-1">400m Sprint</p>
+              <div className="whitespace-pre-line text-sm text-white/80 leading-relaxed">
+                {sessionData.longDistanceWorkout.replace(/^"|"$/g, '')}
+              </div>
+            </div>
           </div>
-          <div className="flex-1">
-            <p className="font-medium text-sm text-white mb-1">400m Sprint</p>
-            <div className="whitespace-pre-line text-sm text-white/80 leading-relaxed">
-              {sessionData.longDistanceWorkout.replace(/^"|"$/g, '')}
+        </div>
+      )}
+
+      {/* Gym Exercises */}
+      {gymData && gymData.length > 0 && (
+        <div className="p-4 bg-white/10 rounded-lg">
+          <div className="flex items-start">
+            <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
+              <Dumbbell className="h-4 w-4 text-white" />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-sm text-white mb-1">Gym Exercises</p>
+              <div className="space-y-2">
+                {gymData.map((exercise: string, index: number) => (
+                  <div key={index} className="text-sm text-white/80 leading-relaxed">
+                    {exercise}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -358,8 +387,28 @@ function PracticePage() {
 
   return (
     <PageContainer className="pb-24">
-      {/* Scrollable Daily Workout Cards */}
-      <div className="space-y-4">
+      {/* Fixed Target Times Header */}
+      <div className="fixed top-16 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b px-4 py-2">
+        <div className="max-w-md mx-auto">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Calculator className="h-4 w-4 text-primary" />
+              <h3 className="text-sm font-medium">Target Times</h3>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCalculatorOpen(true)}
+              className="h-7 text-xs"
+            >
+              Calculate
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Scrollable Daily Workout Cards - with top padding for fixed header */}
+      <div className="pt-16 space-y-4">
         {selectedProgram && assignedPrograms && assignedPrograms.length > 0 ? (
           <>
             {/* Text-based program display */}
@@ -384,7 +433,7 @@ function PracticePage() {
               </div>
             ) : (
               /* Daily Workout Cards List */
-              <div className="space-y-4 max-h-[70vh] overflow-y-auto">
+              <div className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
                 {isLoadingCards || isLoadingProgramSessions ? (
                   /* Loading skeleton cards */
                   <>
@@ -403,23 +452,26 @@ function PracticePage() {
                   </>
                 ) : workoutCards.length > 0 ? (
                   /* Render workout cards */
-                  workoutCards.map((card) => (
-                    <div key={card.id} className={`p-4 bg-gradient-to-br from-blue-800 to-purple-400 ${card.isToday ? 'ring-2 ring-yellow-400' : ''}`} style={{ borderRadius: '6px', boxShadow: '0 0 8px rgba(168, 85, 247, 0.2)' }}>
-                      <div className="space-y-3">
-                        {/* Date header */}
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-medium text-white">{card.dayOfWeek}</h3>
-                            {card.isToday && <Badge className="bg-yellow-500 text-black text-xs">Today</Badge>}
+                  workoutCards.map((card) => {
+                    const { gymData } = useGymData(card.sessionData?.dayNumber);
+                    return (
+                      <div key={card.id} className={`p-4 bg-gradient-to-br from-blue-800 to-purple-400 ${card.isToday ? 'ring-2 ring-yellow-400' : ''}`} style={{ borderRadius: '6px', boxShadow: '0 0 8px rgba(168, 85, 247, 0.2)' }}>
+                        <div className="space-y-3">
+                          {/* Date header */}
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-medium text-white">{card.dayOfWeek}</h3>
+                              {card.isToday && <Badge className="bg-yellow-500 text-black text-xs">Today</Badge>}
+                            </div>
+                            <span className="text-sm text-white/80">{card.dateString}</span>
                           </div>
-                          <span className="text-sm text-white/80">{card.dateString}</span>
+                          
+                          {/* Workout content */}
+                          <WorkoutCardContent sessionData={card.sessionData} athleteProfile={athleteProfile} gymData={gymData} />
                         </div>
-                        
-                        {/* Workout content */}
-                        <WorkoutCardContent sessionData={card.sessionData} athleteProfile={athleteProfile} />
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   /* No workout cards */
                   <div className="p-4 bg-gradient-to-br from-blue-800 to-purple-400" style={{ borderRadius: '6px', boxShadow: '0 0 8px rgba(168, 85, 247, 0.2)' }}>
@@ -449,35 +501,9 @@ function PracticePage() {
             </Button>
           </div>
         )}
-        
-        {/* Target Times Calculator - Always visible and positioned outside transition area */}
-        <div className="mt-6">
-          <Card className="border border-purple-500/25" style={{ borderRadius: '6px' }}>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Calculator className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-medium">Target Times</h3>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCalculatorOpen(true)}
-                  className="h-8"
-                >
-                  Calculate
-                </Button>
-              </div>
-              
-              <p className="text-sm text-muted-foreground mt-2">
-                Calculate target times for different distances based on your track type and training goals.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
 
         {/* Your Programs section */}
-        <div className="space-y-4">
+        <div className="space-y-4 mt-6">
           <Card className="bg-primary/5" style={{ borderRadius: '6px' }}>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -520,6 +546,56 @@ function PracticePage() {
           </Card>
         </div>
       </div>
+
+      {/* Target Times Calculator Dialog */}
+      <Dialog open={calculatorOpen} onOpenChange={setCalculatorOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Target Times Calculator</DialogTitle>
+            <DialogDescription>
+              Calculate estimated target times for different distances.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Track Type</label>
+              <div className="flex gap-2">
+                <Button
+                  variant={currentTrackType === "outdoor" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setCurrentTrackType("outdoor")}
+                >
+                  Outdoor
+                </Button>
+                <Button
+                  variant={currentTrackType === "indoor" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setCurrentTrackType("indoor")}
+                >
+                  Indoor
+                </Button>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="firstFootTiming"
+                  checked={useFirstFootTiming}
+                  onCheckedChange={(checked) => setUseFirstFootTiming(checked as boolean)}
+                />
+                <label htmlFor="firstFootTiming" className="text-sm">
+                  Use first foot timing
+                </label>
+              </div>
+            </div>
+
+            <div className="text-xs text-muted-foreground">
+              This calculator provides estimated target times based on track type and timing method. Results may vary based on individual performance and conditions.
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </PageContainer>
   );
 }
