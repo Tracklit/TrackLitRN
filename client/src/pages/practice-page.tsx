@@ -346,10 +346,15 @@ function PracticePage() {
     
     setIsTransitioning(true);
     
-    // Start new content from opposite side
     const containerWidth = containerRef.current?.offsetWidth || 0;
-    setCurrentTranslateX(direction === 'prev' ? -containerWidth : containerWidth);
     
+    // Phase 1: Position new content off-screen on the correct side
+    // For prev (swipe right): new content should come from right (+containerWidth)
+    // For next (swipe left): new content should come from left (-containerWidth)
+    const newContentStartPos = direction === 'prev' ? containerWidth : -containerWidth;
+    setCurrentTranslateX(newContentStartPos);
+    
+    // Phase 2: Update data while content is off-screen
     setCurrentDayOffset(prev => direction === 'prev' ? prev - 1 : prev + 1);
     
     // Update selected date
@@ -357,14 +362,14 @@ function PracticePage() {
     newDate.setDate(newDate.getDate() + (direction === 'prev' ? currentDayOffset - 1 : currentDayOffset + 1));
     setSelectedDate(newDate);
     
-    // Slide new content in after data loads
+    // Phase 3: Slide new content in after a brief delay
     setTimeout(() => {
       setCurrentTranslateX(0);
       setIsSliding(false);
       setTimeout(() => {
         setIsTransitioning(false);
       }, 300);
-    }, 100);
+    }, 50);
   };
 
   // Touch event handlers for swipe navigation
