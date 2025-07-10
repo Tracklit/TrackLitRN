@@ -398,10 +398,10 @@ function PracticePage() {
     // Check if it's a horizontal swipe (more horizontal than vertical movement)
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
       if (deltaX > 0) {
-        // Swipe right - go to previous day
+        // Swipe right - content exits right, new content comes from left (go to previous day)
         handleDateNavigation('prev');
       } else {
-        // Swipe left - go to next day
+        // Swipe left - content exits left, new content comes from right (go to next day)
         handleDateNavigation('next');
       }
     }
@@ -501,9 +501,13 @@ function PracticePage() {
             className={`space-y-4 transition-transform duration-300 ${
               fadeTransition 
                 ? 'transform translate-x-0' 
-                : slideDirection === 'next' 
-                  ? 'transform -translate-x-full' 
-                  : 'transform translate-x-full'
+                : isSlideIn 
+                  ? slideDirection === 'next' 
+                    ? 'transform translate-x-full'  // Next: slide in from right
+                    : 'transform -translate-x-full' // Prev: slide in from left
+                  : slideDirection === 'next' 
+                    ? 'transform -translate-x-full'  // Next: slide out to left
+                    : 'transform translate-x-full'   // Prev: slide out to right
             }`}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
