@@ -497,24 +497,24 @@ function PracticePage() {
   return (
     <PageContainer className="pb-24">
       {/* Fixed Target Times Header */}
-      <div className="fixed top-16 left-0 right-0 z-50 bg-white dark:bg-gray-950 border-b shadow-sm">
+      <div className="fixed top-16 left-0 right-0 z-50 bg-black border-b shadow-sm">
         <div className="max-w-md mx-auto">
           <div 
             className="flex items-center justify-between px-4 py-2 cursor-pointer"
             onClick={() => setTargetTimesExpanded(!targetTimesExpanded)}
           >
             <div className="flex items-center gap-2">
-              <Calculator className="h-4 w-4 text-primary" />
-              <h3 className="text-sm font-medium">Target Times</h3>
+              <Calculator className="h-4 w-4 text-white" />
+              <h3 className="text-sm font-medium text-white">Target Times</h3>
             </div>
-            <ChevronDown className={`h-4 w-4 transition-transform ${targetTimesExpanded ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`h-4 w-4 transition-transform text-white ${targetTimesExpanded ? 'rotate-180' : ''}`} />
           </div>
           
           {/* Collapsible Content */}
           {targetTimesExpanded && (
             <div className="px-4 pb-4 space-y-3 border-t">
               <div className="space-y-2 pt-3">
-                <label className="text-xs font-medium">Track Type</label>
+                <label className="text-xs font-medium text-white">Track Type</label>
                 <div className="flex gap-2">
                   <Button
                     variant={currentTrackType === "outdoor" ? "default" : "outline"}
@@ -536,7 +536,7 @@ function PracticePage() {
               </div>
               
               <div className="space-y-2">
-                <label className="text-xs font-medium">Timing Options</label>
+                <label className="text-xs font-medium text-white">Timing Options</label>
                 <div className="space-y-1">
                   <div className="flex items-center space-x-2">
                     <Checkbox
@@ -544,7 +544,7 @@ function PracticePage() {
                       checked={useFirstFootTiming}
                       onCheckedChange={(checked) => setUseFirstFootTiming(checked as boolean)}
                     />
-                    <label htmlFor="firstFootTiming" className="text-xs">
+                    <label htmlFor="firstFootTiming" className="text-xs text-white">
                       First Foot
                     </label>
                   </div>
@@ -554,7 +554,7 @@ function PracticePage() {
                       checked={useOnMovement}
                       onCheckedChange={(checked) => setUseOnMovement(checked as boolean)}
                     />
-                    <label htmlFor="onMovement" className="text-xs">
+                    <label htmlFor="onMovement" className="text-xs text-white">
                       On Movement
                     </label>
                   </div>
@@ -563,7 +563,7 @@ function PracticePage() {
 
               {/* Target Times Table */}
               <div className="space-y-2">
-                <label className="text-xs font-medium">Target Times</label>
+                <label className="text-xs font-medium text-white">Target Times</label>
                 <div className="bg-muted/20 rounded-md overflow-hidden">
                   <div className="relative">
                     {(() => {
@@ -606,7 +606,7 @@ function PracticePage() {
                 </div>
               </div>
 
-              <div className="text-xs text-muted-foreground">
+              <div className="text-xs text-white/80">
                 Times are estimates based on selected track type and timing method.
               </div>
             </div>
