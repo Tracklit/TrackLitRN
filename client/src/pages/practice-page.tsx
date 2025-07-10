@@ -61,9 +61,6 @@ function PracticePage() {
   const [currentDayOffset, setCurrentDayOffset] = useState<number>(0); // 0 = today, -1 = yesterday, 1 = tomorrow
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [fadeTransition, setFadeTransition] = useState(true);
-  const [slideDirection, setSlideDirection] = useState<'next' | 'prev'>('next');
-  const [isSlideIn, setIsSlideIn] = useState(false);
   
   // Touch/swipe states
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
@@ -338,32 +335,23 @@ function PracticePage() {
     }
   }, [programSessions, currentDayOffset]);
 
-  // Helper function to handle date navigation with transition
+  // Helper function to handle date navigation
   const handleDateNavigation = (direction: 'prev' | 'next') => {
     if (isTransitioning) return; // Prevent multiple rapid clicks
     
     setIsTransitioning(true);
-    setSlideDirection(direction);
-    setFadeTransition(false);
-    setIsSlideIn(false);
     
+    setCurrentDayOffset(prev => direction === 'prev' ? prev - 1 : prev + 1);
+    
+    // Update selected date
+    const newDate = new Date();
+    newDate.setDate(newDate.getDate() + (direction === 'prev' ? currentDayOffset - 1 : currentDayOffset + 1));
+    setSelectedDate(newDate);
+    
+    // Reset transition flag
     setTimeout(() => {
-      setCurrentDayOffset(prev => direction === 'prev' ? prev - 1 : prev + 1);
-      
-      // Update selected date
-      const newDate = new Date();
-      newDate.setDate(newDate.getDate() + (direction === 'prev' ? currentDayOffset - 1 : currentDayOffset + 1));
-      setSelectedDate(newDate);
-      
-      // Wait for data to load, then slide back in
-      setTimeout(() => {
-        setIsSlideIn(true);
-        setFadeTransition(true);
-        setTimeout(() => {
-          setIsTransitioning(false);
-        }, 150); // Allow slide-in to start before allowing next transition
-      }, 100);
-    }, 150);
+      setIsTransitioning(false);
+    }, 100);
   };
 
   // Touch event handlers for swipe navigation
@@ -398,10 +386,10 @@ function PracticePage() {
     // Check if it's a horizontal swipe (more horizontal than vertical movement)
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
       if (deltaX > 0) {
-        // Swipe right - content exits right, new content comes from left (go to previous day)
+        // Swipe right - go to previous day
         handleDateNavigation('prev');
       } else {
-        // Swipe left - content exits left, new content comes from right (go to next day)
+        // Swipe left - go to next day
         handleDateNavigation('next');
       }
     }
@@ -498,17 +486,7 @@ function PracticePage() {
         <>
           {/* Daily Session Content */}
           <div 
-            className={`space-y-4 transition-transform duration-300 ${
-              fadeTransition 
-                ? 'transform translate-x-0' 
-                : isSlideIn 
-                  ? slideDirection === 'next' 
-                    ? 'transform translate-x-full'  // Next: slide in from right
-                    : 'transform -translate-x-full' // Prev: slide in from left
-                  : slideDirection === 'next' 
-                    ? 'transform -translate-x-full'  // Next: slide out to left
-                    : 'transform translate-x-full'   // Prev: slide out to right
-            }`}
+            className="space-y-4"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
