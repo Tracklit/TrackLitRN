@@ -121,7 +121,8 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
   - Swipe left for next day, swipe right for previous day with visual feedback during drag
   - Disabled smooth transitions during active dragging for immediate finger-following response
   - Added slide-in animation for new content entering from opposite side of screen
-  - Swipe right exits content right and brings new content from left; swipe left exits content left and brings new content from right
+  - Swipe right: content exits right, new content enters from left
+  - Swipe left: content exits left, new content enters from right
 - July 9, 2025: Enhanced date navigation with smooth fade transitions and cleaner interface ✅
   - Fixed critical bug where page would break when changing dates to days with meets instead of training sessions
   - Moved date navigation to always be visible (under workout card for workouts, top for meets)

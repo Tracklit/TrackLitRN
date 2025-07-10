@@ -348,10 +348,10 @@ function PracticePage() {
     
     const containerWidth = containerRef.current?.offsetWidth || 0;
     
-    // Phase 1: Position new content off-screen on the correct side
-    // For prev (swipe right): new content should come from right (+containerWidth)
-    // For next (swipe left): new content should come from left (-containerWidth)
-    const newContentStartPos = direction === 'prev' ? containerWidth : -containerWidth;
+    // Phase 1: Position new content off-screen on the opposite side of where old content exits
+    // When swiping right (prev): old content exits right, new content enters from left
+    // When swiping left (next): old content exits left, new content enters from right
+    const newContentStartPos = direction === 'prev' ? -containerWidth : containerWidth;
     setCurrentTranslateX(newContentStartPos);
     
     // Phase 2: Update data while content is off-screen
