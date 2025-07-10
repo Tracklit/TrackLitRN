@@ -40,6 +40,28 @@ import { DayPicker } from "react-day-picker";
 import { Textarea } from "@/components/ui/textarea";
 
 // Component to render workout content within each card
+function WorkoutCard({ card, athleteProfile }: { card: any, athleteProfile: any }) {
+  const { gymData } = useGymData(card.sessionData?.dayNumber);
+  
+  return (
+    <div className={`p-4 bg-gradient-to-br from-blue-800 to-purple-400 ${card.isToday ? 'ring-2 ring-yellow-400' : ''}`} style={{ borderRadius: '6px', boxShadow: '0 0 8px rgba(168, 85, 247, 0.2)' }}>
+      <div className="space-y-3">
+        {/* Date header */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <h3 className="font-medium text-white">{card.dayOfWeek}</h3>
+            {card.isToday && <Badge className="bg-yellow-500 text-black text-xs">Today</Badge>}
+          </div>
+          <span className="text-sm text-white/80">{card.dateString}</span>
+        </div>
+        
+        {/* Workout content */}
+        <WorkoutCardContent sessionData={card.sessionData} athleteProfile={athleteProfile} gymData={gymData} />
+      </div>
+    </div>
+  );
+}
+
 function WorkoutCardContent({ sessionData, athleteProfile, gymData }: { sessionData: any, athleteProfile: any, gymData?: any }) {
   if (!sessionData) return null;
 
@@ -452,26 +474,13 @@ function PracticePage() {
                   </>
                 ) : workoutCards.length > 0 ? (
                   /* Render workout cards */
-                  workoutCards.map((card) => {
-                    const { gymData } = useGymData(card.sessionData?.dayNumber);
-                    return (
-                      <div key={card.id} className={`p-4 bg-gradient-to-br from-blue-800 to-purple-400 ${card.isToday ? 'ring-2 ring-yellow-400' : ''}`} style={{ borderRadius: '6px', boxShadow: '0 0 8px rgba(168, 85, 247, 0.2)' }}>
-                        <div className="space-y-3">
-                          {/* Date header */}
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-medium text-white">{card.dayOfWeek}</h3>
-                              {card.isToday && <Badge className="bg-yellow-500 text-black text-xs">Today</Badge>}
-                            </div>
-                            <span className="text-sm text-white/80">{card.dateString}</span>
-                          </div>
-                          
-                          {/* Workout content */}
-                          <WorkoutCardContent sessionData={card.sessionData} athleteProfile={athleteProfile} gymData={gymData} />
-                        </div>
-                      </div>
-                    );
-                  })
+                  workoutCards.map((card) => (
+                    <WorkoutCard 
+                      key={card.id} 
+                      card={card} 
+                      athleteProfile={athleteProfile} 
+                    />
+                  ))
                 ) : (
                   /* No workout cards */
                   <div className="p-4 bg-gradient-to-br from-blue-800 to-purple-400" style={{ borderRadius: '6px', boxShadow: '0 0 8px rgba(168, 85, 247, 0.2)' }}>
