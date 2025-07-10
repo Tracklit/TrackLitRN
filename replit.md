@@ -108,21 +108,12 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
-- July 10, 2025: Successfully implemented vertical card layout Practice page ✅
-  - Completely removed all swipe navigation code for simpler interaction
-  - Implemented vertical scrolling list of Track Workout cards (7 days ahead)
-  - Added scroll snap behavior with centered card view for smooth navigation
-  - Organized cards chronologically: later dates down, older dates up
-  - Added Target Times calculator as modal opened from calculator icon on each card
-  - Added Journal entry modal with media support opened from book icon on each card
-  - Moved Your Programs to top-right dropdown menu for easy program switching
-  - Enhanced card design with blue-to-purple gradient and improved typography
-  - Added proper meet day detection and display with location and time
-  - Implemented haptic feedback using navigator.vibrate() for card interactions
-  - Cards show training sessions with categorized workouts (short/medium/long distance)
-  - Rest days display with calendar icon and appropriate messaging
-  - Removed old static Target Times, Your Programs, and Journal Entry components
-  - User confirmed the vertical card layout is working correctly
+- July 10, 2025: Enhanced Track Workout card styling and transitions ✅
+  - Weakened outer glow from 20px to 8px opacity for subtler appearance
+  - Changed background gradient from purple-to-blue to blue-to-purple for different visual flow
+  - Replaced fade transitions with slide-out/slide-in animations for smoother page changes
+  - Updated transition from opacity-based to transform-based with translate-x movement
+  - Target Times calculator now positioned outside fade transition area for static behavior
 - July 9, 2025: Enhanced date navigation with smooth fade transitions and cleaner interface ✅
   - Fixed critical bug where page would break when changing dates to days with meets instead of training sessions
   - Moved date navigation to always be visible (under workout card for workouts, top for meets)

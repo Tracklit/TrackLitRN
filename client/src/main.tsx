@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-import AuthenticatedApp from "./AuthenticatedApp";
+import App from "./App";
 import "./index.css";
 
-createRoot(document.getElementById("root")!).render(<AuthenticatedApp />);
+createRoot(document.getElementById("root")!).render(<App />);
