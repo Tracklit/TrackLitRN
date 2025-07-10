@@ -473,8 +473,20 @@ function PracticePage() {
                     <div className="space-y-3">
                       <div className="p-3 bg-gradient-to-br from-blue-800 to-purple-400 overflow-y-auto relative" style={{ borderRadius: '6px', height: '33vh', boxShadow: '0 0 8px rgba(168, 85, 247, 0.2)' }}>
                         <div className="space-y-3">
-                          {/* Skeleton loader for daily workout data */}
-                          <div className="p-2 bg-white/10" style={{ borderRadius: "6px" }}>
+                          {/* Skeleton loader for daily workout data - List format */}
+                          <div className="bg-white/5 p-3 border border-white/10" style={{ borderRadius: "6px" }}>
+                            <div className="flex items-start">
+                              <div className="bg-white/20 p-1.5 rounded-full mr-3 mt-0.5">
+                                <Dumbbell className="h-4 w-4 text-white" />
+                              </div>
+                              <div className="flex-1">
+                                <Skeleton className="h-4 w-20 mb-2 bg-white/20" />
+                                <Skeleton className="h-3 w-full mb-1 bg-white/20" />
+                                <Skeleton className="h-3 w-4/5 bg-white/20" />
+                              </div>
+                            </div>
+                          </div>
+                          <div className="bg-white/5 p-3 border border-white/10" style={{ borderRadius: "6px" }}>
                             <div className="flex items-start">
                               <div className="bg-white/20 p-1.5 rounded-full mr-3 mt-0.5">
                                 <Dumbbell className="h-4 w-4 text-white" />
@@ -482,30 +494,18 @@ function PracticePage() {
                               <div className="flex-1">
                                 <Skeleton className="h-4 w-16 mb-2 bg-white/20" />
                                 <Skeleton className="h-3 w-full mb-1 bg-white/20" />
-                                <Skeleton className="h-3 w-4/5 bg-white/20" />
-                              </div>
-                            </div>
-                          </div>
-                          <div className="p-2 bg-white/10" style={{ borderRadius: "6px" }}>
-                            <div className="flex items-start">
-                              <div className="bg-white/20 p-1.5 rounded-full mr-3 mt-0.5">
-                                <Dumbbell className="h-4 w-4 text-white" />
-                              </div>
-                              <div className="flex-1">
-                                <Skeleton className="h-4 w-12 mb-2 bg-white/20" />
-                                <Skeleton className="h-3 w-full mb-1 bg-white/20" />
                                 <Skeleton className="h-3 w-3/4 mb-1 bg-white/20" />
                                 <Skeleton className="h-3 w-5/6 bg-white/20" />
                               </div>
                             </div>
                           </div>
-                          <div className="p-2 bg-white/10" style={{ borderRadius: "6px" }}>
+                          <div className="bg-white/5 p-3 border border-white/10" style={{ borderRadius: "6px" }}>
                             <div className="flex items-start">
                               <div className="bg-white/20 p-1.5 rounded-full mr-3 mt-0.5">
                                 <Dumbbell className="h-4 w-4 text-white" />
                               </div>
                               <div className="flex-1">
-                                <Skeleton className="h-4 w-14 mb-2 bg-white/20" />
+                                <Skeleton className="h-4 w-18 mb-2 bg-white/20" />
                                 <Skeleton className="h-3 w-full mb-1 bg-white/20" />
                                 <Skeleton className="h-3 w-2/3 bg-white/20" />
                               </div>
@@ -547,22 +547,24 @@ function PracticePage() {
                                 </div>
                               )}
                             
-                              {/* Track Workout - Vertical List Format */}
-                              <div className="space-y-2">
+                              {/* Track Workout - Vertical Scrollable List */}
+                              <div className="space-y-3">
                                 {activeSessionData.shortDistanceWorkout && 
                                  activeSessionData.shortDistanceWorkout.trim() !== "" && 
                                  (!athleteProfile || athleteProfile.sprint60m100m !== false || 
                                   (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
                                    !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
                                    !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
-                                  <div className="flex items-start">
-                                    <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
-                                      <Dumbbell className="h-4 w-4 text-white" />
-                                    </div>
-                                    <div className="flex-1">
-                                      <p className="font-medium text-sm text-white mb-1">60m/100m</p>
-                                      <div className="whitespace-pre-line text-sm text-white/80">
-                                        {activeSessionData.shortDistanceWorkout.replace(/^"|"$/g, '')}
+                                  <div className="bg-white/5 p-3 border border-white/10" style={{ borderRadius: '6px' }}>
+                                    <div className="flex items-start">
+                                      <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
+                                        <Dumbbell className="h-4 w-4 text-white" />
+                                      </div>
+                                      <div className="flex-1">
+                                        <p className="font-medium text-sm text-white mb-2">60m/100m Sprint</p>
+                                        <div className="whitespace-pre-line text-sm text-white/80 leading-relaxed">
+                                          {activeSessionData.shortDistanceWorkout.replace(/^"|"$/g, '')}
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
@@ -574,14 +576,16 @@ function PracticePage() {
                                   (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
                                    !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
                                    !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
-                                  <div className="flex items-start">
-                                    <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
-                                      <Dumbbell className="h-4 w-4 text-white" />
-                                    </div>
-                                    <div className="flex-1">
-                                      <p className="font-medium text-sm text-white mb-1">200m</p>
-                                      <div className="whitespace-pre-line text-sm text-white/80">
-                                        {activeSessionData.mediumDistanceWorkout.replace(/^"|"$/g, '')}
+                                  <div className="bg-white/5 p-3 border border-white/10" style={{ borderRadius: '6px' }}>
+                                    <div className="flex items-start">
+                                      <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
+                                        <Dumbbell className="h-4 w-4 text-white" />
+                                      </div>
+                                      <div className="flex-1">
+                                        <p className="font-medium text-sm text-white mb-2">200m Sprint</p>
+                                        <div className="whitespace-pre-line text-sm text-white/80 leading-relaxed">
+                                          {activeSessionData.mediumDistanceWorkout.replace(/^"|"$/g, '')}
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
@@ -593,14 +597,16 @@ function PracticePage() {
                                   (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
                                    !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
                                    !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
-                                  <div className="flex items-start">
-                                    <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
-                                      <Dumbbell className="h-4 w-4 text-white" />
-                                    </div>
-                                    <div className="flex-1">
-                                      <p className="font-medium text-sm text-white mb-1">400m</p>
-                                      <div className="whitespace-pre-line text-sm text-white/80">
-                                        {activeSessionData.longDistanceWorkout.replace(/^"|"$/g, '')}
+                                  <div className="bg-white/5 p-3 border border-white/10" style={{ borderRadius: '6px' }}>
+                                    <div className="flex items-start">
+                                      <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
+                                        <Dumbbell className="h-4 w-4 text-white" />
+                                      </div>
+                                      <div className="flex-1">
+                                        <p className="font-medium text-sm text-white mb-2">400m Sprint</p>
+                                        <div className="whitespace-pre-line text-sm text-white/80 leading-relaxed">
+                                          {activeSessionData.longDistanceWorkout.replace(/^"|"$/g, '')}
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
@@ -609,35 +615,39 @@ function PracticePage() {
                               
                               {/* Gym Exercises Section - Dynamic Loading */}
                               {isLoadingGymData && shouldFetchGymData && (
-                                <div className="flex items-start">
-                                  <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
-                                    <Dumbbell className="h-4 w-4 text-white" />
-                                  </div>
-                                  <div className="flex-1">
-                                    <p className="font-medium text-sm text-white">Loading Gym Exercises...</p>
-                                    <div className="mt-2">
-                                      <div className="animate-pulse h-4 bg-white/20 rounded w-3/4"></div>
+                                <div className="bg-white/5 p-3 border border-white/10" style={{ borderRadius: '6px' }}>
+                                  <div className="flex items-start">
+                                    <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
+                                      <Dumbbell className="h-4 w-4 text-white" />
+                                    </div>
+                                    <div className="flex-1">
+                                      <p className="font-medium text-sm text-white mb-2">Loading Gym Exercises...</p>
+                                      <div className="mt-2">
+                                        <div className="animate-pulse h-4 bg-white/20 rounded w-3/4"></div>
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
                               )}
                               
                               {gymDataResponse?.gymData && gymDataResponse.gymData.length > 0 && (
-                                <div className="flex items-start">
-                                  <div className="bg-primary/10 p-1.5 rounded-full mr-3 mt-0.5">
-                                    <Dumbbell className="h-4 w-4 text-primary" />
-                                  </div>
-                                  <div className="flex-1">
-                                    <p className="font-medium text-sm">Gym Exercises</p>
-                                    <div className="space-y-1 mt-2">
-                                      {gymDataResponse.gymData.map((exercise: string, index: number) => (
-                                        <div key={index} className="flex items-start gap-2 text-sm">
-                                          <span className="text-primary font-mono text-xs mt-0.5 min-w-[20px]">
-                                            {(index + 1).toString().padStart(2, '0')}
-                                          </span>
-                                          <span className="flex-1">{exercise}</span>
-                                        </div>
-                                      ))}
+                                <div className="bg-white/5 p-3 border border-white/10" style={{ borderRadius: '6px' }}>
+                                  <div className="flex items-start">
+                                    <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
+                                      <Dumbbell className="h-4 w-4 text-white" />
+                                    </div>
+                                    <div className="flex-1">
+                                      <p className="font-medium text-sm text-white mb-2">Gym Exercises</p>
+                                      <div className="space-y-1 mt-2">
+                                        {gymDataResponse.gymData.map((exercise: string, index: number) => (
+                                          <div key={index} className="flex items-start gap-2 text-sm">
+                                            <span className="text-white/60 font-mono text-xs mt-0.5 min-w-[20px]">
+                                              {(index + 1).toString().padStart(2, '0')}
+                                            </span>
+                                            <span className="flex-1 text-white/80">{exercise}</span>
+                                          </div>
+                                        ))}
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
