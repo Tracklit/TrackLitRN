@@ -114,7 +114,7 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
   - Replaced fade transitions with slide-out/slide-in animations for smoother page changes
   - Updated transition from opacity-based to transform-based with translate-x movement
   - Target Times calculator now positioned outside fade transition area for static behavior
-  - Fixed slide directions: slides out to left when going forward, slides out to right when going backward
+  - Fixed slide directions: slides out to right when going forward, slides out to left when going backward
   - Added slideDirection state to track navigation direction for proper slide animations
 - July 9, 2025: Enhanced date navigation with smooth fade transitions and cleaner interface ✅
   - Fixed critical bug where page would break when changing dates to days with meets instead of training sessions

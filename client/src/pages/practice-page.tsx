@@ -445,7 +445,7 @@ function PracticePage() {
       {!hasMeetsToday && (
         <>
           {/* Daily Session Content */}
-          <div className={`space-y-4 transition-transform duration-300 ${fadeTransition ? 'transform translate-x-0' : slideDirection === 'next' ? 'transform -translate-x-full' : 'transform translate-x-full'}`}>
+          <div className={`space-y-4 transition-transform duration-300 ${fadeTransition ? 'transform translate-x-0' : slideDirection === 'next' ? 'transform translate-x-full' : 'transform -translate-x-full'}`}>
             <div className="bg-muted/40 p-3" style={{ borderRadius: '6px' }}>
               {selectedProgram && assignedPrograms && assignedPrograms.length > 0 ? (
                 <div className="space-y-4">
