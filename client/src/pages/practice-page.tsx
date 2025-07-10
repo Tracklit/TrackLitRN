@@ -3,7 +3,7 @@ import { ProtectedRoute } from "@/lib/protected-route";
 import OpenAI from "openai";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "@/hooks/use-toast";
-import { useAssignedPrograms } from "@/hooks/use-assigned-programs";
+
 import { useProgramSessions } from "@/hooks/use-program-sessions";
 import { useGymData } from "@/hooks/use-gym-data";
 import { useQuery } from "@tanstack/react-query";
@@ -194,8 +194,11 @@ function PracticePage() {
   const { user } = useAuth();
   const { toast } = useToast();
   
-  // Fetch assigned programs
-  const { assignedPrograms, isLoading: isLoadingPrograms } = useAssignedPrograms();
+  // Fetch available programs (purchased and assigned)
+  const { data: availablePrograms = [], isLoading: isLoadingPrograms } = useQuery({
+    queryKey: ["/api/purchased-programs"],
+    enabled: !!user,
+  });
   
   // Fetch athlete profile to check subscription
   const { data: athleteProfile } = useQuery({
@@ -486,13 +489,13 @@ function PracticePage() {
 
   // Set up effects for program selection and session loading
   useEffect(() => {
-    if (assignedPrograms && assignedPrograms.length > 0 && !selectedProgram) {
-      setSelectedProgram(assignedPrograms[0]);
-    } else if (assignedPrograms && assignedPrograms.length === 0) {
-      // Clear selected program if no programs are assigned
+    if (availablePrograms && availablePrograms.length > 0 && !selectedProgram) {
+      setSelectedProgram(availablePrograms[0]);
+    } else if (availablePrograms && availablePrograms.length === 0) {
+      // Clear selected program if no programs are available
       setSelectedProgram(null);
     }
-  }, [assignedPrograms, selectedProgram]);
+  }, [availablePrograms, selectedProgram]);
 
   return (
     <PageContainer className="pb-24">
@@ -617,7 +620,7 @@ function PracticePage() {
 
       {/* Scrollable Daily Workout Cards - with top padding for fixed header */}
       <div className="pt-16 space-y-4">
-        {selectedProgram && assignedPrograms && assignedPrograms.length > 0 ? (
+        {selectedProgram && availablePrograms && availablePrograms.length > 0 ? (
           <>
             {/* Text-based program display */}
             {selectedProgram.program?.isTextBased ? (
@@ -733,9 +736,9 @@ function PracticePage() {
                     </div>
                   ))}
                 </div>
-              ) : assignedPrograms && assignedPrograms.length > 0 ? (
+              ) : availablePrograms && availablePrograms.length > 0 ? (
                 <div className="space-y-3">
-                  {assignedPrograms.map((programAssignment) => (
+                  {availablePrograms.map((programAssignment) => (
                     <div 
                       key={programAssignment.id} 
                       className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${
