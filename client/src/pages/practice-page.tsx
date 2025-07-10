@@ -497,7 +497,7 @@ function PracticePage() {
   return (
     <PageContainer className="pb-24">
       {/* Fixed Target Times Header */}
-      <div className="fixed top-16 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+      <div className="fixed top-16 left-0 right-0 z-50 bg-background border-b">
         <div className="max-w-md mx-auto">
           <div 
             className="flex items-center justify-between px-4 py-2 cursor-pointer"
