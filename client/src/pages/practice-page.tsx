@@ -515,168 +515,169 @@ function PracticePage() {
                       </div>
                     </div>
                   ) : activeSessionData ? (
-                    <div className="space-y-3">
-                      <div className="p-3 bg-gradient-to-br from-blue-800 to-purple-400 overflow-y-auto relative" style={{ borderRadius: '6px', height: '33vh', boxShadow: '0 0 8px rgba(168, 85, 247, 0.2)' }}>
-                        <div className="space-y-3">
-                          {/* Scroll indicator */}
-                          <div className="absolute bottom-2 right-2 opacity-50">
-                            <ChevronDown className="h-4 w-4 text-white animate-bounce" />
-                          </div>
-                          
-                          {activeSessionData.isRestDay || 
-                           !activeSessionData.date || 
-                           activeSessionData.date.trim() === '' ||
-                           (!activeSessionData.shortDistanceWorkout && 
-                            !activeSessionData.mediumDistanceWorkout && 
-                            !activeSessionData.longDistanceWorkout) ? (
-                            <div className="p-3 bg-muted/30" style={{ borderRadius: '6px' }}>
-                              <p className="text-center font-medium">Rest Day</p>
-                              <p className="text-sm text-center text-muted-foreground">
-                                Take time to recover and prepare for your next training session.
-                              </p>
-                            </div>
-                          ) : (
-                            <>
-                              {/* Pre-activation exercises */}
-                              {activeSessionData.preActivation1 && activeSessionData.preActivation1.trim() !== "" && (
-                                <div>
-                                  <p className="font-medium text-sm mb-2 text-white">Pre-Activation</p>
-                                  <div className="whitespace-pre-line text-sm mt-1 pl-2 border-l-2 border-white/30 text-white/80">
+                    <>
+                      {activeSessionData.isRestDay || 
+                       !activeSessionData.date || 
+                       activeSessionData.date.trim() === '' ||
+                       (!activeSessionData.shortDistanceWorkout && 
+                        !activeSessionData.mediumDistanceWorkout && 
+                        !activeSessionData.longDistanceWorkout) ? (
+                        <div className="p-4 bg-gradient-to-br from-blue-800 to-purple-400" style={{ borderRadius: '6px', boxShadow: '0 0 8px rgba(168, 85, 247, 0.2)' }}>
+                          <p className="text-center font-medium text-white">Rest Day</p>
+                          <p className="text-sm text-center text-white/80">
+                            Take time to recover and prepare for your next training session.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-4 max-h-[70vh] overflow-y-auto">
+                          {/* Pre-activation exercises */}
+                          {activeSessionData.preActivation1 && activeSessionData.preActivation1.trim() !== "" && (
+                            <div className="p-4 bg-gradient-to-br from-blue-800 to-purple-400" style={{ borderRadius: '6px', boxShadow: '0 0 8px rgba(168, 85, 247, 0.2)' }}>
+                              <div className="flex items-start">
+                                <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
+                                  <Activity className="h-4 w-4 text-white" />
+                                </div>
+                                <div className="flex-1">
+                                  <p className="font-medium text-sm text-white mb-2">Pre-Activation</p>
+                                  <div className="whitespace-pre-line text-sm text-white/80 leading-relaxed">
                                     {activeSessionData.preActivation1.replace(/^"|"$/g, '')}
                                   </div>
                                 </div>
-                              )}
-                            
-                              {/* Track Workout - Vertical Scrollable List */}
-                              <div className="space-y-3">
-                                {activeSessionData.shortDistanceWorkout && 
-                                 activeSessionData.shortDistanceWorkout.trim() !== "" && 
-                                 (!athleteProfile || athleteProfile.sprint60m100m !== false || 
-                                  (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
-                                   !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
-                                   !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
-                                  <div className="bg-white/5 p-3 border border-white/10" style={{ borderRadius: '6px' }}>
-                                    <div className="flex items-start">
-                                      <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
-                                        <Dumbbell className="h-4 w-4 text-white" />
-                                      </div>
-                                      <div className="flex-1">
-                                        <p className="font-medium text-sm text-white mb-2">60m/100m Sprint</p>
-                                        <div className="whitespace-pre-line text-sm text-white/80 leading-relaxed">
-                                          {activeSessionData.shortDistanceWorkout.replace(/^"|"$/g, '')}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                )}
-                                
-                                {activeSessionData.mediumDistanceWorkout && 
-                                 activeSessionData.mediumDistanceWorkout.trim() !== "" && 
-                                 (!athleteProfile || athleteProfile.sprint200m || 
-                                  (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
-                                   !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
-                                   !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
-                                  <div className="bg-white/5 p-3 border border-white/10" style={{ borderRadius: '6px' }}>
-                                    <div className="flex items-start">
-                                      <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
-                                        <Dumbbell className="h-4 w-4 text-white" />
-                                      </div>
-                                      <div className="flex-1">
-                                        <p className="font-medium text-sm text-white mb-2">200m Sprint</p>
-                                        <div className="whitespace-pre-line text-sm text-white/80 leading-relaxed">
-                                          {activeSessionData.mediumDistanceWorkout.replace(/^"|"$/g, '')}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                )}
-                                
-                                {activeSessionData.longDistanceWorkout && 
-                                 activeSessionData.longDistanceWorkout.trim() !== "" && 
-                                 (!athleteProfile || athleteProfile.sprint400m || 
-                                  (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
-                                   !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
-                                   !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
-                                  <div className="bg-white/5 p-3 border border-white/10" style={{ borderRadius: '6px' }}>
-                                    <div className="flex items-start">
-                                      <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
-                                        <Dumbbell className="h-4 w-4 text-white" />
-                                      </div>
-                                      <div className="flex-1">
-                                        <p className="font-medium text-sm text-white mb-2">400m Sprint</p>
-                                        <div className="whitespace-pre-line text-sm text-white/80 leading-relaxed">
-                                          {activeSessionData.longDistanceWorkout.replace(/^"|"$/g, '')}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                )}
                               </div>
-                              
-                              {/* Gym Exercises Section - Dynamic Loading */}
-                              {isLoadingGymData && shouldFetchGymData && (
-                                <div className="bg-white/5 p-3 border border-white/10" style={{ borderRadius: '6px' }}>
-                                  <div className="flex items-start">
-                                    <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
-                                      <Dumbbell className="h-4 w-4 text-white" />
-                                    </div>
-                                    <div className="flex-1">
-                                      <p className="font-medium text-sm text-white mb-2">Loading Gym Exercises...</p>
-                                      <div className="mt-2">
-                                        <div className="animate-pulse h-4 bg-white/20 rounded w-3/4"></div>
+                            </div>
+                          )}
+                        
+                          {/* 60m/100m Sprint Card */}
+                          {activeSessionData.shortDistanceWorkout && 
+                           activeSessionData.shortDistanceWorkout.trim() !== "" && 
+                           (!athleteProfile || athleteProfile.sprint60m100m !== false || 
+                            (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
+                             !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
+                             !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
+                            <div className="p-4 bg-gradient-to-br from-blue-800 to-purple-400" style={{ borderRadius: '6px', boxShadow: '0 0 8px rgba(168, 85, 247, 0.2)' }}>
+                              <div className="flex items-start">
+                                <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
+                                  <Dumbbell className="h-4 w-4 text-white" />
+                                </div>
+                                <div className="flex-1">
+                                  <p className="font-medium text-sm text-white mb-2">60m/100m Sprint</p>
+                                  <div className="whitespace-pre-line text-sm text-white/80 leading-relaxed">
+                                    {activeSessionData.shortDistanceWorkout.replace(/^"|"$/g, '')}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* 200m Sprint Card */}
+                          {activeSessionData.mediumDistanceWorkout && 
+                           activeSessionData.mediumDistanceWorkout.trim() !== "" && 
+                           (!athleteProfile || athleteProfile.sprint200m || 
+                            (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
+                             !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
+                             !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
+                            <div className="p-4 bg-gradient-to-br from-blue-800 to-purple-400" style={{ borderRadius: '6px', boxShadow: '0 0 8px rgba(168, 85, 247, 0.2)' }}>
+                              <div className="flex items-start">
+                                <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
+                                  <Dumbbell className="h-4 w-4 text-white" />
+                                </div>
+                                <div className="flex-1">
+                                  <p className="font-medium text-sm text-white mb-2">200m Sprint</p>
+                                  <div className="whitespace-pre-line text-sm text-white/80 leading-relaxed">
+                                    {activeSessionData.mediumDistanceWorkout.replace(/^"|"$/g, '')}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* 400m Sprint Card */}
+                          {activeSessionData.longDistanceWorkout && 
+                           activeSessionData.longDistanceWorkout.trim() !== "" && 
+                           (!athleteProfile || athleteProfile.sprint400m || 
+                            (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
+                             !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
+                             !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
+                            <div className="p-4 bg-gradient-to-br from-blue-800 to-purple-400" style={{ borderRadius: '6px', boxShadow: '0 0 8px rgba(168, 85, 247, 0.2)' }}>
+                              <div className="flex items-start">
+                                <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
+                                  <Dumbbell className="h-4 w-4 text-white" />
+                                </div>
+                                <div className="flex-1">
+                                  <p className="font-medium text-sm text-white mb-2">400m Sprint</p>
+                                  <div className="whitespace-pre-line text-sm text-white/80 leading-relaxed">
+                                    {activeSessionData.longDistanceWorkout.replace(/^"|"$/g, '')}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Gym Exercises Card - Dynamic Loading */}
+                          {isLoadingGymData && shouldFetchGymData && (
+                            <div className="p-4 bg-gradient-to-br from-blue-800 to-purple-400" style={{ borderRadius: '6px', boxShadow: '0 0 8px rgba(168, 85, 247, 0.2)' }}>
+                              <div className="flex items-start">
+                                <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
+                                  <Dumbbell className="h-4 w-4 text-white" />
+                                </div>
+                                <div className="flex-1">
+                                  <p className="font-medium text-sm text-white mb-2">Loading Gym Exercises...</p>
+                                  <div className="mt-2">
+                                    <div className="animate-pulse h-4 bg-white/20 rounded w-3/4"></div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Gym Exercises Card */}
+                          {gymDataResponse?.gymData && gymDataResponse.gymData.length > 0 && (
+                            <div className="p-4 bg-gradient-to-br from-blue-800 to-purple-400" style={{ borderRadius: '6px', boxShadow: '0 0 8px rgba(168, 85, 247, 0.2)' }}>
+                              <div className="flex items-start">
+                                <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
+                                  <Dumbbell className="h-4 w-4 text-white" />
+                                </div>
+                                <div className="flex-1">
+                                  <p className="font-medium text-sm text-white mb-2">Gym Exercises</p>
+                                  <div className="space-y-1 mt-2">
+                                    {gymDataResponse.gymData.map((exercise: string, index: number) => (
+                                      <div key={index} className="flex items-start gap-2 text-sm">
+                                        <span className="text-white/60 font-mono text-xs mt-0.5 min-w-[20px]">
+                                          {(index + 1).toString().padStart(2, '0')}
+                                        </span>
+                                        <span className="flex-1 text-white/80">{exercise}</span>
                                       </div>
-                                    </div>
+                                    ))}
                                   </div>
                                 </div>
-                              )}
-                              
-                              {gymDataResponse?.gymData && gymDataResponse.gymData.length > 0 && (
-                                <div className="bg-white/5 p-3 border border-white/10" style={{ borderRadius: '6px' }}>
-                                  <div className="flex items-start">
-                                    <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
-                                      <Dumbbell className="h-4 w-4 text-white" />
-                                    </div>
-                                    <div className="flex-1">
-                                      <p className="font-medium text-sm text-white mb-2">Gym Exercises</p>
-                                      <div className="space-y-1 mt-2">
-                                        {gymDataResponse.gymData.map((exercise: string, index: number) => (
-                                          <div key={index} className="flex items-start gap-2 text-sm">
-                                            <span className="text-white/60 font-mono text-xs mt-0.5 min-w-[20px]">
-                                              {(index + 1).toString().padStart(2, '0')}
-                                            </span>
-                                            <span className="flex-1 text-white/80">{exercise}</span>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  </div>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Gym Exercises Error State */}
+                          {!isLoadingGymData && !gymDataResponse?.gymData?.length && 
+                           (activeSessionData?.shortDistanceWorkout?.toLowerCase().includes('gym') ||
+                            activeSessionData?.mediumDistanceWorkout?.toLowerCase().includes('gym') ||
+                            activeSessionData?.longDistanceWorkout?.toLowerCase().includes('gym')) && (
+                            <div className="p-4 bg-gradient-to-br from-yellow-600 to-orange-500" style={{ borderRadius: '6px', boxShadow: '0 0 8px rgba(234, 179, 8, 0.2)' }}>
+                              <div className="flex items-start">
+                                <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
+                                  <Dumbbell className="h-4 w-4 text-white" />
                                 </div>
-                              )}
-                              
-                              {/* Gym Exercises Error State - when Gym tab is missing */}
-                              {!isLoadingGymData && !gymDataResponse?.gymData?.length && 
-                               (activeSessionData?.shortDistanceWorkout?.toLowerCase().includes('gym') ||
-                                activeSessionData?.mediumDistanceWorkout?.toLowerCase().includes('gym') ||
-                                activeSessionData?.longDistanceWorkout?.toLowerCase().includes('gym')) && (
-                                <div className="flex items-start">
-                                  <div className="bg-yellow-100 dark:bg-yellow-900/50 p-1.5 rounded-full mr-3 mt-0.5">
-                                    <Dumbbell className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
-                                  </div>
-                                  <div className="flex-1">
-                                    <p className="font-medium text-sm text-yellow-800 dark:text-yellow-200 mb-1">
-                                      Gym Exercises Not Available
-                                    </p>
-                                    <p className="text-xs text-yellow-700 dark:text-yellow-300">
-                                      To display gym exercises, create a tab named "Gym" in your Google Sheets with the exercise details.
-                                    </p>
-                                  </div>
+                                <div className="flex-1">
+                                  <p className="font-medium text-sm text-white mb-1">
+                                    Gym Exercises Not Available
+                                  </p>
+                                  <p className="text-xs text-white/80">
+                                    To display gym exercises, create a tab named "Gym" in your Google Sheets with the exercise details.
+                                  </p>
                                 </div>
-                              )}
-                            </>
+                              </div>
+                            </div>
                           )}
                         </div>
-                      </div>
-                    </div>
+                      )}
+                    </>
                   ) : isLoadingProgramSessions ? (
                     <div className="flex justify-center py-6">
                       <Loader2 className="h-6 w-6 animate-spin text-primary" />
