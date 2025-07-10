@@ -284,18 +284,10 @@ function PracticePage() {
     console.log('Starting workout save process...');
     
     try {
-      // Mark session as completed if needed
-      if (selectedProgram && activeSessionData) {
-        await fetch(`/api/programs/${selectedProgram.programId}/sessions/${activeSessionData.dayNumber}/complete`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        });
-      }
-
       // Get today's date for title
       const today = new Date();
       const formattedDate = today.toLocaleDateString('en-CA'); // YYYY-MM-DD
-      const entryTitle = `${activeSessionData?.title || 'Training'} - ${formattedDate}`;
+      const entryTitle = `Training - ${formattedDate}`;
       
       // Create journal entry object
       const journalEntry = {
@@ -304,9 +296,9 @@ function PracticePage() {
         mood: moodValue,
         workoutData: {
           program: selectedProgram?.program?.title || 'Training Session',
-          session: activeSessionData?.title || 'Session',
-          dayNumber: activeSessionData?.dayNumber || 1,
-          exercises: activeSessionData?.exercises || [],
+          session: 'Session',
+          dayNumber: 1,
+          exercises: [],
           moodRating: moodValue,
           notes: diaryNotes,
           completedAt: new Date().toISOString()
@@ -363,119 +355,6 @@ function PracticePage() {
       setSelectedProgram(null);
     }
   }, [assignedPrograms, selectedProgram]);
-
-  useEffect(() => {
-    try {
-      // Always try to set session data, even if there are meets
-      const today = new Date();
-      const targetDate = new Date(today.getTime() + currentDayOffset * 24 * 60 * 60 * 1000);
-      
-      // Format target date to match session date format (e.g., "Jun-3")
-      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      const targetDateString = `${monthNames[targetDate.getMonth()]}-${targetDate.getDate()}`;
-      
-      console.log(`Looking for session with date: ${targetDateString}`);
-      
-      // If we have program sessions, try to find a matching session
-      if (programSessions && programSessions.length > 0) {
-        console.log('Available sessions:', programSessions.slice(0, 5).map(s => ({ date: s.date, hasWorkout: !!(s.shortDistanceWorkout || s.mediumDistanceWorkout || s.longDistanceWorkout) })));
-        
-        // Find session that matches the target date
-        let session = programSessions.find(s => s.date === targetDateString);
-        
-        // If no session found for this date, create a rest day session
-        if (!session) {
-          console.log(`No session found for ${targetDateString}, creating rest day`);
-          session = {
-            dayNumber: null, // Don't assign a day number for rest days
-            date: targetDateString,
-            preActivation1: null,
-            preActivation2: null,
-            shortDistanceWorkout: null,
-            mediumDistanceWorkout: null,
-            longDistanceWorkout: null,
-            extraSession: null,
-            title: "Rest Day",
-            description: "Rest and Recovery",
-            notes: null,
-            completed: false,
-            completed_at: null,
-            isRestDay: true
-          };
-        } else {
-          console.log(`Found session for ${targetDateString}:`, { 
-            date: session.date, 
-            dayNumber: session.dayNumber,
-            hasWorkout: !!(session.shortDistanceWorkout || session.mediumDistanceWorkout || session.longDistanceWorkout),
-            isRestDay: session.isRestDay 
-          });
-        }
-        
-        setActiveSessionData(session);
-      } else {
-        // No program sessions available, create a basic rest day
-        console.log(`No program sessions available, creating rest day for ${targetDateString}`);
-        const restDaySession = {
-          dayNumber: null,
-          date: targetDateString,
-          preActivation1: null,
-          preActivation2: null,
-          shortDistanceWorkout: null,
-          mediumDistanceWorkout: null,
-          longDistanceWorkout: null,
-          extraSession: null,
-          title: "Rest Day",
-          description: "Rest and Recovery",
-          notes: null,
-          completed: false,
-          completed_at: null,
-          isRestDay: true
-        };
-        setActiveSessionData(restDaySession);
-      }
-      
-      setIsTransitioning(false);
-    } catch (error) {
-      console.error('Error processing session data:', error);
-      setIsTransitioning(false);
-    }
-  }, [programSessions, currentDayOffset]);
-
-  // Helper function to handle date navigation with transition
-  const handleDateNavigation = (direction: 'prev' | 'next') => {
-    if (isTransitioning) return; // Prevent multiple rapid clicks
-    
-    setIsTransitioning(true);
-    setFadeTransition(false);
-    
-    setTimeout(() => {
-      setCurrentDayOffset(prev => direction === 'prev' ? prev - 1 : prev + 1);
-      
-      // Update selected date
-      const newDate = new Date();
-      newDate.setDate(newDate.getDate() + (direction === 'prev' ? currentDayOffset - 1 : currentDayOffset + 1));
-      setSelectedDate(newDate);
-      
-      // Wait for data to load, then fade back in
-      setTimeout(() => {
-        setFadeTransition(true);
-        setTimeout(() => {
-          setIsTransitioning(false);
-        }, 150); // Allow fade-in to start before allowing next transition
-      }, 100);
-    }, 150);
-  };
-
-  // Effect to handle the transition completion
-  useEffect(() => {
-    if (isTransitioning) {
-      // After data has been processed, complete the transition
-      const timer = setTimeout(() => {
-        setIsTransitioning(false);
-      }, 200);
-      return () => clearTimeout(timer);
-    }
-  }, [activeSessionData, currentDayMeets]);
 
   return (
     <PageContainer className="pb-24">
