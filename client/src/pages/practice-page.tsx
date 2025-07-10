@@ -220,46 +220,85 @@ function PracticePage() {
   
   // Target times calculator with comprehensive format
   const calculateTargetTimes = () => {
-    // Base 100m time - this would come from user input or athlete profile
-    const base100mTime = 11.80;
+    if (!athleteProfile) {
+      return {
+        distances: [],
+        percentages: [],
+        getTime: () => "-"
+      };
+    }
+    
+    // Get base goal times from athlete profile
+    const goal100m = athleteProfile.sprint60m100mGoal;
+    const goal200m = athleteProfile.sprint200mGoal;
+    const goal400m = athleteProfile.sprint400mGoal;
+    
+    // If no goals are set, return empty calculator
+    if (!goal100m && !goal200m && !goal400m) {
+      return {
+        distances: [],
+        percentages: [],
+        getTime: () => "-"
+      };
+    }
     
     // Track type adjustments
     const trackAdjustment = currentTrackType === "indoor" ? 0.98 : 1.0;
     
-    // Base adjusted time for track type
-    let adjusted100m = base100mTime * trackAdjustment;
+    // Calculate base times for each distance from the set goals
+    const baseTimesByDistance: { [key: string]: number } = {};
     
-    // Timing method adjustments (subtract from 100% time)
-    if (useFirstFootTiming) adjusted100m -= 0.55;
-    if (useOnMovement) adjusted100m -= 0.15;
+    // If 100m goal is set, use it as base for short distances
+    if (goal100m) {
+      let adjusted100m = goal100m * trackAdjustment;
+      if (useFirstFootTiming) adjusted100m -= 0.55;
+      if (useOnMovement) adjusted100m -= 0.15;
+      
+      baseTimesByDistance["50m"] = adjusted100m * 0.50;
+      baseTimesByDistance["60m"] = adjusted100m * 0.60;
+      baseTimesByDistance["80m"] = adjusted100m * 0.80;
+      baseTimesByDistance["100m"] = adjusted100m;
+      baseTimesByDistance["120m"] = adjusted100m * 1.20; // Calculated from 100m
+      baseTimesByDistance["150m"] = adjusted100m * 1.50; // Calculated from 100m
+    }
     
-    // Distances and their corresponding percentage multipliers
-    const distances = ["50m", "60m", "80m", "100m", "120m", "150m", "200m", "250m", "300m"];
+    // If 200m goal is set, use it as base for medium distances  
+    if (goal200m) {
+      let adjusted200m = goal200m * trackAdjustment;
+      if (useFirstFootTiming) adjusted200m -= 0.55;
+      if (useOnMovement) adjusted200m -= 0.15;
+      
+      baseTimesByDistance["200m"] = adjusted200m;
+      baseTimesByDistance["250m"] = adjusted200m * 1.25; // Calculated from 200m
+      baseTimesByDistance["300m"] = adjusted200m * 1.50; // Calculated from 200m
+    }
+    
+    // If 400m goal is set, use it as base
+    if (goal400m) {
+      let adjusted400m = goal400m * trackAdjustment;
+      if (useFirstFootTiming) adjusted400m -= 0.55;
+      if (useOnMovement) adjusted400m -= 0.15;
+      
+      baseTimesByDistance["400m"] = adjusted400m;
+    }
+    
+    // Get available distances based on set goals
+    const availableDistances = Object.keys(baseTimesByDistance).sort((a, b) => {
+      const getDistance = (d: string) => parseInt(d.replace('m', ''));
+      return getDistance(a) - getDistance(b);
+    });
+    
     const percentages = [60, 65, 70, 75, 80, 85, 90, 95, 100];
     
-    // Distance to percentage ratio mapping (based on sprint physics)
-    const distanceRatios = {
-      "50m": 0.50,
-      "60m": 0.60,
-      "80m": 0.80,
-      "100m": 1.00,
-      "120m": 1.20,
-      "150m": 1.50,
-      "200m": 2.07,
-      "250m": 2.60,
-      "300m": 3.25
-    };
-    
     return {
-      distances,
+      distances: availableDistances,
       percentages,
       getTime: (distance: string, percentage: number) => {
-        const ratio = distanceRatios[distance as keyof typeof distanceRatios];
-        if (!ratio) return "-";
+        const baseTime = baseTimesByDistance[distance];
+        if (!baseTime) return "-";
         
-        const baseTimeForDistance = adjusted100m * ratio;
         // Percentage represents speed percentage - so 80% speed means 100/80 = 1.25x the time
-        const adjustedTime = baseTimeForDistance * (100 / percentage);
+        const adjustedTime = baseTime * (100 / percentage);
         return adjustedTime.toFixed(2);
       }
     };
