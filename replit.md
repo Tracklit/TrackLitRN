@@ -114,6 +114,7 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
   - Replaced fade transitions with slide-out/slide-in animations for smoother page changes
   - Updated transition from opacity-based to transform-based with translate-x movement
   - Target Times calculator now positioned outside fade transition area for static behavior
+  - Changed Track Workout display to scrollable vertical list format with individual workout items
 - July 9, 2025: Enhanced date navigation with smooth fade transitions and cleaner interface ✅
   - Fixed critical bug where page would break when changing dates to days with meets instead of training sessions
   - Moved date navigation to always be visible (under workout card for workouts, top for meets)
