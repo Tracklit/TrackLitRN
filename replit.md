@@ -114,10 +114,12 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
   - Replaced fade transitions with slide-out/slide-in animations for smoother page changes
   - Updated transition from opacity-based to transform-based with translate-x movement
   - Target Times calculator now positioned outside fade transition area for static behavior
-  - Removed all transition animations to start fresh with swipe-only implementation
-  - Added swipe gesture support for date navigation (swipe left for next day, swipe right for previous day)
+  - Implemented interactive swipe gestures where content follows finger movement during drag
+  - Added 30% threshold snap behavior: content snaps out of view when moved 30% of container width
+  - Content smoothly returns to original position if swipe doesn't reach 30% threshold
   - Enhanced touch event handling with horizontal swipe detection and scroll prevention
-  - Simplified date navigation to instant content switching without visual transitions
+  - Swipe left for next day, swipe right for previous day with visual feedback during drag
+  - Disabled smooth transitions during active dragging for immediate finger-following response
 - July 9, 2025: Enhanced date navigation with smooth fade transitions and cleaner interface ✅
   - Fixed critical bug where page would break when changing dates to days with meets instead of training sessions
   - Moved date navigation to always be visible (under workout card for workouts, top for meets)

@@ -65,6 +65,9 @@ function PracticePage() {
   // Touch/swipe states
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
+  const [currentTranslateX, setCurrentTranslateX] = useState<number>(0);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   
   // State for session data
   const [activeSessionData, setActiveSessionData] = useState<any>(null);
@@ -340,6 +343,7 @@ function PracticePage() {
     if (isTransitioning) return; // Prevent multiple rapid clicks
     
     setIsTransitioning(true);
+    setCurrentTranslateX(0); // Reset translate position
     
     setCurrentDayOffset(prev => direction === 'prev' ? prev - 1 : prev + 1);
     
@@ -358,33 +362,36 @@ function PracticePage() {
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStartX(e.touches[0].clientX);
     setTouchStartY(e.touches[0].clientY);
+    setIsDragging(true);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    // Prevent default scrolling behavior during swipe
-    if (touchStartX !== null && touchStartY !== null) {
+    if (touchStartX !== null && touchStartY !== null && isDragging) {
       const currentX = e.touches[0].clientX;
       const currentY = e.touches[0].clientY;
-      const deltaX = Math.abs(currentX - touchStartX);
-      const deltaY = Math.abs(currentY - touchStartY);
+      const deltaX = currentX - touchStartX;
+      const deltaY = currentY - touchStartY;
       
-      // If horizontal swipe is more significant than vertical, prevent scroll
-      if (deltaX > deltaY && deltaX > 30) {
+      // Check if it's a horizontal swipe
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
         e.preventDefault();
+        setCurrentTranslateX(deltaX);
       }
     }
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX === null || touchStartY === null) return;
+    if (touchStartX === null || touchStartY === null || !isDragging) return;
     
     const touchEndX = e.changedTouches[0].clientX;
-    const touchEndY = e.changedTouches[0].clientY;
     const deltaX = touchEndX - touchStartX;
-    const deltaY = touchEndY - touchStartY;
+    const containerWidth = containerRef.current?.offsetWidth || 0;
     
-    // Check if it's a horizontal swipe (more horizontal than vertical movement)
-    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+    // Calculate 30% threshold
+    const threshold = containerWidth * 0.3;
+    
+    if (Math.abs(deltaX) > threshold) {
+      // Snap out of view and navigate
       if (deltaX > 0) {
         // Swipe right - go to previous day
         handleDateNavigation('prev');
@@ -392,11 +399,15 @@ function PracticePage() {
         // Swipe left - go to next day
         handleDateNavigation('next');
       }
+    } else {
+      // Snap back to original position
+      setCurrentTranslateX(0);
     }
     
     // Reset touch states
     setTouchStartX(null);
     setTouchStartY(null);
+    setIsDragging(false);
   };
 
   // Effect to handle the transition completion
@@ -486,7 +497,11 @@ function PracticePage() {
         <>
           {/* Daily Session Content */}
           <div 
-            className="space-y-4"
+            ref={containerRef}
+            className={`space-y-4 ${!isDragging ? 'transition-transform duration-300 ease-out' : ''}`}
+            style={{
+              transform: `translateX(${currentTranslateX}px)`,
+            }}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
