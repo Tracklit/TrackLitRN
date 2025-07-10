@@ -500,28 +500,22 @@ function PracticePage() {
       <div className="fixed top-16 left-0 right-0 z-50 bg-black border-b shadow-sm">
         <div className="max-w-md mx-auto">
           <div className="flex items-center justify-between px-4 py-2">
-            <div 
-              className="flex items-center gap-2 cursor-pointer"
-              onClick={() => setTargetTimesExpanded(!targetTimesExpanded)}
-            >
-              <Calculator className="h-4 w-4 text-white" />
-              <h3 className="text-sm font-medium text-white">Target Times</h3>
-            </div>
             <div className="flex items-center gap-2">
               <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowAssignedPrograms(true);
-                }}
+                onClick={() => setTargetTimesExpanded(!targetTimesExpanded)}
+                className="flex items-center gap-1 px-2 py-1 bg-white/10 hover:bg-white/20 rounded text-xs text-white"
+              >
+                <Calculator className="h-3 w-3" />
+                Target Times
+                <ChevronDown className={`h-3 w-3 transition-transform ${targetTimesExpanded ? 'rotate-180' : ''}`} />
+              </button>
+              <button 
+                onClick={() => setShowAssignedPrograms(true)}
                 className="flex items-center gap-1 px-2 py-1 bg-white/10 hover:bg-white/20 rounded text-xs text-white"
               >
                 <ClipboardList className="h-3 w-3" />
                 Your Programs
               </button>
-              <ChevronDown 
-                className={`h-4 w-4 transition-transform text-white cursor-pointer ${targetTimesExpanded ? 'rotate-180' : ''}`}
-                onClick={() => setTargetTimesExpanded(!targetTimesExpanded)}
-              />
             </div>
           </div>
           
@@ -716,11 +710,11 @@ function PracticePage() {
           />
           
           {/* Modal Content */}
-          <div className="relative bg-white rounded-lg shadow-2xl w-full max-w-md mx-4 max-h-[80vh] flex flex-col">
+          <div className="relative bg-black rounded-lg shadow-2xl w-full max-w-md mx-4 max-h-[80vh] flex flex-col">
             {/* Header */}
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Your Programs</h2>
-              <p className="text-sm text-gray-600 mt-1">
+            <div className="px-6 py-4 border-b border-gray-700">
+              <h2 className="text-lg font-semibold text-white">Your Programs</h2>
+              <p className="text-sm text-gray-300 mt-1">
                 Select a training program to view or switch between your assigned programs.
               </p>
             </div>
@@ -730,11 +724,11 @@ function PracticePage() {
               {isLoadingPrograms ? (
                 <div className="space-y-3">
                   {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                      <div className="h-10 w-10 rounded-full bg-gray-200 animate-pulse" />
+                    <div key={i} className="flex items-center gap-3 p-3 bg-gray-800 rounded-lg">
+                      <div className="h-10 w-10 rounded-full bg-gray-700 animate-pulse" />
                       <div className="flex-1">
-                        <div className="h-4 w-32 bg-gray-200 rounded animate-pulse mb-1" />
-                        <div className="h-3 w-24 bg-gray-200 rounded animate-pulse" />
+                        <div className="h-4 w-32 bg-gray-700 rounded animate-pulse mb-1" />
+                        <div className="h-3 w-24 bg-gray-700 rounded animate-pulse" />
                       </div>
                     </div>
                   ))}
@@ -746,8 +740,8 @@ function PracticePage() {
                       key={programAssignment.id} 
                       className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${
                         selectedProgram?.id === programAssignment.id 
-                          ? 'bg-blue-50 border-2 border-blue-200 shadow-sm' 
-                          : 'bg-gray-50 border-2 border-transparent active:bg-gray-100'
+                          ? 'bg-blue-600 border-2 border-blue-400 shadow-sm' 
+                          : 'bg-gray-800 border-2 border-transparent active:bg-gray-700'
                       }`}
                       onClick={() => {
                         setSelectedProgram(programAssignment);
@@ -757,24 +751,24 @@ function PracticePage() {
                     >
                       <div className="flex-shrink-0">
                         <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
-                          selectedProgram?.id === programAssignment.id ? 'bg-blue-100' : 'bg-gray-200'
+                          selectedProgram?.id === programAssignment.id ? 'bg-blue-500' : 'bg-gray-700'
                         }`}>
                           <ClipboardList className={`h-5 w-5 ${
-                            selectedProgram?.id === programAssignment.id ? 'text-blue-600' : 'text-gray-600'
+                            selectedProgram?.id === programAssignment.id ? 'text-white' : 'text-gray-300'
                           }`} />
                         </div>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate text-gray-900">
+                        <p className="font-medium text-sm truncate text-white">
                           {programAssignment.program?.title || 'Unnamed Program'}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-400">
                           {programAssignment.program?.category || 'Training Program'} • {programAssignment.program?.duration || 0} days
                         </p>
                       </div>
                       {selectedProgram?.id === programAssignment.id && (
                         <div className="flex-shrink-0">
-                          <div className="h-2 w-2 bg-blue-500 rounded-full" />
+                          <div className="h-2 w-2 bg-blue-400 rounded-full" />
                         </div>
                       )}
                     </div>
@@ -782,8 +776,8 @@ function PracticePage() {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <ClipboardList className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-sm text-gray-600 mb-2">
+                  <ClipboardList className="h-12 w-12 text-gray-500 mx-auto mb-4" />
+                  <p className="text-sm text-gray-300 mb-2">
                     No programs assigned yet
                   </p>
                   <p className="text-xs text-gray-500">
@@ -794,10 +788,10 @@ function PracticePage() {
             </div>
             
             {/* Footer */}
-            <div className="px-6 py-4 border-t border-gray-200">
+            <div className="px-6 py-4 border-t border-gray-700">
               <button 
                 onClick={() => setShowAssignedPrograms(false)}
-                className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium active:bg-gray-200 transition-colors"
+                className="w-full px-4 py-2 bg-gray-800 text-white rounded-lg font-medium active:bg-gray-700 transition-colors"
                 style={{ touchAction: 'manipulation' }}
               >
                 Close
