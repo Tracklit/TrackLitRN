@@ -62,6 +62,7 @@ function PracticePage() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [fadeTransition, setFadeTransition] = useState(true);
+  const [slideDirection, setSlideDirection] = useState<'next' | 'prev'>('next');
   
   // State for session data
   const [activeSessionData, setActiveSessionData] = useState<any>(null);
@@ -337,6 +338,7 @@ function PracticePage() {
     if (isTransitioning) return; // Prevent multiple rapid clicks
     
     setIsTransitioning(true);
+    setSlideDirection(direction);
     setFadeTransition(false);
     
     setTimeout(() => {
@@ -347,12 +349,12 @@ function PracticePage() {
       newDate.setDate(newDate.getDate() + (direction === 'prev' ? currentDayOffset - 1 : currentDayOffset + 1));
       setSelectedDate(newDate);
       
-      // Wait for data to load, then fade back in
+      // Wait for data to load, then slide back in
       setTimeout(() => {
         setFadeTransition(true);
         setTimeout(() => {
           setIsTransitioning(false);
-        }, 150); // Allow fade-in to start before allowing next transition
+        }, 150); // Allow slide-in to start before allowing next transition
       }, 100);
     }, 150);
   };
@@ -443,7 +445,7 @@ function PracticePage() {
       {!hasMeetsToday && (
         <>
           {/* Daily Session Content */}
-          <div className={`space-y-4 transition-transform duration-300 ${fadeTransition ? 'transform translate-x-0' : 'transform translate-x-full'}`}>
+          <div className={`space-y-4 transition-transform duration-300 ${fadeTransition ? 'transform translate-x-0' : slideDirection === 'next' ? 'transform -translate-x-full' : 'transform translate-x-full'}`}>
             <div className="bg-muted/40 p-3" style={{ borderRadius: '6px' }}>
               {selectedProgram && assignedPrograms && assignedPrograms.length > 0 ? (
                 <div className="space-y-4">
