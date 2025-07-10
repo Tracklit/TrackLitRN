@@ -706,6 +706,85 @@ function PracticePage() {
 
       </div>
 
+      {/* Assigned Programs Modal */}
+      <Dialog open={showAssignedPrograms} onOpenChange={setShowAssignedPrograms}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Your Programs</DialogTitle>
+            <DialogDescription>
+              Select a training program to view or switch between your assigned programs.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-3 py-4">
+            {isLoadingPrograms ? (
+              <div className="space-y-2">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 border rounded-lg">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="flex-1">
+                      <Skeleton className="h-4 w-32 mb-1" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : assignedPrograms && assignedPrograms.length > 0 ? (
+              assignedPrograms.map((programAssignment) => (
+                <div 
+                  key={programAssignment.id} 
+                  className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors ${
+                    selectedProgram?.id === programAssignment.id ? 'border-primary bg-primary/10' : 'border-border'
+                  }`}
+                  onClick={() => {
+                    setSelectedProgram(programAssignment);
+                    setShowAssignedPrograms(false);
+                  }}
+                >
+                  <div className="flex-shrink-0">
+                    <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center">
+                      <ClipboardList className="h-5 w-5 text-primary" />
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">
+                      {programAssignment.program?.title || 'Unnamed Program'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {programAssignment.program?.category || 'Training Program'} • {programAssignment.program?.duration || 0} days
+                    </p>
+                  </div>
+                  {selectedProgram?.id === programAssignment.id && (
+                    <div className="flex-shrink-0">
+                      <div className="h-2 w-2 bg-primary rounded-full" />
+                    </div>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <ClipboardList className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-sm text-muted-foreground mb-2">
+                  No programs assigned yet
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Your coach will assign training programs to your account.
+                </p>
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowAssignedPrograms(false)}
+              className="w-full"
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </PageContainer>
   );
