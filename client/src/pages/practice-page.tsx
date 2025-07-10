@@ -226,12 +226,12 @@ function PracticePage() {
     // Track type adjustments
     const trackAdjustment = currentTrackType === "indoor" ? 0.98 : 1.0;
     
-    // Timing method adjustments
-    let timingAdjustment = 1.0;
-    if (useFirstFootTiming) timingAdjustment *= 0.995;
-    if (useOnMovement) timingAdjustment *= 0.99;
+    // Base adjusted time for track type
+    let adjusted100m = base100mTime * trackAdjustment;
     
-    const adjusted100m = base100mTime * trackAdjustment * timingAdjustment;
+    // Timing method adjustments (subtract from 100% time)
+    if (useFirstFootTiming) adjusted100m -= 0.55;
+    if (useOnMovement) adjusted100m -= 0.15;
     
     // Distances and their corresponding percentage multipliers
     const distances = ["50m", "60m", "80m", "100m", "120m", "150m", "200m", "250m", "300m"];
