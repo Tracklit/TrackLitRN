@@ -6,7 +6,7 @@ import { toast } from "@/hooks/use-toast";
 
 import { useProgramSessions } from "@/hooks/use-program-sessions";
 import { useGymData } from "@/hooks/use-gym-data";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Meet } from "@shared/schema";
 import { PageContainer } from "@/components/page-container";
@@ -193,6 +193,7 @@ function WorkoutCardContent({ sessionData, athleteProfile, gymData }: { sessionD
 function PracticePage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   // Fetch available programs (purchased and assigned)
   const { data: availablePrograms = [], isLoading: isLoadingPrograms } = useQuery({
@@ -746,9 +747,16 @@ function PracticePage() {
                           ? 'bg-blue-600 border-2 border-blue-400 shadow-sm' 
                           : 'bg-gray-800 border-2 border-transparent active:bg-gray-700'
                       }`}
-                      onClick={() => {
+                      onClick={async () => {
                         setSelectedProgram(programAssignment);
                         setShowAssignedPrograms(false);
+                        // Force refresh of workout cards when switching programs
+                        setWorkoutCards([]);
+                        setIsLoadingCards(true);
+                        // Invalidate and refetch program sessions for the new program
+                        await queryClient.invalidateQueries({
+                          queryKey: ["/api/program-sessions", programAssignment.programId]
+                        });
                       }}
                       style={{ touchAction: 'manipulation' }}
                     >
