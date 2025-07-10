@@ -218,7 +218,7 @@ function PracticePage() {
   const [currentTrackType, setCurrentTrackType] = useState<"indoor" | "outdoor">("outdoor");
   const [useOnMovement, setUseOnMovement] = useState(false);
   
-  // Comprehensive target times calculator
+  // Target times calculator with exact format
   const calculateTargetTimes = () => {
     // Base 100m time - this would come from user input or athlete profile
     const base100mTime = 11.80;
@@ -235,27 +235,21 @@ function PracticePage() {
     
     // Calculate target times based on percentages from 100m time
     const distances = [
-      { distance: "60m", percentage: 0.82, splits: ["0-30m", "30-60m"] },
-      { distance: "100m", percentage: 1.0, splits: ["0-30m", "30-60m", "60-100m"] },
-      { distance: "150m", percentage: 1.52, splits: ["0-50m", "50-100m", "100-150m"] },
-      { distance: "200m", percentage: 2.07, splits: ["0-50m", "50-100m", "100-150m", "150-200m"] },
-      { distance: "300m", percentage: 3.25, splits: ["0-100m", "100-200m", "200-300m"] },
-      { distance: "400m", percentage: 4.55, splits: ["0-100m", "100-200m", "200-300m", "300-400m"] }
+      { distance: "60m", percentage: 82 },
+      { distance: "100m", percentage: 100 },
+      { distance: "150m", percentage: 152 },
+      { distance: "200m", percentage: 207 },
+      { distance: "300m", percentage: 325 },
+      { distance: "400m", percentage: 455 }
     ];
     
-    return distances.map(({ distance, percentage, splits }) => {
-      const targetTime = (adjusted100m * percentage).toFixed(2);
-      const splitTimes = splits.map((split, index) => {
-        // Simplified split calculation - would be more complex in real implementation
-        const splitTime = (parseFloat(targetTime) / splits.length).toFixed(2);
-        return { split, time: splitTime };
-      });
+    return distances.map(({ distance, percentage }) => {
+      const targetTime = (adjusted100m * (percentage / 100)).toFixed(2);
       
       return {
         distance,
-        targetTime,
-        percentage: (percentage * 100).toFixed(0) + "%",
-        splits: splitTimes
+        percentage: `(${percentage}%)`,
+        targetTime
       };
     });
   };
@@ -521,28 +515,18 @@ function PracticePage() {
               <div className="space-y-2">
                 <label className="text-xs font-medium">Target Times</label>
                 <div className="bg-muted/20 rounded-md overflow-hidden">
-                  <div className="grid grid-cols-4 gap-px bg-border text-xs">
+                  <div className="grid grid-cols-3 gap-px bg-border text-xs">
                     {/* Header */}
                     <div className="bg-background px-2 py-1.5 font-medium text-center">Distance</div>
                     <div className="bg-background px-2 py-1.5 font-medium text-center">%</div>
                     <div className="bg-background px-2 py-1.5 font-medium text-center">Time</div>
-                    <div className="bg-background px-2 py-1.5 font-medium text-center">Splits</div>
                     
                     {/* Data rows */}
-                    {calculateTargetTimes().map(({ distance, percentage, targetTime, splits }) => (
+                    {calculateTargetTimes().map(({ distance, percentage, targetTime }) => (
                       <>
                         <div key={`${distance}-distance`} className="bg-background px-2 py-1.5 text-center font-medium">{distance}</div>
-                        <div key={`${distance}-percentage`} className="bg-background px-2 py-1.5 text-center">{percentage}</div>
+                        <div key={`${distance}-percentage`} className="bg-background px-2 py-1.5 text-center text-muted-foreground">{percentage}</div>
                         <div key={`${distance}-time`} className="bg-background px-2 py-1.5 text-center font-mono">{targetTime}s</div>
-                        <div key={`${distance}-splits`} className="bg-background px-1 py-1.5 text-center">
-                          <div className="space-y-0.5">
-                            {splits.map((split, index) => (
-                              <div key={`${distance}-split-${index}`} className="text-[10px] leading-tight">
-                                {split.split}: {split.time}s
-                              </div>
-                            ))}
-                          </div>
-                        </div>
                       </>
                     ))}
                   </div>
