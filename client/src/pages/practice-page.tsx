@@ -67,6 +67,8 @@ function PracticePage() {
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const [currentTranslateX, setCurrentTranslateX] = useState<number>(0);
   const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [isSliding, setIsSliding] = useState<boolean>(false);
+  const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('left');
   const containerRef = useRef<HTMLDivElement>(null);
   
   // State for session data
@@ -343,7 +345,10 @@ function PracticePage() {
     if (isTransitioning) return; // Prevent multiple rapid clicks
     
     setIsTransitioning(true);
-    setCurrentTranslateX(0); // Reset translate position
+    
+    // Start new content from opposite side
+    const containerWidth = containerRef.current?.offsetWidth || 0;
+    setCurrentTranslateX(direction === 'prev' ? -containerWidth : containerWidth);
     
     setCurrentDayOffset(prev => direction === 'prev' ? prev - 1 : prev + 1);
     
@@ -352,9 +357,13 @@ function PracticePage() {
     newDate.setDate(newDate.getDate() + (direction === 'prev' ? currentDayOffset - 1 : currentDayOffset + 1));
     setSelectedDate(newDate);
     
-    // Reset transition flag
+    // Slide new content in after data loads
     setTimeout(() => {
-      setIsTransitioning(false);
+      setCurrentTranslateX(0);
+      setIsSliding(false);
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 300);
     }, 100);
   };
 
@@ -391,14 +400,23 @@ function PracticePage() {
     const threshold = containerWidth * 0.3;
     
     if (Math.abs(deltaX) > threshold) {
-      // Snap out of view and navigate
-      if (deltaX > 0) {
-        // Swipe right - go to previous day
-        handleDateNavigation('prev');
-      } else {
-        // Swipe left - go to next day
-        handleDateNavigation('next');
-      }
+      // Set slide direction and trigger slide out
+      setSlideDirection(deltaX > 0 ? 'right' : 'left');
+      setIsSliding(true);
+      
+      // Complete the slide out animation
+      setCurrentTranslateX(deltaX > 0 ? containerWidth : -containerWidth);
+      
+      // Navigate after slide out completes
+      setTimeout(() => {
+        if (deltaX > 0) {
+          // Swipe right - go to previous day
+          handleDateNavigation('prev');
+        } else {
+          // Swipe left - go to next day
+          handleDateNavigation('next');
+        }
+      }, 300);
     } else {
       // Snap back to original position
       setCurrentTranslateX(0);
@@ -498,7 +516,7 @@ function PracticePage() {
           {/* Daily Session Content */}
           <div 
             ref={containerRef}
-            className={`space-y-4 ${!isDragging ? 'transition-transform duration-300 ease-out' : ''}`}
+            className={`space-y-4 ${!isDragging || isSliding ? 'transition-transform duration-300 ease-out' : ''}`}
             style={{
               transform: `translateX(${currentTranslateX}px)`,
             }}
