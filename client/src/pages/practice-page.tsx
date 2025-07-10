@@ -212,7 +212,7 @@ function PracticePage() {
   const [isLoadingCards, setIsLoadingCards] = useState(false);
   
   // Calculator states
-  const [calculatorOpen, setCalculatorOpen] = useState(false);
+  const [targetTimesExpanded, setTargetTimesExpanded] = useState(false);
   const [useFirstFootTiming, setUseFirstFootTiming] = useState(false);
   const [adjustForTrackType, setAdjustForTrackType] = useState(false);
   const [currentTrackType, setCurrentTrackType] = useState<"indoor" | "outdoor">("outdoor");
@@ -410,22 +410,62 @@ function PracticePage() {
   return (
     <PageContainer className="pb-24">
       {/* Fixed Target Times Header */}
-      <div className="fixed top-16 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b px-4 py-2">
+      <div className="fixed top-16 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
         <div className="max-w-md mx-auto">
-          <div className="flex items-center justify-between">
+          <div 
+            className="flex items-center justify-between px-4 py-2 cursor-pointer"
+            onClick={() => setTargetTimesExpanded(!targetTimesExpanded)}
+          >
             <div className="flex items-center gap-2">
               <Calculator className="h-4 w-4 text-primary" />
               <h3 className="text-sm font-medium">Target Times</h3>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCalculatorOpen(true)}
-              className="h-7 text-xs"
-            >
-              Calculate
-            </Button>
+            <ChevronDown className={`h-4 w-4 transition-transform ${targetTimesExpanded ? 'rotate-180' : ''}`} />
           </div>
+          
+          {/* Collapsible Content */}
+          {targetTimesExpanded && (
+            <div className="px-4 pb-4 space-y-3 border-t">
+              <div className="space-y-2 pt-3">
+                <label className="text-xs font-medium">Track Type</label>
+                <div className="flex gap-2">
+                  <Button
+                    variant={currentTrackType === "outdoor" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCurrentTrackType("outdoor")}
+                    className="h-7 text-xs"
+                  >
+                    Outdoor
+                  </Button>
+                  <Button
+                    variant={currentTrackType === "indoor" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCurrentTrackType("indoor")}
+                    className="h-7 text-xs"
+                  >
+                    Indoor
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="firstFootTiming"
+                    checked={useFirstFootTiming}
+                    onCheckedChange={(checked) => setUseFirstFootTiming(checked as boolean)}
+                  />
+                  <label htmlFor="firstFootTiming" className="text-xs">
+                    Use first foot timing
+                  </label>
+                </div>
+              </div>
+
+              <div className="text-xs text-muted-foreground">
+                Calculator provides estimated target times based on track type and timing method.
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -556,55 +596,7 @@ function PracticePage() {
         </div>
       </div>
 
-      {/* Target Times Calculator Dialog */}
-      <Dialog open={calculatorOpen} onOpenChange={setCalculatorOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Target Times Calculator</DialogTitle>
-            <DialogDescription>
-              Calculate estimated target times for different distances.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Track Type</label>
-              <div className="flex gap-2">
-                <Button
-                  variant={currentTrackType === "outdoor" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setCurrentTrackType("outdoor")}
-                >
-                  Outdoor
-                </Button>
-                <Button
-                  variant={currentTrackType === "indoor" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setCurrentTrackType("indoor")}
-                >
-                  Indoor
-                </Button>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="firstFootTiming"
-                  checked={useFirstFootTiming}
-                  onCheckedChange={(checked) => setUseFirstFootTiming(checked as boolean)}
-                />
-                <label htmlFor="firstFootTiming" className="text-sm">
-                  Use first foot timing
-                </label>
-              </div>
-            </div>
 
-            <div className="text-xs text-muted-foreground">
-              This calculator provides estimated target times based on track type and timing method. Results may vary based on individual performance and conditions.
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </PageContainer>
   );
 }
