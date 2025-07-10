@@ -216,6 +216,38 @@ function PracticePage() {
   const [useFirstFootTiming, setUseFirstFootTiming] = useState(false);
   const [adjustForTrackType, setAdjustForTrackType] = useState(false);
   const [currentTrackType, setCurrentTrackType] = useState<"indoor" | "outdoor">("outdoor");
+  const [useOnMovement, setUseOnMovement] = useState(false);
+  
+  // Base times for calculations (example data - replace with real algorithm)
+  const calculateTargetTimes = () => {
+    const baseTimes = {
+      "60m": 7.50,
+      "100m": 11.80,
+      "200m": 23.60,
+      "400m": 52.00
+    };
+    
+    let adjustmentFactor = 1.0;
+    
+    // Track type adjustment
+    if (currentTrackType === "indoor") {
+      adjustmentFactor *= 0.98; // Indoor tracks are typically faster
+    }
+    
+    // Timing method adjustments
+    if (useFirstFootTiming) {
+      adjustmentFactor *= 0.995; // Slightly faster for first foot
+    }
+    
+    if (useOnMovement) {
+      adjustmentFactor *= 0.99; // On movement timing is faster
+    }
+    
+    return Object.entries(baseTimes).map(([distance, time]) => ({
+      distance,
+      time: (time * adjustmentFactor).toFixed(2)
+    }));
+  };
   
 
   
@@ -449,20 +481,53 @@ function PracticePage() {
               </div>
               
               <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="firstFootTiming"
-                    checked={useFirstFootTiming}
-                    onCheckedChange={(checked) => setUseFirstFootTiming(checked as boolean)}
-                  />
-                  <label htmlFor="firstFootTiming" className="text-xs">
-                    Use first foot timing
-                  </label>
+                <label className="text-xs font-medium">Timing Options</label>
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="firstFootTiming"
+                      checked={useFirstFootTiming}
+                      onCheckedChange={(checked) => setUseFirstFootTiming(checked as boolean)}
+                    />
+                    <label htmlFor="firstFootTiming" className="text-xs">
+                      First Foot
+                    </label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="onMovement"
+                      checked={useOnMovement}
+                      onCheckedChange={(checked) => setUseOnMovement(checked as boolean)}
+                    />
+                    <label htmlFor="onMovement" className="text-xs">
+                      On Movement
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Target Times Table */}
+              <div className="space-y-2">
+                <label className="text-xs font-medium">Target Times</label>
+                <div className="bg-muted/20 rounded-md overflow-hidden">
+                  <div className="grid grid-cols-2 gap-px bg-border">
+                    {/* Header */}
+                    <div className="bg-background px-2 py-1.5 text-xs font-medium text-center">Distance</div>
+                    <div className="bg-background px-2 py-1.5 text-xs font-medium text-center">Time</div>
+                    
+                    {/* Data rows */}
+                    {calculateTargetTimes().map(({ distance, time }) => (
+                      <>
+                        <div key={`${distance}-label`} className="bg-background px-2 py-1.5 text-xs text-center">{distance}</div>
+                        <div key={`${distance}-time`} className="bg-background px-2 py-1.5 text-xs text-center font-mono">{time}s</div>
+                      </>
+                    ))}
+                  </div>
                 </div>
               </div>
 
               <div className="text-xs text-muted-foreground">
-                Calculator provides estimated target times based on track type and timing method.
+                Times are estimates based on selected track type and timing method.
               </div>
             </div>
           )}
