@@ -65,6 +65,10 @@ function PracticePage() {
   const [slideDirection, setSlideDirection] = useState<'next' | 'prev'>('next');
   const [isSlideIn, setIsSlideIn] = useState(false);
   
+  // Touch/swipe states
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchStartY, setTouchStartY] = useState<number | null>(null);
+  
   // State for session data
   const [activeSessionData, setActiveSessionData] = useState<any>(null);
   
@@ -362,6 +366,51 @@ function PracticePage() {
     }, 150);
   };
 
+  // Touch event handlers for swipe navigation
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.touches[0].clientX);
+    setTouchStartY(e.touches[0].clientY);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    // Prevent default scrolling behavior during swipe
+    if (touchStartX !== null && touchStartY !== null) {
+      const currentX = e.touches[0].clientX;
+      const currentY = e.touches[0].clientY;
+      const deltaX = Math.abs(currentX - touchStartX);
+      const deltaY = Math.abs(currentY - touchStartY);
+      
+      // If horizontal swipe is more significant than vertical, prevent scroll
+      if (deltaX > deltaY && deltaX > 30) {
+        e.preventDefault();
+      }
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX === null || touchStartY === null) return;
+    
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+    const deltaX = touchEndX - touchStartX;
+    const deltaY = touchEndY - touchStartY;
+    
+    // Check if it's a horizontal swipe (more horizontal than vertical movement)
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+      if (deltaX > 0) {
+        // Swipe right - go to previous day
+        handleDateNavigation('prev');
+      } else {
+        // Swipe left - go to next day
+        handleDateNavigation('next');
+      }
+    }
+    
+    // Reset touch states
+    setTouchStartX(null);
+    setTouchStartY(null);
+  };
+
   // Effect to handle the transition completion
   useEffect(() => {
     if (isTransitioning) {
@@ -448,17 +497,18 @@ function PracticePage() {
       {!hasMeetsToday && (
         <>
           {/* Daily Session Content */}
-          <div className={`space-y-4 transition-transform duration-300 ${
-            fadeTransition 
-              ? 'transform translate-x-0' 
-              : isSlideIn 
-                ? slideDirection === 'next' 
+          <div 
+            className={`space-y-4 transition-transform duration-300 ${
+              fadeTransition 
+                ? 'transform translate-x-0' 
+                : slideDirection === 'next' 
                   ? 'transform -translate-x-full' 
                   : 'transform translate-x-full'
-                : slideDirection === 'next' 
-                  ? 'transform translate-x-full' 
-                  : 'transform -translate-x-full'
-          }`}>
+            }`}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
             <div className="bg-muted/40 p-3" style={{ borderRadius: '6px' }}>
               {selectedProgram && assignedPrograms && assignedPrograms.length > 0 ? (
                 <div className="space-y-4">
