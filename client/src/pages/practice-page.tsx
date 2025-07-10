@@ -218,7 +218,7 @@ function PracticePage() {
   const [currentTrackType, setCurrentTrackType] = useState<"indoor" | "outdoor">("outdoor");
   const [useOnMovement, setUseOnMovement] = useState(false);
   
-  // Target times calculator with exact format
+  // Target times calculator with comprehensive format
   const calculateTargetTimes = () => {
     // Base 100m time - this would come from user input or athlete profile
     const base100mTime = 11.80;
@@ -233,25 +233,35 @@ function PracticePage() {
     
     const adjusted100m = base100mTime * trackAdjustment * timingAdjustment;
     
-    // Calculate target times based on percentages from 100m time
-    const distances = [
-      { distance: "60m", percentage: 82 },
-      { distance: "100m", percentage: 100 },
-      { distance: "150m", percentage: 152 },
-      { distance: "200m", percentage: 207 },
-      { distance: "300m", percentage: 325 },
-      { distance: "400m", percentage: 455 }
-    ];
+    // Distances and their corresponding percentage multipliers
+    const distances = ["50m", "60m", "80m", "100m", "120m", "150m", "200m", "250m", "300m"];
+    const percentages = [60, 65, 70, 75, 80, 85, 90, 95, 100];
     
-    return distances.map(({ distance, percentage }) => {
-      const targetTime = (adjusted100m * (percentage / 100)).toFixed(2);
-      
-      return {
-        distance,
-        percentage: `(${percentage}%)`,
-        targetTime
-      };
-    });
+    // Distance to percentage ratio mapping (based on sprint physics)
+    const distanceRatios = {
+      "50m": 0.50,
+      "60m": 0.60,
+      "80m": 0.80,
+      "100m": 1.00,
+      "120m": 1.20,
+      "150m": 1.50,
+      "200m": 2.07,
+      "250m": 2.60,
+      "300m": 3.25
+    };
+    
+    return {
+      distances,
+      percentages,
+      getTime: (distance: string, percentage: number) => {
+        const ratio = distanceRatios[distance as keyof typeof distanceRatios];
+        if (!ratio) return "-";
+        
+        const baseTimeForDistance = adjusted100m * ratio;
+        const adjustedTime = baseTimeForDistance * (percentage / 100);
+        return adjustedTime.toFixed(2);
+      }
+    };
   };
   
 
@@ -515,20 +525,35 @@ function PracticePage() {
               <div className="space-y-2">
                 <label className="text-xs font-medium">Target Times</label>
                 <div className="bg-muted/20 rounded-md overflow-hidden">
-                  <div className="grid grid-cols-3 gap-px bg-border text-xs">
-                    {/* Header */}
-                    <div className="bg-background px-2 py-1.5 font-medium text-center">Distance</div>
-                    <div className="bg-background px-2 py-1.5 font-medium text-center">%</div>
-                    <div className="bg-background px-2 py-1.5 font-medium text-center">Time</div>
-                    
-                    {/* Data rows */}
-                    {calculateTargetTimes().map(({ distance, percentage, targetTime }) => (
-                      <>
-                        <div key={`${distance}-distance`} className="bg-background px-2 py-1.5 text-center font-medium">{distance}</div>
-                        <div key={`${distance}-percentage`} className="bg-background px-2 py-1.5 text-center text-muted-foreground">{percentage}</div>
-                        <div key={`${distance}-time`} className="bg-background px-2 py-1.5 text-center font-mono">{targetTime}s</div>
-                      </>
-                    ))}
+                  <div className="overflow-x-auto">
+                    {(() => {
+                      const data = calculateTargetTimes();
+                      return (
+                        <div className="grid gap-px bg-border text-xs min-w-fit" style={{ gridTemplateColumns: `80px repeat(${data.percentages.length}, 60px)` }}>
+                          {/* Header row */}
+                          <div className="bg-background px-2 py-1.5 font-medium text-center">Distance</div>
+                          {data.percentages.map((percentage) => (
+                            <div key={`header-${percentage}`} className="bg-background px-1 py-1.5 font-medium text-center">
+                              {percentage}%
+                            </div>
+                          ))}
+                          
+                          {/* Data rows */}
+                          {data.distances.map((distance) => (
+                            <>
+                              <div key={`${distance}-label`} className="bg-background px-2 py-1.5 font-medium text-center">
+                                {distance}
+                              </div>
+                              {data.percentages.map((percentage) => (
+                                <div key={`${distance}-${percentage}`} className="bg-background px-1 py-1.5 text-center font-mono text-[10px]">
+                                  {data.getTime(distance, percentage)}
+                                </div>
+                              ))}
+                            </>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
