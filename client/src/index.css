@@ -39,16 +39,6 @@ html, body, #root, main, div, section, article {
 
 /* Removed chat slide animations */
 
-/* Hide scrollbars for horizontal scrolling */
-.overflow-x-auto::-webkit-scrollbar {
-  display: none;
-}
-
-.overflow-x-auto {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
-}
-
 /* Custom card shadow with strong visibility */
 .shadow-md {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1) !important;

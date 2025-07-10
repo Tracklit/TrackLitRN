@@ -24,7 +24,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Mic, Loader2, MapPin, ChevronLeft, ChevronRight, ChevronDown, Calendar, Play, Pause, Camera, Video, Upload, X, Save, CheckCircle, ClipboardList, Calculator, ChevronUp, CalendarRange, Dumbbell, Target, Timer, FolderOpen, Plus, Edit3, Clock } from "lucide-react";
+import { Mic, Loader2, MapPin, ChevronLeft, ChevronRight, ChevronDown, Calendar, Play, Pause, Camera, Video, Upload, X, Save, CheckCircle, ClipboardList, Calculator, ChevronUp, CalendarRange, Dumbbell, Target, Timer } from "lucide-react";
 import { Link } from "wouter";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { WorkoutReactions } from "@/components/workout-reactions";
@@ -38,82 +38,6 @@ import {
 } from "@/components/ui/dialog";
 import { DayPicker } from "react-day-picker";
 import { Textarea } from "@/components/ui/textarea";
-
-// TrackWorkoutCard Component
-interface TrackWorkoutCardProps {
-  card: {
-    id: number;
-    date: string;
-    dateObj: Date;
-    dayOffset: number;
-    isToday: boolean;
-  };
-  isCentered: boolean;
-  onTargetTimes: () => void;
-  onJournal: () => void;
-}
-
-function TrackWorkoutCard({ card, isCentered, onTargetTimes, onJournal }: TrackWorkoutCardProps) {
-  if (!isCentered) {
-    // Fallback display - just show icon
-    return (
-      <Card className="h-48 bg-primary/5 border-primary/25 flex items-center justify-center">
-        <div className="text-center">
-          <Dumbbell className="h-8 w-8 text-primary mx-auto mb-2" />
-          <p className="text-sm text-muted-foreground">{card.date}</p>
-        </div>
-      </Card>
-    );
-  }
-
-  // Full data display for centered card
-  return (
-    <Card className="h-48 bg-gradient-to-br from-blue-800 to-purple-400 text-white p-4 relative overflow-hidden">
-      <div className="absolute top-2 right-2 flex gap-2">
-        <Button
-          size="icon"
-          variant="ghost"
-          className="h-8 w-8 text-white hover:bg-white/20"
-          onClick={onTargetTimes}
-        >
-          <Target className="h-4 w-4" />
-        </Button>
-        <Button
-          size="icon"
-          variant="ghost"
-          className="h-8 w-8 text-white hover:bg-white/20"
-          onClick={onJournal}
-        >
-          <Edit3 className="h-4 w-4" />
-        </Button>
-      </div>
-      
-      <div className="flex flex-col h-full">
-        <div className="flex items-center gap-2 mb-4">
-          <Calendar className="h-5 w-5" />
-          <span className="font-medium">{card.date}</span>
-          {card.isToday && (
-            <Badge variant="secondary" className="bg-white/20 text-white">
-              Today
-            </Badge>
-          )}
-        </div>
-        
-        <div className="flex-1 space-y-3">
-          <div className="bg-white/10 p-3 rounded-md">
-            <h4 className="font-medium mb-1">Track Workout</h4>
-            <p className="text-sm text-white/80">3x60m, 2x100m, 1x200m</p>
-          </div>
-          
-          <div className="bg-white/10 p-3 rounded-md">
-            <h4 className="font-medium mb-1">Strength</h4>
-            <p className="text-sm text-white/80">Upper body focus</p>
-          </div>
-        </div>
-      </div>
-    </Card>
-  );
-}
 
 function PracticePage() {
   const { user } = useAuth();
@@ -132,15 +56,20 @@ function PracticePage() {
   const [selectedProgram, setSelectedProgram] = useState<any>(null);
   const [showAssignedPrograms, setShowAssignedPrograms] = useState<boolean>(false);
   
-  // State for current day navigation - simplified for horizontal cards
+  // State for current day navigation
+  const [currentDay, setCurrentDay] = useState<"yesterday" | "today" | "tomorrow">("today");
   const [currentDayOffset, setCurrentDayOffset] = useState<number>(0); // 0 = today, -1 = yesterday, 1 = tomorrow
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [isTransitioning, setIsTransitioning] = useState(false);
   
-  // Horizontal scroll states
-  const [centeredCardIndex, setCenteredCardIndex] = useState<number>(3); // Today is at index 3
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [showTargetTimesModal, setShowTargetTimesModal] = useState(false);
-  const [showJournalModal, setShowJournalModal] = useState(false);
-  const [showProgramsDropdown, setShowProgramsDropdown] = useState(false);
+  // Touch/swipe states
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchStartY, setTouchStartY] = useState<number | null>(null);
+  const [currentTranslateX, setCurrentTranslateX] = useState<number>(0);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [isSliding, setIsSliding] = useState<boolean>(false);
+  const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('left');
+  const containerRef = useRef<HTMLDivElement>(null);
   
   // State for session data
   const [activeSessionData, setActiveSessionData] = useState<any>(null);
@@ -404,166 +333,162 @@ function PracticePage() {
         setActiveSessionData(restDaySession);
       }
       
+      setIsTransitioning(false);
     } catch (error) {
       console.error('Error processing session data:', error);
+      setIsTransitioning(false);
     }
   }, [programSessions, currentDayOffset]);
 
-  // Generate card data for horizontal scroll (7 days centered on today)
-  // Order: later dates down, older dates up (reverse chronological)
-  const generateCardData = () => {
-    const cards = [];
-    const today = new Date();
+  // Helper function to handle date navigation
+  const handleDateNavigation = (direction: 'prev' | 'next') => {
+    if (isTransitioning) return; // Prevent multiple rapid clicks
     
-    // Generate 7 cards: 3 days after, today, 3 days before
-    // This creates order: +3, +2, +1, 0, -1, -2, -3 (newer to older)
-    for (let i = 3; i >= -3; i--) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + i);
-      
-      const dateStr = date.toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric' 
-      });
-      
-      cards.push({
-        id: i,
-        date: dateStr,
-        dateObj: date,
-        dayOffset: i,
-        isToday: i === 0
-      });
-    }
+    setIsTransitioning(true);
     
-    return cards;
+    const containerWidth = containerRef.current?.offsetWidth || 0;
+    
+    // Phase 1: Position new content off-screen on the opposite side of where old content exits
+    // When swiping right (prev): old content exits right, new content enters from left
+    // When swiping left (next): old content exits left, new content enters from right
+    const newContentStartPos = direction === 'prev' ? -containerWidth : containerWidth;
+    setCurrentTranslateX(newContentStartPos);
+    
+    // Phase 2: Update data while content is off-screen
+    setCurrentDayOffset(prev => direction === 'prev' ? prev - 1 : prev + 1);
+    
+    // Update selected date
+    const newDate = new Date();
+    newDate.setDate(newDate.getDate() + (direction === 'prev' ? currentDayOffset - 1 : currentDayOffset + 1));
+    setSelectedDate(newDate);
+    
+    // Phase 3: Slide new content in after a brief delay
+    setTimeout(() => {
+      setCurrentTranslateX(0);
+      setIsSliding(false);
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 300);
+    }, 50);
   };
 
-  const cardData = generateCardData();
+  // Touch event handlers for swipe navigation
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.touches[0].clientX);
+    setTouchStartY(e.touches[0].clientY);
+    setIsDragging(true);
+  };
 
-  // Handle scroll and snap to center
-  const handleScroll = () => {
-    if (!scrollContainerRef.current) return;
-    
-    const container = scrollContainerRef.current;
-    const containerWidth = container.offsetWidth;
-    const cardWidth = 320; // Fixed card width including gap
-    const scrollLeft = container.scrollLeft;
-    
-    // Calculate which card should be centered
-    const centerPosition = scrollLeft + containerWidth / 2;
-    const cardIndex = Math.round(centerPosition / cardWidth);
-    const clampedIndex = Math.max(0, Math.min(cardIndex, cardData.length - 1));
-    
-    if (clampedIndex !== centeredCardIndex) {
-      setCenteredCardIndex(clampedIndex);
-      // Trigger haptic feedback
-      if (navigator.vibrate) {
-        navigator.vibrate(50);
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartX !== null && touchStartY !== null && isDragging) {
+      const currentX = e.touches[0].clientX;
+      const currentY = e.touches[0].clientY;
+      const deltaX = currentX - touchStartX;
+      const deltaY = currentY - touchStartY;
+      
+      // Check if it's a horizontal swipe
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        e.preventDefault();
+        setCurrentTranslateX(deltaX);
       }
     }
   };
 
-  // Snap to center when scrolling stops
-  const handleScrollEnd = () => {
-    if (!scrollContainerRef.current) return;
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX === null || touchStartY === null || !isDragging) return;
     
-    const container = scrollContainerRef.current;
-    const containerWidth = container.offsetWidth;
-    const cardWidth = 320;
-    const targetScrollLeft = centeredCardIndex * cardWidth - (containerWidth - cardWidth) / 2;
+    const touchEndX = e.changedTouches[0].clientX;
+    const deltaX = touchEndX - touchStartX;
+    const containerWidth = containerRef.current?.offsetWidth || 0;
     
-    container.scrollTo({
-      left: targetScrollLeft,
-      behavior: 'smooth'
-    });
-  };
-
-  // Center the view on "today" when component mounts
-  useEffect(() => {
-    if (scrollContainerRef.current) {
-      const container = scrollContainerRef.current;
-      const containerWidth = container.offsetWidth;
-      const cardWidth = 320;
-      const todayIndex = 3; // Today is at index 3
-      const targetScrollLeft = todayIndex * cardWidth - (containerWidth - cardWidth) / 2;
+    // Calculate 30% threshold
+    const threshold = containerWidth * 0.3;
+    
+    if (Math.abs(deltaX) > threshold) {
+      // Set slide direction and trigger slide out
+      setSlideDirection(deltaX > 0 ? 'right' : 'left');
+      setIsSliding(true);
       
+      // Complete the slide out animation
+      setCurrentTranslateX(deltaX > 0 ? containerWidth : -containerWidth);
+      
+      // Navigate after slide out completes
       setTimeout(() => {
-        container.scrollTo({
-          left: targetScrollLeft,
-          behavior: 'smooth'
-        });
-      }, 100); // Small delay to ensure container is rendered
+        if (deltaX > 0) {
+          // Swipe right - go to previous day
+          handleDateNavigation('prev');
+        } else {
+          // Swipe left - go to next day
+          handleDateNavigation('next');
+        }
+      }, 300);
+    } else {
+      // Snap back to original position
+      setCurrentTranslateX(0);
     }
-  }, []);
-
-  // Handle date navigation for the old card system (keeping for compatibility)
-  const handleDateNavigation = (direction: 'prev' | 'next') => {
-    const newOffset = direction === 'prev' ? currentDayOffset - 1 : currentDayOffset + 1;
-    setCurrentDayOffset(newOffset);
+    
+    // Reset touch states
+    setTouchStartX(null);
+    setTouchStartY(null);
+    setIsDragging(false);
   };
 
-
+  // Effect to handle the transition completion
+  useEffect(() => {
+    if (isTransitioning) {
+      // After data has been processed, complete the transition
+      const timer = setTimeout(() => {
+        setIsTransitioning(false);
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [activeSessionData, currentDayMeets]);
 
   return (
     <PageContainer className="pb-24">
-      {/* Your Programs Dropdown - Top Right */}
-      <div className="flex justify-end mb-4">
-        <div className="relative">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowProgramsDropdown(!showProgramsDropdown)}
-            className="flex items-center gap-2"
-          >
-            <FolderOpen className="h-4 w-4" />
-            Your Programs
-            <ChevronDown className="h-4 w-4" />
-          </Button>
-          {showProgramsDropdown && (
-            <div className="absolute right-0 top-full mt-2 w-64 bg-background border rounded-md shadow-lg z-50">
-              <div className="p-2">
-                {assignedPrograms?.map((assignment) => (
-                  <div key={assignment.id} className="p-2 hover:bg-muted rounded text-sm">
-                    {assignment.program?.title}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Horizontal Scrolling Cards */}
-      <div className="mb-6">
-        <div 
-          ref={scrollContainerRef}
-          className="flex overflow-x-auto gap-4 px-4"
-          style={{ 
-            scrollSnapType: 'x mandatory',
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none'
-          }}
-          onScroll={handleScroll}
-          onScrollEnd={handleScrollEnd}
-        >
-          {cardData.map((card, index) => (
-            <div
-              key={card.id}
-              className={`flex-shrink-0 w-80 ${index === centeredCardIndex ? 'opacity-100' : 'opacity-60'}`}
-              style={{ scrollSnapAlign: 'center' }}
-            >
-              <TrackWorkoutCard
-                card={card}
-                isCentered={index === centeredCardIndex}
-                onTargetTimes={() => setShowTargetTimesModal(true)}
-                onJournal={() => setShowJournalModal(true)}
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* Show meets if any exist for the current day */}
+      {hasMeetsToday && (
+        <>
+          {/* Date navigation - Always visible for meet days */}
+          <div className="flex justify-end mb-6">
+            <div className="flex items-center justify-between max-w-xs text-center">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleDateNavigation('prev')}
+                disabled={isTransitioning}
+                className="h-8 w-8"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              
+              <div className="flex items-center gap-2 mx-3">
+                <span className="text-sm font-medium min-w-[80px]">
+                  {(() => {
+                    const date = new Date();
+                    date.setDate(date.getDate() + currentDayOffset);
+                    return date.toLocaleDateString('en-US', { 
+                      month: 'short', 
+                      day: 'numeric'
+                    });
+                  })()}
+                </span>
+              </div>
+              
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleDateNavigation('next')}
+                disabled={isTransitioning}
+                className="h-8 w-8"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
+
       {hasMeetsToday && (
         <div className="mb-6">
           <h3 className="text-lg font-medium mb-3">Today's Meets</h3>
@@ -594,7 +519,16 @@ function PracticePage() {
       {!hasMeetsToday && (
         <>
           {/* Daily Session Content */}
-          <div className="space-y-4">
+          <div 
+            ref={containerRef}
+            className={`space-y-4 ${!isDragging || isSliding ? 'transition-transform duration-300 ease-out' : ''}`}
+            style={{
+              transform: `translateX(${currentTranslateX}px)`,
+            }}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
             <div className="bg-muted/40 p-3" style={{ borderRadius: '6px' }}>
               {selectedProgram && assignedPrograms && assignedPrograms.length > 0 ? (
                 <div className="space-y-4">
@@ -883,6 +817,7 @@ function PracticePage() {
                   variant="ghost"
                   size="icon"
                   onClick={() => handleDateNavigation('prev')}
+                  disabled={isTransitioning}
                   className="h-8 w-8"
                 >
                   <ChevronLeft className="h-4 w-4" />
@@ -905,6 +840,7 @@ function PracticePage() {
                   variant="ghost"
                   size="icon"
                   onClick={() => handleDateNavigation('next')}
+                  disabled={isTransitioning}
                   className="h-8 w-8"
                 >
                   <ChevronRight className="h-4 w-4" />
@@ -1357,144 +1293,6 @@ function PracticePage() {
         </DialogContent>
       </Dialog>
       
-      {/* Target Times Modal */}
-      <Dialog open={showTargetTimesModal} onOpenChange={setShowTargetTimesModal}>
-        <DialogContent className="sm:max-w-4xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-primary" />
-              Target Times Calculator
-            </DialogTitle>
-            <DialogDescription>
-              Calculate your training target times based on your personal bests.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Checkbox 
-                  id="first-foot-timing" 
-                  checked={useFirstFootTiming}
-                  onCheckedChange={(checked) => setUseFirstFootTiming(checked === true)}
-                />
-                <label htmlFor="first-foot-timing" className="text-sm">
-                  First foot contact timing (-0.55s)
-                </label>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Checkbox 
-                  id="track-adjust" 
-                  checked={adjustForTrackType}
-                  onCheckedChange={(checked) => setAdjustForTrackType(checked === true)}
-                />
-                <label htmlFor="track-adjust" className="text-sm">
-                  Track type adjustment
-                </label>
-              </div>
-            </div>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm border border-border rounded-md">
-                <thead>
-                  <tr className="bg-muted">
-                    <th className="text-left p-2">Distance</th>
-                    <th className="text-right p-2">80%</th>
-                    <th className="text-right p-2">90%</th>
-                    <th className="text-right p-2">95%</th>
-                    <th className="text-right p-2">98%</th>
-                    <th className="text-right p-2">100%</th>
-                    <th className="text-right p-2">Goal</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    { distance: "50m", time: 6.20 },
-                    { distance: "60m", time: 7.40 },
-                    { distance: "100m", time: 12.40 },
-                    { distance: "200m", time: 26.0 },
-                    { distance: "400m", time: 52.0 }
-                  ].map((row, index) => (
-                    <tr key={row.distance} className={index % 2 === 0 ? "bg-muted/30" : ""}>
-                      <td className="p-2 font-medium">{row.distance}</td>
-                      <td className="p-2 text-right">{(row.time / 0.8).toFixed(2)}s</td>
-                      <td className="p-2 text-right">{(row.time / 0.9).toFixed(2)}s</td>
-                      <td className="p-2 text-right">{(row.time / 0.95).toFixed(2)}s</td>
-                      <td className="p-2 text-right">{(row.time / 0.98).toFixed(2)}s</td>
-                      <td className="p-2 text-right">{row.time.toFixed(2)}s</td>
-                      <td className="p-2 text-right font-bold">{row.time.toFixed(2)}s</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button onClick={() => setShowTargetTimesModal(false)}>
-              Close
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Journal Modal */}
-      <Dialog open={showJournalModal} onOpenChange={setShowJournalModal}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Edit3 className="h-5 w-5 text-primary" />
-              Training Journal
-            </DialogTitle>
-            <DialogDescription>
-              Record your training notes and mood for today.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">How did you feel today?</label>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-sm">Poor</span>
-                <Slider
-                  value={[moodValue]}
-                  min={1}
-                  max={10}
-                  step={0.5}
-                  onValueChange={(value) => setMoodValue(value[0])}
-                  className="flex-1"
-                />
-                <span className="text-sm">Excellent</span>
-                <span className="text-sm font-bold">{moodValue}/10</span>
-              </div>
-            </div>
-            
-            <div>
-              <label className="text-sm font-medium mb-2 block">Notes</label>
-              <Textarea
-                placeholder="How was your training today? Any observations or goals for next time?"
-                value={diaryNotes}
-                onChange={(e) => setDiaryNotes(e.target.value)}
-                className="min-h-[100px]"
-              />
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowJournalModal(false)}>
-              Cancel
-            </Button>
-            <Button onClick={() => {
-              setShowJournalModal(false);
-              setSessionCompleteOpen(true);
-            }}>
-              Save Entry
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* Session Complete Modal */}
       <Dialog open={sessionCompleteOpen} onOpenChange={setSessionCompleteOpen}>
         <DialogContent className="sm:max-w-md">
