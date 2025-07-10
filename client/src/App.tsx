@@ -9,13 +9,11 @@ import { Header } from "@/components/layout/header";
 import { BottomNavigation } from "@/components/layout/bottom-navigation";
 import { KeyboardProvider } from "@/contexts/keyboard-context";
 // Import tool components
-import { 
-  StopwatchPage,
-  StartGunPage,
-  JournalPage,
-  PaceCalculatorPage,
-  PhotoFinishPage
-} from "@/pages/routes";
+import { Component as StopwatchPage } from "@/pages/tools/stopwatch-page";
+import { Component as StartGunPage } from "@/pages/tools/start-gun-page";
+import { Component as JournalPage } from "@/pages/tools/journal-page";
+import { Component as PaceCalculatorPage } from "@/pages/tools/pace-calculator-page";
+import { Component as PhotoFinishPage } from "@/pages/tools/photo-finish-page";
 import PhotoFinishAnalysisPage from "@/pages/tools/photo-finish-analysis-page";
 
 import { OnboardingFlow } from "@/components/onboarding-flow";
