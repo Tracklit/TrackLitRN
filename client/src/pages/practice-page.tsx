@@ -499,15 +499,30 @@ function PracticePage() {
       {/* Fixed Target Times Header */}
       <div className="fixed top-16 left-0 right-0 z-50 bg-black border-b shadow-sm">
         <div className="max-w-md mx-auto">
-          <div 
-            className="flex items-center justify-between px-4 py-2 cursor-pointer"
-            onClick={() => setTargetTimesExpanded(!targetTimesExpanded)}
-          >
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between px-4 py-2">
+            <div 
+              className="flex items-center gap-2 cursor-pointer"
+              onClick={() => setTargetTimesExpanded(!targetTimesExpanded)}
+            >
               <Calculator className="h-4 w-4 text-white" />
               <h3 className="text-sm font-medium text-white">Target Times</h3>
             </div>
-            <ChevronDown className={`h-4 w-4 transition-transform text-white ${targetTimesExpanded ? 'rotate-180' : ''}`} />
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowAssignedPrograms(true);
+                }}
+                className="flex items-center gap-1 px-2 py-1 bg-white/10 hover:bg-white/20 rounded text-xs text-white"
+              >
+                <ClipboardList className="h-3 w-3" />
+                Your Programs
+              </button>
+              <ChevronDown 
+                className={`h-4 w-4 transition-transform text-white cursor-pointer ${targetTimesExpanded ? 'rotate-180' : ''}`}
+                onClick={() => setTargetTimesExpanded(!targetTimesExpanded)}
+              />
+            </div>
           </div>
           
           {/* Collapsible Content */}
@@ -523,14 +538,6 @@ function PracticePage() {
                     className="h-7 text-xs"
                   >
                     Outdoor
-                  </Button>
-                  <Button
-                    variant={currentTrackType === "indoor" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setCurrentTrackType("indoor")}
-                    className="h-7 text-xs"
-                  >
-                    Indoor
                   </Button>
                 </div>
               </div>
@@ -696,49 +703,7 @@ function PracticePage() {
           </div>
         )}
 
-        {/* Your Programs section */}
-        <div className="space-y-4 mt-6">
-          <Card className="bg-primary/5" style={{ borderRadius: '6px' }}>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <ClipboardList className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-medium">Your Programs</h3>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowAssignedPrograms(true)}
-                  className="h-8"
-                >
-                  View All
-                </Button>
-              </div>
-              
-              {isLoadingPrograms ? (
-                <div className="mt-3">
-                  <Skeleton className="h-4 w-32 mb-2" />
-                  <Skeleton className="h-3 w-48" />
-                </div>
-              ) : assignedPrograms && assignedPrograms.length > 0 ? (
-                <div className="mt-3">
-                  <p className="text-sm font-medium text-primary">
-                    {selectedProgram?.program?.name || assignedPrograms[0]?.program?.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {assignedPrograms.length} program{assignedPrograms.length !== 1 ? 's' : ''} assigned
-                  </p>
-                </div>
-              ) : (
-                <div className="mt-3">
-                  <p className="text-sm text-muted-foreground">
-                    No programs assigned yet. Your coach will assign training programs to your account.
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+
       </div>
 
 
