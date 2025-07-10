@@ -108,14 +108,15 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
-- July 9, 2025: Enhanced date navigation with smooth fade transitions and actual date display ✅
+- July 9, 2025: Enhanced date navigation with smooth fade transitions and cleaner interface ✅
   - Fixed critical bug where page would break when changing dates to days with meets instead of training sessions
   - Moved date navigation to always be visible (under workout card for workouts, top for meets)
   - Enhanced session data processing to handle both meet days and workout days correctly
   - Added comprehensive error handling for date calculations and meet detection
-  - Replaced skeleton loading with slower 500ms fade transitions to smoothly cover non-loaded content
+  - Replaced skeleton loading with fast 300ms fade transitions that wait for data to load before showing
   - Updated date picker to display actual dates (e.g., "Jul 9", "Jul 10") instead of relative terms
-  - Implemented smooth fade out/in transitions during date changes with 200ms fade out, 400ms fade in
+  - Removed calendar icons from date pickers for cleaner interface
+  - Implemented proper fade timing: 150ms fade out, wait for data load, then 300ms fade in
   - Removed all skeleton components in favor of cleaner opacity-based transitions
   - Date navigation now works seamlessly for all date combinations with smooth visual transitions
 - July 9, 2025: Fixed gym data fetching and display issues ✅

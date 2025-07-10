@@ -336,6 +336,7 @@ function PracticePage() {
   const handleDateNavigation = (direction: 'prev' | 'next') => {
     if (isTransitioning) return; // Prevent multiple rapid clicks
     
+    setIsTransitioning(true);
     setFadeTransition(false);
     
     setTimeout(() => {
@@ -346,10 +347,14 @@ function PracticePage() {
       newDate.setDate(newDate.getDate() + (direction === 'prev' ? currentDayOffset - 1 : currentDayOffset + 1));
       setSelectedDate(newDate);
       
+      // Wait for data to load, then fade back in
       setTimeout(() => {
         setFadeTransition(true);
-      }, 400);
-    }, 200);
+        setTimeout(() => {
+          setIsTransitioning(false);
+        }, 150); // Allow fade-in to start before allowing next transition
+      }, 100);
+    }, 150);
   };
 
   // Effect to handle the transition completion
@@ -382,7 +387,6 @@ function PracticePage() {
               </Button>
               
               <div className="flex items-center gap-2 mx-3">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium min-w-[80px]">
                   {(() => {
                     const date = new Date();
@@ -439,7 +443,7 @@ function PracticePage() {
       {!hasMeetsToday && (
         <>
           {/* Daily Session Content */}
-          <div className={`space-y-4 transition-opacity duration-500 ${fadeTransition ? 'opacity-100' : 'opacity-0'}`}>
+          <div className={`space-y-4 transition-opacity duration-300 ${fadeTransition ? 'opacity-100' : 'opacity-0'}`}>
             <div className="bg-muted/40 p-3" style={{ borderRadius: '6px' }}>
               {selectedProgram && assignedPrograms && assignedPrograms.length > 0 ? (
                 <div className="space-y-4">
@@ -735,7 +739,6 @@ function PracticePage() {
                 </Button>
                 
                 <div className="flex items-center gap-2 mx-3">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-medium min-w-[80px]">
                     {(() => {
                       const date = new Date();
