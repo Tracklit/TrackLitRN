@@ -1,0 +1,189 @@
+Here’s a working React Native swipeable card carousel using gesture handling and animation, where users swipe cards left or right and the next card appears in a loop.
+
+We’ll use:
+	•	react-native-reanimated
+	•	react-native-gesture-handler
+
+⸻
+
+🧱 Dependencies
+
+Make sure you have these installed:
+
+npm install react-native-reanimated react-native-gesture-handler
+
+For Expo:
+
+npx expo install react-native-reanimated react-native-gesture-handler
+
+
+⸻
+
+🧩 Swipe Carousel Logic
+	•	Cards are stacked.
+	•	Swipe left or right removes the top card and shows the next.
+	•	The deck loops if needed.
+
+⸻
+
+💻 Full Code (Functional Example)
+
+// SwipeCarousel.js
+
+import React, { useState } from 'react';
+import { View, StyleSheet, Dimensions } from 'react-native';
+import Animated, {
+  useAnimatedGestureHandler,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  runOnJS,
+} from 'react-native-reanimated';
+import { PanGestureHandler } from 'react-native-gesture-handler';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
+
+const SwipeCarousel = ({ cards }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const translateX = useSharedValue(0);
+  const rotateZ = useSharedValue(0);
+
+  const nextCard = () => {
+    setCurrentIndex((prev) => (prev + 1) % cards.length);
+    translateX.value = 0;
+    rotateZ.value = 0;
+  };
+
+  const gestureHandler = useAnimatedGestureHandler({
+    onActive: (event) => {
+      translateX.value = event.translationX;
+      rotateZ.value = event.translationX / 20;
+    },
+    onEnd: () => {
+      if (Math.abs(translateX.value) > SWIPE_THRESHOLD) {
+        translateX.value = withSpring(translateX.value > 0 ? SCREEN_WIDTH : -SCREEN_WIDTH, {}, () => {
+          runOnJS(nextCard)();
+        });
+      } else {
+        translateX.value = withSpring(0);
+        rotateZ.value = withSpring(0);
+      }
+    },
+  });
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: translateX.value },
+      { rotateZ: `${rotateZ.value}deg` },
+    ],
+  }));
+
+  return (
+    <View style={styles.container}>
+      {cards
+        .slice(currentIndex, currentIndex + 2)
+        .reverse()
+        .map((card, i) => {
+          const isTopCard = i === 0;
+          return isTopCard ? (
+            <PanGestureHandler key={card.id} onGestureEvent={gestureHandler}>
+              <Animated.View style={[styles.card, animatedStyle]}>
+                {card.component}
+              </Animated.View>
+            </PanGestureHandler>
+          ) : (
+            <View key={card.id} style={[styles.card, styles.nextCard]}>
+              {card.component}
+            </View>
+          );
+        })}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  card: {
+    width: SCREEN_WIDTH * 0.9,
+    height: 400,
+    position: 'absolute',
+    borderRadius: 20,
+    backgroundColor: '#fff',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  nextCard: {
+    top: 10,
+    backgroundColor: '#f0f0f0',
+  },
+});
+
+export default SwipeCarousel;
+
+
+⸻
+
+🧪 How to Use It
+
+// App.js
+
+import React from 'react';
+import { Text, View, StyleSheet } from 'react-native';
+import SwipeCarousel from './SwipeCarousel';
+
+const CARDS = [
+  { id: '1', component: <Card color="#FF6B6B" text="Card 1" /> },
+  { id: '2', component: <Card color="#4ECDC4" text="Card 2" /> },
+  { id: '3', component: <Card color="#1A535C" text="Card 3" /> },
+];
+
+const Card = ({ color, text }) => (
+  <View style={[styles.card, { backgroundColor: color }]}>
+    <Text style={styles.text}>{text}</Text>
+  </View>
+);
+
+export default function App() {
+  return <SwipeCarousel cards={CARDS} />;
+}
+
+const styles = StyleSheet.create({
+  card: {
+    flex: 1,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  text: {
+    fontSize: 28,
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+});
+
+
+⸻
+
+✅ Features
+	•	Looping carousel
+	•	Smooth swipe animations
+	•	Easily customizable
+
+⸻
+
+If you’d like to add:
+	•	Undo swipe
+	•	Swipe direction callbacks
+	•	Deck reset
+	•	Swipe up/down support
+
+Let me know and I’ll extend the logic.
