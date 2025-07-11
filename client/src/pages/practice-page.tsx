@@ -476,8 +476,9 @@ function PracticePage() {
   
   // Journal navigation
   const handleOpenJournal = (date: string) => {
-    // Navigate to journal page with date parameter
-    window.location.href = `/journal-entry?date=${encodeURIComponent(date)}`;
+    // Navigate to journal page with date parameter using wouter for better performance
+    window.history.pushState({}, '', `/journal-entry?date=${encodeURIComponent(date)}`);
+    window.dispatchEvent(new PopStateEvent('popstate'));
   };
   
   // Calculator states

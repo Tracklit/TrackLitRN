@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { PageContainer } from "@/components/page-container";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Loader2, Save } from "lucide-react";
+import { ArrowLeft, Loader2, Save, Mic, MicOff, Volume2 } from "lucide-react";
 import { Link } from "wouter";
 
 export default function JournalEntryPage() {
@@ -19,15 +19,133 @@ export default function JournalEntryPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // Get date from URL parameters
-  const urlParams = new URLSearchParams(window.location.search);
-  const dateParam = urlParams.get('date') || new Date().toLocaleDateString();
+  // Get date from URL parameters (optimized)
+  const dateParam = useRef(new URLSearchParams(window.location.search).get('date') || new Date().toLocaleDateString()).current;
+  
+  // Fetch athlete profile for subscription check
+  const { data: athleteProfile } = useQuery({
+    queryKey: ["/api/athlete-profile"],
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000, // 5 minutes cache
+  });
   
   // Form state
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
   const [mood, setMood] = useState([5]);
   const [isPublic, setIsPublic] = useState(false);
+  
+  // Voice recording state
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  
+  // Check if user has Pro/Star subscription
+  const hasVoiceAccess = athleteProfile?.subscription === 'pro' || athleteProfile?.subscription === 'star';
+  
+  // Voice recording functions
+  const startRecording = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      
+      const chunks: Blob[] = [];
+      mediaRecorder.ondataavailable = (event) => {
+        chunks.push(event.data);
+      };
+      
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(chunks, { type: 'audio/wav' });
+        setAudioBlob(audioBlob);
+        stream.getTracks().forEach(track => track.stop());
+      };
+      
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (error) {
+      toast({
+        title: "Recording Failed",
+        description: "Unable to access microphone. Please check permissions.",
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
+  
+  const stopRecording = useCallback(() => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  }, [isRecording]);
+  
+  const transcribeAudio = useCallback(async () => {
+    if (!audioBlob) return;
+    
+    setIsTranscribing(true);
+    try {
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'recording.wav');
+      
+      const response = await fetch('/api/transcribe', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error('Transcription failed');
+      }
+      
+      const { text } = await response.json();
+      setNotes(prev => prev + (prev ? '\n\n' : '') + text);
+      
+      toast({
+        title: "Voice Transcribed",
+        description: "Your voice note has been converted to text.",
+      });
+    } catch (error) {
+      toast({
+        title: "Transcription Failed",
+        description: "Unable to transcribe voice recording. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsTranscribing(false);
+    }
+  }, [audioBlob, toast]);
+  
+  const playAudio = useCallback(() => {
+    if (audioBlob) {
+      const audioUrl = URL.createObjectURL(audioBlob);
+      audioRef.current = new Audio(audioUrl);
+      audioRef.current.play();
+      setIsPlaying(true);
+      
+      audioRef.current.onended = () => {
+        setIsPlaying(false);
+        URL.revokeObjectURL(audioUrl);
+      };
+    }
+  }, [audioBlob]);
+  
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+      }
+    };
+  }, []);
   
   // Create mutation for adding journal entry
   const createMutation = useMutation({
@@ -104,6 +222,20 @@ export default function JournalEntryPage() {
     return 'text-green-600';
   };
 
+  // Show loading state while fetching athlete profile
+  if (!user) {
+    return (
+      <PageContainer>
+        <div className="max-w-2xl mx-auto p-4">
+          <div className="animate-pulse">
+            <div className="h-8 bg-white/10 rounded mb-4"></div>
+            <div className="h-96 bg-white/10 rounded"></div>
+          </div>
+        </div>
+      </PageContainer>
+    );
+  }
+
   return (
     <PageContainer>
       <div className="max-w-2xl mx-auto p-4 space-y-6">
@@ -140,9 +272,63 @@ export default function JournalEntryPage() {
               />
             </div>
 
-            {/* Notes Textarea */}
+            {/* Notes Textarea with Voice Recording */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-white">Notes</label>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-white">Notes</label>
+                {hasVoiceAccess && (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={isRecording ? stopRecording : startRecording}
+                      disabled={isTranscribing}
+                      className="h-8 px-2 text-white hover:bg-white/10"
+                    >
+                      {isRecording ? (
+                        <MicOff className="h-4 w-4 text-red-400" />
+                      ) : (
+                        <Mic className="h-4 w-4" />
+                      )}
+                      <span className="ml-1 text-xs">
+                        {isRecording ? 'Stop' : 'Record'}
+                      </span>
+                    </Button>
+                    
+                    {audioBlob && (
+                      <>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={playAudio}
+                          disabled={isPlaying}
+                          className="h-8 px-2 text-white hover:bg-white/10"
+                        >
+                          <Volume2 className="h-4 w-4" />
+                        </Button>
+                        
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={transcribeAudio}
+                          disabled={isTranscribing}
+                          className="h-8 px-2 text-white hover:bg-white/10"
+                        >
+                          {isTranscribing ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            "Transcribe"
+                          )}
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+              
               <Textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -150,6 +336,13 @@ export default function JournalEntryPage() {
                 className="bg-white/10 border-white/20 text-white placeholder:text-white/60 min-h-[120px]"
                 maxLength={1000}
               />
+              
+              {!hasVoiceAccess && (
+                <div className="flex items-center gap-2 text-xs text-white/60">
+                  <Mic className="h-3 w-3" />
+                  <span>Voice recording available with Pro/Star subscription</span>
+                </div>
+              )}
             </div>
 
             {/* Mood Slider */}
