@@ -8,21 +8,33 @@
       "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "ios": {
+        "bundleIdentifier": "com.tracklit.app"
+      }
     },
     "production": {
       "ios": {
-        "bundleIdentifier": "com.tracklit.app"
+        "bundleIdentifier": "com.tracklit.app",
+        "distribution": "store"
       },
       "android": {
         "buildType": "apk"
+      }
+    },
+    "testflight": {
+      "ios": {
+        "bundleIdentifier": "com.tracklit.app",
+        "distribution": "store"
       }
     }
   },
   "submit": {
     "production": {
       "ios": {
-        "bundleIdentifier": "com.tracklit.app"
+        "bundleIdentifier": "com.tracklit.app",
+        "appleId": "YOUR_APPLE_ID_HERE",
+        "ascAppId": "YOUR_APP_STORE_CONNECT_ID_HERE"
       },
       "android": {
         "packageName": "com.tracklit.app"
