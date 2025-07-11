@@ -214,6 +214,8 @@ function PracticePage() {
   // State for daily workout cards
   const [workoutCards, setWorkoutCards] = useState<any[]>([]);
   const [isLoadingCards, setIsLoadingCards] = useState(false);
+  const [daysToShow, setDaysToShow] = useState(7);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   
   // Calculator states
   const [targetTimesExpanded, setTargetTimesExpanded] = useState(false);
@@ -321,11 +323,11 @@ function PracticePage() {
     if (programSessions && programSessions.length > 0) {
       setIsLoadingCards(true);
       
-      // Create cards for the next 7 days starting from today
+      // Create cards for the specified number of days starting from today
       const today = new Date();
       const cards: any[] = [];
       
-      for (let i = 0; i < 7; i++) {
+      for (let i = 0; i < daysToShow; i++) {
         const date = new Date(today);
         date.setDate(today.getDate() + i);
         
@@ -351,7 +353,7 @@ function PracticePage() {
       setWorkoutCards(cards);
       setIsLoadingCards(false);
     }
-  }, [programSessions]);
+  }, [programSessions, daysToShow]);
 
   // Helper function to find session data for a specific date
   const findSessionForDate = (sessions: any[], targetDate: Date) => {
@@ -366,6 +368,15 @@ function PracticePage() {
     // Find session by calculating day number based on current date
     const targetDayNumber = sessions[0].dayNumber + daysDifference;
     return sessions.find(session => session.dayNumber === targetDayNumber) || null;
+  };
+
+  // Function to load more days
+  const loadMoreDays = () => {
+    setIsLoadingMore(true);
+    setTimeout(() => {
+      setDaysToShow(prev => prev + 7);
+      setIsLoadingMore(false);
+    }, 500);
   };
 
   // Fetch meets to show on workout day
@@ -687,13 +698,38 @@ function PracticePage() {
                   </>
                 ) : workoutCards.length > 0 ? (
                   /* Render workout cards */
-                  workoutCards.map((card) => (
-                    <WorkoutCard 
-                      key={card.id} 
-                      card={card} 
-                      athleteProfile={athleteProfile} 
-                    />
-                  ))
+                  <>
+                    {workoutCards.map((card) => (
+                      <WorkoutCard 
+                        key={card.id} 
+                        card={card} 
+                        athleteProfile={athleteProfile} 
+                      />
+                    ))}
+                    
+                    {/* Load More button for Google Sheet programs */}
+                    {selectedProgram?.program?.importedFromSheet && (
+                      <div className="flex justify-center pt-4">
+                        <Button
+                          onClick={loadMoreDays}
+                          disabled={isLoadingMore}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg flex items-center gap-2"
+                        >
+                          {isLoadingMore ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Loading...
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="h-4 w-4" />
+                              Load More Days
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   /* No workout cards */
                   <div className="p-4 bg-gradient-to-br from-blue-800 to-purple-400" style={{ borderRadius: '6px', boxShadow: '0 0 8px rgba(168, 85, 247, 0.2)' }}>
@@ -773,6 +809,8 @@ function PracticePage() {
                       onClick={async () => {
                         setSelectedProgram(programAssignment);
                         setShowAssignedPrograms(false);
+                        // Reset days to show when switching programs
+                        setDaysToShow(7);
                         // Force refresh of workout cards when switching programs
                         setWorkoutCards([]);
                         setIsLoadingCards(true);
