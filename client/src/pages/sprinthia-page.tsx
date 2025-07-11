@@ -35,6 +35,8 @@ export default function SprinthiaPage() {
   const [messageInput, setMessageInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Force refresh - gradient background should be visible
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -119,7 +121,7 @@ export default function SprinthiaPage() {
 
   return (
     <PageContainer className="pt-20">
-      <div className="flex-1 overflow-hidden bg-gradient-to-br from-purple-500 to-blue-800">
+      <div className="flex-1 overflow-hidden" style={{ background: 'linear-gradient(to bottom right, #8b5cf6, #1e40af)' }}>
         <div className="flex items-center justify-between p-3 border-b border-white/20">
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-semibold text-white">Sprinthia AI Coach</h1>
