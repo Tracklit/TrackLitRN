@@ -483,7 +483,7 @@ function ModernProgramCard({ program, type, creator, viewMode }: {
 
   return (
     <Card 
-      className="group break-inside-avoid mb-6 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/10 cursor-pointer bg-gradient-to-br from-gray-800/90 to-gray-900/90 border-gray-700/50 backdrop-blur-sm hover:border-blue-500/50"
+      className="group break-inside-avoid mb-6 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/10 cursor-pointer bg-primary/5 border border-primary/25 backdrop-blur-sm hover:border-blue-500/50"
       onClick={() => window.location.href = `/programs/${program.programId || program.id}`}
       style={{ borderRadius: '6px' }}
     >
@@ -550,12 +550,12 @@ function ModernProgramCard({ program, type, creator, viewMode }: {
           )}
         </div>
         
-        <CardTitle className="text-lg font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">
+        <CardTitle className="text-lg font-bold text-foreground mb-2 group-hover:text-blue-400 transition-colors">
           {program.title}
         </CardTitle>
         
         {program.description && (
-          <CardDescription className="text-gray-400 text-sm line-clamp-2 mb-3">
+          <CardDescription className="text-muted-foreground text-sm line-clamp-2 mb-3">
             {program.description}
           </CardDescription>
         )}
@@ -565,7 +565,7 @@ function ModernProgramCard({ program, type, creator, viewMode }: {
         {/* Program details */}
         <div className="flex flex-wrap gap-2 mb-3">
           {program.category && (
-            <Badge variant="outline" className="text-xs border-gray-600 text-gray-300 rounded-md">
+            <Badge variant="outline" className="text-xs border-primary/25 text-muted-foreground rounded-md">
               <Tag className="h-3 w-3 mr-1" />
               {program.category}
             </Badge>
@@ -587,11 +587,11 @@ function ModernProgramCard({ program, type, creator, viewMode }: {
         
         {/* Stats */}
         <div className="grid grid-cols-2 gap-4 text-sm">
-          <div className="flex items-center text-gray-400">
+          <div className="flex items-center text-muted-foreground">
             <CalendarDays className="h-4 w-4 mr-2" />
             <span>{program.duration || 0} days</span>
           </div>
-          <div className="flex items-center text-gray-400">
+          <div className="flex items-center text-muted-foreground">
             <Clock className="h-4 w-4 mr-2" />
             <span>{program.totalSessions || 0} sessions</span>
           </div>
@@ -601,8 +601,8 @@ function ModernProgramCard({ program, type, creator, viewMode }: {
         {progress > 0 && (
           <div className="mt-4">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-xs text-gray-400">Progress</span>
-              <span className="text-[9px] font-medium">{progress}%</span>
+              <span className="text-xs text-muted-foreground">Progress</span>
+              <span className="text-[9px] font-medium text-foreground">{progress}%</span>
             </div>
             <Progress value={progress} className="h-0.5" />
           </div>
@@ -674,24 +674,24 @@ function CompactProgramListItem({ program, viewMode, creator }: {
   };
 
   return (
-    <Card className="bg-gradient-to-br from-blue-900/20 via-purple-900/20 to-gray-900/30 border-gray-700/30 hover:border-gray-600/50 transition-all duration-200" style={{ borderRadius: '6px' }}>
+    <Card className="bg-primary/5 border border-primary/25 hover:border-gray-600/50 transition-all duration-200" style={{ borderRadius: '6px' }}>
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-semibold text-white text-sm truncate">{program.title}</h3>
+              <h3 className="font-semibold text-foreground text-sm truncate">{program.title}</h3>
               {program.isAssigned && <UserCheck className="h-4 w-4 text-blue-500 flex-shrink-0" />}
               {!program.isAssigned && program.visibility === 'premium' && <Crown className="h-4 w-4 text-yellow-500 flex-shrink-0" />}
               {!program.isAssigned && program.visibility === 'private' && <LockIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
             </div>
-            <p className="text-xs text-gray-400 truncate">{program.description || "No description"}</p>
+            <p className="text-xs text-muted-foreground truncate">{program.description || "No description"}</p>
           </div>
           <div className="flex items-center gap-3 ml-4">
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-muted-foreground">
               {program.duration || 0} days
             </div>
             {progress > 0 && (
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-muted-foreground">
                 {progress}% complete
               </div>
             )}
@@ -700,7 +700,7 @@ function CompactProgramListItem({ program, viewMode, creator }: {
             {viewMode === "creator" && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-8 w-8 p-0 text-gray-400 hover:text-white">
+                  <Button variant="ghost" className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground">
                     <MoreVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
