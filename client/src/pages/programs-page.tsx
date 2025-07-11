@@ -59,12 +59,21 @@ import {
   Eye,
   UserPlus,
   UserCheck,
-  Trash2
+  Trash2,
+  Upload,
+  ExternalLink,
+  Edit3,
+  Star,
+  CheckCircle,
+  XCircle,
+  ChevronDown
 } from "lucide-react";
 
 export default function ProgramsPage() {
   const [activeTab, setActiveTab] = useState("my-programs");
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterCategory, setFilterCategory] = useState("all");
+  const [sortBy, setSortBy] = useState("recent");
   const { user } = useAuth();
   
   // Query for user's created programs
@@ -129,103 +138,145 @@ export default function ProgramsPage() {
     : [];
   
   return (
-    <div className="container max-w-screen-xl mx-auto p-4 pt-20 md:pl-72 pb-20 h-screen overflow-y-auto">
-
-
-      
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-        <div className="relative w-full md:w-72">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search programs..."
-            className="pl-8"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        
-        {activeTab === "my-programs" && (
-          <Button asChild>
-            <Link href="/programs/create">
-              <Plus className="h-4 w-4 mr-2" />
-              Create Program
-            </Link>
-          </Button>
-        )}
-      </div>
-      
-      <Tabs defaultValue="my-programs" onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full md:w-auto grid grid-cols-3 mb-6 bg-gray-900 border-gray-800">
-          <TabsTrigger value="my-programs" className="data-[state=active]:bg-gray-800 data-[state=active]:text-white">My Programs</TabsTrigger>
-          <TabsTrigger value="purchased" className="data-[state=active]:bg-gray-800 data-[state=active]:text-white">Purchased</TabsTrigger>
-          <TabsTrigger value="workout-library" className="data-[state=active]:bg-gray-800 data-[state=active]:text-white">Workout Library</TabsTrigger>
-        </TabsList>
-        
-        {/* My Programs Tab */}
-        <TabsContent value="my-programs">
-          {isLoadingUserPrograms ? (
-            <div className="grid grid-cols-3 gap-4">
-              {[1, 2, 3, 4, 5, 6].map((item) => (
-                <CompactProgramCardSkeleton key={item} />
-              ))}
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
+      {/* Header */}
+      <div className="sticky top-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800/50">
+        <div className="container max-w-screen-xl mx-auto px-4 py-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                Programs
+              </h1>
             </div>
-          ) : filteredUserPrograms.length === 0 ? (
-            <EmptyState 
-              title="No programs yet"
-              description="You haven't created any training programs yet. Get started by creating your first program."
-              action={
-                <Button asChild>
-                  <Link href="/programs/create">
+            
+            {/* Search and Filter Bar */}
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  type="search"
+                  placeholder="Search programs..."
+                  className="pl-10 w-64 bg-gray-800/50 border-gray-700 focus:border-blue-500"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="bg-gray-800/50 border-gray-700 hover:bg-gray-700">
+                    <Filter className="h-4 w-4 mr-2" />
+                    Filter
+                    <ChevronDown className="h-4 w-4 ml-2" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-48 bg-gray-800 border-gray-700">
+                  <DropdownMenuItem onClick={() => setFilterCategory("all")}>
+                    All Programs
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setFilterCategory("sprint")}>
+                    Sprint Programs
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setFilterCategory("distance")}>
+                    Distance Programs
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setFilterCategory("strength")}>
+                    Strength Programs
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="container max-w-screen-xl mx-auto px-4 py-6 pb-24">{/* Extra bottom padding for FAB */}
+      
+        <Tabs defaultValue="my-programs" onValueChange={setActiveTab} className="w-full">
+          <TabsList className="w-full md:w-auto grid grid-cols-3 mb-8 bg-gray-800/50 border-gray-700 backdrop-blur-sm">
+            <TabsTrigger 
+              value="my-programs" 
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white font-medium"
+            >
+              My Programs
+            </TabsTrigger>
+            <TabsTrigger 
+              value="purchased" 
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white font-medium"
+            >
+              Purchased
+            </TabsTrigger>
+            <TabsTrigger 
+              value="workout-library" 
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white font-medium"
+            >
+              Workout Library
+            </TabsTrigger>
+          </TabsList>
+        
+          {/* My Programs Tab */}
+          <TabsContent value="my-programs">
+            {isLoadingUserPrograms ? (
+              <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
+                {[1, 2, 3, 4, 5, 6].map((item) => (
+                  <ModernProgramCardSkeleton key={item} />
+                ))}
+              </div>
+            ) : filteredUserPrograms.length === 0 ? (
+              <EmptyState 
+                title="No programs yet"
+                description="You haven't created any training programs yet. Get started by creating your first program."
+                action={
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-white">
                     <Plus className="h-4 w-4 mr-2" />
                     Create Program
-                  </Link>
-                </Button>
-              }
-            />
-          ) : (
-            <div className="grid grid-cols-3 gap-4">
-              {filteredUserPrograms.map((program) => (
-                <CompactProgramCard 
-                  key={program.id} 
-                  program={program}
-                  viewMode="creator"
-                />
-              ))}
-            </div>
-          )}
-        </TabsContent>
+                  </Button>
+                }
+              />
+            ) : (
+              <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
+                {filteredUserPrograms.map((program) => (
+                  <ModernProgramCard 
+                    key={program.id} 
+                    program={program}
+                    viewMode="creator"
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
         
-        {/* Purchased Programs Tab */}
-        <TabsContent value="purchased">
-          {isLoadingPurchasedPrograms ? (
-            <div className="grid grid-cols-3 gap-4">
-              {[1, 2, 3, 4, 5, 6].map((item) => (
-                <CompactProgramCardSkeleton key={item} />
-              ))}
-            </div>
-          ) : filteredPurchasedPrograms.length === 0 ? (
-            <EmptyState 
-              title="No purchased programs"
-              description="You haven't purchased any training programs yet. Check out the public programs to find quality training content."
-              action={
-                <Button variant="outline" onClick={() => setActiveTab("workout-library")}>
-                  Browse Programs
-                </Button>
-              }
-            />
-          ) : (
-            <div className="grid grid-cols-3 gap-4">
-              {filteredPurchasedPrograms.map((program) => (
-                <CompactProgramCard 
-                  key={program.id} 
-                  program={program}
-                  viewMode="purchased"
-                />
-              ))}
-            </div>
-          )}
-        </TabsContent>
+          {/* Purchased Programs Tab */}
+          <TabsContent value="purchased">
+            {isLoadingPurchasedPrograms ? (
+              <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
+                {[1, 2, 3, 4, 5, 6].map((item) => (
+                  <ModernProgramCardSkeleton key={item} />
+                ))}
+              </div>
+            ) : filteredPurchasedPrograms.length === 0 ? (
+              <EmptyState 
+                title="No purchased programs"
+                description="You haven't purchased any training programs yet. Check out the public programs to find quality training content."
+                action={
+                  <Button variant="outline" onClick={() => setActiveTab("workout-library")} className="border-gray-600 text-gray-300 hover:bg-gray-700">
+                    Browse Programs
+                  </Button>
+                }
+              />
+            ) : (
+              <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
+                {filteredPurchasedPrograms.map((program) => (
+                  <ModernProgramCard 
+                    key={program.id} 
+                    program={program}
+                    viewMode="purchased"
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
         
         {/* Workout Library Tab */}
         <TabsContent value="workout-library">
@@ -272,12 +323,27 @@ export default function ProgramsPage() {
             </>
           )}
         </TabsContent>
-      </Tabs>
+        </Tabs>
+      </div>
+
+      {/* Floating Action Button */}
+      {activeTab === "my-programs" && (
+        <div className="fixed bottom-20 right-6 z-50">
+          <Button 
+            asChild 
+            className="h-14 w-14 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300 animate-pulse"
+          >
+            <Link href="/programs/create">
+              <Plus className="h-6 w-6" />
+            </Link>
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
 
-function CompactProgramCard({ program, type, creator, viewMode }: {
+function ModernProgramCard({ program, type, creator, viewMode }: {
   program: any;
   type?: string;
   creator?: any;
@@ -357,27 +423,42 @@ function CompactProgramCard({ program, type, creator, viewMode }: {
     }
   });
   
+  // Get status based on program state
+  const getStatusInfo = () => {
+    if (program.visibility === 'public') return { label: 'Published', color: 'bg-green-600', icon: CheckCircle };
+    if (program.visibility === 'private') return { label: 'Private', color: 'bg-blue-600', icon: LockIcon };
+    if (program.totalSessions === 0) return { label: 'Draft', color: 'bg-yellow-600', icon: Edit3 };
+    return { label: 'Active', color: 'bg-purple-600', icon: TrendingUp };
+  };
+
+  const statusInfo = getStatusInfo();
+  const StatusIcon = statusInfo.icon;
+
   return (
-    <Card className="overflow-hidden transition-all hover:shadow-md h-24 bg-black/95 border-gray-800/50 relative cursor-pointer hover:bg-black"
-          onClick={() => window.location.href = `/programs/${program.programId || program.id}`}>
-      
-      <CardHeader className="p-3 pb-2">
-        <div className="flex justify-between items-start">
-          <div className="flex-1 pr-2 text-center">
-            <CardTitle className="text-sm leading-tight line-clamp-2 font-medium">{program.title}</CardTitle>
-            <div className="h-px bg-gray-700/40 w-full mt-2 mb-1"></div>
-          </div>
+    <Card 
+      className="group break-inside-avoid mb-6 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/10 cursor-pointer bg-gradient-to-br from-gray-800/90 to-gray-900/90 border-gray-700/50 backdrop-blur-sm hover:border-blue-500/50"
+      onClick={() => window.location.href = `/programs/${program.programId || program.id}`}
+      style={{ borderRadius: '6px' }}
+    >
+      {/* Header with status badge */}
+      <CardHeader className="p-4 pb-3">
+        <div className="flex justify-between items-start mb-3">
+          <Badge className={`${statusInfo.color} text-white px-2 py-1 text-xs font-medium`}>
+            <StatusIcon className="h-3 w-3 mr-1" />
+            {statusInfo.label}
+          </Badge>
+          
           {viewMode === "creator" && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={(e) => e.stopPropagation()}>
-                  <MoreVertical className="h-3 w-3" />
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                  <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40" onClick={(e) => e.stopPropagation()}>
+              <DropdownMenuContent align="end" className="w-48 bg-gray-800 border-gray-700">
                 <DropdownMenuItem asChild>
                   <Link href={`/programs/${program.id}`} className="flex items-center">
-                    <Eye className="h-3 w-3 mr-2" />
+                    <Eye className="h-4 w-4 mr-2" />
                     View Details
                   </Link>
                 </DropdownMenuItem>
@@ -403,9 +484,9 @@ function CompactProgramCard({ program, type, creator, viewMode }: {
                     disabled={isRefreshing}
                   >
                     {isRefreshing ? (
-                      <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     ) : (
-                      <RefreshCw className="h-3 w-3 mr-2" />
+                      <RefreshCw className="h-4 w-4 mr-2" />
                     )}
                     Refresh Data
                   </DropdownMenuItem>
@@ -414,35 +495,71 @@ function CompactProgramCard({ program, type, creator, viewMode }: {
                   onClick={handleDeleteProgram}
                   className="text-destructive focus:text-destructive"
                 >
-                  <Trash2 className="h-3 w-3 mr-2" />
+                  <Trash2 className="h-4 w-4 mr-2" />
                   Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           )}
-          {viewMode !== "creator" && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-4 w-4 p-0"
-              asChild
-            >
-              <Link href={`/programs/${program.id}`}>
-                <Eye className="h-2 w-2" />
-              </Link>
-            </Button>
-          )}
         </div>
+        
+        <CardTitle className="text-lg font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">
+          {program.title}
+        </CardTitle>
+        
         {program.description && (
-          <CardDescription className="text-[10px] line-clamp-1 mt-0.5">{program.description}</CardDescription>
+          <CardDescription className="text-gray-400 text-sm line-clamp-2 mb-3">
+            {program.description}
+          </CardDescription>
         )}
       </CardHeader>
       
-      <CardContent className="p-3 pt-0 pb-1">
+      <CardContent className="p-4 pt-0">
+        {/* Program details */}
+        <div className="flex flex-wrap gap-2 mb-3">
+          {program.category && (
+            <Badge variant="outline" className="text-xs border-gray-600 text-gray-300">
+              <Tag className="h-3 w-3 mr-1" />
+              {program.category}
+            </Badge>
+          )}
+          {program.level && (
+            <Badge variant="outline" className="text-xs border-gray-600 text-gray-300">
+              <TrendingUp className="h-3 w-3 mr-1" />
+              {program.level}
+            </Badge>
+          )}
+          {program.importedFromSheet && (
+            <Badge variant="outline" className="text-xs border-green-600 text-green-400">
+              <ExternalLink className="h-3 w-3 mr-1" />
+              Google Sheet
+            </Badge>
+          )}
+          {program.isUploadedProgram && (
+            <Badge variant="outline" className="text-xs border-purple-600 text-purple-400">
+              <Upload className="h-3 w-3 mr-1" />
+              Document
+            </Badge>
+          )}
+        </div>
+        
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="flex items-center text-gray-400">
+            <CalendarDays className="h-4 w-4 mr-2" />
+            <span>{program.duration || 0} days</span>
+          </div>
+          <div className="flex items-center text-gray-400">
+            <Clock className="h-4 w-4 mr-2" />
+            <span>{program.totalSessions || 0} sessions</span>
+          </div>
+        </div>
+        
+        {/* Progress bar for purchased programs */}
         {progress > 0 && (
-          <div className="mt-1">
-            <div className="flex justify-between items-center mb-0.5">
-              <span className="text-[9px] text-muted-foreground">Progress</span>
+          <div className="mt-4">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-xs text-gray-400">Progress</span>
               <span className="text-[9px] font-medium">{progress}%</span>
             </div>
             <Progress value={progress} className="h-0.5" />
@@ -466,6 +583,31 @@ function CompactProgramCard({ program, type, creator, viewMode }: {
         </div>
       )}
 
+    </Card>
+  );
+}
+
+function ModernProgramCardSkeleton() {
+  return (
+    <Card className="break-inside-avoid mb-6 overflow-hidden bg-gradient-to-br from-gray-800/50 to-gray-900/50 border-gray-700/30 animate-pulse" style={{ borderRadius: '6px' }}>
+      <CardHeader className="p-4 pb-3">
+        <div className="flex justify-between items-start mb-3">
+          <div className="h-6 w-16 bg-gray-700/50 rounded"></div>
+          <div className="h-6 w-6 bg-gray-700/50 rounded"></div>
+        </div>
+        <div className="h-6 w-full bg-gray-700/50 rounded mb-2"></div>
+        <div className="h-4 w-3/4 bg-gray-700/50 rounded"></div>
+      </CardHeader>
+      <CardContent className="p-4 pt-0">
+        <div className="flex gap-2 mb-3">
+          <div className="h-5 w-16 bg-gray-700/50 rounded"></div>
+          <div className="h-5 w-20 bg-gray-700/50 rounded"></div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="h-4 w-full bg-gray-700/50 rounded"></div>
+          <div className="h-4 w-full bg-gray-700/50 rounded"></div>
+        </div>
+      </CardContent>
     </Card>
   );
 }
