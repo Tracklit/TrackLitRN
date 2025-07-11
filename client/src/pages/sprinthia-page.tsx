@@ -119,25 +119,18 @@ export default function SprinthiaPage() {
 
   return (
     <PageContainer className="pt-20">
-      <div className="flex-1 overflow-hidden">
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <div className="flex items-center gap-3">
-            <div className="w-6 h-6 rounded-full overflow-hidden">
-              <img 
-                src="/sprinthia-avatar-fresh.jpeg" 
-                alt="Sprinthia"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <h1 className="text-xl font-semibold">Sprinthia AI Coach</h1>
+      <div className="flex-1 overflow-hidden bg-gradient-to-br from-purple-500 to-blue-800">
+        <div className="flex items-center justify-between p-3 border-b border-white/20">
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-semibold text-white">Sprinthia AI Coach</h1>
           </div>
 
             <div className="flex items-center gap-2">
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" className="border-white/25 text-white hover:text-white hover:bg-white/10">
                     <Info className="h-4 w-4 mr-2" />
-                    About Sprinthia
+                    About
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl">
@@ -183,6 +176,8 @@ export default function SprinthiaPage() {
                 onClick={() => createConversationMutation.mutate(`New Chat ${new Date().toLocaleDateString()}`)}
                 disabled={createConversationMutation.isPending}
                 size="sm"
+                className="border-white/25 text-white hover:text-white hover:bg-white/10"
+                variant="outline"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 New Chat
@@ -196,11 +191,11 @@ export default function SprinthiaPage() {
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
                   {messages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center">
-                      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                        <Brain className="h-8 w-8 text-primary" />
+                      <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-4">
+                        <Brain className="h-8 w-8 text-white" />
                       </div>
-                      <h3 className="text-lg font-semibold mb-2">Start chatting with Sprinthia!</h3>
-                      <p className="text-muted-foreground max-w-md">
+                      <h3 className="text-lg font-semibold mb-2 text-white">Start chatting with Sprinthia!</h3>
+                      <p className="text-white/80 max-w-md">
                         Ask about training techniques, performance analysis, injury prevention, or any track and field related questions.
                       </p>
                     </div>
@@ -213,21 +208,21 @@ export default function SprinthiaPage() {
                           message.role === 'user' ? "ml-auto flex-row-reverse" : ""
                         )}
                       >
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
                           {message.role === 'user' ? (
-                            <span className="text-sm font-semibold">
+                            <span className="text-sm font-semibold text-white">
                               {user?.username?.charAt(0).toUpperCase() || 'U'}
                             </span>
                           ) : (
-                            <Brain className="h-4 w-4 text-primary" />
+                            <Brain className="h-4 w-4 text-white" />
                           )}
                         </div>
                         <div
                           className={cn(
                             "rounded-lg p-3 max-w-[80%]",
                             message.role === 'user'
-                              ? "bg-primary text-primary-foreground ml-auto"
-                              : "bg-muted"
+                              ? "bg-white/20 text-white ml-auto"
+                              : "bg-black/20 text-white"
                           )}
                         >
                           <p className="whitespace-pre-wrap">{message.content}</p>
@@ -241,14 +236,14 @@ export default function SprinthiaPage() {
 
                   {isLoading && (
                     <div className="flex gap-3 max-w-4xl">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <Brain className="h-4 w-4 text-primary" />
+                      <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                        <Brain className="h-4 w-4 text-white" />
                       </div>
-                      <div className="rounded-lg p-3 bg-muted">
+                      <div className="rounded-lg p-3 bg-black/20">
                         <div className="flex space-x-1">
-                          <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
-                          <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
-                          <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                          <div className="w-2 h-2 bg-white/80 rounded-full animate-bounce" />
+                          <div className="w-2 h-2 bg-white/80 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                          <div className="w-2 h-2 bg-white/80 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
                         </div>
                       </div>
                     </div>
@@ -257,7 +252,7 @@ export default function SprinthiaPage() {
                   <div ref={messagesEndRef} />
                 </div>
 
-                <div className="border-t border-border p-4 bg-background">
+                <div className="border-t border-white/20 p-4 bg-black/20">
                   <div className="max-w-4xl mx-auto">
                     <div className="flex gap-2">
                       <Input
@@ -266,12 +261,13 @@ export default function SprinthiaPage() {
                         onKeyPress={handleKeyPress}
                         placeholder="Ask Sprinthia about training, techniques, or performance..."
                         disabled={isLoading}
-                        className="flex-1"
+                        className="flex-1 bg-white/10 border-white/25 text-white placeholder:text-white/60"
                       />
                       <Button 
                         onClick={handleSendMessage}
                         disabled={!messageInput.trim() || isLoading}
                         size="icon"
+                        className="bg-white/20 text-white hover:bg-white/30"
                       >
                         <Send className="h-4 w-4" />
                       </Button>
@@ -282,16 +278,16 @@ export default function SprinthiaPage() {
             ) : (
               <div className="h-full flex flex-col items-center justify-center text-center p-8">
                 {conversations.length === 0 ? (
-                  <Alert className="max-w-md">
-                    <MessageSquare className="h-4 w-4" />
-                    <AlertDescription>
+                  <Alert className="max-w-md bg-white/10 border-white/20">
+                    <MessageSquare className="h-4 w-4 text-white" />
+                    <AlertDescription className="text-white/80">
                       Welcome to Sprinthia! Create your first conversation to start chatting with your AI track and field coach.
                     </AlertDescription>
                   </Alert>
                 ) : (
-                  <Alert className="max-w-md">
-                    <MessageSquare className="h-4 w-4" />
-                    <AlertDescription>
+                  <Alert className="max-w-md bg-white/10 border-white/20">
+                    <MessageSquare className="h-4 w-4 text-white" />
+                    <AlertDescription className="text-white/80">
                       Select a conversation from the sidebar or create a new one to continue chatting with Sprinthia.
                     </AlertDescription>
                   </Alert>
