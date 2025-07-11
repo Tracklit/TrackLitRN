@@ -7,7 +7,6 @@ import {
   faTrophy,
   faImage,
   faStar,
-  faRobot,
 } from '@fortawesome/free-solid-svg-icons';
 
 import { cn } from "@/lib/utils";
@@ -50,7 +49,7 @@ const navItems = [
   { 
     title: "Sprinthia", 
     href: "/sprinthia", 
-    icon: <FontAwesomeIcon icon={faRobot} className="h-4 w-4" />,
+    icon: <span className="text-xs font-bold">AI</span>,
     key: "sprinthia"
   }
 ];
