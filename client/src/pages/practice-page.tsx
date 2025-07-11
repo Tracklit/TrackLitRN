@@ -653,11 +653,10 @@ function PracticePage() {
   const findSessionForDate = (sessions: any[], targetDate: Date) => {
     if (!sessions || sessions.length === 0) return null;
     
-    // Format target date as MMM-DD (e.g., "Jul-11")
-    const targetDateString = targetDate.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric' 
-    });
+    // Format target date as MMM-DD (e.g., "Jul-11") to match the session data format
+    const month = targetDate.toLocaleDateString('en-US', { month: 'short' });
+    const day = targetDate.getDate().toString();
+    const targetDateString = `${month}-${day}`;
     
     console.log('Looking for session with date:', targetDateString);
     console.log('Available sessions (first 10):', sessions.slice(0, 10).map(s => ({ date: s.date, dayNumber: s.dayNumber })));
