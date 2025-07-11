@@ -120,8 +120,14 @@ export default function SprinthiaPage() {
   const activeConversation = conversations.find((c: SprinthiaConversation) => c.id === activeConversationId);
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(to bottom right, #8b5cf6, #1e40af)' }}>
-      <div className="pt-20 px-4 h-screen flex flex-col">
+    <div className="fixed inset-0 bg-purple-600" style={{ 
+      background: 'linear-gradient(135deg, #8b5cf6 0%, #1e40af 100%)',
+      minHeight: '100vh',
+      width: '100vw',
+      zIndex: 1
+    }}>
+      <div className="pt-20 px-4 h-full flex flex-col">
+        {/* UPDATED HEADER - NO PROFILE IMAGE */}
         <div className="flex items-center justify-between p-3 border-b border-white/20">
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-semibold text-white">Sprinthia AI Coach</h1>
