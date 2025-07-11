@@ -69,6 +69,7 @@ import RehabPage from "@/pages/rehab-page";
 import ArcadePage from "@/pages/arcade-page";
 import ChatPage from "@/pages/chat-page";
 import ChannelSettingsPage from "@/pages/channel-settings-page";
+import JournalEntryPage from "@/pages/journal-entry-page";
 
 import HamstringRehabPage from "@/pages/rehab/acute-muscle/hamstring";
 import FootRehabPage from "@/pages/rehab/chronic-injuries/foot";
@@ -180,6 +181,7 @@ function Router() {
         
           {/* Training */}
           <ProtectedRoute path="/practice" component={PracticePage} />
+          <ProtectedRoute path="/journal-entry" component={JournalEntryPage} />
           <ProtectedRoute path="/tools" component={WorkoutToolsPage} />
           <ProtectedRoute path="/training-tools" component={WorkoutToolsPage} />
           <ProtectedRoute path="/tools/stopwatch" component={StopwatchPage} />

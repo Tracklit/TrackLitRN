@@ -474,19 +474,10 @@ function PracticePage() {
   const [daysToShow, setDaysToShow] = useState(7);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   
-  // Journal modal states
-  const [isJournalModalOpen, setIsJournalModalOpen] = useState(false);
-  const [selectedJournalDate, setSelectedJournalDate] = useState("");
-  
-  // Journal modal handler
+  // Journal navigation
   const handleOpenJournal = (date: string) => {
-    setSelectedJournalDate(date);
-    setIsJournalModalOpen(true);
-  };
-  
-  const handleCloseJournal = () => {
-    setIsJournalModalOpen(false);
-    setSelectedJournalDate("");
+    // Navigate to journal page with date parameter
+    window.location.href = `/journal-entry?date=${encodeURIComponent(date)}`;
   };
   
   // Calculator states
@@ -1146,12 +1137,7 @@ function PracticePage() {
         </div>
       )}
 
-      {/* Journal Entry Modal */}
-      <JournalEntryModal
-        isOpen={isJournalModalOpen}
-        onClose={handleCloseJournal}
-        date={selectedJournalDate}
-      />
+
 
     </PageContainer>
   );
