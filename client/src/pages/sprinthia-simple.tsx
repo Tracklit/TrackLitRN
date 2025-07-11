@@ -167,7 +167,9 @@ export default function SprinthiaSimple() {
   };
 
   return (
-    <div className="flex h-screen bg-background" data-sprinthia-page>
+    <div className="flex h-screen" data-sprinthia-page style={{ 
+      background: 'linear-gradient(135deg, #8b5cf6 0%, #1e40af 100%)' 
+    }}>
       <SidebarNavigation />
       
       <div className="flex-1 flex flex-col">
@@ -227,35 +229,27 @@ export default function SprinthiaSimple() {
           
           <div className="flex-1 flex flex-col max-w-6xl mx-auto w-full">
             {/* Header */}
-          <div className="p-6 border-b border-border bg-background">
+          <div className="p-6 border-b border-white/20 bg-transparent">
             <div className="flex items-center gap-4">
-              <div className="relative">
-                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500" style={{ padding: '1px' }}>
-                  <div className="w-full h-full rounded-full bg-background overflow-hidden">
-                    <img src="/sprinthia-avatar-compressed.jpeg" alt="Sprinthia AI" className="w-full h-full object-cover" style={{ objectPosition: '50% 20%' }} />
-                  </div>
-                </div>
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-background"></div>
-              </div>
               <div className="flex-1">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
-                  Sprinthia
+                <h1 className="text-2xl font-bold text-white">
+                  Sprinthia AI Coach
                 </h1>
-                <p className="text-muted-foreground text-sm">Your AI track and field coach • Always available</p>
+                <p className="text-white/80 text-sm">Your AI track and field coach • Always available</p>
               </div>
               <div className="flex flex-col items-end gap-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setShowHistory(!showHistory)}
-                  className="flex items-center gap-1"
+                  className="flex items-center gap-1 border-white/25 text-white hover:text-white hover:bg-white/10"
                 >
                   <History className="h-4 w-4" />
                   History
                 </Button>
-                <div className="bg-muted/50 rounded-lg px-3 py-2 border">
-                  <p className="text-xs text-muted-foreground mb-1">Remaining</p>
-                  <p className="font-semibold text-sm">{getPromptDisplay()}</p>
+                <div className="bg-white/10 rounded-lg px-3 py-2 border-white/20 border">
+                  <p className="text-xs text-white/60 mb-1">Remaining</p>
+                  <p className="font-semibold text-sm text-white">{getPromptDisplay()}</p>
                 </div>
               </div>
             </div>
@@ -265,8 +259,8 @@ export default function SprinthiaSimple() {
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {messages.length === 0 && (
               <div className="text-center py-2">
-                <h3 className="text-xl font-semibold mb-3">Hi {user?.name?.split(' ')[0] || 'there'}, how can I help you today?</h3>
-                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                <h3 className="text-xl font-semibold mb-3 text-white">Hi {user?.name?.split(' ')[0] || 'there'}, how can I help you today?</h3>
+                <p className="text-white/80 mb-6 max-w-md mx-auto">
                   Ask me about training plans, race preparation, injury rehabilitation, or nutrition advice.
                 </p>
                 <div className="flex flex-wrap gap-2 justify-center max-w-2xl mx-auto">
@@ -274,7 +268,7 @@ export default function SprinthiaSimple() {
                     <button
                       key={suggestion}
                       onClick={() => setInput(suggestion)}
-                      className="px-3 py-2 text-sm bg-muted/50 hover:bg-muted rounded-lg border transition-colors"
+                      className="px-3 py-2 text-sm bg-white/20 hover:bg-white/30 rounded-lg border border-white/25 transition-colors text-white"
                     >
                       {suggestion}
                     </button>
@@ -287,7 +281,7 @@ export default function SprinthiaSimple() {
               <div key={message.id} className="w-full mb-6">
                 <div className={cn(
                   "mb-2 text-sm font-medium",
-                  message.role === 'user' ? 'text-blue-600' : 'text-purple-600'
+                  message.role === 'user' ? 'text-white' : 'text-white/90'
                 )}>
                   {message.role === 'user' ? 'You' : 'Sprinthia'}
                 </div>
@@ -295,11 +289,11 @@ export default function SprinthiaSimple() {
                   className={cn(
                     "w-full rounded-lg px-4 py-3 shadow-sm",
                     message.role === 'user'
-                      ? 'bg-muted/30 border-l-4 border-blue-500'
-                      : 'bg-muted/50 border-l-4 border-purple-500'
+                      ? 'bg-white/20 border-l-4 border-white/50'
+                      : 'bg-black/20 border-l-4 border-white/50'
                   )}
                 >
-                  <div className="whitespace-pre-wrap leading-relaxed text-foreground">
+                  <div className="whitespace-pre-wrap leading-relaxed text-white">
                     {message.content
                       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                       .replace(/\*(.*?)\*/g, '<em>$1</em>')
@@ -340,16 +334,16 @@ export default function SprinthiaSimple() {
             {/* Typing indicator */}
             {isGenerating && (
               <div className="w-full mb-6">
-                <div className="mb-2 text-sm font-medium text-purple-600">
+                <div className="mb-2 text-sm font-medium text-white/90">
                   Sprinthia
                 </div>
-                <div className="w-full bg-muted/50 border-l-4 border-purple-500 rounded-lg px-4 py-3 shadow-sm">
+                <div className="w-full bg-black/20 border-l-4 border-white/50 rounded-lg px-4 py-3 shadow-sm">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">Thinking</span>
+                    <span className="text-sm text-white/70">Thinking</span>
                     <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                      <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                      <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-white/70 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                      <div className="w-2 h-2 bg-white/70 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                      <div className="w-2 h-2 bg-white/70 rounded-full animate-bounce"></div>
                     </div>
                   </div>
                 </div>
@@ -360,7 +354,7 @@ export default function SprinthiaSimple() {
           </div>
 
           {/* Input */}
-          <div className="p-6 border-t border-border bg-gradient-to-r from-background to-muted/10">
+          <div className="p-6 border-t border-white/20 bg-transparent">
             <div className="flex gap-3 max-w-4xl mx-auto">
               <div className="flex-1 relative">
                 <Input
@@ -368,21 +362,21 @@ export default function SprinthiaSimple() {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="Ask Sprinthia about training, races, rehabilitation, or nutrition..."
-                  className="pr-12 h-12 rounded-xl border-2 focus:border-blue-500 transition-colors bg-background/50 backdrop-blur-sm"
+                  className="pr-12 h-12 rounded-xl border-2 border-white/25 focus:border-white/50 transition-colors bg-white/10 backdrop-blur-sm text-white placeholder:text-white/60"
                   disabled={isGenerating}
                 />
                 <Button 
                   onClick={handleSendMessage}
                   disabled={!input.trim() || isGenerating || (user?.subscriptionTier !== 'star' && !user?.sprinthiaPrompts)}
                   size="icon"
-                  className="absolute right-1 top-1 h-10 w-10 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 transition-all"
+                  className="absolute right-1 top-1 h-10 w-10 rounded-lg bg-white/20 hover:bg-white/30 border border-white/25 transition-all text-white"
                 >
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
             </div>
             {user?.subscriptionTier !== 'star' && user?.sprinthiaPrompts === 0 && (
-              <p className="text-sm text-muted-foreground text-center mt-3">
+              <p className="text-sm text-white/70 text-center mt-3">
                 You've used all your prompts. Upgrade to Pro or Star to continue using Sprinthia.
               </p>
             )}
