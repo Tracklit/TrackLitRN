@@ -582,39 +582,35 @@ function PracticePage() {
     isLoading: isLoadingProgramSessions 
   } = useProgramSessions(selectedProgram?.programId || null);
 
-  // Generate workout cards based on available program sessions
+  // Generate workout cards starting from today's date
   useEffect(() => {
     if (programSessions && programSessions.length > 0) {
       setIsLoadingCards(true);
       
-      // Create cards based on the actual sessions available, taking the first 'daysToShow' sessions
-      const cards: any[] = [];
+      // Create cards for the specified number of days starting from today
       const today = new Date();
+      const cards: any[] = [];
       
-      // Take the first 'daysToShow' sessions from the program
-      const sessionsToShow = programSessions.slice(0, daysToShow);
-      
-      for (let i = 0; i < sessionsToShow.length; i++) {
-        const session = sessionsToShow[i];
+      for (let i = 0; i < daysToShow; i++) {
+        const date = new Date(today);
+        date.setDate(today.getDate() + i);
         
-        // Parse the session date to create a proper Date object
-        // Session.date is in format "Mar-16", "Mar-17", etc.
-        const sessionDate = parseSessionDate(session.date);
+        // Find session for this specific date
+        const sessionForDate = findSessionForDate(programSessions, date);
         
-        if (sessionDate) {
-          cards.push({
-            id: `${sessionDate.getTime()}-${session.dayNumber}`,
-            date: sessionDate,
-            dateString: sessionDate.toLocaleDateString('en-US', { 
-              month: 'short', 
-              day: 'numeric',
-              year: 'numeric'
-            }),
-            dayOfWeek: sessionDate.toLocaleDateString('en-US', { weekday: 'long' }),
-            sessionData: session,
-            isToday: isToday(sessionDate)
-          });
-        }
+        // Always create a card for each day, even if no session data exists
+        cards.push({
+          id: `${date.getTime()}-${i}`,
+          date: date,
+          dateString: date.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric',
+            year: 'numeric'
+          }),
+          dayOfWeek: date.toLocaleDateString('en-US', { weekday: 'long' }),
+          sessionData: sessionForDate,
+          isToday: i === 0
+        });
       }
       
       setWorkoutCards(cards);
@@ -663,8 +659,13 @@ function PracticePage() {
       day: 'numeric' 
     });
     
+    console.log('Looking for session with date:', targetDateString);
+    console.log('Available sessions:', sessions.slice(0, 5).map(s => ({ date: s.date, dayNumber: s.dayNumber })));
+    
     // Find session by matching the date string format from the program data
     const matchedSession = sessions.find(session => session.date === targetDateString);
+    
+    console.log('Found session for', targetDateString, ':', matchedSession ? { date: matchedSession.date, dayNumber: matchedSession.dayNumber } : 'NOT FOUND');
     
     return matchedSession || null;
   };
