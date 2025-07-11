@@ -145,7 +145,7 @@ export default function ProgramsPage() {
       {/* Header */}
       <div className="sticky top-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800/50">
         <div className="container max-w-screen-xl mx-auto px-4 py-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex flex-col gap-4">
             <div className="flex items-center gap-4">
               <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
                 Programs
@@ -153,13 +153,13 @@ export default function ProgramsPage() {
             </div>
             
             {/* Search and Filter Bar */}
-            <div className="flex items-center gap-3">
-              <div className="relative">
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="relative flex-1 min-w-0">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   type="search"
                   placeholder="Search programs..."
-                  className="pl-10 w-64 bg-gray-800/50 border-gray-700 focus:border-blue-500"
+                  className="pl-10 w-full min-w-[200px] bg-gray-800/50 border-gray-700 focus:border-blue-500"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -167,7 +167,7 @@ export default function ProgramsPage() {
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="bg-gray-800/50 border-gray-700 hover:bg-gray-700">
+                  <Button variant="outline" className="bg-gray-800/50 border-gray-700 hover:bg-gray-700 flex-shrink-0">
                     <Filter className="h-4 w-4 mr-2" />
                     Filter
                     <ChevronDown className="h-4 w-4 ml-2" />
@@ -190,7 +190,7 @@ export default function ProgramsPage() {
               </DropdownMenu>
               
               {/* View Toggle */}
-              <div className="flex items-center bg-gray-800/50 border border-gray-700 rounded-md">
+              <div className="flex items-center bg-gray-800/50 border border-gray-700 rounded-md flex-shrink-0">
                 <Button
                   variant={viewMode === "cards" ? "default" : "ghost"}
                   size="sm"
