@@ -10,7 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Loader2, Save, Mic, MicOff, Volume2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Loader2, Save, Mic, MicOff, Volume2, Star, Crown } from "lucide-react";
 import { Link } from "wouter";
 
 export default function JournalEntryPage() {
@@ -44,8 +45,18 @@ export default function JournalEntryPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   
-  // Check if user has Pro/Star subscription
-  const hasVoiceAccess = athleteProfile?.subscription === 'pro' || athleteProfile?.subscription === 'star';
+  // Check if user has Pro/Star subscription (multiple ways to check)
+  const userTier = user?.subscriptionTier || athleteProfile?.subscription || 'free';
+  const hasVoiceAccess = userTier === 'pro' || userTier === 'star';
+  
+
+  
+  // Get subscription icon
+  const getSubscriptionIcon = (tier: string) => {
+    if (tier === 'star') return <Star className="h-3 w-3" />;
+    if (tier === 'pro') return <Crown className="h-3 w-3" />;
+    return null;
+  };
   
   // Voice recording functions
   const startRecording = useCallback(async () => {
@@ -273,31 +284,61 @@ export default function JournalEntryPage() {
             </div>
 
             {/* Notes Textarea with Voice Recording */}
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium text-white">Notes</label>
                 {hasVoiceAccess && (
                   <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={isRecording ? stopRecording : startRecording}
-                      disabled={isTranscribing}
-                      className="h-8 px-2 text-white hover:bg-white/10"
-                    >
-                      {isRecording ? (
-                        <MicOff className="h-4 w-4 text-red-400" />
-                      ) : (
-                        <Mic className="h-4 w-4" />
+                    <Badge variant="outline" className="border-white/20 text-white text-xs">
+                      {getSubscriptionIcon(userTier)}
+                      <span className="ml-1">{userTier.toUpperCase()}</span>
+                    </Badge>
+                    <div className="h-4 w-px bg-white/20"></div>
+                    <span className="text-xs text-white/60">Voice Recording</span>
+                  </div>
+                )}
+              </div>
+              
+              {/* Voice Recording Controls */}
+              {hasVoiceAccess && (
+                <div className="bg-white/5 border border-white/20 rounded-lg p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Button
+                        type="button"
+                        variant={isRecording ? "destructive" : "default"}
+                        size="sm"
+                        onClick={isRecording ? stopRecording : startRecording}
+                        disabled={isTranscribing}
+                        className={`h-9 px-3 ${
+                          isRecording 
+                            ? 'bg-red-500 hover:bg-red-600 text-white' 
+                            : 'bg-white/10 hover:bg-white/20 text-white border-white/20'
+                        }`}
+                      >
+                        {isRecording ? (
+                          <>
+                            <MicOff className="h-4 w-4 mr-2" />
+                            <span className="text-sm">Stop Recording</span>
+                          </>
+                        ) : (
+                          <>
+                            <Mic className="h-4 w-4 mr-2" />
+                            <span className="text-sm">Start Recording</span>
+                          </>
+                        )}
+                      </Button>
+                      
+                      {isRecording && (
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                          <span className="text-xs text-white/60">Recording...</span>
+                        </div>
                       )}
-                      <span className="ml-1 text-xs">
-                        {isRecording ? 'Stop' : 'Record'}
-                      </span>
-                    </Button>
+                    </div>
                     
                     {audioBlob && (
-                      <>
+                      <div className="flex items-center gap-2">
                         <Button
                           type="button"
                           variant="ghost"
@@ -323,11 +364,11 @@ export default function JournalEntryPage() {
                             "Transcribe"
                           )}
                         </Button>
-                      </>
+                      </div>
                     )}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
               
               <Textarea
                 value={notes}
@@ -338,9 +379,22 @@ export default function JournalEntryPage() {
               />
               
               {!hasVoiceAccess && (
-                <div className="flex items-center gap-2 text-xs text-white/60">
-                  <Mic className="h-3 w-3" />
-                  <span>Voice recording available with Pro/Star subscription</span>
+                <div className="bg-white/5 border border-white/20 rounded-lg p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-9 w-9 bg-white/10 rounded-lg flex items-center justify-center">
+                        <Mic className="h-4 w-4 text-white/60" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-white">Voice Recording</div>
+                        <div className="text-xs text-white/60">Available with Pro/Star subscription</div>
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="border-white/20 text-white/60 text-xs">
+                      <Crown className="h-3 w-3 mr-1" />
+                      Premium
+                    </Badge>
+                  </div>
                 </div>
               )}
             </div>
