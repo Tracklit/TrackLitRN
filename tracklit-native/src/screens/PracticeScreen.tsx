@@ -1,8 +1,35 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import JournalEntryModal from '../components/JournalEntryModal';
 
 const PracticeScreen: React.FC = () => {
+  const [journalModalVisible, setJournalModalVisible] = useState(false);
+  const [selectedDate, setSelectedDate] = useState('');
+
+  const handleOpenJournal = (date: string) => {
+    setSelectedDate(date);
+    setJournalModalVisible(true);
+  };
+
+  const handleSaveJournal = async (entry: any) => {
+    try {
+      // Here you would integrate with your journal API
+      console.log('Saving journal entry:', entry);
+      Alert.alert('Success', 'Journal entry saved successfully!');
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  };
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -12,7 +39,15 @@ const PracticeScreen: React.FC = () => {
       
       <ScrollView style={styles.content}>
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Warm-up</Text>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>Warm-up</Text>
+            <TouchableOpacity 
+              style={styles.journalButton}
+              onPress={() => handleOpenJournal(formatDate(new Date()))}
+            >
+              <Text style={styles.journalButtonText}>✏️</Text>
+            </TouchableOpacity>
+          </View>
           <Text style={styles.cardText}>• 10 minutes light jogging</Text>
           <Text style={styles.cardText}>• Dynamic stretching routine</Text>
           <Text style={styles.cardText}>• High knees and butt kicks</Text>
@@ -22,7 +57,15 @@ const PracticeScreen: React.FC = () => {
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Sprint Work</Text>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>Sprint Work</Text>
+            <TouchableOpacity 
+              style={styles.journalButton}
+              onPress={() => handleOpenJournal(formatDate(new Date()))}
+            >
+              <Text style={styles.journalButtonText}>✏️</Text>
+            </TouchableOpacity>
+          </View>
           <Text style={styles.cardText}>• 6 x 50m accelerations</Text>
           <Text style={styles.cardText}>• 4 x 100m at 90% effort</Text>
           <Text style={styles.cardText}>• 2 x 200m tempo runs</Text>
@@ -32,7 +75,15 @@ const PracticeScreen: React.FC = () => {
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Strength Training</Text>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>Strength Training</Text>
+            <TouchableOpacity 
+              style={styles.journalButton}
+              onPress={() => handleOpenJournal(formatDate(new Date()))}
+            >
+              <Text style={styles.journalButtonText}>✏️</Text>
+            </TouchableOpacity>
+          </View>
           <Text style={styles.cardText}>• 3 sets of squats</Text>
           <Text style={styles.cardText}>• 3 sets of deadlifts</Text>
           <Text style={styles.cardText}>• Core conditioning</Text>
@@ -42,7 +93,15 @@ const PracticeScreen: React.FC = () => {
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Cool Down</Text>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>Cool Down</Text>
+            <TouchableOpacity 
+              style={styles.journalButton}
+              onPress={() => handleOpenJournal(formatDate(new Date()))}
+            >
+              <Text style={styles.journalButtonText}>✏️</Text>
+            </TouchableOpacity>
+          </View>
           <Text style={styles.cardText}>• 5 minutes easy walking</Text>
           <Text style={styles.cardText}>• Static stretching</Text>
           <Text style={styles.cardText}>• Foam rolling</Text>
@@ -51,6 +110,13 @@ const PracticeScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      <JournalEntryModal
+        visible={journalModalVisible}
+        onClose={() => setJournalModalVisible(false)}
+        date={selectedDate}
+        onSave={handleSaveJournal}
+      />
     </SafeAreaView>
   );
 };
@@ -87,11 +153,28 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#374151',
   },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   cardTitle: {
     fontSize: 20,
     fontWeight: '600',
     color: '#ffffff',
-    marginBottom: 12,
+    flex: 1,
+  },
+  journalButton: {
+    backgroundColor: '#374151',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginLeft: 12,
+  },
+  journalButtonText: {
+    fontSize: 16,
+    color: '#ffffff',
   },
   cardText: {
     fontSize: 16,
