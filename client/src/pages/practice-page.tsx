@@ -6,7 +6,7 @@ import { toast } from "@/hooks/use-toast";
 
 import { useProgramSessions } from "@/hooks/use-program-sessions";
 import { useGymData } from "@/hooks/use-gym-data";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Meet } from "@shared/schema";
 import { PageContainer } from "@/components/page-container";
