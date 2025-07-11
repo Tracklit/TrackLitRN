@@ -643,6 +643,29 @@ function PracticePage() {
                   </div>
                 </div>
               </div>
+            ) : selectedProgram.program?.isUploadedProgram && selectedProgram.program?.programFileUrl ? (
+              /* Uploaded document program display */
+              <div className="p-3 bg-primary/5" style={{ borderRadius: '6px' }}>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Upload className="h-5 w-5 text-primary" />
+                    <h3 className="font-medium">Program Document</h3>
+                  </div>
+                  
+                  <div className="bg-muted/30 p-2" style={{ borderRadius: '6px' }}>
+                    <iframe
+                      src={selectedProgram.program.programFileUrl}
+                      className="w-full h-[70vh] border-0"
+                      style={{ borderRadius: '4px' }}
+                      title="Program Document"
+                    />
+                  </div>
+                  
+                  <div className="text-xs text-muted-foreground mt-2 p-2 bg-muted/20" style={{ borderRadius: '6px' }}>
+                    <p>This is an uploaded program document. Use the controls in the viewer to navigate through your training program.</p>
+                  </div>
+                </div>
+              </div>
             ) : (
               /* Daily Workout Cards List */
               <div className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
