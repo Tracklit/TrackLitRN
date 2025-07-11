@@ -483,9 +483,9 @@ function ModernProgramCard({ program, type, creator, viewMode }: {
 
   return (
     <Card 
-      className="group break-inside-avoid mb-6 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/10 cursor-pointer bg-primary/5 border border-primary/25 backdrop-blur-sm hover:border-blue-500/50"
+      className="group break-inside-avoid mb-6 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/10 cursor-pointer bg-primary/5 backdrop-blur-sm hover:border-blue-500/50"
       onClick={() => window.location.href = `/programs/${program.programId || program.id}`}
-      style={{ borderRadius: '6px' }}
+      style={{ borderRadius: '6px', border: '1px solid rgba(168, 85, 247, 0.1)' }}
     >
       {/* Header with status badge */}
       <CardHeader className="p-4 pb-3">
@@ -674,7 +674,7 @@ function CompactProgramListItem({ program, viewMode, creator }: {
   };
 
   return (
-    <Card className="bg-primary/5 border border-primary/25 hover:border-gray-600/50 transition-all duration-200" style={{ borderRadius: '6px' }}>
+    <Card className="bg-primary/5 hover:border-gray-600/50 transition-all duration-200" style={{ borderRadius: '6px', border: '1px solid rgba(168, 85, 247, 0.1)' }}>
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex-1 min-w-0">

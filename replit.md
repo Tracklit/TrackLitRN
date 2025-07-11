@@ -119,6 +119,10 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
   - Fixed Grid toggle being out of viewport on mobile with responsive header layout
   - Added triple dot menu functionality to compact list view cards with edit/delete actions
   - Applied same blue-purple gradient background to compact list cards for consistency
+  - Updated card backgrounds to match Home page cards (bg-primary/5 with subtle borders)
+  - Applied consistent 6px border radius to all card elements and components
+  - Updated text colors to use proper theme colors (text-foreground, text-muted-foreground)
+  - Refined border styling to use 1px very faint border (rgba(168, 85, 247, 0.1)) for subtle appearance
 - July 10, 2025: Enhanced Track Workout card styling and transitions ✅
   - Weakened outer glow from 20px to 8px opacity for subtler appearance
   - Changed background gradient from purple-to-blue to blue-to-purple for different visual flow
