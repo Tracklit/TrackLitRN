@@ -116,6 +116,9 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
   - Applied view toggle to all program tabs (My Programs, Purchased Programs)
   - Compact list view displays essential information: title, description, duration, and completion status
   - Enhanced visual hierarchy with proper spacing and typography in both views
+  - Fixed Grid toggle being out of viewport on mobile with responsive header layout
+  - Added triple dot menu functionality to compact list view cards with edit/delete actions
+  - Applied same blue-purple gradient background to compact list cards for consistency
 - July 10, 2025: Enhanced Track Workout card styling and transitions ✅
   - Weakened outer glow from 20px to 8px opacity for subtler appearance
   - Changed background gradient from purple-to-blue to blue-to-purple for different visual flow

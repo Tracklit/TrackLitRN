@@ -635,9 +635,46 @@ function CompactProgramListItem({ program, viewMode, creator }: {
   creator?: any;
 }) {
   const progress = program.progress ? Math.round((program.completedSessions / program.totalSessions) * 100) : 0;
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Create mutation for deleting programs
+  const deleteProgramMutation = useMutation({
+    mutationFn: async (programId: number) => {
+      const response = await apiRequest("DELETE", `/api/programs/${programId}`, {});
+      
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error || "Failed to delete program");
+      }
+      
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Program deleted",
+        description: "The program has been successfully deleted",
+      });
+      // Refresh the programs list
+      queryClient.invalidateQueries({ queryKey: ['/api/programs'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error deleting program",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleDeleteProgram = () => {
+    if (confirm("Are you sure you want to delete this program? This action cannot be undone.")) {
+      deleteProgramMutation.mutate(program.id);
+    }
+  };
 
   return (
-    <Card className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 border-gray-700/30 hover:border-gray-600/50 transition-all duration-200" style={{ borderRadius: '6px' }}>
+    <Card className="bg-gradient-to-br from-blue-900/20 via-purple-900/20 to-gray-900/30 border-gray-700/30 hover:border-gray-600/50 transition-all duration-200" style={{ borderRadius: '6px' }}>
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex-1 min-w-0">
@@ -657,6 +694,29 @@ function CompactProgramListItem({ program, viewMode, creator }: {
               <div className="text-xs text-gray-500">
                 {progress}% complete
               </div>
+            )}
+            
+            {/* Actions Menu */}
+            {viewMode === "creator" && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0 text-gray-400 hover:text-white">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 bg-gray-800 border-gray-700">
+                  <DropdownMenuItem asChild>
+                    <Link href={`/programs/${program.id}/edit`} className="flex items-center cursor-pointer">
+                      <Edit3 className="h-4 w-4 mr-2" />
+                      Edit Program
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleDeleteProgram} className="text-red-400 hover:text-red-300">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Program
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
         </div>
