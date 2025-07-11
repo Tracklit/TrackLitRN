@@ -123,6 +123,10 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
   - Applied consistent 6px border radius to all card elements and components
   - Updated text colors to use proper theme colors (text-foreground, text-muted-foreground)
   - Refined border styling to use 1px very faint border (rgba(168, 85, 247, 0.1)) for subtle appearance
+- July 11, 2025: Updated Practice page Track Workout icons ✅
+  - Replaced dumbbell icons with bullet point icons (Circle with fill-current) on Track Workout cards
+  - Updated icons in 60m/100m Sprint, 200m Sprint, 400m Sprint, and Gym Exercises sections
+  - Enhanced visual consistency with filled circle bullet point design
 - July 10, 2025: Enhanced Track Workout card styling and transitions ✅
   - Weakened outer glow from 20px to 8px opacity for subtler appearance
   - Changed background gradient from purple-to-blue to blue-to-purple for different visual flow

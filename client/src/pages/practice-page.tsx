@@ -24,7 +24,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Mic, Loader2, MapPin, ChevronLeft, ChevronRight, ChevronDown, Calendar, Play, Pause, Camera, Video, Upload, X, Save, CheckCircle, ClipboardList, Calculator, ChevronUp, CalendarRange, Dumbbell, Target, Timer } from "lucide-react";
+import { Mic, Loader2, MapPin, ChevronLeft, ChevronRight, ChevronDown, Calendar, Play, Pause, Camera, Video, Upload, X, Save, CheckCircle, ClipboardList, Calculator, ChevronUp, CalendarRange, Target, Timer, Circle } from "lucide-react";
 import { Link } from "wouter";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { WorkoutReactions } from "@/components/workout-reactions";
@@ -110,7 +110,7 @@ function WorkoutCardContent({ sessionData, athleteProfile, gymData }: { sessionD
         <div className="p-4 bg-white/10 rounded-lg">
           <div className="flex items-start">
             <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
-              <Dumbbell className="h-4 w-4 text-white" />
+              <Circle className="h-4 w-4 text-white fill-current" />
             </div>
             <div className="flex-1">
               <p className="font-medium text-sm text-white mb-1">60m/100m Sprint</p>
@@ -132,7 +132,7 @@ function WorkoutCardContent({ sessionData, athleteProfile, gymData }: { sessionD
         <div className="p-4 bg-white/10 rounded-lg">
           <div className="flex items-start">
             <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
-              <Dumbbell className="h-4 w-4 text-white" />
+              <Circle className="h-4 w-4 text-white fill-current" />
             </div>
             <div className="flex-1">
               <p className="font-medium text-sm text-white mb-1">200m Sprint</p>
@@ -154,7 +154,7 @@ function WorkoutCardContent({ sessionData, athleteProfile, gymData }: { sessionD
         <div className="p-4 bg-white/10 rounded-lg">
           <div className="flex items-start">
             <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
-              <Dumbbell className="h-4 w-4 text-white" />
+              <Circle className="h-4 w-4 text-white fill-current" />
             </div>
             <div className="flex-1">
               <p className="font-medium text-sm text-white mb-1">400m Sprint</p>
@@ -171,7 +171,7 @@ function WorkoutCardContent({ sessionData, athleteProfile, gymData }: { sessionD
         <div className="p-4 bg-white/10 rounded-lg">
           <div className="flex items-start">
             <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
-              <Dumbbell className="h-4 w-4 text-white" />
+              <Circle className="h-4 w-4 text-white fill-current" />
             </div>
             <div className="flex-1">
               <p className="font-medium text-sm text-white mb-1">Gym Exercises</p>
