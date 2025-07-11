@@ -108,6 +108,14 @@ User Login → Passport.js Validation → Session Creation → Role-based Route 
 - **Asset Management**: Local file uploads with cleanup services
 
 ## Recent Changes
+- July 11, 2025: Enhanced Programs page with view toggle and refined styling ✅
+  - Added view toggle between masonry card view and compact list view using Grid/List icons
+  - Removed level labels from program cards for cleaner appearance
+  - Removed animation/blinking from floating action button
+  - Created CompactProgramListItem component for text-only list view showing program name and description
+  - Applied view toggle to all program tabs (My Programs, Purchased Programs)
+  - Compact list view displays essential information: title, description, duration, and completion status
+  - Enhanced visual hierarchy with proper spacing and typography in both views
 - July 10, 2025: Enhanced Track Workout card styling and transitions ✅
   - Weakened outer glow from 20px to 8px opacity for subtler appearance
   - Changed background gradient from purple-to-blue to blue-to-purple for different visual flow

@@ -66,7 +66,9 @@ import {
   Star,
   CheckCircle,
   XCircle,
-  ChevronDown
+  ChevronDown,
+  Grid3X3,
+  List
 } from "lucide-react";
 
 export default function ProgramsPage() {
@@ -74,6 +76,7 @@ export default function ProgramsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [sortBy, setSortBy] = useState("recent");
+  const [viewMode, setViewMode] = useState<"cards" | "list">("cards");
   const { user } = useAuth();
   
   // Query for user's created programs
@@ -185,6 +188,26 @@ export default function ProgramsPage() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              
+              {/* View Toggle */}
+              <div className="flex items-center bg-gray-800/50 border border-gray-700 rounded-md">
+                <Button
+                  variant={viewMode === "cards" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("cards")}
+                  className={`px-3 py-1 rounded-l-md ${viewMode === "cards" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white"}`}
+                >
+                  <Grid3X3 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === "list" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("list")}
+                  className={`px-3 py-1 rounded-r-md ${viewMode === "list" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white"}`}
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -235,15 +258,27 @@ export default function ProgramsPage() {
                 }
               />
             ) : (
-              <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
-                {filteredUserPrograms.map((program) => (
-                  <ModernProgramCard 
-                    key={program.id} 
-                    program={program}
-                    viewMode="creator"
-                  />
-                ))}
-              </div>
+              viewMode === "cards" ? (
+                <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
+                  {filteredUserPrograms.map((program) => (
+                    <ModernProgramCard 
+                      key={program.id} 
+                      program={program}
+                      viewMode="creator"
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {filteredUserPrograms.map((program) => (
+                    <CompactProgramListItem 
+                      key={program.id}
+                      program={program}
+                      viewMode="creator"
+                    />
+                  ))}
+                </div>
+              )
             )}
           </TabsContent>
         
@@ -266,15 +301,27 @@ export default function ProgramsPage() {
                 }
               />
             ) : (
-              <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
-                {filteredPurchasedPrograms.map((program) => (
-                  <ModernProgramCard 
-                    key={program.id} 
-                    program={program}
-                    viewMode="purchased"
-                  />
-                ))}
-              </div>
+              viewMode === "cards" ? (
+                <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
+                  {filteredPurchasedPrograms.map((program) => (
+                    <ModernProgramCard 
+                      key={program.id} 
+                      program={program}
+                      viewMode="purchased"
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {filteredPurchasedPrograms.map((program) => (
+                    <CompactProgramListItem 
+                      key={program.id}
+                      program={program}
+                      viewMode="purchased"
+                    />
+                  ))}
+                </div>
+              )
             )}
           </TabsContent>
         
@@ -331,7 +378,7 @@ export default function ProgramsPage() {
         <div className="fixed bottom-20 right-6 z-50">
           <Button 
             asChild 
-            className="h-14 w-14 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300 animate-pulse"
+            className="h-14 w-14 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
           >
             <Link href="/programs/create">
               <Plus className="h-6 w-6" />
@@ -523,12 +570,7 @@ function ModernProgramCard({ program, type, creator, viewMode }: {
               {program.category}
             </Badge>
           )}
-          {program.level && (
-            <Badge variant="outline" className="text-xs border-gray-600 text-gray-300">
-              <TrendingUp className="h-3 w-3 mr-1" />
-              {program.level}
-            </Badge>
-          )}
+
           {program.importedFromSheet && (
             <Badge variant="outline" className="text-xs border-green-600 text-green-400">
               <ExternalLink className="h-3 w-3 mr-1" />
@@ -583,6 +625,42 @@ function ModernProgramCard({ program, type, creator, viewMode }: {
         </div>
       )}
 
+    </Card>
+  );
+}
+
+function CompactProgramListItem({ program, viewMode, creator }: {
+  program: any;
+  viewMode: "creator" | "public" | "purchased";
+  creator?: any;
+}) {
+  const progress = program.progress ? Math.round((program.completedSessions / program.totalSessions) * 100) : 0;
+
+  return (
+    <Card className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 border-gray-700/30 hover:border-gray-600/50 transition-all duration-200" style={{ borderRadius: '6px' }}>
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-semibold text-white text-sm truncate">{program.title}</h3>
+              {program.isAssigned && <UserCheck className="h-4 w-4 text-blue-500 flex-shrink-0" />}
+              {!program.isAssigned && program.visibility === 'premium' && <Crown className="h-4 w-4 text-yellow-500 flex-shrink-0" />}
+              {!program.isAssigned && program.visibility === 'private' && <LockIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
+            </div>
+            <p className="text-xs text-gray-400 truncate">{program.description || "No description"}</p>
+          </div>
+          <div className="flex items-center gap-3 ml-4">
+            <div className="text-xs text-gray-500">
+              {program.duration || 0} days
+            </div>
+            {progress > 0 && (
+              <div className="text-xs text-gray-500">
+                {progress}% complete
+              </div>
+            )}
+          </div>
+        </div>
+      </CardContent>
     </Card>
   );
 }
