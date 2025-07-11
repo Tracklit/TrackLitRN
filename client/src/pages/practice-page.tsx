@@ -582,34 +582,37 @@ function PracticePage() {
     isLoading: isLoadingProgramSessions 
   } = useProgramSessions(selectedProgram?.programId || null);
 
-  // Generate workout cards for multiple days when program sessions are available
+  // Generate workout cards based on available program sessions
   useEffect(() => {
     if (programSessions && programSessions.length > 0) {
       setIsLoadingCards(true);
       
-      // Create cards for the specified number of days starting from today
-      const today = new Date();
+      // Create cards based on the actual sessions available, taking the first 'daysToShow' sessions
       const cards: any[] = [];
+      const today = new Date();
       
-      for (let i = 0; i < daysToShow; i++) {
-        const date = new Date(today);
-        date.setDate(today.getDate() + i);
+      // Take the first 'daysToShow' sessions from the program
+      const sessionsToShow = programSessions.slice(0, daysToShow);
+      
+      for (let i = 0; i < sessionsToShow.length; i++) {
+        const session = sessionsToShow[i];
         
-        // Find session for this date
-        const sessionForDate = findSessionForDate(programSessions, date);
+        // Parse the session date to create a proper Date object
+        // Session.date is in format "Mar-16", "Mar-17", etc.
+        const sessionDate = parseSessionDate(session.date);
         
-        if (sessionForDate) {
+        if (sessionDate) {
           cards.push({
-            id: `${date.getTime()}-${sessionForDate.dayNumber}`,
-            date: date,
-            dateString: date.toLocaleDateString('en-US', { 
+            id: `${sessionDate.getTime()}-${session.dayNumber}`,
+            date: sessionDate,
+            dateString: sessionDate.toLocaleDateString('en-US', { 
               month: 'short', 
               day: 'numeric',
               year: 'numeric'
             }),
-            dayOfWeek: date.toLocaleDateString('en-US', { weekday: 'long' }),
-            sessionData: sessionForDate,
-            isToday: i === 0
+            dayOfWeek: sessionDate.toLocaleDateString('en-US', { weekday: 'long' }),
+            sessionData: session,
+            isToday: isToday(sessionDate)
           });
         }
       }
@@ -619,19 +622,51 @@ function PracticePage() {
     }
   }, [programSessions, daysToShow]);
 
+  // Helper function to parse session date string (e.g., "Mar-16") to Date object
+  const parseSessionDate = (dateString: string): Date | null => {
+    if (!dateString || typeof dateString !== 'string') return null;
+    
+    // Parse format like "Mar-16"
+    const [monthStr, dayStr] = dateString.split('-');
+    if (!monthStr || !dayStr) return null;
+    
+    const monthMap: { [key: string]: number } = {
+      'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
+      'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+    };
+    
+    const month = monthMap[monthStr];
+    const day = parseInt(dayStr);
+    
+    if (month === undefined || isNaN(day)) return null;
+    
+    // Use current year or next year if the date already passed
+    const currentYear = new Date().getFullYear();
+    const testDate = new Date(currentYear, month, day);
+    
+    return testDate;
+  };
+
+  // Helper function to check if a date is today
+  const isToday = (date: Date): boolean => {
+    const today = new Date();
+    return date.toDateString() === today.toDateString();
+  };
+
   // Helper function to find session data for a specific date
   const findSessionForDate = (sessions: any[], targetDate: Date) => {
     if (!sessions || sessions.length === 0) return null;
     
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    targetDate.setHours(0, 0, 0, 0);
+    // Format target date as MMM-DD (e.g., "Jul-11")
+    const targetDateString = targetDate.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric' 
+    });
     
-    const daysDifference = Math.floor((targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    // Find session by matching the date string format from the program data
+    const matchedSession = sessions.find(session => session.date === targetDateString);
     
-    // Find session by calculating day number based on current date
-    const targetDayNumber = sessions[0].dayNumber + daysDifference;
-    return sessions.find(session => session.dayNumber === targetDayNumber) || null;
+    return matchedSession || null;
   };
 
   // Function to load more days
