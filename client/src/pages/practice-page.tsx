@@ -653,28 +653,23 @@ function PracticePage() {
   const findSessionForDate = (sessions: any[], targetDate: Date) => {
     if (!sessions || sessions.length === 0) return null;
     
-    // Calculate days from today to get the correct session index
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    targetDate.setHours(0, 0, 0, 0);
+    // Format target date as MMM-DD (e.g., "Jul-11")
+    const targetDateString = targetDate.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric' 
+    });
     
-    const daysDifference = Math.floor((targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    console.log('Looking for session with date:', targetDateString);
+    console.log('Available sessions (first 10):', sessions.slice(0, 10).map(s => ({ date: s.date, dayNumber: s.dayNumber })));
     
-    // Get the session at the calculated index (0-based)
-    const sessionIndex = daysDifference;
+    // Find session by exact date match
+    const matchedSession = sessions.find(session => session.date === targetDateString);
     
-    console.log('Looking for session at index:', sessionIndex, 'for date:', targetDate.toLocaleDateString());
-    console.log('Available sessions count:', sessions.length);
+    console.log('Found session for', targetDateString, ':', matchedSession ? 
+      { date: matchedSession.date, dayNumber: matchedSession.dayNumber, hasWorkout: !!(matchedSession.shortDistanceWorkout || matchedSession.mediumDistanceWorkout || matchedSession.longDistanceWorkout) } : 
+      'NOT FOUND');
     
-    // Return the session at the calculated index
-    if (sessionIndex >= 0 && sessionIndex < sessions.length) {
-      const session = sessions[sessionIndex];
-      console.log('Found session:', { date: session.date, dayNumber: session.dayNumber });
-      return session;
-    }
-    
-    console.log('No session found for index:', sessionIndex);
-    return null;
+    return matchedSession || null;
   };
 
   // Function to load more days
