@@ -325,22 +325,25 @@ export default function MeetsPage() {
             
             <Tabs defaultValue="upcoming" className="mt-4">
               <div className="flex justify-between items-center mb-6">
-                <TabsList className="bg-black border-gray-800">
+                <TabsList className="bg-card border-border" style={{ borderRadius: '6px' }}>
                   <TabsTrigger 
                     value="upcoming" 
-                    className="data-[state=active]:bg-black data-[state=active]:text-white"
+                    className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary text-muted-foreground"
+                    style={{ borderRadius: '6px' }}
                   >
                     Upcoming
                   </TabsTrigger>
                   <TabsTrigger 
                     value="past"
-                    className="data-[state=active]:bg-black data-[state=active]:text-white"
+                    className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary text-muted-foreground"
+                    style={{ borderRadius: '6px' }}
                   >
                     Past
                   </TabsTrigger>
                   <TabsTrigger 
                     value="calendar"
-                    className="data-[state=active]:bg-black data-[state=active]:text-white"
+                    className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary text-muted-foreground"
+                    style={{ borderRadius: '6px' }}
                   >
                     Calendar
                   </TabsTrigger>
@@ -367,27 +370,27 @@ export default function MeetsPage() {
                     {upcomingMeets
                       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                       .map(meet => (
-                      <Card key={meet.id} className="overflow-hidden bg-black/95 border border-gray-800/50 shadow-md">
+                      <Card key={meet.id} className="overflow-hidden bg-primary/5 backdrop-blur-sm hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300" style={{ borderRadius: '6px', border: '1px solid rgba(168, 85, 247, 0.1)' }}>
                         <CardContent className="p-4">
                           <div className="flex flex-col">
-                            <h3 className="font-medium text-xl text-white mb-2">{meet.name}</h3>
+                            <h3 className="font-medium text-xl text-foreground mb-2">{meet.name}</h3>
                             <div className="flex flex-col space-y-2 mb-3">
                               <div className="flex items-center">
-                                <Calendar className="h-4 w-4 mr-2 text-blue-400" />
-                                <span className="text-blue-300">{formatDate(meet.date)} • {formatTime(meet.date)}</span>
+                                <Calendar className="h-4 w-4 mr-2 text-primary" />
+                                <span className="text-muted-foreground">{formatDate(meet.date)} • {formatTime(meet.date)}</span>
                               </div>
                               <div className="flex items-center">
-                                <MapPin className="h-4 w-4 mr-2 text-blue-400" />
-                                <span className="text-blue-300">{meet.location}</span>
+                                <MapPin className="h-4 w-4 mr-2 text-primary" />
+                                <span className="text-muted-foreground">{meet.location}</span>
                               </div>
                               {meet.websiteUrl && (
                                 <div className="flex items-center">
-                                  <Trophy className="h-4 w-4 mr-2 text-blue-400" />
+                                  <Trophy className="h-4 w-4 mr-2 text-primary" />
                                   <a 
                                     href={meet.websiteUrl} 
                                     target="_blank" 
                                     rel="noopener noreferrer"
-                                    className="text-blue-300 hover:text-blue-100 underline text-sm"
+                                    className="text-primary hover:text-foreground underline text-sm"
                                   >
                                     Official Meet Info
                                   </a>
@@ -397,7 +400,7 @@ export default function MeetsPage() {
                             
                             <div className="flex flex-wrap gap-2 my-3">
                               {meet.events?.map(event => (
-                                <Badge key={event} className="bg-blue-900/60 text-blue-200 hover:bg-blue-800">{event}</Badge>
+                                <Badge key={event} className="bg-primary/20 text-primary hover:bg-primary/30" style={{ borderRadius: '6px' }}>{event}</Badge>
                               ))}
                             </div>
                             
@@ -409,22 +412,22 @@ export default function MeetsPage() {
                                   <Button 
                                     variant="outline" 
                                     size="sm"
-                                    className="border-blue-600 text-blue-400 hover:bg-blue-800/30"
+                                    className="border-primary/25 text-muted-foreground hover:text-foreground hover:bg-primary/10"
                                   >
                                     <MoreVertical className="h-4 w-4" />
                                   </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent className="bg-blue-900 border-blue-700">
+                                <DropdownMenuContent className="bg-card border-border" style={{ borderRadius: '6px' }}>
                                   <DropdownMenuItem 
                                     onClick={() => setSelectedMeet(selectedMeet?.id === meet.id ? null : meet)}
-                                    className="text-blue-200 hover:bg-blue-800 cursor-pointer"
+                                    className="text-foreground hover:bg-primary/10 cursor-pointer"
                                   >
                                     <Clock className="h-4 w-4 mr-2" />
                                     {selectedMeet?.id === meet.id ? 'Hide Preparation' : 'View Preparation'}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem 
                                     onClick={() => handleShareMeet(meet)}
-                                    className="text-blue-200 hover:bg-blue-800 cursor-pointer"
+                                    className="text-foreground hover:bg-primary/10 cursor-pointer"
                                   >
                                     <Users className="h-4 w-4 mr-2" />
                                     Share Meet
@@ -432,7 +435,7 @@ export default function MeetsPage() {
                                   {meet.websiteUrl && (
                                     <DropdownMenuItem 
                                       onClick={() => window.open(meet.websiteUrl, '_blank')}
-                                      className="text-blue-200 hover:bg-blue-800 cursor-pointer"
+                                      className="text-foreground hover:bg-primary/10 cursor-pointer"
                                     >
                                       <ExternalLink className="h-4 w-4 mr-2" />
                                       Official Website
@@ -467,7 +470,7 @@ export default function MeetsPage() {
                     ))}
                   </div>
                 ) : (
-                  <Card className="overflow-hidden bg-black/95 border border-gray-800/50 text-center p-8">
+                  <Card className="overflow-hidden bg-primary/5 backdrop-blur-sm text-center p-8" style={{ borderRadius: '6px', border: '1px solid rgba(168, 85, 247, 0.1)' }}>
                     <p className="text-muted-foreground mb-4">No upcoming meets</p>
                     <Button
                       onClick={() => setLocation('/meets/create')}
@@ -489,27 +492,27 @@ export default function MeetsPage() {
                     {pastMeets
                       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                       .map(meet => (
-                      <Card key={meet.id} className="overflow-hidden bg-black/95 border border-gray-800/50 shadow-md">
+                      <Card key={meet.id} className="overflow-hidden bg-primary/5 backdrop-blur-sm hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300" style={{ borderRadius: '6px', border: '1px solid rgba(168, 85, 247, 0.1)' }}>
                         <CardContent className="p-4">
                           <div className="flex flex-col">
-                            <h3 className="font-medium text-xl text-white mb-2">{meet.name}</h3>
+                            <h3 className="font-medium text-xl text-foreground mb-2">{meet.name}</h3>
                             <div className="flex flex-col space-y-2 mb-3">
                               <div className="flex items-center">
-                                <Calendar className="h-4 w-4 mr-2 text-blue-400" />
-                                <span className="text-blue-300">{formatDate(meet.date)} • {formatTime(meet.date)}</span>
+                                <Calendar className="h-4 w-4 mr-2 text-primary" />
+                                <span className="text-muted-foreground">{formatDate(meet.date)} • {formatTime(meet.date)}</span>
                               </div>
                               <div className="flex items-center">
-                                <MapPin className="h-4 w-4 mr-2 text-blue-400" />
-                                <span className="text-blue-300">{meet.location}</span>
+                                <MapPin className="h-4 w-4 mr-2 text-primary" />
+                                <span className="text-muted-foreground">{meet.location}</span>
                               </div>
                               {meet.websiteUrl && (
                                 <div className="flex items-center">
-                                  <Trophy className="h-4 w-4 mr-2 text-blue-400" />
+                                  <Trophy className="h-4 w-4 mr-2 text-primary" />
                                   <a 
                                     href={meet.websiteUrl} 
                                     target="_blank" 
                                     rel="noopener noreferrer"
-                                    className="text-blue-300 hover:text-blue-100 underline text-sm"
+                                    className="text-primary hover:text-foreground underline text-sm"
                                   >
                                     Official Meet Info
                                   </a>
@@ -519,7 +522,7 @@ export default function MeetsPage() {
                             
                             <div className="flex flex-wrap gap-2 my-3">
                               {meet.events?.map(event => (
-                                <Badge key={event} className="bg-blue-900/60 text-blue-200 hover:bg-blue-800">{event}</Badge>
+                                <Badge key={event} className="bg-primary/20 text-primary hover:bg-primary/30" style={{ borderRadius: '6px' }}>{event}</Badge>
                               ))}
                             </div>
                             
@@ -529,22 +532,22 @@ export default function MeetsPage() {
                                   <Button 
                                     variant="outline" 
                                     size="sm"
-                                    className="border-blue-600 text-blue-400 hover:bg-blue-800/30"
+                                    className="border-primary/25 text-muted-foreground hover:text-foreground hover:bg-primary/10"
                                   >
                                     <MoreVertical className="h-4 w-4" />
                                   </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent className="bg-blue-900 border-blue-700">
+                                <DropdownMenuContent className="bg-card border-border" style={{ borderRadius: '6px' }}>
                                   <DropdownMenuItem 
                                     onClick={() => setSelectedPastMeet(selectedPastMeet?.id === meet.id ? null : meet)}
-                                    className="text-blue-200 hover:bg-blue-800 cursor-pointer"
+                                    className="text-foreground hover:bg-primary/10 cursor-pointer"
                                   >
                                     <Trophy className="h-4 w-4 mr-2" />
                                     {selectedPastMeet?.id === meet.id ? 'Hide Results' : 'Log Results'}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem 
                                     onClick={() => handleShareMeet(meet)}
-                                    className="text-blue-200 hover:bg-blue-800 cursor-pointer"
+                                    className="text-foreground hover:bg-primary/10 cursor-pointer"
                                   >
                                     <Users className="h-4 w-4 mr-2" />
                                     Share Meet
@@ -552,7 +555,7 @@ export default function MeetsPage() {
                                   {meet.websiteUrl && (
                                     <DropdownMenuItem 
                                       onClick={() => window.open(meet.websiteUrl, '_blank')}
-                                      className="text-blue-200 hover:bg-blue-800 cursor-pointer"
+                                      className="text-foreground hover:bg-primary/10 cursor-pointer"
                                     >
                                       <ExternalLink className="h-4 w-4 mr-2" />
                                       Official Website
@@ -694,8 +697,8 @@ export default function MeetsPage() {
                     ))}
                   </div>
                 ) : (
-                  <Card className="overflow-hidden bg-[#010a18] border border-blue-800/60 text-center p-8">
-                    <p className="text-blue-300">No past meets</p>
+                  <Card className="overflow-hidden bg-primary/5 backdrop-blur-sm text-center p-8" style={{ borderRadius: '6px', border: '1px solid rgba(168, 85, 247, 0.1)' }}>
+                    <p className="text-muted-foreground">No past meets</p>
                   </Card>
                 )}
               </TabsContent>
@@ -707,24 +710,24 @@ export default function MeetsPage() {
                     
                     {selectedMeet && (
                       <div className="mt-6">
-                        <Card className="overflow-hidden bg-[#010a18] border border-blue-800/60 shadow-md">
+                        <Card className="overflow-hidden bg-primary/5 backdrop-blur-sm hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300" style={{ borderRadius: '6px', border: '1px solid rgba(168, 85, 247, 0.1)' }}>
                           <CardContent className="p-4">
                             <div className="flex flex-col">
-                              <h3 className="font-medium text-xl text-white mb-2">{selectedMeet.name}</h3>
+                              <h3 className="font-medium text-xl text-foreground mb-2">{selectedMeet.name}</h3>
                               <div className="flex flex-col space-y-2 mb-3">
                                 <div className="flex items-center">
-                                  <Calendar className="h-4 w-4 mr-2 text-blue-400" />
-                                  <span className="text-blue-300">{formatDate(selectedMeet.date)} • {formatTime(selectedMeet.date)}</span>
+                                  <Calendar className="h-4 w-4 mr-2 text-primary" />
+                                  <span className="text-muted-foreground">{formatDate(selectedMeet.date)} • {formatTime(selectedMeet.date)}</span>
                                 </div>
                                 <div className="flex items-center">
-                                  <MapPin className="h-4 w-4 mr-2 text-blue-400" />
-                                  <span className="text-blue-300">{selectedMeet.location}</span>
+                                  <MapPin className="h-4 w-4 mr-2 text-primary" />
+                                  <span className="text-muted-foreground">{selectedMeet.location}</span>
                                 </div>
                               </div>
                               
                               <div className="flex flex-wrap gap-2 my-3">
                                 {selectedMeet.events?.map(event => (
-                                  <Badge key={event} className="bg-blue-900/60 text-blue-200 hover:bg-blue-800">{event}</Badge>
+                                  <Badge key={event} className="bg-primary/20 text-primary hover:bg-primary/30" style={{ borderRadius: '6px' }}>{event}</Badge>
                                 ))}
                               </div>
                               
@@ -732,7 +735,7 @@ export default function MeetsPage() {
                                 <Button 
                                   variant="outline" 
                                   size="sm"
-                                  className="border-blue-600 text-blue-400 hover:bg-blue-800/30"
+                                  className="border-primary/25 text-muted-foreground hover:text-foreground hover:bg-primary/10"
                                   onClick={() => setIsCreateMeetOpen(true)}
                                 >
                                   Edit Meet
@@ -740,7 +743,7 @@ export default function MeetsPage() {
                                 <Button 
                                   variant="outline" 
                                   size="sm"
-                                  className="border-blue-600 text-blue-400 hover:bg-blue-800/30"
+                                  className="border-primary/25 text-muted-foreground hover:text-foreground hover:bg-primary/10"
                                   onClick={() => handleShareMeet(selectedMeet)}
                                 >
                                   <UserPlus className="h-4 w-4 mr-1" />
@@ -754,11 +757,11 @@ export default function MeetsPage() {
                     )}
                   </>
                 ) : (
-                  <Card className="overflow-hidden bg-[#010a18] border border-amber-600/60 shadow-md">
+                  <Card className="overflow-hidden bg-primary/5 backdrop-blur-sm shadow-md" style={{ borderRadius: '6px', border: '1px solid rgba(168, 85, 247, 0.1)' }}>
                     <CardContent className="p-8 text-center">
                       <Crown className="h-16 w-16 text-amber-400 mx-auto mb-4" />
-                      <h3 className="text-xl font-semibold text-white mb-2">Pro Feature</h3>
-                      <p className="text-blue-300 mb-4">
+                      <h3 className="text-xl font-semibold text-foreground mb-2">Pro Feature</h3>
+                      <p className="text-muted-foreground mb-4">
                         Upgrade to Pro to access the Calendar view and see all your meets in a monthly layout.
                       </p>
                       <Button className="bg-amber-600 hover:bg-amber-700 text-white">
@@ -778,7 +781,7 @@ export default function MeetsPage() {
 
       {/* Athlete Search Modal */}
       <Dialog open={isShareModalOpen} onOpenChange={setIsShareModalOpen}>
-        <DialogContent className="sm:max-w-md bg-background border border-border">
+        <DialogContent className="sm:max-w-md bg-background border border-border" style={{ borderRadius: '6px' }}>
           <DialogHeader>
             <DialogTitle className="text-foreground flex items-center">
               <UserPlus className="mr-2 h-5 w-5" />
@@ -792,18 +795,18 @@ export default function MeetsPage() {
           <div className="mt-4 space-y-4">
             <Input
               placeholder="Search athletes by name..."
-              className="bg-blue-900/30 border-blue-700 text-white placeholder-blue-400"
+              className="bg-primary/10 border-primary/25 text-foreground placeholder-muted-foreground"
             />
             
             <div className="max-h-48 overflow-y-auto space-y-2">
               {/* Connected athletes from actual data */}
               {['Alex Johnson', 'Sarah Chen', 'Mike Williams', 'Emma Davis'].map((athlete, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-blue-900/20 rounded-lg border border-blue-800/40">
+                <div key={index} className="flex items-center justify-between p-3 bg-primary/5 rounded-lg border border-primary/10" style={{ borderRadius: '6px' }}>
                   <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                    <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
                       <span className="text-white text-sm font-medium">{athlete.charAt(0)}</span>
                     </div>
-                    <span className="text-white">{athlete}</span>
+                    <span className="text-foreground">{athlete}</span>
                   </div>
                   <Button
                     size="sm"
@@ -816,7 +819,7 @@ export default function MeetsPage() {
               ))}
             </div>
             
-            <div className="text-center text-blue-400 text-sm">
+            <div className="text-center text-muted-foreground text-sm">
               Only athletes you're connected with appear here
             </div>
           </div>
