@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
-import { PageContainer } from '@/components/page-container';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -120,8 +120,8 @@ export default function SprinthiaPage() {
   const activeConversation = conversations.find((c: SprinthiaConversation) => c.id === activeConversationId);
 
   return (
-    <PageContainer className="pt-20">
-      <div className="flex-1 overflow-hidden" style={{ background: 'linear-gradient(to bottom right, #8b5cf6, #1e40af)' }}>
+    <div className="min-h-screen" style={{ background: 'linear-gradient(to bottom right, #8b5cf6, #1e40af)' }}>
+      <div className="pt-20 px-4 h-screen flex flex-col">
         <div className="flex items-center justify-between p-3 border-b border-white/20">
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-semibold text-white">Sprinthia AI Coach</h1>
@@ -298,6 +298,6 @@ export default function SprinthiaPage() {
             )}
           </div>
       </div>
-    </PageContainer>
+    </div>
   );
 }
