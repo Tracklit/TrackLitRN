@@ -490,7 +490,7 @@ function ModernProgramCard({ program, type, creator, viewMode }: {
       {/* Header with status badge */}
       <CardHeader className="p-4 pb-3">
         <div className="flex justify-between items-start mb-3">
-          <Badge className={`${statusInfo.color} text-white px-2 py-1 text-xs font-medium`}>
+          <Badge className={`${statusInfo.color} text-white px-2 py-1 text-xs font-medium rounded-md`}>
             <StatusIcon className="h-3 w-3 mr-1" />
             {statusInfo.label}
           </Badge>
@@ -502,7 +502,7 @@ function ModernProgramCard({ program, type, creator, viewMode }: {
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 bg-gray-800 border-gray-700">
+              <DropdownMenuContent align="end" className="w-48 bg-gray-800 border-gray-700 rounded-md">
                 <DropdownMenuItem asChild>
                   <Link href={`/programs/${program.id}`} className="flex items-center">
                     <Eye className="h-4 w-4 mr-2" />
@@ -565,20 +565,20 @@ function ModernProgramCard({ program, type, creator, viewMode }: {
         {/* Program details */}
         <div className="flex flex-wrap gap-2 mb-3">
           {program.category && (
-            <Badge variant="outline" className="text-xs border-gray-600 text-gray-300">
+            <Badge variant="outline" className="text-xs border-gray-600 text-gray-300 rounded-md">
               <Tag className="h-3 w-3 mr-1" />
               {program.category}
             </Badge>
           )}
 
           {program.importedFromSheet && (
-            <Badge variant="outline" className="text-xs border-green-600 text-green-400">
+            <Badge variant="outline" className="text-xs border-green-600 text-green-400 rounded-md">
               <ExternalLink className="h-3 w-3 mr-1" />
               Google Sheet
             </Badge>
           )}
           {program.isUploadedProgram && (
-            <Badge variant="outline" className="text-xs border-purple-600 text-purple-400">
+            <Badge variant="outline" className="text-xs border-purple-600 text-purple-400 rounded-md">
               <Upload className="h-3 w-3 mr-1" />
               Document
             </Badge>
@@ -704,7 +704,7 @@ function CompactProgramListItem({ program, viewMode, creator }: {
                     <MoreVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48 bg-gray-800 border-gray-700">
+                <DropdownMenuContent align="end" className="w-48 bg-gray-800 border-gray-700 rounded-md">
                   <DropdownMenuItem asChild>
                     <Link href={`/programs/${program.id}/edit`} className="flex items-center cursor-pointer">
                       <Edit3 className="h-4 w-4 mr-2" />
