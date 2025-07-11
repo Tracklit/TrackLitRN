@@ -24,7 +24,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Mic, Loader2, MapPin, ChevronLeft, ChevronRight, ChevronDown, Calendar, Play, Pause, Camera, Video, Upload, X, Save, CheckCircle, ClipboardList, Calculator, ChevronUp, CalendarRange, Target, Timer, Circle } from "lucide-react";
+import { Mic, Loader2, MapPin, ChevronLeft, ChevronRight, ChevronDown, Calendar, Play, Pause, Camera, Video, Upload, X, Save, CheckCircle, ClipboardList, Calculator, ChevronUp, CalendarRange, Target, Timer, Circle, PenTool } from "lucide-react";
 import { Link } from "wouter";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { WorkoutReactions } from "@/components/workout-reactions";
@@ -38,9 +38,256 @@ import {
 } from "@/components/ui/dialog";
 import { DayPicker } from "react-day-picker";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+
+// Define the journal entry type
+interface JournalEntry {
+  id: number;
+  userId: number;
+  title: string;
+  notes: string;
+  type: string;
+  content: any; // This will store mood ratings and workout details
+  isPublic: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Journal Entry Modal Component
+function JournalEntryModal({ isOpen, onClose, date }: { isOpen: boolean; onClose: () => void; date: string }) {
+  const [title, setTitle] = useState("");
+  const [notes, setNotes] = useState("");
+  const [type, setType] = useState("workout");
+  const [mood, setMood] = useState([5]);
+  const [energy, setEnergy] = useState([5]);
+  const [motivation, setMotivation] = useState([5]);
+  const [confidence, setConfidence] = useState([5]);
+  const [soreness, setSoreness] = useState([5]);
+  const [isPublic, setIsPublic] = useState(false);
+
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Create mutation for adding journal entry
+  const createMutation = useMutation({
+    mutationFn: async (entryData: any) => {
+      const response = await fetch('/api/journal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(entryData),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create journal entry');
+      }
+      
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/journal'] });
+      toast({
+        title: "Journal Entry Created",
+        description: "Your journal entry has been saved successfully.",
+        duration: 3000,
+      });
+      onClose();
+      resetForm();
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to Create Entry",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+        duration: 5000,
+      });
+    },
+  });
+
+  const resetForm = () => {
+    setTitle("");
+    setNotes("");
+    setType("workout");
+    setMood([5]);
+    setEnergy([5]);
+    setMotivation([5]);
+    setConfidence([5]);
+    setSoreness([5]);
+    setIsPublic(false);
+  };
+
+  const handleSubmit = () => {
+    if (!title.trim()) {
+      toast({
+        title: "Title Required",
+        description: "Please enter a title for your journal entry.",
+        variant: "destructive",
+        duration: 3000,
+      });
+      return;
+    }
+
+    const entryData = {
+      title: title.trim(),
+      notes: notes.trim(),
+      type,
+      isPublic,
+      content: {
+        mood: mood[0],
+        energy: energy[0],
+        motivation: motivation[0],
+        confidence: confidence[0],
+        soreness: soreness[0],
+        date: date,
+      },
+    };
+
+    createMutation.mutate(entryData);
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Journal Entry - {date}</DialogTitle>
+          <DialogDescription>
+            Record your thoughts, feelings, and notes about your training session.
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="space-y-4">
+          {/* Title Input */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Title</label>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Enter journal entry title..."
+              className="w-full"
+            />
+          </div>
+
+          {/* Notes Textarea */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Notes</label>
+            <Textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Write your thoughts about today's training..."
+              className="min-h-[100px]"
+            />
+          </div>
+
+          {/* Mood Ratings */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium">How are you feeling? (1-10)</h3>
+            
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Mood</span>
+                <div className="flex items-center gap-3">
+                  <Slider
+                    value={mood}
+                    onValueChange={setMood}
+                    max={10}
+                    min={1}
+                    step={1}
+                    className="w-32"
+                  />
+                  <span className="text-sm font-medium w-6">{mood[0]}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Energy</span>
+                <div className="flex items-center gap-3">
+                  <Slider
+                    value={energy}
+                    onValueChange={setEnergy}
+                    max={10}
+                    min={1}
+                    step={1}
+                    className="w-32"
+                  />
+                  <span className="text-sm font-medium w-6">{energy[0]}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Motivation</span>
+                <div className="flex items-center gap-3">
+                  <Slider
+                    value={motivation}
+                    onValueChange={setMotivation}
+                    max={10}
+                    min={1}
+                    step={1}
+                    className="w-32"
+                  />
+                  <span className="text-sm font-medium w-6">{motivation[0]}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Confidence</span>
+                <div className="flex items-center gap-3">
+                  <Slider
+                    value={confidence}
+                    onValueChange={setConfidence}
+                    max={10}
+                    min={1}
+                    step={1}
+                    className="w-32"
+                  />
+                  <span className="text-sm font-medium w-6">{confidence[0]}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Soreness</span>
+                <div className="flex items-center gap-3">
+                  <Slider
+                    value={soreness}
+                    onValueChange={setSoreness}
+                    max={10}
+                    min={1}
+                    step={1}
+                    className="w-32"
+                  />
+                  <span className="text-sm font-medium w-6">{soreness[0]}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Public Toggle */}
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium">Make this entry public</label>
+            <Switch
+              checked={isPublic}
+              onCheckedChange={setIsPublic}
+            />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} disabled={createMutation.isPending}>
+            {createMutation.isPending ? (
+              <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</>
+            ) : (
+              "Save Entry"
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 // Component to render workout content within each card
-function WorkoutCard({ card, athleteProfile }: { card: any, athleteProfile: any }) {
+function WorkoutCard({ card, athleteProfile, onOpenJournal }: { card: any, athleteProfile: any, onOpenJournal: (date: string) => void }) {
   const { gymData } = useGymData(card.sessionData?.dayNumber);
   
   return (
@@ -52,7 +299,17 @@ function WorkoutCard({ card, athleteProfile }: { card: any, athleteProfile: any 
             <h3 className="font-medium text-white">{card.dayOfWeek}</h3>
             {card.isToday && <Badge className="bg-yellow-500 text-black text-xs">Today</Badge>}
           </div>
-          <span className="text-sm text-white/80">{card.dateString}</span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onOpenJournal(card.dateString)}
+              className="h-8 w-8 p-0 text-white hover:bg-white/10"
+            >
+              <PenTool className="h-4 w-4" />
+            </Button>
+            <span className="text-sm text-white/80">{card.dateString}</span>
+          </div>
         </div>
         
         {/* Workout content */}
@@ -216,6 +473,21 @@ function PracticePage() {
   const [isLoadingCards, setIsLoadingCards] = useState(false);
   const [daysToShow, setDaysToShow] = useState(7);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  
+  // Journal modal states
+  const [isJournalModalOpen, setIsJournalModalOpen] = useState(false);
+  const [selectedJournalDate, setSelectedJournalDate] = useState("");
+  
+  // Journal modal handler
+  const handleOpenJournal = (date: string) => {
+    setSelectedJournalDate(date);
+    setIsJournalModalOpen(true);
+  };
+  
+  const handleCloseJournal = () => {
+    setIsJournalModalOpen(false);
+    setSelectedJournalDate("");
+  };
   
   // Calculator states
   const [targetTimesExpanded, setTargetTimesExpanded] = useState(false);
@@ -704,6 +976,7 @@ function PracticePage() {
                         key={card.id} 
                         card={card} 
                         athleteProfile={athleteProfile} 
+                        onOpenJournal={handleOpenJournal}
                       />
                     ))}
                     
@@ -872,6 +1145,13 @@ function PracticePage() {
           </div>
         </div>
       )}
+
+      {/* Journal Entry Modal */}
+      <JournalEntryModal
+        isOpen={isJournalModalOpen}
+        onClose={handleCloseJournal}
+        date={selectedJournalDate}
+      />
 
     </PageContainer>
   );
