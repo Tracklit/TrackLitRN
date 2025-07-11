@@ -5139,7 +5139,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get purchased programs, assigned programs, and created programs
       const purchases = await dbStorage.getUserPurchasedPrograms(req.user!.id);
       const assignedPrograms = await dbStorage.getAssignedPrograms(req.user!.id);
-      const createdPrograms = await dbStorage.getProgramsByUserId(req.user!.id);
+      const createdPrograms = await dbStorage.getUserPrograms(req.user!.id);
       
       console.log('Assigned programs for user', req.user!.id, ':', assignedPrograms);
       
