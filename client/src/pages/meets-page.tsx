@@ -370,27 +370,27 @@ export default function MeetsPage() {
                     {upcomingMeets
                       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                       .map(meet => (
-                      <Card key={meet.id} className="overflow-hidden bg-primary/5 backdrop-blur-sm hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300" style={{ borderRadius: '6px', border: '1px solid rgba(168, 85, 247, 0.1)' }}>
+                      <Card key={meet.id} className="overflow-hidden bg-gradient-to-br from-blue-800 to-purple-400 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300" style={{ borderRadius: '6px', boxShadow: '0 0 8px rgba(168, 85, 247, 0.2)' }}>
                         <CardContent className="p-4">
                           <div className="flex flex-col">
-                            <h3 className="font-medium text-xl text-foreground mb-2">{meet.name}</h3>
+                            <h3 className="font-medium text-xl text-white mb-2">{meet.name}</h3>
                             <div className="flex flex-col space-y-2 mb-3">
                               <div className="flex items-center">
-                                <Calendar className="h-4 w-4 mr-2 text-primary" />
-                                <span className="text-muted-foreground">{formatDate(meet.date)} • {formatTime(meet.date)}</span>
+                                <Calendar className="h-4 w-4 mr-2 text-white" />
+                                <span className="text-white/80">{formatDate(meet.date)} • {formatTime(meet.date)}</span>
                               </div>
                               <div className="flex items-center">
-                                <MapPin className="h-4 w-4 mr-2 text-primary" />
-                                <span className="text-muted-foreground">{meet.location}</span>
+                                <MapPin className="h-4 w-4 mr-2 text-white" />
+                                <span className="text-white/80">{meet.location}</span>
                               </div>
                               {meet.websiteUrl && (
                                 <div className="flex items-center">
-                                  <Trophy className="h-4 w-4 mr-2 text-primary" />
+                                  <Trophy className="h-4 w-4 mr-2 text-white" />
                                   <a 
                                     href={meet.websiteUrl} 
                                     target="_blank" 
                                     rel="noopener noreferrer"
-                                    className="text-primary hover:text-foreground underline text-sm"
+                                    className="text-white hover:text-white/80 underline text-sm"
                                   >
                                     Official Meet Info
                                   </a>
@@ -400,7 +400,7 @@ export default function MeetsPage() {
                             
                             <div className="flex flex-wrap gap-2 my-3">
                               {meet.events?.map(event => (
-                                <Badge key={event} className="bg-primary/20 text-primary hover:bg-primary/30" style={{ borderRadius: '6px' }}>{event}</Badge>
+                                <Badge key={event} className="bg-white/20 text-white hover:bg-white/30" style={{ borderRadius: '6px' }}>{event}</Badge>
                               ))}
                             </div>
                             
@@ -412,7 +412,7 @@ export default function MeetsPage() {
                                   <Button 
                                     variant="outline" 
                                     size="sm"
-                                    className="border-primary/25 text-muted-foreground hover:text-foreground hover:bg-primary/10"
+                                    className="border-white/25 text-white hover:text-white hover:bg-white/10"
                                   >
                                     <MoreVertical className="h-4 w-4" />
                                   </Button>
@@ -492,27 +492,27 @@ export default function MeetsPage() {
                     {pastMeets
                       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                       .map(meet => (
-                      <Card key={meet.id} className="overflow-hidden bg-primary/5 backdrop-blur-sm hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300" style={{ borderRadius: '6px', border: '1px solid rgba(168, 85, 247, 0.1)' }}>
+                      <Card key={meet.id} className="overflow-hidden bg-gradient-to-br from-blue-800 to-purple-400 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300" style={{ borderRadius: '6px', boxShadow: '0 0 8px rgba(168, 85, 247, 0.2)' }}>
                         <CardContent className="p-4">
                           <div className="flex flex-col">
-                            <h3 className="font-medium text-xl text-foreground mb-2">{meet.name}</h3>
+                            <h3 className="font-medium text-xl text-white mb-2">{meet.name}</h3>
                             <div className="flex flex-col space-y-2 mb-3">
                               <div className="flex items-center">
-                                <Calendar className="h-4 w-4 mr-2 text-primary" />
-                                <span className="text-muted-foreground">{formatDate(meet.date)} • {formatTime(meet.date)}</span>
+                                <Calendar className="h-4 w-4 mr-2 text-white" />
+                                <span className="text-white/80">{formatDate(meet.date)} • {formatTime(meet.date)}</span>
                               </div>
                               <div className="flex items-center">
-                                <MapPin className="h-4 w-4 mr-2 text-primary" />
-                                <span className="text-muted-foreground">{meet.location}</span>
+                                <MapPin className="h-4 w-4 mr-2 text-white" />
+                                <span className="text-white/80">{meet.location}</span>
                               </div>
                               {meet.websiteUrl && (
                                 <div className="flex items-center">
-                                  <Trophy className="h-4 w-4 mr-2 text-primary" />
+                                  <Trophy className="h-4 w-4 mr-2 text-white" />
                                   <a 
                                     href={meet.websiteUrl} 
                                     target="_blank" 
                                     rel="noopener noreferrer"
-                                    className="text-primary hover:text-foreground underline text-sm"
+                                    className="text-white hover:text-white/80 underline text-sm"
                                   >
                                     Official Meet Info
                                   </a>
@@ -522,7 +522,7 @@ export default function MeetsPage() {
                             
                             <div className="flex flex-wrap gap-2 my-3">
                               {meet.events?.map(event => (
-                                <Badge key={event} className="bg-primary/20 text-primary hover:bg-primary/30" style={{ borderRadius: '6px' }}>{event}</Badge>
+                                <Badge key={event} className="bg-white/20 text-white hover:bg-white/30" style={{ borderRadius: '6px' }}>{event}</Badge>
                               ))}
                             </div>
                             
@@ -532,7 +532,7 @@ export default function MeetsPage() {
                                   <Button 
                                     variant="outline" 
                                     size="sm"
-                                    className="border-primary/25 text-muted-foreground hover:text-foreground hover:bg-primary/10"
+                                    className="border-white/25 text-white hover:text-white hover:bg-white/10"
                                   >
                                     <MoreVertical className="h-4 w-4" />
                                   </Button>
@@ -710,24 +710,24 @@ export default function MeetsPage() {
                     
                     {selectedMeet && (
                       <div className="mt-6">
-                        <Card className="overflow-hidden bg-primary/5 backdrop-blur-sm hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300" style={{ borderRadius: '6px', border: '1px solid rgba(168, 85, 247, 0.1)' }}>
+                        <Card className="overflow-hidden bg-gradient-to-br from-blue-800 to-purple-400 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300" style={{ borderRadius: '6px', boxShadow: '0 0 8px rgba(168, 85, 247, 0.2)' }}>
                           <CardContent className="p-4">
                             <div className="flex flex-col">
-                              <h3 className="font-medium text-xl text-foreground mb-2">{selectedMeet.name}</h3>
+                              <h3 className="font-medium text-xl text-white mb-2">{selectedMeet.name}</h3>
                               <div className="flex flex-col space-y-2 mb-3">
                                 <div className="flex items-center">
-                                  <Calendar className="h-4 w-4 mr-2 text-primary" />
-                                  <span className="text-muted-foreground">{formatDate(selectedMeet.date)} • {formatTime(selectedMeet.date)}</span>
+                                  <Calendar className="h-4 w-4 mr-2 text-white" />
+                                  <span className="text-white/80">{formatDate(selectedMeet.date)} • {formatTime(selectedMeet.date)}</span>
                                 </div>
                                 <div className="flex items-center">
-                                  <MapPin className="h-4 w-4 mr-2 text-primary" />
-                                  <span className="text-muted-foreground">{selectedMeet.location}</span>
+                                  <MapPin className="h-4 w-4 mr-2 text-white" />
+                                  <span className="text-white/80">{selectedMeet.location}</span>
                                 </div>
                               </div>
                               
                               <div className="flex flex-wrap gap-2 my-3">
                                 {selectedMeet.events?.map(event => (
-                                  <Badge key={event} className="bg-primary/20 text-primary hover:bg-primary/30" style={{ borderRadius: '6px' }}>{event}</Badge>
+                                  <Badge key={event} className="bg-white/20 text-white hover:bg-white/30" style={{ borderRadius: '6px' }}>{event}</Badge>
                                 ))}
                               </div>
                               
@@ -735,7 +735,7 @@ export default function MeetsPage() {
                                 <Button 
                                   variant="outline" 
                                   size="sm"
-                                  className="border-primary/25 text-muted-foreground hover:text-foreground hover:bg-primary/10"
+                                  className="border-white/25 text-white hover:text-white hover:bg-white/10"
                                   onClick={() => setIsCreateMeetOpen(true)}
                                 >
                                   Edit Meet
@@ -743,7 +743,7 @@ export default function MeetsPage() {
                                 <Button 
                                   variant="outline" 
                                   size="sm"
-                                  className="border-primary/25 text-muted-foreground hover:text-foreground hover:bg-primary/10"
+                                  className="border-white/25 text-white hover:text-white hover:bg-white/10"
                                   onClick={() => handleShareMeet(selectedMeet)}
                                 >
                                   <UserPlus className="h-4 w-4 mr-1" />
