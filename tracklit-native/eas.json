@@ -25,7 +25,8 @@
     "testflight": {
       "ios": {
         "bundleIdentifier": "com.tracklit.app",
-        "distribution": "store"
+        "distribution": "store",
+        "autoIncrement": "buildNumber"
       }
     }
   },

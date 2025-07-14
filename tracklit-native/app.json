@@ -45,6 +45,9 @@
       "eas": {
         "projectId": "tracklit-mobile"
       }
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
     }
   }
 }
