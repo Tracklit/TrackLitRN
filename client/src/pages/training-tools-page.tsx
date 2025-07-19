@@ -10,7 +10,10 @@ import {
   BookOpen,
   Lock,
   Video,
-  Camera
+  Camera,
+  Flag,
+  PlayCircle,
+  FileText
 } from "lucide-react";
 import { Link } from "wouter";
 import { OptimizedBackgroundImage } from '@/components/optimized-background-image';
@@ -41,7 +44,7 @@ export default function WorkoutToolsPage() {
     {
       title: "Video Analysis",
       description: "AI-powered race video analysis with Sprinthia",
-      icon: <Camera className="h-6 w-6" />,
+      icon: <PlayCircle className="h-12 w-12 text-white" />,
       href: "/tools/video-analysis",
       disabled: false,
       backgroundImage: toolBackgrounds[0],
@@ -50,7 +53,7 @@ export default function WorkoutToolsPage() {
     {
       title: "Photo Finish",
       description: "Analyze race videos with timing overlays",
-      icon: <Video className="h-6 w-6" />,
+      icon: <Flag className="h-12 w-12 text-white" />,
       href: "/tools/photo-finish",
       disabled: false,
       backgroundImage: toolBackgrounds[1],
@@ -59,7 +62,7 @@ export default function WorkoutToolsPage() {
     {
       title: "Start Gun",
       description: "Simulate a race start signal",
-      icon: <Volume2 className="h-6 w-6" />,
+      icon: <Volume2 className="h-12 w-12 text-white" />,
       href: "/tools/start-gun",
       disabled: false,
       backgroundImage: toolBackgrounds[2],
@@ -68,7 +71,7 @@ export default function WorkoutToolsPage() {
     {
       title: "Stopwatch",
       description: "Track your time with precision",
-      icon: <Timer className="h-6 w-6" />,
+      icon: <Timer className="h-12 w-12 text-white" />,
       href: "/tools/stopwatch",
       disabled: false,
       backgroundImage: toolBackgrounds[3],
@@ -77,7 +80,7 @@ export default function WorkoutToolsPage() {
     {
       title: "Journal",
       description: "View and search your workout notes",
-      icon: <BookOpen className="h-6 w-6" />,
+      icon: <FileText className="h-12 w-12 text-white" />,
       href: "/tools/journal",
       disabled: false,
       backgroundImage: toolBackgrounds[4],
@@ -86,7 +89,7 @@ export default function WorkoutToolsPage() {
     {
       title: "Exercise Library",
       description: "Store and organize your training videos",
-      icon: <Video className="h-6 w-6" />,
+      icon: <Video className="h-12 w-12 text-white" />,
       href: "/tools/exercise-library",
       disabled: false,
       backgroundImage: toolBackgrounds[5],
@@ -95,14 +98,14 @@ export default function WorkoutToolsPage() {
     {
       title: "Rep Starter",
       description: "Countdown timer for repetitions",
-      icon: <RefreshCw className="h-6 w-6 text-muted-foreground" />,
+      icon: <RefreshCw className="h-12 w-12 text-muted-foreground" />,
       href: "#",
       disabled: true
     },
     {
       title: "Pace Calculator",
       description: "Calculate your target pace",
-      icon: <Gauge className="h-6 w-6 text-muted-foreground" />,
+      icon: <Gauge className="h-12 w-12 text-muted-foreground" />,
       href: "#",
       disabled: true
     }
@@ -153,9 +156,9 @@ export default function WorkoutToolsPage() {
               // Enabled card
               <Link key={index} href={card.href}>
                 <Card 
-                  className="cursor-pointer h-[140px] mx-auto mb-2 overflow-hidden relative group hover:scale-105 transition-all duration-300 bg-primary/5"
+                  className="cursor-pointer h-[140px] mx-auto mb-2 overflow-hidden relative group hover:scale-105 transition-all duration-300 bg-slate-800"
                   style={{ 
-                    border: '0.5px solid rgba(168, 85, 247, 0.25)', 
+                    border: '0.5px solid rgba(148, 163, 184, 0.25)', 
                     borderRadius: '6px',
                     boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 15px 20px -5px rgba(0, 0, 0, 0.15)'
                   }}
@@ -175,10 +178,16 @@ export default function WorkoutToolsPage() {
                   
                   {/* Content Area */}
                   <CardContent className="p-2.5 relative h-full flex flex-col justify-center z-10">
-                    <div className="flex flex-col items-center text-center gap-2">
+                    <div className="flex flex-col items-center text-center gap-3">
+                      {/* Icon at top */}
+                      <div className="flex justify-center">
+                        {card.icon}
+                      </div>
+                      
+                      {/* Title and description */}
                       <div>
-                        <h2 className="text-base font-bold mb-0.5">{card.title}</h2>
-                        <p className="text-muted-foreground text-xs px-1 line-clamp-2 overflow-hidden">{card.description}</p>
+                        <h2 className="text-base font-bold mb-1 text-white">{card.title}</h2>
+                        <p className="text-white/80 text-xs px-1 line-clamp-2 overflow-hidden">{card.description}</p>
                       </div>
                     </div>
                   </CardContent>
