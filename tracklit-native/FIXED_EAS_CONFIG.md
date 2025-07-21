@@ -88,11 +88,14 @@ Bundle identifiers should be configured in `app.json`, not `eas.json`:
 The configuration is now correct and ready for:
 
 ```bash
-# This should now work without errors
-eas build --platform ios --profile testflight
+# Validate configuration by checking build profiles
+eas build:configure
 
-# Check configuration validity
-eas build --platform ios --profile testflight --dry-run
+# List available profiles to verify setup
+eas build:list --platform ios
+
+# Start the actual build
+eas build --platform ios --profile testflight
 ```
 
 ## Before You Build
