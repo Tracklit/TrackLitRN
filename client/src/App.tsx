@@ -23,6 +23,7 @@ import { PageTransition } from "@/components/page-transition";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
+import TestPage from "@/pages/test-page-simple";
 import MeetsPage from "@/pages/meets-page";
 import CreateMeetPage from "@/pages/create-meet-page";
 import ResultsPage from "@/pages/results-page";
@@ -247,6 +248,7 @@ function Router() {
         
         {/* Auth */}
         <Route path="/auth" component={AuthPage} />
+        <Route path="/test" component={TestPage} />
         <Route component={NotFound} />
         </Switch>
         </PageTransition>
