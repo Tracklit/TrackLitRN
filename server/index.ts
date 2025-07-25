@@ -27,6 +27,8 @@ app.use(express.static(path.join(process.cwd(), 'public')));
 // Serve uploaded images
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
+// Simple debug route will be added after registerRoutes
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -84,6 +86,24 @@ app.use((req, res, next) => {
   VideoCleanupService.schedulePeriodicCleanup();
 
   const server = await registerRoutes(app);
+
+  // Add debug route after registerRoutes but before Vite
+  app.get('/simple-test', (req, res) => {
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head><title>Simple Test</title></head>
+      <body>
+        <h1 style="color: green;">Simple Server Test Working!</h1>
+        <p>Time: ${new Date().toISOString()}</p>
+        <script>
+          console.log("Basic JavaScript working");
+          document.body.style.backgroundColor = "#001100";
+        </script>
+      </body>
+      </html>
+    `);
+  });
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
