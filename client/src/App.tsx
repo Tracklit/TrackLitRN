@@ -26,6 +26,7 @@ import AuthPage from "@/pages/auth-page";
 import TestPage from "@/pages/test-page-simple";
 import ToolsPreviewPage from "@/pages/tools-preview";
 import MinimalTest from "@/pages/minimal-test";
+import DebugSimple from "@/pages/debug-simple";
 import MeetsPage from "@/pages/meets-page";
 import CreateMeetPage from "@/pages/create-meet-page";
 import ResultsPage from "@/pages/results-page";
@@ -253,6 +254,7 @@ function Router() {
         <Route path="/test" component={TestPage} />
         <Route path="/tools-preview" component={ToolsPreviewPage} />
         <Route path="/test-minimal" component={MinimalTest} />
+        <Route path="/debug" component={DebugSimple} />
         <Route component={NotFound} />
         </Switch>
         </PageTransition>
