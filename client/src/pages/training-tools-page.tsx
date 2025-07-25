@@ -37,7 +37,7 @@ export default function WorkoutToolsPage() {
     {
       title: "Video Analysis",
       description: "AI-powered race video analysis with Sprinthia",
-      icon: <PlayCircle className="h-12 w-12 text-white" />,
+      icon: <PlayCircle className="h-16 w-16 text-white" />,
       href: "/tools/video-analysis",
       disabled: false,
       backgroundImage: toolBackgrounds[0],
@@ -46,7 +46,7 @@ export default function WorkoutToolsPage() {
     {
       title: "Photo Finish",
       description: "Analyze race videos with timing overlays",
-      icon: <Flag className="h-12 w-12 text-white" />,
+      icon: <Flag className="h-16 w-16 text-white" />,
       href: "/tools/photo-finish",
       disabled: false,
       backgroundImage: toolBackgrounds[1],
@@ -55,7 +55,7 @@ export default function WorkoutToolsPage() {
     {
       title: "Start Gun",
       description: "Simulate a race start signal",
-      icon: <Volume2 className="h-12 w-12 text-white" />,
+      icon: <Volume2 className="h-16 w-16 text-white" />,
       href: "/tools/start-gun",
       disabled: false,
       backgroundImage: toolBackgrounds[2],
@@ -64,7 +64,7 @@ export default function WorkoutToolsPage() {
     {
       title: "Stopwatch",
       description: "Track your time with precision",
-      icon: <Timer className="h-12 w-12 text-white" />,
+      icon: <Timer className="h-16 w-16 text-white" />,
       href: "/tools/stopwatch",
       disabled: false,
       backgroundImage: toolBackgrounds[3],
@@ -73,7 +73,7 @@ export default function WorkoutToolsPage() {
     {
       title: "Journal",
       description: "View and search your workout notes",
-      icon: <FileText className="h-12 w-12 text-white" />,
+      icon: <FileText className="h-16 w-16 text-white" />,
       href: "/tools/journal",
       disabled: false,
       backgroundImage: toolBackgrounds[4],
@@ -82,7 +82,7 @@ export default function WorkoutToolsPage() {
     {
       title: "Exercise Library",
       description: "Store and organize your training videos",
-      icon: <Video className="h-12 w-12 text-white" />,
+      icon: <Video className="h-16 w-16 text-white" />,
       href: "/tools/exercise-library",
       disabled: false,
       backgroundImage: toolBackgrounds[5],
@@ -149,11 +149,12 @@ export default function WorkoutToolsPage() {
               // Enabled card
               <Link key={index} href={card.href}>
                 <Card 
-                  className="cursor-pointer h-[140px] mx-auto mb-2 overflow-hidden relative group hover:scale-105 transition-all duration-300 bg-slate-800"
+                  className="cursor-pointer h-[140px] mx-auto mb-2 overflow-hidden relative group hover:scale-105 transition-all duration-300"
                   style={{ 
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                     border: '0.5px solid rgba(148, 163, 184, 0.25)', 
                     borderRadius: '6px',
-                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 15px 20px -5px rgba(0, 0, 0, 0.15)'
+                    boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.3), 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 15px 20px -5px rgba(0, 0, 0, 0.15)'
                   }}
                 >
                   {/* Background Image */}
