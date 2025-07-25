@@ -29,17 +29,21 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0f172a"
       },
-      "package": "com.tracklit.app",
-      "versionCode": 1
+      "package": "com.tracklit.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [],
+    "plugins": [
+      "expo-router"
+    ],
     "scheme": "tracklit",
     "extra": {
+      "router": {
+        "origin": false
+      },
       "eas": {
-        "projectId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        "projectId": "tracklit-mobile"
       }
     },
     "runtimeVersion": {
