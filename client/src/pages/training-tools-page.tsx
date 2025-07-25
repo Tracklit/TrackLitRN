@@ -19,25 +19,18 @@ import { Link } from "wouter";
 import { OptimizedBackgroundImage } from '@/components/optimized-background-image';
 import { PreloadImages } from '@/components/preload-images';
 
-// Import dashboard card images
-import sprinthiaBackground from '@assets/image_1750019864190.png';
-import practiceBackground from '@assets/Screenshot 2025-06-15 205621_1750013855167.png';
-import programsBackground from '@assets/image_1750012192490.png';
-import raceBackground from '@assets/Screenshot 2025-06-15 205651_1750013855167.png';
-import toolsBackground from '@assets/Screenshot 2025-06-15 205721_1750013855168.png';
+// Import dashboard card images - temporarily commented out
+// import sprinthiaBackground from '@assets/image_1750019864190.png';
+// import practiceBackground from '@assets/Screenshot 2025-06-15 205621_1750013855167.png';
+// import programsBackground from '@assets/image_1750012192490.png';
+// import raceBackground from '@assets/Screenshot 2025-06-15 205651_1750013855167.png';
+// import toolsBackground from '@assets/Screenshot 2025-06-15 205721_1750013855168.png';
 
 
 
 export default function WorkoutToolsPage() {
-  // Background images for tool cards - all use Start Gun background (practiceBackground)
-  const toolBackgrounds = [
-    practiceBackground,     // Video Analysis - Start Gun image
-    practiceBackground,     // Photo Finish - Start Gun image
-    practiceBackground,     // Start Gun - Start Gun image  
-    practiceBackground,     // Stopwatch - Start Gun image
-    practiceBackground,     // Journal - Start Gun image
-    practiceBackground      // Exercise Library - Start Gun image
-  ];
+  // Background images for tool cards - temporarily disabled
+  const toolBackgrounds: string[] = [];
 
   // Tool cards with links to individual pages
   const toolCards = [
@@ -113,8 +106,8 @@ export default function WorkoutToolsPage() {
   
   return (
     <div className="container max-w-screen-xl mx-auto p-4 pt-20 pb-10">
-      {/* Preload tool card images */}
-      <PreloadImages images={toolBackgrounds} quality={20} priority={true} />
+      {/* Preload tool card images - temporarily commented out */}
+      {/* <PreloadImages images={toolBackgrounds} quality={20} priority={true} /> */}
 
       {/* Tool Cards - 2 column layout matching the home page style */}
       <section className="mb-6">
