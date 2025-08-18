@@ -28,7 +28,10 @@ import {
   Check,
   X,
   Camera,
-  Shield
+  Shield,
+  Palette,
+  Upload,
+  Image as ImageIcon
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { MessagePanel } from '@/components/message-panel';
@@ -90,6 +93,10 @@ export default function PublicProfilePage() {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileData, setProfileData] = useState({ name: '', username: '' });
   const [isMessagePanelOpen, setIsMessagePanelOpen] = useState(false);
+  const [isEditingBackground, setIsEditingBackground] = useState(false);
+  const [backgroundType, setBackgroundType] = useState<'color' | 'image'>('color');
+  const [backgroundColor, setBackgroundColor] = useState('#1e293b');
+  const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -184,6 +191,33 @@ export default function PublicProfilePage() {
     setIsMessagePanelOpen(false);
   };
 
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setBackgroundImage(e.target?.result as string);
+        setBackgroundType('image');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const getCardBackgroundStyle = () => {
+    if (backgroundType === 'image' && backgroundImage) {
+      return {
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        opacity: 0.2
+      };
+    }
+    return {
+      background: backgroundColor
+    };
+  };
+
   const getSubscriptionTier = (tier: string | null) => {
     if (!tier || tier === 'free') return 'FREE';
     return tier.toUpperCase();
@@ -266,10 +300,27 @@ export default function PublicProfilePage() {
               >
                 <div className="bg-gradient-to-b from-slate-800 via-slate-900 to-slate-800 rounded-3xl p-8 h-full flex flex-col items-center justify-between relative overflow-hidden">
                   
-                  {/* Background Pattern */}
+                  {/* Custom Background Layer */}
+                  <div 
+                    className="absolute inset-0 rounded-3xl"
+                    style={getCardBackgroundStyle()}
+                  />
+                  
+                  {/* Background Pattern Overlay */}
                   <div className="absolute inset-0 opacity-5">
                     <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-amber-400/20 to-transparent" />
                   </div>
+
+                  {/* Background Edit Button */}
+                  {isOwnProfile && (
+                    <Button
+                      size="sm"
+                      className="absolute top-4 right-4 w-10 h-10 rounded-full bg-amber-500/80 hover:bg-amber-600 text-black z-20"
+                      onClick={() => setIsEditingBackground(true)}
+                    >
+                      <Palette className="h-4 w-4" />
+                    </Button>
+                  )}
 
                   {/* Profile Section */}
                   <div className="flex flex-col items-center z-10 flex-1 justify-center">
@@ -379,6 +430,133 @@ export default function PublicProfilePage() {
                 </Button>
               </div>
             )}
+
+            {/* Background Customization Dialog */}
+            <Dialog open={isEditingBackground} onOpenChange={setIsEditingBackground}>
+              <DialogContent className="bg-slate-900 border-slate-700 text-white">
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-bold text-white flex items-center gap-2">
+                    <Palette className="h-5 w-5 text-amber-400" />
+                    Customize Card Background
+                  </DialogTitle>
+                </DialogHeader>
+                
+                <div className="space-y-6 p-4">
+                  {/* Background Type Selection */}
+                  <div className="space-y-3">
+                    <Label className="text-lg font-medium text-gray-300">Background Type</Label>
+                    <div className="flex gap-4">
+                      <Button
+                        variant={backgroundType === 'color' ? 'default' : 'outline'}
+                        onClick={() => setBackgroundType('color')}
+                        className={backgroundType === 'color' 
+                          ? 'bg-amber-500 text-black hover:bg-amber-600' 
+                          : 'border-gray-600 text-gray-400 hover:bg-gray-700'
+                        }
+                      >
+                        <Palette className="h-4 w-4 mr-2" />
+                        Solid Color
+                      </Button>
+                      <Button
+                        variant={backgroundType === 'image' ? 'default' : 'outline'}
+                        onClick={() => setBackgroundType('image')}
+                        className={backgroundType === 'image' 
+                          ? 'bg-amber-500 text-black hover:bg-amber-600' 
+                          : 'border-gray-600 text-gray-400 hover:bg-gray-700'
+                        }
+                      >
+                        <ImageIcon className="h-4 w-4 mr-2" />
+                        Custom Image
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Color Picker */}
+                  {backgroundType === 'color' && (
+                    <div className="space-y-3">
+                      <Label className="text-md font-medium text-gray-300">Choose Color</Label>
+                      <div className="space-y-3">
+                        <Input
+                          type="color"
+                          value={backgroundColor}
+                          onChange={(e) => setBackgroundColor(e.target.value)}
+                          className="w-full h-12 rounded-lg border-gray-600 bg-slate-800"
+                        />
+                        <div className="grid grid-cols-6 gap-2">
+                          {[
+                            '#1e293b', '#334155', '#475569', '#64748b',
+                            '#dc2626', '#ea580c', '#d97706', '#65a30d',
+                            '#059669', '#0891b2', '#2563eb', '#7c3aed',
+                            '#c2410c', '#be123c', '#a21caf', '#7c2d12'
+                          ].map((color) => (
+                            <button
+                              key={color}
+                              className="w-8 h-8 rounded-lg border-2 border-gray-600 hover:border-amber-400 transition-colors"
+                              style={{ backgroundColor: color }}
+                              onClick={() => setBackgroundColor(color)}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Image Upload */}
+                  {backgroundType === 'image' && (
+                    <div className="space-y-3">
+                      <Label className="text-md font-medium text-gray-300">Upload Image</Label>
+                      <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-amber-400 transition-colors">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className="hidden"
+                          id="background-upload"
+                        />
+                        <label htmlFor="background-upload" className="cursor-pointer">
+                          <div className="flex flex-col items-center gap-2">
+                            <Upload className="h-8 w-8 text-gray-400" />
+                            <p className="text-gray-400">Click to upload an image</p>
+                            <p className="text-xs text-gray-500">Image will be shown at 20% opacity</p>
+                          </div>
+                        </label>
+                      </div>
+                      {backgroundImage && (
+                        <div className="mt-3">
+                          <p className="text-sm text-gray-400 mb-2">Preview:</p>
+                          <div className="w-full h-20 rounded-lg border border-gray-600 bg-cover bg-center opacity-20"
+                               style={{ backgroundImage: `url(${backgroundImage})` }} />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 pt-4">
+                    <Button
+                      onClick={() => setIsEditingBackground(false)}
+                      className="flex-1 bg-amber-500 text-black hover:bg-amber-600"
+                    >
+                      <Check className="h-4 w-4 mr-2" />
+                      Apply Changes
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setIsEditingBackground(false);
+                        setBackgroundType('color');
+                        setBackgroundColor('#1e293b');
+                        setBackgroundImage(null);
+                      }}
+                      className="border-gray-600 text-gray-400 hover:bg-gray-700"
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Reset
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
 
             {/* Legacy sections - moved below card */}
             <div className="mt-8 space-y-6">
