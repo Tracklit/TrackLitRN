@@ -98,6 +98,10 @@ export default function PublicProfilePage() {
   const [backgroundColor, setBackgroundColor] = useState('#1e293b');
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isEditingProfileImage, setIsEditingProfileImage] = useState(false);
+  const [tempImageUrl, setTempImageUrl] = useState<string | null>(null);
+  const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
+  const [imageScale, setImageScale] = useState(1);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -219,27 +223,80 @@ export default function PublicProfilePage() {
     };
   };
 
-  const handleProfileImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProfileImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setTempImageUrl(e.target?.result as string);
+      setImagePosition({ x: 0, y: 0 });
+      setImageScale(1);
+      setIsEditingProfileImage(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleProfileImageSave = async () => {
+    if (!tempImageUrl) return;
 
     setIsUploadingImage(true);
     
     try {
-      const formData = new FormData();
-      formData.append('profileImage', file);
+      // Create a canvas to crop the image
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = tempImageUrl;
+      });
 
-      const response = await fetch('/api/user/public-profile', {
+      // Set canvas size to desired output size (square)
+      const outputSize = 400;
+      canvas.width = outputSize;
+      canvas.height = outputSize;
+
+      // Calculate the source rectangle based on position and scale
+      const containerSize = 300; // Approximate size of the cropper container
+      const cropSize = containerSize * 0.8; // 80% of container (matching the circle)
+      const scaledImageWidth = img.width * imageScale;
+      const scaledImageHeight = img.height * imageScale;
+      
+      // Calculate source coordinates
+      const sourceX = Math.max(0, -imagePosition.x * (img.width / scaledImageWidth));
+      const sourceY = Math.max(0, -imagePosition.y * (img.height / scaledImageHeight));
+      const sourceSize = Math.min(img.width, img.height) / imageScale;
+
+      // Draw the cropped image
+      ctx?.drawImage(
+        img,
+        sourceX, sourceY, sourceSize, sourceSize,
+        0, 0, outputSize, outputSize
+      );
+
+      // Convert canvas to blob
+      const blob = await new Promise<Blob>((resolve) => {
+        canvas.toBlob((blob) => resolve(blob!), 'image/jpeg', 0.9);
+      });
+      
+      const formData = new FormData();
+      formData.append('profileImage', blob, 'profile.jpg');
+
+      const uploadResponse = await fetch('/api/user/public-profile', {
         method: 'POST',
         body: formData,
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      if (uploadResponse.ok) {
         // Refresh user data to get new profile image
         queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}`] });
         queryClient.invalidateQueries({ queryKey: ['/api/user'] });
         toast({ title: 'Profile image updated successfully' });
+        setIsEditingProfileImage(false);
+        setTempImageUrl(null);
       } else {
         throw new Error('Failed to upload image');
       }
@@ -378,7 +435,7 @@ export default function PublicProfilePage() {
                           <input
                             type="file"
                             accept="image/*"
-                            onChange={handleProfileImageUpload}
+                            onChange={handleProfileImageSelect}
                             className="hidden"
                             id="profile-image-upload"
                           />
@@ -608,6 +665,135 @@ export default function PublicProfilePage() {
                     >
                       <X className="h-4 w-4 mr-2" />
                       Reset
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Profile Image Cropping Dialog */}
+            <Dialog open={isEditingProfileImage} onOpenChange={setIsEditingProfileImage}>
+              <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-bold text-white flex items-center gap-2">
+                    <Camera className="h-5 w-5 text-amber-400" />
+                    Adjust Profile Image
+                  </DialogTitle>
+                </DialogHeader>
+                
+                <div className="space-y-6 p-4">
+                  {/* Image Cropper Container */}
+                  <div className="relative w-full aspect-square bg-slate-800 rounded-xl overflow-hidden border-2 border-amber-400/20">
+                    {tempImageUrl && (
+                      <div 
+                        className="absolute inset-0 cursor-move"
+                        style={{
+                          backgroundImage: `url(${tempImageUrl})`,
+                          backgroundSize: `${imageScale * 100}%`,
+                          backgroundPosition: `${imagePosition.x}px ${imagePosition.y}px`,
+                          backgroundRepeat: 'no-repeat'
+                        }}
+                        onMouseDown={(e) => {
+                          const startX = e.clientX - imagePosition.x;
+                          const startY = e.clientY - imagePosition.y;
+                          
+                          const handleMouseMove = (moveE: MouseEvent) => {
+                            setImagePosition({
+                              x: moveE.clientX - startX,
+                              y: moveE.clientY - startY
+                            });
+                          };
+                          
+                          const handleMouseUp = () => {
+                            document.removeEventListener('mousemove', handleMouseMove);
+                            document.removeEventListener('mouseup', handleMouseUp);
+                          };
+                          
+                          document.addEventListener('mousemove', handleMouseMove);
+                          document.addEventListener('mouseup', handleMouseUp);
+                        }}
+                      />
+                    )}
+                    
+                    {/* Circle overlay to show crop area */}
+                    <div className="absolute inset-0 pointer-events-none">
+                      <div 
+                        className="absolute border-4 border-amber-400 rounded-full"
+                        style={{
+                          top: '10%',
+                          left: '10%',
+                          right: '10%',
+                          bottom: '10%'
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Scale Control */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-300">Zoom</Label>
+                    <div className="relative">
+                      <input
+                        type="range"
+                        min="0.5"
+                        max="3"
+                        step="0.1"
+                        value={imageScale}
+                        onChange={(e) => setImageScale(parseFloat(e.target.value))}
+                        className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer 
+                                 [&::-webkit-slider-thumb]:appearance-none 
+                                 [&::-webkit-slider-thumb]:w-4 
+                                 [&::-webkit-slider-thumb]:h-4 
+                                 [&::-webkit-slider-thumb]:rounded-full 
+                                 [&::-webkit-slider-thumb]:bg-amber-500 
+                                 [&::-webkit-slider-thumb]:cursor-pointer
+                                 [&::-moz-range-thumb]:w-4 
+                                 [&::-moz-range-thumb]:h-4 
+                                 [&::-moz-range-thumb]:rounded-full 
+                                 [&::-moz-range-thumb]:bg-amber-500 
+                                 [&::-moz-range-thumb]:cursor-pointer
+                                 [&::-moz-range-thumb]:border-none"
+                      />
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-400">
+                      <span>50%</span>
+                      <span>300%</span>
+                    </div>
+                  </div>
+
+                  {/* Instructions */}
+                  <div className="bg-slate-800 rounded-lg p-3">
+                    <p className="text-xs text-gray-400 text-center">
+                      Drag the image to position it within the circle. Use the zoom slider to resize.
+                    </p>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 pt-4">
+                    <Button
+                      onClick={handleProfileImageSave}
+                      disabled={isUploadingImage}
+                      className="flex-1 bg-amber-500 text-black hover:bg-amber-600"
+                    >
+                      {isUploadingImage ? (
+                        <div className="animate-spin w-4 h-4 border-2 border-black border-t-transparent rounded-full mr-2" />
+                      ) : (
+                        <Check className="h-4 w-4 mr-2" />
+                      )}
+                      {isUploadingImage ? 'Saving...' : 'Save Image'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setIsEditingProfileImage(false);
+                        setTempImageUrl(null);
+                        setImagePosition({ x: 0, y: 0 });
+                        setImageScale(1);
+                      }}
+                      className="border-gray-600 text-gray-400 hover:bg-gray-700"
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Cancel
                     </Button>
                   </div>
                 </div>

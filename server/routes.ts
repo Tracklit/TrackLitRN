@@ -2212,15 +2212,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Move file to final location
         fs.renameSync(req.file.path, finalPath);
         
-        // Compress the profile image
+        // Keep original format and only resize if too large, preserve aspect ratio
         const compressedFileName = `compressed_${fileName}`;
         const compressedPath = path.join('uploads/profiles', compressedFileName);
         
         try {
-          await compressImage(finalPath, compressedPath, 85);
+          await sharp(finalPath)
+            .resize(800, 800, { 
+              fit: 'inside', 
+              withoutEnlargement: true 
+            })
+            .toFile(compressedPath);
+          
+          // Remove original file after processing
+          fs.unlinkSync(finalPath);
           profileImageUrl = `/uploads/profiles/${compressedFileName}`;
-        } catch (compressionError) {
-          console.error('Profile image compression failed, using original:', compressionError);
+        } catch (processingError) {
+          console.error('Profile image processing failed, using original:', processingError);
           profileImageUrl = `/uploads/profiles/${fileName}`;
         }
       }
