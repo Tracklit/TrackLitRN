@@ -97,6 +97,7 @@ export default function PublicProfilePage() {
   const [backgroundType, setBackgroundType] = useState<'color' | 'image'>('color');
   const [backgroundColor, setBackgroundColor] = useState('#1e293b');
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -218,6 +219,42 @@ export default function PublicProfilePage() {
     };
   };
 
+  const handleProfileImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingImage(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('profileImage', file);
+
+      const response = await fetch('/api/user/public-profile', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Refresh user data to get new profile image
+        queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}`] });
+        queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+        toast({ title: 'Profile image updated successfully' });
+      } else {
+        throw new Error('Failed to upload image');
+      }
+    } catch (error) {
+      console.error('Image upload error:', error);
+      toast({ 
+        title: 'Failed to update profile image', 
+        description: 'Please try again with a different image.',
+        variant: 'destructive' 
+      });
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
   const getSubscriptionTier = (tier: string | null) => {
     if (!tier || tier === 'free') return 'FREE';
     return tier.toUpperCase();
@@ -337,12 +374,31 @@ export default function PublicProfilePage() {
                       </div>
                       
                       {isOwnProfile && (
-                        <Button
-                          size="sm"
-                          className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-amber-500 hover:bg-amber-600 text-black"
-                        >
-                          <Camera className="h-5 w-5" />
-                        </Button>
+                        <>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleProfileImageUpload}
+                            className="hidden"
+                            id="profile-image-upload"
+                          />
+                          <label htmlFor="profile-image-upload">
+                            <Button
+                              size="sm"
+                              className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-amber-500 hover:bg-amber-600 text-black cursor-pointer"
+                              disabled={isUploadingImage}
+                              asChild
+                            >
+                              <span>
+                                {isUploadingImage ? (
+                                  <div className="animate-spin w-4 h-4 border-2 border-black border-t-transparent rounded-full" />
+                                ) : (
+                                  <Camera className="h-5 w-5" />
+                                )}
+                              </span>
+                            </Button>
+                          </label>
+                        </>
                       )}
                     </div>
 

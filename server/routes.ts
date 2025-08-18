@@ -2176,11 +2176,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Public profile update route with image upload
+  const profilesDir = path.join(process.cwd(), 'uploads/profiles');
+  if (!fs.existsSync(profilesDir)) {
+    fs.mkdirSync(profilesDir, { recursive: true });
+  }
+
   const profileUpload = multer({
     dest: 'uploads/profiles/',
     limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
     fileFilter: (req, file, cb) => {
-      const allowedTypes = /jpeg|jpg|png|gif/;
+      const allowedTypes = /jpeg|jpg|png|gif|webp/;
       const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
       const mimetype = allowedTypes.test(file.mimetype);
       
