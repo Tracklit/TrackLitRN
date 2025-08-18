@@ -184,6 +184,11 @@ export default function PublicProfilePage() {
     setIsMessagePanelOpen(false);
   };
 
+  const getSubscriptionTier = (tier: string | null) => {
+    if (!tier || tier === 'free') return 'FREE';
+    return tier.toUpperCase();
+  };
+
   const getSubscriptionBadge = (tier: string | null) => {
     if (!tier || tier === 'free') return null;
     
@@ -222,178 +227,260 @@ export default function PublicProfilePage() {
   }
 
   return (
-    <div className="flex h-screen bg-[#010a18] text-white">
+    <div className="flex h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
       <div className="flex-1 overflow-auto">
         <main className="pt-16 pb-6">
-          <div className="max-w-4xl mx-auto px-4">
+          <div className="max-w-md mx-auto px-4">
             
-            {/* Profile Header */}
-            <Card className="bg-blue-900/20 border-blue-800/60 mb-6">
-              <CardContent className="p-6">
-                <div className="flex flex-col md:flex-row gap-6 items-start">
+            {/* Action Buttons - Moved Above Card */}
+            {!isOwnProfile && (
+              <div className="flex gap-3 mb-6 justify-center">
+                <Button
+                  size="lg"
+                  className="bg-blue-600 hover:bg-blue-700 px-8"
+                  onClick={handleOpenMessage}
+                >
+                  <MessageCircle className="h-5 w-5 mr-2" />
+                  Message
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-2 border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-black px-8"
+                >
+                  <UserPlus className="h-5 w-5 mr-2" />
+                  Add Friend
+                </Button>
+              </div>
+            )}
+
+            {/* Trading Card - Main Profile */}
+            <div className="relative">
+              {/* Card with Gold Border */}
+              <div 
+                className="relative bg-gradient-to-b from-slate-800 to-slate-900 rounded-3xl p-1"
+                style={{ 
+                  height: '67vh',
+                  background: 'linear-gradient(145deg, #d4af37, #ffd700, #b8860b, #daa520)'
+                }}
+              >
+                <div className="bg-gradient-to-b from-slate-800 via-slate-900 to-slate-800 rounded-3xl p-8 h-full flex flex-col items-center justify-between relative overflow-hidden">
                   
-                  {/* Profile Image */}
-                  <div className="relative">
-                    <Avatar className="w-24 h-24 border-2 border-blue-500">
-                      <AvatarImage src={profileUser.profileImageUrl || undefined} />
-                      <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xl">
-                        {profileUser.name?.charAt(0) || profileUser.username.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
+                  {/* Background Pattern */}
+                  <div className="absolute inset-0 opacity-5">
+                    <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-amber-400/20 to-transparent" />
+                  </div>
+
+                  {/* Profile Section */}
+                  <div className="flex flex-col items-center z-10 flex-1 justify-center">
                     
-                    {isOwnProfile && (
-                      <Button
-                        size="sm"
-                        className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-blue-600 hover:bg-blue-700"
-                      >
-                        <Camera className="h-4 w-4" />
-                      </Button>
+                    {/* Profile Image with Gold Ring */}
+                    <div className="relative mb-6">
+                      <div className="p-1 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500">
+                        <Avatar className="w-32 h-32 border-4 border-slate-800">
+                          <AvatarImage src={profileUser.profileImageUrl || undefined} />
+                          <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white text-3xl">
+                            {profileUser.name?.charAt(0) || profileUser.username.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                      </div>
+                      
+                      {isOwnProfile && (
+                        <Button
+                          size="sm"
+                          className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-amber-500 hover:bg-amber-600 text-black"
+                        >
+                          <Camera className="h-5 w-5" />
+                        </Button>
+                      )}
+                    </div>
+
+                    {/* Name and Username */}
+                    <div className="text-center mb-4">
+                      <h1 className="text-3xl font-bold text-white mb-2">
+                        {profileUser.name || profileUser.username}
+                      </h1>
+                      <p className="text-amber-400 text-lg">@{profileUser.username}</p>
+                    </div>
+
+                    {/* Subscription Tier Badge */}
+                    <div className="mb-6">
+                      <div className="bg-gradient-to-r from-amber-400 to-yellow-500 text-black px-6 py-2 rounded-full font-bold text-lg tracking-wider">
+                        {getSubscriptionTier(profileUser.subscriptionTier)}
+                      </div>
+                    </div>
+
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-2 gap-4 w-full max-w-xs mb-6">
+                      <div className="text-center">
+                        <div className="flex items-center justify-center gap-2 text-amber-400 mb-1">
+                          <Trophy className="h-5 w-5" />
+                          <span className="font-medium">PB</span>
+                        </div>
+                        <p className="text-xl font-bold text-white">10.12</p>
+                      </div>
+                      <div className="text-center">
+                        <div className="flex items-center justify-center gap-2 text-amber-400 mb-1">
+                          <MapPin className="h-5 w-5" />
+                          <span className="font-medium">Nation</span>
+                        </div>
+                        <p className="text-xl font-bold text-white">SWE</p>
+                      </div>
+                      <div className="text-center">
+                        <div className="flex items-center justify-center gap-2 text-amber-400 mb-1">
+                          <Dumbbell className="h-5 w-5" />
+                          <span className="font-medium">Workouts</span>
+                        </div>
+                        <p className="text-xl font-bold text-white">124</p>
+                      </div>
+                      <div className="text-center">
+                        <div className="flex items-center justify-center gap-2 text-amber-400 mb-1">
+                          <Users className="h-5 w-5" />
+                          <span className="font-medium">Friends</span>
+                        </div>
+                        <p className="text-xl font-bold text-white">{connections.length}</p>
+                      </div>
+                    </div>
+
+                    {/* Member Since */}
+                    {profileUser.createdAt && (
+                      <p className="text-gray-300 text-sm mb-4">
+                        Member since {format(new Date(profileUser.createdAt), 'yyyy')}
+                      </p>
+                    )}
+
+                    {/* Bio */}
+                    {profileUser.bio && (
+                      <p className="text-gray-300 text-sm text-center leading-relaxed max-w-xs">
+                        {profileUser.bio}
+                      </p>
                     )}
                   </div>
 
-                  {/* Profile Info */}
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <div className="flex items-center gap-3 mb-2">
-                          {isEditingProfile && isOwnProfile ? (
-                            <div className="space-y-2">
-                              <Input
-                                value={profileData.name}
-                                onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
-                                placeholder="Display Name"
-                                className="bg-blue-900/30 border-blue-700/50"
-                              />
-                              <Input
-                                value={profileData.username}
-                                onChange={(e) => setProfileData(prev => ({ ...prev, username: e.target.value }))}
-                                placeholder="Username"
-                                className="bg-blue-900/30 border-blue-700/50"
-                              />
-                              <div className="flex gap-2">
-                                <Button size="sm" onClick={handleProfileSave}>
-                                  <Check className="h-4 w-4" />
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline" 
-                                  onClick={() => setIsEditingProfile(false)}
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          ) : (
-                            <>
-                              <h1 className="text-2xl font-bold">{profileUser.name || profileUser.username}</h1>
-                              {profileUser.isCoach && (
-                                <Badge className="bg-amber-600 hover:bg-amber-700">
-                                  <Shield className="h-3 w-3 mr-1" />
-                                  Coach
-                                </Badge>
-                              )}
-                              {getSubscriptionBadge(profileUser.subscriptionTier)}
-                            </>
-                          )}
-                        </div>
-                        
-                        <p className="text-gray-400 mb-2">@{profileUser.username}</p>
-                        
-                        {profileUser.createdAt && (
-                          <p className="text-sm text-gray-500">
-                            Member since {format(new Date(profileUser.createdAt), 'MMMM yyyy')}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex gap-2">
-                        {isOwnProfile ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setIsEditingProfile(true)}
-                            className="border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white"
-                          >
-                            <Edit2 className="h-4 w-4 mr-2" />
-                            Edit Profile
-                          </Button>
-                        ) : (
-                          <>
-                            <Button
-                              size="sm"
-                              className="bg-blue-600 hover:bg-blue-700"
-                              onClick={handleOpenMessage}
-                            >
-                              <MessageCircle className="h-4 w-4 mr-2" />
-                              Message
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white"
-                            >
-                              <UserPlus className="h-4 w-4 mr-2" />
-                              Add Friend
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Bio Section */}
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <Label className="text-sm font-medium text-gray-300">Bio</Label>
-                        {isOwnProfile && !isEditingBio && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setIsEditingBio(true)}
-                            className="h-6 px-2 text-gray-400 hover:text-white"
-                          >
-                            <Edit2 className="h-3 w-3" />
-                          </Button>
-                        )}
-                      </div>
-                      
-                      {isEditingBio && isOwnProfile ? (
-                        <div className="space-y-2">
-                          <Textarea
-                            value={bioText}
-                            onChange={(e) => setBioText(e.target.value)}
-                            placeholder="Tell others about yourself..."
-                            className="bg-blue-900/30 border-blue-700/50 min-h-[80px]"
-                            maxLength={500}
-                          />
-                          <div className="flex gap-2 justify-end">
-                            <Button size="sm" onClick={handleBioSave}>
-                              <Check className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              onClick={() => setIsEditingBio(false)}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="text-gray-300 text-sm leading-relaxed">
-                          {profileUser.bio || 'No bio available.'}
-                        </p>
-                      )}
-                    </div>
+                  {/* Card Number at Bottom */}
+                  <div className="text-amber-400 text-xl font-bold z-10">
+                    #{profileUser.id.toString().padStart(4, '0')}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Edit Profile Button for Own Profile */}
+            {isOwnProfile && (
+              <div className="flex justify-center mt-6">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => setIsEditingProfile(true)}
+                  className="border-2 border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-black px-8"
+                >
+                  <Edit2 className="h-5 w-5 mr-2" />
+                  Edit Profile
+                </Button>
+              </div>
+            )}
+
+            {/* Legacy sections - moved below card */}
+            <div className="mt-8 space-y-6">
               
-              {/* Left Column */}
-              <div className="lg:col-span-2 space-y-6">
+              {/* Bio Editing Section */}
+              {isOwnProfile && (
+                <Card className="bg-blue-900/20 border-blue-800/60">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <Label className="text-lg font-medium text-gray-300">Bio</Label>
+                      {!isEditingBio && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setIsEditingBio(true)}
+                          className="text-gray-400 hover:text-white"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    
+                    {isEditingBio ? (
+                      <div className="space-y-3">
+                        <Textarea
+                          value={bioText}
+                          onChange={(e) => setBioText(e.target.value)}
+                          placeholder="Tell others about yourself..."
+                          className="bg-blue-900/30 border-blue-700/50 min-h-[100px]"
+                          maxLength={500}
+                        />
+                        <div className="flex gap-2 justify-end">
+                          <Button size="sm" onClick={handleBioSave}>
+                            <Check className="h-4 w-4 mr-2" />
+                            Save
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={() => setIsEditingBio(false)}
+                          >
+                            <X className="h-4 w-4 mr-2" />
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-gray-300 leading-relaxed">
+                        {profileUser.bio || 'No bio available. Click edit to add one.'}
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Profile editing for own profile */}
+              {isEditingProfile && isOwnProfile && (
+                <Card className="bg-blue-900/20 border-blue-800/60">
+                  <CardContent className="p-6">
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-white">Edit Profile</h3>
+                      <div className="space-y-3">
+                        <div>
+                          <Label className="text-sm font-medium text-gray-300">Display Name</Label>
+                          <Input
+                            value={profileData.name}
+                            onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
+                            placeholder="Display Name"
+                            className="bg-blue-900/30 border-blue-700/50 mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium text-gray-300">Username</Label>
+                          <Input
+                            value={profileData.username}
+                            onChange={(e) => setProfileData(prev => ({ ...prev, username: e.target.value }))}
+                            placeholder="Username"
+                            className="bg-blue-900/30 border-blue-700/50 mt-1"
+                          />
+                        </div>
+                        <div className="flex gap-3 pt-2">
+                          <Button onClick={handleProfileSave} className="bg-blue-600 hover:bg-blue-700">
+                            <Check className="h-4 w-4 mr-2" />
+                            Save Changes
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            onClick={() => setIsEditingProfile(false)}
+                            className="border-gray-600 text-gray-400 hover:bg-gray-600 hover:text-white"
+                          >
+                            <X className="h-4 w-4 mr-2" />
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Additional sections */}
+              <div className="grid grid-cols-1 gap-6">
                 
                 {/* Latest Workout */}
                 <Card className="bg-blue-900/20 border-blue-800/60">
