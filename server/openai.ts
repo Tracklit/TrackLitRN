@@ -293,3 +293,164 @@ Be specific and technical in your analysis. Do not say you cannot analyze - inst
   // This should never be reached, but adding for TypeScript compliance
   throw new Error("Video analysis could not be completed - no valid processing path available");
 }
+
+interface TrainingProgramParams {
+  title: string;
+  description: string;
+  totalLengthWeeks: number;
+  blocks: number;
+  workoutsPerWeek: number;
+  gymWorkoutsPerWeek: number;
+  blockFocus: 'speed' | 'speed-maintenance' | 'speed-endurance' | 'mixed' | 'short-to-long' | 'long-to-short';
+  specificRequirements: string;
+  previousContent?: string;
+}
+
+export async function generateTrainingProgram(params: TrainingProgramParams): Promise<string> {
+  try {
+    const blockFocusDescriptions = {
+      'speed': 'maximum speed development with high-intensity sprint work',
+      'speed-maintenance': 'maintaining current speed levels with moderate intensity',
+      'speed-endurance': 'building ability to maintain speed over longer distances',
+      'mixed': 'balanced combination of speed, endurance, and power training',
+      'short-to-long': 'progressive development from short sprints to longer distances',
+      'long-to-short': 'starting with longer distances and progressing to pure speed work'
+    };
+
+    const systemPrompt = `You are Sprinthia, an elite track and field AI coach specializing in sprint training program design. You create detailed, periodized training programs for athletes of all levels.
+
+Key principles:
+- Base programs on proven coaching methodologies and exercise science
+- Include proper warm-up, main work, and cool-down for each session
+- Progress intelligently through training blocks
+- Balance high-intensity work with recovery
+- Specify sets, reps, distances, and rest intervals
+- Include both track and gym components when requested
+- Consider athlete development and injury prevention
+
+Format your response as a detailed training program with:
+1. Program overview and goals
+2. Block-by-block breakdown
+3. Weekly structure for each block
+4. Specific workout details for each session
+5. Recovery and regeneration guidelines
+
+Be specific with exercises, distances, intensities, and progressions.`;
+
+    const userPrompt = `Create a comprehensive track and field training program with these specifications:
+
+Program Details:
+- Title: ${params.title}
+- Description: ${params.description}
+- Total Length: ${params.totalLengthWeeks} weeks
+- Training Blocks: ${params.blocks}
+- Workouts per Week: ${params.workoutsPerWeek}
+- Gym Sessions per Week: ${params.gymWorkoutsPerWeek}
+- Block Focus: ${blockFocusDescriptions[params.blockFocus]}
+
+Specific Requirements:
+${params.specificRequirements}
+
+Please create a detailed, progressive training program that includes:
+- Clear periodization across all ${params.blocks} blocks
+- Specific workout details for each session type
+- Appropriate volume and intensity progressions
+- Integration of track and gym work
+- Recovery protocols and regeneration strategies
+- Performance testing and milestone checkpoints
+
+Make the program practical and implementable while maintaining high coaching standards.`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
+      ],
+      max_tokens: 4000,
+      temperature: 0.7
+    });
+
+    const generatedProgram = response.choices[0].message.content;
+    
+    if (!generatedProgram) {
+      throw new Error("No program content generated");
+    }
+
+    return generatedProgram;
+  } catch (error) {
+    console.error("Error generating training program:", error);
+    throw new Error("Failed to generate training program. Please try again.");
+  }
+}
+
+export async function regenerateTrainingProgram(params: TrainingProgramParams): Promise<string> {
+  try {
+    const blockFocusDescriptions = {
+      'speed': 'maximum speed development with high-intensity sprint work',
+      'speed-maintenance': 'maintaining current speed levels with moderate intensity',
+      'speed-endurance': 'building ability to maintain speed over longer distances',
+      'mixed': 'balanced combination of speed, endurance, and power training',
+      'short-to-long': 'progressive development from short sprints to longer distances',
+      'long-to-short': 'starting with longer distances and progressing to pure speed work'
+    };
+
+    const systemPrompt = `You are Sprinthia, an elite track and field AI coach specializing in sprint training program design. You are regenerating a training program to provide fresh alternatives while maintaining coaching excellence.
+
+Your task is to create a NEW training program that:
+- Maintains the same overall structure and goals
+- Uses different exercises, progressions, or methodologies
+- Provides variety while keeping scientific principles
+- Offers alternative approaches to achieve the same training objectives
+- Ensures the new program is distinctly different from the previous version
+
+Base programs on proven coaching methodologies but explore different exercise selections, training methods, or periodization approaches.`;
+
+    const userPrompt = `Regenerate a training program with these specifications (create a NEW version different from the previous):
+
+Program Details:
+- Title: ${params.title}
+- Description: ${params.description}
+- Total Length: ${params.totalLengthWeeks} weeks
+- Training Blocks: ${params.blocks}
+- Workouts per Week: ${params.workoutsPerWeek}
+- Gym Sessions per Week: ${params.gymWorkoutsPerWeek}
+- Block Focus: ${blockFocusDescriptions[params.blockFocus]}
+
+Specific Requirements:
+${params.specificRequirements}
+
+Previous Program (DO NOT COPY - use as reference for creating something different):
+${params.previousContent}
+
+Create a completely NEW program that:
+- Achieves the same training goals through different methods
+- Uses alternative exercises and progressions
+- Maintains the same overall structure but with fresh content
+- Provides variety while keeping scientific training principles
+- Is distinctly different from the previous version
+
+Focus on offering new exercise selections, different training methodologies, or alternative periodization approaches while maintaining coaching excellence.`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
+      ],
+      max_tokens: 4000,
+      temperature: 0.8 // Slightly higher temperature for more variety
+    });
+
+    const regeneratedProgram = response.choices[0].message.content;
+    
+    if (!regeneratedProgram) {
+      throw new Error("No program content generated");
+    }
+
+    return regeneratedProgram;
+  } catch (error) {
+    console.error("Error regenerating training program:", error);
+    throw new Error("Failed to regenerate training program. Please try again.");
+  }
+}

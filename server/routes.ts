@@ -8660,6 +8660,114 @@ Keep the response professional, evidence-based, and specific to track and field 
   app.post("/api/journal/:journalId/comments", addJournalComment);
   app.post("/api/mood-entries", recordMoodEntry);
 
+  // Sprinthia AI Program Generation Routes
+  app.post("/api/sprinthia/generate-program", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const user = req.user!;
+      const { totalLengthWeeks, blocks, workoutsPerWeek, gymWorkoutsPerWeek, blockFocus, aiPrompt, title, description } = req.body;
+      
+      // Check subscription tier
+      if (user.subscriptionTier === 'free') {
+        return res.status(403).json({ 
+          error: "Premium subscription required",
+          message: "Sprinthia AI program generation requires a Pro or Star subscription."
+        });
+      }
+      
+      // Check usage limits
+      const programsCreated = user.sprinthiaProgramsCreated || 0;
+      const maxPrograms = user.subscriptionTier === 'pro' ? 3 : 12;
+      
+      if (programsCreated >= maxPrograms) {
+        return res.status(403).json({ 
+          error: "Usage limit reached",
+          message: `You've reached your limit of ${maxPrograms} AI-generated programs. Upgrade or purchase additional usage with Spikes.`
+        });
+      }
+      
+      // Import OpenAI function
+      const { generateTrainingProgram } = await import('./openai');
+      
+      // Generate the program using AI
+      const programContent = await generateTrainingProgram({
+        title: title || 'Custom Training Program',
+        description: description || '',
+        totalLengthWeeks,
+        blocks,
+        workoutsPerWeek,
+        gymWorkoutsPerWeek,
+        blockFocus,
+        specificRequirements: aiPrompt
+      });
+      
+      // Update user's usage count
+      await dbStorage.updateUserSprinthiaUsage(user.id, { 
+        programsCreated: programsCreated + 1 
+      });
+      
+      res.json({ content: programContent });
+    } catch (error) {
+      console.error("Error generating Sprinthia program:", error);
+      res.status(500).json({ error: "Failed to generate program" });
+    }
+  });
+  
+  app.post("/api/sprinthia/regenerate-program", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const user = req.user!;
+      const { totalLengthWeeks, blocks, workoutsPerWeek, gymWorkoutsPerWeek, blockFocus, aiPrompt, title, description, previousContent } = req.body;
+      
+      // Check subscription tier
+      if (user.subscriptionTier === 'free') {
+        return res.status(403).json({ 
+          error: "Premium subscription required",
+          message: "Sprinthia AI program regeneration requires a Pro or Star subscription."
+        });
+      }
+      
+      // Check regeneration limits
+      const regenerationsUsed = user.sprinthiaRegenerationsUsed || 0;
+      const maxRegenerations = user.subscriptionTier === 'pro' ? 3 : 12;
+      
+      if (regenerationsUsed >= maxRegenerations) {
+        return res.status(403).json({ 
+          error: "Regeneration limit reached",
+          message: `You've reached your limit of ${maxRegenerations} program regenerations. Upgrade or purchase additional usage with Spikes.`
+        });
+      }
+      
+      // Import OpenAI function
+      const { regenerateTrainingProgram } = await import('./openai');
+      
+      // Regenerate the program using AI
+      const programContent = await regenerateTrainingProgram({
+        title: title || 'Custom Training Program',
+        description: description || '',
+        totalLengthWeeks,
+        blocks,
+        workoutsPerWeek,
+        gymWorkoutsPerWeek,
+        blockFocus,
+        specificRequirements: aiPrompt,
+        previousContent
+      });
+      
+      // Update user's regeneration count
+      await dbStorage.updateUserSprinthiaUsage(user.id, { 
+        regenerationsUsed: regenerationsUsed + 1 
+      });
+      
+      res.json({ content: programContent });
+    } catch (error) {
+      console.error("Error regenerating Sprinthia program:", error);
+      res.status(500).json({ error: "Failed to regenerate program" });
+    }
+  });
+
   // Use modular routes
   app.use("/api/community", communityRoutes);
   app.use(chatRoutes);

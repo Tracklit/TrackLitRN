@@ -3478,6 +3478,26 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(chatGroupMembers.userId, userId));
   }
+
+  async updateUserSprinthiaUsage(userId: number, updates: { programsCreated?: number; regenerationsUsed?: number }): Promise<User> {
+    const updateData: any = {};
+    
+    if (updates.programsCreated !== undefined) {
+      updateData.sprinthiaProgramsCreated = updates.programsCreated;
+    }
+    
+    if (updates.regenerationsUsed !== undefined) {
+      updateData.sprinthiaRegenerationsUsed = updates.regenerationsUsed;
+    }
+    
+    const [updatedUser] = await db
+      .update(users)
+      .set(updateData)
+      .where(eq(users.id, userId))
+      .returning();
+      
+    return updatedUser;
+  }
 }
 
 export const storage = new DatabaseStorage();

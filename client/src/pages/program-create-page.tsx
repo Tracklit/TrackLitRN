@@ -17,7 +17,10 @@ import {
   BookOpen,
   Loader2,
   Upload,
-  CheckCircle2
+  CheckCircle2,
+  Bot,
+  Zap,
+  Crown
 } from "lucide-react";
 import { 
   Select, 
@@ -38,12 +41,21 @@ interface CreateProgramForm {
   textContent?: string;
 }
 
+interface SprinthiaFormData {
+  totalLengthWeeks: number;
+  blocks: number;
+  workoutsPerWeek: number;
+  gymWorkoutsPerWeek: number;
+  blockFocus: 'speed' | 'speed-maintenance' | 'speed-endurance' | 'mixed' | 'short-to-long' | 'long-to-short';
+  aiPrompt: string;
+}
+
 function ProgramCreatePage() {
   const { toast } = useToast();
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   
-  const [selectedMethod, setSelectedMethod] = useState<'builder' | 'upload' | 'import' | 'text' | null>(null);
+  const [selectedMethod, setSelectedMethod] = useState<'builder' | 'upload' | 'import' | 'text' | 'sprinthia' | null>(null);
   const [isNavigatingToEdit, setIsNavigatingToEdit] = useState(false);
   const [formData, setFormData] = useState<CreateProgramForm>({
     title: "",
@@ -57,6 +69,23 @@ function ProgramCreatePage() {
 
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  
+  // Sprinthia form state
+  const [sprinthiaData, setSprinthiaData] = useState<SprinthiaFormData>({
+    totalLengthWeeks: 4,
+    blocks: 2,
+    workoutsPerWeek: 4,
+    gymWorkoutsPerWeek: 2,
+    blockFocus: 'speed',
+    aiPrompt: ''
+  });
+  
+  // Sprinthia state
+  const [isGeneratingProgram, setIsGeneratingProgram] = useState(false);
+  const [generatedProgram, setGeneratedProgram] = useState<string | null>(null);
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const [showUsageLimitModal, setShowUsageLimitModal] = useState(false);
+  const [usageLimitType, setUsageLimitType] = useState<'creation' | 'regeneration'>('creation');
 
   const createProgramMutation = useMutation({
     mutationFn: async (data: CreateProgramForm) => {
@@ -200,6 +229,129 @@ function ProgramCreatePage() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  // Check subscription limits for Sprinthia
+  const checkSprinthiaUsage = () => {
+    if (!user) return false;
+    
+    const tier = user.subscriptionTier || 'free';
+    if (tier === 'free') {
+      return { allowed: false, reason: 'non-paying' };
+    }
+    
+    // Check program creation limits (these would need to be tracked in the backend)
+    const programsCreated = user.sprinthiaProgramsCreated || 0;
+    const maxPrograms = tier === 'pro' ? 3 : tier === 'star' ? 12 : 0;
+    
+    if (programsCreated >= maxPrograms) {
+      return { allowed: false, reason: 'creation-limit', current: programsCreated, max: maxPrograms };
+    }
+    
+    return { allowed: true };
+  };
+
+  const checkRegenerationUsage = () => {
+    if (!user) return false;
+    
+    const tier = user.subscriptionTier || 'free';
+    if (tier === 'free') {
+      return { allowed: false, reason: 'non-paying' };
+    }
+    
+    // Check regeneration limits (these would need to be tracked per program)
+    const regenerationsUsed = user.sprinthiaRegenerationsUsed || 0;
+    const maxRegenerations = tier === 'pro' ? 3 : tier === 'star' ? 12 : 0;
+    
+    if (regenerationsUsed >= maxRegenerations) {
+      return { allowed: false, reason: 'regeneration-limit', current: regenerationsUsed, max: maxRegenerations };
+    }
+    
+    return { allowed: true };
+  };
+
+  const generateSprinthiaProgram = async () => {
+    const usageCheck = checkSprinthiaUsage();
+    if (!usageCheck.allowed) {
+      setUsageLimitType('creation');
+      setShowUsageLimitModal(true);
+      return;
+    }
+
+    setIsGeneratingProgram(true);
+    try {
+      const response = await apiRequest('POST', '/api/sprinthia/generate-program', {
+        ...sprinthiaData,
+        title: formData.title,
+        description: formData.description
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate program');
+      }
+      
+      const result = await response.json();
+      setGeneratedProgram(result.content);
+      
+      toast({
+        title: "Program Generated",
+        description: "Your AI-powered training program has been created!",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Generation Failed",
+        description: error.message || "Failed to generate program. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingProgram(false);
+    }
+  };
+
+  const regenerateProgram = async () => {
+    const usageCheck = checkRegenerationUsage();
+    if (!usageCheck.allowed) {
+      setUsageLimitType('regeneration');
+      setShowUsageLimitModal(true);
+      return;
+    }
+
+    setIsRegenerating(true);
+    try {
+      const response = await apiRequest('POST', '/api/sprinthia/regenerate-program', {
+        ...sprinthiaData,
+        title: formData.title,
+        description: formData.description,
+        previousContent: generatedProgram
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to regenerate program');
+      }
+      
+      const result = await response.json();
+      setGeneratedProgram(result.content);
+      
+      toast({
+        title: "Program Regenerated",
+        description: "Your training program has been updated with new AI suggestions!",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Regeneration Failed",
+        description: error.message || "Failed to regenerate program. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
+
+  const continueToEdit = () => {
+    // Copy generated content to formData and switch to text mode
+    setFormData(prev => ({ ...prev, textContent: generatedProgram || '' }));
+    setSelectedMethod('text');
+    setGeneratedProgram(null);
+  };
+
   if (uploadSuccess || isNavigatingToEdit) {
     return (
       <div className="container max-w-screen-xl mx-auto p-4 pt-20 md:pt-24 md:pl-72 pb-20">
@@ -246,7 +398,7 @@ function ProgramCreatePage() {
 
       <div className="max-w-4xl mx-auto mt-8">
         {!selectedMethod ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
             <Card 
               className="cursor-pointer border-2 hover:border-primary/50 transition-all hover:shadow-md relative"
               onClick={() => setSelectedMethod('upload')}
@@ -292,6 +444,29 @@ function ProgramCreatePage() {
                 <CardDescription>
                   Create a simple text-based program that displays as a scrollable list
                 </CardDescription>
+              </CardHeader>
+            </Card>
+            
+            <Card 
+              className="cursor-pointer border-2 hover:border-primary/50 transition-all hover:shadow-md"
+              onClick={() => setSelectedMethod('sprinthia')}
+            >
+              <CardHeader className="text-center pb-6">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center">
+                  <Bot className="h-8 w-8 text-white" />
+                </div>
+                <CardTitle className="text-xl mb-2">Build With Sprinthia</CardTitle>
+                <CardDescription>
+                  Build a text based program powered by AI
+                </CardDescription>
+                {user?.subscriptionTier === 'free' && (
+                  <div className="mt-2">
+                    <div className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-amber-100 text-amber-800 border border-amber-200">
+                      <Crown className="h-3 w-3 mr-1" />
+                      Premium Required
+                    </div>
+                  </div>
+                )}
               </CardHeader>
             </Card>
             
@@ -695,6 +870,230 @@ function ProgramCreatePage() {
                   </form>
                 </CardContent>
               </Card>
+            )}
+
+            {selectedMethod === 'sprinthia' && (
+              <div className="space-y-6">
+                {!generatedProgram ? (
+                  <Card className="border-2 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-amber-500/50">
+                    <CardHeader className="bg-gradient-to-r from-amber-500/10 to-amber-600/10 border-b border-amber-500/20">
+                      <CardTitle className="flex items-center text-amber-100">
+                        <Bot className="h-5 w-5 mr-2 text-amber-400" />
+                        Build With Sprinthia AI
+                      </CardTitle>
+                      <CardDescription className="text-amber-200/80">
+                        Create an AI-powered training program with custom parameters and intelligent recommendations
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <Label className="text-amber-100">Program Title *</Label>
+                            <Input
+                              placeholder="Enter program title"
+                              value={formData.title}
+                              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                              className="mt-1 bg-slate-800/50 border-slate-600 text-white placeholder-slate-400"
+                            />
+                          </div>
+
+                          <div>
+                            <Label className="text-amber-100">Total Length (weeks)</Label>
+                            <Select 
+                              value={sprinthiaData.totalLengthWeeks.toString()} 
+                              onValueChange={(value) => setSprinthiaData(prev => ({ ...prev, totalLengthWeeks: parseInt(value) }))}
+                            >
+                              <SelectTrigger className="mt-1 bg-slate-800/50 border-slate-600 text-white">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="bg-slate-800 border-slate-600">
+                                {Array.from({ length: 12 }, (_, i) => (
+                                  <SelectItem key={i + 1} value={(i + 1).toString()} className="text-white hover:bg-slate-700">
+                                    {i + 1} week{i !== 0 ? 's' : ''}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div>
+                            <Label className="text-amber-100">Number of Blocks</Label>
+                            <Select 
+                              value={sprinthiaData.blocks.toString()} 
+                              onValueChange={(value) => setSprinthiaData(prev => ({ ...prev, blocks: parseInt(value) }))}
+                            >
+                              <SelectTrigger className="mt-1 bg-slate-800/50 border-slate-600 text-white">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="bg-slate-800 border-slate-600">
+                                {Array.from({ length: 6 }, (_, i) => (
+                                  <SelectItem key={i + 1} value={(i + 1).toString()} className="text-white hover:bg-slate-700">
+                                    {i + 1} block{i !== 0 ? 's' : ''}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div>
+                            <Label className="text-amber-100">Workouts Per Week</Label>
+                            <Select 
+                              value={sprinthiaData.workoutsPerWeek.toString()} 
+                              onValueChange={(value) => setSprinthiaData(prev => ({ ...prev, workoutsPerWeek: parseInt(value) }))}
+                            >
+                              <SelectTrigger className="mt-1 bg-slate-800/50 border-slate-600 text-white">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="bg-slate-800 border-slate-600">
+                                {Array.from({ length: 7 }, (_, i) => (
+                                  <SelectItem key={i + 1} value={(i + 1).toString()} className="text-white hover:bg-slate-700">
+                                    {i + 1} workout{i !== 0 ? 's' : ''}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div>
+                            <Label className="text-amber-100">Gym Workouts Per Week</Label>
+                            <Select 
+                              value={sprinthiaData.gymWorkoutsPerWeek.toString()} 
+                              onValueChange={(value) => setSprinthiaData(prev => ({ ...prev, gymWorkoutsPerWeek: parseInt(value) }))}
+                            >
+                              <SelectTrigger className="mt-1 bg-slate-800/50 border-slate-600 text-white">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="bg-slate-800 border-slate-600">
+                                {Array.from({ length: 6 }, (_, i) => (
+                                  <SelectItem key={i} value={i.toString()} className="text-white hover:bg-slate-700">
+                                    {i} workout{i !== 1 ? 's' : ''}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div>
+                            <Label className="text-amber-100">Block Focus</Label>
+                            <Select 
+                              value={sprinthiaData.blockFocus} 
+                              onValueChange={(value: SprinthiaFormData['blockFocus']) => setSprinthiaData(prev => ({ ...prev, blockFocus: value }))}
+                            >
+                              <SelectTrigger className="mt-1 bg-slate-800/50 border-slate-600 text-white">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="bg-slate-800 border-slate-600">
+                                <SelectItem value="speed" className="text-white hover:bg-slate-700">Speed</SelectItem>
+                                <SelectItem value="speed-maintenance" className="text-white hover:bg-slate-700">Speed Maintenance</SelectItem>
+                                <SelectItem value="speed-endurance" className="text-white hover:bg-slate-700">Speed Endurance</SelectItem>
+                                <SelectItem value="mixed" className="text-white hover:bg-slate-700">Mixed</SelectItem>
+                                <SelectItem value="short-to-long" className="text-white hover:bg-slate-700">Short to Long</SelectItem>
+                                <SelectItem value="long-to-short" className="text-white hover:bg-slate-700">Long to Short</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label className="text-amber-100">Description & AI Prompt</Label>
+                          <Textarea
+                            placeholder="Describe your program goals and any specific requirements for the AI. Be as detailed as possible to get better results."
+                            value={sprinthiaData.aiPrompt}
+                            onChange={(e) => setSprinthiaData(prev => ({ ...prev, aiPrompt: e.target.value }))}
+                            className="mt-1 bg-slate-800/50 border-slate-600 text-white placeholder-slate-400 min-h-[120px]"
+                          />
+                          <p className="text-sm text-amber-200/70 mt-2">
+                            Example: "Create a program for a high school sprinter focusing on 100m and 200m events. Include warm-up routines, sprint drills, and recovery sessions."
+                          </p>
+                        </div>
+
+                        <div className="flex flex-col gap-3">
+                          <Button 
+                            onClick={generateSprinthiaProgram}
+                            disabled={isGeneratingProgram || !formData.title || !sprinthiaData.aiPrompt}
+                            className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-900 font-semibold"
+                          >
+                            {isGeneratingProgram ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Generating Program...
+                              </>
+                            ) : (
+                              <>
+                                <Zap className="h-4 w-4 mr-2" />
+                                Generate Training Program
+                              </>
+                            )}
+                          </Button>
+                          
+                          {user && (
+                            <div className="text-center text-sm text-amber-200/70">
+                              {user.subscriptionTier === 'pro' && `${3 - (user.sprinthiaProgramsCreated || 0)} program creations remaining`}
+                              {user.subscriptionTier === 'star' && `${12 - (user.sprinthiaProgramsCreated || 0)} program creations remaining`}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card className="border-2 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-amber-500/50">
+                    <CardHeader className="bg-gradient-to-r from-green-500/10 to-green-600/10 border-b border-green-500/20">
+                      <CardTitle className="flex items-center text-green-100">
+                        <CheckCircle2 className="h-5 w-5 mr-2 text-green-400" />
+                        Program Generated Successfully
+                      </CardTitle>
+                      <CardDescription className="text-green-200/80">
+                        Your AI-powered training program is ready! Review the content and choose your next action.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                      <div className="space-y-4">
+                        <div className="bg-slate-800/50 border border-slate-600 rounded-lg p-4 max-h-[400px] overflow-y-auto">
+                          <pre className="text-sm text-white whitespace-pre-wrap font-mono">{generatedProgram}</pre>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <Button 
+                            onClick={continueToEdit}
+                            className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white"
+                          >
+                            <BookOpen className="h-4 w-4 mr-2" />
+                            Continue to Edit and Save
+                          </Button>
+                          
+                          <Button 
+                            onClick={regenerateProgram}
+                            disabled={isRegenerating}
+                            variant="outline"
+                            className="border-amber-500 text-amber-400 hover:bg-amber-500/10"
+                          >
+                            {isRegenerating ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Regenerating...
+                              </>
+                            ) : (
+                              <>
+                                <Zap className="h-4 w-4 mr-2" />
+                                Rewrite
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                        
+                        {user && (
+                          <div className="text-center text-sm text-amber-200/70">
+                            {user.subscriptionTier === 'pro' && `${3 - (user.sprinthiaRegenerationsUsed || 0)} regenerations remaining`}
+                            {user.subscriptionTier === 'star' && `${12 - (user.sprinthiaRegenerationsUsed || 0)} regenerations remaining`}
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             )}
           </div>
         )}

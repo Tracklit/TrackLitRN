@@ -17,6 +17,8 @@ export const users = pgTable("users", {
   profileImageUrl: text("profile_image_url"),
   spikes: integer("spikes").default(0), // In-app currency/tokens
   sprinthiaPrompts: integer("sprinthia_prompts").default(1), // Available AI prompts
+  sprinthiaProgramsCreated: integer("sprinthia_programs_created").default(0), // Track AI program generations
+  sprinthiaRegenerationsUsed: integer("sprinthia_regenerations_used").default(0), // Track regenerations
   defaultClubId: integer("default_club_id"), // Will be connected through relations
   isBlocked: boolean("is_blocked").default(false), // For admin blocking
   isPrivate: boolean("is_private").default(false), // Privacy setting for profile visibility
