@@ -457,7 +457,7 @@ function ProgramCreatePage() {
                 </div>
                 <CardTitle className="text-xl mb-2">Build With Sprinthia</CardTitle>
                 <CardDescription>
-                  Build a text based program powered by AI
+                  Build a text based program powered by AI. Once generated, you will be able to manually edit before saving.
                 </CardDescription>
                 {user?.subscriptionTier === 'free' && (
                   <div className="mt-2">
@@ -882,7 +882,7 @@ function ProgramCreatePage() {
                         Build With Sprinthia AI
                       </CardTitle>
                       <CardDescription className="text-amber-200/80">
-                        Create an AI-powered training program with custom parameters and intelligent recommendations
+                        Create an AI-powered training program with custom parameters and intelligent recommendations. Once generated, you will be able to manually edit before saving.
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="p-6">
