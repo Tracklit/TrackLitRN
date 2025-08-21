@@ -14,6 +14,27 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY 
 });
 
+// Helper function to clean markdown formatting from AI responses
+function cleanMarkdownFormatting(text: string): string {
+  if (!text) return text;
+  
+  // Remove markdown headers (# and ##)
+  text = text.replace(/^#{1,6}\s*/gm, '');
+  
+  // Remove bold markdown (**text** and __text__)
+  text = text.replace(/\*\*(.*?)\*\*/g, '$1');
+  text = text.replace(/__(.*?)__/g, '$1');
+  
+  // Remove italic markdown (*text* and _text_)
+  text = text.replace(/\*(.*?)\*/g, '$1');
+  text = text.replace(/_(.*?)_/g, '$1');
+  
+  // Clean up any remaining stray * or # characters that might be at start of lines
+  text = text.replace(/^[\*#]+\s*/gm, '');
+  
+  return text.trim();
+}
+
 // Helper function to extract frames from video
 async function extractVideoFrames(videoPath: string, outputDir: string, numFrames: number = 3): Promise<string[]> {
   return new Promise((resolve, reject) => {
@@ -85,7 +106,8 @@ export async function getChatCompletion(prompt: string): Promise<string> {
       temperature: 0.7,
     });
 
-    return response.choices[0].message.content || "Analysis could not be completed at this time.";
+    const content = response.choices[0].message.content || "Analysis could not be completed at this time.";
+    return cleanMarkdownFormatting(content);
   } catch (error) {
     console.error("OpenAI API error:", error);
     throw new Error("Failed to generate analysis. Please try again.");
@@ -233,7 +255,7 @@ Be specific and technical in your analysis. Do not say you cannot analyze - inst
             console.warn(`Could not delete video file: ${videoPath}`, e);
           }
           
-          return analysisResult;
+          return cleanMarkdownFormatting(analysisResult);
           
         } catch (apiError: any) {
           console.error("OpenAI API Error:", {
@@ -377,7 +399,7 @@ Make the program practical and implementable while maintaining high coaching sta
       throw new Error("No program content generated");
     }
 
-    return generatedProgram;
+    return cleanMarkdownFormatting(generatedProgram);
   } catch (error) {
     console.error("Error generating training program:", error);
     throw new Error("Failed to generate training program. Please try again.");
@@ -448,7 +470,7 @@ Focus on offering new exercise selections, different training methodologies, or 
       throw new Error("No program content generated");
     }
 
-    return regeneratedProgram;
+    return cleanMarkdownFormatting(regeneratedProgram);
   } catch (error) {
     console.error("Error regenerating training program:", error);
     throw new Error("Failed to regenerate training program. Please try again.");
