@@ -465,21 +465,7 @@ const ChatPage = () => {
     }
   });
 
-  // Fetch messages for selected chat
-  const { data: messages = [], isLoading: messagesLoading } = useQuery({
-    queryKey: selectedChat?.type === 'group' 
-      ? ['/api/chat/groups', selectedChat.id, 'messages']
-      : ['/api/chat/direct', selectedChat?.id, 'messages'],
-    queryFn: async () => {
-      if (!selectedChat) return [];
-      const endpoint = selectedChat.type === 'group'
-        ? `/api/chat/groups/${selectedChat.id}/messages`
-        : `/api/chat/direct/${selectedChat.id}/messages`;
-      const response = await apiRequest('GET', endpoint);
-      return response.json();
-    },
-    enabled: !!selectedChat,
-  });
+  // Messages query is defined later in the component to avoid duplication
 
   // Create group mutation
   // Group creation is now handled on dedicated page
@@ -599,6 +585,23 @@ const ChatPage = () => {
     console.log('Selecting chat:', chat);
     setSelectedChat(chat);
     
+    // Immediately trigger data fetching for the selected chat
+    const queryKey = chat.type === 'group' 
+      ? ['/api/chat/groups', chat.id, 'messages']
+      : ['/api/chat/direct', chat.id, 'messages'];
+    
+    // Prefetch messages for the selected chat to ensure they load before transition
+    queryClient.prefetchQuery({
+      queryKey,
+      queryFn: async () => {
+        const endpoint = chat.type === 'group'
+          ? `/api/chat/groups/${chat.id}/messages`
+          : `/api/chat/direct/${chat.id}/messages`;
+        const response = await apiRequest('GET', endpoint);
+        return response.json();
+      }
+    });
+    
     // Use requestAnimationFrame to ensure the chat renders in the off-screen position first
     requestAnimationFrame(() => {
       setViewState('chat'); // Switch to chat view without unmounting
@@ -627,8 +630,20 @@ const ChatPage = () => {
       
       if (response.ok) {
         const conversation = await response.json();
+        const chat = { type: 'direct' as const, id: conversation.id };
+        
+        // Prefetch messages for the direct message to ensure they load before transition
+        await queryClient.prefetchQuery({
+          queryKey: ['/api/chat/direct', conversation.id, 'messages'],
+          queryFn: async () => {
+            const endpoint = `/api/chat/direct/${conversation.id}/messages`;
+            const response = await apiRequest('GET', endpoint);
+            return response.json();
+          }
+        });
+        
         // Select the direct message chat
-        setSelectedChat({ type: 'direct', id: conversation.id });
+        setSelectedChat(chat);
         
         // Use requestAnimationFrame to ensure the chat renders in the off-screen position first
         requestAnimationFrame(() => {
@@ -1648,7 +1663,7 @@ const ChatInterface = ({ selectedChat, onBack }: { selectedChat: { type: 'group'
       {showScrollToBottom && (
         <div className="absolute bottom-24 right-4 z-10">
           <Button
-            onClick={scrollToBottom}
+            onClick={() => scrollToBottom()}
             size="sm"
             variant="ghost"
             className="h-10 w-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg border-2 border-blue-500"
@@ -2077,7 +2092,6 @@ const MessageBubble = ({ message, isOwn, currentUser, onImageClick, onVideoClick
               src={message.media_url}
               alt="Shared image"
               className="border border-gray-300 rounded-sm"
-              style={{ borderRadius: '3px' }}
               lazy={true}
               maxWidth={300}
               maxHeight={400}

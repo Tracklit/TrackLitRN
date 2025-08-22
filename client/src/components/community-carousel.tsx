@@ -259,7 +259,7 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
         
         return (
           <div 
-            key={activity.id} 
+            key={`${activity.id}-${index}`} 
             className="absolute inset-0 flex items-center transition-transform duration-500 ease-in-out"
             style={{
               transform: `translateX(${(position - currentIndex) * 100}%)`,
