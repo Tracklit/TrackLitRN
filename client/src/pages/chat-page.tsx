@@ -298,11 +298,18 @@ const ChatPage = () => {
     setIsAtTop(container.scrollTop <= 5);
   };
 
-  // Touch/drag handlers for search bar with overscroll detection
+  // Enhanced touch handlers for both vertical (search) and horizontal (navigation) gestures
+  const [touchStartX, setTouchStartX] = useState(0);
+  const [touchStartY, setTouchStartY] = useState(0);
+  const [swipeDirection, setSwipeDirection] = useState<'none' | 'horizontal' | 'vertical'>('none');
+
   const handleTouchStart = (e: React.TouchEvent) => {
     const container = e.currentTarget as HTMLElement;
     const touch = e.touches[0];
+    setTouchStartX(touch.clientX);
+    setTouchStartY(touch.clientY);
     setDragStartY(touch.clientY);
+    setSwipeDirection('none');
     
     // Don't set dragging state immediately - wait for actual movement
     if (container.scrollTop === 0) {
@@ -313,38 +320,71 @@ const ChatPage = () => {
   const handleTouchMove = (e: React.TouchEvent) => {
     const container = e.currentTarget as HTMLElement;
     const touch = e.touches[0];
-    const deltaY = touch.clientY - dragStartY;
+    const deltaX = touch.clientX - touchStartX;
+    const deltaY = touch.clientY - touchStartY;
     
-    // Handle downward pulls when at top to show search bar
-    if (container.scrollTop === 0 && deltaY > 20 && !searchBarVisible) {
-      if (!isDragging) {
-        setIsDragging(true);
-      }
-      
-      e.preventDefault(); // Prevent bounce scroll
-      e.stopPropagation();
-      
-      const offset = Math.min(deltaY - 20, 100); // Subtract 20px threshold
-      setDragOffset(Math.max(0, offset));
-      
-      // Show search bar when pulled down enough
-      if (offset > 40) {
-        setSearchBarVisible(true);
+    // Determine swipe direction on first significant movement
+    if (swipeDirection === 'none' && (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10)) {
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        setSwipeDirection('horizontal');
+      } else {
+        setSwipeDirection('vertical');
       }
     }
-    // Handle upward drags when search bar is visible to hide it
-    else if (searchBarVisible && deltaY < -20) {
-      if (!isDragging) {
-        setIsDragging(true);
+    
+    // Handle horizontal swipes for navigation
+    if (swipeDirection === 'horizontal') {
+      // Right swipe: go back from chat to list
+      if (viewState === 'chat' && deltaX > 50) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Right swipe detected - navigating back to list');
+        handleBackToList();
+        return;
       }
       
-      e.preventDefault();
-      e.stopPropagation();
+      // Left swipe: (could be implemented to go into a chat, but we handle that via tap)
+      // For now, just prevent default to avoid interfering with the interface
+      if (Math.abs(deltaX) > 20) {
+        e.preventDefault();
+      }
+    }
+    
+    // Handle vertical swipes for search bar (existing functionality)
+    if (swipeDirection === 'vertical') {
+      const deltaYFromStart = touch.clientY - dragStartY;
       
-      // Hide search bar on upward drag
-      setSearchBarVisible(false);
-      setIsDragging(false);
-      setDragOffset(0);
+      // Handle downward pulls when at top to show search bar
+      if (container.scrollTop === 0 && deltaYFromStart > 20 && !searchBarVisible) {
+        if (!isDragging) {
+          setIsDragging(true);
+        }
+        
+        e.preventDefault(); // Prevent bounce scroll
+        e.stopPropagation();
+        
+        const offset = Math.min(deltaYFromStart - 20, 100); // Subtract 20px threshold
+        setDragOffset(Math.max(0, offset));
+        
+        // Show search bar when pulled down enough
+        if (offset > 40) {
+          setSearchBarVisible(true);
+        }
+      }
+      // Handle upward drags when search bar is visible to hide it
+      else if (searchBarVisible && deltaYFromStart < -20) {
+        if (!isDragging) {
+          setIsDragging(true);
+        }
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Hide search bar on upward drag
+        setSearchBarVisible(false);
+        setIsDragging(false);
+        setDragOffset(0);
+      }
     }
   };
 
@@ -352,6 +392,9 @@ const ChatPage = () => {
     setIsDragging(false);
     setDragOffset(0);
     setDragStartY(0);
+    setTouchStartX(0);
+    setTouchStartY(0);
+    setSwipeDirection('none');
     
     // For showing search bar: keep visible if pulled far enough during drag
     if (!searchBarVisible && dragOffset >= 70) {
@@ -885,6 +928,9 @@ const ChatPage = () => {
         className={`absolute inset-0 w-full h-full bg-slate-900 transition-transform duration-300 ease-in-out z-20 ${
           viewState === 'chat' ? 'translate-x-0' : 'translate-x-full'
         }`}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         {selectedChat ? (
           <ChatInterface selectedChat={selectedChat} onBack={handleBackToList} />
