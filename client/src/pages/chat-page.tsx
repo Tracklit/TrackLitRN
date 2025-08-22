@@ -617,7 +617,17 @@ const ChatPage = () => {
   const handleBackToList = () => {
     console.log('Back button clicked!');
     setViewState('list'); // Switch to list view without unmounting
-    // Don't clear selectedChat immediately - let it persist in memory
+    
+    // Clear selectedChat after transition completes to avoid blank screen during animation
+    setTimeout(() => {
+      // Check current state to ensure user hasn't navigated away
+      setViewState(currentState => {
+        if (currentState === 'list') {
+          setSelectedChat(null);
+        }
+        return currentState;
+      });
+    }, 300); // Match the transition duration
   };
 
   // Handle direct message creation
@@ -876,8 +886,15 @@ const ChatPage = () => {
           viewState === 'chat' ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        {selectedChat && (
+        {selectedChat ? (
           <ChatInterface selectedChat={selectedChat} onBack={handleBackToList} />
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-gray-400 text-center">
+              <MessageCircle className="h-16 w-16 mx-auto mb-4" />
+              <p>Select a chat to start messaging</p>
+            </div>
+          </div>
         )}
       </div>
 
