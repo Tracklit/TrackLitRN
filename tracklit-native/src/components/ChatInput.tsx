@@ -15,18 +15,28 @@ interface ChatInputProps {
   onSendMessage: (text: string) => void;
   placeholder?: string;
   maxLength?: number;
+  initialValue?: string;
+  onTextChange?: (text: string) => void;
+  disabled?: boolean;
 }
 
 const ChatInput: React.FC<ChatInputProps> = ({ 
   onSendMessage, 
   placeholder = 'Type a message...', 
-  maxLength = 1000 
+  maxLength = 1000,
+  initialValue = '',
+  onTextChange,
+  disabled = false
 }) => {
-  const [inputText, setInputText] = useState('');
+  const [inputText, setInputText] = useState(initialValue);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [inputHeight, setInputHeight] = useState(44);
   const inputRef = useRef<TextInput>(null);
   const animatedValue = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    setInputText(initialValue);
+  }, [initialValue]);
 
   useEffect(() => {
     const keyboardShowListener = Keyboard.addListener(
@@ -75,6 +85,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
   const handleTextChange = (text: string) => {
     setInputText(text);
+    onTextChange?.(text);
   };
 
   const handleContentSizeChange = (event: any) => {
@@ -133,7 +144,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             inputText.trim() ? styles.sendButtonActive : styles.sendButtonInactive
           ]} 
           onPress={handleSend}
-          disabled={!inputText.trim()}
+          disabled={!inputText.trim() || disabled}
           activeOpacity={0.7}
         >
           <Text 

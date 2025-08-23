@@ -4,42 +4,73 @@ export interface User {
   id: number;
   email: string;
   name: string;
+  username: string;
   role: 'athlete' | 'coach' | 'admin';
   subscription_tier: 'free' | 'pro' | 'star';
   profile_image_url?: string;
   created_at: string;
 }
 
-export interface ChatGroup {
+export interface ChatChannel {
   id: number;
   name: string;
   description?: string;
+  image?: string;
   avatar_url?: string;
-  created_by: number;
-  admin_ids: number[];
   is_private: boolean;
+  is_public: boolean;
+  created_by: number;
+  owner_id: number;
   created_at: string;
-  last_message?: string;
   last_message_at?: string;
+  last_message_text?: string;
+  last_message?: string;
   message_count: number;
+  admin_ids: number[];
+  member_count?: number;
+  members?: Array<{
+    id: number;
+    name: string;
+    username: string;
+  }>;
+  channel_type: 'group' | 'direct';
+  other_user_id?: number;
   is_member: boolean;
   is_admin: boolean;
   is_owner: boolean;
-  members: User[];
 }
 
-export interface Message {
+export interface ChatMessage {
   id: number;
-  group_id?: number;
+  group_id: number;
   user_id: number;
   text: string;
-  message_type: 'text' | 'image' | 'file' | 'system';
-  reply_to_id?: number;
-  image_url?: string;
-  file_url?: string;
   created_at: string;
-  user?: User;
-  reply_to?: Message;
+  edited_at?: string;
+  is_deleted: boolean;
+  reply_to_id?: number;
+  message_type: 'text' | 'image' | 'video' | 'file' | 'system';
+  media_url?: string;
+  reactions?: Array<{
+    emoji: string;
+    count: number;
+    users?: number[];
+  }>;
+  reply_to_message?: {
+    id: number;
+    text: string;
+    message_type: string;
+    user: {
+      id: number;
+      name: string;
+    };
+  };
+  user?: {
+    id: number;
+    name: string;
+    username: string;
+    profile_image_url?: string;
+  };
 }
 
 export interface TrainingProgram {
@@ -117,12 +148,40 @@ export type RootStackParamList = {
   Programs: undefined;
   Race: undefined;
   Chat: undefined;
-  GroupChat: { groupId: number };
+  GroupChat: { groupId: number; channelType: 'group' | 'direct' };
+  DirectChat: { userId: number; userName: string };
+  CreateGroup: undefined;
+  GroupSettings: { groupId: number };
   ProgramDetails: { programId: number };
   MeetDetails: { meetId: number };
   Profile: undefined;
   Settings: undefined;
 };
+
+export interface DirectMessage {
+  id: number;
+  senderId: number;
+  receiverId: number;
+  text: string;
+  createdAt: string;
+  editedAt?: string;
+  isDeleted: boolean;
+  isRead: boolean;
+  readAt?: string;
+  replyToId?: number;
+  reply_to_id?: number;
+  messageType: 'text' | 'image' | 'file';
+  mediaUrl?: string;
+}
+
+export interface Conversation {
+  id: number;
+  user1Id: number;
+  user2Id: number;
+  lastMessageId?: number;
+  lastMessageAt: string;
+  createdAt: string;
+}
 
 // API Response types
 export interface ApiResponse<T> {
