@@ -431,7 +431,7 @@ export default function JournalEntryPage() {
             {/* Public Toggle */}
             <div className="flex items-center justify-between bg-white/10 border border-white/20 rounded-lg p-4">
               <div>
-                <label className="text-sm font-medium text-white">Make Public</label>
+                <label className="text-sm font-medium text-white">Share this entry publically</label>
                 <p className="text-xs text-white/60 mt-1">
                   Share this entry with your coach and teammates
                 </p>

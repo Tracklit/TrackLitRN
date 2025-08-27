@@ -304,9 +304,9 @@ function WorkoutCard({ card, athleteProfile, onOpenJournal }: { card: any, athle
               variant="ghost"
               size="sm"
               onClick={() => onOpenJournal(card.dateString)}
-              className="h-8 w-8 p-0 text-white hover:bg-white/10"
+              className="h-8 px-3 text-white hover:bg-white/10 text-xs"
             >
-              <PenTool className="h-4 w-4" />
+              Finish
             </Button>
             <span className="text-sm text-white/80">{card.dateString}</span>
           </div>
