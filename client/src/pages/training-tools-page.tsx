@@ -37,7 +37,7 @@ export default function WorkoutToolsPage() {
     {
       title: "Video Analysis",
       description: "AI-powered race video analysis with Sprinthia",
-      icon: <PlayCircle className="h-4 w-4 text-white" />,
+      icon: <PlayCircle className="h-8 w-8 text-white" />,
       href: "/tools/video-analysis",
       disabled: false,
       backgroundImage: toolBackgrounds[0],
@@ -46,7 +46,7 @@ export default function WorkoutToolsPage() {
     {
       title: "Photo Finish",
       description: "Analyze race videos with timing overlays",
-      icon: <Flag className="h-4 w-4 text-white" />,
+      icon: <Flag className="h-8 w-8 text-white" />,
       href: "/tools/photo-finish",
       disabled: false,
       backgroundImage: toolBackgrounds[1],
@@ -55,7 +55,7 @@ export default function WorkoutToolsPage() {
     {
       title: "Start Gun",
       description: "Simulate a race start signal",
-      icon: <Volume2 className="h-4 w-4 text-white" />,
+      icon: <Volume2 className="h-8 w-8 text-white" />,
       href: "/tools/start-gun",
       disabled: false,
       backgroundImage: toolBackgrounds[2],
@@ -64,7 +64,7 @@ export default function WorkoutToolsPage() {
     {
       title: "Stopwatch",
       description: "Track your time with precision",
-      icon: <Timer className="h-4 w-4 text-white" />,
+      icon: <Timer className="h-8 w-8 text-white" />,
       href: "/tools/stopwatch",
       disabled: false,
       backgroundImage: toolBackgrounds[3],
@@ -73,7 +73,7 @@ export default function WorkoutToolsPage() {
     {
       title: "Journal",
       description: "View and search your workout notes",
-      icon: <FileText className="h-4 w-4 text-white" />,
+      icon: <FileText className="h-8 w-8 text-white" />,
       href: "/tools/journal",
       disabled: false,
       backgroundImage: toolBackgrounds[4],
@@ -82,7 +82,7 @@ export default function WorkoutToolsPage() {
     {
       title: "Exercise Library",
       description: "Store and organize your training videos",
-      icon: <Video className="h-4 w-4 text-white" />,
+      icon: <Video className="h-8 w-8 text-white" />,
       href: "/tools/exercise-library",
       disabled: false,
       backgroundImage: toolBackgrounds[5],
