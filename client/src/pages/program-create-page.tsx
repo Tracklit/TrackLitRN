@@ -396,93 +396,133 @@ function ProgramCreatePage() {
         description="Build a training program for your athletes or share with the community"
       />
 
-      <div className="max-w-4xl mx-auto mt-8">
+      <div className="mt-8">
         {!selectedMethod ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+          <div className="grid grid-cols-2 gap-4 mx-auto" style={{ width: "90vw", maxWidth: "540px", margin: "0 auto" }}>
             <Card 
-              className="cursor-pointer border-2 hover:border-primary/50 transition-all hover:shadow-md relative"
+              className="cursor-pointer h-[140px] mx-auto mb-2 overflow-hidden relative group hover:scale-105 transition-all duration-300"
+              style={{ 
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                border: '0.5px solid rgba(148, 163, 184, 0.25)', 
+                borderRadius: '6px',
+                boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.3), 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 15px 20px -5px rgba(0, 0, 0, 0.15)'
+              }}
               onClick={() => setSelectedMethod('upload')}
             >
-              <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full font-medium">
+              <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full font-medium z-20">
                 Recommended
               </div>
-              <CardHeader className="text-center pb-6">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-                  <FileUp className="h-8 w-8 text-primary" />
+              <CardContent className="p-2.5 relative h-full flex flex-col justify-center z-10">
+                <div className="flex flex-col items-center text-center gap-3">
+                  <div className="flex justify-center">
+                    <FileUp className="h-8 w-8 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold mb-1 text-white">Upload Document</h2>
+                    <p className="text-white/80 text-xs px-1 line-clamp-2 overflow-hidden">Share existing training documents in PDF, DOC, or DOCX format</p>
+                  </div>
                 </div>
-                <CardTitle className="text-xl mb-2">Upload Document</CardTitle>
-                <CardDescription>
-                  Share existing training documents in PDF, DOC, or DOCX format
-                </CardDescription>
-              </CardHeader>
+              </CardContent>
             </Card>
             
             <Card 
-              className="cursor-pointer border-2 hover:border-primary/50 transition-all hover:shadow-md"
+              className="cursor-pointer h-[140px] mx-auto mb-2 overflow-hidden relative group hover:scale-105 transition-all duration-300"
+              style={{ 
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                border: '0.5px solid rgba(148, 163, 184, 0.25)', 
+                borderRadius: '6px',
+                boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.3), 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 15px 20px -5px rgba(0, 0, 0, 0.15)'
+              }}
               onClick={() => setSelectedMethod('builder')}
             >
-              <CardHeader className="text-center pb-6">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-                  <BookOpen className="h-8 w-8 text-primary" />
+              <CardContent className="p-2.5 relative h-full flex flex-col justify-center z-10">
+                <div className="flex flex-col items-center text-center gap-3">
+                  <div className="flex justify-center">
+                    <BookOpen className="h-8 w-8 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold mb-1 text-white">Program Builder</h2>
+                    <p className="text-white/80 text-xs px-1 line-clamp-2 overflow-hidden">Create a structured training program with custom sessions and exercises</p>
+                  </div>
                 </div>
-                <CardTitle className="text-xl mb-2">Program Builder</CardTitle>
-                <CardDescription>
-                  Create a structured training program with custom sessions and exercises
-                </CardDescription>
-              </CardHeader>
+              </CardContent>
             </Card>
             
             <Card 
-              className="cursor-pointer border-2 hover:border-primary/50 transition-all hover:shadow-md"
+              className="cursor-pointer h-[140px] mx-auto mb-2 overflow-hidden relative group hover:scale-105 transition-all duration-300"
+              style={{ 
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                border: '0.5px solid rgba(148, 163, 184, 0.25)', 
+                borderRadius: '6px',
+                boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.3), 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 15px 20px -5px rgba(0, 0, 0, 0.15)'
+              }}
               onClick={() => setSelectedMethod('text')}
             >
-              <CardHeader className="text-center pb-6">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-                  <BookOpen className="h-8 w-8 text-primary" />
+              <CardContent className="p-2.5 relative h-full flex flex-col justify-center z-10">
+                <div className="flex flex-col items-center text-center gap-3">
+                  <div className="flex justify-center">
+                    <BookOpen className="h-8 w-8 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold mb-1 text-white">Text Based</h2>
+                    <p className="text-white/80 text-xs px-1 line-clamp-2 overflow-hidden">Create a simple text-based program that displays as a scrollable list</p>
+                  </div>
                 </div>
-                <CardTitle className="text-xl mb-2">Text Based</CardTitle>
-                <CardDescription>
-                  Create a simple text-based program that displays as a scrollable list
-                </CardDescription>
-              </CardHeader>
+              </CardContent>
             </Card>
             
             <Card 
-              className="cursor-pointer border-2 hover:border-primary/50 transition-all hover:shadow-md"
+              className="cursor-pointer h-[140px] mx-auto mb-2 overflow-hidden relative group hover:scale-105 transition-all duration-300"
+              style={{ 
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                border: '0.5px solid rgba(148, 163, 184, 0.25)', 
+                borderRadius: '6px',
+                boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.3), 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 15px 20px -5px rgba(0, 0, 0, 0.15)'
+              }}
               onClick={() => setSelectedMethod('sprinthia')}
             >
-              <CardHeader className="text-center pb-6">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center">
-                  <Bot className="h-8 w-8 text-white" />
-                </div>
-                <CardTitle className="text-xl mb-2">Build With Sprinthia</CardTitle>
-                <CardDescription>
-                  Build a text based program powered by AI. Once generated, you will be able to manually edit before saving.
-                </CardDescription>
-                {user?.subscriptionTier === 'free' && (
-                  <div className="mt-2">
-                    <div className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-amber-100 text-amber-800 border border-amber-200">
-                      <Crown className="h-3 w-3 mr-1" />
-                      Premium Required
-                    </div>
+              <CardContent className="p-2.5 relative h-full flex flex-col justify-center z-10">
+                <div className="flex flex-col items-center text-center gap-3">
+                  <div className="flex justify-center">
+                    <Bot className="h-8 w-8 text-white" />
                   </div>
-                )}
-              </CardHeader>
+                  <div>
+                    <h2 className="text-base font-bold mb-1 text-white">Build With Sprinthia</h2>
+                    <p className="text-white/80 text-xs px-1 line-clamp-2 overflow-hidden">Build a text based program powered by AI. Once generated, you will be able to manually edit before saving.</p>
+                    {user?.subscriptionTier === 'free' && (
+                      <div className="mt-1">
+                        <div className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-amber-100 text-amber-800 border border-amber-200">
+                          <Crown className="h-3 w-3 mr-1" />
+                          Premium Required
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
             </Card>
             
             <Card 
-              className="cursor-pointer border-2 hover:border-primary/50 transition-all hover:shadow-md"
+              className="cursor-pointer h-[140px] mx-auto mb-2 overflow-hidden relative group hover:scale-105 transition-all duration-300"
+              style={{ 
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                border: '0.5px solid rgba(148, 163, 184, 0.25)', 
+                borderRadius: '6px',
+                boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.3), 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 15px 20px -5px rgba(0, 0, 0, 0.15)'
+              }}
               onClick={() => setSelectedMethod('import')}
             >
-              <CardHeader className="text-center pb-6">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Upload className="h-8 w-8 text-primary" />
+              <CardContent className="p-2.5 relative h-full flex flex-col justify-center z-10">
+                <div className="flex flex-col items-center text-center gap-3">
+                  <div className="flex justify-center">
+                    <Upload className="h-8 w-8 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold mb-1 text-white">Import from Sheets</h2>
+                    <p className="text-white/80 text-xs px-1 line-clamp-2 overflow-hidden">Connect your Google Sheets for automatic synchronization</p>
+                  </div>
                 </div>
-                <CardTitle className="text-xl mb-2">Import from Sheets</CardTitle>
-                <CardDescription>
-                  Connect your Google Sheets for automatic synchronization
-                </CardDescription>
-              </CardHeader>
+              </CardContent>
             </Card>
           </div>
         ) : (
