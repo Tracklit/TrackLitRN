@@ -19,56 +19,56 @@ export default function ToolsPreviewPage() {
     {
       title: "Video Analysis",
       description: "AI-powered race video analysis with Sprinthia",
-      icon: <PlayCircle className="h-8 w-8 text-white" />,
+      icon: <PlayCircle className="h-4 w-4 text-white" />,
       href: "/tools/video-analysis",
       disabled: false
     },
     {
       title: "Photo Finish",
       description: "Analyze race videos with timing overlays",
-      icon: <Flag className="h-8 w-8 text-white" />,
+      icon: <Flag className="h-4 w-4 text-white" />,
       href: "/tools/photo-finish",
       disabled: false
     },
     {
       title: "Start Gun",
       description: "Simulate a race start signal",
-      icon: <Volume2 className="h-8 w-8 text-white" />,
+      icon: <Volume2 className="h-4 w-4 text-white" />,
       href: "/tools/start-gun",
       disabled: false
     },
     {
       title: "Stopwatch",
       description: "Track your time with precision",
-      icon: <Timer className="h-8 w-8 text-white" />,
+      icon: <Timer className="h-4 w-4 text-white" />,
       href: "/tools/stopwatch",
       disabled: false
     },
     {
       title: "Journal",
       description: "View and search your workout notes",
-      icon: <FileText className="h-8 w-8 text-white" />,
+      icon: <FileText className="h-4 w-4 text-white" />,
       href: "/tools/journal",
       disabled: false
     },
     {
       title: "Exercise Library",
       description: "Store and organize your training videos",
-      icon: <Video className="h-8 w-8 text-white" />,
+      icon: <Video className="h-4 w-4 text-white" />,
       href: "/tools/exercise-library",
       disabled: false
     },
     {
       title: "Rep Starter",
       description: "Countdown timer for repetitions",
-      icon: <RefreshCw className="h-8 w-8 text-muted-foreground" />,
+      icon: <RefreshCw className="h-4 w-4 text-muted-foreground" />,
       href: "#",
       disabled: true
     },
     {
       title: "Pace Calculator",
       description: "Calculate your target pace",
-      icon: <Gauge className="h-8 w-8 text-muted-foreground" />,
+      icon: <Gauge className="h-4 w-4 text-muted-foreground" />,
       href: "#",
       disabled: true
     }
