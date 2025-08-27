@@ -474,69 +474,30 @@ export default function AuthPage() {
       {/* Hero Image / Info Section */}
       <div className="hidden md:flex items-center justify-center bg-gradient-to-r from-primary/90 to-secondary/90 text-white p-12">
         <div className="max-w-md">
-          <h2 className="text-3xl font-bold mb-6">Elevate Your Track & Field Performance</h2>
-          <ul className="space-y-4">
-            <li className="flex items-start">
-              <div className="rounded-full bg-white/20 p-1 mr-3 mt-1">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg">Plan Meets with Precision</h3>
-                <p className="opacity-80 mt-1">Get real-time weather forecasts and create detailed preparation plans.</p>
-              </div>
-            </li>
-            <li className="flex items-start">
-              <div className="rounded-full bg-white/20 p-1 mr-3 mt-1">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg">Track Performance Progress</h3>
-                <p className="opacity-80 mt-1">Log your results and analyze your performance with detailed analytics.</p>
-              </div>
-            </li>
-            <li className="flex items-start">
-              <div className="rounded-full bg-white/20 p-1 mr-3 mt-1">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg">Smart Reminders</h3>
-                <p className="opacity-80 mt-1">Never miss important preparation steps with customizable reminders.</p>
-              </div>
-            </li>
-          </ul>
+          <h2 className="text-3xl font-bold mb-4">Join the Future of Athletics</h2>
+          <p className="opacity-90 mb-8 text-lg">Connect with coaches, explore training programs in the marketplace, and level up with Spikes — TrackLit is the ultimate performance toolkit for track and field.</p>
+          
+          <div className="space-y-6">
+            <div>
+              <h3 className="font-semibold text-xl mb-2">Own Your Progress</h3>
+              <p className="opacity-80">Track every rep, jump, and race with powerful analytics and PR tracking — see your improvements week by week, season by season.</p>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold text-xl mb-2">Stay Meet-Ready</h3>
+              <p className="opacity-80">Plan competitions with precision using integrated calendars, weather insights, and pre-race prep tools.</p>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold text-xl mb-2">Never Miss a Beat</h3>
+              <p className="opacity-80">Get smart reminders for workouts, recovery, and meet prep so you stay consistent when it matters most.</p>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold text-xl mb-2">Train Smarter, Compete Stronger</h3>
+              <p className="opacity-80">Let Sprinthia, your AI athletics coach, build personalized workouts and training blocks tailored to your event, season goals, and level.</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
