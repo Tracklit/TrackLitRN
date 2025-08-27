@@ -409,7 +409,7 @@ function ProgramCreatePage() {
               }}
               onClick={() => setSelectedMethod('upload')}
             >
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full border-2 border-white z-20"></div>
+              <div className="absolute w-3 h-3 bg-yellow-400 rounded-full border-2 border-white z-20" style={{ top: '11px', right: '11px' }}></div>
               <CardContent className="p-2.5 relative h-full flex flex-col justify-center z-10">
                 <div className="flex flex-col items-center text-center gap-3">
                   <div className="flex justify-center">
