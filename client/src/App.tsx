@@ -253,7 +253,7 @@ function Router() {
         
         {/* Auth */}
         <Route path="/auth" component={AuthPage} />
-        <Route path="/ambassador" component={AmbassadorLandingPage} />
+        <Route path="/affiliate" component={AmbassadorLandingPage} />
         <Route path="/test" component={TestPage} />
         <Route path="/tools-preview" component={ToolsPreviewPage} />
         <Route path="/test-minimal" component={MinimalTest} />
@@ -322,25 +322,25 @@ function MainApp() {
   
   return (
     <div className="min-h-screen text-foreground">
-      {/* Top Header Bar - Hide for chat routes, auth page, and ambassador page */}
-      {!location.startsWith('/chat') && location !== '/auth' && location !== '/ambassador' && <Header />}
+      {/* Top Header Bar - Hide for chat routes, auth page, and affiliate page */}
+      {!location.startsWith('/chat') && location !== '/auth' && location !== '/affiliate' && <Header />}
       
-      {/* Hamburger Menu for all screens - Hide for chat routes, auth page, and ambassador page */}
-      {!location.startsWith('/chat') && location !== '/auth' && location !== '/ambassador' && (
+      {/* Hamburger Menu for all screens - Hide for chat routes, auth page, and affiliate page */}
+      {!location.startsWith('/chat') && location !== '/auth' && location !== '/affiliate' && (
         <div className="fixed top-4 left-4 z-50">
           <HamburgerMenu />
         </div>
       )}
       
       {/* Main Content */}
-      <main className={location.startsWith('/chat') || location === '/auth' || location === '/ambassador' ? '' : 'pt-20 pb-16 md:pb-0'}>
-        <div className={location.startsWith('/chat') || location === '/auth' || location === '/ambassador' ? '' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'}>
+      <main className={location.startsWith('/chat') || location === '/auth' || location === '/affiliate' ? '' : 'pt-20 pb-16 md:pb-0'}>
+        <div className={location.startsWith('/chat') || location === '/auth' || location === '/affiliate' ? '' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'}>
           <Router />
         </div>
       </main>
       
-      {/* Bottom Navigation - Hide for chat routes, auth page, and ambassador page */}
-      {!location.startsWith('/chat') && location !== '/auth' && location !== '/ambassador' && <BottomNavigation />}
+      {/* Bottom Navigation - Hide for chat routes, auth page, and affiliate page */}
+      {!location.startsWith('/chat') && location !== '/auth' && location !== '/affiliate' && <BottomNavigation />}
       
       {/* Onboarding flow - Only show for logged in users who haven't seen it */}
       {user && showOnboarding && (
