@@ -43,40 +43,43 @@ interface TierCard {
 
 // LOI Text
 const LOI_TEXT = `
-LETTER OF INTENT - TRACKLIT AMBASSADOR PROGRAM
+Subject: Letter of Intent for Brand Affiliation / Endorsement Sponsorship
 
-This Letter of Intent outlines the terms and expectations for participation in the TrackLit Ambassador Program.
+Dear Athlete,
 
-1. PROGRAM OVERVIEW
-The TrackLit Ambassador Program is designed to partner with influential track and field athletes, coaches, and enthusiasts to promote our platform and grow our community.
+This Letter of Intent ("LOI") outlines the preliminary terms and understanding regarding a potential brand affiliation and/or endorsement sponsorship between TrackLit ("Company") and [Athlete Name] ("Athlete"). This LOI is intended solely as a statement of mutual interest and does not constitute a legally binding agreement, except where specifically noted.
 
-2. AMBASSADOR RESPONSIBILITIES
-- Authentic promotion of TrackLit through your social media channels
-- Creating engaging content showcasing TrackLit features
-- Providing feedback to help improve our platform
-- Maintaining professional conduct that aligns with TrackLit values
+1. PURPOSE
+The purpose of this LOI is to express the intent of both parties to explore a potential partnership in which the Athlete will serve as a brand ambassador for TrackLit, the ultimate track and field toolkit.
 
-3. COMPENSATION STRUCTURE
-Compensation varies by tier and includes:
-- Monetary rewards per successful referral
-- Revenue sharing opportunities (select tiers)
-- Free Spikes (in-app currency) packages
-- Exclusive access to new features
-- Blue checkmark verification on your profile
+2. BRAND AMBASSADOR TIERS
+The Athlete's engagement level and compensation will be determined under one of four category tiers based on:
+• Athlete's status, achievements, and recognition in the sport
+• Scope of promotional and brand activities
 
-4. REQUIREMENTS
-- Minimum follower counts as specified by tier
-- Active engagement with track and field community
-- Registered TrackLit account in good standing
-- Compliance with platform terms of service
+The specific tier and associated terms will be finalized in the formal sponsorship agreement.
 
-5. TERM AND TERMINATION
-This agreement may be terminated by either party with 30 days written notice. TrackLit reserves the right to terminate immediately for violations of program guidelines.
+3. ANTICIPATED ACTIVITIES
+Potential activities under the future agreement may include, but are not limited to:
+• Social media promotion and content creation
+• Participation in TrackLit campaigns
+• Use of Athlete's image, name, and likeness for marketing purposes
+• Other mutually agreed promotional activities
 
-6. CONFIDENTIALITY
-Ambassadors may receive early access to features and should maintain confidentiality until public release.
+4. TERM AND TIMING
+The formal brand affiliation/endorsement contract is anticipated to commence upon the official launch of the TrackLit platform, currently estimated for October 2025.
 
-By signing below, you acknowledge that you have read, understood, and agree to the terms outlined in this Letter of Intent.
+5. CONFIDENTIALITY
+Both parties agree to maintain confidentiality regarding the terms of this LOI and any discussions relating to the potential sponsorship until a formal agreement is executed or discussions are mutually terminated.
+
+6. NON-BINDING NATURE
+Except for Section 5 (Confidentiality), this LOI does not create a binding obligation to enter into a formal agreement. The parties acknowledge that any binding obligations will only arise pursuant to a fully executed sponsorship agreement.
+
+7. NEXT STEPS
+• TrackLit will provide additional information on platform launch and tier details
+• Parties will negotiate in good faith to finalize the formal sponsorship agreement
+
+We are excited about the possibility of collaborating with you and look forward to further discussions to formalize this partnership.
 `;
 
 export default function AmbassadorLandingPage() {
