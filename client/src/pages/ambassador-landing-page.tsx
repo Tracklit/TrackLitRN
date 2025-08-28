@@ -25,6 +25,7 @@ const ambassadorFormSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   socialMediaHandles: z.string().min(1, "Please provide your social media handles"),
   audienceSize: z.number().min(1000, "Minimum audience size is 1,000"),
+  trackLitUsername: z.string().min(1, "TrackLit username is required"),
   hasTrackLitAccount: z.boolean().refine(val => val === true, "You must have a TrackLit account"),
   agreesToLOI: z.boolean().refine(val => val === true, "You must agree to the Letter of Intent"),
   signature: z.string().min(1, "Digital signature is required"),
@@ -95,6 +96,7 @@ export default function AmbassadorLandingPage() {
       email: "",
       socialMediaHandles: "",
       audienceSize: 0,
+      trackLitUsername: "",
       hasTrackLitAccount: false,
       agreesToLOI: false,
       signature: "",
@@ -106,7 +108,8 @@ export default function AmbassadorLandingPage() {
     if (audienceSize >= 500000) return "Star";
     if (audienceSize >= 50000) return "Champ";
     if (audienceSize >= 10000) return "Pro";
-    if (audienceSize >= 5000) return "Athlete";
+    if (audienceSize >= 5000) return "Affiliate";
+    if (audienceSize >= 1000) return "Athlete";
     return "Not Eligible";
   };
 
@@ -114,6 +117,18 @@ export default function AmbassadorLandingPage() {
     {
       id: "athlete",
       title: "Athlete",
+      requirements: "1,000–5,000 social audience",
+      rewards: [
+        "Blue checkmark verification",
+        "Small Spikes package",
+        "Up to $1 per user referral"
+      ],
+      highlight: "purple",
+      icon: <Users className="h-6 w-6" />
+    },
+    {
+      id: "affiliate",
+      title: "Affiliate",
       requirements: "5,000–10,000 social audience",
       rewards: [
         "Blue checkmark verification",
@@ -121,7 +136,7 @@ export default function AmbassadorLandingPage() {
         "Up to $3 per user referral"
       ],
       highlight: "purple",
-      icon: <Users className="h-6 w-6" />
+      icon: <Zap className="h-6 w-6" />
     },
     {
       id: "pro",
@@ -398,6 +413,25 @@ export default function AmbassadorLandingPage() {
                               </Badge>
                             </div>
                           )}
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* TrackLit Username */}
+                    <FormField
+                      control={form.control}
+                      name="trackLitUsername"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-white">TrackLit Username</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="Enter your TrackLit username"
+                              className="bg-slate-800/50 border-slate-600 text-white placeholder:text-slate-400"
+                            />
+                          </FormControl>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
