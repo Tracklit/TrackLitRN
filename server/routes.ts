@@ -8815,13 +8815,29 @@ Submission Details:
       console.log(formattedSubmission);
       console.log("=== END AFFILIATE SUBMISSION ===");
 
-      // TODO: Implement actual email sending to lion@tracklitapp.com
-      // This could be done with Nodemailer or a service like SendGrid
+      // Store submission in database
+      const submissionRecord = await storage.createAffiliateSubmission({
+        fullName: submissionData.fullName,
+        email: submissionData.email,
+        socialMediaHandles: submissionData.socialMediaHandles,
+        audienceSize: submissionData.audienceSize,
+        trackLitUsername: submissionData.trackLitUsername,
+        hasTrackLitAccount: submissionData.hasTrackLitAccount,
+        agreesToLOI: submissionData.agreesToLOI,
+        signature: submissionData.signature,
+        assignedTier: submissionData.assignedTier,
+        submittedAt: submissionData.submittedAt,
+        formData: JSON.stringify(submissionData),
+        status: 'pending'
+      });
+
+      console.log(`Affiliate submission stored in database with ID: ${submissionRecord.id}`);
       
       res.json({ 
         success: true, 
         message: "Affiliate application submitted successfully",
-        tier: submissionData.assignedTier
+        tier: submissionData.assignedTier,
+        submissionId: submissionRecord.id
       });
       
     } catch (error) {

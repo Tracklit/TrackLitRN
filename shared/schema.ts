@@ -796,6 +796,25 @@ export const referrals = pgTable("referrals", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const affiliateSubmissions = pgTable("affiliate_submissions", {
+  id: serial("id").primaryKey(),
+  fullName: text("full_name").notNull(),
+  email: text("email").notNull(),
+  socialMediaHandles: text("social_media_handles").notNull(),
+  audienceSize: integer("audience_size").notNull(),
+  trackLitUsername: text("tracklit_username").notNull(),
+  hasTrackLitAccount: boolean("has_tracklit_account").notNull(),
+  agreesToLOI: boolean("agrees_to_loi").notNull(),
+  signature: text("signature").notNull(),
+  assignedTier: text("assigned_tier").notNull(),
+  submittedAt: timestamp("submitted_at").notNull(),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewedBy: integer("reviewed_by").references(() => users.id),
+  status: text("status", { enum: ['pending', 'approved', 'rejected'] }).default('pending'),
+  adminNotes: text("admin_notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const achievementsRelations = relations(achievements, ({ many }) => ({
   userAchievements: many(userAchievements),
@@ -838,6 +857,13 @@ export const referralsRelations = relations(referrals, ({ one }) => ({
   }),
 }));
 
+export const affiliateSubmissionsRelations = relations(affiliateSubmissions, ({ one }) => ({
+  reviewedByUser: one(users, {
+    fields: [affiliateSubmissions.reviewedBy],
+    references: [users.id],
+  }),
+}));
+
 // Schemas for Spikes System
 export const insertAchievementSchema = createInsertSchema(achievements, {
   spikeReward: z.number().int().min(1),
@@ -864,18 +890,30 @@ export const insertReferralSchema = createInsertSchema(referrals, {
   referralCode: z.string().min(6),
 });
 
+export const insertAffiliateSubmissionSchema = createInsertSchema(affiliateSubmissions, {
+  fullName: z.string().min(1),
+  email: z.string().email(),
+  socialMediaHandles: z.string().min(1),
+  audienceSize: z.number().int().min(1000),
+  trackLitUsername: z.string().min(1),
+  signature: z.string().min(1),
+  assignedTier: z.string().min(1),
+});
+
 // Types
 export type Achievement = typeof achievements.$inferSelect;
 export type UserAchievement = typeof userAchievements.$inferSelect;
 export type LoginStreak = typeof loginStreaks.$inferSelect;
 export type SpikeTransaction = typeof spikeTransactions.$inferSelect;
 export type Referral = typeof referrals.$inferSelect;
+export type AffiliateSubmission = typeof affiliateSubmissions.$inferSelect;
 
 export type InsertAchievement = z.infer<typeof insertAchievementSchema>;
 export type InsertUserAchievement = z.infer<typeof insertUserAchievementSchema>;
 export type InsertLoginStreak = z.infer<typeof insertLoginStreakSchema>;
 export type InsertSpikeTransaction = z.infer<typeof insertSpikeTransactionSchema>;
 export type InsertReferral = z.infer<typeof insertReferralSchema>;
+export type InsertAffiliateSubmission = z.infer<typeof insertAffiliateSubmissionSchema>;
 
 
 

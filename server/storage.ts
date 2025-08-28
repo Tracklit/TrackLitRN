@@ -125,7 +125,10 @@ import {
   chatGroupMessages,
   telegramDirectMessages,
   typingStatus,
-  messageReactions
+  messageReactions,
+  AffiliateSubmission,
+  InsertAffiliateSubmission,
+  affiliateSubmissions
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, lt, gte, desc, asc, inArray, or, isNotNull, isNull, ne, sql, exists } from "drizzle-orm";
@@ -349,6 +352,12 @@ export interface IStorage {
   markNotificationAsRead(notificationId: number): Promise<boolean>;
   markAllNotificationsAsRead(userId: number): Promise<boolean>;
   deleteNotification(notificationId: number): Promise<boolean>;
+
+  // Affiliate Submissions operations
+  createAffiliateSubmission(submissionData: InsertAffiliateSubmission): Promise<AffiliateSubmission>;
+  getAffiliateSubmissions(): Promise<AffiliateSubmission[]>;
+  getAffiliateSubmission(id: number): Promise<AffiliateSubmission | undefined>;
+  updateAffiliateSubmissionStatus(id: number, status: 'pending' | 'approved' | 'rejected', reviewedBy: number, adminNotes?: string): Promise<AffiliateSubmission | undefined>;
 
   // Video Analysis operations
   getVideoAnalysis(id: number): Promise<VideoAnalysis | undefined>;
@@ -2984,6 +2993,43 @@ export class DatabaseStorage implements IStorage {
           )
         )
       );
+  }
+
+  // Affiliate Submissions
+  async createAffiliateSubmission(submissionData: InsertAffiliateSubmission): Promise<AffiliateSubmission> {
+    const [submission] = await db.insert(affiliateSubmissions).values(submissionData).returning();
+    return submission;
+  }
+
+  async getAffiliateSubmissions(): Promise<AffiliateSubmission[]> {
+    return db
+      .select()
+      .from(affiliateSubmissions)
+      .orderBy(desc(affiliateSubmissions.createdAt));
+  }
+
+  async getAffiliateSubmission(id: number): Promise<AffiliateSubmission | undefined> {
+    const [submission] = await db.select().from(affiliateSubmissions).where(eq(affiliateSubmissions.id, id));
+    return submission;
+  }
+
+  async updateAffiliateSubmissionStatus(
+    id: number, 
+    status: 'pending' | 'approved' | 'rejected',
+    reviewedBy: number,
+    adminNotes?: string
+  ): Promise<AffiliateSubmission | undefined> {
+    const [submission] = await db
+      .update(affiliateSubmissions)
+      .set({
+        status,
+        reviewedAt: new Date(),
+        reviewedBy,
+        adminNotes
+      })
+      .where(eq(affiliateSubmissions.id, id))
+      .returning();
+    return submission;
   }
 
   // Video Analysis operations
