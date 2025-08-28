@@ -203,11 +203,18 @@ export default function AmbassadorLandingPage() {
         submittedAt: new Date().toISOString(),
       };
 
-      // For now, just store in local storage (later integrate with backend)
-      console.log("Ambassador application submitted:", submissionData);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Submit to backend
+      const response = await fetch('/api/affiliate-submission', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submissionData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit application');
+      }
       
       toast({
         title: "Application Submitted!",

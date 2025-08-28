@@ -8768,6 +8768,68 @@ Keep the response professional, evidence-based, and specific to track and field 
     }
   });
 
+  // Affiliate program submission endpoint
+  app.post("/api/affiliate-submission", async (req: Request, res: Response) => {
+    try {
+      const submissionData = req.body;
+      
+      // Validate required fields
+      const requiredFields = ['fullName', 'email', 'socialMediaHandles', 'audienceSize', 'trackLitUsername', 'assignedTier', 'signature'];
+      const missingFields = requiredFields.filter(field => !submissionData[field]);
+      
+      if (missingFields.length > 0) {
+        return res.status(400).json({ 
+          error: `Missing required fields: ${missingFields.join(', ')}` 
+        });
+      }
+
+      // Format submission for logging/email
+      const formattedSubmission = `
+NEW AFFILIATE PROGRAM SUBMISSION
+================================
+
+Contact Information:
+- Full Name: ${submissionData.fullName}
+- Email: ${submissionData.email}
+- TrackLit Username: ${submissionData.trackLitUsername}
+
+Social Media Details:
+- Handles: ${submissionData.socialMediaHandles}
+- Audience Size: ${submissionData.audienceSize.toLocaleString()}
+- Assigned Tier: ${submissionData.assignedTier}
+
+Agreement:
+- Has TrackLit Account: ${submissionData.hasTrackLitAccount ? 'Yes' : 'No'}
+- Agreed to LOI: ${submissionData.agreesToLOI ? 'Yes' : 'No'}
+- Digital Signature: ${submissionData.signature}
+
+Submission Details:
+- Submitted At: ${submissionData.submittedAt}
+- Form Data: ${JSON.stringify(submissionData, null, 2)}
+
+================================
+      `;
+
+      // Log the submission (in production, this would send an email to lion@tracklitapp.com)
+      console.log("=== AFFILIATE SUBMISSION FOR lion@tracklitapp.com ===");
+      console.log(formattedSubmission);
+      console.log("=== END AFFILIATE SUBMISSION ===");
+
+      // TODO: Implement actual email sending to lion@tracklitapp.com
+      // This could be done with Nodemailer or a service like SendGrid
+      
+      res.json({ 
+        success: true, 
+        message: "Affiliate application submitted successfully",
+        tier: submissionData.assignedTier
+      });
+      
+    } catch (error) {
+      console.error("Error processing affiliate submission:", error);
+      res.status(500).json({ error: "Failed to process affiliate submission" });
+    }
+  });
+
   // Use modular routes
   app.use("/api/community", communityRoutes);
   app.use(chatRoutes);
