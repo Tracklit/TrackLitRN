@@ -1,0 +1,65 @@
+Single screen: AmbassadorLandingPage.js
+	•	Sections in vertical scroll view:
+	1.	Header: “Become a TrackLit Ambassador – The Ultimate Toolkit for Track & Field”
+	2.	Affiliate Opportunities (3 cards: Athlete, Pro, Champ)
+	3.	Sponsorship Opportunities (1 card: Star)
+	4.	Sign-Up Form + LOI
+
+⸻
+
+3. Content Sections
+
+Affiliate Opportunities
+	•	Show 3 styled cards with purple border/highlight:
+	•	Athlete
+	•	Requirements: 5,000–10,000 social audience
+	•	Rewards: Blue checkmark, Small Spikes package, Up to $3 per user referral
+	•	Pro
+	•	Requirements: 10,000–50,000 social audience
+	•	Rewards: Blue checkmark, Medium Spikes package, Up to $6 per user referral
+	•	Champ
+	•	Requirements: 50,000–100,000 social audience
+	•	Rewards: Blue checkmark, Large Spikes package, Up to $6 per user referral, Rev share per referred subscriber
+
+Sponsorship Opportunities
+	•	One gold-highlighted card for Star:
+	•	Requirements: 500,000+ social audience
+	•	Rewards: Blue checkmark, Maximum Spikes package, $6 per user referral, Rev share per referred subscriber, Paid content collaboration
+
+⸻
+
+4. Sign-Up Form
+	•	Fields:
+	•	Full Name (text input)
+	•	Email (text input)
+	•	Social Media Handles (multi-line text input)
+	•	Audience Size (numeric input)
+	•	Checkbox: “I confirm I have registered a TrackLit account” (required)
+	•	Tier assignment is automatic:
+	•	5k–10k → Athlete
+	•	10k–50k → Pro
+	•	50k–100k → Champ
+	•	500k+ → Star
+
+(no dropdown for tier selection).
+	•	Below the inputs:
+	•	Scrollable box displaying LOI text (embed via WebView or static text).
+	•	Checkbox: “I have read and agree to the Letter of Intent”.
+	•	Signature field (react-native-signature-canvas).
+
+⸻
+
+5. Submit Handling
+	•	On submit:
+	•	Validate required fields, LOI agreement, TrackLit account confirmation, and signature.
+	•	Store data (local state for now; later integrate with backend or Firebase).
+	•	Show success message: “Thank you for signing up! Our team will reach out soon.”
+
+⸻
+
+6. Styling
+	•	Background: dark (#0d0d0d).
+	•	Text: white.
+	•	Accent colors: purple for affiliate cards, gold for sponsorship card.
+	•	Cards: React Native Paper Card with bullet lists for rewards.
+	•	Form: clean layout with padding and spacing.

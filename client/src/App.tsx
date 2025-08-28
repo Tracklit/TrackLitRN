@@ -73,6 +73,7 @@ import SprinthiaPage from "@/pages/sprinthia-simple";
 import RehabPage from "@/pages/rehab-page";
 import ArcadePage from "@/pages/arcade-page";
 import ChatPage from "@/pages/chat-page";
+import AmbassadorLandingPage from "@/pages/ambassador-landing-page";
 import ChannelSettingsPage from "@/pages/channel-settings-page";
 import JournalEntryPage from "@/pages/journal-entry-page";
 
@@ -252,6 +253,7 @@ function Router() {
         
         {/* Auth */}
         <Route path="/auth" component={AuthPage} />
+        <Route path="/ambassador" component={AmbassadorLandingPage} />
         <Route path="/test" component={TestPage} />
         <Route path="/tools-preview" component={ToolsPreviewPage} />
         <Route path="/test-minimal" component={MinimalTest} />
@@ -320,25 +322,25 @@ function MainApp() {
   
   return (
     <div className="min-h-screen text-foreground">
-      {/* Top Header Bar - Hide for chat routes and auth page */}
-      {!location.startsWith('/chat') && location !== '/auth' && <Header />}
+      {/* Top Header Bar - Hide for chat routes, auth page, and ambassador page */}
+      {!location.startsWith('/chat') && location !== '/auth' && location !== '/ambassador' && <Header />}
       
-      {/* Hamburger Menu for all screens - Hide for chat routes and auth page */}
-      {!location.startsWith('/chat') && location !== '/auth' && (
+      {/* Hamburger Menu for all screens - Hide for chat routes, auth page, and ambassador page */}
+      {!location.startsWith('/chat') && location !== '/auth' && location !== '/ambassador' && (
         <div className="fixed top-4 left-4 z-50">
           <HamburgerMenu />
         </div>
       )}
       
       {/* Main Content */}
-      <main className={location.startsWith('/chat') || location === '/auth' ? '' : 'pt-20 pb-16 md:pb-0'}>
-        <div className={location.startsWith('/chat') || location === '/auth' ? '' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'}>
+      <main className={location.startsWith('/chat') || location === '/auth' || location === '/ambassador' ? '' : 'pt-20 pb-16 md:pb-0'}>
+        <div className={location.startsWith('/chat') || location === '/auth' || location === '/ambassador' ? '' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'}>
           <Router />
         </div>
       </main>
       
-      {/* Bottom Navigation - Hide for chat routes and auth page */}
-      {!location.startsWith('/chat') && location !== '/auth' && <BottomNavigation />}
+      {/* Bottom Navigation - Hide for chat routes, auth page, and ambassador page */}
+      {!location.startsWith('/chat') && location !== '/auth' && location !== '/ambassador' && <BottomNavigation />}
       
       {/* Onboarding flow - Only show for logged in users who haven't seen it */}
       {user && showOnboarding && (
