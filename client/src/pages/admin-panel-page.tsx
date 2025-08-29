@@ -7,9 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Search, Shield, Bell, UserPlus, Ban, Trash2 } from "lucide-react";
+import { AlertTriangle, Search, Shield, Bell, UserPlus, Ban, Trash2, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -234,6 +234,26 @@ export default function AdminPanelPage() {
             Back to Dashboard
           </Button>
         </div>
+
+        {/* Quick Actions */}
+        <Card className="bg-gray-900 border-gray-700">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Shield className="w-5 h-5" />
+              <span>Admin Actions</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Link href="/admin-affiliate-submissions">
+                <Button className="w-full h-20 bg-blue-600 hover:bg-blue-700 flex flex-col items-center justify-center space-y-2">
+                  <Users className="w-6 h-6" />
+                  <span>Affiliate Submissions</span>
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* User Search */}
         <Card className="bg-gray-900 border-gray-700">

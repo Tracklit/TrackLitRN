@@ -8846,6 +8846,61 @@ Submission Details:
     }
   });
 
+  // Admin endpoint to get affiliate submissions
+  app.get("/api/admin/affiliate-submissions", async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      
+      // Check if user is admin
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+
+      const submissions = await storage.getAffiliateSubmissions();
+      res.json(submissions);
+      
+    } catch (error) {
+      console.error("Error fetching affiliate submissions:", error);
+      res.status(500).json({ error: "Failed to fetch affiliate submissions" });
+    }
+  });
+
+  // Admin endpoint to update submission status
+  app.patch("/api/admin/affiliate-submissions/:id", async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      
+      // Check if user is admin
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+
+      const submissionId = parseInt(req.params.id);
+      const { status, adminNotes } = req.body;
+
+      if (!['pending', 'approved', 'rejected'].includes(status)) {
+        return res.status(400).json({ error: "Invalid status" });
+      }
+
+      const updatedSubmission = await storage.updateAffiliateSubmissionStatus(
+        submissionId, 
+        status, 
+        user.id, 
+        adminNotes
+      );
+
+      if (!updatedSubmission) {
+        return res.status(404).json({ error: "Submission not found" });
+      }
+
+      res.json(updatedSubmission);
+      
+    } catch (error) {
+      console.error("Error updating submission status:", error);
+      res.status(500).json({ error: "Failed to update submission status" });
+    }
+  });
+
   // Use modular routes
   app.use("/api/community", communityRoutes);
   app.use(chatRoutes);

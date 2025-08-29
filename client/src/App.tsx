@@ -69,6 +69,7 @@ import ExerciseLibraryAddPage from "@/pages/exercise-library-add-page";
 import VideoAnalysisPage from "@/pages/video-analysis-page";
 import { VideoPlayerPage } from "@/pages/video-player-page";
 import AdminPanelPage from "@/pages/admin-panel-page";
+import AdminAffiliateSubmissions from "@/pages/admin-affiliate-submissions";
 import SprinthiaPage from "@/pages/sprinthia-simple";
 import RehabPage from "@/pages/rehab-page";
 import ArcadePage from "@/pages/arcade-page";
@@ -250,6 +251,7 @@ function Router() {
         {/* Public Profiles - separate URL pattern */}
         <Route path="/user/:userId" component={PublicProfilePage} />
         <ProtectedRoute path="/admin-panel" component={AdminPanelPage} />
+        <ProtectedRoute path="/admin-affiliate-submissions" component={AdminAffiliateSubmissions} />
         
         {/* Auth */}
         <Route path="/auth" component={AuthPage} />
