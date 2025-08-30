@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -18,25 +18,39 @@ import { insertMarketplaceListingSchema, insertProgramListingSchema, insertConsu
 import { cn } from "@/lib/utils";
 
 // Form schemas
-const programListingFormSchema = insertMarketplaceListingSchema.extend({
+const programListingFormSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  previewImageUrl: z.string().optional(),
+  price: z.number().min(0.01, "Price must be at least $0.01"),
+  currency: z.string().default('USD'),
+  tags: z.array(z.string()).default([]),
+  badges: z.array(z.string()).default([]),
+  visibility: z.enum(['draft', 'public', 'unlisted']).default('draft'),
   programId: z.number().min(1, "Please select a program"),
   durationWeeks: z.number().min(1, "Duration must be at least 1 week"),
-  level: z.string().min(1, "Please select a level"),
   category: z.string().min(1, "Please select a category"),
-  compareAtPriceCents: z.number().optional(),
-}).omit({ type: true });
+  compareAtPrice: z.number().optional(),
+});
 
-const consultingListingFormSchema = insertMarketplaceListingSchema.extend({
+const consultingListingFormSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  previewImageUrl: z.string().optional(),
+  price: z.number().min(0.01, "Price must be at least $0.01"),
+  currency: z.string().default('USD'),
+  tags: z.array(z.string()).default([]),
+  badges: z.array(z.string()).default([]),
+  visibility: z.enum(['draft', 'public', 'unlisted']).default('draft'),
   slotLengthMin: z.number().min(15, "Minimum slot length is 15 minutes"),
-  pricePerSlotCents: z.number().min(100, "Minimum price is $1.00"),
+  pricePerSlot: z.number().min(1, "Minimum price is $1.00"),
   maxParticipants: z.number().min(1, "Must allow at least 1 participant"),
   deliveryFormat: z.string().min(1, "Please select delivery format"),
   sessionDurationMinutes: z.number().min(15, "Minimum session duration is 15 minutes"),
   category: z.string().min(1, "Please select a category"),
-  description: z.string().optional(),
   requirements: z.string().optional(),
   whatYouGet: z.string().optional(),
-}).omit({ type: true });
+});
 
 type ProgramListingForm = z.infer<typeof programListingFormSchema>;
 type ConsultingListingForm = z.infer<typeof consultingListingFormSchema>;
@@ -62,16 +76,15 @@ export default function MarketplaceCreateListingPage() {
     resolver: zodResolver(programListingFormSchema),
     defaultValues: {
       title: '',
-      subtitle: '',
-      heroUrl: '',
-      priceCents: 9999,
+      description: '',
+      previewImageUrl: '',
+      price: 99.99,
       currency: 'USD',
       tags: [],
       badges: [],
-      visibility: 'draft',
+      visibility: 'draft' as const,
       programId: 0,
       durationWeeks: 8,
-      level: '',
       category: '',
     }
   });
@@ -81,24 +94,39 @@ export default function MarketplaceCreateListingPage() {
     resolver: zodResolver(consultingListingFormSchema),
     defaultValues: {
       title: '',
-      subtitle: '',
-      heroUrl: '',
-      priceCents: 7500,
+      description: '',
+      previewImageUrl: '',
+      price: 75.00,
       currency: 'USD',
       tags: [],
       badges: [],
-      visibility: 'draft',
+      visibility: 'draft' as const,
       slotLengthMin: 60,
-      pricePerSlotCents: 7500,
+      pricePerSlot: 75.00,
       maxParticipants: 1,
       deliveryFormat: 'video-call',
       sessionDurationMinutes: 60,
       category: '',
-      description: '',
       requirements: '',
       whatYouGet: '',
     }
   });
+
+  // Auto-populate price when program is selected
+  useEffect(() => {
+    const selectedProgramId = programForm.watch('programId');
+    const selectedProgram = programs?.find((p: any) => p.id === selectedProgramId);
+    
+    if (selectedProgram) {
+      // Convert from spikes/cents to dollars if needed
+      const priceInDollars = selectedProgram.priceType === 'money' ? selectedProgram.price / 100 : selectedProgram.price;
+      if (selectedProgram.price > 0) {
+        programForm.setValue('price', priceInDollars);
+      }
+      programForm.setValue('title', selectedProgram.title);
+      programForm.setValue('description', selectedProgram.description || '');
+    }
+  }, [programForm.watch('programId'), programs, programForm]);
 
   // Create listing mutation
   const createListingMutation = useMutation({
@@ -129,16 +157,21 @@ export default function MarketplaceCreateListingPage() {
   });
 
   const handleSubmitProgram = (data: ProgramListingForm) => {
-    const { programId, durationWeeks, level, category, compareAtPriceCents, ...listingData } = data;
+    const { programId, durationWeeks, category, compareAtPrice, price, previewImageUrl, description, ...listingData } = data;
     
     createListingMutation.mutate({
-      listing: { ...listingData, type: 'program' },
+      listing: { 
+        ...listingData, 
+        type: 'program',
+        priceCents: Math.round(price * 100), // Convert dollars to cents for API
+        subtitle: description, // Map description back to subtitle for API
+        heroUrl: previewImageUrl || ''
+      },
       typeSpecific: {
         programId,
         durationWeeks,
-        level,
         category,
-        compareAtPriceCents,
+        compareAtPriceCents: compareAtPrice ? Math.round(compareAtPrice * 100) : undefined,
       }
     });
   };
@@ -146,7 +179,7 @@ export default function MarketplaceCreateListingPage() {
   const handleSubmitConsulting = (data: ConsultingListingForm) => {
     const { 
       slotLengthMin, 
-      pricePerSlotCents, 
+      pricePerSlot, 
       maxParticipants, 
       deliveryFormat, 
       sessionDurationMinutes, 
@@ -154,14 +187,22 @@ export default function MarketplaceCreateListingPage() {
       description,
       requirements,
       whatYouGet,
+      price,
+      previewImageUrl,
       ...listingData 
     } = data;
     
     createListingMutation.mutate({
-      listing: { ...listingData, type: 'consulting' },
+      listing: { 
+        ...listingData, 
+        type: 'consulting',
+        priceCents: Math.round(price * 100), // Convert dollars to cents for API
+        subtitle: description, // Map description back to subtitle for API
+        heroUrl: previewImageUrl || ''
+      },
       typeSpecific: {
         slotLengthMin,
-        pricePerSlotCents,
+        pricePerSlotCents: Math.round(pricePerSlot * 100), // Convert to cents
         maxParticipants,
         deliveryFormat,
         sessionDurationMinutes,
@@ -245,12 +286,12 @@ export default function MarketplaceCreateListingPage() {
                     />
                     <FormField
                       control={programForm.control}
-                      name="subtitle"
+                      name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-white">Subtitle</FormLabel>
+                          <FormLabel className="text-white">Description</FormLabel>
                           <FormControl>
-                            <Input {...field} value={field.value || ''} placeholder="Master explosive speed and technique" className="bg-white/10 border-white/20 text-white" />
+                            <Textarea {...field} value={field.value || ''} placeholder="Master explosive speed and technique with this comprehensive program..." className="bg-white/10 border-white/20 text-white min-h-[100px]" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -260,12 +301,12 @@ export default function MarketplaceCreateListingPage() {
 
                   <FormField
                     control={programForm.control}
-                    name="heroUrl"
+                    name="previewImageUrl"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-white">Hero Image URL</FormLabel>
+                        <FormLabel className="text-white">Preview Image</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="https://example.com/image.jpg" className="bg-white/10 border-white/20 text-white" />
+                          <Input {...field} value={field.value || ''} placeholder="https://example.com/image.jpg" className="bg-white/10 border-white/20 text-white" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -302,15 +343,19 @@ export default function MarketplaceCreateListingPage() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <FormField
                       control={programForm.control}
-                      name="priceCents"
+                      name="price"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-white">Price (cents)</FormLabel>
+                          <FormLabel className="text-white">
+                            <DollarSign className="h-4 w-4 inline mr-2" />
+                            Price (USD)
+                          </FormLabel>
                           <FormControl>
                             <Input 
                               type="number" 
+                              step="0.01"
                               {...field} 
-                              onChange={(e) => field.onChange(parseInt(e.target.value))}
+                              onChange={(e) => field.onChange(parseFloat(e.target.value))}
                               className="bg-white/10 border-white/20 text-white" 
                             />
                           </FormControl>
@@ -338,15 +383,16 @@ export default function MarketplaceCreateListingPage() {
                     />
                     <FormField
                       control={programForm.control}
-                      name="compareAtPriceCents"
+                      name="compareAtPrice"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-white">Compare at Price (optional)</FormLabel>
                           <FormControl>
                             <Input 
                               type="number" 
+                              step="0.01"
                               {...field} 
-                              onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                              onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                               className="bg-white/10 border-white/20 text-white" 
                             />
                           </FormControl>
@@ -356,57 +402,31 @@ export default function MarketplaceCreateListingPage() {
                     />
                   </div>
 
-                  {/* Level and Category */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      control={programForm.control}
-                      name="level"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-white">Level</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value || ''}>
-                            <FormControl>
-                              <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                                <SelectValue placeholder="Select level" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {levels.map(level => (
-                                <SelectItem key={level} value={level}>
-                                  {level.charAt(0).toUpperCase() + level.slice(1)}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={programForm.control}
-                      name="category"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-white">Category</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value || ''}>
-                            <FormControl>
-                              <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                                <SelectValue placeholder="Select category" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {categories.map(category => (
-                                <SelectItem key={category} value={category}>
-                                  {category.charAt(0).toUpperCase() + category.slice(1)}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  {/* Category */}
+                  <FormField
+                    control={programForm.control}
+                    name="category"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-white">Category</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ''}>
+                          <FormControl>
+                            <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                              <SelectValue placeholder="Select category" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {categories.map(category => (
+                              <SelectItem key={category} value={category}>
+                                {category.charAt(0).toUpperCase() + category.slice(1)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   {/* Visibility */}
                   <FormField
@@ -458,34 +478,19 @@ export default function MarketplaceCreateListingPage() {
               <Form {...consultingForm}>
                 <form onSubmit={consultingForm.handleSubmit(handleSubmitConsulting)} className="space-y-6">
                   {/* Basic Info */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      control={consultingForm.control}
-                      name="title"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-white">Title</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="1-on-1 Technique Analysis" className="bg-white/10 border-white/20 text-white" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={consultingForm.control}
-                      name="subtitle"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-white">Subtitle</FormLabel>
-                          <FormControl>
-                            <Input {...field} value={field.value || ''} placeholder="Personalized coaching session" className="bg-white/10 border-white/20 text-white" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <FormField
+                    control={consultingForm.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-white">Title</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ''} placeholder="1-on-1 Technique Analysis" className="bg-white/10 border-white/20 text-white" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <FormField
                     control={consultingForm.control}
@@ -496,8 +501,9 @@ export default function MarketplaceCreateListingPage() {
                         <FormControl>
                           <Textarea 
                             {...field} 
+                            value={field.value || ''}
                             placeholder="Describe what you'll provide in this session..."
-                            className="bg-white/10 border-white/20 text-white min-h-[100px]"
+                            className="bg-white/10 border-white/20 text-white min-h-[120px]"
                           />
                         </FormControl>
                         <FormMessage />
@@ -507,20 +513,46 @@ export default function MarketplaceCreateListingPage() {
 
                   <FormField
                     control={consultingForm.control}
-                    name="heroUrl"
+                    name="previewImageUrl"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-white">Hero Image URL</FormLabel>
+                        <FormLabel className="text-white">Preview Image</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="https://example.com/image.jpg" className="bg-white/10 border-white/20 text-white" />
+                          <Input {...field} value={field.value || ''} placeholder="https://example.com/image.jpg" className="bg-white/10 border-white/20 text-white" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
+                  {/* Pricing */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={consultingForm.control}
+                      name="pricePerSlot"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-white">
+                            <DollarSign className="h-4 w-4 inline mr-2" />
+                            Price per Session (USD)
+                          </FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              step="0.01"
+                              {...field} 
+                              onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                              className="bg-white/10 border-white/20 text-white" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
                   {/* Session Details */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <FormField
                       control={consultingForm.control}
                       name="sessionDurationMinutes"
@@ -565,18 +597,19 @@ export default function MarketplaceCreateListingPage() {
                     />
                     <FormField
                       control={consultingForm.control}
-                      name="priceCents"
+                      name="price"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-white">
                             <DollarSign className="h-4 w-4 inline mr-2" />
-                            Price (cents)
+                            Price (USD)
                           </FormLabel>
                           <FormControl>
                             <Input 
                               type="number" 
+                              step="0.01"
                               {...field} 
-                              onChange={(e) => field.onChange(parseInt(e.target.value))}
+                              onChange={(e) => field.onChange(parseFloat(e.target.value))}
                               className="bg-white/10 border-white/20 text-white" 
                             />
                           </FormControl>
