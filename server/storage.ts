@@ -128,7 +128,23 @@ import {
   messageReactions,
   AffiliateSubmission,
   InsertAffiliateSubmission,
-  affiliateSubmissions
+  affiliateSubmissions,
+  // Marketplace imports
+  MarketplaceProduct,
+  InsertMarketplaceProduct,
+  MarketplaceTransaction,
+  InsertMarketplaceTransaction,
+  MarketplaceConsultingSession,
+  InsertMarketplaceConsultingSession,
+  MarketplaceSessionParticipant,
+  InsertMarketplaceSessionParticipant,
+  MarketplaceReview,
+  InsertMarketplaceReview,
+  marketplaceProducts,
+  marketplaceTransactions,
+  marketplaceConsultingSessions,
+  marketplaceSessionParticipants,
+  marketplaceReviews
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, lt, gte, desc, asc, inArray, or, isNotNull, isNull, ne, sql, exists } from "drizzle-orm";
@@ -366,6 +382,38 @@ export interface IStorage {
   createVideoAnalysis(video: InsertVideoAnalysis): Promise<VideoAnalysis>;
   updateVideoAnalysis(id: number, videoData: Partial<VideoAnalysis>): Promise<VideoAnalysis | undefined>;
   deleteVideoAnalysis(id: number): Promise<boolean>;
+
+  // Marketplace operations
+  // Products
+  getMarketplaceProducts(type?: 'digital_program' | 'live_consulting'): Promise<MarketplaceProduct[]>;
+  getMarketplaceProduct(id: number): Promise<MarketplaceProduct | undefined>;
+  getMarketplaceProductsBySeller(sellerId: number): Promise<MarketplaceProduct[]>;
+  createMarketplaceProduct(product: InsertMarketplaceProduct): Promise<MarketplaceProduct>;
+  updateMarketplaceProduct(id: number, productData: Partial<MarketplaceProduct>): Promise<MarketplaceProduct | undefined>;
+  deleteMarketplaceProduct(id: number): Promise<boolean>;
+  
+  // Transactions
+  createMarketplaceTransaction(transaction: InsertMarketplaceTransaction): Promise<MarketplaceTransaction>;
+  getMarketplaceTransaction(id: number): Promise<MarketplaceTransaction | undefined>;
+  getMarketplaceTransactionsByBuyer(buyerId: number): Promise<MarketplaceTransaction[]>;
+  getMarketplaceTransactionsBySeller(sellerId: number): Promise<MarketplaceTransaction[]>;
+  updateMarketplaceTransactionStatus(id: number, status: 'pending' | 'completed' | 'failed' | 'refunded'): Promise<MarketplaceTransaction | undefined>;
+  
+  // Consulting Sessions
+  createMarketplaceConsultingSession(session: InsertMarketplaceConsultingSession): Promise<MarketplaceConsultingSession>;
+  getMarketplaceConsultingSession(id: number): Promise<MarketplaceConsultingSession | undefined>;
+  getMarketplaceConsultingSessionsByCoach(coachId: number): Promise<MarketplaceConsultingSession[]>;
+  getMarketplaceConsultingSessionsByParticipant(participantId: number): Promise<MarketplaceConsultingSession[]>;
+  updateMarketplaceConsultingSession(id: number, sessionData: Partial<MarketplaceConsultingSession>): Promise<MarketplaceConsultingSession | undefined>;
+  
+  // Session Participants
+  addMarketplaceSessionParticipant(participant: InsertMarketplaceSessionParticipant): Promise<MarketplaceSessionParticipant>;
+  getMarketplaceSessionParticipants(sessionId: number): Promise<MarketplaceSessionParticipant[]>;
+  
+  // Reviews
+  createMarketplaceReview(review: InsertMarketplaceReview): Promise<MarketplaceReview>;
+  getMarketplaceReviews(productId: number): Promise<MarketplaceReview[]>;
+  getMarketplaceReviewsByUser(userId: number): Promise<MarketplaceReview[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3543,6 +3591,203 @@ export class DatabaseStorage implements IStorage {
       .returning();
       
     return updatedUser;
+  }
+
+  // Marketplace Products
+  async getMarketplaceProducts(type?: 'digital_program' | 'live_consulting'): Promise<MarketplaceProduct[]> {
+    const query = db
+      .select()
+      .from(marketplaceProducts)
+      .where(eq(marketplaceProducts.isActive, true));
+    
+    if (type) {
+      return query.where(eq(marketplaceProducts.type, type));
+    }
+    
+    return query.orderBy(desc(marketplaceProducts.createdAt));
+  }
+
+  async getMarketplaceProduct(id: number): Promise<MarketplaceProduct | undefined> {
+    const [product] = await db
+      .select()
+      .from(marketplaceProducts)
+      .where(eq(marketplaceProducts.id, id));
+    return product;
+  }
+
+  async getMarketplaceProductsBySeller(sellerId: number): Promise<MarketplaceProduct[]> {
+    return db
+      .select()
+      .from(marketplaceProducts)
+      .where(eq(marketplaceProducts.sellerId, sellerId))
+      .orderBy(desc(marketplaceProducts.createdAt));
+  }
+
+  async createMarketplaceProduct(product: InsertMarketplaceProduct): Promise<MarketplaceProduct> {
+    const [newProduct] = await db
+      .insert(marketplaceProducts)
+      .values(product)
+      .returning();
+    return newProduct;
+  }
+
+  async updateMarketplaceProduct(id: number, productData: Partial<MarketplaceProduct>): Promise<MarketplaceProduct | undefined> {
+    const [updatedProduct] = await db
+      .update(marketplaceProducts)
+      .set({ ...productData, updatedAt: new Date() })
+      .where(eq(marketplaceProducts.id, id))
+      .returning();
+    return updatedProduct;
+  }
+
+  async deleteMarketplaceProduct(id: number): Promise<boolean> {
+    const result = await db
+      .update(marketplaceProducts)
+      .set({ isActive: false })
+      .where(eq(marketplaceProducts.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Marketplace Transactions
+  async createMarketplaceTransaction(transaction: InsertMarketplaceTransaction): Promise<MarketplaceTransaction> {
+    const [newTransaction] = await db
+      .insert(marketplaceTransactions)
+      .values(transaction)
+      .returning();
+    return newTransaction;
+  }
+
+  async getMarketplaceTransaction(id: number): Promise<MarketplaceTransaction | undefined> {
+    const [transaction] = await db
+      .select()
+      .from(marketplaceTransactions)
+      .where(eq(marketplaceTransactions.id, id));
+    return transaction;
+  }
+
+  async getMarketplaceTransactionsByBuyer(buyerId: number): Promise<MarketplaceTransaction[]> {
+    return db
+      .select()
+      .from(marketplaceTransactions)
+      .where(eq(marketplaceTransactions.buyerId, buyerId))
+      .orderBy(desc(marketplaceTransactions.createdAt));
+  }
+
+  async getMarketplaceTransactionsBySeller(sellerId: number): Promise<MarketplaceTransaction[]> {
+    return db
+      .select()
+      .from(marketplaceTransactions)
+      .where(eq(marketplaceTransactions.sellerId, sellerId))
+      .orderBy(desc(marketplaceTransactions.createdAt));
+  }
+
+  async updateMarketplaceTransactionStatus(id: number, status: 'pending' | 'completed' | 'failed' | 'refunded'): Promise<MarketplaceTransaction | undefined> {
+    const [updatedTransaction] = await db
+      .update(marketplaceTransactions)
+      .set({ status })
+      .where(eq(marketplaceTransactions.id, id))
+      .returning();
+    return updatedTransaction;
+  }
+
+  // Marketplace Consulting Sessions
+  async createMarketplaceConsultingSession(session: InsertMarketplaceConsultingSession): Promise<MarketplaceConsultingSession> {
+    const [newSession] = await db
+      .insert(marketplaceConsultingSessions)
+      .values(session)
+      .returning();
+    return newSession;
+  }
+
+  async getMarketplaceConsultingSession(id: number): Promise<MarketplaceConsultingSession | undefined> {
+    const [session] = await db
+      .select()
+      .from(marketplaceConsultingSessions)
+      .where(eq(marketplaceConsultingSessions.id, id));
+    return session;
+  }
+
+  async getMarketplaceConsultingSessionsByCoach(coachId: number): Promise<MarketplaceConsultingSession[]> {
+    return db
+      .select()
+      .from(marketplaceConsultingSessions)
+      .where(eq(marketplaceConsultingSessions.coachId, coachId))
+      .orderBy(desc(marketplaceConsultingSessions.scheduledAt));
+  }
+
+  async getMarketplaceConsultingSessionsByParticipant(participantId: number): Promise<MarketplaceConsultingSession[]> {
+    return db
+      .select({
+        id: marketplaceConsultingSessions.id,
+        productId: marketplaceConsultingSessions.productId,
+        transactionId: marketplaceConsultingSessions.transactionId,
+        coachId: marketplaceConsultingSessions.coachId,
+        scheduledAt: marketplaceConsultingSessions.scheduledAt,
+        duration: marketplaceConsultingSessions.duration,
+        meetingUrl: marketplaceConsultingSessions.meetingUrl,
+        status: marketplaceConsultingSessions.status,
+        notes: marketplaceConsultingSessions.notes,
+        rating: marketplaceConsultingSessions.rating,
+        feedback: marketplaceConsultingSessions.feedback,
+        createdAt: marketplaceConsultingSessions.createdAt,
+      })
+      .from(marketplaceConsultingSessions)
+      .innerJoin(
+        marketplaceSessionParticipants,
+        eq(marketplaceSessionParticipants.sessionId, marketplaceConsultingSessions.id)
+      )
+      .where(eq(marketplaceSessionParticipants.participantId, participantId))
+      .orderBy(desc(marketplaceConsultingSessions.scheduledAt));
+  }
+
+  async updateMarketplaceConsultingSession(id: number, sessionData: Partial<MarketplaceConsultingSession>): Promise<MarketplaceConsultingSession | undefined> {
+    const [updatedSession] = await db
+      .update(marketplaceConsultingSessions)
+      .set(sessionData)
+      .where(eq(marketplaceConsultingSessions.id, id))
+      .returning();
+    return updatedSession;
+  }
+
+  // Marketplace Session Participants
+  async addMarketplaceSessionParticipant(participant: InsertMarketplaceSessionParticipant): Promise<MarketplaceSessionParticipant> {
+    const [newParticipant] = await db
+      .insert(marketplaceSessionParticipants)
+      .values(participant)
+      .returning();
+    return newParticipant;
+  }
+
+  async getMarketplaceSessionParticipants(sessionId: number): Promise<MarketplaceSessionParticipant[]> {
+    return db
+      .select()
+      .from(marketplaceSessionParticipants)
+      .where(eq(marketplaceSessionParticipants.sessionId, sessionId));
+  }
+
+  // Marketplace Reviews
+  async createMarketplaceReview(review: InsertMarketplaceReview): Promise<MarketplaceReview> {
+    const [newReview] = await db
+      .insert(marketplaceReviews)
+      .values(review)
+      .returning();
+    return newReview;
+  }
+
+  async getMarketplaceReviews(productId: number): Promise<MarketplaceReview[]> {
+    return db
+      .select()
+      .from(marketplaceReviews)
+      .where(eq(marketplaceReviews.productId, productId))
+      .orderBy(desc(marketplaceReviews.createdAt));
+  }
+
+  async getMarketplaceReviewsByUser(userId: number): Promise<MarketplaceReview[]> {
+    return db
+      .select()
+      .from(marketplaceReviews)
+      .where(eq(marketplaceReviews.reviewerId, userId))
+      .orderBy(desc(marketplaceReviews.createdAt));
   }
 }
 

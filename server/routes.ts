@@ -8856,7 +8856,7 @@ Submission Details:
         return res.status(403).json({ error: "Admin access required" });
       }
 
-      const submissions = await storage.getAffiliateSubmissions();
+      const submissions = await dbStorage.getAffiliateSubmissions();
       res.json(submissions);
       
     } catch (error) {
@@ -8882,7 +8882,7 @@ Submission Details:
         return res.status(400).json({ error: "Invalid status" });
       }
 
-      const updatedSubmission = await storage.updateAffiliateSubmissionStatus(
+      const updatedSubmission = await dbStorage.updateAffiliateSubmissionStatus(
         submissionId, 
         status, 
         user.id, 
@@ -8900,6 +8900,161 @@ Submission Details:
       res.status(500).json({ error: "Failed to update submission status" });
     }
   });
+
+  // Marketplace API Routes
+  
+  // Get all marketplace products (with optional filtering)
+  app.get("/api/marketplace/products", async (req: Request, res: Response) => {
+    try {
+      const { type } = req.query;
+      const products = await dbStorage.getMarketplaceProducts(
+        type as 'digital_program' | 'live_consulting' | undefined
+      );
+      res.json(products);
+    } catch (error) {
+      console.error("Error fetching marketplace products:", error);
+      res.status(500).json({ error: "Failed to fetch marketplace products" });
+    }
+  });
+
+  // Get specific marketplace product
+  app.get("/api/marketplace/products/:id", async (req: Request, res: Response) => {
+    try {
+      const productId = parseInt(req.params.id);
+      const product = await dbStorage.getMarketplaceProduct(productId);
+      
+      if (!product) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+      
+      res.json(product);
+    } catch (error) {
+      console.error("Error fetching marketplace product:", error);
+      res.status(500).json({ error: "Failed to fetch marketplace product" });
+    }
+  });
+
+  // Create marketplace product (coaches only)
+  app.post("/api/marketplace/products", async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      
+      if (!user || !user.isCoach) {
+        return res.status(403).json({ error: "Coach access required" });
+      }
+
+      const productData = {
+        ...req.body,
+        sellerId: user.id
+      };
+
+      const product = await dbStorage.createMarketplaceProduct(productData);
+      res.json(product);
+    } catch (error) {
+      console.error("Error creating marketplace product:", error);
+      res.status(500).json({ error: "Failed to create marketplace product" });
+    }
+  });
+
+  // Update marketplace product
+  app.patch("/api/marketplace/products/:id", async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const productId = parseInt(req.params.id);
+      
+      if (!user || !user.isCoach) {
+        return res.status(403).json({ error: "Coach access required" });
+      }
+
+      const existingProduct = await dbStorage.getMarketplaceProduct(productId);
+      if (!existingProduct || existingProduct.sellerId !== user.id) {
+        return res.status(403).json({ error: "Not authorized to update this product" });
+      }
+
+      const updatedProduct = await dbStorage.updateMarketplaceProduct(productId, req.body);
+      res.json(updatedProduct);
+    } catch (error) {
+      console.error("Error updating marketplace product:", error);
+      res.status(500).json({ error: "Failed to update marketplace product" });
+    }
+  });
+
+  // Delete marketplace product
+  app.delete("/api/marketplace/products/:id", async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const productId = parseInt(req.params.id);
+      
+      if (!user || !user.isCoach) {
+        return res.status(403).json({ error: "Coach access required" });
+      }
+
+      const existingProduct = await dbStorage.getMarketplaceProduct(productId);
+      if (!existingProduct || existingProduct.sellerId !== user.id) {
+        return res.status(403).json({ error: "Not authorized to delete this product" });
+      }
+
+      await dbStorage.deleteMarketplaceProduct(productId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting marketplace product:", error);
+      res.status(500).json({ error: "Failed to delete marketplace product" });
+    }
+  });
+
+  // Get products by seller
+  app.get("/api/marketplace/seller/:sellerId/products", async (req: Request, res: Response) => {
+    try {
+      const sellerId = parseInt(req.params.sellerId);
+      const products = await dbStorage.getMarketplaceProductsBySeller(sellerId);
+      res.json(products);
+    } catch (error) {
+      console.error("Error fetching seller products:", error);
+      res.status(500).json({ error: "Failed to fetch seller products" });
+    }
+  });
+
+  // Create marketplace transaction (purchase)
+  app.post("/api/marketplace/purchase", async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      
+      if (!user) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+
+      const { productId, stripePaymentIntentId } = req.body;
+      
+      const product = await dbStorage.getMarketplaceProduct(productId);
+      if (!product) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+
+      // Calculate platform fee based on subscription tier
+      const feeRates = { free: 0.20, pro: 0.18, star: 0.16 };
+      const feeRate = feeRates[user.subscriptionTier as keyof typeof feeRates] || 0.20;
+      const platformFee = Math.round(product.price * feeRate);
+      const sellerAmount = product.price - platformFee;
+
+      const transaction = await dbStorage.createMarketplaceTransaction({
+        productId,
+        buyerId: user.id,
+        sellerId: product.sellerId,
+        amount: product.price,
+        platformFee,
+        sellerAmount,
+        stripePaymentIntentId,
+        buyerSubscriptionTier: user.subscriptionTier,
+        status: 'pending'
+      });
+
+      res.json(transaction);
+    } catch (error) {
+      console.error("Error creating marketplace transaction:", error);
+      res.status(500).json({ error: "Failed to process purchase" });
+    }
+  });
+
 
   // Use modular routes
   app.use("/api/community", communityRoutes);
