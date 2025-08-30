@@ -8816,7 +8816,7 @@ Submission Details:
       console.log("=== END AFFILIATE SUBMISSION ===");
 
       // Store submission in database
-      const submissionRecord = await storage.createAffiliateSubmission({
+      const submissionRecord = await dbStorage.createAffiliateSubmission({
         fullName: submissionData.fullName,
         email: submissionData.email,
         socialMediaHandles: submissionData.socialMediaHandles,
@@ -8856,7 +8856,7 @@ Submission Details:
         return res.status(403).json({ error: "Admin access required" });
       }
 
-      const submissions = await storage.getAffiliateSubmissions();
+      const submissions = await dbStorage.getAffiliateSubmissions();
       res.json(submissions);
       
     } catch (error) {
@@ -8882,7 +8882,7 @@ Submission Details:
         return res.status(400).json({ error: "Invalid status" });
       }
 
-      const updatedSubmission = await storage.updateAffiliateSubmissionStatus(
+      const updatedSubmission = await dbStorage.updateAffiliateSubmissionStatus(
         submissionId, 
         status, 
         user.id, 
@@ -8919,7 +8919,7 @@ Submission Details:
         limit: limit ? parseInt(limit as string) : undefined
       };
 
-      const result = await storage.getMarketplaceListings(params);
+      const result = await dbStorage.getMarketplaceListings(params);
       res.json(result);
     } catch (error) {
       console.error("Error fetching marketplace listings:", error);
@@ -8935,7 +8935,7 @@ Submission Details:
         return res.status(400).json({ error: "Invalid listing ID" });
       }
 
-      const listing = await storage.getMarketplaceListing(id);
+      const listing = await dbStorage.getMarketplaceListing(id);
       if (!listing) {
         return res.status(404).json({ error: "Listing not found" });
       }
@@ -8944,6 +8944,136 @@ Submission Details:
     } catch (error) {
       console.error("Error fetching marketplace listing:", error);
       res.status(500).json({ error: "Failed to fetch marketplace listing" });
+    }
+  });
+
+  // Create dummy marketplace listings for testing
+  app.post("/api/marketplace/dummy-listings", async (req: Request, res: Response) => {
+    try {
+      const dummyListings = [
+        {
+          listing: {
+            type: 'program' as const,
+            title: "Elite Sprint Development Program",
+            subtitle: "Master explosive speed and technique",
+            heroUrl: null,
+            priceCents: 14999,
+            currency: 'USD',
+            tags: ['sprint', 'speed', 'technique'],
+            badges: ['bestseller', 'coach-verified'],
+            rating: 4.8,
+            visibility: 'public' as const,
+            coachId: 1
+          },
+          typeSpecific: {
+            programId: 5,
+            durationWeeks: 12,
+            level: 'advanced',
+            category: 'sprint',
+            compareAtPriceCents: 19999
+          }
+        },
+        {
+          listing: {
+            type: 'program' as const,
+            title: "Distance Running Endurance Builder",
+            subtitle: "Build aerobic capacity and stamina",
+            heroUrl: null,
+            priceCents: 9999,
+            currency: 'USD',
+            tags: ['distance', 'endurance', 'aerobic'],
+            badges: ['popular'],
+            rating: 4.6,
+            visibility: 'public' as const,
+            coachId: 1
+          },
+          typeSpecific: {
+            programId: 5,
+            durationWeeks: 16,
+            level: 'intermediate',
+            category: 'distance',
+            compareAtPriceCents: 12999
+          }
+        },
+        {
+          listing: {
+            type: 'consulting' as const,
+            title: "1-on-1 Technique Analysis",
+            subtitle: "Personalized coaching session",
+            heroUrl: null,
+            priceCents: 12500,
+            currency: 'USD',
+            tags: ['technique', 'analysis', 'personal'],
+            badges: ['coach-verified'],
+            rating: 4.9,
+            visibility: 'public' as const,
+            coachId: 1
+          },
+          typeSpecific: {
+            sessionDurationMinutes: 60,
+            maxParticipants: 1,
+            deliveryFormat: 'video-call',
+            category: 'technique'
+          }
+        },
+        {
+          listing: {
+            type: 'program' as const,
+            title: "Jump & Hurdle Mastery",
+            subtitle: "Perfect your jumping technique",
+            heroUrl: null,
+            priceCents: 11999,
+            currency: 'USD',
+            tags: ['jump', 'hurdles', 'technique'],
+            badges: ['new'],
+            rating: 4.7,
+            visibility: 'public' as const,
+            coachId: 1
+          },
+          typeSpecific: {
+            programId: 5,
+            durationWeeks: 8,
+            level: 'intermediate',
+            category: 'jump',
+            compareAtPriceCents: 14999
+          }
+        },
+        {
+          listing: {
+            type: 'consulting' as const,
+            title: "Group Training Session",
+            subtitle: "Small group coaching (up to 4 athletes)",
+            heroUrl: null,
+            priceCents: 7500,
+            currency: 'USD',
+            tags: ['group', 'training', 'interactive'],
+            badges: ['popular'],
+            rating: 4.5,
+            visibility: 'public' as const,
+            coachId: 1
+          },
+          typeSpecific: {
+            sessionDurationMinutes: 90,
+            maxParticipants: 4,
+            deliveryFormat: 'video-call',
+            category: 'training'
+          }
+        }
+      ];
+
+      const createdListings = [];
+      for (const { listing, typeSpecific } of dummyListings) {
+        const newListing = await dbStorage.createMarketplaceListing(listing, typeSpecific);
+        createdListings.push(newListing);
+      }
+
+      res.status(201).json({ 
+        message: `Created ${createdListings.length} dummy listings`,
+        listings: createdListings
+      });
+    } catch (error) {
+      console.error("Error creating dummy marketplace listings:", error);
+      res.status(500).json({ error: "Failed to create dummy listings" });
     }
   });
 
@@ -8969,7 +9099,7 @@ Submission Details:
       // Set coach ID to current user
       listing.coachId = req.user.id;
 
-      const newListing = await storage.createMarketplaceListing(listing, typeSpecific);
+      const newListing = await dbStorage.createMarketplaceListing(listing, typeSpecific);
       res.status(201).json(newListing);
     } catch (error) {
       console.error("Error creating marketplace listing:", error);
@@ -8989,7 +9119,7 @@ Submission Details:
         return res.status(400).json({ error: "Invalid listing ID" });
       }
 
-      const existingListing = await storage.getMarketplaceListing(id);
+      const existingListing = await dbStorage.getMarketplaceListing(id);
       if (!existingListing) {
         return res.status(404).json({ error: "Listing not found" });
       }
@@ -8999,7 +9129,7 @@ Submission Details:
         return res.status(403).json({ error: "Not authorized to update this listing" });
       }
 
-      const updatedListing = await storage.updateMarketplaceListing(id, req.body);
+      const updatedListing = await dbStorage.updateMarketplaceListing(id, req.body);
       res.json(updatedListing);
     } catch (error) {
       console.error("Error updating marketplace listing:", error);
@@ -9019,7 +9149,7 @@ Submission Details:
         return res.status(400).json({ error: "Invalid listing ID" });
       }
 
-      const existingListing = await storage.getMarketplaceListing(id);
+      const existingListing = await dbStorage.getMarketplaceListing(id);
       if (!existingListing) {
         return res.status(404).json({ error: "Listing not found" });
       }
@@ -9029,7 +9159,7 @@ Submission Details:
         return res.status(403).json({ error: "Not authorized to delete this listing" });
       }
 
-      const deleted = await storage.deleteMarketplaceListing(id);
+      const deleted = await dbStorage.deleteMarketplaceListing(id);
       if (deleted) {
         res.json({ success: true });
       } else {

@@ -48,12 +48,6 @@ const navItems = [
     key: "tools"
   },
   { 
-    title: "Marketplace", 
-    href: "/marketplace", 
-    icon: <FontAwesomeIcon icon={faShoppingCart} className="h-4 w-4" />,
-    key: "marketplace"
-  },
-  { 
     title: "Sprinthia", 
     href: "/sprinthia", 
     icon: <span className="text-xs font-bold">AI</span>,

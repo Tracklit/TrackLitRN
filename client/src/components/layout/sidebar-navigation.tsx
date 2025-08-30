@@ -19,7 +19,8 @@ import {
   Coins,
   BookOpen,
   Brain,
-  Shield
+  Shield,
+  ShoppingCart
 } from "lucide-react";
 
 interface NavItemProps {
@@ -136,6 +137,18 @@ export function SidebarNavigation({ isMobile = false }: { isMobile?: boolean }) 
             isActive={location === '/results'}
           >
             Results
+          </NavItem>
+          
+          {/* Marketplace Section */}
+          <div className="pt-4 pb-2">
+            <p className="text-xs text-gray-400 px-3 font-medium">MARKETPLACE</p>
+          </div>
+          <NavItem 
+            href="/marketplace" 
+            icon={<ShoppingCart className="h-5 w-5" />} 
+            isActive={location.startsWith('/marketplace')}
+          >
+            Marketplace
           </NavItem>
           
           {/* Social Section */}
