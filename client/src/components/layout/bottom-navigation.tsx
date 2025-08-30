@@ -7,6 +7,7 @@ import {
   faTrophy,
   faImage,
   faStar,
+  faShoppingCart,
 } from '@fortawesome/free-solid-svg-icons';
 
 import { cn } from "@/lib/utils";
@@ -45,6 +46,12 @@ const navItems = [
     href: "/training-tools", 
     icon: <FontAwesomeIcon icon={faImage} className="h-4 w-4" />,
     key: "tools"
+  },
+  { 
+    title: "Marketplace", 
+    href: "/marketplace", 
+    icon: <FontAwesomeIcon icon={faShoppingCart} className="h-4 w-4" />,
+    key: "marketplace"
   },
   { 
     title: "Sprinthia", 

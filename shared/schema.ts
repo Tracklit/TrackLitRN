@@ -1988,3 +1988,291 @@ export const usersSpikesRelations = relations(users, ({ many, one }) => ({
   blockedByMe: many(blockedUsers, { relationName: "blocker" }),
   blockedMe: many(blockedUsers, { relationName: "blocked" }),
 }));
+
+// =================
+// MARKETPLACE TABLES
+// =================
+
+// Base marketplace listings table
+export const marketplaceListings = pgTable("marketplace_listings", {
+  id: serial("id").primaryKey(),
+  type: text("type").notNull(), // 'program' or 'consulting'
+  title: text("title").notNull(),
+  subtitle: text("subtitle"),
+  coachId: integer("coach_id").notNull().references(() => users.id),
+  heroUrl: text("hero_url").notNull(),
+  priceCents: integer("price_cents").notNull(),
+  currency: text("currency").default("USD"),
+  visibility: text("visibility").default("draft"), // 'public', 'unlisted', 'draft'
+  tags: text("tags").array(),
+  badges: text("badges").array(),
+  rating: json("rating"), // { value: number, count: number }
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Program-specific listing details
+export const programListings = pgTable("program_listings", {
+  id: serial("id").primaryKey(),
+  listingId: integer("listing_id").notNull().references(() => marketplaceListings.id, { onDelete: "cascade" }),
+  programId: integer("program_id").notNull().references(() => trainingPrograms.id),
+  durationWeeks: integer("duration_weeks").notNull(),
+  level: text("level").notNull(), // 'Beginner', 'Intermediate', 'Advanced'
+  category: text("category"), // 'Speed', 'Endurance', 'Strength', 'Mobility'
+  compareAtPriceCents: integer("compare_at_price_cents"),
+});
+
+// Consulting-specific listing details
+export const consultingListings = pgTable("consulting_listings", {
+  id: serial("id").primaryKey(),
+  listingId: integer("listing_id").notNull().references(() => marketplaceListings.id, { onDelete: "cascade" }),
+  description: text("description"),
+  slotLengthMin: integer("slot_length_min").notNull(),
+  pricePerSlotCents: integer("price_per_slot_cents").notNull(),
+  availability: json("availability"), // Array<{ day: number; start: string; end: string }>
+  bufferMin: integer("buffer_min").default(15),
+  groupMax: integer("group_max").default(1),
+  reschedulePolicy: text("reschedule_policy").default("moderate"), // 'flexible', 'moderate', 'strict'
+  meetingLinkTemplate: text("meeting_link_template"),
+});
+
+// Individual consulting time slots
+export const consultingSlots = pgTable("consulting_slots", {
+  id: serial("id").primaryKey(),
+  consultingListingId: integer("consulting_listing_id").notNull().references(() => consultingListings.id, { onDelete: "cascade" }),
+  startTime: timestamp("start_time").notNull(),
+  endTime: timestamp("end_time").notNull(),
+  available: boolean("available").default(true),
+  maxSeats: integer("max_seats").default(1),
+  bookedSeats: integer("booked_seats").default(0),
+  meetingLink: text("meeting_link"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Shopping cart items
+export const marketplaceCartItems = pgTable("marketplace_cart_items", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  listingId: integer("listing_id").notNull().references(() => marketplaceListings.id, { onDelete: "cascade" }),
+  type: text("type").notNull(), // 'program' or 'consulting'
+  quantity: integer("quantity").default(1),
+  metadata: json("metadata"), // For consulting: selected slot IDs, etc.
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Orders
+export const marketplaceOrders = pgTable("marketplace_orders", {
+  id: serial("id").primaryKey(),
+  buyerId: integer("buyer_id").notNull().references(() => users.id),
+  subtotalCents: integer("subtotal_cents").notNull(),
+  platformFeeCents: integer("platform_fee_cents").notNull(),
+  taxCents: integer("tax_cents").default(0),
+  totalCents: integer("total_cents").notNull(),
+  currency: text("currency").default("USD"),
+  status: text("status").default("pending"), // 'pending', 'paid', 'failed', 'refunded', 'partially_refunded'
+  stripePaymentIntentId: text("stripe_payment_intent_id"),
+  buyerSubscriptionTier: text("buyer_subscription_tier"), // Used for platform fee calculation
+  createdAt: timestamp("created_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+});
+
+// Order items
+export const marketplaceOrderItems = pgTable("marketplace_order_items", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id").notNull().references(() => marketplaceOrders.id, { onDelete: "cascade" }),
+  listingId: integer("listing_id").notNull().references(() => marketplaceListings.id),
+  sellerId: integer("seller_id").notNull().references(() => users.id),
+  type: text("type").notNull(), // 'program' or 'consulting'
+  quantity: integer("quantity").default(1),
+  unitPriceCents: integer("unit_price_cents").notNull(),
+  totalPriceCents: integer("total_price_cents").notNull(),
+  metadata: json("metadata"), // For consulting: slot IDs, meeting links, etc.
+  status: text("status").default("pending"), // 'pending', 'fulfilled', 'cancelled'
+  fulfilledAt: timestamp("fulfilled_at"),
+});
+
+// Reviews for marketplace items
+export const marketplaceReviews = pgTable("marketplace_reviews", {
+  id: serial("id").primaryKey(),
+  listingId: integer("listing_id").notNull().references(() => marketplaceListings.id, { onDelete: "cascade" }),
+  reviewerId: integer("reviewer_id").notNull().references(() => users.id),
+  orderId: integer("order_id").references(() => marketplaceOrders.id), // Link to purchase
+  rating: integer("rating").notNull(), // 1-5 stars
+  title: text("title"),
+  content: text("content"),
+  tags: text("tags").array(), // e.g., ["400m", "In-season"]
+  isVerifiedPurchase: boolean("is_verified_purchase").default(false),
+  helpfulCount: integer("helpful_count").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// =================
+// MARKETPLACE RELATIONS
+// =================
+
+export const marketplaceListingsRelations = relations(marketplaceListings, ({ one, many }) => ({
+  coach: one(users, {
+    fields: [marketplaceListings.coachId],
+    references: [users.id],
+  }),
+  programListing: one(programListings, {
+    fields: [marketplaceListings.id],
+    references: [programListings.listingId],
+  }),
+  consultingListing: one(consultingListings, {
+    fields: [marketplaceListings.id],
+    references: [consultingListings.listingId],
+  }),
+  cartItems: many(marketplaceCartItems),
+  orderItems: many(marketplaceOrderItems),
+  reviews: many(marketplaceReviews),
+}));
+
+export const programListingsRelations = relations(programListings, ({ one }) => ({
+  listing: one(marketplaceListings, {
+    fields: [programListings.listingId],
+    references: [marketplaceListings.id],
+  }),
+  program: one(trainingPrograms, {
+    fields: [programListings.programId],
+    references: [trainingPrograms.id],
+  }),
+}));
+
+export const consultingListingsRelations = relations(consultingListings, ({ one, many }) => ({
+  listing: one(marketplaceListings, {
+    fields: [consultingListings.listingId],
+    references: [marketplaceListings.id],
+  }),
+  slots: many(consultingSlots),
+}));
+
+export const consultingSlotsRelations = relations(consultingSlots, ({ one }) => ({
+  consultingListing: one(consultingListings, {
+    fields: [consultingSlots.consultingListingId],
+    references: [consultingListings.id],
+  }),
+}));
+
+export const marketplaceCartItemsRelations = relations(marketplaceCartItems, ({ one }) => ({
+  user: one(users, {
+    fields: [marketplaceCartItems.userId],
+    references: [users.id],
+  }),
+  listing: one(marketplaceListings, {
+    fields: [marketplaceCartItems.listingId],
+    references: [marketplaceListings.id],
+  }),
+}));
+
+export const marketplaceOrdersRelations = relations(marketplaceOrders, ({ one, many }) => ({
+  buyer: one(users, {
+    fields: [marketplaceOrders.buyerId],
+    references: [users.id],
+  }),
+  items: many(marketplaceOrderItems),
+}));
+
+export const marketplaceOrderItemsRelations = relations(marketplaceOrderItems, ({ one }) => ({
+  order: one(marketplaceOrders, {
+    fields: [marketplaceOrderItems.orderId],
+    references: [marketplaceOrders.id],
+  }),
+  listing: one(marketplaceListings, {
+    fields: [marketplaceOrderItems.listingId],
+    references: [marketplaceListings.id],
+  }),
+  seller: one(users, {
+    fields: [marketplaceOrderItems.sellerId],
+    references: [users.id],
+  }),
+}));
+
+export const marketplaceReviewsRelations = relations(marketplaceReviews, ({ one }) => ({
+  listing: one(marketplaceListings, {
+    fields: [marketplaceReviews.listingId],
+    references: [marketplaceListings.id],
+  }),
+  reviewer: one(users, {
+    fields: [marketplaceReviews.reviewerId],
+    references: [users.id],
+  }),
+  order: one(marketplaceOrders, {
+    fields: [marketplaceReviews.orderId],
+    references: [marketplaceOrders.id],
+  }),
+}));
+
+// =================
+// MARKETPLACE SCHEMAS
+// =================
+
+export const insertMarketplaceListingSchema = createInsertSchema(marketplaceListings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertProgramListingSchema = createInsertSchema(programListings).omit({
+  id: true,
+});
+
+export const insertConsultingListingSchema = createInsertSchema(consultingListings).omit({
+  id: true,
+});
+
+export const insertConsultingSlotSchema = createInsertSchema(consultingSlots).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertMarketplaceCartItemSchema = createInsertSchema(marketplaceCartItems).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertMarketplaceOrderSchema = createInsertSchema(marketplaceOrders).omit({
+  id: true,
+  createdAt: true,
+  completedAt: true,
+});
+
+export const insertMarketplaceOrderItemSchema = createInsertSchema(marketplaceOrderItems).omit({
+  id: true,
+  fulfilledAt: true,
+});
+
+export const insertMarketplaceReviewSchema = createInsertSchema(marketplaceReviews).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// =================
+// MARKETPLACE TYPES
+// =================
+
+export type MarketplaceListing = typeof marketplaceListings.$inferSelect;
+export type InsertMarketplaceListing = z.infer<typeof insertMarketplaceListingSchema>;
+
+export type ProgramListing = typeof programListings.$inferSelect;
+export type InsertProgramListing = z.infer<typeof insertProgramListingSchema>;
+
+export type ConsultingListing = typeof consultingListings.$inferSelect;
+export type InsertConsultingListing = z.infer<typeof insertConsultingListingSchema>;
+
+export type ConsultingSlot = typeof consultingSlots.$inferSelect;
+export type InsertConsultingSlot = z.infer<typeof insertConsultingSlotSchema>;
+
+export type MarketplaceCartItem = typeof marketplaceCartItems.$inferSelect;
+export type InsertMarketplaceCartItem = z.infer<typeof insertMarketplaceCartItemSchema>;
+
+export type MarketplaceOrder = typeof marketplaceOrders.$inferSelect;
+export type InsertMarketplaceOrder = z.infer<typeof insertMarketplaceOrderSchema>;
+
+export type MarketplaceOrderItem = typeof marketplaceOrderItems.$inferSelect;
+export type InsertMarketplaceOrderItem = z.infer<typeof insertMarketplaceOrderItemSchema>;
+
+export type MarketplaceReview = typeof marketplaceReviews.$inferSelect;
+export type InsertMarketplaceReview = z.infer<typeof insertMarketplaceReviewSchema>;

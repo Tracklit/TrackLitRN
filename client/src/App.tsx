@@ -80,6 +80,9 @@ import JournalEntryPage from "@/pages/journal-entry-page";
 
 import HamstringRehabPage from "@/pages/rehab/acute-muscle/hamstring";
 import FootRehabPage from "@/pages/rehab/chronic-injuries/foot";
+import MarketplacePage from "@/pages/marketplace-page";
+import MarketplaceListingDetails from "@/pages/marketplace-listing-details";
+import MarketplaceCart from "@/pages/marketplace-cart";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { TickerProvider } from "@/contexts/ticker-context";
@@ -207,6 +210,11 @@ function Router() {
           <ProtectedRoute path="/programs/:id/edit" component={ProgramEditorPage} />
           <ProtectedRoute path="/assign-program/:programId" component={AssignProgramPage} />
           <ProtectedRoute path="/assigned-programs" component={AssignedProgramsPage} />
+          
+          {/* Marketplace */}
+          <ProtectedRoute path="/marketplace" component={MarketplacePage} />
+          <ProtectedRoute path="/marketplace/listings/:id" component={MarketplaceListingDetails} />
+          <ProtectedRoute path="/marketplace/cart" component={MarketplaceCart} />
           
           {/* Competition */}
           <ProtectedRoute path="/meets" component={MeetsPage} />

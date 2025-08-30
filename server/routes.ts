@@ -8901,6 +8901,436 @@ Submission Details:
     }
   });
 
+  // =================
+  // MARKETPLACE ROUTES
+  // =================
+
+  // Get marketplace listings with search/filter
+  app.get("/api/marketplace/listings", async (req: Request, res: Response) => {
+    try {
+      const { query, type, category, sort, page, limit } = req.query;
+      
+      const params = {
+        query: query as string,
+        type: type as 'program' | 'consulting',
+        category: category as string,
+        sort: sort as string,
+        page: page ? parseInt(page as string) : undefined,
+        limit: limit ? parseInt(limit as string) : undefined
+      };
+
+      const result = await storage.getMarketplaceListings(params);
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching marketplace listings:", error);
+      res.status(500).json({ error: "Failed to fetch marketplace listings" });
+    }
+  });
+
+  // Get single marketplace listing
+  app.get("/api/marketplace/listings/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid listing ID" });
+      }
+
+      const listing = await storage.getMarketplaceListing(id);
+      if (!listing) {
+        return res.status(404).json({ error: "Listing not found" });
+      }
+
+      res.json(listing);
+    } catch (error) {
+      console.error("Error fetching marketplace listing:", error);
+      res.status(500).json({ error: "Failed to fetch marketplace listing" });
+    }
+  });
+
+  // Create marketplace listing (coach only)
+  app.post("/api/marketplace/listings", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      // Check if user is a coach
+      if (req.user.role !== 'coach' && req.user.role !== 'admin') {
+        return res.status(403).json({ error: "Coach access required" });
+      }
+
+      const { listing, typeSpecific } = req.body;
+      
+      // Validate required fields
+      if (!listing.type || !listing.title || !listing.heroUrl || listing.priceCents === undefined) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      // Set coach ID to current user
+      listing.coachId = req.user.id;
+
+      const newListing = await storage.createMarketplaceListing(listing, typeSpecific);
+      res.status(201).json(newListing);
+    } catch (error) {
+      console.error("Error creating marketplace listing:", error);
+      res.status(500).json({ error: "Failed to create marketplace listing" });
+    }
+  });
+
+  // Update marketplace listing (owner only)
+  app.patch("/api/marketplace/listings/:id", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid listing ID" });
+      }
+
+      const existingListing = await storage.getMarketplaceListing(id);
+      if (!existingListing) {
+        return res.status(404).json({ error: "Listing not found" });
+      }
+
+      // Check ownership
+      if (existingListing.coach.id !== req.user.id && req.user.role !== 'admin') {
+        return res.status(403).json({ error: "Not authorized to update this listing" });
+      }
+
+      const updatedListing = await storage.updateMarketplaceListing(id, req.body);
+      res.json(updatedListing);
+    } catch (error) {
+      console.error("Error updating marketplace listing:", error);
+      res.status(500).json({ error: "Failed to update marketplace listing" });
+    }
+  });
+
+  // Delete marketplace listing (owner only)
+  app.delete("/api/marketplace/listings/:id", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid listing ID" });
+      }
+
+      const existingListing = await storage.getMarketplaceListing(id);
+      if (!existingListing) {
+        return res.status(404).json({ error: "Listing not found" });
+      }
+
+      // Check ownership
+      if (existingListing.coach.id !== req.user.id && req.user.role !== 'admin') {
+        return res.status(403).json({ error: "Not authorized to delete this listing" });
+      }
+
+      const deleted = await storage.deleteMarketplaceListing(id);
+      if (deleted) {
+        res.json({ success: true });
+      } else {
+        res.status(500).json({ error: "Failed to delete listing" });
+      }
+    } catch (error) {
+      console.error("Error deleting marketplace listing:", error);
+      res.status(500).json({ error: "Failed to delete marketplace listing" });
+    }
+  });
+
+  // Get coach's own programs for listing creation
+  app.get("/api/marketplace/programs/mine", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      if (req.user.role !== 'coach' && req.user.role !== 'admin') {
+        return res.status(403).json({ error: "Coach access required" });
+      }
+
+      const programs = await storage.getCoachPrograms(req.user.id);
+      res.json({ items: programs });
+    } catch (error) {
+      console.error("Error fetching coach programs:", error);
+      res.status(500).json({ error: "Failed to fetch programs" });
+    }
+  });
+
+  // =================
+  // CART ROUTES
+  // =================
+
+  // Get user's cart items
+  app.get("/api/marketplace/cart", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const cartItems = await storage.getCartItems(req.user.id);
+      res.json(cartItems);
+    } catch (error) {
+      console.error("Error fetching cart items:", error);
+      res.status(500).json({ error: "Failed to fetch cart items" });
+    }
+  });
+
+  // Add item to cart
+  app.post("/api/marketplace/cart", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { listingId, type, quantity = 1, metadata } = req.body;
+      
+      if (!listingId || !type) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      const cartItem = await storage.addToCart({
+        userId: req.user.id,
+        listingId,
+        type,
+        quantity,
+        metadata
+      });
+
+      res.status(201).json(cartItem);
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      res.status(500).json({ error: "Failed to add to cart" });
+    }
+  });
+
+  // Update cart item quantity
+  app.patch("/api/marketplace/cart/:id", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const id = parseInt(req.params.id);
+      const { quantity } = req.body;
+
+      if (isNaN(id) || quantity === undefined) {
+        return res.status(400).json({ error: "Invalid parameters" });
+      }
+
+      const updatedItem = await storage.updateCartItem(id, quantity);
+      if (!updatedItem) {
+        return res.status(404).json({ error: "Cart item not found" });
+      }
+
+      res.json(updatedItem);
+    } catch (error) {
+      console.error("Error updating cart item:", error);
+      res.status(500).json({ error: "Failed to update cart item" });
+    }
+  });
+
+  // Remove item from cart
+  app.delete("/api/marketplace/cart/:id", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid cart item ID" });
+      }
+
+      const removed = await storage.removeFromCart(id);
+      if (removed) {
+        res.json({ success: true });
+      } else {
+        res.status(404).json({ error: "Cart item not found" });
+      }
+    } catch (error) {
+      console.error("Error removing from cart:", error);
+      res.status(500).json({ error: "Failed to remove from cart" });
+    }
+  });
+
+  // Calculate cart price
+  app.post("/api/marketplace/cart/price", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { items } = req.body;
+      if (!items || !Array.isArray(items)) {
+        return res.status(400).json({ error: "Invalid items data" });
+      }
+
+      const buyerTier = req.user.subscriptionTier || 'free';
+      const pricing = await storage.calculateCartPrice(items, buyerTier);
+      
+      res.json(pricing);
+    } catch (error) {
+      console.error("Error calculating cart price:", error);
+      res.status(500).json({ error: "Failed to calculate cart price" });
+    }
+  });
+
+  // =================
+  // ORDER ROUTES
+  // =================
+
+  // Get user's orders
+  app.get("/api/marketplace/orders", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const orders = await storage.getUserOrders(req.user.id);
+      res.json(orders);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      res.status(500).json({ error: "Failed to fetch orders" });
+    }
+  });
+
+  // Get specific order
+  app.get("/api/marketplace/orders/:id", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid order ID" });
+      }
+
+      const order = await storage.getOrder(id);
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      // Check ownership
+      if (order.buyerId !== req.user.id && req.user.role !== 'admin') {
+        return res.status(403).json({ error: "Not authorized to view this order" });
+      }
+
+      res.json(order);
+    } catch (error) {
+      console.error("Error fetching order:", error);
+      res.status(500).json({ error: "Failed to fetch order" });
+    }
+  });
+
+  // =================
+  // CONSULTING SLOTS ROUTES
+  // =================
+
+  // Get consulting slots for a listing
+  app.get("/api/consulting/:listingId/slots", async (req: Request, res: Response) => {
+    try {
+      const listingId = parseInt(req.params.listingId);
+      const { from, to } = req.query;
+
+      if (isNaN(listingId)) {
+        return res.status(400).json({ error: "Invalid listing ID" });
+      }
+
+      const fromDate = from ? new Date(from as string) : undefined;
+      const toDate = to ? new Date(to as string) : undefined;
+
+      const slots = await storage.getConsultingSlots(listingId, fromDate, toDate);
+      res.json(slots);
+    } catch (error) {
+      console.error("Error fetching consulting slots:", error);
+      res.status(500).json({ error: "Failed to fetch consulting slots" });
+    }
+  });
+
+  // Create consulting slots (coach only)
+  app.post("/api/consulting/:listingId/slots", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const listingId = parseInt(req.params.listingId);
+      const { slots } = req.body;
+
+      if (isNaN(listingId) || !slots || !Array.isArray(slots)) {
+        return res.status(400).json({ error: "Invalid parameters" });
+      }
+
+      // Verify listing ownership
+      const listing = await storage.getMarketplaceListing(listingId);
+      if (!listing || listing.coach.id !== req.user.id) {
+        return res.status(403).json({ error: "Not authorized" });
+      }
+
+      const createdSlots = await storage.createConsultingSlots(slots);
+      res.status(201).json(createdSlots);
+    } catch (error) {
+      console.error("Error creating consulting slots:", error);
+      res.status(500).json({ error: "Failed to create consulting slots" });
+    }
+  });
+
+  // =================
+  // REVIEW ROUTES
+  // =================
+
+  // Get reviews for a listing
+  app.get("/api/marketplace/listings/:id/reviews", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid listing ID" });
+      }
+
+      const reviews = await storage.getListingReviews(id);
+      res.json(reviews);
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+      res.status(500).json({ error: "Failed to fetch reviews" });
+    }
+  });
+
+  // Create a review (authenticated users only)
+  app.post("/api/marketplace/listings/:id/reviews", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const listingId = parseInt(req.params.id);
+      const { rating, title, content, tags } = req.body;
+
+      if (isNaN(listingId) || !rating || rating < 1 || rating > 5) {
+        return res.status(400).json({ error: "Invalid parameters" });
+      }
+
+      const review = await storage.createReview({
+        listingId,
+        reviewerId: req.user.id,
+        rating,
+        title,
+        content,
+        tags,
+        isVerifiedPurchase: false // TODO: Check if user actually purchased
+      });
+
+      res.status(201).json(review);
+    } catch (error) {
+      console.error("Error creating review:", error);
+      res.status(500).json({ error: "Failed to create review" });
+    }
+  });
+
   // Use modular routes
   app.use("/api/community", communityRoutes);
   app.use(chatRoutes);

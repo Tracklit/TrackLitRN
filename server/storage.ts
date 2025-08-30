@@ -128,7 +128,31 @@ import {
   messageReactions,
   AffiliateSubmission,
   InsertAffiliateSubmission,
-  affiliateSubmissions
+  affiliateSubmissions,
+  MarketplaceListing,
+  InsertMarketplaceListing,
+  ProgramListing,
+  InsertProgramListing,
+  ConsultingListing,
+  InsertConsultingListing,
+  ConsultingSlot,
+  InsertConsultingSlot,
+  MarketplaceCartItem,
+  InsertMarketplaceCartItem,
+  MarketplaceOrder,
+  InsertMarketplaceOrder,
+  MarketplaceOrderItem,
+  InsertMarketplaceOrderItem,
+  MarketplaceReview,
+  InsertMarketplaceReview,
+  marketplaceListings,
+  programListings,
+  consultingListings,
+  consultingSlots,
+  marketplaceCartItems,
+  marketplaceOrders,
+  marketplaceOrderItems,
+  marketplaceReviews
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, lt, gte, desc, asc, inArray, or, isNotNull, isNull, ne, sql, exists } from "drizzle-orm";
@@ -366,6 +390,42 @@ export interface IStorage {
   createVideoAnalysis(video: InsertVideoAnalysis): Promise<VideoAnalysis>;
   updateVideoAnalysis(id: number, videoData: Partial<VideoAnalysis>): Promise<VideoAnalysis | undefined>;
   deleteVideoAnalysis(id: number): Promise<boolean>;
+
+  // Marketplace Listing operations
+  getMarketplaceListings(params?: { query?: string; type?: 'program' | 'consulting'; category?: string; sort?: string; page?: number; limit?: number }): Promise<{ items: any[], total: number, nextPage?: number }>;
+  getMarketplaceListing(id: number): Promise<any>;
+  createMarketplaceListing(listing: InsertMarketplaceListing, typeSpecific: InsertProgramListing | InsertConsultingListing): Promise<any>;
+  updateMarketplaceListing(id: number, listingData: Partial<MarketplaceListing>): Promise<MarketplaceListing | undefined>;
+  updateMarketplaceListingStatus(id: number, visibility: 'public' | 'unlisted' | 'draft'): Promise<MarketplaceListing | undefined>;
+  deleteMarketplaceListing(id: number): Promise<boolean>;
+  getCoachPrograms(coachId: number): Promise<{ id: number; title: string; durationWeeks: number; level: string }[]>;
+
+  // Cart operations
+  getCartItems(userId: number): Promise<MarketplaceCartItem[]>;
+  addToCart(item: InsertMarketplaceCartItem): Promise<MarketplaceCartItem>;
+  updateCartItem(id: number, quantity: number): Promise<MarketplaceCartItem | undefined>;
+  removeFromCart(id: number): Promise<boolean>;
+  clearCart(userId: number): Promise<boolean>;
+  calculateCartPrice(items: MarketplaceCartItem[], buyerTier: string): Promise<{ subtotalCents: number; platformFeeCents: number; taxCents: number; totalCents: number }>;
+
+  // Order operations
+  createOrder(order: InsertMarketplaceOrder, items: InsertMarketplaceOrderItem[]): Promise<MarketplaceOrder>;
+  getOrder(id: number): Promise<MarketplaceOrder | undefined>;
+  getUserOrders(userId: number): Promise<MarketplaceOrder[]>;
+  updateOrderStatus(id: number, status: string): Promise<MarketplaceOrder | undefined>;
+  fulfillOrderItem(orderItemId: number): Promise<MarketplaceOrderItem | undefined>;
+
+  // Consulting Slots operations
+  getConsultingSlots(consultingListingId: number, from?: Date, to?: Date): Promise<{ slots: any[] }>;
+  createConsultingSlots(slots: InsertConsultingSlot[]): Promise<ConsultingSlot[]>;
+  bookConsultingSlot(slotId: number, userId: number): Promise<boolean>;
+  updateConsultingSlot(id: number, slotData: Partial<ConsultingSlot>): Promise<ConsultingSlot | undefined>;
+
+  // Review operations
+  getListingReviews(listingId: number): Promise<MarketplaceReview[]>;
+  createReview(review: InsertMarketplaceReview): Promise<MarketplaceReview>;
+  updateReview(id: number, reviewData: Partial<MarketplaceReview>): Promise<MarketplaceReview | undefined>;
+  deleteReview(id: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3543,6 +3603,462 @@ export class DatabaseStorage implements IStorage {
       .returning();
       
     return updatedUser;
+  }
+
+  // =================
+  // MARKETPLACE METHODS
+  // =================
+
+  // Marketplace Listing operations
+  async getMarketplaceListings(params?: { query?: string; type?: 'program' | 'consulting'; category?: string; sort?: string; page?: number; limit?: number }): Promise<{ items: any[], total: number, nextPage?: number }> {
+    const { query, type, category, sort = 'relevance', page = 1, limit = 20 } = params || {};
+    const offset = (page - 1) * limit;
+
+    let whereConditions = [eq(marketplaceListings.visibility, 'public')];
+    
+    if (type) {
+      whereConditions.push(eq(marketplaceListings.type, type));
+    }
+
+    if (query) {
+      whereConditions.push(
+        or(
+          sql`${marketplaceListings.title} ILIKE '%' || ${query} || '%'`,
+          sql`${marketplaceListings.subtitle} ILIKE '%' || ${query} || '%'`
+        )
+      );
+    }
+
+    // Get total count
+    const [totalResult] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(marketplaceListings)
+      .where(and(...whereConditions));
+    
+    const total = totalResult?.count || 0;
+
+    // Sort conditions
+    let orderBy;
+    switch (sort) {
+      case 'price_asc':
+        orderBy = asc(marketplaceListings.priceCents);
+        break;
+      case 'price_desc':
+        orderBy = desc(marketplaceListings.priceCents);
+        break;
+      case 'newest':
+        orderBy = desc(marketplaceListings.createdAt);
+        break;
+      default:
+        orderBy = desc(marketplaceListings.createdAt); // Default relevance
+    }
+
+    // Get listings with coach info
+    const listings = await db
+      .select({
+        id: marketplaceListings.id,
+        type: marketplaceListings.type,
+        title: marketplaceListings.title,
+        subtitle: marketplaceListings.subtitle,
+        heroUrl: marketplaceListings.heroUrl,
+        priceCents: marketplaceListings.priceCents,
+        currency: marketplaceListings.currency,
+        tags: marketplaceListings.tags,
+        badges: marketplaceListings.badges,
+        rating: marketplaceListings.rating,
+        createdAt: marketplaceListings.createdAt,
+        coachId: marketplaceListings.coachId,
+        coachName: users.name,
+        coachUsername: users.username,
+        coachProfileImageUrl: users.profileImageUrl,
+        coachIsVerified: users.role, // We'll check if they're coach/verified
+      })
+      .from(marketplaceListings)
+      .leftJoin(users, eq(marketplaceListings.coachId, users.id))
+      .where(and(...whereConditions))
+      .orderBy(orderBy)
+      .limit(limit)
+      .offset(offset);
+
+    const items = listings.map(listing => ({
+      id: listing.id,
+      type: listing.type,
+      title: listing.title,
+      subtitle: listing.subtitle,
+      heroUrl: listing.heroUrl,
+      priceCents: listing.priceCents,
+      currency: listing.currency,
+      tags: listing.tags,
+      badges: listing.badges,
+      rating: listing.rating,
+      createdAt: listing.createdAt,
+      coach: {
+        id: listing.coachId,
+        name: listing.coachName,
+        username: listing.coachUsername,
+        avatarUrl: listing.coachProfileImageUrl,
+        verified: listing.coachIsVerified === 'coach'
+      }
+    }));
+
+    const nextPage = offset + limit < total ? page + 1 : undefined;
+    
+    return { items, total, nextPage };
+  }
+
+  async getMarketplaceListing(id: number): Promise<any> {
+    const [listing] = await db
+      .select({
+        id: marketplaceListings.id,
+        type: marketplaceListings.type,
+        title: marketplaceListings.title,
+        subtitle: marketplaceListings.subtitle,
+        heroUrl: marketplaceListings.heroUrl,
+        priceCents: marketplaceListings.priceCents,
+        currency: marketplaceListings.currency,
+        tags: marketplaceListings.tags,
+        badges: marketplaceListings.badges,
+        rating: marketplaceListings.rating,
+        visibility: marketplaceListings.visibility,
+        createdAt: marketplaceListings.createdAt,
+        coachId: marketplaceListings.coachId,
+        coachName: users.name,
+        coachUsername: users.username,
+        coachProfileImageUrl: users.profileImageUrl,
+        coachIsVerified: users.role,
+      })
+      .from(marketplaceListings)
+      .leftJoin(users, eq(marketplaceListings.coachId, users.id))
+      .where(eq(marketplaceListings.id, id));
+
+    if (!listing) return undefined;
+
+    const result = {
+      id: listing.id,
+      type: listing.type,
+      title: listing.title,
+      subtitle: listing.subtitle,
+      heroUrl: listing.heroUrl,
+      priceCents: listing.priceCents,
+      currency: listing.currency,
+      tags: listing.tags,
+      badges: listing.badges,
+      rating: listing.rating,
+      visibility: listing.visibility,
+      createdAt: listing.createdAt,
+      coach: {
+        id: listing.coachId,
+        name: listing.coachName,
+        username: listing.coachUsername,
+        avatarUrl: listing.coachProfileImageUrl,
+        verified: listing.coachIsVerified === 'coach'
+      }
+    };
+
+    // Get type-specific details
+    if (listing.type === 'program') {
+      const [programDetails] = await db
+        .select()
+        .from(programListings)
+        .where(eq(programListings.listingId, id));
+      
+      if (programDetails) {
+        Object.assign(result, {
+          programId: programDetails.programId,
+          durationWeeks: programDetails.durationWeeks,
+          level: programDetails.level,
+          category: programDetails.category,
+          compareAtPriceCents: programDetails.compareAtPriceCents
+        });
+      }
+    } else if (listing.type === 'consulting') {
+      const [consultingDetails] = await db
+        .select()
+        .from(consultingListings)
+        .where(eq(consultingListings.listingId, id));
+      
+      if (consultingDetails) {
+        Object.assign(result, {
+          description: consultingDetails.description,
+          slotLengthMin: consultingDetails.slotLengthMin,
+          pricePerSlotCents: consultingDetails.pricePerSlotCents,
+          availability: consultingDetails.availability,
+          bufferMin: consultingDetails.bufferMin,
+          groupMax: consultingDetails.groupMax,
+          reschedulePolicy: consultingDetails.reschedulePolicy,
+          meetingLinkTemplate: consultingDetails.meetingLinkTemplate
+        });
+      }
+    }
+
+    return result;
+  }
+
+  async createMarketplaceListing(listing: InsertMarketplaceListing, typeSpecific: InsertProgramListing | InsertConsultingListing): Promise<any> {
+    const [newListing] = await db.insert(marketplaceListings).values(listing).returning();
+    
+    if (listing.type === 'program') {
+      await db.insert(programListings).values({
+        ...(typeSpecific as InsertProgramListing),
+        listingId: newListing.id
+      });
+    } else if (listing.type === 'consulting') {
+      await db.insert(consultingListings).values({
+        ...(typeSpecific as InsertConsultingListing),
+        listingId: newListing.id
+      });
+    }
+
+    return this.getMarketplaceListing(newListing.id);
+  }
+
+  async updateMarketplaceListing(id: number, listingData: Partial<MarketplaceListing>): Promise<MarketplaceListing | undefined> {
+    const [updated] = await db
+      .update(marketplaceListings)
+      .set({ ...listingData, updatedAt: new Date() })
+      .where(eq(marketplaceListings.id, id))
+      .returning();
+    return updated;
+  }
+
+  async updateMarketplaceListingStatus(id: number, visibility: 'public' | 'unlisted' | 'draft'): Promise<MarketplaceListing | undefined> {
+    return this.updateMarketplaceListing(id, { visibility });
+  }
+
+  async deleteMarketplaceListing(id: number): Promise<boolean> {
+    const result = await db.delete(marketplaceListings).where(eq(marketplaceListings.id, id));
+    return result.rowCount > 0;
+  }
+
+  async getCoachPrograms(coachId: number): Promise<{ id: number; title: string; durationWeeks: number; level: string }[]> {
+    const programs = await db
+      .select({
+        id: trainingPrograms.id,
+        title: trainingPrograms.title,
+        duration: trainingPrograms.duration,
+        level: sql<string>`COALESCE(${trainingPrograms.level}, 'Intermediate')`.as('level')
+      })
+      .from(trainingPrograms)
+      .where(eq(trainingPrograms.userId, coachId));
+
+    return programs.map(p => ({
+      id: p.id,
+      title: p.title,
+      durationWeeks: p.duration || 4,
+      level: p.level || 'Intermediate'
+    }));
+  }
+
+  // Cart operations
+  async getCartItems(userId: number): Promise<MarketplaceCartItem[]> {
+    return db
+      .select()
+      .from(marketplaceCartItems)
+      .where(eq(marketplaceCartItems.userId, userId));
+  }
+
+  async addToCart(item: InsertMarketplaceCartItem): Promise<MarketplaceCartItem> {
+    // Check if item already exists in cart
+    const [existingItem] = await db
+      .select()
+      .from(marketplaceCartItems)
+      .where(and(
+        eq(marketplaceCartItems.userId, item.userId),
+        eq(marketplaceCartItems.listingId, item.listingId)
+      ));
+
+    if (existingItem) {
+      // Update quantity
+      return this.updateCartItem(existingItem.id, existingItem.quantity + (item.quantity || 1));
+    } else {
+      // Add new item
+      const [newItem] = await db.insert(marketplaceCartItems).values(item).returning();
+      return newItem;
+    }
+  }
+
+  async updateCartItem(id: number, quantity: number): Promise<MarketplaceCartItem | undefined> {
+    const [updated] = await db
+      .update(marketplaceCartItems)
+      .set({ quantity })
+      .where(eq(marketplaceCartItems.id, id))
+      .returning();
+    return updated;
+  }
+
+  async removeFromCart(id: number): Promise<boolean> {
+    const result = await db.delete(marketplaceCartItems).where(eq(marketplaceCartItems.id, id));
+    return result.rowCount > 0;
+  }
+
+  async clearCart(userId: number): Promise<boolean> {
+    const result = await db.delete(marketplaceCartItems).where(eq(marketplaceCartItems.userId, userId));
+    return true; // Always return true even if no items were deleted
+  }
+
+  async calculateCartPrice(items: MarketplaceCartItem[], buyerTier: string): Promise<{ subtotalCents: number; platformFeeCents: number; taxCents: number; totalCents: number }> {
+    let subtotalCents = 0;
+
+    for (const item of items) {
+      const listing = await this.getMarketplaceListing(item.listingId);
+      if (listing) {
+        subtotalCents += listing.priceCents * item.quantity;
+      }
+    }
+
+    // Calculate platform fee based on subscription tier
+    let platformFeePercentage = 0.20; // 20% for non-subscribers
+    if (buyerTier === 'star') {
+      platformFeePercentage = 0.16; // 16% for Star
+    } else if (buyerTier === 'pro') {
+      platformFeePercentage = 0.18; // 18% for Pro
+    }
+
+    const platformFeeCents = Math.round(subtotalCents * platformFeePercentage);
+    const taxCents = 0; // Implement tax calculation if needed
+    const totalCents = subtotalCents + platformFeeCents + taxCents;
+
+    return { subtotalCents, platformFeeCents, taxCents, totalCents };
+  }
+
+  // Order operations
+  async createOrder(order: InsertMarketplaceOrder, items: InsertMarketplaceOrderItem[]): Promise<MarketplaceOrder> {
+    const [newOrder] = await db.insert(marketplaceOrders).values(order).returning();
+    
+    // Add order items
+    const orderItemsWithOrderId = items.map(item => ({
+      ...item,
+      orderId: newOrder.id
+    }));
+    
+    await db.insert(marketplaceOrderItems).values(orderItemsWithOrderId);
+    
+    return newOrder;
+  }
+
+  async getOrder(id: number): Promise<MarketplaceOrder | undefined> {
+    const [order] = await db
+      .select()
+      .from(marketplaceOrders)
+      .where(eq(marketplaceOrders.id, id));
+    return order;
+  }
+
+  async getUserOrders(userId: number): Promise<MarketplaceOrder[]> {
+    return db
+      .select()
+      .from(marketplaceOrders)
+      .where(eq(marketplaceOrders.buyerId, userId))
+      .orderBy(desc(marketplaceOrders.createdAt));
+  }
+
+  async updateOrderStatus(id: number, status: string): Promise<MarketplaceOrder | undefined> {
+    const updateData: any = { status };
+    if (status === 'paid') {
+      updateData.completedAt = new Date();
+    }
+
+    const [updated] = await db
+      .update(marketplaceOrders)
+      .set(updateData)
+      .where(eq(marketplaceOrders.id, id))
+      .returning();
+    return updated;
+  }
+
+  async fulfillOrderItem(orderItemId: number): Promise<MarketplaceOrderItem | undefined> {
+    const [updated] = await db
+      .update(marketplaceOrderItems)
+      .set({ 
+        status: 'fulfilled',
+        fulfilledAt: new Date()
+      })
+      .where(eq(marketplaceOrderItems.id, orderItemId))
+      .returning();
+    return updated;
+  }
+
+  // Consulting Slots operations
+  async getConsultingSlots(consultingListingId: number, from?: Date, to?: Date): Promise<{ slots: any[] }> {
+    let whereConditions = [eq(consultingSlots.consultingListingId, consultingListingId)];
+    
+    if (from) {
+      whereConditions.push(gte(consultingSlots.startTime, from));
+    }
+    if (to) {
+      whereConditions.push(lt(consultingSlots.startTime, to));
+    }
+
+    const slots = await db
+      .select()
+      .from(consultingSlots)
+      .where(and(...whereConditions))
+      .orderBy(asc(consultingSlots.startTime));
+
+    return { slots };
+  }
+
+  async createConsultingSlots(slots: InsertConsultingSlot[]): Promise<ConsultingSlot[]> {
+    const created = await db.insert(consultingSlots).values(slots).returning();
+    return created;
+  }
+
+  async bookConsultingSlot(slotId: number, userId: number): Promise<boolean> {
+    const [slot] = await db
+      .select()
+      .from(consultingSlots)
+      .where(eq(consultingSlots.id, slotId));
+
+    if (!slot || !slot.available || slot.bookedSeats >= slot.maxSeats) {
+      return false;
+    }
+
+    await db
+      .update(consultingSlots)
+      .set({ 
+        bookedSeats: slot.bookedSeats + 1,
+        available: slot.bookedSeats + 1 >= slot.maxSeats ? false : true
+      })
+      .where(eq(consultingSlots.id, slotId));
+
+    return true;
+  }
+
+  async updateConsultingSlot(id: number, slotData: Partial<ConsultingSlot>): Promise<ConsultingSlot | undefined> {
+    const [updated] = await db
+      .update(consultingSlots)
+      .set(slotData)
+      .where(eq(consultingSlots.id, id))
+      .returning();
+    return updated;
+  }
+
+  // Review operations
+  async getListingReviews(listingId: number): Promise<MarketplaceReview[]> {
+    return db
+      .select()
+      .from(marketplaceReviews)
+      .where(eq(marketplaceReviews.listingId, listingId))
+      .orderBy(desc(marketplaceReviews.createdAt));
+  }
+
+  async createReview(review: InsertMarketplaceReview): Promise<MarketplaceReview> {
+    const [newReview] = await db.insert(marketplaceReviews).values(review).returning();
+    return newReview;
+  }
+
+  async updateReview(id: number, reviewData: Partial<MarketplaceReview>): Promise<MarketplaceReview | undefined> {
+    const [updated] = await db
+      .update(marketplaceReviews)
+      .set({ ...reviewData, updatedAt: new Date() })
+      .where(eq(marketplaceReviews.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteReview(id: number): Promise<boolean> {
+    const result = await db.delete(marketplaceReviews).where(eq(marketplaceReviews.id, id));
+    return result.rowCount > 0;
   }
 }
 
