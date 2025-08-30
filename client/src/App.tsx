@@ -83,6 +83,7 @@ import FootRehabPage from "@/pages/rehab/chronic-injuries/foot";
 import MarketplacePage from "@/pages/marketplace-page";
 import MarketplaceListingDetails from "@/pages/marketplace-listing-details";
 import MarketplaceCart from "@/pages/marketplace-cart";
+import MarketplaceCreateListingPage from "@/pages/marketplace-create-listing-page";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { TickerProvider } from "@/contexts/ticker-context";
@@ -213,6 +214,7 @@ function Router() {
           
           {/* Marketplace */}
           <ProtectedRoute path="/marketplace" component={MarketplacePage} />
+          <ProtectedRoute path="/marketplace/create" component={MarketplaceCreateListingPage} />
           <ProtectedRoute path="/marketplace/listings/:id" component={MarketplaceListingDetails} />
           <ProtectedRoute path="/marketplace/cart" component={MarketplaceCart} />
           
