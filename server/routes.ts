@@ -9010,9 +9010,11 @@ Submission Details:
             coachId: 1
           },
           typeSpecific: {
-            sessionDurationMinutes: 60,
+            slotLengthMin: 60,
+            pricePerSlotCents: 12500,
             maxParticipants: 1,
             deliveryFormat: 'video-call',
+            sessionDurationMinutes: 60,
             category: 'technique'
           }
         },
@@ -9053,9 +9055,11 @@ Submission Details:
             coachId: 1
           },
           typeSpecific: {
-            sessionDurationMinutes: 90,
+            slotLengthMin: 90,
+            pricePerSlotCents: 7500,
             maxParticipants: 4,
             deliveryFormat: 'video-call',
+            sessionDurationMinutes: 90,
             category: 'training'
           }
         }

@@ -2029,7 +2029,13 @@ export const consultingListings = pgTable("consulting_listings", {
   description: text("description"),
   slotLengthMin: integer("slot_length_min").notNull(),
   pricePerSlotCents: integer("price_per_slot_cents").notNull(),
-  availability: json("availability"), // Array<{ day: number; start: string; end: string }>
+  maxParticipants: integer("max_participants").notNull().default(1),
+  deliveryFormat: text("delivery_format").notNull(),
+  requirements: text("requirements"),
+  whatYouGet: text("what_you_get"),
+  sessionDurationMinutes: integer("session_duration_minutes").notNull(),
+  category: text("category").notNull(),
+  availability: text("availability").default("available"),
   bufferMin: integer("buffer_min").default(15),
   groupMax: integer("group_max").default(1),
   reschedulePolicy: text("reschedule_policy").default("moderate"), // 'flexible', 'moderate', 'strict'
