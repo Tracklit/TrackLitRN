@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, DollarSign, Clock, Users } from "lucide-react";
+import { ObjectUploader } from "@/components/ObjectUploader";
 import { insertMarketplaceListingSchema, insertProgramListingSchema, insertConsultingListingSchema } from "@shared/schema";
 import { cn } from "@/lib/utils";
 
@@ -60,6 +61,7 @@ export default function MarketplaceCreateListingPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // Fetch available programs for the current user
   const { data: programs } = useQuery({
@@ -299,19 +301,72 @@ export default function MarketplaceCreateListingPage() {
                     />
                   </div>
 
-                  <FormField
-                    control={programForm.control}
-                    name="previewImageUrl"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-white">Preview Image</FormLabel>
-                        <FormControl>
-                          <Input {...field} value={field.value || ''} placeholder="https://example.com/image.jpg" className="bg-white/10 border-white/20 text-white" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="space-y-2">
+                    <FormLabel className="text-white">Preview Image</FormLabel>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <ObjectUploader
+                        maxNumberOfFiles={1}
+                        maxFileSize={10485760} // 10MB
+                        requiresSubscription={true}
+                        onGetUploadParameters={async () => {
+                          const response = await fetch('/api/marketplace/upload-url', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                          });
+                          if (!response.ok) {
+                            const error = await response.json();
+                            throw new Error(error.message || 'Failed to get upload URL');
+                          }
+                          const { uploadURL } = await response.json();
+                          return { method: 'PUT', url: uploadURL };
+                        }}
+                        onComplete={async (result) => {
+                          try {
+                            setUploadingImage(true);
+                            if (result.successful && result.successful[0]) {
+                              const uploadURL = result.successful[0].uploadURL;
+                              const response = await fetch('/api/marketplace/images', {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ imageURL: uploadURL })
+                              });
+                              
+                              if (response.ok) {
+                                const { objectPath } = await response.json();
+                                programForm.setValue('previewImageUrl', objectPath);
+                                toast({
+                                  title: "Image uploaded successfully!",
+                                  description: "Your preview image has been uploaded."
+                                });
+                              } else {
+                                throw new Error('Failed to process image');
+                              }
+                            }
+                          } catch (error: any) {
+                            toast({
+                              title: "Upload failed",
+                              description: error.message || "Failed to upload image",
+                              variant: "destructive"
+                            });
+                          } finally {
+                            setUploadingImage(false);
+                          }
+                        }}
+                        buttonClassName="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                      >
+                        Upload Preview Image
+                      </ObjectUploader>
+                      
+                      {programForm.watch('previewImageUrl') && (
+                        <div className="bg-white/10 backdrop-blur-sm border-white/20 rounded-lg p-4">
+                          <p className="text-white text-sm mb-2">Current image:</p>
+                          <p className="text-gray-300 text-xs break-all">
+                            {programForm.watch('previewImageUrl')}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
                   {/* Program Selection */}
                   <FormField
@@ -511,19 +566,72 @@ export default function MarketplaceCreateListingPage() {
                     )}
                   />
 
-                  <FormField
-                    control={consultingForm.control}
-                    name="previewImageUrl"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-white">Preview Image</FormLabel>
-                        <FormControl>
-                          <Input {...field} value={field.value || ''} placeholder="https://example.com/image.jpg" className="bg-white/10 border-white/20 text-white" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="space-y-2">
+                    <FormLabel className="text-white">Preview Image</FormLabel>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <ObjectUploader
+                        maxNumberOfFiles={1}
+                        maxFileSize={10485760} // 10MB
+                        requiresSubscription={true}
+                        onGetUploadParameters={async () => {
+                          const response = await fetch('/api/marketplace/upload-url', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                          });
+                          if (!response.ok) {
+                            const error = await response.json();
+                            throw new Error(error.message || 'Failed to get upload URL');
+                          }
+                          const { uploadURL } = await response.json();
+                          return { method: 'PUT', url: uploadURL };
+                        }}
+                        onComplete={async (result) => {
+                          try {
+                            setUploadingImage(true);
+                            if (result.successful && result.successful[0]) {
+                              const uploadURL = result.successful[0].uploadURL;
+                              const response = await fetch('/api/marketplace/images', {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ imageURL: uploadURL })
+                              });
+                              
+                              if (response.ok) {
+                                const { objectPath } = await response.json();
+                                consultingForm.setValue('previewImageUrl', objectPath);
+                                toast({
+                                  title: "Image uploaded successfully!",
+                                  description: "Your preview image has been uploaded."
+                                });
+                              } else {
+                                throw new Error('Failed to process image');
+                              }
+                            }
+                          } catch (error: any) {
+                            toast({
+                              title: "Upload failed",
+                              description: error.message || "Failed to upload image",
+                              variant: "destructive"
+                            });
+                          } finally {
+                            setUploadingImage(false);
+                          }
+                        }}
+                        buttonClassName="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                      >
+                        Upload Preview Image
+                      </ObjectUploader>
+                      
+                      {consultingForm.watch('previewImageUrl') && (
+                        <div className="bg-white/10 backdrop-blur-sm border-white/20 rounded-lg p-4">
+                          <p className="text-white text-sm mb-2">Current image:</p>
+                          <p className="text-gray-300 text-xs break-all">
+                            {consultingForm.watch('previewImageUrl')}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
                   {/* Pricing */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

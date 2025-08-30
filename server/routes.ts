@@ -9465,6 +9465,127 @@ Submission Details:
     }
   });
 
+  // ============ OBJECT STORAGE ROUTES FOR MARKETPLACE ============
+
+  // Get upload URL for marketplace images (subscription required)
+  app.post("/api/marketplace/upload-url", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const user = req.user!;
+      const isSubscriber = user.subscriptionTier !== 'free' || user.isPremium;
+      
+      if (!isSubscriber) {
+        return res.status(403).json({ 
+          error: "Subscription required", 
+          message: "Image upload is available for Pro and Star subscribers only"
+        });
+      }
+
+      const { ObjectStorageService } = await import("./objectStorage");
+      const objectStorageService = new ObjectStorageService();
+      
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      res.json({ uploadURL });
+    } catch (error) {
+      console.error("Error generating upload URL:", error);
+      res.status(500).json({ error: "Failed to generate upload URL" });
+    }
+  });
+
+  // Set ACL policy after marketplace image upload
+  app.put("/api/marketplace/images", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { imageURL } = req.body;
+      if (!imageURL) {
+        return res.status(400).json({ error: "imageURL is required" });
+      }
+
+      const user = req.user!;
+      const isSubscriber = user.subscriptionTier !== 'free' || user.isPremium;
+      
+      if (!isSubscriber) {
+        return res.status(403).json({ 
+          error: "Subscription required",
+          message: "Image upload is available for Pro and Star subscribers only"
+        });
+      }
+
+      const { ObjectStorageService } = await import("./objectStorage");
+      const objectStorageService = new ObjectStorageService();
+      
+      // Set ACL policy for the uploaded image
+      const objectPath = await objectStorageService.trySetObjectEntityAclPolicy(
+        imageURL,
+        {
+          owner: user.id.toString(),
+          visibility: "public", // Marketplace images are public
+        }
+      );
+
+      res.json({ objectPath });
+    } catch (error) {
+      console.error("Error setting image ACL:", error);
+      res.status(500).json({ error: "Failed to process image" });
+    }
+  });
+
+  // Serve private objects with ACL check
+  app.get("/objects/:objectPath(*)", async (req: Request, res: Response) => {
+    try {
+      const { ObjectStorageService, ObjectNotFoundError } = await import("./objectStorage");
+      const { ObjectPermission } = await import("./objectAcl");
+      
+      const objectStorageService = new ObjectStorageService();
+      const userId = req.isAuthenticated() ? req.user!.id.toString() : undefined;
+      
+      const objectFile = await objectStorageService.getObjectEntityFile(req.path);
+      const canAccess = await objectStorageService.canAccessObjectEntity({
+        objectFile,
+        userId: userId,
+        requestedPermission: ObjectPermission.READ,
+      });
+      
+      if (!canAccess) {
+        return res.sendStatus(401);
+      }
+      
+      objectStorageService.downloadObject(objectFile, res);
+    } catch (error) {
+      console.error("Error accessing object:", error);
+      const { ObjectNotFoundError } = await import("./objectStorage");
+      if (error instanceof ObjectNotFoundError) {
+        return res.sendStatus(404);
+      }
+      return res.sendStatus(500);
+    }
+  });
+
+  // Serve public objects
+  app.get("/public-objects/:filePath(*)", async (req: Request, res: Response) => {
+    try {
+      const filePath = req.params.filePath;
+      const { ObjectStorageService } = await import("./objectStorage");
+      const objectStorageService = new ObjectStorageService();
+      
+      const file = await objectStorageService.searchPublicObject(filePath);
+      if (!file) {
+        return res.status(404).json({ error: "File not found" });
+      }
+      
+      objectStorageService.downloadObject(file, res);
+    } catch (error) {
+      console.error("Error serving public object:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // Use modular routes
   app.use("/api/community", communityRoutes);
   app.use(chatRoutes);
