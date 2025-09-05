@@ -168,7 +168,7 @@ app.use((req, res, next) => {
             try {
               const lines = data.toString().split('\n').filter(line => line.trim());
               
-              lines.filter((line: string) => line.trim()).forEach((line: string) => {
+              lines.forEach(line => {
                 try {
                   const poseData = JSON.parse(line);
                   
@@ -220,9 +220,9 @@ app.use((req, res, next) => {
   
   // Cleanup pose tracking processes on server shutdown
   process.on('SIGINT', () => {
-    activeProcesses.forEach((process) => {
+    for (const [socketId, process] of activeProcesses) {
       process.kill();
-    });
+    }
     activeProcesses.clear();
     process.exit();
   });
