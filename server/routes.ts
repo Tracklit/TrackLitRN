@@ -415,13 +415,7 @@ async function initializeDefaultAchievements() {
   }
 }
 
-// Initialize Stripe
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
-}
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2025-04-30.basil",
-});
+// Stripe initialization moved to top of file
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
