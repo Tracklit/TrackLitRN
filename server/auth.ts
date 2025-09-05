@@ -25,12 +25,16 @@ async function hashPassword(password: string) {
 
 async function comparePasswords(supplied: string, stored: string) {
   try {
+    console.log("Comparing password - stored format:", stored.substring(0, 10) + "...");
+    
     // Check if it's a bcrypt hash (starts with $2b$, $2a$, etc.)
     if (stored.startsWith('$2')) {
+      console.log("Using bcrypt comparison");
       return await bcrypt.compare(supplied, stored);
     }
     
     // Handle custom scrypt format (legacy)
+    console.log("Using scrypt comparison");
     const [hashed, salt] = stored.split(".");
     if (!salt) {
       console.error("Invalid password format - no salt found");
