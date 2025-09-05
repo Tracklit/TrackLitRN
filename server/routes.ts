@@ -23,6 +23,11 @@ import { worldAthleticsService } from "./world-athletics";
 import communityRoutes from "./routes/community";
 import chatRoutes from "./chat-routes-simple";
 
+// Initialize Stripe
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2023-10-16',
+});
+
 // Coach-athlete relationship API functions will be moved inside registerRoutes
 
 // Remove unused import
@@ -7433,6 +7438,98 @@ Keep the response professional, evidence-based, and specific to track and field 
     } catch (error) {
       console.error("Error getting coach limits:", error);
       res.status(500).json({ error: "Failed to get coach limits" });
+    }
+  });
+
+  // Stripe subscription creation endpoint
+  app.post("/api/create-subscription", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const { coachId, subscriptionId, billingType } = req.body;
+      const athleteId = req.user!.id;
+
+      // Get coach and subscription details
+      const coach = await dbStorage.getUser(coachId);
+      const subscription = await dbStorage.getUserSubscription(subscriptionId);
+
+      if (!coach || !subscription || !coach.isCoach) {
+        return res.status(404).json({ error: "Coach or subscription not found" });
+      }
+
+      // Calculate amount and setup Stripe subscription
+      let amount = 0;
+      let interval = 'month';
+      
+      switch (billingType) {
+        case 'monthly':
+          amount = Math.round(subscription.monthlyRate * 100); // Convert to cents
+          interval = 'month';
+          break;
+        case 'weekly':
+          amount = Math.round(subscription.weeklyRate * 100);
+          interval = 'week';
+          break;
+        case 'session':
+          amount = Math.round(subscription.sessionRate * 100);
+          // For sessions, we'll create a one-time payment instead
+          const paymentIntent = await stripe.paymentIntents.create({
+            amount,
+            currency: 'usd',
+            metadata: {
+              coachId,
+              athleteId,
+              subscriptionId,
+              billingType: 'session',
+            },
+          });
+          return res.json({ clientSecret: paymentIntent.client_secret });
+        default:
+          return res.status(400).json({ error: "Invalid billing type" });
+      }
+
+      // Create recurring subscription for monthly/weekly
+      const customer = await stripe.customers.create({
+        email: req.user!.email,
+        metadata: {
+          userId: athleteId.toString(),
+        },
+      });
+
+      const priceId = await stripe.prices.create({
+        unit_amount: amount,
+        currency: 'usd',
+        recurring: { interval: interval as 'month' | 'week' },
+        product_data: {
+          name: subscription.title,
+          description: `Coaching subscription from ${coach.name || coach.username}`,
+        },
+        metadata: {
+          coachId: coachId.toString(),
+          subscriptionId: subscriptionId.toString(),
+        },
+      });
+
+      const stripeSubscription = await stripe.subscriptions.create({
+        customer: customer.id,
+        items: [{ price: priceId.id }],
+        payment_behavior: 'default_incomplete',
+        expand: ['latest_invoice.payment_intent'],
+        metadata: {
+          coachId,
+          athleteId,
+          subscriptionId,
+          billingType,
+        },
+      });
+
+      const invoice = stripeSubscription.latest_invoice as any;
+      const paymentIntent = invoice.payment_intent;
+
+      res.json({ clientSecret: paymentIntent.client_secret });
+    } catch (error) {
+      console.error("Error creating subscription:", error);
+      res.status(500).json({ error: "Failed to create subscription" });
     }
   });
 
