@@ -1,191 +1,107 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { DollarSign, Crown, Calendar, CreditCard, Check, X } from "lucide-react";
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { apiRequest } from "@/lib/queryClient";
-
-// Initialize Stripe
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || '');
+import { DollarSign, Crown, Star, Users } from "lucide-react";
+import type { UserSubscription } from "@shared/schema";
 
 interface SubscriptionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  user?: any; // The coach offering the subscription
-  subscription?: any; // The subscription offer
-  currentUser?: any; // The current logged-in user (potential subscriber)
-}
-
-// Payment form component
-function PaymentForm({ 
-  subscription, 
-  coachName, 
-  billingType, 
-  onSuccess, 
-  onCancel 
-}: { 
-  subscription: any; 
-  coachName: string; 
-  billingType: string;
-  onSuccess: () => void;
-  onCancel: () => void;
-}) {
-  const stripe = useStripe();
-  const elements = useElements();
-  const { toast } = useToast();
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-
-    if (!stripe || !elements) return;
-
-    setIsProcessing(true);
-
-    try {
-      const { error } = await stripe.confirmPayment({
-        elements,
-        confirmParams: {
-          return_url: `${window.location.origin}/subscription-success`,
-        },
-      });
-
-      if (error) {
-        toast({
-          title: "Payment Failed",
-          description: error.message || "Unable to process payment",
-          variant: "destructive",
-        });
-      } else {
-        onSuccess();
-      }
-    } catch (err: any) {
-      toast({
-        title: "Payment Error",
-        description: err.message || "Something went wrong",
-        variant: "destructive",
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const getAmount = () => {
-    switch (billingType) {
-      case 'monthly': return subscription.monthlyRate;
-      case 'weekly': return subscription.weeklyRate;
-      case 'session': return subscription.sessionRate;
-      default: return subscription.monthlyRate;
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Subscription Summary */}
-      <div className="bg-gradient-to-r from-purple-500/10 to-indigo-500/10 rounded-lg p-4 border border-purple-500/20">
-        <div className="flex items-center justify-between mb-2">
-          <h4 className="font-semibold text-white">Subscription Summary</h4>
-          <Badge className="bg-purple-600 text-white">
-            <Crown className="h-3 w-3 mr-1" />
-            Premium
-          </Badge>
-        </div>
-        <p className="text-sm text-gray-300 mb-3">{subscription.title}</p>
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-400">Coach: {coachName}</span>
-          <span className="text-lg font-bold text-white">
-            ${getAmount()}/{billingType === 'session' ? 'session' : billingType.replace('ly', '')}
-          </span>
-        </div>
-      </div>
-
-      {/* Payment Element */}
-      <div className="space-y-4">
-        <Label className="text-white">Payment Information</Label>
-        <PaymentElement className="p-3 bg-white rounded-md" />
-      </div>
-
-      {/* Action Buttons */}
-      <div className="flex gap-3">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={isProcessing}
-          className="flex-1"
-        >
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          disabled={!stripe || isProcessing}
-          className="flex-1 bg-purple-600 hover:bg-purple-700"
-        >
-          {isProcessing ? (
-            <div className="flex items-center gap-2">
-              <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-              Processing...
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <CreditCard className="h-4 w-4" />
-              Subscribe ${getAmount()}
-            </div>
-          )}
-        </Button>
-      </div>
-    </form>
-  );
+  isOwnProfile: boolean;
+  userId: number;
+  userRole: "athlete" | "coach" | "admin" | "both";
+  subscription?: UserSubscription | null;
+  onSubscriptionUpdate?: () => void;
 }
 
 export function SubscriptionModal({
   isOpen,
   onClose,
-  user,
+  isOwnProfile,
+  userId,
+  userRole,
   subscription,
-  currentUser,
+  onSubscriptionUpdate,
 }: SubscriptionModalProps) {
   const { toast } = useToast();
-  const [selectedBillingType, setSelectedBillingType] = useState<string>('monthly');
-  const [clientSecret, setClientSecret] = useState<string>('');
-  const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    priceAmount: 0,
+    priceCurrency: "USD" as "USD" | "EUR",
+    priceFrequency: "month" as "session" | "week" | "month" | "year",
+    includedPrograms: [] as number[],
+    isActive: true,
+  });
 
-  // Reset state when modal opens/closes
+  // Load existing subscription data
   useEffect(() => {
-    if (!isOpen) {
-      setShowPaymentForm(false);
-      setClientSecret('');
-      setSelectedBillingType('monthly');
+    if (subscription) {
+      setFormData({
+        title: subscription.title,
+        description: subscription.description,
+        priceAmount: subscription.priceAmount / 100, // Convert cents to dollars
+        priceCurrency: subscription.priceCurrency as "USD" | "EUR",
+        priceFrequency: subscription.priceFrequency as "session" | "week" | "month" | "year",
+        includedPrograms: subscription.includedPrograms || [],
+        isActive: subscription.isActive,
+      });
     }
-  }, [isOpen]);
+  }, [subscription]);
 
-  const handleSubscribe = async () => {
-    if (!subscription || !user) return;
+  const handleSave = async () => {
+    if (!formData.title.trim() || !formData.description.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Title and description are required",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsLoading(true);
     try {
-      const response = await apiRequest('POST', '/api/create-subscription', {
-        coachId: user.id,
-        subscriptionId: subscription.id,
-        billingType: selectedBillingType,
-      });
+      const payload = {
+        ...formData,
+        priceAmount: Math.round(formData.priceAmount * 100), // Convert to cents
+        userId,
+      };
 
-      const data = await response.json();
-      
-      if (data.clientSecret) {
-        setClientSecret(data.clientSecret);
-        setShowPaymentForm(true);
+      const response = subscription
+        ? await fetch(`/api/subscriptions/${subscription.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          })
+        : await fetch("/api/subscriptions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: subscription ? "Subscription updated!" : "Subscription created!",
+        });
+        onSubscriptionUpdate?.();
+        onClose();
       } else {
-        throw new Error('Failed to create payment intent');
+        const error = await response.json();
+        throw new Error(error.message || "Failed to save subscription");
       }
     } catch (error: any) {
       toast({
-        title: "Subscription Error",
-        description: error.message || "Failed to create subscription",
+        title: "Error",
+        description: error.message || "Failed to save subscription",
         variant: "destructive",
       });
     } finally {
@@ -193,169 +109,227 @@ export function SubscriptionModal({
     }
   };
 
-  const handlePaymentSuccess = () => {
-    toast({
-      title: "Subscription Successful!",
-      description: `You're now subscribed to ${user?.name || user?.username}'s coaching`,
-    });
-    onClose();
+  const handleSubscribe = async () => {
+    if (!subscription) return;
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/subscriptions/${subscription.id}/subscribe`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (response.ok) {
+        const { paymentUrl } = await response.json();
+        window.location.href = paymentUrl; // Redirect to Stripe payment
+      } else {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to start subscription");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to start subscription",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const getAvailableOptions = () => {
-    const options = [];
-    if (subscription?.monthlyRate > 0) {
-      options.push({ value: 'monthly', label: 'Monthly', price: subscription.monthlyRate });
-    }
-    if (subscription?.weeklyRate > 0) {
-      options.push({ value: 'weekly', label: 'Weekly', price: subscription.weeklyRate });
-    }
-    if (subscription?.sessionRate > 0) {
-      options.push({ value: 'session', label: 'Per Session', price: subscription.sessionRate });
-    }
-    return options;
+  const formatPrice = (amount: number, currency: string, frequency: string) => {
+    const price = amount === 0 ? "Free" : `${currency === "EUR" ? "€" : "$"}${amount}`;
+    return frequency === "session" ? `${price} per session` : `${price}/${frequency}`;
   };
 
-  const availableOptions = getAvailableOptions();
-
-  // Auto-select the first available option
-  useEffect(() => {
-    if (availableOptions.length > 0 && !selectedBillingType) {
-      setSelectedBillingType(availableOptions[0].value);
+  const getButtonText = () => {
+    if (isOwnProfile) {
+      return userRole === "coach" || userRole === "both" ? "Start Coaching" : "Create Subscription";
     }
-  }, [availableOptions]);
-
-  if (!user || !subscription) {
-    return null;
-  }
+    return userRole === "coach" || userRole === "both" ? "Request Coaching" : "Subscribe";
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-md">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-gray-900 border-gray-800">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <Crown className="h-5 w-5 text-purple-400" />
-            Subscribe to Coach
+          <DialogTitle className="text-white flex items-center gap-2">
+            {isOwnProfile ? (
+              <>
+                <Crown className="w-5 h-5 text-yellow-400" />
+                {subscription ? "Edit" : "Create"} Your Subscription Offer
+              </>
+            ) : (
+              <>
+                <Users className="w-5 h-5 text-blue-400" />
+                {getButtonText()}
+              </>
+            )}
           </DialogTitle>
         </DialogHeader>
 
-        {!showPaymentForm ? (
-          <div className="space-y-6">
-            {/* Coach Info */}
-            <div className="flex items-center gap-3 p-4 bg-slate-800 rounded-lg">
-              <img
-                src={user.profileImageUrl || "/default-avatar.png"}
-                alt={user.name || user.username}
-                className="w-12 h-12 rounded-full object-cover"
-              />
-              <div className="flex-1">
-                <h4 className="font-semibold">{user.name || user.username}</h4>
-                <p className="text-sm text-gray-400">@{user.username}</p>
-              </div>
-              {user.subscriptionTier && user.subscriptionTier !== 'free' && (
-                <Badge className="bg-blue-600 text-white text-xs">
-                  {user.subscriptionTier.toUpperCase()}
-                </Badge>
-              )}
-            </div>
-
-            {/* Subscription Details */}
-            <div className="space-y-4">
-              <div>
-                <h5 className="font-semibold mb-2">{subscription.title}</h5>
-                <p className="text-sm text-gray-300">{subscription.description}</p>
+        <div className="space-y-6">
+          {isOwnProfile ? (
+            // Edit mode for own profile
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="title" className="text-white">
+                  Title *
+                </Label>
+                <Input
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="bg-white/10 border-white/20 text-white"
+                  placeholder="e.g., Personal Training Sessions"
+                />
               </div>
 
-              {/* Billing Options */}
-              <div>
-                <Label className="text-sm font-medium mb-3 block">Choose Billing Option</Label>
+              <div className="space-y-2">
+                <Label htmlFor="description" className="text-white">
+                  Description *
+                </Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="bg-white/10 border-white/20 text-white min-h-[100px]"
+                  placeholder="Describe what you offer, your experience, and what subscribers will get..."
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  {availableOptions.map((option) => (
-                    <div
-                      key={option.value}
-                      className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                        selectedBillingType === option.value
-                          ? 'border-purple-500 bg-purple-500/10'
-                          : 'border-slate-700 bg-slate-800 hover:border-slate-600'
-                      }`}
-                      onClick={() => setSelectedBillingType(option.value)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className={`w-4 h-4 rounded-full border-2 ${
-                            selectedBillingType === option.value 
-                              ? 'border-purple-500 bg-purple-500' 
-                              : 'border-gray-400'
-                          }`}>
-                            {selectedBillingType === option.value && (
-                              <Check className="w-2 h-2 text-white ml-0.5 mt-0.5" />
-                            )}
-                          </div>
-                          <span className="font-medium">{option.label}</span>
-                        </div>
-                        <span className="font-bold text-purple-400">
-                          ${option.price}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                  <Label htmlFor="price" className="text-white">
+                    Price
+                  </Label>
+                  <Input
+                    id="price"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.priceAmount}
+                    onChange={(e) => setFormData({ ...formData, priceAmount: parseFloat(e.target.value) || 0 })}
+                    className="bg-white/10 border-white/20 text-white"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="currency" className="text-white">
+                    Currency
+                  </Label>
+                  <Select
+                    value={formData.priceCurrency}
+                    onValueChange={(value) => setFormData({ ...formData, priceCurrency: value as "USD" | "EUR" })}
+                  >
+                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="USD">USD ($)</SelectItem>
+                      <SelectItem value="EUR">EUR (€)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="frequency" className="text-white">
+                    Frequency
+                  </Label>
+                  <Select
+                    value={formData.priceFrequency}
+                    onValueChange={(value) => setFormData({ ...formData, priceFrequency: value as any })}
+                  >
+                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="session">Per Session</SelectItem>
+                      <SelectItem value="week">Per Week</SelectItem>
+                      <SelectItem value="month">Per Month</SelectItem>
+                      <SelectItem value="year">Per Year</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
-            </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-3 pt-2">
-              <Button
-                variant="outline"
-                onClick={onClose}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSubscribe}
-                disabled={isLoading || !selectedBillingType}
-                className="flex-1 bg-purple-600 hover:bg-purple-700"
-              >
-                {isLoading ? (
-                  <div className="flex items-center gap-2">
-                    <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-                    Loading...
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="active"
+                  checked={formData.isActive}
+                  onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
+                />
+                <Label htmlFor="active" className="text-white">
+                  Active (visible to others)
+                </Label>
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-700">
+                <Button variant="outline" onClick={onClose} className="border-gray-600 text-gray-300">
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSave}
+                  disabled={isLoading}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                >
+                  {isLoading ? "Saving..." : subscription ? "Update" : "Create"}
+                </Button>
+              </div>
+            </>
+          ) : (
+            // View mode for other users' profiles
+            subscription && (
+              <>
+                <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 p-6 rounded-lg border border-blue-500/20">
+                  <h3 className="text-xl font-semibold text-white mb-2">{subscription.title}</h3>
+                  <p className="text-gray-300 mb-4">{subscription.description}</p>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="w-5 h-5 text-green-400" />
+                      <span className="text-lg font-semibold text-white">
+                        {formatPrice(subscription.priceAmount / 100, subscription.priceCurrency, subscription.priceFrequency)}
+                      </span>
+                    </div>
+                    
+                    {subscription.priceAmount === 0 && (
+                      <Badge variant="success" className="bg-green-600 text-white">
+                        Free
+                      </Badge>
+                    )}
                   </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <CreditCard className="h-4 w-4" />
-                    Continue to Payment
+                </div>
+
+                {subscription.includedPrograms && subscription.includedPrograms.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="text-white">Included Programs</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {subscription.includedPrograms.map((programId) => (
+                        <Badge key={programId} variant="secondary" className="bg-gray-700 text-gray-200">
+                          Program #{programId}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                 )}
-              </Button>
-            </div>
-          </div>
-        ) : clientSecret ? (
-          <Elements 
-            stripe={stripePromise} 
-            options={{ 
-              clientSecret,
-              appearance: {
-                theme: 'night',
-                variables: {
-                  colorPrimary: '#8b5cf6',
-                }
-              }
-            }}
-          >
-            <PaymentForm
-              subscription={subscription}
-              coachName={user.name || user.username}
-              billingType={selectedBillingType}
-              onSuccess={handlePaymentSuccess}
-              onCancel={() => setShowPaymentForm(false)}
-            />
-          </Elements>
-        ) : (
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full" />
-          </div>
-        )}
+
+                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-700">
+                  <Button variant="outline" onClick={onClose} className="border-gray-600 text-gray-300">
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleSubscribe}
+                    disabled={isLoading || !subscription.isActive}
+                    className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                  >
+                    {isLoading ? "Processing..." : subscription.priceAmount === 0 ? "Subscribe for Free" : `Subscribe for ${formatPrice(subscription.priceAmount / 100, subscription.priceCurrency, subscription.priceFrequency)}`}
+                  </Button>
+                </div>
+              </>
+            )
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
