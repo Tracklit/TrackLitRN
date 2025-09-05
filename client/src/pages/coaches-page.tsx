@@ -6,10 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Users, Star, MapPin, Trophy, MessageSquare, UserPlus, Crown } from "lucide-react";
+import { Search, Users, Star, MapPin, Trophy, MessageSquare, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { SubscriptionModal } from '@/components/SubscriptionModal';
 
 interface Coach {
   id: number;
@@ -24,19 +23,11 @@ interface Coach {
   isVerified?: boolean;
   yearsExperience?: number;
   certifications?: string[];
-  subscription?: {
-    id: number;
-    monthlyRate: number;
-    weeklyRate: number;
-    sessionRate: number;
-  };
 }
 
 export default function CoachesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("all");
-  const [selectedCoach, setSelectedCoach] = useState<Coach | null>(null);
-  const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -69,12 +60,6 @@ export default function CoachesPage() {
       });
     },
   });
-
-  // Handle subscription modal
-  const handleSubscribeToCoach = (coach: Coach) => {
-    setSelectedCoach(coach);
-    setIsSubscriptionModalOpen(true);
-  };
 
   // Filter coaches based on search and specialty
   const filteredCoaches = coaches.filter(coach => {
@@ -231,51 +216,16 @@ export default function CoachesPage() {
                   </div>
                 )}
 
-                {/* Subscription Pricing Display */}
-                {coach.subscription && (
-                  <div className="mb-4 p-3 bg-gradient-to-r from-purple-500/10 to-indigo-500/10 rounded-lg border border-purple-500/20">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Crown className="h-4 w-4 text-purple-400" />
-                      <span className="text-xs font-medium text-purple-400">Subscription Available</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      {coach.subscription.monthlyRate > 0 && (
-                        <div className="text-center">
-                          <div className="font-medium text-white">${coach.subscription.monthlyRate}</div>
-                          <div className="text-muted-foreground">per month</div>
-                        </div>
-                      )}
-                      {coach.subscription.sessionRate > 0 && (
-                        <div className="text-center">
-                          <div className="font-medium text-white">${coach.subscription.sessionRate}</div>
-                          <div className="text-muted-foreground">per session</div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
                 <div className="flex gap-2">
-                  {coach.subscription ? (
-                    <Button
-                      size="sm"
-                      onClick={() => handleSubscribeToCoach(coach)}
-                      className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
-                    >
-                      <Crown className="h-3 w-3 mr-1" />
-                      Subscribe
-                    </Button>
-                  ) : (
-                    <Button
-                      size="sm"
-                      onClick={() => connectMutation.mutate(coach.id)}
-                      disabled={connectMutation.isPending}
-                      className="flex-1"
-                    >
-                      <UserPlus className="h-3 w-3 mr-1" />
-                      Connect
-                    </Button>
-                  )}
+                  <Button
+                    size="sm"
+                    onClick={() => connectMutation.mutate(coach.id)}
+                    disabled={connectMutation.isPending}
+                    className="flex-1"
+                  >
+                    <UserPlus className="h-3 w-3 mr-1" />
+                    Connect
+                  </Button>
                   <Button size="sm" variant="outline">
                     <MessageSquare className="h-3 w-3 mr-1" />
                     Message
@@ -286,15 +236,6 @@ export default function CoachesPage() {
           ))}
         </div>
       )}
-      
-      {/* Subscription Modal */}
-      <SubscriptionModal
-        isOpen={isSubscriptionModalOpen}
-        onClose={() => setIsSubscriptionModalOpen(false)}
-        user={selectedCoach}
-        subscription={selectedCoach?.subscription}
-        currentUser={undefined} // Will be fetched from context in modal
-      />
     </div>
   );
 }

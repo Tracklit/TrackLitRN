@@ -22,10 +22,6 @@ import {
   InsertClub,
   ClubMember,
   InsertClubMember,
-  UserSubscription,
-  InsertUserSubscription,
-  SubscriptionPurchase,
-  InsertSubscriptionPurchase,
 
 
   ProgramAssignment,
@@ -156,9 +152,7 @@ import {
   marketplaceCartItems,
   marketplaceOrders,
   marketplaceOrderItems,
-  marketplaceReviews,
-  userSubscriptions,
-  subscriptionPurchases
+  marketplaceReviews
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, lt, gte, desc, asc, inArray, or, isNotNull, isNull, ne, sql, exists } from "drizzle-orm";
@@ -432,18 +426,6 @@ export interface IStorage {
   createReview(review: InsertMarketplaceReview): Promise<MarketplaceReview>;
   updateReview(id: number, reviewData: Partial<MarketplaceReview>): Promise<MarketplaceReview | undefined>;
   deleteReview(id: number): Promise<boolean>;
-
-  // User Subscription operations
-  getUserSubscription(userId: number): Promise<UserSubscription | undefined>;
-  createUserSubscription(subscription: InsertUserSubscription): Promise<UserSubscription>;
-  updateUserSubscription(id: number, data: Partial<UserSubscription>): Promise<UserSubscription | undefined>;
-  deleteUserSubscription(id: number): Promise<boolean>;
-  getSubscriptionPurchases(userId: number): Promise<SubscriptionPurchase[]>;
-  getSubscriptionSubscribers(userId: number): Promise<SubscriptionPurchase[]>;
-  createSubscriptionPurchase(purchase: InsertSubscriptionPurchase): Promise<SubscriptionPurchase>;
-  updateSubscriptionPurchase(id: number, data: Partial<SubscriptionPurchase>): Promise<SubscriptionPurchase | undefined>;
-  cancelSubscriptionPurchase(id: number): Promise<boolean>;
-  getActiveSubscription(subscriberId: number, providerId: number): Promise<SubscriptionPurchase | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -4077,103 +4059,6 @@ export class DatabaseStorage implements IStorage {
   async deleteReview(id: number): Promise<boolean> {
     const result = await db.delete(marketplaceReviews).where(eq(marketplaceReviews.id, id));
     return result.rowCount > 0;
-  }
-
-  // User Subscription operations
-  async getUserSubscription(userId: number): Promise<UserSubscription | undefined> {
-    const [subscription] = await db
-      .select()
-      .from(userSubscriptions)
-      .where(eq(userSubscriptions.userId, userId));
-    return subscription;
-  }
-
-  async createUserSubscription(subscription: InsertUserSubscription): Promise<UserSubscription> {
-    const [newSubscription] = await db
-      .insert(userSubscriptions)
-      .values({
-        ...subscription,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .returning();
-    return newSubscription;
-  }
-
-  async updateUserSubscription(id: number, data: Partial<UserSubscription>): Promise<UserSubscription | undefined> {
-    const [updated] = await db
-      .update(userSubscriptions)
-      .set({ ...data, updatedAt: new Date() })
-      .where(eq(userSubscriptions.id, id))
-      .returning();
-    return updated;
-  }
-
-  async deleteUserSubscription(id: number): Promise<boolean> {
-    const result = await db.delete(userSubscriptions).where(eq(userSubscriptions.id, id));
-    return result.rowCount > 0;
-  }
-
-  async getSubscriptionPurchases(userId: number): Promise<SubscriptionPurchase[]> {
-    return await db
-      .select()
-      .from(subscriptionPurchases)
-      .where(eq(subscriptionPurchases.subscriberId, userId));
-  }
-
-  async getSubscriptionSubscribers(userId: number): Promise<SubscriptionPurchase[]> {
-    return await db
-      .select()
-      .from(subscriptionPurchases)
-      .where(eq(subscriptionPurchases.providerId, userId));
-  }
-
-  async createSubscriptionPurchase(purchase: InsertSubscriptionPurchase): Promise<SubscriptionPurchase> {
-    const [newPurchase] = await db
-      .insert(subscriptionPurchases)
-      .values({
-        ...purchase,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .returning();
-    return newPurchase;
-  }
-
-  async updateSubscriptionPurchase(id: number, data: Partial<SubscriptionPurchase>): Promise<SubscriptionPurchase | undefined> {
-    const [updated] = await db
-      .update(subscriptionPurchases)
-      .set({ ...data, updatedAt: new Date() })
-      .where(eq(subscriptionPurchases.id, id))
-      .returning();
-    return updated;
-  }
-
-  async cancelSubscriptionPurchase(id: number): Promise<boolean> {
-    const [updated] = await db
-      .update(subscriptionPurchases)
-      .set({ 
-        status: "cancelled",
-        cancelAtPeriodEnd: true,
-        updatedAt: new Date() 
-      })
-      .where(eq(subscriptionPurchases.id, id))
-      .returning();
-    return !!updated;
-  }
-
-  async getActiveSubscription(subscriberId: number, providerId: number): Promise<SubscriptionPurchase | undefined> {
-    const [subscription] = await db
-      .select()
-      .from(subscriptionPurchases)
-      .where(
-        and(
-          eq(subscriptionPurchases.subscriberId, subscriberId),
-          eq(subscriptionPurchases.providerId, providerId),
-          eq(subscriptionPurchases.status, "active")
-        )
-      );
-    return subscription;
   }
 }
 

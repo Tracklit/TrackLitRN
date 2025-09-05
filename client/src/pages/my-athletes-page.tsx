@@ -5,12 +5,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { UserCheck, MessageSquare, UserMinus, UserPlus, Search, Crown, Calendar } from "lucide-react";
+import { UserCheck, MessageSquare, UserMinus, UserPlus, Search } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { ListSkeleton } from "@/components/list-skeleton";
-import { Badge } from "@/components/ui/badge";
 
 export default function MyAthletesPage() {
   const { toast } = useToast();
@@ -34,12 +33,6 @@ export default function MyAthletesPage() {
     enabled: !!currentUser?.isCoach,
   });
 
-  // Fetch subscription purchases to show subscription status
-  const { data: subscriptionPurchases = [] } = useQuery({
-    queryKey: ["/api/subscription-purchases"],
-    enabled: !!currentUser?.isCoach,
-  });
-
   // Filter connections for search
   const filteredConnections = connections.filter((connection: any) =>
     connection.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -50,13 +43,6 @@ export default function MyAthletesPage() {
   const availableConnections = filteredConnections.filter((connection: any) => 
     !coachAthletes.some((athlete: any) => athlete.id === connection.id)
   );
-
-  // Helper function to get subscription status for an athlete
-  const getAthleteSubscriptionStatus = (athleteId: number) => {
-    return subscriptionPurchases.find((purchase: any) => 
-      purchase.athleteId === athleteId && purchase.status === 'active'
-    );
-  };
 
   // Add athlete mutation
   const addAthleteMutation = useMutation({
@@ -229,28 +215,14 @@ export default function MyAthletesPage() {
                   </Avatar>
                   
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2">
                       <Link
                         href={`/user/${athlete.id}`}
                         className="font-semibold text-white hover:text-blue-400 transition-colors"
                       >
                         {athlete.name || athlete.username}
                       </Link>
-                      {getAthleteSubscriptionStatus(athlete.id) && (
-                        <Badge variant="secondary" className="text-xs bg-purple-600 text-white">
-                          <Crown className="h-3 w-3 mr-1" />
-                          Subscriber
-                        </Badge>
-                      )}
                     </div>
-                    {getAthleteSubscriptionStatus(athlete.id) && (
-                      <div className="flex items-center gap-2 text-xs text-gray-400">
-                        <Calendar className="h-3 w-3" />
-                        <span>
-                          Next billing: {new Date(getAthleteSubscriptionStatus(athlete.id).nextBillingDate).toLocaleDateString()}
-                        </span>
-                      </div>
-                    )}
                     <p className="text-sm text-gray-400">@{athlete.username}</p>
                     {athlete.bio && (
                       <p className="text-sm text-gray-300 mt-1 line-clamp-1">{athlete.bio}</p>

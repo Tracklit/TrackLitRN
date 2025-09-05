@@ -35,7 +35,6 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { MessagePanel } from '@/components/message-panel';
-import { SubscriptionModal } from '@/components/SubscriptionModal';
 
 interface User {
   id: number;
@@ -103,7 +102,6 @@ export default function PublicProfilePage() {
   const [tempImageUrl, setTempImageUrl] = useState<string | null>(null);
   const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
   const [imageScale, setImageScale] = useState(1);
-  const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -141,12 +139,6 @@ export default function PublicProfilePage() {
   const { data: connections = [] } = useQuery({
     queryKey: [`/api/users/${userId}/connections`],
     enabled: !!userId
-  });
-
-  // Get user's subscription offer (if they're a coach offering subscriptions)
-  const { data: userSubscription } = useQuery({
-    queryKey: [`/api/user-subscriptions/${userId}`],
-    enabled: !!userId && profileUser?.isCoach && !isOwnProfile
   });
 
   const isOwnProfile = currentUser?.id === userId;
@@ -370,10 +362,10 @@ export default function PublicProfilePage() {
             
             {/* Action Buttons - Moved Above Card */}
             {!isOwnProfile && (
-              <div className="flex gap-2 mb-6 justify-center flex-wrap">
+              <div className="flex gap-3 mb-6 justify-center">
                 <Button
                   size="lg"
-                  className="bg-blue-600 hover:bg-blue-700 px-6"
+                  className="bg-blue-600 hover:bg-blue-700 px-8"
                   onClick={handleOpenMessage}
                 >
                   <MessageCircle className="h-5 w-5 mr-2" />
@@ -382,21 +374,11 @@ export default function PublicProfilePage() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-2 border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-black px-6"
+                  className="border-2 border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-black px-8"
                 >
                   <UserPlus className="h-5 w-5 mr-2" />
                   Add Friend
                 </Button>
-                {profileUser?.isCoach && userSubscription && (
-                  <Button
-                    size="lg"
-                    className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 px-6"
-                    onClick={() => setIsSubscriptionModalOpen(true)}
-                  >
-                    <Crown className="h-5 w-5 mr-2" />
-                    Subscribe
-                  </Button>
-                )}
               </div>
             )}
 
@@ -1095,15 +1077,6 @@ export default function PublicProfilePage() {
         isOpen={isMessagePanelOpen}
         onClose={handleCloseMessagePanel}
         targetUserId={userId}
-      />
-      
-      {/* Subscription Modal */}
-      <SubscriptionModal
-        isOpen={isSubscriptionModalOpen}
-        onClose={() => setIsSubscriptionModalOpen(false)}
-        user={profileUser}
-        subscription={userSubscription}
-        currentUser={currentUser}
       />
     </div>
   );

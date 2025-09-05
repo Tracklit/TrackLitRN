@@ -58,11 +58,6 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   programProgress: many(programProgress, { relationName: "program_progress" }),
   sentMeetInvitations: many(meetInvitations, { relationName: "sent_invitations" }),
   receivedMeetInvitations: many(meetInvitations, { relationName: "received_invitations" }),
-  
-  // Subscription relations
-  subscriptionOffers: many(userSubscriptions, { relationName: "subscription_offers" }),
-  subscriptionsPurchased: many(subscriptionPurchases, { relationName: "subscriptions_purchased" }),
-  subscriptionsReceived: many(subscriptionPurchases, { relationName: "subscriptions_received" }),
 }));
 
 export const meets = pgTable("meets", {
@@ -2216,70 +2211,6 @@ export const marketplaceReviewsRelations = relations(marketplaceReviews, ({ one 
 }));
 
 // =================
-// USER SUBSCRIPTION TABLES
-// =================
-
-// Table for subscription offers that users create
-export const userSubscriptions = pgTable("user_subscriptions", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id), // The user offering the subscription
-  title: text("title").notNull(),
-  description: text("description").notNull(),
-  priceAmount: integer("price_amount").notNull(), // In cents
-  priceCurrency: text("price_currency").notNull().default("USD"), // USD or EUR
-  priceFrequency: text("price_frequency").notNull(), // "session", "week", "month", "year"
-  includedPrograms: integer("included_programs").array(), // Optional array of program IDs
-  isActive: boolean("is_active").default(true),
-  stripeProductId: text("stripe_product_id"),
-  stripePriceId: text("stripe_price_id"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-// Table for actual subscription purchases between users
-export const subscriptionPurchases = pgTable("subscription_purchases", {
-  id: serial("id").primaryKey(),
-  subscriberId: integer("subscriber_id").notNull().references(() => users.id), // User who subscribed
-  providerId: integer("provider_id").notNull().references(() => users.id), // User being subscribed to
-  subscriptionId: integer("subscription_id").notNull().references(() => userSubscriptions.id), // The subscription offer
-  status: text("status").default("active"), // active, cancelled, paused, expired
-  stripeSubscriptionId: text("stripe_subscription_id"),
-  stripeCustomerId: text("stripe_customer_id"),
-  currentPeriodStart: timestamp("current_period_start"),
-  currentPeriodEnd: timestamp("current_period_end"),
-  cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-// Relations for subscriptions
-export const userSubscriptionsRelations = relations(userSubscriptions, ({ one, many }) => ({
-  user: one(users, {
-    fields: [userSubscriptions.userId],
-    references: [users.id],
-    relationName: "subscription_offers"
-  }),
-  purchases: many(subscriptionPurchases),
-}));
-
-export const subscriptionPurchasesRelations = relations(subscriptionPurchases, ({ one }) => ({
-  subscriber: one(users, {
-    fields: [subscriptionPurchases.subscriberId],
-    references: [users.id],
-    relationName: "subscriptions_purchased"
-  }),
-  provider: one(users, {
-    fields: [subscriptionPurchases.providerId],
-    references: [users.id],
-    relationName: "subscriptions_received"
-  }),
-  subscription: one(userSubscriptions, {
-    fields: [subscriptionPurchases.subscriptionId],
-    references: [userSubscriptions.id],
-  }),
-}));
-
-// =================
 // MARKETPLACE SCHEMAS
 // =================
 
@@ -2351,39 +2282,3 @@ export type InsertMarketplaceOrderItem = z.infer<typeof insertMarketplaceOrderIt
 
 export type MarketplaceReview = typeof marketplaceReviews.$inferSelect;
 export type InsertMarketplaceReview = z.infer<typeof insertMarketplaceReviewSchema>;
-
-// =================
-// SUBSCRIPTION SCHEMAS
-// =================
-
-export const insertUserSubscriptionSchema = createInsertSchema(userSubscriptions).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  stripeProductId: true,
-  stripePriceId: true,
-}).extend({
-  priceAmount: z.number().min(0), // Allow free subscriptions
-  priceCurrency: z.enum(["USD", "EUR"]),
-  priceFrequency: z.enum(["session", "week", "month", "year"]),
-});
-
-export const insertSubscriptionPurchaseSchema = createInsertSchema(subscriptionPurchases).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  stripeSubscriptionId: true,
-  stripeCustomerId: true,
-  currentPeriodStart: true,
-  currentPeriodEnd: true,
-});
-
-// =================
-// SUBSCRIPTION TYPES
-// =================
-
-export type UserSubscription = typeof userSubscriptions.$inferSelect;
-export type InsertUserSubscription = z.infer<typeof insertUserSubscriptionSchema>;
-
-export type SubscriptionPurchase = typeof subscriptionPurchases.$inferSelect;
-export type InsertSubscriptionPurchase = z.infer<typeof insertSubscriptionPurchaseSchema>;
