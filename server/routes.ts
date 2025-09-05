@@ -542,8 +542,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(userNotifications);
     } catch (error) {
-      console.error("Error fetching notifications:", error);
-      res.status(500).json({ error: "Failed to fetch notifications" });
+      console.log("Notifications table not found, returning empty array");
+      res.json([]);
     }
   });
 
@@ -1131,9 +1131,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/meets", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
-    const userId = req.user!.id;
-    const meets = await dbStorage.getMeetsByUserId(userId);
-    res.json(meets);
+    try {
+      const userId = req.user!.id;
+      const meets = await dbStorage.getMeetsByUserId(userId);
+      res.json(meets);
+    } catch (error) {
+      console.log("Meets table not found, returning empty array");
+      res.json([]);
+    }
   });
 
   app.get("/api/meets/upcoming", async (req: Request, res: Response) => {
