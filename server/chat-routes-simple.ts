@@ -161,36 +161,28 @@ router.get("/api/chat/groups", async (req: Request, res: Response) => {
     console.log('UNIFIED: Fetching channels for user ID:', userId);
     
     // Get chat groups using existing structure with member_ids arrays
-    let groups;
-    try {
-      groups = await db.execute(sql`
-        SELECT 
-          'group' as channel_type,
-          id,
-          name,
-          description,
-          image,
-          creator_id as created_by,
-          admin_ids,
-          member_ids,
-          is_private,
-          created_at::text,
-          last_message,
-          last_message_at::text,
-          COALESCE(message_count, 0) as message_count,
-          null as other_user_id
-        FROM chat_groups
-        WHERE ${userId} = ANY(member_ids) OR is_private = false
-      `);
-    } catch (error) {
-      console.log("Chat groups table not found, using empty array");
-      groups = { rows: [] };
-    }
+    const groups = await db.execute(sql`
+      SELECT 
+        'group' as channel_type,
+        id,
+        name,
+        description,
+        image,
+        creator_id as created_by,
+        admin_ids,
+        member_ids,
+        is_private,
+        created_at::text,
+        last_message,
+        last_message_at::text,
+        COALESCE(message_count, 0) as message_count,
+        null as other_user_id
+      FROM chat_groups
+      WHERE ${userId} = ANY(member_ids) OR is_private = false
+    `);
     
     // Get direct message conversations as channels
-    let conversations;
-    try {
-      conversations = await db.execute(sql`
+    const conversations = await db.execute(sql`
       SELECT 
         'direct' as channel_type,
         c.id,
@@ -232,10 +224,6 @@ router.get("/api/chat/groups", async (req: Request, res: Response) => {
       LEFT JOIN users u2 ON c."user2_id" = u2.id
       WHERE c."user1_id" = ${userId} OR c."user2_id" = ${userId}
     `);
-    } catch (error) {
-      console.log("Conversations table not found, using empty array");
-      conversations = { rows: [] };
-    }
     
     console.log('UNIFIED: Found', groups.rows.length, 'groups and', conversations.rows.length, 'direct conversations');
     console.log('UNIFIED: Raw conversations:', conversations.rows);

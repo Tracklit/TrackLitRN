@@ -4,7 +4,6 @@ import { Express } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
-import bcrypt from "bcrypt";
 import { storage } from "./storage";
 import { User, User as SelectUser, insertUserSchema } from "@shared/schema";
 import { z } from "zod";
@@ -25,32 +24,7 @@ async function hashPassword(password: string) {
 
 async function comparePasswords(supplied: string, stored: string) {
   try {
-    console.log("Comparing password - stored format:", stored.substring(0, 10) + "...");
-    
-    // Check if it's a bcrypt hash (starts with $2b$, $2a$, etc.)
-    if (stored.startsWith('$2')) {
-      console.log("Using bcrypt comparison");
-      console.log("Supplied password length:", supplied.length);
-      console.log("Stored hash length:", stored.length);
-      
-      // Temporary fix for testuser - the stored hash appears corrupted
-      if (supplied === 'Password123' && stored.includes('K7L/VnbKhV1V5B5Q5rQ5Q')) {
-        console.log("Using temporary password fix for testuser");
-        return true;
-      }
-      
-      const result = await bcrypt.compare(supplied, stored);
-      console.log("Bcrypt comparison result:", result);
-      return result;
-    }
-    
-    // Handle custom scrypt format (legacy)
-    console.log("Using scrypt comparison");
     const [hashed, salt] = stored.split(".");
-    if (!salt) {
-      console.error("Invalid password format - no salt found");
-      return false;
-    }
     const hashedBuf = Buffer.from(hashed, "hex");
     const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
     return timingSafeEqual(hashedBuf, suppliedBuf);

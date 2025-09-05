@@ -542,8 +542,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(userNotifications);
     } catch (error) {
-      console.log("Notifications table not found, returning empty array");
-      res.json([]);
+      console.error("Error fetching notifications:", error);
+      res.status(500).json({ error: "Failed to fetch notifications" });
     }
   });
 
@@ -1131,14 +1131,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/meets", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
-    try {
-      const userId = req.user!.id;
-      const meets = await dbStorage.getMeetsByUserId(userId);
-      res.json(meets);
-    } catch (error) {
-      console.log("Meets table not found, returning empty array");
-      res.json([]);
-    }
+    const userId = req.user!.id;
+    const meets = await dbStorage.getMeetsByUserId(userId);
+    res.json(meets);
   });
 
   app.get("/api/meets/upcoming", async (req: Request, res: Response) => {
@@ -1342,14 +1337,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/results", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
-    try {
-      const userId = req.user!.id;
-      const results = await dbStorage.getResultsByUserId(userId);
-      res.json(results);
-    } catch (error) {
-      console.log("Results table not found, returning empty array");
-      res.json([]);
-    }
+    const userId = req.user!.id;
+    const results = await dbStorage.getResultsByUserId(userId);
+    res.json(results);
   });
 
   app.get("/api/meets/:meetId/results", async (req: Request, res: Response) => {
@@ -5571,13 +5561,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Not authenticated" });
       }
       
-      let assignedPrograms;
-      try {
-        assignedPrograms = await dbStorage.getAssignedPrograms(req.user!.id);
-      } catch (error) {
-        console.log("Program assignments table not found, returning empty array");
-        return res.json([]);
-      }
+      const assignedPrograms = await dbStorage.getAssignedPrograms(req.user!.id);
       
       // For each assigned program, fetch the full program details and assigner info
       const enrichedAssignments = await Promise.all(
@@ -6845,8 +6829,8 @@ Keep the response professional, evidence-based, and specific to track and field 
       const conversations = await dbStorage.getUserConversations(req.user.id);
       res.json(conversations);
     } catch (error) {
-      console.log("Conversations table not found, returning empty array");
-      res.json([]);
+      console.error("Error fetching conversations:", error);
+      res.status(500).send("Error fetching conversations");
     }
   });
 
@@ -7107,8 +7091,8 @@ Keep the response professional, evidence-based, and specific to track and field 
       const pendingRequests = await dbStorage.getPendingFriendRequests(req.user.id);
       res.json(pendingRequests);
     } catch (error) {
-      console.log("Friend requests table not found, returning empty array");
-      res.json([]);
+      console.error("Error fetching pending friend requests:", error);
+      res.status(500).send("Error fetching pending friend requests");
     }
   });
 
