@@ -179,9 +179,9 @@ export default function SubscriptionManagementPage() {
         title: "Subscription Cancelled",
         description: "Your subscription offering has been cancelled successfully",
       });
-      // Navigate back to subscriptions page after deletion
+      // Navigate back to profile page after deletion
       setTimeout(() => {
-        setLocation("/my-subscriptions");
+        setLocation("/profile");
       }, 1500);
     },
     onError: (error: any) => {
@@ -407,9 +407,36 @@ export default function SubscriptionManagementPage() {
                     </div>
 
                     <div className="flex justify-end space-x-2 pt-4">
-                      <Button type="button" variant="outline" asChild>
-                        <Link href="/my-subscriptions">Cancel</Link>
-                      </Button>
+                      {existingSubscription ? (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button type="button" variant="outline">
+                              Cancel Subscription
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Cancel Your Subscription Offering?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will permanently cancel your subscription offering. All existing subscribers will be notified and their renewals will be cancelled. You can create a new subscription later if needed.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={handleCancelSubscription}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Yes, Cancel Subscription
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      ) : (
+                        <Button type="button" variant="outline" asChild>
+                          <Link href="/profile">Cancel</Link>
+                        </Button>
+                      )}
                       <Button 
                         type="submit" 
                         disabled={createOrUpdateSubscription.isPending}
