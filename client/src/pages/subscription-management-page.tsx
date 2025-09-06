@@ -19,7 +19,7 @@ import { Link, useLocation } from "wouter";
 const subscriptionSchema = z.object({
   title: z.string().min(1, "Title is required").max(100, "Title too long"),
   description: z.string().min(10, "Description must be at least 10 characters").max(500, "Description too long"),
-  priceAmount: z.number().min(100, "Minimum price is $1.00").max(100000, "Maximum price is $1,000"),
+  priceAmount: z.number().min(1, "Minimum price is $1.00").max(1000, "Maximum price is $1,000"),
   priceCurrency: z.enum(["USD", "EUR"]),
   priceInterval: z.enum(["week", "month", "year"]),
 });
@@ -49,7 +49,7 @@ export default function SubscriptionManagementPage() {
     defaultValues: {
       title: existingSubscription?.title || "Coaching Subscription",
       description: existingSubscription?.description || "Get personalized coaching and training programs",
-      priceAmount: existingSubscription?.priceAmount || 2500, // $25.00
+      priceAmount: existingSubscription?.priceAmount ? existingSubscription.priceAmount / 100 : 25.00, // Convert cents to dollars
       priceCurrency: existingSubscription?.priceCurrency || "USD",
       priceInterval: existingSubscription?.priceInterval || "month",
     },
@@ -61,7 +61,7 @@ export default function SubscriptionManagementPage() {
       form.reset({
         title: existingSubscription.title,
         description: existingSubscription.description,
-        priceAmount: existingSubscription.priceAmount,
+        priceAmount: existingSubscription.priceAmount / 100, // Convert cents to dollars
         priceCurrency: existingSubscription.priceCurrency,
         priceInterval: existingSubscription.priceInterval,
       });
@@ -70,7 +70,12 @@ export default function SubscriptionManagementPage() {
 
   const createOrUpdateSubscription = useMutation({
     mutationFn: async (data: SubscriptionFormData) => {
-      const response = await apiRequest("POST", "/api/subscriptions", data);
+      // Convert dollars to cents for backend
+      const dataWithCents = {
+        ...data,
+        priceAmount: Math.round(data.priceAmount * 100)
+      };
+      const response = await apiRequest("POST", "/api/subscriptions", dataWithCents);
       return response.json();
     },
     onSuccess: () => {
@@ -94,8 +99,9 @@ export default function SubscriptionManagementPage() {
     createOrUpdateSubscription.mutate(data);
   };
 
-  const formatPrice = (amount: number, currency: string) => {
-    return `${currency === "USD" ? "$" : "€"}${(amount / 100).toFixed(2)}`;
+  const formatPrice = (amount: number, currency: string, isInCents = false) => {
+    const value = isInCents ? amount / 100 : amount;
+    return `${currency === "USD" ? "$" : "€"}${value.toFixed(2)}`;
   };
 
   const getIntervalText = (interval: string) => {
@@ -116,10 +122,11 @@ export default function SubscriptionManagementPage() {
     }
   };
 
-  const calculateCoachEarnings = (amount: number) => {
+  const calculateCoachEarnings = (amount: number, isInCents = false) => {
+    const value = isInCents ? amount : amount * 100; // Convert to cents for calculation
     const feePercentage = getPlatformFeePercentage();
-    const platformFee = Math.round((amount * feePercentage) / 100);
-    return amount - platformFee;
+    const platformFee = Math.round((value * feePercentage) / 100);
+    return value - platformFee;
   };
 
   const currentPrice = form.watch("priceAmount");
@@ -216,16 +223,16 @@ export default function SubscriptionManagementPage() {
                         name="priceAmount"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Price (in cents)</FormLabel>
+                            <FormLabel>Pricing</FormLabel>
                             <FormControl>
                               <Input 
                                 type="number"
-                                min="100"
-                                max="100000"
-                                step="100"
-                                placeholder="2500"
+                                min="1"
+                                max="1000"
+                                step="0.01"
+                                placeholder="25.00"
                                 {...field}
-                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                               />
                             </FormControl>
                             <FormDescription>
@@ -346,7 +353,7 @@ export default function SubscriptionManagementPage() {
                     <span className="text-sm">You earn:</span>
                     <div className="text-right">
                       <div className="font-bold text-green-600">
-                        {formatPrice(calculateCoachEarnings(currentPrice), currentCurrency)}
+                        {formatPrice(calculateCoachEarnings(currentPrice), currentCurrency, true)}
                       </div>
                       <div className="text-xs text-muted-foreground">
                         {getIntervalText(currentInterval)} ({getPlatformFeePercentage()}% platform fee)
@@ -379,7 +386,8 @@ export default function SubscriptionManagementPage() {
                         <p className="text-2xl font-bold">
                           {formatPrice(
                             subscribers.reduce((sum: number, sub: any) => sum + (sub.coachAmount || 0), 0),
-                            "USD"
+                            "USD",
+                            true
                           )}
                         </p>
                         <p className="text-xs text-muted-foreground">Monthly Earnings</p>
@@ -398,6 +406,9 @@ export default function SubscriptionManagementPage() {
                   <div className="ml-3">
                     <h4 className="font-medium text-blue-900">Platform Fee: {getPlatformFeePercentage()}%</h4>
                     <p className="text-sm text-blue-700 mt-1">
+                      Platform fees are what allows us to keep TrackLit alive, change your membership to lower this rate. Thank you!
+                    </p>
+                    <p className="text-sm text-blue-700 mt-2">
                       {user?.subscriptionTier === "free" && "Upgrade to Pro (18%) or Star (16%) to reduce fees!"}
                       {user?.subscriptionTier === "pro" && "Star members get just 16% fees - upgrade to save more!"}
                       {user?.subscriptionTier === "star" && "You have the lowest platform fee as a Star member!"}
