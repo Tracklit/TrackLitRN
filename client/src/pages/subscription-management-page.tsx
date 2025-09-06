@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Crown, DollarSign, Clock, Calendar, Users, TrendingUp, ArrowLeft, Save, Plus, X, Trash2 } from "lucide-react";
+import { Crown, DollarSign, Clock, Calendar, Users, TrendingUp, ArrowLeft, Save, Plus, X, Trash2, ChevronDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
@@ -19,6 +19,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -483,74 +489,89 @@ export default function SubscriptionManagementPage() {
                 <CardContent>
                   <div className="space-y-4">
                     {coachPrograms.length === 0 ? (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <Plus className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p>No programs created yet</p>
-                        <p className="text-sm">Create some training programs first to include them in your subscription</p>
-                        <Button variant="outline" size="sm" className="mt-4" asChild>
+                      <div className="text-center py-6 text-muted-foreground">
+                        <Plus className="h-8 w-8 mx-auto mb-3 opacity-50" />
+                        <p className="text-sm">No programs created yet</p>
+                        <Button variant="outline" size="sm" className="mt-3" asChild>
                           <Link href="/programs">Create Programs</Link>
                         </Button>
                       </div>
                     ) : (
-                      <div className="grid gap-3">
-                        {coachPrograms.map((program: any) => {
-                          const isIncluded = isProgramIncluded(program.id);
-                          return (
-                            <div 
-                              key={program.id} 
-                              className="flex items-center space-x-3 p-3 border rounded-lg"
-                            >
-                              <Checkbox
-                                id={`program-${program.id}`}
-                                checked={isIncluded}
-                                onCheckedChange={(checked) => 
-                                  handleToggleProgram(program.id, isIncluded)
-                                }
-                                disabled={addProgramMutation.isPending || removeProgramMutation.isPending}
-                              />
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between">
-                                  <div>
-                                    <h4 className="font-medium text-sm truncate">
-                                      {program.title}
-                                    </h4>
-                                    <p className="text-xs text-muted-foreground truncate">
-                                      {program.description || "No description"}
-                                    </p>
-                                  </div>
-                                  <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                                    <Badge variant="outline" className="text-xs">
-                                      {program.duration} days
-                                    </Badge>
-                                    <Badge variant="outline" className="text-xs">
-                                      {program.visibility}
-                                    </Badge>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    {/* Summary */}
-                    {includedPrograms.length > 0 && (
-                      <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                        <div className="flex items-center">
-                          <Badge variant="secondary" className="mr-2">
-                            {includedPrograms.length}
-                          </Badge>
-                          <span className="text-sm text-blue-700">
-                            {includedPrograms.length === 1 
-                              ? "program included in subscription" 
-                              : "programs included in subscription"
-                            }
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">
+                            {includedPrograms.length} of {coachPrograms.length} programs selected
                           </span>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button variant="outline" size="sm" className="w-40">
+                                Manage Programs
+                                <ChevronDown className="h-4 w-4 ml-2" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-80" align="end">
+                              <div className="space-y-3">
+                                <div className="font-medium text-sm">Select Programs to Include</div>
+                                <ScrollArea className="h-60">
+                                  <div className="space-y-2 pr-3">
+                                    {coachPrograms.map((program: any) => {
+                                      const isIncluded = isProgramIncluded(program.id);
+                                      return (
+                                        <div 
+                                          key={program.id} 
+                                          className="flex items-start space-x-3 p-2 rounded border"
+                                        >
+                                          <Checkbox
+                                            id={`program-${program.id}`}
+                                            checked={isIncluded}
+                                            onCheckedChange={(checked) => 
+                                              handleToggleProgram(program.id, isIncluded)
+                                            }
+                                            disabled={addProgramMutation.isPending || removeProgramMutation.isPending}
+                                            className="mt-0.5"
+                                          />
+                                          <div className="flex-1 min-w-0">
+                                            <h4 className="font-medium text-sm leading-none">
+                                              {program.title}
+                                            </h4>
+                                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                              {program.description || "No description"}
+                                            </p>
+                                            <div className="flex items-center space-x-2 mt-2">
+                                              <Badge variant="outline" className="text-xs py-0">
+                                                {program.duration} days
+                                              </Badge>
+                                              <Badge variant="outline" className="text-xs py-0">
+                                                {program.visibility}
+                                              </Badge>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </ScrollArea>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
                         </div>
-                        <p className="text-xs text-blue-600 mt-1">
-                          Subscribers will have access to all selected programs
-                        </p>
+                        
+                        {/* Show selected programs */}
+                        {includedPrograms.length > 0 && (
+                          <div className="bg-gray-50 p-3 rounded-lg">
+                            <div className="text-sm font-medium mb-2">Selected Programs:</div>
+                            <div className="space-y-1">
+                              {includedPrograms.map((program: any) => (
+                                <div key={program.id} className="flex items-center justify-between text-sm">
+                                  <span className="truncate">{program.title}</span>
+                                  <Badge variant="secondary" className="text-xs">
+                                    {program.duration} days
+                                  </Badge>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
