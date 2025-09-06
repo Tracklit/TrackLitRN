@@ -47,7 +47,7 @@ export default function SubscriptionManagementPage() {
 
   // Fetch coach's programs for inclusion selection
   const { data: coachPrograms = [] } = useQuery({
-    queryKey: ["/api/programs/coach"],
+    queryKey: ["/api/programs"],
     enabled: !!user,
   });
 
