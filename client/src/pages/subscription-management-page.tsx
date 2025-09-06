@@ -401,6 +401,14 @@ export default function SubscriptionManagementPage() {
                   <CardDescription>
                     Select which training programs are included with your subscription
                   </CardDescription>
+                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-700 font-medium">
+                      📝 OBS: Created programs can be added to your subscription after you create your subscription
+                    </p>
+                    <p className="text-xs text-blue-600 mt-1">
+                      Use the checkboxes below to include existing programs, or create new ones and add them later
+                    </p>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
