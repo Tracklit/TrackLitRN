@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Crown, LogOut, Edit, Camera, UserCheck, Plus, MessageCircle, Check, X, Palette, Upload } from 'lucide-react';
+import { Crown, LogOut, Edit, Camera, UserCheck, Plus, MessageCircle, Check, X, Palette, Upload, Settings } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
@@ -27,6 +27,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import SubscriptionManagementModal from '@/components/SubscriptionManagementModal';
 
 // Profile form schema
 const profileFormSchema = z.object({
@@ -65,6 +66,7 @@ export default function ProfilePage() {
   const [tempImageUrl, setTempImageUrl] = useState<string | null>(null);
   const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
   const [imageScale, setImageScale] = useState(1);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
   // Coach functionality queries
   const { data: coachLimits } = useQuery({
@@ -422,6 +424,14 @@ export default function ProfilePage() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setShowSubscriptionModal(true)}
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  Manage Coaching
+                </Button>
                 <Drawer open={isPublicProfileDialogOpen} onOpenChange={setIsPublicProfileDialogOpen}>
                   <DrawerTrigger asChild>
                     <Button variant="outline" size="sm">
@@ -999,6 +1009,11 @@ export default function ProfilePage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Subscription Management Modal */}
+      {showSubscriptionModal && (
+        <SubscriptionManagementModal onClose={() => setShowSubscriptionModal(false)} />
+      )}
     </div>
   );
 }
