@@ -29,6 +29,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { GoogleSheetImportDialog } from "@/components/google-sheet-import-dialog";
 
 interface CreateProgramForm {
@@ -39,6 +40,7 @@ interface CreateProgramForm {
   priceType: 'spikes' | 'money';
   duration: number;
   textContent?: string;
+  addToSubscription?: boolean;
 }
 
 interface SprinthiaFormData {
@@ -64,7 +66,8 @@ function ProgramCreatePage() {
     price: 0,
     priceType: "spikes",
     duration: 4,
-    textContent: ""
+    textContent: "",
+    addToSubscription: false
   });
 
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -761,6 +764,27 @@ function ProgramCreatePage() {
                         </div>
                       </div>
                     )}
+
+                    {/* Add to Subscription Option */}
+                    <div className="flex items-center space-x-2 p-4 border rounded-lg bg-blue-50/50">
+                      <Checkbox
+                        id="add-to-subscription"
+                        checked={formData.addToSubscription}
+                        onCheckedChange={(checked) => updateFormData("addToSubscription", checked as boolean)}
+                      />
+                      <div className="grid gap-1.5 leading-none">
+                        <Label
+                          htmlFor="add-to-subscription"
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center"
+                        >
+                          <Crown className="h-4 w-4 mr-2 text-yellow-500" />
+                          Add to my subscription offering
+                        </Label>
+                        <p className="text-xs text-muted-foreground">
+                          Include this program automatically in your coaching subscription for subscribers
+                        </p>
+                      </div>
+                    </div>
 
                     <Button 
                       type="submit" 

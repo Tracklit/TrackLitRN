@@ -5686,6 +5686,170 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get programs included in a subscription
+  app.get("/api/subscriptions/:subscriptionId/programs", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const subscriptionId = parseInt(req.params.subscriptionId);
+      const userId = req.user!.id;
+      
+      // Get subscription and verify ownership
+      const subscription = await db.select()
+        .from(userSubscriptions)
+        .where(and(
+          eq(userSubscriptions.id, subscriptionId),
+          eq(userSubscriptions.coachId, userId)
+        ))
+        .limit(1);
+      
+      if (subscription.length === 0) {
+        return res.status(404).json({ error: "Subscription not found" });
+      }
+      
+      const sub = subscription[0];
+      const includedProgramIds = sub.includedPrograms || [];
+      
+      if (includedProgramIds.length === 0) {
+        return res.json([]);
+      }
+      
+      // Get the programs
+      const programs = await db.select()
+        .from(trainingPrograms)
+        .where(inArray(trainingPrograms.id, includedProgramIds.map(id => parseInt(id))))
+        .orderBy(trainingPrograms.createdAt);
+      
+      res.json(programs);
+    } catch (error: any) {
+      console.error("Error fetching subscription programs:", error);
+      res.status(500).json({ error: "Error fetching programs" });
+    }
+  });
+
+  // Add programs to subscription
+  app.post("/api/subscriptions/:subscriptionId/programs", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const subscriptionId = parseInt(req.params.subscriptionId);
+      const { programIds } = req.body;
+      const userId = req.user!.id;
+      
+      if (!Array.isArray(programIds)) {
+        return res.status(400).json({ error: "Program IDs must be an array" });
+      }
+      
+      // Get subscription and verify ownership
+      const subscription = await db.select()
+        .from(userSubscriptions)
+        .where(and(
+          eq(userSubscriptions.id, subscriptionId),
+          eq(userSubscriptions.coachId, userId)
+        ))
+        .limit(1);
+      
+      if (subscription.length === 0) {
+        return res.status(404).json({ error: "Subscription not found" });
+      }
+      
+      // Verify all programs belong to the coach
+      const programs = await db.select()
+        .from(trainingPrograms)
+        .where(and(
+          inArray(trainingPrograms.id, programIds),
+          eq(trainingPrograms.userId, userId)
+        ));
+      
+      if (programs.length !== programIds.length) {
+        return res.status(400).json({ error: "Some programs don't exist or don't belong to you" });
+      }
+      
+      // Update subscription with new program IDs
+      const currentIncluded = subscription[0].includedPrograms || [];
+      const newIncluded = [...new Set([...currentIncluded, ...programIds.map(id => id.toString())])];
+      
+      await db.update(userSubscriptions)
+        .set({
+          includedPrograms: newIncluded,
+          updatedAt: new Date(),
+        })
+        .where(eq(userSubscriptions.id, subscriptionId));
+      
+      res.json({ message: "Programs added to subscription", includedPrograms: newIncluded });
+    } catch (error: any) {
+      console.error("Error adding programs to subscription:", error);
+      res.status(500).json({ error: "Error adding programs" });
+    }
+  });
+
+  // Remove programs from subscription
+  app.delete("/api/subscriptions/:subscriptionId/programs/:programId", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const subscriptionId = parseInt(req.params.subscriptionId);
+      const programId = req.params.programId;
+      const userId = req.user!.id;
+      
+      // Get subscription and verify ownership
+      const subscription = await db.select()
+        .from(userSubscriptions)
+        .where(and(
+          eq(userSubscriptions.id, subscriptionId),
+          eq(userSubscriptions.coachId, userId)
+        ))
+        .limit(1);
+      
+      if (subscription.length === 0) {
+        return res.status(404).json({ error: "Subscription not found" });
+      }
+      
+      // Remove program from included list
+      const currentIncluded = subscription[0].includedPrograms || [];
+      const newIncluded = currentIncluded.filter(id => id !== programId);
+      
+      await db.update(userSubscriptions)
+        .set({
+          includedPrograms: newIncluded,
+          updatedAt: new Date(),
+        })
+        .where(eq(userSubscriptions.id, subscriptionId));
+      
+      res.json({ message: "Program removed from subscription", includedPrograms: newIncluded });
+    } catch (error: any) {
+      console.error("Error removing program from subscription:", error);
+      res.status(500).json({ error: "Error removing program" });
+    }
+  });
+
+  // Get coach's programs for subscription management
+  app.get("/api/programs/coach", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const userId = req.user!.id;
+      
+      const programs = await db.select()
+        .from(trainingPrograms)
+        .where(eq(trainingPrograms.userId, userId))
+        .orderBy(trainingPrograms.createdAt);
+      
+      res.json(programs);
+    } catch (error: any) {
+      console.error("Error fetching coach programs:", error);
+      res.status(500).json({ error: "Error fetching programs" });
+    }
+  });
+
   // 7. Purchase a program (Spikes-based)
   app.post("/api/programs/:id/purchase", async (req: Request, res: Response) => {
     try {

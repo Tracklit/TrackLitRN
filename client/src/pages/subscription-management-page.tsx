@@ -6,7 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Crown, DollarSign, Clock, Calendar, Users, TrendingUp, ArrowLeft, Save } from "lucide-react";
+import { Crown, DollarSign, Clock, Calendar, Users, TrendingUp, ArrowLeft, Save, Plus, X } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -42,6 +43,18 @@ export default function SubscriptionManagementPage() {
   const { data: subscribers } = useQuery({
     queryKey: ["/api/my-subscribers"],
     enabled: !!user,
+  });
+
+  // Fetch coach's programs for inclusion selection
+  const { data: coachPrograms = [] } = useQuery({
+    queryKey: ["/api/programs/coach"],
+    enabled: !!user,
+  });
+
+  // Fetch included programs in subscription
+  const { data: includedPrograms = [], refetch: refetchIncludedPrograms } = useQuery({
+    queryKey: [`/api/subscriptions/${existingSubscription?.id}/programs`],
+    enabled: !!existingSubscription?.id,
   });
 
   const form = useForm<SubscriptionFormData>({
@@ -95,6 +108,54 @@ export default function SubscriptionManagementPage() {
     },
   });
 
+  // Mutation for adding programs to subscription
+  const addProgramMutation = useMutation({
+    mutationFn: async (programIds: number[]) => {
+      if (!existingSubscription?.id) throw new Error("No subscription found");
+      const response = await apiRequest("POST", `/api/subscriptions/${existingSubscription.id}/programs`, {
+        programIds
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      refetchIncludedPrograms();
+      toast({
+        title: "Success",
+        description: "Programs added to subscription",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add programs",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation for removing programs from subscription
+  const removeProgramMutation = useMutation({
+    mutationFn: async (programId: number) => {
+      if (!existingSubscription?.id) throw new Error("No subscription found");
+      const response = await apiRequest("DELETE", `/api/subscriptions/${existingSubscription.id}/programs/${programId}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      refetchIncludedPrograms();
+      toast({
+        title: "Success",
+        description: "Program removed from subscription",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to remove program",
+        variant: "destructive",
+      });
+    },
+  });
+
   const onSubmit = (data: SubscriptionFormData) => {
     createOrUpdateSubscription.mutate(data);
   };
@@ -127,6 +188,19 @@ export default function SubscriptionManagementPage() {
     const feePercentage = getPlatformFeePercentage();
     const platformFee = Math.round((value * feePercentage) / 100);
     return value - platformFee;
+  };
+
+  // Helper functions for program management
+  const handleToggleProgram = (programId: number, isIncluded: boolean) => {
+    if (isIncluded) {
+      removeProgramMutation.mutate(programId);
+    } else {
+      addProgramMutation.mutate([programId]);
+    }
+  };
+
+  const isProgramIncluded = (programId: number) => {
+    return includedPrograms.some((p: any) => p.id === programId);
   };
 
   const currentPrice = form.watch("priceAmount");
@@ -315,6 +389,96 @@ export default function SubscriptionManagementPage() {
                 </Form>
               </CardContent>
             </Card>
+
+            {/* Included Programs Section */}
+            {existingSubscription && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-lg">
+                    <Plus className="h-5 w-5 mr-2" />
+                    Included Programs
+                  </CardTitle>
+                  <CardDescription>
+                    Select which training programs are included with your subscription
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {coachPrograms.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Plus className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>No programs created yet</p>
+                        <p className="text-sm">Create some training programs first to include them in your subscription</p>
+                        <Button variant="outline" size="sm" className="mt-4" asChild>
+                          <Link href="/programs">Create Programs</Link>
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="grid gap-3">
+                        {coachPrograms.map((program: any) => {
+                          const isIncluded = isProgramIncluded(program.id);
+                          return (
+                            <div 
+                              key={program.id} 
+                              className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50"
+                            >
+                              <Checkbox
+                                id={`program-${program.id}`}
+                                checked={isIncluded}
+                                onCheckedChange={(checked) => 
+                                  handleToggleProgram(program.id, isIncluded)
+                                }
+                                disabled={addProgramMutation.isPending || removeProgramMutation.isPending}
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <h4 className="font-medium text-sm truncate">
+                                      {program.title}
+                                    </h4>
+                                    <p className="text-xs text-muted-foreground truncate">
+                                      {program.description || "No description"}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                                    <Badge variant="outline" className="text-xs">
+                                      {program.duration} days
+                                    </Badge>
+                                    <Badge variant="outline" className="text-xs">
+                                      {program.visibility}
+                                    </Badge>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Summary */}
+                    {includedPrograms.length > 0 && (
+                      <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="flex items-center">
+                          <Badge variant="secondary" className="mr-2">
+                            {includedPrograms.length}
+                          </Badge>
+                          <span className="text-sm text-blue-700">
+                            {includedPrograms.length === 1 
+                              ? "program included in subscription" 
+                              : "programs included in subscription"
+                            }
+                          </span>
+                        </div>
+                        <p className="text-xs text-blue-600 mt-1">
+                          Subscribers will have access to all selected programs
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Sidebar */}

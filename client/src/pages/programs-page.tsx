@@ -117,6 +117,89 @@ export default function ProgramsPage() {
       return response.json();
     }
   });
+
+  // Query for coach's subscription offering
+  const { data: mySubscription } = useQuery({
+    queryKey: ["/api/my-subscription"],
+    enabled: !!user,
+  });
+
+  // Mutations for program-subscription management
+  const queryClient = useQueryClient();
+  
+  const addProgramToSubscriptionMutation = useMutation({
+    mutationFn: async ({ subscriptionId, programIds }: { subscriptionId: number; programIds: number[] }) => {
+      const response = await apiRequest("POST", `/api/subscriptions/${subscriptionId}/programs`, {
+        programIds
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/my-subscription"] });
+      toast({
+        title: "Success",
+        description: "Program added to subscription successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to add program to subscription",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const removeProgramFromSubscriptionMutation = useMutation({
+    mutationFn: async ({ subscriptionId, programId }: { subscriptionId: number; programId: number }) => {
+      const response = await apiRequest("DELETE", `/api/subscriptions/${subscriptionId}/programs/${programId}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/my-subscription"] });
+      toast({
+        title: "Success",
+        description: "Program removed from subscription successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to remove program from subscription",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Helper functions for subscription management
+  const isProgramInSubscription = (programId: number) => {
+    return mySubscription?.includedPrograms?.some((p: any) => p.id === programId) || false;
+  };
+
+  const handleToggleSubscriptionProgram = (programId: number) => {
+    if (!mySubscription?.id) {
+      toast({
+        title: "No Subscription",
+        description: "Create a subscription first to add programs",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const isInSubscription = isProgramInSubscription(programId);
+    
+    if (isInSubscription) {
+      removeProgramFromSubscriptionMutation.mutate({
+        subscriptionId: mySubscription.id,
+        programId
+      });
+    } else {
+      addProgramToSubscriptionMutation.mutate({
+        subscriptionId: mySubscription.id,
+        programIds: [programId]
+      });
+    }
+  };
   
   // Filter programs based on search query
   const filteredUserPrograms = Array.isArray(userPrograms) 
@@ -522,6 +605,26 @@ function ModernProgramCard({ program, type, creator, viewMode }: {
                     className="w-full justify-start p-2 h-auto font-normal"
                   />
                 </DropdownMenuItem>
+                
+                {/* Add to Subscription Option */}
+                <DropdownMenuItem 
+                  onClick={() => handleToggleSubscriptionProgram(program.id)}
+                  disabled={addProgramToSubscriptionMutation.isPending || removeProgramFromSubscriptionMutation.isPending}
+                  className={isProgramInSubscription(program.id) ? "text-green-400" : ""}
+                >
+                  {isProgramInSubscription(program.id) ? (
+                    <>
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Remove from Subscription
+                    </>
+                  ) : (
+                    <>
+                      <Crown className="h-4 w-4 mr-2" />
+                      Add to Subscription
+                    </>
+                  )}
+                </DropdownMenuItem>
+                
                 {program.importedFromSheet && (
                   <DropdownMenuItem 
                     onClick={() => {

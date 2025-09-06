@@ -1503,6 +1503,7 @@ export const trainingProgramsRelations = relations(trainingPrograms, ({ one, man
   sessions: many(programSessions),
   purchases: many(programPurchases),
   assignments: many(programAssignments),
+  subscriptionPrograms: many(subscriptionPrograms),
 }));
 
 export const programSessions = pgTable("program_sessions", {
@@ -2288,6 +2289,7 @@ export const userSubscriptionsRelations = relations(userSubscriptions, ({ one, m
     relationName: "coach_subscription_offerings"
   }),
   purchases: many(userSubscriptionPurchases, { relationName: "subscription_purchases" }),
+  subscriptionPrograms: many(subscriptionPrograms),
 }));
 
 // User Subscription Purchases - active subscriptions
@@ -2328,6 +2330,25 @@ export const userSubscriptionPurchasesRelations = relations(userSubscriptionPurc
   }),
 }));
 
+// Subscription Programs - linking table for subscription-program relationships
+export const subscriptionPrograms = pgTable("subscription_programs", {
+  id: serial("id").primaryKey(),
+  subscriptionId: integer("subscription_id").notNull().references(() => userSubscriptions.id),
+  programId: integer("program_id").notNull().references(() => trainingPrograms.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const subscriptionProgramsRelations = relations(subscriptionPrograms, ({ one }) => ({
+  subscription: one(userSubscriptions, {
+    fields: [subscriptionPrograms.subscriptionId],
+    references: [userSubscriptions.id],
+  }),
+  program: one(trainingPrograms, {
+    fields: [subscriptionPrograms.programId],
+    references: [trainingPrograms.id],
+  }),
+}));
+
 export const insertUserSubscriptionSchema = createInsertSchema(userSubscriptions).omit({
   id: true,
   createdAt: true,
@@ -2338,6 +2359,11 @@ export const insertUserSubscriptionPurchaseSchema = createInsertSchema(userSubsc
   id: true,
   createdAt: true,
   updatedAt: true,
+});
+
+export const insertSubscriptionProgramSchema = createInsertSchema(subscriptionPrograms).omit({
+  id: true,
+  createdAt: true,
 });
 
 // =================
@@ -2372,3 +2398,5 @@ export type SelectUserSubscription = typeof userSubscriptions.$inferSelect;
 export type InsertUserSubscription = z.infer<typeof insertUserSubscriptionSchema>;
 export type SelectUserSubscriptionPurchase = typeof userSubscriptionPurchases.$inferSelect;
 export type InsertUserSubscriptionPurchase = z.infer<typeof insertUserSubscriptionPurchaseSchema>;
+export type SelectSubscriptionProgram = typeof subscriptionPrograms.$inferSelect;
+export type InsertSubscriptionProgram = z.infer<typeof insertSubscriptionProgramSchema>;
