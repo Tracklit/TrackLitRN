@@ -8,12 +8,20 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { User, Users, Crown, Target, Eye, EyeOff } from 'lucide-react';
+import { User, Users, Crown, Target, Eye, EyeOff, ChevronDown, ChevronRight } from 'lucide-react';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 
 export default function AthleteProfile() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [profileSettingsOpen, setProfileSettingsOpen] = useState(true);
+  const [coachDashboardOpen, setCoachDashboardOpen] = useState(false);
+  const [athleteDashboardOpen, setAthleteDashboardOpen] = useState(false);
 
   // Query for coach limits
   const { data: coachLimits } = useQuery({
@@ -118,15 +126,60 @@ export default function AthleteProfile() {
   return (
     <div className="min-h-screen bg-[#010a18] text-white p-4">
       <div className="max-w-2xl mx-auto space-y-6">
-        {/* Profile Header */}
+        {/* Coach Status Card - Moved up 2 positions */}
         <Card className="bg-[#1a2332] border-gray-700">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <User className="w-5 h-5" />
-              Profile Settings
+              <Crown className="w-5 h-5" />
+              Coach Status
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label htmlFor="coach-toggle" className="text-sm font-medium text-gray-300">
+                  Enable Coach Features
+                </Label>
+                <p className="text-xs text-gray-400">
+                  Enable coach features to assign programs to athletes
+                </p>
+              </div>
+              <Switch
+                id="coach-toggle"
+                checked={user?.isCoach || false}
+                onCheckedChange={handleCoachToggle}
+                disabled={updateCoachStatusMutation.isPending}
+              />
+            </div>
+            
+            {user?.isCoach && coachLimits && (
+              <div className="bg-[#0f1419] p-3 rounded-lg border border-gray-700">
+                {getCoachLimitInfo()}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Profile Settings - Now Collapsible */}
+        <Collapsible open={profileSettingsOpen} onOpenChange={setProfileSettingsOpen}>
+          <Card className="bg-[#1a2332] border-gray-700">
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer hover:bg-[#1f2937] transition-colors">
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <User className="w-5 h-5" />
+                    Profile Settings
+                  </div>
+                  {profileSettingsOpen ? (
+                    <ChevronDown className="w-4 h-4" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4" />
+                  )}
+                </CardTitle>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent className="space-y-6">
             {/* Basic Info */}
             <div className="space-y-2">
               <Label className="text-sm font-medium text-gray-300">Username</Label>
@@ -158,33 +211,6 @@ export default function AthleteProfile() {
               </div>
             </div>
 
-            {/* Coach Toggle */}
-            <div className="space-y-4 border-t border-gray-700 pt-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <Label htmlFor="coach-toggle" className="text-sm font-medium text-gray-300 flex items-center gap-2">
-                    <Crown className="w-4 h-4" />
-                    Coach Status
-                  </Label>
-                  <p className="text-xs text-gray-400">
-                    Enable coach features to assign programs to athletes
-                  </p>
-                </div>
-                <Switch
-                  id="coach-toggle"
-                  checked={user?.isCoach || false}
-                  onCheckedChange={handleCoachToggle}
-                  disabled={updateCoachStatusMutation.isPending}
-                />
-              </div>
-              
-              {user?.isCoach && coachLimits && (
-                <div className="bg-[#0f1419] p-3 rounded-lg border border-gray-700">
-                  {getCoachLimitInfo()}
-                </div>
-              )}
-            </div>
-
             {/* Privacy Toggle */}
             <div className="space-y-4 border-t border-gray-700 pt-4">
               <div className="flex items-center justify-between">
@@ -214,19 +240,32 @@ export default function AthleteProfile() {
                 </div>
               )}
             </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
 
-        {/* Coach Dashboard */}
+        {/* Coach Dashboard - Now Collapsible */}
         {user?.isCoach && (
-          <Card className="bg-[#1a2332] border-gray-700">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                Coach Dashboard
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <Collapsible open={coachDashboardOpen} onOpenChange={setCoachDashboardOpen}>
+            <Card className="bg-[#1a2332] border-gray-700">
+              <CollapsibleTrigger asChild>
+                <CardHeader className="cursor-pointer hover:bg-[#1f2937] transition-colors">
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-5 h-5" />
+                      Coach Dashboard
+                    </div>
+                    {coachDashboardOpen ? (
+                      <ChevronDown className="w-4 h-4" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4" />
+                    )}
+                  </CardTitle>
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-[#0f1419] p-4 rounded-lg border border-gray-700">
                   <div className="flex items-center gap-2 mb-2">
@@ -278,20 +317,33 @@ export default function AthleteProfile() {
                   </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
         )}
 
-        {/* Athlete Dashboard */}
+        {/* Athlete Dashboard - Now Collapsible */}
         {coaches.length > 0 && (
-          <Card className="bg-[#1a2332] border-gray-700">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Crown className="w-5 h-5" />
-                Your Coaches
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+          <Collapsible open={athleteDashboardOpen} onOpenChange={setAthleteDashboardOpen}>
+            <Card className="bg-[#1a2332] border-gray-700">
+              <CollapsibleTrigger asChild>
+                <CardHeader className="cursor-pointer hover:bg-[#1f2937] transition-colors">
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Crown className="w-5 h-5" />
+                      Your Coaches
+                    </div>
+                    {athleteDashboardOpen ? (
+                      <ChevronDown className="w-4 h-4" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4" />
+                    )}
+                  </CardTitle>
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent>
               <div className="space-y-2">
                 {coaches.map((coach: any) => (
                   <div key={coach.id} className="flex items-center justify-between bg-[#0f1419] p-3 rounded border border-gray-700">
@@ -310,8 +362,10 @@ export default function AthleteProfile() {
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
         )}
       </div>
     </div>
