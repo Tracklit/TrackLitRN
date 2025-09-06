@@ -386,7 +386,7 @@ export default function PublicProfilePage() {
                     coachName={profileUser.name}
                     coachUsername={profileUser.username}
                     variant="crown"
-                    className="size-lg px-8"
+                    className="px-8"
                   />
                 )}
               </div>

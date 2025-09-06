@@ -38,9 +38,24 @@ export default function SubscriptionButton({
     (sub: any) => sub.coachId === coachId && sub.status === "active"
   );
 
-  // Don't show button if coach doesn't offer subscriptions
-  if (isLoading || !subscription) {
-    return null;
+  // Show loading state
+  if (isLoading) {
+    return (
+      <Button disabled className={`${className}`} size="lg">
+        <Crown className="h-4 w-4 mr-2" />
+        Loading...
+      </Button>
+    );
+  }
+
+  // Show "Not Available" state if coach doesn't offer subscriptions
+  if (!subscription) {
+    return (
+      <Button disabled className={`${className}`} size="lg" variant="outline">
+        <Crown className="h-4 w-4 mr-2" />
+        No Coaching Available
+      </Button>
+    );
   }
 
   // Don't show button if user is already subscribed
