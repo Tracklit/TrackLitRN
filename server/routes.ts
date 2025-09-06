@@ -2,7 +2,7 @@ import express, { type Express, type Request, type Response } from "express";
 import { createServer, type Server } from "http";
 import { storage as dbStorage } from "./storage";
 import { pool, db } from "./db";
-import { meets, notifications, users, messageReactions } from "@shared/schema";
+import { meets, notifications, users, messageReactions, userSubscriptions, userSubscriptionPurchases } from "@shared/schema";
 import { and, eq, or, sql, isNotNull, desc, asc } from "drizzle-orm";
 import { setupAuth } from "./auth";
 import { z } from "zod";
@@ -5341,6 +5341,348 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error confirming payment:", error);
       res.status(500).json({ error: "Error confirming payment: " + error.message });
+    }
+  });
+
+  // =====================================
+  // USER SUBSCRIPTION ROUTES
+  // =====================================
+
+  // Get coach's subscription offering
+  app.get("/api/users/:coachId/subscription", async (req: Request, res: Response) => {
+    try {
+      const coachId = parseInt(req.params.coachId);
+      
+      const subscription = await db.select()
+        .from(userSubscriptions)
+        .where(and(
+          eq(userSubscriptions.coachId, coachId),
+          eq(userSubscriptions.isActive, true)
+        ))
+        .limit(1);
+      
+      if (subscription.length === 0) {
+        return res.json(null);
+      }
+      
+      res.json(subscription[0]);
+    } catch (error: any) {
+      console.error("Error fetching subscription:", error);
+      res.status(500).json({ error: "Error fetching subscription" });
+    }
+  });
+
+  // Create or update coach's subscription offering
+  app.post("/api/subscriptions", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const { title, description, priceAmount, priceCurrency, priceInterval } = req.body;
+      const coachId = req.user!.id;
+      
+      // Check if coach already has an active subscription
+      const existingSubscription = await db.select()
+        .from(userSubscriptions)
+        .where(and(
+          eq(userSubscriptions.coachId, coachId),
+          eq(userSubscriptions.isActive, true)
+        ))
+        .limit(1);
+      
+      if (existingSubscription.length > 0) {
+        // Update existing subscription
+        await db.update(userSubscriptions)
+          .set({
+            title,
+            description,
+            priceAmount,
+            priceCurrency,
+            priceInterval,
+            updatedAt: new Date(),
+          })
+          .where(eq(userSubscriptions.id, existingSubscription[0].id));
+        
+        res.json({ message: "Subscription updated successfully" });
+      } else {
+        // Create new subscription
+        const newSubscription = await db.insert(userSubscriptions).values({
+          coachId,
+          title,
+          description,
+          priceAmount,
+          priceCurrency,
+          priceInterval,
+        }).returning();
+        
+        res.status(201).json(newSubscription[0]);
+      }
+    } catch (error: any) {
+      console.error("Error creating/updating subscription:", error);
+      res.status(500).json({ error: "Error processing subscription" });
+    }
+  });
+
+  // Create subscription payment intent
+  app.post("/api/subscriptions/:subscriptionId/create-payment-intent", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const subscriptionId = parseInt(req.params.subscriptionId);
+      const userId = req.user!.id;
+      
+      // Get subscription details
+      const subscription = await db.select()
+        .from(userSubscriptions)
+        .where(eq(userSubscriptions.id, subscriptionId))
+        .limit(1);
+      
+      if (subscription.length === 0) {
+        return res.status(404).json({ error: "Subscription not found" });
+      }
+      
+      const sub = subscription[0];
+      
+      // Check if user is already subscribed to this coach
+      const existingPurchase = await db.select()
+        .from(userSubscriptionPurchases)
+        .where(and(
+          eq(userSubscriptionPurchases.subscriberId, userId),
+          eq(userSubscriptionPurchases.coachId, sub.coachId),
+          eq(userSubscriptionPurchases.status, "active")
+        ))
+        .limit(1);
+      
+      if (existingPurchase.length > 0) {
+        return res.status(400).json({ error: "You are already subscribed to this coach" });
+      }
+      
+      // Calculate platform fees based on coach's subscription tier
+      const coach = await db.select()
+        .from(users)
+        .where(eq(users.id, sub.coachId))
+        .limit(1);
+      
+      let platformFeePercentage = 22; // Default 22% for free users
+      if (coach.length > 0) {
+        if (coach[0].subscriptionTier === "pro") platformFeePercentage = 18;
+        else if (coach[0].subscriptionTier === "star") platformFeePercentage = 16;
+      }
+      
+      const platformFeeAmount = Math.round((sub.priceAmount * platformFeePercentage) / 100);
+      const coachAmount = sub.priceAmount - platformFeeAmount;
+      
+      // Create Stripe payment intent
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: sub.priceAmount,
+        currency: sub.priceCurrency.toLowerCase(),
+        metadata: {
+          subscriptionId: subscriptionId.toString(),
+          subscriberId: userId.toString(),
+          coachId: sub.coachId.toString(),
+          subscriptionTitle: sub.title,
+          platformFeePercentage: platformFeePercentage.toString(),
+          platformFeeAmount: platformFeeAmount.toString(),
+          coachAmount: coachAmount.toString(),
+        },
+      });
+      
+      res.json({ clientSecret: paymentIntent.client_secret });
+    } catch (error: any) {
+      console.error("Error creating subscription payment intent:", error);
+      res.status(500).json({ error: "Error creating payment intent: " + error.message });
+    }
+  });
+
+  // Confirm subscription payment
+  app.post("/api/subscriptions/:subscriptionId/confirm-payment", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const { paymentIntentId } = req.body;
+      const subscriptionId = parseInt(req.params.subscriptionId);
+      const userId = req.user!.id;
+      
+      if (!paymentIntentId) {
+        return res.status(400).json({ error: "Payment intent ID is required" });
+      }
+      
+      // Retrieve payment intent from Stripe
+      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+      
+      if (paymentIntent.status !== 'succeeded') {
+        return res.status(400).json({ error: "Payment not completed" });
+      }
+      
+      // Verify metadata
+      const metadata = paymentIntent.metadata;
+      if (
+        metadata.subscriptionId !== subscriptionId.toString() ||
+        metadata.subscriberId !== userId.toString()
+      ) {
+        return res.status(400).json({ error: "Payment verification failed" });
+      }
+      
+      // Calculate subscription period
+      const now = new Date();
+      const subscription = await db.select()
+        .from(userSubscriptions)
+        .where(eq(userSubscriptions.id, subscriptionId))
+        .limit(1);
+      
+      if (subscription.length === 0) {
+        return res.status(404).json({ error: "Subscription not found" });
+      }
+      
+      const sub = subscription[0];
+      let currentPeriodEnd = new Date(now);
+      
+      switch (sub.priceInterval) {
+        case 'week':
+          currentPeriodEnd.setDate(currentPeriodEnd.getDate() + 7);
+          break;
+        case 'month':
+          currentPeriodEnd.setMonth(currentPeriodEnd.getMonth() + 1);
+          break;
+        case 'year':
+          currentPeriodEnd.setFullYear(currentPeriodEnd.getFullYear() + 1);
+          break;
+        default:
+          currentPeriodEnd.setMonth(currentPeriodEnd.getMonth() + 1);
+      }
+      
+      // Create subscription purchase record
+      const purchase = await db.insert(userSubscriptionPurchases).values({
+        subscriptionId,
+        subscriberId: userId,
+        coachId: parseInt(metadata.coachId),
+        status: "active",
+        currentPeriodStart: now,
+        currentPeriodEnd,
+        platformFeePercentage: parseInt(metadata.platformFeePercentage),
+        totalAmount: paymentIntent.amount,
+        platformFeeAmount: parseInt(metadata.platformFeeAmount),
+        coachAmount: parseInt(metadata.coachAmount),
+      }).returning();
+      
+      res.status(201).json({ purchase, paymentIntent: paymentIntent.id });
+    } catch (error: any) {
+      console.error("Error confirming subscription payment:", error);
+      res.status(500).json({ error: "Error confirming payment: " + error.message });
+    }
+  });
+
+  // Get user's active subscriptions (as subscriber)
+  app.get("/api/my-subscriptions", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const userId = req.user!.id;
+      
+      const subscriptions = await db.select({
+        id: userSubscriptionPurchases.id,
+        status: userSubscriptionPurchases.status,
+        currentPeriodStart: userSubscriptionPurchases.currentPeriodStart,
+        currentPeriodEnd: userSubscriptionPurchases.currentPeriodEnd,
+        totalAmount: userSubscriptionPurchases.totalAmount,
+        coachId: userSubscriptionPurchases.coachId,
+        coachName: users.name,
+        coachUsername: users.username,
+        subscriptionTitle: userSubscriptions.title,
+        subscriptionDescription: userSubscriptions.description,
+        priceInterval: userSubscriptions.priceInterval,
+      })
+        .from(userSubscriptionPurchases)
+        .innerJoin(userSubscriptions, eq(userSubscriptionPurchases.subscriptionId, userSubscriptions.id))
+        .innerJoin(users, eq(userSubscriptionPurchases.coachId, users.id))
+        .where(eq(userSubscriptionPurchases.subscriberId, userId))
+        .orderBy(desc(userSubscriptionPurchases.createdAt));
+      
+      res.json(subscriptions);
+    } catch (error: any) {
+      console.error("Error fetching user subscriptions:", error);
+      res.status(500).json({ error: "Error fetching subscriptions" });
+    }
+  });
+
+  // Get coach's subscribers
+  app.get("/api/my-subscribers", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const coachId = req.user!.id;
+      
+      const subscribers = await db.select({
+        id: userSubscriptionPurchases.id,
+        status: userSubscriptionPurchases.status,
+        currentPeriodStart: userSubscriptionPurchases.currentPeriodStart,
+        currentPeriodEnd: userSubscriptionPurchases.currentPeriodEnd,
+        totalAmount: userSubscriptionPurchases.totalAmount,
+        coachAmount: userSubscriptionPurchases.coachAmount,
+        subscriberId: userSubscriptionPurchases.subscriberId,
+        subscriberName: users.name,
+        subscriberUsername: users.username,
+        subscriberEmail: users.email,
+        subscriptionTitle: userSubscriptions.title,
+        priceInterval: userSubscriptions.priceInterval,
+      })
+        .from(userSubscriptionPurchases)
+        .innerJoin(userSubscriptions, eq(userSubscriptionPurchases.subscriptionId, userSubscriptions.id))
+        .innerJoin(users, eq(userSubscriptionPurchases.subscriberId, users.id))
+        .where(eq(userSubscriptionPurchases.coachId, coachId))
+        .orderBy(desc(userSubscriptionPurchases.createdAt));
+      
+      res.json(subscribers);
+    } catch (error: any) {
+      console.error("Error fetching subscribers:", error);
+      res.status(500).json({ error: "Error fetching subscribers" });
+    }
+  });
+
+  // Cancel subscription
+  app.post("/api/subscriptions/:purchaseId/cancel", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const purchaseId = parseInt(req.params.purchaseId);
+      const userId = req.user!.id;
+      
+      // Get subscription purchase
+      const purchase = await db.select()
+        .from(userSubscriptionPurchases)
+        .where(and(
+          eq(userSubscriptionPurchases.id, purchaseId),
+          eq(userSubscriptionPurchases.subscriberId, userId)
+        ))
+        .limit(1);
+      
+      if (purchase.length === 0) {
+        return res.status(404).json({ error: "Subscription not found" });
+      }
+      
+      // Update subscription to cancel at period end
+      await db.update(userSubscriptionPurchases)
+        .set({
+          cancelAtPeriodEnd: true,
+          updatedAt: new Date(),
+        })
+        .where(eq(userSubscriptionPurchases.id, purchaseId));
+      
+      res.json({ message: "Subscription will be cancelled at the end of the current period" });
+    } catch (error: any) {
+      console.error("Error cancelling subscription:", error);
+      res.status(500).json({ error: "Error cancelling subscription" });
     }
   });
 
