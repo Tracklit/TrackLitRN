@@ -450,7 +450,7 @@ export default function SubscriptionManagementPage() {
                         ) : (
                           <>
                             <Save className="h-4 w-4 mr-2" />
-                            {existingSubscription ? "Update Subscription" : "Create Subscription"}
+                            {existingSubscription ? "Save Changes" : "Create Subscription"}
                           </>
                         )}
                       </Button>

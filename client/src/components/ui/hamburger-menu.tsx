@@ -373,6 +373,18 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                 Profile Settings
               </div>
             </Link>
+            <Link href="/my-subscriptions">
+              <div
+                className={cn(
+                  "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
+                  location === "/my-subscriptions" ? "bg-primary text-primary-foreground" : "text-gray-300"
+                )}
+                onClick={() => setIsOpen(false)}
+              >
+                <FontAwesomeIcon icon={faHeart} className="h-4 w-4 mr-3" />
+                My Subscriptions
+              </div>
+            </Link>
           </nav>
         </div>
       </div>
