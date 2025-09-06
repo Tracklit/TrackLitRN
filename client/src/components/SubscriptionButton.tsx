@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Heart, Crown, DollarSign } from "lucide-react";
+import { Heart, Crown, DollarSign, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import SubscriptionModal from "./SubscriptionModal";
+import SubscriptionManagementModal from "./SubscriptionManagementModal";
 
 interface SubscriptionButtonProps {
   coachId: number;
@@ -22,6 +23,7 @@ export default function SubscriptionButton({
 }: SubscriptionButtonProps) {
   const { user } = useAuth();
   const [showModal, setShowModal] = useState(false);
+  const [showManagementModal, setShowManagementModal] = useState(false);
 
   // Fetch coach's subscription offering
   const { data: subscription, isLoading } = useQuery({
@@ -34,6 +36,7 @@ export default function SubscriptionButton({
     enabled: !!user,
   });
 
+  const isOwnProfile = user?.id === coachId;
   const isAlreadySubscribed = mySubscriptions?.some(
     (sub: any) => sub.coachId === coachId && sub.status === "active"
   );
@@ -48,7 +51,38 @@ export default function SubscriptionButton({
     );
   }
 
-  // Show "Not Available" state if coach doesn't offer subscriptions
+  // Own Profile: Always show button to manage subscription offering
+  if (isOwnProfile) {
+    return (
+      <>
+        <Button
+          onClick={() => setShowManagementModal(true)}
+          className={`${className}`}
+          size="lg"
+          variant={subscription ? "default" : "outline"}
+        >
+          <Settings className="h-4 w-4 mr-2" />
+          {subscription ? "Manage Coaching" : "Set Up Coaching"}
+        </Button>
+
+        {showManagementModal && (
+          <SubscriptionManagementModal onClose={() => setShowManagementModal(false)} />
+        )}
+      </>
+    );
+  }
+
+  // Other Profile: Already subscribed
+  if (isAlreadySubscribed) {
+    return (
+      <Button disabled className={`${className}`} size="lg">
+        <Crown className="h-4 w-4 mr-2" />
+        Subscribed
+      </Button>
+    );
+  }
+
+  // Other Profile: No subscription offering available
   if (!subscription) {
     return (
       <Button disabled className={`${className}`} size="lg" variant="outline">
@@ -56,21 +90,6 @@ export default function SubscriptionButton({
         No Coaching Available
       </Button>
     );
-  }
-
-  // Don't show button if user is already subscribed
-  if (isAlreadySubscribed) {
-    return (
-      <Button disabled className={`${className}`}>
-        <Crown className="h-4 w-4 mr-2" />
-        Subscribed
-      </Button>
-    );
-  }
-
-  // Don't show button if viewing own profile
-  if (user?.id === coachId) {
-    return null;
   }
 
   const formatPrice = (amount: number, currency: string, interval: string) => {

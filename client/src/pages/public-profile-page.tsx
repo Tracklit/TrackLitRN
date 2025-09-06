@@ -361,36 +361,38 @@ export default function PublicProfilePage() {
         <main className="pt-16 pb-6">
           <div className="max-w-md mx-auto px-4">
             
-            {/* Action Buttons - Moved Above Card */}
-            {!isOwnProfile && (
-              <div className="flex gap-3 mb-6 justify-center flex-wrap">
-                <Button
-                  size="lg"
-                  className="bg-blue-600 hover:bg-blue-700 px-8"
-                  onClick={handleOpenMessage}
-                >
-                  <MessageCircle className="h-5 w-5 mr-2" />
-                  Message
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-2 border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-black px-8"
-                >
-                  <UserPlus className="h-5 w-5 mr-2" />
-                  Add Friend
-                </Button>
-                {profileUser && (
-                  <SubscriptionButton
-                    coachId={profileUser.id}
-                    coachName={profileUser.name}
-                    coachUsername={profileUser.username}
-                    variant="crown"
-                    className="px-8"
-                  />
-                )}
-              </div>
-            )}
+            {/* Action Buttons - Always show subscription button */}
+            <div className="flex gap-3 mb-6 justify-center flex-wrap">
+              {!isOwnProfile && (
+                <>
+                  <Button
+                    size="lg"
+                    className="bg-blue-600 hover:bg-blue-700 px-8"
+                    onClick={handleOpenMessage}
+                  >
+                    <MessageCircle className="h-5 w-5 mr-2" />
+                    Message
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="border-2 border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-black px-8"
+                  >
+                    <UserPlus className="h-5 w-5 mr-2" />
+                    Add Friend
+                  </Button>
+                </>
+              )}
+              {profileUser && (
+                <SubscriptionButton
+                  coachId={profileUser.id}
+                  coachName={profileUser.name}
+                  coachUsername={profileUser.username}
+                  variant="crown"
+                  className="px-8"
+                />
+              )}
+            </div>
 
             {/* Trading Card - Main Profile */}
             <div className="relative">
