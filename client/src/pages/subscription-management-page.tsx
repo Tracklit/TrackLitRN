@@ -410,7 +410,7 @@ export default function SubscriptionManagementPage() {
                       {existingSubscription ? (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button type="button" variant="outline">
+                            <Button type="button" variant="destructive">
                               Cancel Subscription
                             </Button>
                           </AlertDialogTrigger>
@@ -498,7 +498,7 @@ export default function SubscriptionManagementPage() {
                           return (
                             <div 
                               key={program.id} 
-                              className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50"
+                              className="flex items-center space-x-3 p-3 border rounded-lg"
                             >
                               <Checkbox
                                 id={`program-${program.id}`}
@@ -558,75 +558,6 @@ export default function SubscriptionManagementPage() {
               </Card>
             )}
 
-            {/* Cancel Subscription Section */}
-            {existingSubscription && (
-              <Card className="border-red-200 bg-red-50/50">
-                <CardHeader>
-                  <CardTitle className="flex items-center text-lg text-red-700">
-                    <Trash2 className="h-5 w-5 mr-2" />
-                    Cancel Subscription
-                  </CardTitle>
-                  <CardDescription className="text-red-600">
-                    Permanently cancel your subscription offering
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="p-4 bg-red-100 border border-red-200 rounded-lg">
-                      <h4 className="font-medium text-red-800 mb-2">⚠️ Warning</h4>
-                      <p className="text-sm text-red-700">
-                        Cancelling your subscription will:
-                      </p>
-                      <ul className="mt-2 text-xs text-red-600 space-y-1">
-                        <li>• Remove your subscription offering from the marketplace</li>
-                        <li>• Stop new sign-ups immediately</li>
-                        <li>• Cancel all existing subscriber renewals</li>
-                        <li>• This action cannot be undone</li>
-                      </ul>
-                    </div>
-
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button 
-                          variant="destructive" 
-                          className="w-full"
-                          disabled={deleteSubscriptionMutation.isPending}
-                        >
-                          {deleteSubscriptionMutation.isPending ? (
-                            <>
-                              <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
-                              Cancelling...
-                            </>
-                          ) : (
-                            <>
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Cancel Subscription
-                            </>
-                          )}
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action will permanently cancel your subscription offering. All existing subscribers will be notified and their renewals will be cancelled. You can create a new subscription later if needed.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
-                          <AlertDialogAction 
-                            onClick={handleCancelSubscription}
-                            className="bg-red-600 hover:bg-red-700"
-                          >
-                            Yes, Cancel Subscription
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
           </div>
 
           {/* Sidebar */}
