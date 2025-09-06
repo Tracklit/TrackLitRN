@@ -9,11 +9,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Crown, Users, Heart, DollarSign, Calendar, AlertTriangle, Plus, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "wouter";
-import SubscriptionManagementModal from "@/components/SubscriptionManagementModal";
 
 export default function MySubscriptionsPage() {
   const { user } = useAuth();
-  const [showManagementModal, setShowManagementModal] = useState(false);
 
   // Fetch subscriptions as subscriber (coaches I'm paying)
   const { data: mySubscriptions, isLoading: isLoadingMine } = useQuery({
@@ -240,9 +238,11 @@ export default function MySubscriptionsPage() {
                   <p className="text-sm text-muted-foreground mb-4">
                     Set up your coaching subscription to start earning from athletes
                   </p>
-                  <Button onClick={() => setShowManagementModal(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Set Up Subscription
+                  <Button asChild>
+                    <Link href="/manage-subscription">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Set Up Subscription
+                    </Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -302,18 +302,20 @@ export default function MySubscriptionsPage() {
           <TabsContent value="offering" className="space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-semibold">My Subscription Offering</h2>
-              <Button onClick={() => setShowManagementModal(true)}>
-                {myOffering ? (
-                  <>
-                    <Settings className="h-4 w-4 mr-2" />
-                    Edit Offering
-                  </>
-                ) : (
-                  <>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Offering
-                  </>
-                )}
+              <Button asChild>
+                <Link href="/manage-subscription">
+                  {myOffering ? (
+                    <>
+                      <Settings className="h-4 w-4 mr-2" />
+                      Edit Offering
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Offering
+                    </>
+                  )}
+                </Link>
               </Button>
             </div>
 
@@ -367,9 +369,11 @@ export default function MySubscriptionsPage() {
                   <p className="text-sm text-muted-foreground mb-4">
                     Create a subscription offering to earn recurring income from coaching
                   </p>
-                  <Button onClick={() => setShowManagementModal(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Subscription Offering
+                  <Button asChild>
+                    <Link href="/manage-subscription">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Subscription Offering
+                    </Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -377,9 +381,6 @@ export default function MySubscriptionsPage() {
           </TabsContent>
         </Tabs>
 
-        {showManagementModal && (
-          <SubscriptionManagementModal onClose={() => setShowManagementModal(false)} />
-        )}
       </main>
     </div>
   );

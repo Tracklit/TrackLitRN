@@ -27,7 +27,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import SubscriptionManagementModal from '@/components/SubscriptionManagementModal';
+import { Link } from 'wouter';
 
 // Profile form schema
 const profileFormSchema = z.object({
@@ -66,7 +66,6 @@ export default function ProfilePage() {
   const [tempImageUrl, setTempImageUrl] = useState<string | null>(null);
   const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
   const [imageScale, setImageScale] = useState(1);
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
   // Coach functionality queries
   const { data: coachLimits } = useQuery({
@@ -427,10 +426,12 @@ export default function ProfilePage() {
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={() => setShowSubscriptionModal(true)}
+                  asChild
                 >
-                  <Settings className="h-4 w-4 mr-2" />
-                  Manage Coaching
+                  <Link href="/manage-subscription">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Manage Coaching
+                  </Link>
                 </Button>
                 <Drawer open={isPublicProfileDialogOpen} onOpenChange={setIsPublicProfileDialogOpen}>
                   <DrawerTrigger asChild>
@@ -1009,11 +1010,6 @@ export default function ProfilePage() {
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Subscription Management Modal */}
-      {showSubscriptionModal && (
-        <SubscriptionManagementModal onClose={() => setShowSubscriptionModal(false)} />
-      )}
     </div>
   );
 }
