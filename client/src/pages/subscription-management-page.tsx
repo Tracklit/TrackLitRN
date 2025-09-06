@@ -248,6 +248,25 @@ export default function SubscriptionManagementPage() {
     }
   };
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      // Add all programs that aren't already included
+      const programsToAdd = coachPrograms
+        .filter((program: any) => !isProgramIncluded(program.id))
+        .map((program: any) => program.id);
+      if (programsToAdd.length > 0) {
+        addProgramMutation.mutate(programsToAdd);
+      }
+    } else {
+      // Remove all included programs
+      includedPrograms.forEach((program: any) => {
+        removeProgramMutation.mutate(program.id);
+      });
+    }
+  };
+
+  const areAllProgramsSelected = coachPrograms.length > 0 && includedPrograms.length === coachPrograms.length;
+
   const isProgramIncluded = (programId: number) => {
     return includedPrograms.some((p: any) => p.id === programId);
   };
@@ -505,13 +524,26 @@ export default function SubscriptionManagementPage() {
                           <Popover>
                             <PopoverTrigger asChild>
                               <Button variant="outline" size="sm" className="w-40">
-                                Manage Programs
+                                Add Programs
                                 <ChevronDown className="h-4 w-4 ml-2" />
                               </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-80" align="end">
                               <div className="space-y-3">
-                                <div className="font-medium text-sm">Select Programs to Include</div>
+                                <div className="flex items-center justify-between">
+                                  <div className="font-medium text-sm">Select Programs to Include</div>
+                                  <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                      id="select-all"
+                                      checked={areAllProgramsSelected}
+                                      onCheckedChange={handleSelectAll}
+                                      disabled={addProgramMutation.isPending || removeProgramMutation.isPending}
+                                    />
+                                    <label htmlFor="select-all" className="text-sm font-medium cursor-pointer">
+                                      Select All
+                                    </label>
+                                  </div>
+                                </div>
                                 <ScrollArea className="h-60">
                                   <div className="space-y-2 pr-3">
                                     {coachPrograms.map((program: any) => {
