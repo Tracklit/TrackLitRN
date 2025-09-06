@@ -84,6 +84,7 @@ import MarketplacePage from "@/pages/marketplace-page";
 import MarketplaceListingDetails from "@/pages/marketplace-listing-details";
 import MarketplaceCart from "@/pages/marketplace-cart";
 import MarketplaceCreateListingPage from "@/pages/marketplace-create-listing-page";
+import MySubscriptionsPage from "@/pages/my-subscriptions-page";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { TickerProvider } from "@/contexts/ticker-context";
@@ -217,6 +218,9 @@ function Router() {
           <ProtectedRoute path="/marketplace/create" component={MarketplaceCreateListingPage} />
           <ProtectedRoute path="/marketplace/listings/:id" component={MarketplaceListingDetails} />
           <ProtectedRoute path="/marketplace/cart" component={MarketplaceCart} />
+          
+          {/* Subscriptions */}
+          <ProtectedRoute path="/my-subscriptions" component={MySubscriptionsPage} />
           
           {/* Competition */}
           <ProtectedRoute path="/meets" component={MeetsPage} />

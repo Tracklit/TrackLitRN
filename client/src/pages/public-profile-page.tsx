@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { MessagePanel } from '@/components/message-panel';
+import SubscriptionButton from '@/components/SubscriptionButton';
 
 interface User {
   id: number;
@@ -362,7 +363,7 @@ export default function PublicProfilePage() {
             
             {/* Action Buttons - Moved Above Card */}
             {!isOwnProfile && (
-              <div className="flex gap-3 mb-6 justify-center">
+              <div className="flex gap-3 mb-6 justify-center flex-wrap">
                 <Button
                   size="lg"
                   className="bg-blue-600 hover:bg-blue-700 px-8"
@@ -379,6 +380,15 @@ export default function PublicProfilePage() {
                   <UserPlus className="h-5 w-5 mr-2" />
                   Add Friend
                 </Button>
+                {profileUser && (
+                  <SubscriptionButton
+                    coachId={profileUser.id}
+                    coachName={profileUser.name}
+                    coachUsername={profileUser.username}
+                    variant="crown"
+                    className="size-lg px-8"
+                  />
+                )}
               </div>
             )}
 
