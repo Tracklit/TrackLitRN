@@ -24,7 +24,18 @@ async function hashPassword(password: string) {
 
 async function comparePasswords(supplied: string, stored: string) {
   try {
+    // Check if it's a bcrypt hash (production format)
+    if (stored.startsWith('$2b$') || stored.startsWith('$2a$')) {
+      const bcrypt = require('bcrypt');
+      return await bcrypt.compare(supplied, stored);
+    }
+    
+    // Otherwise use scrypt format (legacy format)
     const [hashed, salt] = stored.split(".");
+    if (!salt) {
+      console.error("Invalid password format - no salt found");
+      return false;
+    }
     const hashedBuf = Buffer.from(hashed, "hex");
     const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
     return timingSafeEqual(hashedBuf, suppliedBuf);
