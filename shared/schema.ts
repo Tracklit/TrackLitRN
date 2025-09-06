@@ -58,6 +58,11 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   programProgress: many(programProgress, { relationName: "program_progress" }),
   sentMeetInvitations: many(meetInvitations, { relationName: "sent_invitations" }),
   receivedMeetInvitations: many(meetInvitations, { relationName: "received_invitations" }),
+  
+  // User Subscriptions
+  subscriptionOfferings: many(userSubscriptions, { relationName: "coach_subscription_offerings" }),
+  subscriptionsAsSubscriber: many(userSubscriptionPurchases, { relationName: "user_subscriptions_as_subscriber" }),
+  subscriptionsAsCoach: many(userSubscriptionPurchases, { relationName: "user_subscriptions_as_coach" }),
 }));
 
 export const meets = pgTable("meets", {
@@ -2256,6 +2261,86 @@ export const insertMarketplaceReviewSchema = createInsertSchema(marketplaceRevie
 });
 
 // =================
+// USER SUBSCRIPTIONS
+// =================
+
+// User Subscriptions - for coach subscription offerings
+export const userSubscriptions = pgTable("user_subscriptions", {
+  id: serial("id").primaryKey(),
+  coachId: integer("coach_id").notNull().references(() => users.id),
+  title: text("title").notNull().default("Coaching Subscription"),
+  description: text("description").notNull().default("Get personalized coaching and training programs"),
+  priceAmount: integer("price_amount").notNull().default(0), // Price in cents
+  priceCurrency: text("price_currency").notNull().default("USD"), // USD or EUR
+  priceInterval: text("price_interval").notNull().default("month"), // session, week, month, year
+  isActive: boolean("is_active").default(true),
+  stripeProductId: text("stripe_product_id"), // Stripe product ID
+  stripePriceId: text("stripe_price_id"), // Stripe price ID
+  includedPrograms: text("included_programs").array(), // Program IDs included in subscription
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const userSubscriptionsRelations = relations(userSubscriptions, ({ one, many }) => ({
+  coach: one(users, {
+    fields: [userSubscriptions.coachId],
+    references: [users.id],
+    relationName: "coach_subscription_offerings"
+  }),
+  purchases: many(userSubscriptionPurchases, { relationName: "subscription_purchases" }),
+}));
+
+// User Subscription Purchases - active subscriptions
+export const userSubscriptionPurchases = pgTable("user_subscription_purchases", {
+  id: serial("id").primaryKey(),
+  subscriptionId: integer("subscription_id").notNull().references(() => userSubscriptions.id),
+  subscriberId: integer("subscriber_id").notNull().references(() => users.id),
+  coachId: integer("coach_id").notNull().references(() => users.id),
+  status: text("status").default("active"), // active, cancelled, expired, payment_failed
+  stripeSubscriptionId: text("stripe_subscription_id"), // Stripe subscription ID
+  stripeCustomerId: text("stripe_customer_id"), // Stripe customer ID
+  currentPeriodStart: timestamp("current_period_start"),
+  currentPeriodEnd: timestamp("current_period_end"),
+  cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
+  platformFeePercentage: integer("platform_fee_percentage").notNull().default(22), // 22%, 18%, 16% based on coach tier
+  totalAmount: integer("total_amount").notNull(), // Total subscription amount in cents
+  platformFeeAmount: integer("platform_fee_amount").notNull(), // Platform fee in cents
+  coachAmount: integer("coach_amount").notNull(), // Amount coach receives in cents
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const userSubscriptionPurchasesRelations = relations(userSubscriptionPurchases, ({ one }) => ({
+  subscription: one(userSubscriptions, {
+    fields: [userSubscriptionPurchases.subscriptionId],
+    references: [userSubscriptions.id],
+    relationName: "subscription_purchases"
+  }),
+  subscriber: one(users, {
+    fields: [userSubscriptionPurchases.subscriberId],
+    references: [users.id],
+    relationName: "user_subscriptions_as_subscriber"
+  }),
+  coach: one(users, {
+    fields: [userSubscriptionPurchases.coachId],
+    references: [users.id],
+    relationName: "user_subscriptions_as_coach"
+  }),
+}));
+
+export const insertUserSubscriptionSchema = createInsertSchema(userSubscriptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertUserSubscriptionPurchaseSchema = createInsertSchema(userSubscriptionPurchases).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// =================
 // MARKETPLACE TYPES
 // =================
 
@@ -2282,3 +2367,8 @@ export type InsertMarketplaceOrderItem = z.infer<typeof insertMarketplaceOrderIt
 
 export type MarketplaceReview = typeof marketplaceReviews.$inferSelect;
 export type InsertMarketplaceReview = z.infer<typeof insertMarketplaceReviewSchema>;
+
+export type SelectUserSubscription = typeof userSubscriptions.$inferSelect;
+export type InsertUserSubscription = z.infer<typeof insertUserSubscriptionSchema>;
+export type SelectUserSubscriptionPurchase = typeof userSubscriptionPurchases.$inferSelect;
+export type InsertUserSubscriptionPurchase = z.infer<typeof insertUserSubscriptionPurchaseSchema>;
