@@ -5424,6 +5424,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete coach's own subscription offering
+  app.delete("/api/subscriptions/:subscriptionId", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const subscriptionId = parseInt(req.params.subscriptionId);
+      const coachId = req.user!.id;
+      
+      // Verify the subscription belongs to the coach
+      const subscription = await db.select()
+        .from(userSubscriptions)
+        .where(and(
+          eq(userSubscriptions.id, subscriptionId),
+          eq(userSubscriptions.coachId, coachId),
+          eq(userSubscriptions.isActive, true)
+        ))
+        .limit(1);
+      
+      if (subscription.length === 0) {
+        return res.status(404).json({ error: "Subscription not found or already cancelled" });
+      }
+      
+      // Soft delete by setting isActive to false
+      await db.update(userSubscriptions)
+        .set({
+          isActive: false,
+          updatedAt: new Date(),
+        })
+        .where(eq(userSubscriptions.id, subscriptionId));
+      
+      res.json({ message: "Subscription cancelled successfully" });
+    } catch (error: any) {
+      console.error("Error cancelling subscription:", error);
+      res.status(500).json({ error: "Error cancelling subscription" });
+    }
+  });
+
   // Create subscription payment intent
   app.post("/api/subscriptions/:subscriptionId/create-payment-intent", async (req: Request, res: Response) => {
     try {
