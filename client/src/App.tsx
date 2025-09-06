@@ -261,7 +261,7 @@ function Router() {
         <ProtectedRoute path="/spikes" component={SpikesPage} />
         <ProtectedRoute path="/subscription" component={SubscriptionPage} />
         <ProtectedRoute path="/profile" component={ProfilePage} />
-        <ProtectedRoute path="/athlete-profile" component={AthleteProfilePage} />
+        <ProtectedRoute path="/timing-settings" component={AthleteProfilePage} />
 
         
         {/* Public Profiles - separate URL pattern */}

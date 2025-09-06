@@ -216,11 +216,11 @@ export function SidebarNavigation({ isMobile = false }: { isMobile?: boolean }) 
             <p className="text-xs text-darkGray px-3 font-medium">ACCOUNT</p>
           </div>
           <NavItem 
-            href="/athlete-profile" 
-            icon={<User className="h-5 w-5" />} 
-            isActive={location === '/athlete-profile'}
+            href="/timing-settings" 
+            icon={<Clock className="h-5 w-5" />} 
+            isActive={location === '/timing-settings'}
           >
-            Athlete Profile
+            Timing Settings
           </NavItem>
           <NavItem 
             href="/spikes" 
@@ -241,7 +241,7 @@ export function SidebarNavigation({ isMobile = false }: { isMobile?: boolean }) 
             icon={<Settings className="h-5 w-5" />} 
             isActive={location === '/profile'}
           >
-            Settings
+            Profile Settings
           </NavItem>
           
           {/* Admin Section - Only show for admin users */}
