@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Crown, LogOut, Edit, Camera, UserCheck, Plus, MessageCircle, Check, X, Palette, Upload, Settings } from 'lucide-react';
+import { Crown, LogOut, Edit, Camera, UserCheck, Plus, MessageCircle, Check, X, Palette, Upload, Settings, ChevronDown, ChevronRight } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
@@ -27,6 +27,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Link } from 'wouter';
 
 // Profile form schema
@@ -66,6 +67,11 @@ export default function ProfilePage() {
   const [tempImageUrl, setTempImageUrl] = useState<string | null>(null);
   const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
   const [imageScale, setImageScale] = useState(1);
+  
+  // Collapsible state
+  const [profileSettingsOpen, setProfileSettingsOpen] = useState(true);
+  const [publicProfileOpen, setPublicProfileOpen] = useState(false);
+  const [coachStatusOpen, setCoachStatusOpen] = useState(false);
 
   // Coach functionality queries
   const { data: coachLimits } = useQuery({
@@ -539,16 +545,64 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
 
-        {/* Public Profile Trading Card Preview */}
-        <Card className="bg-[#0a1529] border-blue-800/30">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <UserCheck className="w-5 h-5" />
-              Your Public Profile
-            </CardTitle>
-            <p className="text-gray-400 text-sm">This is how others see your profile</p>
-          </CardHeader>
-          <CardContent className="p-6">
+        {/* Coach Status - Moved up 2 positions */}
+        <Collapsible open={coachStatusOpen} onOpenChange={setCoachStatusOpen}>
+          <Card className="bg-[#0a1529] border-blue-800/30">
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer hover:bg-[#1f2937] transition-colors">
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Crown className="w-5 h-5" />
+                    Coach Status
+                  </div>
+                  {coachStatusOpen ? (
+                    <ChevronDown className="w-4 h-4" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4" />
+                  )}
+                </CardTitle>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-medium">Enable coaching features</h3>
+                    <p className="text-sm text-gray-400">Access coaching tools and athlete management</p>
+                  </div>
+                  <Switch
+                    checked={user?.isCoach || false}
+                    onCheckedChange={handleCoachToggle}
+                    disabled={updateCoachStatusMutation.isPending}
+                  />
+                </div>
+                {getCoachLimitInfo()}
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
+
+        {/* Public Profile Trading Card Preview - Now Collapsible */}
+        <Collapsible open={publicProfileOpen} onOpenChange={setPublicProfileOpen}>
+          <Card className="bg-[#0a1529] border-blue-800/30">
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer hover:bg-[#1f2937] transition-colors">
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <UserCheck className="w-5 h-5" />
+                    Your Public Profile
+                  </div>
+                  {publicProfileOpen ? (
+                    <ChevronDown className="w-4 h-4" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4" />
+                  )}
+                </CardTitle>
+                <p className="text-gray-400 text-sm">This is how others see your profile</p>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent className="p-6">
             <div className="flex flex-col items-center space-y-6">
               {/* Trading Card Container */}
               <div className="relative w-full max-w-sm mx-auto">
@@ -647,15 +701,31 @@ export default function ProfilePage() {
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
 
-        {/* Profile Settings Form */}
-        <Card className="bg-[#0a1529] border-blue-800/30">
-          <CardHeader>
-            <CardTitle>Profile Settings</CardTitle>
-          </CardHeader>
-          <CardContent>
+        {/* Profile Settings Form - Now Collapsible */}
+        <Collapsible open={profileSettingsOpen} onOpenChange={setProfileSettingsOpen}>
+          <Card className="bg-[#0a1529] border-blue-800/30">
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer hover:bg-[#1f2937] transition-colors">
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Settings className="w-5 h-5" />
+                    Profile Settings
+                  </div>
+                  {profileSettingsOpen ? (
+                    <ChevronDown className="w-4 h-4" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4" />
+                  )}
+                </CardTitle>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField
@@ -720,32 +790,11 @@ export default function ProfilePage() {
                 </Button>
               </form>
             </Form>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
 
-        {/* Coach Settings */}
-        <Card className="bg-[#0a1529] border-blue-800/30">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Crown className="w-5 h-5" />
-              Coach Status
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-medium">Enable coaching features</h3>
-                <p className="text-sm text-gray-400">Access coaching tools and athlete management</p>
-              </div>
-              <Switch
-                checked={user?.isCoach || false}
-                onCheckedChange={handleCoachToggle}
-                disabled={updateCoachStatusMutation.isPending}
-              />
-            </div>
-            {getCoachLimitInfo()}
-          </CardContent>
-        </Card>
 
         {/* Sign Out Card */}
         <Card className="bg-[#0a1529] border-red-800/30">
