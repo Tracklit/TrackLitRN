@@ -46,13 +46,18 @@ export default function OnboardingAlphaInfoPage() {
           </div>
 
           <div className="flex flex-col gap-3">
-            <Button asChild className="w-full">
-              <Link href="/onboarding/install">
-                Next
-                <ArrowRight className="ml-2 h-4 w-4" />
+            <Button asChild className="w-full" onClick={() => {
+              localStorage.setItem('onboardingCompleted', 'true');
+              localStorage.setItem('hasCompletedOnboarding', 'true');
+            }}>
+              <Link href="/">
+                Get Started
               </Link>
             </Button>
-            <Button variant="ghost" asChild className="w-full">
+            <Button variant="ghost" asChild className="w-full" onClick={() => {
+              localStorage.setItem('onboardingCompleted', 'true');
+              localStorage.setItem('hasCompletedOnboarding', 'true');
+            }}>
               <Link href="/">Skip</Link>
             </Button>
           </div>
@@ -62,7 +67,6 @@ export default function OnboardingAlphaInfoPage() {
             <div className="flex gap-1">
               <span className="block h-1.5 w-1.5 bg-muted rounded-full" />
               <span className="block h-1.5 w-6 bg-primary rounded-full" />
-              <span className="block h-1.5 w-1.5 bg-muted rounded-full" />
             </div>
           </div>
         </CardContent>

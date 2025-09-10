@@ -81,7 +81,6 @@ import HamstringRehabPage from "@/pages/rehab/acute-muscle/hamstring";
 import FootRehabPage from "@/pages/rehab/chronic-injuries/foot";
 import OnboardingWelcomePage from "@/pages/onboarding/welcome";
 import OnboardingAlphaInfoPage from "@/pages/onboarding/alpha-info";
-import OnboardingInstallPage from "@/pages/onboarding/install";
 import MarketplacePage from "@/pages/marketplace-page";
 import MarketplaceListingDetails from "@/pages/marketplace-listing-details";
 import MarketplaceCart from "@/pages/marketplace-cart";
@@ -274,7 +273,6 @@ function Router() {
         {/* Onboarding */}
         <Route path="/onboarding/welcome" component={OnboardingWelcomePage} />
         <Route path="/onboarding/alpha-info" component={OnboardingAlphaInfoPage} />
-        <Route path="/onboarding/install" component={OnboardingInstallPage} />
         
         {/* Auth */}
         <Route path="/auth" component={AuthPage} />

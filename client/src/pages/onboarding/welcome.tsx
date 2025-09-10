@@ -41,7 +41,6 @@ export default function OnboardingWelcomePage() {
             <div className="flex gap-1">
               <span className="block h-1.5 w-6 bg-primary rounded-full" />
               <span className="block h-1.5 w-1.5 bg-muted rounded-full" />
-              <span className="block h-1.5 w-1.5 bg-muted rounded-full" />
             </div>
           </div>
         </CardContent>
