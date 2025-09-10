@@ -91,20 +91,7 @@ export default function MarketplacePage() {
       {/* Header */}
       <header className="sticky top-0 z-50 p-4 flex items-center justify-between border-b border-slate-700 bg-slate-900/80 backdrop-blur-sm">
         <h1 className="text-xl font-bold tracking-wide">TrackLit</h1>
-        <div className="flex items-center gap-3">
-          {user?.role === 'coach' && (
-            <Button 
-              asChild
-              size="sm"
-              className="rounded-full bg-indigo-600 hover:bg-indigo-500 text-white px-4"
-            >
-              <Link href="/marketplace/create">
-                Create
-              </Link>
-            </Button>
-          )}
-          <Search className="w-6 h-6" />
-        </div>
+        <Search className="w-6 h-6" />
       </header>
 
       {/* Search + Filters */}
@@ -116,6 +103,18 @@ export default function MarketplacePage() {
           onChange={(e) => setFilters(prev => ({ ...prev, query: e.target.value }))}
           className="w-full p-3 rounded-2xl bg-slate-800 border border-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 text-white"
         />
+
+        {/* Create button for coaches */}
+        {user?.role === 'coach' && (
+          <Button 
+            asChild
+            className="rounded-full bg-indigo-600 hover:bg-indigo-500 text-white mb-3"
+          >
+            <Link href="/marketplace/create">
+              Create New Listing
+            </Link>
+          </Button>
+        )}
 
         <div className="flex gap-2 overflow-x-auto pb-2">
           {categories.map((category) => (
