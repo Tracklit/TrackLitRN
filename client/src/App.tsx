@@ -18,7 +18,6 @@ import {
 } from "@/pages/routes";
 import PhotoFinishAnalysisPage from "@/pages/tools/photo-finish-analysis-page";
 
-import { OnboardingFlow } from "@/components/onboarding-flow";
 import { PageTransition } from "@/components/page-transition";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
@@ -80,6 +79,9 @@ import JournalEntryPage from "@/pages/journal-entry-page";
 
 import HamstringRehabPage from "@/pages/rehab/acute-muscle/hamstring";
 import FootRehabPage from "@/pages/rehab/chronic-injuries/foot";
+import OnboardingWelcomePage from "@/pages/onboarding/welcome";
+import OnboardingAlphaInfoPage from "@/pages/onboarding/alpha-info";
+import OnboardingInstallPage from "@/pages/onboarding/install";
 import MarketplacePage from "@/pages/marketplace-page";
 import MarketplaceListingDetails from "@/pages/marketplace-listing-details";
 import MarketplaceCart from "@/pages/marketplace-cart";
@@ -269,6 +271,11 @@ function Router() {
         <ProtectedRoute path="/admin-panel" component={AdminPanelPage} />
         <ProtectedRoute path="/admin-affiliate-submissions" component={AdminAffiliateSubmissions} />
         
+        {/* Onboarding */}
+        <Route path="/onboarding/welcome" component={OnboardingWelcomePage} />
+        <Route path="/onboarding/alpha-info" component={OnboardingAlphaInfoPage} />
+        <Route path="/onboarding/install" component={OnboardingInstallPage} />
+        
         {/* Auth */}
         <Route path="/auth" component={AuthPage} />
         <Route path="/affiliate" component={AmbassadorLandingPage} />
@@ -302,31 +309,20 @@ function Router() {
 }
 
 function MainApp() {
-  const [showOnboarding, setShowOnboarding] = useState(false);
   const { user, loginMutation, registerMutation } = useAuth();
   const [location] = useLocation();
   
-  // Only show onboarding for new user registrations (not logins)
+  // Redirect to onboarding for new user registrations (not logins)
   useEffect(() => {
     // For simplicity, check if the user has completed onboarding before
     const hasCompletedOnboarding = localStorage.getItem('onboardingCompleted');
     
-    // Only show onboarding if user just registered (not logged in) and hasn't completed it before
+    // Only redirect to onboarding if user just registered (not logged in) and hasn't completed it before
     if (registerMutation.isSuccess && !hasCompletedOnboarding) {
-      setShowOnboarding(true);
+      window.location.href = '/onboarding/welcome';
     }
   }, [registerMutation.isSuccess, registerMutation.data]);
   
-  const handleOnboardingComplete = () => {
-    setShowOnboarding(false);
-    
-    // Award spikes to the user for completing onboarding (this could call an API)
-    // Implementation would go here
-    console.log("Onboarding completed!");
-    
-    // Mark onboarding as completed in localStorage
-    localStorage.setItem('onboardingCompleted', 'true');
-  };
 
   // Special handling for admin panel - render without any layout
   if (location === '/admin-panel') {
@@ -360,13 +356,7 @@ function MainApp() {
       {/* Bottom Navigation - Hide for chat routes, auth page, and affiliate page */}
       {!location.startsWith('/chat') && location !== '/auth' && location !== '/affiliate' && <BottomNavigation />}
       
-      {/* Onboarding flow - Only show for logged in users who haven't seen it */}
-      {user && showOnboarding && (
-        <OnboardingFlow 
-          onComplete={handleOnboardingComplete}
-          isFirstTimeUser={true} // We can check if user has used the app before
-        />
-      )}
+      {/* Onboarding flow moved to separate pages */}
       
       <Toaster />
     </div>
