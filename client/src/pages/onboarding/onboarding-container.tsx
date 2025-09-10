@@ -192,15 +192,15 @@ export default function OnboardingContainer() {
 
       {/* Navigation dots */}
       <div className="flex justify-center mt-6 mb-8">
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           {steps.map((_, index) => (
             <button
               key={index}
               onClick={() => setCurrentStep(index)}
-              className={`h-2 rounded-full transition-all duration-300 ${
+              className={`h-3 rounded-full transition-all duration-300 ${
                 currentStep === index 
-                  ? 'w-8 bg-primary' 
-                  : 'w-2 bg-gray-600 hover:bg-gray-500'
+                  ? 'w-12 bg-blue-500' 
+                  : 'w-3 bg-gray-400 hover:bg-gray-300'
               }`}
               aria-label={`Go to step ${index + 1}`}
             />
