@@ -1,48 +1,60 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Input } from "@/components/ui/input";
+import { Search, RefreshCcw, Star, Filter, ShoppingCart, Home, Grid, User, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LinkedListingCard, ListingCardSkeleton } from "@/components/ui/listing-card";
-import { Search, Filter, Grid, List, Plus, ShoppingCart } from "lucide-react";
-import { Link } from "wouter";
-import { cn } from "@/lib/utils";
+import { Link, useLocation } from "wouter";
+import { useAuth } from "@/hooks/useAuth";
+
+interface MarketplaceListing {
+  id: number;
+  type: 'program' | 'consulting';
+  title: string;
+  subtitle?: string;
+  heroUrl?: string;
+  priceCents: number;
+  currency: string;
+  tags: string[];
+  badges: string[];
+  rating: any;
+  visibility: string;
+  coach: {
+    id: number;
+    name: string;
+    profileImageUrl?: string;
+  };
+  typeSpecific?: {
+    durationWeeks?: number;
+    category?: string;
+    level?: string;
+    sessionDurationMinutes?: number;
+    maxParticipants?: number;
+  };
+}
 
 interface SearchFilters {
   query: string;
-  type: 'all' | 'program' | 'consulting';
   category: string;
-  sort: string;
 }
 
 export default function MarketplacePage() {
+  const { user } = useAuth();
+  const [location] = useLocation();
   const [filters, setFilters] = useState<SearchFilters>({
     query: '',
-    type: 'all',
-    category: '',
-    sort: 'relevance'
+    category: ''
   });
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
 
-  const { data: listings, isLoading, error } = useQuery({
-    queryKey: ['/api/marketplace/listings', filters, currentPage],
+  const { data: listings, isLoading, error, refetch } = useQuery({
+    queryKey: ['/api/marketplace/listings', filters],
     queryFn: async () => {
       const params = new URLSearchParams();
       
       if (filters.query) params.append('query', filters.query);
-      if (filters.type !== 'all') params.append('type', filters.type);
       if (filters.category) params.append('category', filters.category);
-      if (filters.sort) params.append('sort', filters.sort);
-      params.append('page', currentPage.toString());
+      params.append('sort', 'newest');
       params.append('limit', '20');
 
       const response = await fetch(`/api/marketplace/listings?${params}`);
@@ -51,223 +63,193 @@ export default function MarketplacePage() {
     }
   });
 
-  const updateFilter = <K extends keyof SearchFilters>(key: K, value: SearchFilters[K]) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-    setCurrentPage(1); // Reset to first page when filters change
+  const categories = ["Sprint", "Distance", "Jumping", "Throwing", "Combined", "Strength"];
+
+  const formatPrice = (priceCents: number, currency: string = 'USD') => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(priceCents / 100);
   };
 
-  const categories = [
-    'Sprint', 'Distance', 'Jumping', 'Throwing', 'Combined Events', 'Strength & Conditioning'
-  ];
+  const handleCategoryFilter = (category: string) => {
+    const newCategory = selectedCategory === category ? '' : category;
+    setSelectedCategory(newCategory);
+    setFilters(prev => ({ ...prev, category: newCategory }));
+  };
 
-  const sortOptions = [
-    { value: 'relevance', label: 'Most Relevant' },
-    { value: 'newest', label: 'Newest First' },
-    { value: 'price_asc', label: 'Price: Low to High' },
-    { value: 'price_desc', label: 'Price: High to Low' }
-  ];
+  const handleRetry = () => {
+    refetch();
+  };
+
+  const isActiveTab = (path: string) => location === path;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900 text-white flex flex-col">
       {/* Header */}
-      <div className="bg-white/10 backdrop-blur-lg border-b border-white/10">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-white mb-2">TrackLit Marketplace</h1>
-              <p className="text-gray-300">Discover training programs and coaching from world-class athletes</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <Link href="/marketplace/cart">
-                <Button variant="outline" size="sm" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  Cart
-                </Button>
-              </Link>
-              <Link href="/marketplace/create">
-                <Button size="sm" className="bg-gradient-to-r from-blue-600 to-purple-600">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Listing
-                </Button>
-              </Link>
-            </div>
-          </div>
+      <header className="sticky top-0 z-50 p-4 flex items-center justify-between border-b border-slate-700 bg-slate-900/80 backdrop-blur-sm">
+        <h1 className="text-xl font-bold tracking-wide">TrackLit</h1>
+        <Search className="w-6 h-6" />
+      </header>
 
-          {/* Search and Filters */}
-          <div className="flex flex-col lg:flex-row gap-4 mb-6">
-            {/* Search Bar */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Search programs, coaches, or keywords..."
-                value={filters.query}
-                onChange={(e) => updateFilter('query', e.target.value)}
-                className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:bg-white/20"
-              />
-            </div>
+      {/* Search + Filters */}
+      <div className="p-4 space-y-3">
+        <input
+          type="text"
+          placeholder="Search programs, coaches, or keywords..."
+          value={filters.query}
+          onChange={(e) => setFilters(prev => ({ ...prev, query: e.target.value }))}
+          className="w-full p-3 rounded-2xl bg-slate-800 border border-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 text-white"
+        />
 
-            {/* Type Filter */}
-            <Tabs 
-              value={filters.type} 
-              onValueChange={(value) => updateFilter('type', value as SearchFilters['type'])}
-              className="w-auto"
-            >
-              <TabsList className="bg-white/10 border-white/20">
-                <TabsTrigger value="all" className="data-[state=active]:bg-white/20 text-white">All</TabsTrigger>
-                <TabsTrigger value="program" className="data-[state=active]:bg-white/20 text-white">Programs</TabsTrigger>
-                <TabsTrigger value="consulting" className="data-[state=active]:bg-white/20 text-white">Consulting</TabsTrigger>
-              </TabsList>
-            </Tabs>
-
-            {/* Sort */}
-            <Select value={filters.sort} onValueChange={(value) => updateFilter('sort', value)}>
-              <SelectTrigger className="w-48 bg-white/10 border-white/20 text-white">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {sortOptions.map(option => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* View Mode Toggle */}
-            <div className="flex items-center border border-white/20 rounded-md bg-white/10">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setViewMode('grid')}
-                className={cn(
-                  "text-white hover:bg-white/20",
-                  viewMode === 'grid' && "bg-white/20"
-                )}
-              >
-                <Grid className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setViewMode('list')}
-                className={cn(
-                  "text-white hover:bg-white/20",
-                  viewMode === 'list' && "bg-white/20"
-                )}
-              >
-                <List className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Category Filters */}
-          <div className="flex flex-wrap gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          {categories.map((category) => (
             <Button
-              variant={filters.category === '' ? "default" : "outline"}
-              size="sm"
-              onClick={() => updateFilter('category', '')}
-              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+              key={category}
+              variant="outline"
+              onClick={() => handleCategoryFilter(category)}
+              className={`rounded-full whitespace-nowrap transition-colors ${
+                selectedCategory === category
+                  ? 'bg-indigo-500 text-white border-indigo-500'
+                  : 'bg-slate-700/40 text-slate-200 border-slate-600 hover:bg-indigo-500 hover:text-white'
+              }`}
             >
-              All Categories
+              {category}
             </Button>
-            {categories.map(category => (
-              <Button
-                key={category}
-                variant={filters.category === category ? "default" : "outline"}
-                size="sm"
-                onClick={() => updateFilter('category', category)}
-                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-              >
-                {category}
-              </Button>
-            ))}
-          </div>
+          ))}
         </div>
       </div>
 
-      {/* Content */}
-      <div className="container mx-auto px-4 py-8">
-        {/* Results Header */}
-        {listings && (
-          <div className="flex items-center justify-between mb-6">
-            <div className="text-white">
-              <span className="text-lg font-semibold">{listings.total}</span>
-              <span className="text-gray-300 ml-2">results found</span>
-              {filters.query && (
-                <span className="text-gray-300 ml-1">for "{filters.query}"</span>
-              )}
-            </div>
-            {listings.nextPage && (
-              <Button
-                variant="outline"
-                onClick={() => setCurrentPage(prev => prev + 1)}
-                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-              >
-                Load More
-              </Button>
-            )}
-          </div>
-        )}
-
-        {/* Error State */}
-        {error && (
-          <div className="text-center py-12">
-            <div className="text-red-400 mb-4">Failed to load listings</div>
-            <Button variant="outline" onClick={() => window.location.reload()}>
-              Try Again
-            </Button>
-          </div>
-        )}
-
-        {/* Loading State */}
+      {/* Content Area */}
+      <div className="flex-1 p-4">
         {isLoading && (
-          <div className={cn(
-            "grid gap-6",
-            viewMode === 'grid' 
-              ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-              : "grid-cols-1 max-w-4xl mx-auto"
-          )}>
-            {Array.from({ length: 8 }).map((_, i) => (
-              <ListingCardSkeleton key={i} size={viewMode === 'list' ? 'lg' : 'md'} />
+          <div className="grid gap-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div
+                key={i}
+                className="h-28 rounded-2xl bg-slate-700 animate-pulse"
+              ></div>
             ))}
           </div>
         )}
 
-        {/* Listings Grid */}
-        {listings && listings.items.length > 0 && (
-          <div className={cn(
-            "grid gap-6",
-            viewMode === 'grid' 
-              ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-              : "grid-cols-1 max-w-4xl mx-auto"
-          )}>
-            {listings.items.map((listing: any) => (
-              <LinkedListingCard
-                key={listing.id}
-                listing={listing}
-                href={`/marketplace/listings/${listing.id}`}
-                size={viewMode === 'list' ? 'lg' : 'md'}
-                className="bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white/20"
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Empty State */}
-        {listings && listings.items.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-gray-400 mb-4 text-lg">No listings found</div>
-            <p className="text-gray-500 mb-6">Try adjusting your search or filters</p>
+        {!isLoading && error && (
+          <div className="flex flex-col items-center justify-center text-center gap-4 mt-20">
+            <div className="w-40 h-40 bg-slate-700 rounded-2xl flex items-center justify-center">
+              <RefreshCcw className="w-12 h-12 text-slate-400" />
+            </div>
+            <p className="text-lg font-medium">Failed to load listings</p>
             <Button 
-              variant="outline" 
-              onClick={() => setFilters({ query: '', type: 'all', category: '', sort: 'relevance' })}
-              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+              onClick={handleRetry} 
+              className="gap-2 rounded-full bg-indigo-600 hover:bg-indigo-500"
             >
-              Clear Filters
+              <RefreshCcw className="w-4 h-4" /> Try Again
             </Button>
           </div>
+        )}
+
+        {!isLoading && !error && listings && (
+          <>
+            {listings.items && listings.items.length > 0 ? (
+              <div className="grid gap-4">
+                {listings.items.map((listing: MarketplaceListing) => (
+                  <Card
+                    key={listing.id}
+                    className="rounded-2xl bg-slate-800 border-slate-700 hover:border-indigo-500 transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/20"
+                  >
+                    <CardContent className="p-4 flex flex-col gap-2">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold line-clamp-1">{listing.title}</h3>
+                          {listing.subtitle && (
+                            <p className="text-sm text-slate-400 line-clamp-1">{listing.subtitle}</p>
+                          )}
+                        </div>
+                        <Star className="w-5 h-5 text-yellow-400 flex-shrink-0 ml-2" />
+                      </div>
+                      
+                      <p className="text-slate-400 text-sm">By {listing.coach.name}</p>
+                      
+                      {/* Tags and Badges */}
+                      {(listing.tags.length > 0 || listing.badges.length > 0) && (
+                        <div className="flex gap-1 flex-wrap">
+                          {listing.badges.map((badge, index) => (
+                            <Badge key={index} variant="secondary" className="text-xs bg-orange-500/20 text-orange-300 border-orange-500/30">
+                              {badge}
+                            </Badge>
+                          ))}
+                          {listing.tags.slice(0, 2).map((tag, index) => (
+                            <Badge key={index} variant="outline" className="text-xs border-slate-600 text-slate-300">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="font-bold text-lg text-indigo-400">
+                          {formatPrice(listing.priceCents, listing.currency)}
+                        </span>
+                        <Button 
+                          asChild
+                          className="rounded-full bg-indigo-600 hover:bg-indigo-500 transition-colors"
+                        >
+                          <Link href={`/marketplace/listing/${listing.id}`}>
+                            View
+                          </Link>
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center text-center gap-4 mt-20">
+                <div className="w-40 h-40 bg-slate-700 rounded-2xl flex items-center justify-center">
+                  <Search className="w-12 h-12 text-slate-400" />
+                </div>
+                <p className="text-lg font-medium">No listings found</p>
+                <p className="text-slate-400">Try adjusting your search or filters</p>
+                <Button 
+                  onClick={() => {
+                    setFilters({ query: '', category: '' });
+                    setSelectedCategory('');
+                  }}
+                  className="rounded-full bg-slate-700 hover:bg-slate-600"
+                >
+                  Clear Filters
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
+
+      {/* Bottom Navigation */}
+      <nav className="sticky bottom-0 p-4 flex justify-around border-t border-slate-700 bg-slate-900/90 backdrop-blur-sm">
+        <Link href="/" className={`flex flex-col items-center text-xs transition-colors ${isActiveTab('/') ? 'text-indigo-400' : 'text-slate-300 hover:text-indigo-400'}`}>
+          <Home className="w-5 h-5 mb-1" />
+          Home
+        </Link>
+        <Link href="/marketplace" className={`flex flex-col items-center text-xs transition-colors ${isActiveTab('/marketplace') ? 'text-indigo-400' : 'text-slate-300 hover:text-indigo-400'}`}>
+          <Grid className="w-5 h-5 mb-1" />
+          Categories
+        </Link>
+        <Link href="/programs" className={`flex flex-col items-center text-xs transition-colors ${isActiveTab('/programs') ? 'text-indigo-400' : 'text-slate-300 hover:text-indigo-400'}`}>
+          <BookOpen className="w-5 h-5 mb-1" />
+          My Programs
+        </Link>
+        <button className="flex flex-col items-center text-xs text-slate-300 hover:text-indigo-400 transition-colors">
+          <ShoppingCart className="w-5 h-5 mb-1" />
+          Cart
+        </button>
+        <Link href="/profile" className={`flex flex-col items-center text-xs transition-colors ${isActiveTab('/profile') ? 'text-indigo-400' : 'text-slate-300 hover:text-indigo-400'}`}>
+          <User className="w-5 h-5 mb-1" />
+          Profile
+        </Link>
+      </nav>
     </div>
   );
 }
