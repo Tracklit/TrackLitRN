@@ -5,7 +5,7 @@ import { Sparkles, ArrowRight, Info, Coins, Gift } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 interface OnboardingStep {
   id: string;
@@ -30,6 +30,9 @@ export default function OnboardingContainer() {
     onSuccess: () => {
       setClaimedSpikes(true);
       animateCountUp();
+      // Invalidate cache to refresh user data and spikes balance
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/spike-transactions'] });
     }
   });
 

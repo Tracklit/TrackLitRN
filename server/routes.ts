@@ -971,22 +971,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Add 100 spikes as welcome bonus
       const welcomeBonus = 100;
-      const newSpikeTotal = (user.spikes || 0) + welcomeBonus;
       
-      // Update user's spike count
-      await dbStorage.updateUserSpikes(userId, newSpikeTotal);
-      
-      // Add transaction record for welcome bonus
-      await dbStorage.addSpikeTransaction({
-        userId,
-        amount: welcomeBonus,
-        description: "Welcome bonus",
-        type: "earned"
-      });
+      // Add spikes to user and create transaction
+      const result = await dbStorage.addSpikesToUser(
+        userId, 
+        welcomeBonus, 
+        'onboarding', 
+        null,
+        'Welcome bonus'
+      );
 
       res.json({ 
         success: true, 
-        spikes: newSpikeTotal,
+        spikes: result.user.spikes,
         bonus: welcomeBonus
       });
     } catch (error) {
