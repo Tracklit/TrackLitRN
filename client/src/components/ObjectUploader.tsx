@@ -1,10 +1,5 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import type { ReactNode } from "react";
-import Uppy from "@uppy/core";
-import { DashboardModal } from "@uppy/react";
-// CSS imports removed due to package compatibility issues
-import AwsS3 from "@uppy/aws-s3";
-import type { UploadResult } from "@uppy/core";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,9 +14,7 @@ interface ObjectUploaderProps {
     method: "PUT";
     url: string;
   }>;
-  onComplete?: (
-    result: UploadResult<Record<string, unknown>, Record<string, unknown>>
-  ) => void;
+  onComplete?: (result: { uploadURL: string; file: File }) => void;
   buttonClassName?: string;
   children: ReactNode;
   requiresSubscription?: boolean;
@@ -55,39 +48,88 @@ export function ObjectUploader({
   children,
   requiresSubscription = true,
 }: ObjectUploaderProps) {
-  const [showModal, setShowModal] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { user, isSubscriber, subscriptionTier, isLoading } = useAuth();
   const { toast } = useToast();
 
-  const [uppy] = useState(() =>
-    new Uppy({
-      restrictions: {
-        maxNumberOfFiles,
-        maxFileSize,
-        allowedFileTypes: ['image/*'], // Only allow images for marketplace uploads
-      },
-      autoProceed: false,
-    })
-      .use(AwsS3, {
-        shouldUseMultipart: false,
-        getUploadParameters: onGetUploadParameters,
-      })
-      .on("complete", (result) => {
-        onComplete?.(result);
-        setShowModal(false);
-      })
-  );
+  // Handle file selection and upload
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
 
-  // Handle subscription check
+    const file = files[0];
+
+    // Validate file size
+    if (file.size > maxFileSize) {
+      toast({
+        title: "File Too Large",
+        description: `File size must be less than ${Math.round(maxFileSize / 1048576)}MB`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate file type (images only for marketplace)
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid File Type",
+        description: "Only image files are allowed",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      // Get upload parameters
+      const uploadParams = await onGetUploadParameters();
+      
+      // Upload file
+      const response = await fetch(uploadParams.url, {
+        method: uploadParams.method,
+        body: file,
+        headers: {
+          'Content-Type': file.type,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.statusText}`);
+      }
+
+      // Extract the URL from the response
+      const uploadURL = uploadParams.url.split('?')[0]; // Remove query parameters
+
+      // Call completion callback
+      onComplete?.({ uploadURL, file });
+
+      toast({
+        title: "Upload Successful",
+        description: "Your image has been uploaded successfully",
+        variant: "default"
+      });
+
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload image. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploading(false);
+      // Clear the input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  // Handle subscription check and trigger file input
   const handleUploadClick = () => {
-    console.log('Upload button clicked!', {
-      isLoading,
-      requiresSubscription,
-      isSubscriber,
-      showModal
-    });
-    
-    if (isLoading) return;
+    if (isLoading || isUploading) return;
 
     if (requiresSubscription && !isSubscriber) {
       toast({
@@ -98,8 +140,8 @@ export function ObjectUploader({
       return;
     }
 
-    console.log('Opening modal...');
-    setShowModal(true);
+    // Trigger file input
+    fileInputRef.current?.click();
   };
 
   // Show upgrade prompt for non-subscribers
@@ -150,9 +192,14 @@ export function ObjectUploader({
         type="button"
         onClick={handleUploadClick}
         className={buttonClassName}
-        disabled={isLoading}
+        disabled={isLoading || isUploading}
       >
-        {isLoading ? (
+        {isUploading ? (
+          <div className="flex items-center">
+            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+            Uploading...
+          </div>
+        ) : isLoading ? (
           <div className="flex items-center">
             <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
             Loading...
@@ -165,16 +212,14 @@ export function ObjectUploader({
         )}
       </Button>
 
-      <DashboardModal
-        uppy={uppy}
-        open={showModal}
-        onRequestClose={() => setShowModal(false)}
-        proudlyDisplayPoweredByUppy={false}
-        plugins={['Dashboard']}
-        metaFields={[
-          { id: 'name', name: 'Name', placeholder: 'Image name' },
-          { id: 'caption', name: 'Caption', placeholder: 'Describe this image...' },
-        ]}
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileSelect}
+        className="hidden"
+        multiple={maxNumberOfFiles > 1}
       />
     </div>
   );
