@@ -315,12 +315,41 @@ export default function MarketplaceCreateListingPage() {
                             const error = await response.json();
                             throw new Error(error.message || 'Failed to get upload URL');
                           }
-                          const { uploadURL } = await response.json();
-                          return { method: 'PUT', url: uploadURL };
+                          const { uploadURL, publicURL } = await response.json();
+                          return { method: 'PUT', url: uploadURL, publicURL };
                         }}
-                        onComplete={(result) => {
-                          // ObjectUploader returns { uploadURL, file }
-                          programForm.setValue('previewImageUrl', result.uploadURL);
+                        onComplete={async (result) => {
+                          // Extract public URL from upload result
+                          const publicURL = (result as any).publicURL || result.uploadURL.split('?')[0];
+                          
+                          try {
+                            // Make the image publicly accessible
+                            const response = await fetch('/api/marketplace/images', {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ imageURL: publicURL })
+                            });
+                            
+                            if (response.ok) {
+                              programForm.setValue('previewImageUrl', publicURL);
+                              toast({
+                                title: "Image uploaded successfully!",
+                                description: "Your preview image is now publicly accessible."
+                              });
+                            } else {
+                              const errorData = await response.json();
+                              throw new Error(errorData.error || 'Failed to set image as public');
+                            }
+                          } catch (error) {
+                            console.error('Error setting image as public:', error);
+                            toast({
+                              title: "Upload warning",
+                              description: "Image uploaded but may not be publicly visible. Please try again.",
+                              variant: "destructive"
+                            });
+                            // Still set the URL for retry
+                            programForm.setValue('previewImageUrl', publicURL);
+                          }
                         }}
                         buttonClassName="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                       >
@@ -542,12 +571,41 @@ export default function MarketplaceCreateListingPage() {
                             const error = await response.json();
                             throw new Error(error.message || 'Failed to get upload URL');
                           }
-                          const { uploadURL } = await response.json();
-                          return { method: 'PUT', url: uploadURL };
+                          const { uploadURL, publicURL } = await response.json();
+                          return { method: 'PUT', url: uploadURL, publicURL };
                         }}
-                        onComplete={(result) => {
-                          // ObjectUploader returns { uploadURL, file }
-                          consultingForm.setValue('previewImageUrl', result.uploadURL);
+                        onComplete={async (result) => {
+                          // Extract public URL from upload result
+                          const publicURL = (result as any).publicURL || result.uploadURL.split('?')[0];
+                          
+                          try {
+                            // Make the image publicly accessible
+                            const response = await fetch('/api/marketplace/images', {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ imageURL: publicURL })
+                            });
+                            
+                            if (response.ok) {
+                              consultingForm.setValue('previewImageUrl', publicURL);
+                              toast({
+                                title: "Image uploaded successfully!",
+                                description: "Your preview image is now publicly accessible."
+                              });
+                            } else {
+                              const errorData = await response.json();
+                              throw new Error(errorData.error || 'Failed to set image as public');
+                            }
+                          } catch (error) {
+                            console.error('Error setting image as public:', error);
+                            toast({
+                              title: "Upload warning",
+                              description: "Image uploaded but may not be publicly visible. Please try again.",
+                              variant: "destructive"
+                            });
+                            // Still set the URL for retry
+                            consultingForm.setValue('previewImageUrl', publicURL);
+                          }
                         }}
                         buttonClassName="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                       >

@@ -154,6 +154,68 @@ export class ObjectStorageService {
     });
   }
 
+  // Gets the upload URL for a marketplace image (public).
+  async getMarketplaceImageUploadURL(): Promise<string> {
+    const publicPaths = this.getPublicObjectSearchPaths();
+    if (publicPaths.length === 0) {
+      throw new Error(
+        "PUBLIC_OBJECT_SEARCH_PATHS not set. Create a bucket in 'Object Storage' " +
+          "tool and set PUBLIC_OBJECT_SEARCH_PATHS env var."
+      );
+    }
+
+    // Use the first public path for marketplace images
+    const publicBasePath = publicPaths[0];
+    const objectId = randomUUID();
+    const fullPath = `${publicBasePath}/marketplace/images/${objectId}`;
+
+    const { bucketName, objectName } = parseObjectPath(fullPath);
+
+    // Sign URL for PUT method with TTL
+    return signObjectURL({
+      bucketName,
+      objectName,
+      method: "PUT",
+      ttlSec: 900,
+    });
+  }
+
+  // Makes a marketplace image publicly accessible by setting ACL policy
+  async makeMarketplaceImagePublic(publicURL: string): Promise<void> {
+    let bucketName: string;
+    let objectName: string;
+    
+    // Handle full HTTPS URLs
+    if (publicURL.startsWith('https://storage.googleapis.com/')) {
+      const url = new URL(publicURL);
+      const pathParts = url.pathname.split('/').filter(p => p);
+      if (pathParts.length < 2) {
+        throw new Error('Invalid storage URL format');
+      }
+      bucketName = pathParts[0];
+      objectName = pathParts.slice(1).join('/');
+    } else {
+      // Handle path format "/bucket/object"
+      const parsed = parseObjectPath(publicURL);
+      bucketName = parsed.bucketName;
+      objectName = parsed.objectName;
+    }
+    
+    // Validate that this is a marketplace image in the allowed path
+    if (!objectName.startsWith('public/marketplace/images/') && !objectName.startsWith('marketplace/images/')) {
+      throw new Error('Invalid marketplace image path - only marketplace images can be made public');
+    }
+    
+    const bucket = objectStorageClient.bucket(bucketName);
+    const file = bucket.file(objectName);
+    
+    // Set public ACL policy
+    await setObjectAclPolicy(file, {
+      visibility: "public",
+      accessGroups: []
+    });
+  }
+
   // Gets the object entity file from the object path.
   async getObjectEntityFile(objectPath: string): Promise<File> {
     if (!objectPath.startsWith("/objects/")) {

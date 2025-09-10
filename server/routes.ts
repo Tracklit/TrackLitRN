@@ -10076,8 +10076,15 @@ Submission Details:
       const { ObjectStorageService } = await import("./objectStorage");
       const objectStorageService = new ObjectStorageService();
       
-      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
-      res.json({ uploadURL });
+      const uploadURL = await objectStorageService.getMarketplaceImageUploadURL();
+      
+      // Extract the public URL from the signed upload URL
+      const publicURL = uploadURL.split('?')[0]; // Remove query parameters to get permanent URL
+      
+      res.json({ 
+        uploadURL,
+        publicURL
+      });
     } catch (error) {
       console.error("Error generating upload URL:", error);
       res.status(500).json({ error: "Failed to generate upload URL" });
@@ -10109,16 +10116,14 @@ Submission Details:
       const { ObjectStorageService } = await import("./objectStorage");
       const objectStorageService = new ObjectStorageService();
       
-      // Set ACL policy for the uploaded image
-      const objectPath = await objectStorageService.trySetObjectEntityAclPolicy(
-        imageURL,
-        {
-          owner: user.id.toString(),
-          visibility: "public", // Marketplace images are public
-        }
-      );
+      // Make the marketplace image publicly accessible
+      await objectStorageService.makeMarketplaceImagePublic(imageURL);
 
-      res.json({ objectPath });
+      res.json({ 
+        success: true, 
+        message: "Image set as public successfully",
+        publicURL: imageURL
+      });
     } catch (error) {
       console.error("Error setting image ACL:", error);
       res.status(500).json({ error: "Failed to process image" });
