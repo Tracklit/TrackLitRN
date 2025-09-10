@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 // Form schemas
 const programListingFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
+  description: z.string().min(6, "Description must be at least 6 characters"),
   previewImageUrl: z.string().optional(),
   price: z.number().min(0.01, "Price must be at least $0.01"),
   currency: z.string().default('USD'),
@@ -30,13 +30,12 @@ const programListingFormSchema = z.object({
   visibility: z.enum(['draft', 'public', 'unlisted']).default('draft'),
   programId: z.number().min(1, "Please select a program"),
   durationWeeks: z.number().min(1, "Duration must be at least 1 week"),
-  category: z.string().min(1, "Please select a category"),
-  compareAtPrice: z.number().optional(),
+  category: z.string().optional().default("General"),
 });
 
 const consultingListingFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
+  description: z.string().min(6, "Description must be at least 6 characters"),
   previewImageUrl: z.string().optional(),
   price: z.number().min(0.01, "Price must be at least $0.01"),
   currency: z.string().default('USD'),
@@ -48,7 +47,7 @@ const consultingListingFormSchema = z.object({
   maxParticipants: z.number().min(1, "Must allow at least 1 participant"),
   deliveryFormat: z.string().min(1, "Please select delivery format"),
   sessionDurationMinutes: z.number().min(15, "Minimum session duration is 15 minutes"),
-  category: z.string().min(1, "Please select a category"),
+  category: z.string().optional().default("General"),
   requirements: z.string().optional(),
   whatYouGet: z.string().optional(),
 });
@@ -87,7 +86,7 @@ export default function MarketplaceCreateListingPage() {
       visibility: 'draft' as const,
       programId: 0,
       durationWeeks: 8,
-      category: '',
+      category: 'General',
     }
   });
 
@@ -108,7 +107,7 @@ export default function MarketplaceCreateListingPage() {
       maxParticipants: 1,
       deliveryFormat: 'video-call',
       sessionDurationMinutes: 60,
-      category: '',
+      category: 'General',
       requirements: '',
       whatYouGet: '',
     }
@@ -159,7 +158,7 @@ export default function MarketplaceCreateListingPage() {
   });
 
   const handleSubmitProgram = (data: ProgramListingForm) => {
-    const { programId, durationWeeks, category, compareAtPrice, price, previewImageUrl, description, ...listingData } = data;
+    const { programId, durationWeeks, category, price, previewImageUrl, description, ...listingData } = data;
     
     createListingMutation.mutate({
       listing: { 
@@ -173,7 +172,6 @@ export default function MarketplaceCreateListingPage() {
         programId,
         durationWeeks,
         category,
-        compareAtPriceCents: compareAtPrice ? Math.round(compareAtPrice * 100) : undefined,
       }
     });
   };
@@ -217,7 +215,7 @@ export default function MarketplaceCreateListingPage() {
   };
 
   const levels = ['beginner', 'intermediate', 'advanced'];
-  const categories = ['sprint', 'distance', 'jump', 'throw', 'combined', 'strength'];
+  const categories = ['General', 'sprint', 'distance', 'jump', 'throw', 'combined', 'strength'];
   const deliveryFormats = ['video-call', 'in-person', 'phone-call'];
 
   return (
@@ -359,8 +357,17 @@ export default function MarketplaceCreateListingPage() {
                       
                       {programForm.watch('previewImageUrl') && (
                         <div className="bg-white/10 backdrop-blur-sm border-white/20 rounded-lg p-4">
-                          <p className="text-white text-sm mb-2">Current image:</p>
-                          <p className="text-gray-300 text-xs break-all">
+                          <p className="text-white text-sm mb-2">Preview Image:</p>
+                          <img 
+                            src={programForm.watch('previewImageUrl')} 
+                            alt="Preview" 
+                            className="w-full h-32 object-cover rounded-lg"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                            }}
+                          />
+                          <p className="text-gray-300 text-xs mt-2 break-all">
                             {programForm.watch('previewImageUrl')}
                           </p>
                         </div>
@@ -429,25 +436,6 @@ export default function MarketplaceCreateListingPage() {
                               type="number" 
                               {...field} 
                               onChange={(e) => field.onChange(parseInt(e.target.value))}
-                              className="bg-white/10 border-white/20 text-white" 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={programForm.control}
-                      name="compareAtPrice"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-white">Compare at Price (optional)</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number" 
-                              step="0.01"
-                              {...field} 
-                              onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                               className="bg-white/10 border-white/20 text-white" 
                             />
                           </FormControl>
@@ -624,8 +612,17 @@ export default function MarketplaceCreateListingPage() {
                       
                       {consultingForm.watch('previewImageUrl') && (
                         <div className="bg-white/10 backdrop-blur-sm border-white/20 rounded-lg p-4">
-                          <p className="text-white text-sm mb-2">Current image:</p>
-                          <p className="text-gray-300 text-xs break-all">
+                          <p className="text-white text-sm mb-2">Preview Image:</p>
+                          <img 
+                            src={consultingForm.watch('previewImageUrl')} 
+                            alt="Preview" 
+                            className="w-full h-32 object-cover rounded-lg"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                            }}
+                          />
+                          <p className="text-gray-300 text-xs mt-2 break-all">
                             {consultingForm.watch('previewImageUrl')}
                           </p>
                         </div>
