@@ -104,33 +104,35 @@ export default function MarketplacePage() {
           className="w-full p-3 rounded-2xl bg-slate-800 border border-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 text-white"
         />
 
-        {/* Create button for coaches and admins */}
-        {(user?.role === 'coach' || user?.role === 'admin') && (
-          <Button 
-            asChild
-            className="rounded-full bg-indigo-600 hover:bg-indigo-500 text-white mb-3"
-          >
-            <Link href="/marketplace/create">
-              Create New Listing
-            </Link>
-          </Button>
-        )}
-
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {categories.map((category) => (
-            <Button
-              key={category}
-              variant="outline"
-              onClick={() => handleCategoryFilter(category)}
-              className={`rounded-full whitespace-nowrap transition-colors ${
-                selectedCategory === category
-                  ? 'bg-indigo-500 text-white border-indigo-500'
-                  : 'bg-slate-700/40 text-slate-200 border-slate-600 hover:bg-indigo-500 hover:text-white'
-              }`}
+        <div className="flex items-center justify-between gap-2 pb-2">
+          <div className="flex gap-2 overflow-x-auto">
+            {categories.map((category) => (
+              <Button
+                key={category}
+                variant="outline"
+                onClick={() => handleCategoryFilter(category)}
+                className={`rounded-full whitespace-nowrap transition-colors ${
+                  selectedCategory === category
+                    ? 'bg-indigo-500 text-white border-indigo-500'
+                    : 'bg-slate-700/40 text-slate-200 border-slate-600 hover:bg-indigo-500 hover:text-white'
+                }`}
+              >
+                {category}
+              </Button>
+            ))}
+          </div>
+          
+          {/* Create button for coaches and admins */}
+          {(user?.role === 'coach' || user?.role === 'admin') && (
+            <Button 
+              asChild
+              className="rounded-full bg-indigo-600 hover:bg-indigo-500 text-white flex-shrink-0"
             >
-              {category}
+              <Link href="/marketplace/create">
+                Create New Listing
+              </Link>
             </Button>
-          ))}
+          )}
         </div>
       </div>
 
