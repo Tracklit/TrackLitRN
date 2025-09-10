@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, RefreshCcw, Star, Filter, ShoppingCart, Home, Grid, User, BookOpen } from "lucide-react";
+import { Search, RefreshCcw, Star, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -134,8 +134,8 @@ export default function MarketplacePage() {
         </div>
       </div>
 
-      {/* Content Area */}
-      <div className="flex-1 p-4">
+      {/* Content Area with bottom padding for navigation */}
+      <div className="flex-1 p-4 pb-20">
         {isLoading && (
           <div className="grid gap-4">
             {[1, 2, 3, 4, 5].map((i) => (
@@ -239,29 +239,6 @@ export default function MarketplacePage() {
         )}
       </div>
 
-      {/* Bottom Navigation */}
-      <nav className="sticky bottom-0 p-4 flex justify-around border-t border-slate-700 bg-slate-900/90 backdrop-blur-sm">
-        <Link href="/" className={`flex flex-col items-center text-xs transition-colors ${isActiveTab('/') ? 'text-indigo-400' : 'text-slate-300 hover:text-indigo-400'}`}>
-          <Home className="w-5 h-5 mb-1" />
-          Home
-        </Link>
-        <Link href="/marketplace" className={`flex flex-col items-center text-xs transition-colors ${isActiveTab('/marketplace') ? 'text-indigo-400' : 'text-slate-300 hover:text-indigo-400'}`}>
-          <Grid className="w-5 h-5 mb-1" />
-          Categories
-        </Link>
-        <Link href="/programs" className={`flex flex-col items-center text-xs transition-colors ${isActiveTab('/programs') ? 'text-indigo-400' : 'text-slate-300 hover:text-indigo-400'}`}>
-          <BookOpen className="w-5 h-5 mb-1" />
-          My Programs
-        </Link>
-        <button className="flex flex-col items-center text-xs text-slate-300 hover:text-indigo-400 transition-colors">
-          <ShoppingCart className="w-5 h-5 mb-1" />
-          Cart
-        </button>
-        <Link href="/profile" className={`flex flex-col items-center text-xs transition-colors ${isActiveTab('/profile') ? 'text-indigo-400' : 'text-slate-300 hover:text-indigo-400'}`}>
-          <User className="w-5 h-5 mb-1" />
-          Profile
-        </Link>
-      </nav>
     </div>
   );
 }
