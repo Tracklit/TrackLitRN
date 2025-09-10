@@ -20,7 +20,6 @@ import {
   faBullseye,
   faShield,
   faHeart,
-  faGamepad
 } from '@fortawesome/free-solid-svg-icons';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -197,23 +196,6 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               >
                 <FontAwesomeIcon icon={faChartLine} className="h-4 w-4 mr-3" />
                 Results
-              </div>
-            </Link>
-            
-            {/* Fun Section */}
-            <div className="pt-4 pb-2">
-              <p className="text-xs text-gray-400 px-4 font-medium">FUN</p>
-            </div>
-            <Link href="/arcade">
-              <div
-                className={cn(
-                  "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
-                  location === "/arcade" ? "bg-primary text-primary-foreground" : "text-gray-300"
-                )}
-                onClick={() => setIsOpen(false)}
-              >
-                <FontAwesomeIcon icon={faGamepad} className="h-4 w-4 mr-3" />
-                Arcade
               </div>
             </Link>
             
