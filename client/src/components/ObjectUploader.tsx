@@ -139,6 +139,7 @@ export function ObjectUploader({
   return (
     <div>
       <Button
+        type="button"
         onClick={handleUploadClick}
         className={buttonClassName}
         disabled={isLoading}
