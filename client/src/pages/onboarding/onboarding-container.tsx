@@ -25,7 +25,7 @@ export default function OnboardingContainer() {
   // Claim Spikes mutation
   const claimSpikesMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest('/api/claim-welcome-spikes', 'POST');
+      return await apiRequest('POST', '/api/claim-welcome-spikes');
     },
     onSuccess: () => {
       setClaimedSpikes(true);
