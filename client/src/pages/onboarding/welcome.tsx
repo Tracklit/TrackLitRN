@@ -12,11 +12,11 @@ export default function OnboardingWelcomePage() {
             <Sparkles className="h-12 w-12 text-primary" />
           </div>
           <h1 className="text-2xl font-bold">Welcome to TrackLit</h1>
+          <p className="text-lg font-semibold text-primary">The Ultimate Performance Toolkit</p>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="text-center text-gray-300">
-            <p className="mb-4">Your complete track and field training companion.</p>
-            <p>TrackLit helps you track workouts, manage programs, and analyze performance to reach your athletic potential.</p>
+            <p>TrackLit helps you track workouts, manage programs and analyze performance to reach your maximum potential.</p>
             
             <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 text-sm mt-4">
               <Info className="h-5 w-5 text-primary flex-shrink-0" />
