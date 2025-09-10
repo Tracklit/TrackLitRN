@@ -348,6 +348,10 @@ export default function ProgramsPage() {
                       key={program.id} 
                       program={program}
                       viewMode="creator"
+                      addProgramToSubscriptionMutation={addProgramToSubscriptionMutation}
+                      removeProgramFromSubscriptionMutation={removeProgramFromSubscriptionMutation}
+                      handleToggleSubscriptionProgram={handleToggleSubscriptionProgram}
+                      isProgramInSubscription={isProgramInSubscription}
                     />
                   ))}
                 </div>
@@ -473,11 +477,24 @@ export default function ProgramsPage() {
   );
 }
 
-function ModernProgramCard({ program, type, creator, viewMode }: {
+function ModernProgramCard({ 
+  program, 
+  type, 
+  creator, 
+  viewMode,
+  addProgramToSubscriptionMutation,
+  removeProgramFromSubscriptionMutation,
+  handleToggleSubscriptionProgram,
+  isProgramInSubscription
+}: {
   program: any;
   type?: string;
   creator?: any;
   viewMode: "creator" | "public" | "purchased";
+  addProgramToSubscriptionMutation?: any;
+  removeProgramFromSubscriptionMutation?: any;
+  handleToggleSubscriptionProgram?: (programId: number) => void;
+  isProgramInSubscription?: (programId: number) => boolean;
 }) {
   const progress = program.progress ? Math.round((program.completedSessions / program.totalSessions) * 100) : 0;
   const { toast } = useToast();
@@ -606,24 +623,26 @@ function ModernProgramCard({ program, type, creator, viewMode }: {
                   />
                 </DropdownMenuItem>
                 
-                {/* Add to Subscription Option */}
-                <DropdownMenuItem 
-                  onClick={() => handleToggleSubscriptionProgram(program.id)}
-                  disabled={addProgramToSubscriptionMutation.isPending || removeProgramFromSubscriptionMutation.isPending}
-                  className={isProgramInSubscription(program.id) ? "text-green-400" : ""}
-                >
-                  {isProgramInSubscription(program.id) ? (
-                    <>
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Remove from Subscription
-                    </>
-                  ) : (
-                    <>
-                      <Crown className="h-4 w-4 mr-2" />
-                      Add to Subscription
-                    </>
-                  )}
-                </DropdownMenuItem>
+                {/* Add to Subscription Option - only show if subscription functions are available */}
+                {handleToggleSubscriptionProgram && isProgramInSubscription && addProgramToSubscriptionMutation && removeProgramFromSubscriptionMutation && (
+                  <DropdownMenuItem 
+                    onClick={() => handleToggleSubscriptionProgram(program.id)}
+                    disabled={addProgramToSubscriptionMutation.isPending || removeProgramFromSubscriptionMutation.isPending}
+                    className={isProgramInSubscription(program.id) ? "text-green-400" : ""}
+                  >
+                    {isProgramInSubscription(program.id) ? (
+                      <>
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Remove from Subscription
+                      </>
+                    ) : (
+                      <>
+                        <Crown className="h-4 w-4 mr-2" />
+                        Add to Subscription
+                      </>
+                    )}
+                  </DropdownMenuItem>
+                )}
                 
                 {program.importedFromSheet && (
                   <DropdownMenuItem 
