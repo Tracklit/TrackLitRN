@@ -191,8 +191,8 @@ export default function OnboardingContainer() {
       </div>
 
       {/* Navigation dots - Under the info box */}
-      <div className="flex justify-center mt-6 mb-8">
-        <div className="flex gap-3 bg-black/50 rounded-full px-4 py-2">
+      <div className="flex justify-center mt-6" style={{marginBottom: '500px'}}>
+        <div className="flex gap-3">
           {steps.map((_, index) => (
             <button
               key={index}
