@@ -364,8 +364,12 @@ export default function MarketplaceCreateListingPage() {
                             alt="Preview" 
                             className="w-full h-32 object-cover rounded-lg"
                             onError={(e) => {
+                              console.error('Image failed to load:', programForm.watch('previewImageUrl'));
                               const target = e.target as HTMLImageElement;
                               target.style.display = 'none';
+                            }}
+                            onLoad={() => {
+                              console.log('Image loaded successfully:', programForm.watch('previewImageUrl'));
                             }}
                           />
                           <p className="text-gray-300 text-xs mt-2 break-all">
@@ -620,8 +624,12 @@ export default function MarketplaceCreateListingPage() {
                             alt="Preview" 
                             className="w-full h-32 object-cover rounded-lg"
                             onError={(e) => {
+                              console.error('Image failed to load:', consultingForm.watch('previewImageUrl'));
                               const target = e.target as HTMLImageElement;
                               target.style.display = 'none';
+                            }}
+                            onLoad={() => {
+                              console.log('Image loaded successfully:', consultingForm.watch('previewImageUrl'));
                             }}
                           />
                           <p className="text-gray-300 text-xs mt-2 break-all">
