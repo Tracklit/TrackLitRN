@@ -104,8 +104,8 @@ export default function MarketplacePage() {
           className="w-full p-3 rounded-2xl bg-slate-800 border border-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 text-white"
         />
 
-        {/* Create button for coaches */}
-        {user?.role === 'coach' && (
+        {/* Create button for coaches and admins */}
+        {(user?.role === 'coach' || user?.role === 'admin') && (
           <Button 
             asChild
             className="rounded-full bg-indigo-600 hover:bg-indigo-500 text-white mb-3"
