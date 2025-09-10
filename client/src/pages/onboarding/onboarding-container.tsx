@@ -175,36 +175,38 @@ export default function OnboardingContainer() {
 
   return (
     <div 
-      className="min-h-screen bg-[#010a18] text-white flex flex-col items-center justify-center p-4"
+      className="min-h-screen bg-[#010a18] text-white relative"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
       {/* Swipe hint */}
-      <div className="mb-4 text-center">
+      <div className="absolute top-6 left-0 right-0 text-center">
         <p className="text-xs text-gray-400">Swipe left or right to navigate</p>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 flex items-center justify-center">
-        {steps[currentStep].content}
-      </div>
-
-      {/* Navigation dots - Under the info box */}
-      <div className="flex justify-center mt-6" style={{marginBottom: '500px'}}>
-        <div className="flex gap-3">
-          {steps.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentStep(index)}
-              className={`h-4 rounded-full transition-all duration-300 ${
-                currentStep === index 
-                  ? 'w-12 bg-blue-500' 
-                  : 'w-4 bg-gray-400 hover:bg-gray-300'
-              }`}
-              aria-label={`Go to step ${index + 1}`}
-            />
-          ))}
+      {/* Content - Centered vertically */}
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="flex flex-col items-center gap-6">
+          {steps[currentStep].content}
+          
+          {/* Navigation dots - Right under the info box */}
+          <div className="flex justify-center">
+            <div className="flex gap-3">
+              {steps.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentStep(index)}
+                  className={`h-4 rounded-full transition-all duration-300 ${
+                    currentStep === index 
+                      ? 'w-12 bg-blue-500' 
+                      : 'w-4 bg-gray-400 hover:bg-gray-300'
+                  }`}
+                  aria-label={`Go to step ${index + 1}`}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
