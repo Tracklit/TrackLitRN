@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Sparkles, ArrowRight, Info, ExternalLink } from "lucide-react";
+import { Sparkles, ArrowRight, Info } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
 interface OnboardingStep {
@@ -75,24 +75,6 @@ export default function OnboardingContainer() {
                   <li>Your feedback is extremely valuable to us at this stage</li>
                 </ul>
               </div>
-              
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 text-sm mt-4 text-left">
-                <ExternalLink className="h-5 w-5 text-primary flex-shrink-0" />
-                <div>
-                  <span className="font-medium block">Join our Telegram testing group</span>
-                  <a 
-                    href="https://t.me/+LHVB4IeeSvEwNmNk" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-xs text-primary underline"
-                  >
-                    https://t.me/+LHVB4IeeSvEwNmNk
-                  </a>
-                  <span className="text-xs block mt-1">
-                    Report bugs and suggest features to help improve TrackLit
-                  </span>
-                </div>
-              </div>
             </div>
 
             <div className="flex flex-col gap-3">
@@ -103,12 +85,6 @@ export default function OnboardingContainer() {
                 <Link href="/">
                   Get Started
                 </Link>
-              </Button>
-              <Button variant="ghost" asChild className="w-full" onClick={() => {
-                localStorage.setItem('onboardingCompleted', 'true');
-                localStorage.setItem('hasCompletedOnboarding', 'true');
-              }}>
-                <Link href="/">Skip</Link>
               </Button>
             </div>
           </CardContent>
