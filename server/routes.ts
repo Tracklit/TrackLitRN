@@ -947,6 +947,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to fetch spike transactions" });
     }
   });
+
+  app.post("/api/claim-welcome-spikes", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const userId = req.user!.id;
+      const user = await dbStorage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      // Check if user has already claimed welcome spikes (prevent duplicate claims)
+      const existingTransactions = await dbStorage.getSpikeTransactions(userId);
+      const hasWelcomeBonus = existingTransactions.some(t => t.description === "Welcome bonus");
+      
+      if (hasWelcomeBonus) {
+        return res.status(400).json({ error: "Welcome spikes already claimed" });
+      }
+
+      // Add 100 spikes as welcome bonus
+      const welcomeBonus = 100;
+      const newSpikeTotal = (user.spikes || 0) + welcomeBonus;
+      
+      // Update user's spike count
+      await dbStorage.updateUserSpikes(userId, newSpikeTotal);
+      
+      // Add transaction record for welcome bonus
+      await dbStorage.addSpikeTransaction({
+        userId,
+        amount: welcomeBonus,
+        description: "Welcome bonus",
+        type: "earned"
+      });
+
+      res.json({ 
+        success: true, 
+        spikes: newSpikeTotal,
+        bonus: welcomeBonus
+      });
+    } catch (error) {
+      console.error("Error claiming welcome spikes:", error);
+      res.status(500).json({ error: "Failed to claim welcome spikes" });
+    }
+  });
   
   app.post("/api/check-daily-login", async (req: Request, res: Response) => {
     try {

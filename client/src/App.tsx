@@ -272,6 +272,7 @@ function Router() {
         {/* Onboarding */}
         <Route path="/onboarding/welcome" component={OnboardingContainer} />
         <Route path="/onboarding/alpha-info" component={OnboardingContainer} />
+        <Route path="/onboarding/spikes" component={OnboardingContainer} />
         
         {/* Auth */}
         <Route path="/auth" component={AuthPage} />

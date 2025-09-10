@@ -1,8 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Sparkles, ArrowRight, Info } from "lucide-react";
+import { Sparkles, ArrowRight, Info, Coins, Gift } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 interface OnboardingStep {
   id: string;
@@ -14,6 +17,47 @@ export default function OnboardingContainer() {
   const [, setLocation] = useLocation();
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const touchEndRef = useRef<{ x: number; y: number } | null>(null);
+  const [claimedSpikes, setClaimedSpikes] = useState(false);
+  const [animatedCount, setAnimatedCount] = useState(0);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const { user } = useAuth();
+
+  // Claim Spikes mutation
+  const claimSpikesMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest('/api/claim-welcome-spikes', 'POST');
+    },
+    onSuccess: () => {
+      setClaimedSpikes(true);
+      animateCountUp();
+    }
+  });
+
+  // Handle claim spikes
+  const handleClaimSpikes = () => {
+    claimSpikesMutation.mutate();
+  };
+
+  // Animate count up effect
+  const animateCountUp = () => {
+    setShowConfetti(true);
+    let count = 0;
+    const target = 100;
+    const duration = 2000; // 2 seconds
+    const increment = target / (duration / 50); // 50ms intervals
+
+    const timer = setInterval(() => {
+      count += increment;
+      if (count >= target) {
+        count = target;
+        clearInterval(timer);
+      }
+      setAnimatedCount(Math.floor(count));
+    }, 50);
+
+    // Remove confetti effect after animation
+    setTimeout(() => setShowConfetti(false), 3000);
+  };
 
   const steps: OnboardingStep[] = [
     {
@@ -90,6 +134,85 @@ export default function OnboardingContainer() {
           </CardContent>
         </Card>
       )
+    },
+    {
+      id: "spikes",
+      content: (
+        <Card className="w-full max-w-md bg-[#0a1529] border-blue-800/30">
+          <CardHeader className="text-center">
+            <div className="flex items-center justify-center mb-4">
+              <Coins className="h-12 w-12 text-amber-500" />
+            </div>
+            <h1 className="text-2xl font-bold">Meet Spikes</h1>
+            <p className="text-lg font-semibold text-amber-500">Your Training Rewards</p>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="text-center text-gray-300">
+              <p className="mb-4">Spikes are your in-app currency that you earn automatically by training and engaging with TrackLit.</p>
+              
+              <div className="p-4 bg-muted/40 rounded-md text-sm text-left">
+                <span className="font-medium block mb-2">Earn Spikes by:</span>
+                <ul className="space-y-1 list-disc pl-4">
+                  <li>Completing training sessions</li>
+                  <li>Daily login streaks</li>
+                  <li>Achieving personal records</li>
+                  <li>Group participation</li>
+                  <li>Competition results</li>
+                </ul>
+              </div>
+              
+              <div className="p-4 bg-amber-500/10 rounded-md text-sm text-left mt-4">
+                <span className="font-medium block mb-2 text-amber-500">Use Spikes to unlock:</span>
+                <ul className="space-y-1 list-disc pl-4 text-amber-200">
+                  <li>Pro tier features (1,000 Spikes)</li>
+                  <li>Advanced analytics</li>
+                  <li>Custom workout plans</li>
+                  <li>Priority support</li>
+                </ul>
+              </div>
+            </div>
+
+            {!claimedSpikes ? (
+              <div className="text-center">
+                <div className="p-4 bg-gradient-to-br from-green-500/10 to-emerald-500/10 rounded-lg border border-green-500/20 mb-4">
+                  <Gift className="h-8 w-8 text-green-500 mx-auto mb-2" />
+                  <p className="text-sm font-medium text-green-400 mb-1">Welcome Bonus Available!</p>
+                  <p className="text-xs text-gray-400">Claim your first 100 Spikes</p>
+                </div>
+                
+                <Button 
+                  onClick={handleClaimSpikes}
+                  className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-black font-semibold"
+                  disabled={claimSpikesMutation.isPending}
+                >
+                  {claimSpikesMutation.isPending ? "Claiming..." : "Claim 100 Spikes"}
+                </Button>
+              </div>
+            ) : (
+              <div className="text-center">
+                <div className={`p-4 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-lg border border-green-500/30 mb-4 transition-all duration-1000 ${showConfetti ? 'scale-105 shadow-lg' : ''}`}>
+                  <div className="flex items-center justify-center mb-2">
+                    <Coins className="h-8 w-8 text-amber-500 mr-2" />
+                    <span className="text-3xl font-bold text-amber-500">{animatedCount}</span>
+                  </div>
+                  <p className="text-green-400 font-medium">🎉 Spikes Claimed! 🎉</p>
+                  <p className="text-xs text-gray-400">Added to your account</p>
+                </div>
+                
+                <Button asChild className="w-full" onClick={() => {
+                  localStorage.setItem('onboardingCompleted', 'true');
+                  localStorage.setItem('hasCompletedOnboarding', 'true');
+                }}>
+                  <Link href="/">
+                    Start Training
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )
     }
   ];
 
@@ -131,9 +254,10 @@ export default function OnboardingContainer() {
     }
   };
 
+
   // Update URL when step changes
   useEffect(() => {
-    const stepRoutes = ['/onboarding/welcome', '/onboarding/alpha-info'];
+    const stepRoutes = ['/onboarding/welcome', '/onboarding/alpha-info', '/onboarding/spikes'];
     if (stepRoutes[currentStep]) {
       setLocation(stepRoutes[currentStep]);
     }
@@ -146,6 +270,8 @@ export default function OnboardingContainer() {
       setCurrentStep(0);
     } else if (path === '/onboarding/alpha-info') {
       setCurrentStep(1);
+    } else if (path === '/onboarding/spikes') {
+      setCurrentStep(2);
     }
   }, []);
 
