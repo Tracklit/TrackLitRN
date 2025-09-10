@@ -91,7 +91,20 @@ export default function MarketplacePage() {
       {/* Header */}
       <header className="sticky top-0 z-50 p-4 flex items-center justify-between border-b border-slate-700 bg-slate-900/80 backdrop-blur-sm">
         <h1 className="text-xl font-bold tracking-wide">TrackLit</h1>
-        <Search className="w-6 h-6" />
+        <div className="flex items-center gap-3">
+          {user?.role === 'coach' && (
+            <Button 
+              asChild
+              size="sm"
+              className="rounded-full bg-indigo-600 hover:bg-indigo-500 text-white px-4"
+            >
+              <Link href="/marketplace/create">
+                Create
+              </Link>
+            </Button>
+          )}
+          <Search className="w-6 h-6" />
+        </div>
       </header>
 
       {/* Search + Filters */}
