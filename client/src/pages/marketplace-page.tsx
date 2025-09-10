@@ -88,20 +88,24 @@ export default function MarketplacePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900 text-white flex flex-col">
-      {/* Top action bar with Create button for coaches */}
-      <div className="p-4 flex items-center justify-end gap-3 border-b border-slate-700/50">
-        {user?.role === 'coach' && (
-          <Button 
-            asChild
-            size="sm"
-            className="rounded-full bg-indigo-600 hover:bg-indigo-500 text-white px-4"
-          >
-            <Link href="/marketplace/create">
-              Create
-            </Link>
-          </Button>
-        )}
-      </div>
+      {/* Header */}
+      <header className="sticky top-0 z-50 p-4 flex items-center justify-between border-b border-slate-700 bg-slate-900/80 backdrop-blur-sm">
+        <h1 className="text-xl font-bold tracking-wide">TrackLit</h1>
+        <div className="flex items-center gap-3">
+          {user?.role === 'coach' && (
+            <Button 
+              asChild
+              size="sm"
+              className="rounded-full bg-indigo-600 hover:bg-indigo-500 text-white px-4"
+            >
+              <Link href="/marketplace/create">
+                Create
+              </Link>
+            </Button>
+          )}
+          <Search className="w-6 h-6" />
+        </div>
+      </header>
 
       {/* Search + Filters */}
       <div className="p-4 space-y-3">
