@@ -318,37 +318,9 @@ export default function MarketplaceCreateListingPage() {
                           const { uploadURL } = await response.json();
                           return { method: 'PUT', url: uploadURL };
                         }}
-                        onComplete={async (result) => {
-                          try {
-                            setUploadingImage(true);
-                            if (result.successful && result.successful[0]) {
-                              const uploadURL = result.successful[0].uploadURL;
-                              const response = await fetch('/api/marketplace/images', {
-                                method: 'PUT',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ imageURL: uploadURL })
-                              });
-                              
-                              if (response.ok) {
-                                const { objectPath } = await response.json();
-                                programForm.setValue('previewImageUrl', objectPath);
-                                toast({
-                                  title: "Image uploaded successfully!",
-                                  description: "Your preview image has been uploaded."
-                                });
-                              } else {
-                                throw new Error('Failed to process image');
-                              }
-                            }
-                          } catch (error: any) {
-                            toast({
-                              title: "Upload failed",
-                              description: error.message || "Failed to upload image",
-                              variant: "destructive"
-                            });
-                          } finally {
-                            setUploadingImage(false);
-                          }
+                        onComplete={(result) => {
+                          // ObjectUploader returns { uploadURL, file }
+                          programForm.setValue('previewImageUrl', result.uploadURL);
                         }}
                         buttonClassName="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                       >
@@ -573,37 +545,9 @@ export default function MarketplaceCreateListingPage() {
                           const { uploadURL } = await response.json();
                           return { method: 'PUT', url: uploadURL };
                         }}
-                        onComplete={async (result) => {
-                          try {
-                            setUploadingImage(true);
-                            if (result.successful && result.successful[0]) {
-                              const uploadURL = result.successful[0].uploadURL;
-                              const response = await fetch('/api/marketplace/images', {
-                                method: 'PUT',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ imageURL: uploadURL })
-                              });
-                              
-                              if (response.ok) {
-                                const { objectPath } = await response.json();
-                                consultingForm.setValue('previewImageUrl', objectPath);
-                                toast({
-                                  title: "Image uploaded successfully!",
-                                  description: "Your preview image has been uploaded."
-                                });
-                              } else {
-                                throw new Error('Failed to process image');
-                              }
-                            }
-                          } catch (error: any) {
-                            toast({
-                              title: "Upload failed",
-                              description: error.message || "Failed to upload image",
-                              variant: "destructive"
-                            });
-                          } finally {
-                            setUploadingImage(false);
-                          }
+                        onComplete={(result) => {
+                          // ObjectUploader returns { uploadURL, file }
+                          consultingForm.setValue('previewImageUrl', result.uploadURL);
                         }}
                         buttonClassName="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                       >

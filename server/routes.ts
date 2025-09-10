@@ -9685,7 +9685,7 @@ Submission Details:
       const { listing, typeSpecific } = req.body;
       
       // Validate required fields
-      if (!listing.type || !listing.title || !listing.heroUrl || listing.priceCents === undefined) {
+      if (!listing.type || !listing.title || listing.priceCents === undefined) {
         return res.status(400).json({ error: "Missing required fields" });
       }
 
