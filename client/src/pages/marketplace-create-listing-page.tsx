@@ -307,7 +307,7 @@ export default function MarketplaceCreateListingPage() {
                       <ObjectUploader
                         maxNumberOfFiles={1}
                         maxFileSize={10485760} // 10MB
-                        requiresSubscription={true}
+                        requiresSubscription={false}
                         onGetUploadParameters={async () => {
                           const response = await fetch('/api/marketplace/upload-url', {
                             method: 'POST',
@@ -572,7 +572,7 @@ export default function MarketplaceCreateListingPage() {
                       <ObjectUploader
                         maxNumberOfFiles={1}
                         maxFileSize={10485760} // 10MB
-                        requiresSubscription={true}
+                        requiresSubscription={false}
                         onGetUploadParameters={async () => {
                           const response = await fetch('/api/marketplace/upload-url', {
                             method: 'POST',
