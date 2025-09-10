@@ -80,6 +80,13 @@ export function ObjectUploader({
 
   // Handle subscription check
   const handleUploadClick = () => {
+    console.log('Upload button clicked!', {
+      isLoading,
+      requiresSubscription,
+      isSubscriber,
+      showModal
+    });
+    
     if (isLoading) return;
 
     if (requiresSubscription && !isSubscriber) {
@@ -91,6 +98,7 @@ export function ObjectUploader({
       return;
     }
 
+    console.log('Opening modal...');
     setShowModal(true);
   };
 
