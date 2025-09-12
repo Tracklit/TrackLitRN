@@ -410,13 +410,15 @@ async function initializeDefaultAchievements() {
   }
 }
 
-// Initialize Stripe
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
+// Initialize Stripe - only if key is available
+let stripe: Stripe | null = null;
+if (process.env.STRIPE_SECRET_KEY) {
+  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: "2025-04-30.basil",
+  });
+} else {
+  console.warn('STRIPE_SECRET_KEY not found - payment features will be disabled');
 }
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2025-04-30.basil",
-});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes

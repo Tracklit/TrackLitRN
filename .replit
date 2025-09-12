@@ -1,9 +1,9 @@
-modules = ["nodejs-20", "web", "postgresql-16", "python-3.11", "python3", "flutter"]
+modules = ["nodejs-20", "python-3.11", "web"]
 run = "npm run dev"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
-channel = "stable-24_05"
+channel = "stable-25_05"
 packages = ["atk", "ffmpeg", "gcc-unwrapped", "gdk-pixbuf", "glib", "gtk3", "imagemagick", "jq", "libGL", "libGLU", "libstdcxx5", "opencv4", "pango", "python3", "python311Packages.numpy", "python311Packages.opencv4", "wget", "flutter"]
 
 [deployment]
@@ -18,6 +18,10 @@ externalPort = 80
 [[ports]]
 localPort = 37673
 externalPort = 3001
+
+[[ports]]
+localPort = 39829
+externalPort = 3002
 
 [[ports]]
 localPort = 43877

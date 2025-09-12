@@ -11,7 +11,7 @@ if (ffmpegStatic) {
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY 
+  apiKey: process.env.OPENAI_API_KEY || 'dummy-key-for-development'
 });
 
 // Helper function to clean markdown formatting from AI responses
@@ -89,6 +89,10 @@ async function extractVideoFrames(videoPath: string, outputDir: string, numFrame
 }
 
 export async function getChatCompletion(prompt: string): Promise<string> {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("OpenAI service is not configured. Please add OPENAI_API_KEY environment variable.");
+  }
+  
   try {
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -329,6 +333,10 @@ interface TrainingProgramParams {
 }
 
 export async function generateTrainingProgram(params: TrainingProgramParams): Promise<string> {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("OpenAI service is not configured. Please add OPENAI_API_KEY environment variable.");
+  }
+  
   try {
     const blockFocusDescriptions = {
       'speed': 'maximum speed development with high-intensity sprint work',
@@ -407,6 +415,10 @@ Make the program practical and implementable while maintaining high coaching sta
 }
 
 export async function regenerateTrainingProgram(params: TrainingProgramParams): Promise<string> {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("OpenAI service is not configured. Please add OPENAI_API_KEY environment variable.");
+  }
+  
   try {
     const blockFocusDescriptions = {
       'speed': 'maximum speed development with high-intensity sprint work',

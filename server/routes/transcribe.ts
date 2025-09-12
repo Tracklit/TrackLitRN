@@ -42,12 +42,19 @@ export const upload = multer({
 
 // Initialize OpenAI with API key from environment variables
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY || 'dummy-key-for-development',
 });
 
 // Transcribe audio route handler
 export async function transcribeAudioHandler(req: Request, res: Response) {
   try {
+    // Check if OpenAI API key is configured
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(503).json({ 
+        message: "Transcription service is not configured. Please contact support." 
+      });
+    }
+
     // Check for premium user status
     if (!req.user || !req.user.isPremium) {
       return res.status(403).json({ 
