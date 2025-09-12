@@ -6,47 +6,30 @@ import {
 import { StatusBar, View, StyleSheet, Text } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 
+import { AuthProvider, useAuth } from './src/contexts/AuthContext';
+
 import { HomeScreen } from './src/screens/HomeScreen';
+import { AuthScreen } from './src/screens/AuthScreen';
+import { PracticeScreen } from './src/screens/PracticeScreen';
+import { ProgramsScreen } from './src/screens/ProgramsScreen';
+import { RaceScreen } from './src/screens/RaceScreen';
+import { ToolsScreen } from './src/screens/ToolsScreen';
+import { SprinthiaScreen } from './src/screens/SprinthiaScreen';
 import { BottomNavigation } from './src/navigation/BottomNavigation';
 import theme from './src/utils/theme';
 
-// Placeholder screens - will be implemented in subsequent tasks
-const PracticeScreen = () => (
-  <View style={styles.placeholder}>
-    <Text style={styles.placeholderText}>Practice Screen</Text>
-  </View>
-);
-
-const ProgramsScreen = () => (
-  <View style={styles.placeholder}>
-    <Text style={styles.placeholderText}>Programs Screen</Text>
-  </View>
-);
-
-const RaceScreen = () => (
-  <View style={styles.placeholder}>
-    <Text style={styles.placeholderText}>Race Screen</Text>
-  </View>
-);
-
-const ToolsScreen = () => (
-  <View style={styles.placeholder}>
-    <Text style={styles.placeholderText}>Tools Screen</Text>
-  </View>
-);
-
-const SprinthiaScreen = () => (
-  <View style={styles.placeholder}>
-    <Text style={styles.placeholderText}>Sprinthia AI Screen</Text>
-  </View>
-);
-
 type ScreenName = 'Home' | 'Practice' | 'Programs' | 'Race' | 'Tools' | 'Sprinthia';
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
   const [currentScreen, setCurrentScreen] = useState<ScreenName>('Home');
+  const { isAuthenticated } = useAuth();
 
   const renderScreen = () => {
+    // Show auth screen if not authenticated
+    if (!isAuthenticated) {
+      return <AuthScreen />;
+    }
+
     switch (currentScreen) {
       case 'Home':
         return <HomeScreen />;
@@ -70,19 +53,29 @@ const App: React.FC = () => {
   };
 
   return (
-    <SafeAreaProvider>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor="transparent"
-        translucent
-      />
-      <View style={styles.container}>
-        {renderScreen()}
+    <View style={styles.container}>
+      {renderScreen()}
+      {isAuthenticated && (
         <BottomNavigation
           currentRoute={currentScreen}
           onNavigate={handleNavigation}
         />
-      </View>
+      )}
+    </View>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <SafeAreaProvider>
+      <AuthProvider>
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor="transparent"
+          translucent
+        />
+        <AppContent />
+      </AuthProvider>
     </SafeAreaProvider>
   );
 };

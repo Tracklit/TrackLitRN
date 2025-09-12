@@ -10,11 +10,11 @@ import {
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Text } from '@/components/ui/Text';
+import { Card } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { Text } from '../components/ui/Text';
 import Icon from 'react-native-vector-icons/FontAwesome5';
-import theme from '@/utils/theme';
+import theme from '../utils/theme';
 
 const { width: screenWidth } = Dimensions.get('window');
 
