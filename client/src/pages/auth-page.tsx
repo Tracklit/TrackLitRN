@@ -69,7 +69,6 @@ export default function AuthPage() {
       confirmPassword: "",
       name: "",
       email: "",
-      events: [],
     },
   });
 
@@ -181,22 +180,14 @@ export default function AuthPage() {
   const handleGoogleSignIn = async () => {
     try {
       const result = await signInWithGoogle();
-      if (result.user) {
-        // Extract user info from Google
-        const googleUser = result.user;
-        const userData = {
-          name: googleUser.displayName || '',
-          email: googleUser.email || '',
-          googleId: googleUser.uid
-        };
-        
-        // Send to our backend Google auth endpoint
+      if (result.idToken) {
+        // Send the ID token to our backend for verification
         const response = await fetch('/api/auth/google', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(userData),
+          body: JSON.stringify({ idToken: result.idToken }),
         });
         
         if (response.ok) {
@@ -335,9 +326,9 @@ export default function AuthPage() {
             
             <TabsContent value="register">
               <Form {...registerForm}>
-                <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
+                <form onSubmit={registerForm.handleSubmit(onRegisterSubmit as any)} className="space-y-4">
                   <FormField
-                    control={registerForm.control}
+                    control={registerForm.control as any}
                     name="name"
                     render={({ field }) => (
                       <FormItem>
@@ -351,7 +342,7 @@ export default function AuthPage() {
                   />
                   
                   <FormField
-                    control={registerForm.control}
+                    control={registerForm.control as any}
                     name="email"
                     render={({ field }) => (
                       <FormItem>
@@ -365,7 +356,7 @@ export default function AuthPage() {
                   />
                   
                   <FormField
-                    control={registerForm.control}
+                    control={registerForm.control as any}
                     name="username"
                     render={({ field }) => (
                       <FormItem>
@@ -379,7 +370,7 @@ export default function AuthPage() {
                   />
                   
                   <FormField
-                    control={registerForm.control}
+                    control={registerForm.control as any}
                     name="password"
                     render={({ field }) => (
                       <FormItem>
@@ -393,7 +384,7 @@ export default function AuthPage() {
                   />
                   
                   <FormField
-                    control={registerForm.control}
+                    control={registerForm.control as any}
                     name="confirmPassword"
                     render={({ field }) => (
                       <FormItem>

@@ -775,17 +775,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Google authentication endpoint
   app.post("/api/auth/google", async (req: Request, res: Response) => {
     try {
-      const { email, name, googleId } = req.body;
+      const { idToken } = req.body;
+      
+      if (!idToken) {
+        return res.status(400).json({ error: "ID token is required" });
+      }
+      
+      // Import OAuth2Client from google-auth-library
+      const { OAuth2Client } = await import('google-auth-library');
+      const client = new OAuth2Client(process.env.VITE_GOOGLE_CLIENT_ID);
+      
+      // Verify the ID token
+      const ticket = await client.verifyIdToken({
+        idToken: idToken,
+        audience: process.env.VITE_GOOGLE_CLIENT_ID,
+      });
+      
+      const payload = ticket.getPayload();
+      if (!payload) {
+        return res.status(400).json({ error: "Invalid ID token" });
+      }
+      
+      const { email, name, sub: googleId } = payload;
       
       if (!email || !name) {
-        return res.status(400).json({ error: "Email and name are required" });
+        return res.status(400).json({ error: "Email and name are required from Google" });
       }
       
       // Check if user already exists
       let user = await dbStorage.getUserByEmail(email);
       
       if (!user) {
-        // Create new user with Google data
+        // Create new user with verified Google data
         const username = email.split('@')[0];
         const userData = {
           username,

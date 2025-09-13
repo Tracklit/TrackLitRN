@@ -37,7 +37,7 @@ const initializeGoogle = async (): Promise<void> => {
 };
 
 // Google sign-in function
-export const signInWithGoogle = async (): Promise<{ user: any }> => {
+export const signInWithGoogle = async (): Promise<{ idToken: string }> => {
   try {
     if (!GOOGLE_CLIENT_ID) {
       throw new Error('Google Client ID not configured');
@@ -46,56 +46,65 @@ export const signInWithGoogle = async (): Promise<{ user: any }> => {
     await initializeGoogle();
 
     return new Promise((resolve, reject) => {
+      // Generate a random nonce for security
+      const nonce = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      
       window.google.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
         callback: async (response: any) => {
           try {
-            // Decode the JWT token to get user info
-            const payload = JSON.parse(atob(response.credential.split('.')[1]));
-            
-            const user = {
-              uid: payload.sub,
-              displayName: payload.name,
-              email: payload.email,
-              photoURL: payload.picture,
-            };
-            
-            resolve({ user });
+            // Return the actual ID token for server verification
+            resolve({ idToken: response.credential });
           } catch (error) {
             reject(error);
           }
         },
+        nonce: nonce,
+        ux_mode: 'popup',
+        auto_select: false,
+        cancel_on_tap_outside: false,
       });
 
-      // Trigger the sign-in popup
+      // Try One Tap first
       window.google.accounts.id.prompt((notification: any) => {
         if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          // Fallback to manual popup if auto-prompt fails
-          window.google.accounts.id.renderButton(
-            document.createElement('div'),
-            { theme: 'outline', size: 'large' }
-          );
+          // Fallback: Create a visible Google Sign-In button
+          const buttonContainer = document.createElement('div');
+          buttonContainer.id = 'google-signin-button';
+          buttonContainer.style.position = 'fixed';
+          buttonContainer.style.top = '50%';
+          buttonContainer.style.left = '50%';
+          buttonContainer.style.transform = 'translate(-50%, -50%)';
+          buttonContainer.style.zIndex = '10000';
+          buttonContainer.style.backgroundColor = 'white';
+          buttonContainer.style.padding = '20px';
+          buttonContainer.style.borderRadius = '8px';
+          buttonContainer.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
           
-          // Create a temporary button and click it
-          const tempDiv = document.createElement('div');
-          tempDiv.style.display = 'none';
-          document.body.appendChild(tempDiv);
+          document.body.appendChild(buttonContainer);
           
-          window.google.accounts.id.renderButton(tempDiv, {
+          // Add a close button
+          const closeButton = document.createElement('button');
+          closeButton.textContent = '✕';
+          closeButton.style.position = 'absolute';
+          closeButton.style.top = '10px';
+          closeButton.style.right = '10px';
+          closeButton.style.border = 'none';
+          closeButton.style.background = 'none';
+          closeButton.style.cursor = 'pointer';
+          closeButton.onclick = () => {
+            document.body.removeChild(buttonContainer);
+            reject(new Error('Google sign-in cancelled'));
+          };
+          buttonContainer.appendChild(closeButton);
+          
+          // Render the actual Google button
+          window.google.accounts.id.renderButton(buttonContainer, {
             theme: 'outline',
             size: 'large',
-            click_listener: () => {
-              document.body.removeChild(tempDiv);
-            }
+            text: 'signin_with',
+            shape: 'rectangular',
           });
-          
-          // Programmatically click the button
-          const button = tempDiv.querySelector('div[role="button"]') as HTMLElement;
-          if (button) {
-            button.click();
-          } else {
-            reject(new Error('Google sign-in button not found'));
-          }
         }
       });
     });
