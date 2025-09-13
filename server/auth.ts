@@ -8,6 +8,7 @@ import bcrypt from "bcrypt";
 import { storage } from "./storage";
 import { User, User as SelectUser, insertUserSchema } from "@shared/schema";
 import { z } from "zod";
+import { sendEmail, generatePasswordResetToken, generatePasswordResetEmail } from "./utils/email";
 
 declare global {
   namespace Express {
@@ -165,6 +166,104 @@ export function setupAuth(app: Express) {
       if (err) return next(err);
       res.sendStatus(200);
     });
+  });
+
+  // Password reset endpoints
+  app.post("/api/auth/forgot-password", async (req, res) => {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({ error: "Email is required" });
+      }
+
+      // Find user by email
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        // Don't reveal if email exists or not for security
+        return res.json({ message: "If an account with that email exists, you will receive a password reset email." });
+      }
+
+      // Clean up old tokens for this user
+      await storage.deletePasswordResetTokensForUser(user.id);
+
+      // Generate reset token
+      const token = generatePasswordResetToken();
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+      // Save token to database
+      await storage.createPasswordResetToken(user.id, token, expiresAt);
+
+      // Send email
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://tracklit.app' 
+        : `http://localhost:${process.env.PORT || 3000}`;
+      
+      const emailContent = generatePasswordResetEmail(email, token, baseUrl);
+      const emailSent = await sendEmail(emailContent);
+
+      if (!emailSent) {
+        console.error('Failed to send password reset email');
+        // Still return success to not reveal email existence
+      }
+
+      res.json({ message: "If an account with that email exists, you will receive a password reset email." });
+    } catch (error) {
+      console.error("Password reset error:", error);
+      res.status(500).json({ error: "Failed to process password reset request" });
+    }
+  });
+
+  app.post("/api/auth/reset-password", async (req, res) => {
+    try {
+      const { token, newPassword } = req.body;
+
+      if (!token || !newPassword) {
+        return res.status(400).json({ error: "Token and new password are required" });
+      }
+
+      // Find and validate token
+      const resetToken = await storage.getPasswordResetToken(token);
+      if (!resetToken || resetToken.used || new Date() > resetToken.expiresAt) {
+        return res.status(400).json({ error: "Invalid or expired reset token" });
+      }
+
+      // Get the user
+      const user = await storage.getUser(resetToken.userId);
+      if (!user) {
+        return res.status(400).json({ error: "User not found" });
+      }
+
+      // Hash new password
+      const hashedPassword = await hashPassword(newPassword);
+
+      // Update user password
+      await storage.updateUser(user.id, { password: hashedPassword });
+
+      // Mark token as used
+      await storage.markPasswordResetTokenAsUsed(token);
+
+      res.json({ message: "Password reset successfully" });
+    } catch (error) {
+      console.error("Password reset confirmation error:", error);
+      res.status(500).json({ error: "Failed to reset password" });
+    }
+  });
+
+  app.get("/api/auth/verify-reset-token/:token", async (req, res) => {
+    try {
+      const { token } = req.params;
+
+      const resetToken = await storage.getPasswordResetToken(token);
+      if (!resetToken || resetToken.used || new Date() > resetToken.expiresAt) {
+        return res.status(400).json({ error: "Invalid or expired reset token", valid: false });
+      }
+
+      res.json({ valid: true });
+    } catch (error) {
+      console.error("Token verification error:", error);
+      res.status(500).json({ error: "Failed to verify token", valid: false });
+    }
   });
 
   app.get("/api/user", async (req, res) => {

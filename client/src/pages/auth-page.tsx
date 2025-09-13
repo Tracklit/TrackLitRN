@@ -49,6 +49,10 @@ export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [activeTab, setActiveTab] = useState<'login' | 'register' | 'forgot-password' | 'reset-password'>('login');
   const [resetToken, setResetToken] = useState<string>('');
+  const [forgotPasswordMessage, setForgotPasswordMessage] = useState<string>('');
+  const [isSubmittingForgotPassword, setIsSubmittingForgotPassword] = useState(false);
+  const [resetPasswordMessage, setResetPasswordMessage] = useState<string>('');
+  const [isSubmittingResetPassword, setIsSubmittingResetPassword] = useState(false);
   const { toast } = useToast();
 
   // Login form
@@ -102,45 +106,49 @@ export default function AuthPage() {
 
   // Handle forgot password submission
   const onForgotPasswordSubmit = async (data: z.infer<typeof forgotPasswordSchema>) => {
+    setIsSubmittingForgotPassword(true);
+    setForgotPasswordMessage('');
+    
     try {
       const response = await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-
+      
       const result = await response.json();
-
+      
       if (response.ok) {
+        setForgotPasswordMessage('Password reset email sent! Check your inbox.');
         toast({
-          title: "Reset Email Sent",
-          description: result.message,
+          title: 'Email sent',
+          description: 'Please check your inbox for password reset instructions.',
         });
-        
-        // In development, show the token for testing
-        if (result.token) {
-          console.log('Reset token for testing:', result.token);
-          setResetToken(result.token);
-          setActiveTab('reset-password');
-        }
       } else {
+        setForgotPasswordMessage(result.error || 'An error occurred sending the reset email.');
         toast({
-          title: "Error",
-          description: result.error || "Failed to send reset email",
-          variant: "destructive",
+          variant: 'destructive',
+          title: 'Error',
+          description: result.error || 'Failed to send password reset email',
         });
       }
     } catch (error) {
+      setForgotPasswordMessage('Network error. Please try again.');
       toast({
-        title: "Error",
-        description: "Failed to send reset email",
-        variant: "destructive",
+        variant: 'destructive',
+        title: 'Network Error',
+        description: 'Please check your connection and try again.',
       });
+    } finally {
+      setIsSubmittingForgotPassword(false);
     }
   };
 
   // Handle reset password submission
   const onResetPasswordSubmit = async (data: z.infer<typeof resetPasswordSchema>) => {
+    setIsSubmittingResetPassword(true);
+    setResetPasswordMessage('');
+    
     try {
       const response = await fetch('/api/auth/reset-password', {
         method: 'POST',
@@ -150,29 +158,33 @@ export default function AuthPage() {
           newPassword: data.newPassword,
         }),
       });
-
+      
       const result = await response.json();
-
+      
       if (response.ok) {
+        setResetPasswordMessage('Password reset successfully! You can now log in.');
         toast({
-          title: "Password Reset Successful",
-          description: result.message,
+          title: 'Password reset',
+          description: 'Your password has been reset successfully.',
         });
         setActiveTab('login');
-        setResetToken('');
       } else {
+        setResetPasswordMessage(result.error || 'An error occurred resetting the password.');
         toast({
-          title: "Error",
-          description: result.error || "Failed to reset password",
-          variant: "destructive",
+          variant: 'destructive',
+          title: 'Error',
+          description: result.error || 'Failed to reset password',
         });
       }
     } catch (error) {
+      setResetPasswordMessage('Network error. Please try again.');
       toast({
-        title: "Error",
-        description: "Failed to reset password",
-        variant: "destructive",
+        variant: 'destructive',
+        title: 'Network Error',
+        description: 'Please check your connection and try again.',
       });
+    } finally {
+      setIsSubmittingResetPassword(false);
     }
   };
 
@@ -230,11 +242,19 @@ export default function AuthPage() {
             <h1 className="text-3xl font-bold">TrackLit</h1>
           </div>
           
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'login' | 'register')}>
-            <TabsList className="grid grid-cols-2 mb-8">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="register">Register</TabsTrigger>
-            </TabsList>
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'login' | 'register' | 'forgot-password' | 'reset-password')}>
+            {activeTab === 'forgot-password' || activeTab === 'reset-password' ? (
+              <div className="mb-8 text-center">
+                <h2 className="text-xl font-semibold">
+                  {activeTab === 'forgot-password' ? 'Reset Password' : 'Set New Password'}
+                </h2>
+              </div>
+            ) : (
+              <TabsList className="grid grid-cols-2 mb-8">
+                <TabsTrigger value="login">Login</TabsTrigger>
+                <TabsTrigger value="register">Register</TabsTrigger>
+              </TabsList>
+            )}
             
             <TabsContent value="login">
               <Form {...loginForm}>
@@ -326,6 +346,15 @@ export default function AuthPage() {
                     Sign up
                   </button>
                 </p>
+                <div className="mt-2">
+                  <button 
+                    className="text-primary font-medium hover:underline text-sm" 
+                    onClick={() => setActiveTab('forgot-password')}
+                    data-testid="link-forgot-password"
+                  >
+                    Forgot your password?
+                  </button>
+                </div>
               </div>
             </TabsContent>
             
@@ -461,6 +490,135 @@ export default function AuthPage() {
                     Log in
                   </button>
                 </p>
+              </div>
+            </TabsContent>
+            
+            {/* Forgot Password Tab */}
+            <TabsContent value="forgot-password">
+              <Form {...forgotPasswordForm}>
+                <form onSubmit={forgotPasswordForm.handleSubmit(onForgotPasswordSubmit)} className="space-y-4">
+                  <div className="mb-4 text-center text-sm text-muted-foreground">
+                    Enter your email address and we'll send you a link to reset your password.
+                  </div>
+                  
+                  <FormField
+                    control={forgotPasswordForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="email" 
+                            placeholder="Enter your email address" 
+                            data-testid="input-forgot-email"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  {forgotPasswordMessage && (
+                    <div className={`text-sm p-3 rounded ${forgotPasswordMessage.includes('sent') ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                      {forgotPasswordMessage}
+                    </div>
+                  )}
+                  
+                  <Button 
+                    type="submit" 
+                    className="w-full mt-6 bg-primary text-white"
+                    disabled={isSubmittingForgotPassword}
+                    data-testid="button-send-reset-email"
+                  >
+                    {isSubmittingForgotPassword ? "Sending..." : "Send Reset Email"}
+                  </Button>
+                </form>
+              </Form>
+              
+              <div className="mt-6 text-center text-sm text-darkGray">
+                <button 
+                  className="text-primary font-medium hover:underline" 
+                  onClick={() => setActiveTab('login')}
+                  data-testid="link-back-to-login"
+                >
+                  Back to Login
+                </button>
+              </div>
+            </TabsContent>
+            
+            {/* Reset Password Tab */}
+            <TabsContent value="reset-password">
+              <Form {...resetPasswordForm}>
+                <form onSubmit={resetPasswordForm.handleSubmit(onResetPasswordSubmit)} className="space-y-4">
+                  <div className="mb-4 text-center text-sm text-muted-foreground">
+                    Enter your new password below.
+                  </div>
+                  
+                  <FormField
+                    control={resetPasswordForm.control}
+                    name="newPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>New Password</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="password" 
+                            placeholder="Enter your new password" 
+                            data-testid="input-new-password"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={resetPasswordForm.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirm Password</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="password" 
+                            placeholder="Confirm your new password" 
+                            data-testid="input-confirm-password"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  {resetPasswordMessage && (
+                    <div className={`text-sm p-3 rounded ${resetPasswordMessage.includes('successfully') ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                      {resetPasswordMessage}
+                    </div>
+                  )}
+                  
+                  <Button 
+                    type="submit" 
+                    className="w-full mt-6 bg-primary text-white"
+                    disabled={isSubmittingResetPassword}
+                    data-testid="button-reset-password"
+                  >
+                    {isSubmittingResetPassword ? "Resetting..." : "Reset Password"}
+                  </Button>
+                </form>
+              </Form>
+              
+              <div className="mt-6 text-center text-sm text-darkGray">
+                <button 
+                  className="text-primary font-medium hover:underline" 
+                  onClick={() => setActiveTab('login')}
+                  data-testid="link-back-to-login-2"
+                >
+                  Back to Login
+                </button>
               </div>
             </TabsContent>
           </Tabs>

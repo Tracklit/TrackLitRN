@@ -152,7 +152,10 @@ import {
   marketplaceCartItems,
   marketplaceOrders,
   marketplaceOrderItems,
-  marketplaceReviews
+  marketplaceReviews,
+  passwordResetTokens,
+  PasswordResetToken,
+  insertPasswordResetTokenSchema,
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, lt, gte, desc, asc, inArray, or, isNotNull, isNull, ne, sql, exists } from "drizzle-orm";
@@ -4059,6 +4062,48 @@ export class DatabaseStorage implements IStorage {
   async deleteReview(id: number): Promise<boolean> {
     const result = await db.delete(marketplaceReviews).where(eq(marketplaceReviews.id, id));
     return result.rowCount > 0;
+  }
+
+  // Password reset token operations
+  async createPasswordResetToken(userId: number, token: string, expiresAt: Date): Promise<PasswordResetToken> {
+    const [resetToken] = await db
+      .insert(passwordResetTokens)
+      .values({
+        userId,
+        token,
+        expiresAt,
+        used: false,
+      })
+      .returning();
+    return resetToken;
+  }
+
+  async getPasswordResetToken(token: string): Promise<PasswordResetToken | undefined> {
+    const [resetToken] = await db
+      .select()
+      .from(passwordResetTokens)
+      .where(eq(passwordResetTokens.token, token));
+    return resetToken;
+  }
+
+  async markPasswordResetTokenAsUsed(token: string): Promise<boolean> {
+    const result = await db
+      .update(passwordResetTokens)
+      .set({ used: true })
+      .where(eq(passwordResetTokens.token, token));
+    return result.rowCount > 0;
+  }
+
+  async deleteExpiredPasswordResetTokens(): Promise<void> {
+    await db
+      .delete(passwordResetTokens)
+      .where(lt(passwordResetTokens.expiresAt, new Date()));
+  }
+
+  async deletePasswordResetTokensForUser(userId: number): Promise<void> {
+    await db
+      .delete(passwordResetTokens)
+      .where(eq(passwordResetTokens.userId, userId));
   }
 }
 
