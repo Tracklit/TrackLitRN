@@ -6,7 +6,7 @@ let mailService: any = null;
 async function initMailService() {
   try {
     const sendgrid = await import('@sendgrid/mail');
-    mailService = new sendgrid.MailService();
+    mailService = sendgrid;
     if (process.env.SENDGRID_API_KEY) {
       mailService.setApiKey(process.env.SENDGRID_API_KEY);
     } else {

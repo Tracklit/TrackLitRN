@@ -276,6 +276,7 @@ function Router() {
         
         {/* Auth */}
         <Route path="/auth" component={AuthPage} />
+        <Route path="/reset-password" component={AuthPage} />
         <Route path="/affiliate" component={AmbassadorLandingPage} />
         <Route path="/test" component={TestPage} />
         <Route path="/tools-preview" component={ToolsPreviewPage} />

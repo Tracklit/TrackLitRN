@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -53,7 +53,48 @@ export default function AuthPage() {
   const [isSubmittingForgotPassword, setIsSubmittingForgotPassword] = useState(false);
   const [resetPasswordMessage, setResetPasswordMessage] = useState<string>('');
   const [isSubmittingResetPassword, setIsSubmittingResetPassword] = useState(false);
+  const [isVerifyingToken, setIsVerifyingToken] = useState(false);
   const { toast } = useToast();
+
+  // Check for reset token in URL on component mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenFromUrl = urlParams.get('token');
+    
+    if (tokenFromUrl) {
+      setResetToken(tokenFromUrl);
+      setActiveTab('reset-password');
+      
+      // Verify token validity
+      setIsVerifyingToken(true);
+      fetch(`/api/auth/verify-reset-token/${tokenFromUrl}`)
+        .then(response => response.json())
+        .then(data => {
+          if (!data.valid) {
+            toast({
+              title: 'Invalid Token',
+              description: 'This password reset link is invalid or has expired.',
+              variant: 'destructive',
+            });
+            setActiveTab('forgot-password');
+          }
+        })
+        .catch(() => {
+          toast({
+            title: 'Error',
+            description: 'Could not verify reset token. Please request a new reset link.',
+            variant: 'destructive',
+          });
+          setActiveTab('forgot-password');
+        })
+        .finally(() => {
+          setIsVerifyingToken(false);
+        });
+      
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [toast]);
 
   // Login form
   const loginForm = useForm<LoginData>({
