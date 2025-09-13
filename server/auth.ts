@@ -45,6 +45,18 @@ async function comparePasswords(supplied: string, stored: string) {
   }
 }
 
+// Helper function to determine if user needs onboarding
+async function requiresOnboarding(user: User): Promise<boolean> {
+  try {
+    const profile = await storage.getAthleteProfile(user.id);
+    // User needs onboarding if they don't have a profile or missing essential data
+    return !profile || !user.username || !user.name;
+  } catch (error) {
+    // If error fetching profile, assume onboarding is needed
+    return true;
+  }
+}
+
 export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "track-meet-secret-key",
@@ -117,9 +129,16 @@ export function setupAuth(app: Express) {
       }
 
       // Log the user in
-      req.login(user, (err) => {
+      req.login(user, async (err) => {
         if (err) return next(err);
-        res.status(201).json(user);
+        
+        // Check if user needs onboarding
+        const needsOnboarding = await requiresOnboarding(user);
+        
+        res.status(201).json({
+          user,
+          requiresOnboarding: needsOnboarding
+        });
       });
     } catch (error) {
       if (error instanceof z.ZodError) {

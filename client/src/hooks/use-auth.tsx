@@ -57,12 +57,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const res = await apiRequest("POST", "/api/register", credentials);
       return await res.json();
     },
-    onSuccess: (user: SelectUser) => {
+    onSuccess: (data: { user: SelectUser; requiresOnboarding: boolean }) => {
+      // Handle both old format (just user) and new format (user + requiresOnboarding)
+      const user = data.user || data;
+      const requiresOnboarding = data.requiresOnboarding || false;
+      
       queryClient.setQueryData(["/api/user"], user);
       toast({
         title: "Registration successful",
         description: `Welcome to TrackLit, ${user.name}!`,
       });
+      
+      // Redirect based on onboarding requirements
+      if (requiresOnboarding) {
+        window.location.href = '/onboarding';
+      } else {
+        window.location.href = '/';
+      }
     },
     onError: (error: Error) => {
       toast({

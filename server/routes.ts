@@ -772,6 +772,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Helper function to determine if user needs onboarding
+  async function requiresOnboarding(user: User): Promise<boolean> {
+    try {
+      const profile = await dbStorage.getAthleteProfile(user.id);
+      // User needs onboarding if they don't have a profile or missing essential data
+      return !profile || !user.username || !user.name;
+    } catch (error) {
+      // If error fetching profile, assume onboarding is needed
+      return true;
+    }
+  }
+
   // Google authentication endpoint
   app.post("/api/auth/google", async (req: Request, res: Response) => {
     try {
@@ -855,12 +867,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Log the user in
-      req.login(user, (err) => {
+      req.login(user, async (err) => {
         if (err) {
           console.error('Login error:', err);
           return res.status(500).json({ error: "Login failed" });
         }
-        res.json({ user: { id: user.id, username: user.username, name: user.name, email: user.email } });
+        
+        // Check if user needs onboarding
+        const needsOnboarding = await requiresOnboarding(user);
+        
+        res.json({ 
+          user: { id: user.id, username: user.username, name: user.name, email: user.email },
+          requiresOnboarding: needsOnboarding
+        });
       });
       
     } catch (error) {

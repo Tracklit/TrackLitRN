@@ -191,8 +191,13 @@ export default function AuthPage() {
         });
         
         if (response.ok) {
-          // Refresh the page to get the authenticated state
-          window.location.reload();
+          const data = await response.json();
+          // Check if user needs onboarding
+          if (data.requiresOnboarding) {
+            window.location.href = '/onboarding';
+          } else {
+            window.location.href = '/';
+          }
         } else {
           const errorData = await response.json();
           toast({
