@@ -1,0 +1,55 @@
+$ npm install expo
+npm warn ERESOLVE overriding peer dependency
+npm error code ERESOLVE
+npm error ERESOLVE could not resolve
+npm error
+npm error While resolving: react-native@0.81.4
+npm error Found: @types/react@18.3.12
+npm error node_modules/@types/react
+npm error   peerOptional @types/react@"^19.1.0" from @react-native/virtualized-lists@0.81.4
+npm error   node_modules/react-native/node_modules/@react-native/virtualized-lists
+npm error     @react-native/virtualized-lists@"0.81.4" from react-native@0.81.4
+npm error     node_modules/react-native
+npm error       peerOptional react-native@"*" from @expo/devtools@0.1.7
+npm error       node_modules/@expo/devtools
+npm error         @expo/devtools@"0.1.7" from expo@54.0.2
+npm error         node_modules/expo
+npm error       9 more (@expo/vector-icons, expo-asset, expo-constants, ...)
+npm error
+npm error Could not resolve dependency:
+npm error peerOptional @types/react@"^19.1.0" from react-native@0.81.4
+npm error node_modules/react-native
+npm error   peerOptional react-native@"*" from @expo/devtools@0.1.7
+npm error   node_modules/@expo/devtools
+npm error     @expo/devtools@"0.1.7" from expo@54.0.2
+npm error     node_modules/expo
+npm error       expo@"^54.0.2" from the root project
+npm error       9 more (babel-preset-expo, expo-asset, expo-constants, ...)
+npm error   peer react-native@"*" from @expo/vector-icons@15.0.2
+npm error   node_modules/@expo/vector-icons
+npm error     @expo/vector-icons@"^15.0.2" from expo@54.0.2
+npm error   8 more (expo-asset, expo-constants, expo-file-system, expo-font, ...)
+npm error
+npm error Conflicting peer dependency: @types/react@19.1.12
+npm error node_modules/@types/react
+npm error   peerOptional @types/react@"^19.1.0" from react-native@0.81.4
+npm error   node_modules/react-native
+npm error     peerOptional react-native@"*" from @expo/devtools@0.1.7
+npm error     node_modules/@expo/devtools
+npm error       @expo/devtools@"0.1.7" from expo@54.0.2
+npm error       node_modules/expo
+npm error         expo@"^54.0.2" from the root project
+npm error         9 more (babel-preset-expo, expo-asset, expo-constants, ...)
+npm error     peer react-native@"*" from @expo/vector-icons@15.0.2
+npm error     node_modules/@expo/vector-icons
+npm error       @expo/vector-icons@"^15.0.2" from expo@54.0.2
+npm error     8 more (expo-asset, expo-constants, expo-file-system, expo-font, ...)
+npm error
+npm error Fix the upstream dependency conflict, or retry
+npm error this command with --force or --legacy-peer-deps
+npm error to accept an incorrect (and potentially broken) dependency resolution.
+npm error
+npm error
+npm error For a full report see:
+npm error C:\Users\lionm\AppData\Local\npm-cache\_logs\2025-09-12T12_59_44_513Z-eresolve-report.txt
+npm error A complete log of this run can be found in: C:\Users\lionm\AppData\Local\npm-cache\_logs\2025-09-12T12_59_44_513Z-debug-0.log
