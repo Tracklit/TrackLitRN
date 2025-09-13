@@ -807,16 +807,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!user) {
         // Create new user with verified Google data
-        const username = email.split('@')[0];
-        const userData = {
-          username,
-          name,
-          email,
-          password: 'google_auth', // Special marker for Google auth users
-          spikes: 100, // Welcome bonus
-        };
+        // First check if the username is already taken and make it unique
+        const baseUsername = email.split('@')[0];
+        let username = baseUsername;
+        let counter = 1;
         
-        user = await dbStorage.createUser(userData);
+        // Keep trying until we find a unique username
+        while (true) {
+          try {
+            const userData = {
+              username,
+              name,
+              email,
+              password: 'google_auth', // Special marker for Google auth users
+              spikes: 100, // Welcome bonus
+            };
+            
+            user = await dbStorage.createUser(userData);
+            break; // Success, exit the loop
+          } catch (error: any) {
+            // If it's a duplicate key error, try a different username
+            if (error.code === '23505') {
+              if (error.constraint === 'users_username_key') {
+                // Username conflict, try with a number
+                username = `${baseUsername}${counter}`;
+                counter++;
+              } else if (error.constraint === 'users_email_key') {
+                // Email already exists - this shouldn't happen since we checked, but handle it
+                user = await dbStorage.getUserByEmail(email);
+                if (user) break;
+                throw error; // Re-throw if still can't find user
+              } else {
+                // Different constraint error, re-throw
+                throw error;
+              }
+            } else {
+              // Different error, re-throw
+              throw error;
+            }
+            
+            // Safety check to prevent infinite loop
+            if (counter > 100) {
+              throw new Error('Could not create unique username');
+            }
+          }
+        }
       }
       
       // Log the user in
