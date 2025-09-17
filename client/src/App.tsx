@@ -311,6 +311,7 @@ function Router() {
 function MainApp() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [location] = useLocation();
+  const { isPWA, isIOS, canInstall, installPrompt } = usePWA();
   
   // Redirect to onboarding for new user registrations (not logins)
   useEffect(() => {
@@ -335,7 +336,10 @@ function MainApp() {
   }
   
   return (
-    <div className="min-h-screen text-foreground">
+    <div className={`min-h-screen text-foreground ${isPWA ? 'pwa-container' : ''}`}>
+      {/* iOS Status Bar Spacer - Only show in PWA mode on iOS */}
+      {isPWA && isIOS && <div className="ios-status-bar-height" />}
+      
       {/* Top Header Bar - Hide for chat routes, auth page, and affiliate page */}
       {!location.startsWith('/chat') && location !== '/auth' && location !== '/affiliate' && <Header />}
       
