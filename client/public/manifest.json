@@ -1,0 +1,30 @@
+{
+  "name": "TrackLit - Track & Field Training",
+  "short_name": "TrackLit",
+  "description": "Track & Field training programs, meet planning, and performance analytics",
+  "start_url": "/?pwa=true",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#d4af37",
+  "background_color": "#0f172a",
+  "categories": ["sports", "fitness", "training"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png", 
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "display_override": ["standalone", "minimal-ui"],
+  "prefer_related_applications": false,
+  "lang": "en-US",
+  "dir": "ltr"
+}
