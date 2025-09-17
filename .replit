@@ -7,21 +7,13 @@ channel = "stable-25_05"
 packages = ["atk", "ffmpeg", "gcc-unwrapped", "gdk-pixbuf", "glib", "gtk3", "imagemagick", "jq", "libGL", "libGLU", "libstdcxx5", "opencv4", "pango", "python3", "python311Packages.numpy", "python311Packages.opencv4", "wget", "flutter"]
 
 [deployment]
-deploymentTarget = "vm"
+deploymentTarget = "autoscale"
 build = ["npm", "run", "build"]
-run = ["npm", "run", "dev"]
+run = ["npm", "start"]
 
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 37279
-externalPort = 3002
-
-[[ports]]
-localPort = 37673
-externalPort = 3001
 
 [[ports]]
 localPort = 43877
@@ -43,9 +35,12 @@ args = "Start application"
 name = "Start application"
 author = "agent"
 
+[workflows.workflow.metadata]
+outputType = "webview"
+
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev"
+args = "npm start"
 waitForPort = 5000
 
 [agent]
