@@ -1,0 +1,121 @@
+# Development and testing files
+test-*.py
+test-*.js
+test-*.html
+debug-*.js
+debug-*.html
+cookies.txt
+server-direct.js
+*.test.*
+**/*.test.*
+__tests__/
+tests/
+test/
+
+# Documentation and markdown files
+*.md
+**/*.md
+README*
+
+# Development configuration
+.replit
+.env.local
+.env.development
+.env.test
+
+# Build artifacts and cache
+node_modules/
+.npm
+.cache/
+dist/
+build/
+.vite/
+.next/
+coverage/
+
+# Python cache and virtual environments
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+venv/
+env/
+.venv/
+.env
+
+# Git and version control
+.git/
+.gitignore
+.gitattributes
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Large uploaded files and test media (keep essential ones)
+uploads/*.mp4
+uploads/*.mov
+uploads/*.avi
+test-video.mp4
+*.mp4
+*.mov
+*.avi
+
+# Mobile/native build directories
+ios/
+android/
+tracklit-mobile/
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+
+# Package lock files (keep package.json but not lock files to reduce size)
+package-lock.json
+yarn.lock
+uv.lock
+
+# Migration files that aren't needed in production
+migrations/
+
+# Capacitor and native mobile files
+capacitor.config.ts
+app.json
+eas.json
+pubspec.yaml
+
+# Flutter/React Native specific files
+README_FLUTTER_MIGRATION.md
+README_REACT_NATIVE_MIGRATION.md
+react-native-*.html
+react-native-*.js
+Swipe_Navigation_Implementation.html
+Swipe_Navigation_Implementation.md
+
+# Generated or temporary files
+generated-icon.png
+compress-video-analysis-image.js
+CURRENT_IMPLEMENTATION.md
+MEDIAPIPE_INTEGRATION.md
+
+# Large asset directories that might contain test data
+attached_assets/
+public/temp/
+public/cache/
