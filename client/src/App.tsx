@@ -8,6 +8,7 @@ import { HamburgerMenu } from "@/components/ui/hamburger-menu";
 import { Header } from "@/components/layout/header";
 import { BottomNavigation } from "@/components/layout/bottom-navigation";
 import { KeyboardProvider } from "@/contexts/keyboard-context";
+import { usePWA } from "@/hooks/use-pwa";
 // Import tool components
 import { 
   StopwatchPage,
