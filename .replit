@@ -7,7 +7,7 @@ channel = "stable-25_05"
 packages = ["atk", "ffmpeg", "gcc-unwrapped", "gdk-pixbuf", "glib", "gtk3", "imagemagick", "jq", "libGL", "libGLU", "libstdcxx5", "opencv4", "pango", "python3", "python311Packages.numpy", "python311Packages.opencv4", "wget", "flutter"]
 
 [deployment]
-deploymentTarget = "autoscale"
+deploymentTarget = "gce"
 build = ["npm", "run", "build"]
 run = ["npm", "start"]
 
