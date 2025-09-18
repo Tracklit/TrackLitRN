@@ -65,22 +65,6 @@ export function BiomechanicalVideoPlayer({
   // Add missing variable declarations
   const hasBiomechanicalData = biomechanicalData && Object.keys(biomechanicalData).length > 0;
 
-  // Real-time pose tracking data
-  const [poseData, setPoseData] = useState<any>(null);
-  const [webSocket, setWebSocket] = useState<WebSocket | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
-  
-  // Skeleton overlay processing
-  const [skeletonVideoUrl, setSkeletonVideoUrl] = useState<string | null>(null);
-  const [processingOverlay, setProcessingOverlay] = useState(false);
-  const [activeOverlays, setActiveOverlays] = useState<{[key: string]: any}>({});
-  
-  // Frame-based pose tracking
-  const [debugMode, setDebugMode] = useState(false);
-  const [frameData, setFrameData] = useState<any[]>([]);
-  const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
-  const [mediapipeError, setMediapipeError] = useState<string | null>(null);
-  const animationFrameRef = useRef<number | null>(null);
   
   // Zoom and pan state
   const [scale, setScale] = useState(1);
@@ -1009,54 +993,6 @@ export function BiomechanicalVideoPlayer({
     };
   }, []);
 
-  // WebSocket connection for real-time pose tracking
-  useEffect(() => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}`;
-    
-    const ws = new WebSocket(wsUrl);
-    
-    ws.onopen = () => {
-      console.log('WebSocket connected for pose tracking');
-      setIsConnected(true);
-      setWebSocket(ws);
-      
-      // Start pose tracking for the current video
-      ws.send(JSON.stringify({
-        type: 'start_pose_tracking',
-        videoPath: videoUrl
-      }));
-    };
-    
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        
-        if (data.type === 'pose_frame' && data.landmarks) {
-          setPoseData(data);
-        }
-      } catch (error) {
-        console.error('Error parsing pose data:', error);
-      }
-    };
-    
-    ws.onclose = () => {
-      console.log('WebSocket disconnected');
-      setIsConnected(false);
-      setWebSocket(null);
-    };
-    
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-    
-    return () => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'stop_pose_tracking' }));
-        ws.close();
-      }
-    };
-  }, [videoUrl]);
 
   // Draw biomechanical overlays on canvas
   useEffect(() => {

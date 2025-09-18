@@ -3,9 +3,6 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { VideoCleanupService } from "./video-cleanup";
 import path from "path";
-import { createServer } from "http";
-import { WebSocketServer } from "ws";
-import { spawn } from "child_process";
 
 const app = express();
 app.use(express.json());
@@ -138,97 +135,8 @@ app.use((req, res, next) => {
     }
   });
 
-  const httpServer = createServer(app);
-  
-  // Setup WebSocket server for real-time pose tracking
-  const wss = new WebSocketServer({ server: httpServer });
-  const activeProcesses = new Map();
-  
-  wss.on('connection', (ws, req) => {
-    const socketId = Math.random().toString(36).substring(7);
-    log(`WebSocket connected: ${socketId}`);
-    
-    ws.on('message', (message) => {
-      try {
-        const data = JSON.parse(message.toString());
-        
-        if (data.type === 'start_pose_tracking' && data.videoPath) {
-          log(`Starting pose tracking for video: ${data.videoPath}`);
-          
-          const pythonScript = path.join(process.cwd(), 'server', 'realtime-mediapipe.py');
-          const videoPath = data.videoPath.replace('/uploads/', path.join(process.cwd(), 'uploads/'));
-          
-          const poseProcess = spawn('python3', [pythonScript, videoPath], {
-            stdio: ['pipe', 'pipe', 'pipe']
-          });
-
-          activeProcesses.set(socketId, poseProcess);
-
-          poseProcess.stdout.on('data', (data) => {
-            try {
-              const lines = data.toString().split('\n').filter(line => line.trim());
-              
-              lines.forEach(line => {
-                try {
-                  const poseData = JSON.parse(line);
-                  
-                  if (ws.readyState === 1) { // WebSocket.OPEN
-                    ws.send(JSON.stringify({
-                      type: 'pose_data',
-                      data: poseData
-                    }));
-                  }
-                } catch (parseError) {
-                  // Ignore non-JSON output
-                }
-              });
-            } catch (error) {
-              console.error('Error processing pose data:', error);
-            }
-          });
-
-          poseProcess.stderr.on('data', (data) => {
-            console.error('Pose tracking error:', data.toString());
-          });
-
-          poseProcess.on('close', (code) => {
-            log(`Pose tracking process exited with code ${code}`);
-            activeProcesses.delete(socketId);
-          });
-          
-        } else if (data.type === 'stop_pose_tracking') {
-          const process = activeProcesses.get(socketId);
-          if (process) {
-            process.kill();
-            activeProcesses.delete(socketId);
-          }
-        }
-      } catch (error) {
-        console.error('WebSocket message error:', error);
-      }
-    });
-    
-    ws.on('close', () => {
-      log(`WebSocket disconnected: ${socketId}`);
-      const process = activeProcesses.get(socketId);
-      if (process) {
-        process.kill();
-        activeProcesses.delete(socketId);
-      }
-    });
-  });
-  
-  // Cleanup pose tracking processes on server shutdown
-  process.on('SIGINT', () => {
-    for (const [socketId, process] of activeProcesses) {
-      process.kill();
-    }
-    activeProcesses.clear();
-    process.exit();
-  });
-  
-  httpServer.listen(port, '0.0.0.0', () => {
-    console.log(`Server running on 0.0.0.0:${port}`);
+  server.listen(port, host, () => {
+    console.log(`Server running on ${host}:${port}`);
     console.log(`External URL: https://${process.env.REPL_SLUG}-${process.env.REPL_OWNER}.replit.app`);
     console.log('REPLIT_SERVER_READY');
   });

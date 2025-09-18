@@ -15,7 +15,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Camera, Upload, FileVideo, Play, Sparkles, Zap, Crown, ArrowLeft, ArrowRight, Check, Copy, ThumbsUp, ThumbsDown, CheckCircle, Plus, Minus } from "lucide-react";
 import { useLocation } from "wouter";
 import videoAnalysisCardImage from "@assets/video-analysis-card.jpeg";
-import { BiomechanicalVideoPlayer } from "@/components/biomechanical-video-player";
+import { SimpleVideoPlayer } from "@/components/simple-video-player";
 import { VideoThumbnail } from "@/components/video-thumbnail";
 
 export default function VideoAnalysisPage() {
