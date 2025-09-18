@@ -62,6 +62,14 @@ export function BiomechanicalVideoPlayer({
   const [playbackRate, setPlaybackRate] = useState(1);
   const [showControls, setShowControls] = useState(true);
 
+  // Add missing state variables for MediaPipe functionality
+  const [frameData, setFrameData] = useState<any[]>([]);
+  const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
+  const [debugMode, setDebugMode] = useState(false);
+  const [poseData, setPoseData] = useState<any>(null);
+  const [mediapipeError, setMediapipeError] = useState<string | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+
   // Add missing variable declarations
   const hasBiomechanicalData = biomechanicalData && Object.keys(biomechanicalData).length > 0;
 
@@ -450,6 +458,50 @@ export function BiomechanicalVideoPlayer({
       drawFrameBasedOverlays(ctx, currentFramePose, rect.width, rect.height);
     }
   }, [frameData, currentFrameIndex, poseData, debugMode]);
+
+  // Draw overlays based on frame data
+  const drawFrameBasedOverlays = (ctx: CanvasRenderingContext2D, frameData: any, width: number, height: number) => {
+    if (!frameData || !frameData.pose_landmarks) return;
+    
+    overlays.forEach(overlay => {
+      if (overlay.enabled) {
+        switch (overlay.type) {
+          case 'skeleton':
+            drawMediaPipeSkeleton(ctx, frameData.pose_landmarks, width, height);
+            break;
+          case 'angles':
+            const angles = calculateRealJointAngles(frameData.pose_landmarks);
+            drawDynamicJointAngles(ctx, frameData.pose_landmarks, angles, width, height);
+            break;
+        }
+      }
+    });
+  };
+
+  // Utility function for time formatting
+  const formatTime = (time: number) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  // Video control functions
+  const togglePlay = () => {
+    if (!videoRef.current) return;
+    
+    if (isPlaying) {
+      videoRef.current.pause();
+    } else {
+      videoRef.current.play();
+    }
+    setIsPlaying(!isPlaying);
+  };
+
+  const handleSeek = (value: number[]) => {
+    if (!videoRef.current) return;
+    videoRef.current.currentTime = value[0];
+    setCurrentTime(value[0]);
+  };
 
   // Real-time joint angle calculation from MediaPipe landmarks
   const calculateJointAngle = (p1: any, p2: any, p3: any): number => {
