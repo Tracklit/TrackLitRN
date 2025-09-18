@@ -637,7 +637,7 @@ export default function VideoAnalysisPage() {
         {currentStep === "video" && uploadedVideoUrl && (
           <div className="space-y-6">
             {/* Processing Status */}
-            {currentVideo && 'status' in currentVideo && currentVideo.status === 'processing' && (
+            {currentVideo && typeof currentVideo === 'object' && currentVideo !== null && 'status' in currentVideo && (currentVideo as any).status === 'processing' ? (
               <Card className="border-yellow-200 bg-yellow-50">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
@@ -649,7 +649,7 @@ export default function VideoAnalysisPage() {
                   </div>
                 </CardContent>
               </Card>
-            )}
+            ) : null}
 
             <Card className="border-green-200 bg-green-50">
               <CardContent className="p-6 text-center">
