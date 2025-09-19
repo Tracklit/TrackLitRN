@@ -462,9 +462,9 @@ export default function ProgramsPage() {
       </div>
 
       {/* Floating Action Button */}
-      {(activeTab === "my-programs" || user?.role !== "coach") && (
+      {activeTab === "my-programs" && (
         <div className="fixed bottom-20 right-6 z-50">
-          {user?.role === "coach" ? (
+          {user?.isCoach ? (
             <Button 
               asChild 
               className="h-14 w-14 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
