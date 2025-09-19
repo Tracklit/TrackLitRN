@@ -79,24 +79,18 @@ export default function ProgramsPage() {
   const [viewMode, setViewMode] = useState<"cards" | "list">("cards");
   const { user } = useAuth();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
-  // Refresh user data when component mounts or window gains focus
-  useEffect(() => {
-    const handleFocus = () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-    };
+  // Fresh user data with stable query key - refetches when needed
+  const { data: currentUser } = useQuery({
+    queryKey: ["/api/user"],
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+    keepPreviousData: true, // Prevent flicker
+  });
 
-    // Refresh on mount
-    queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-
-    // Refresh when window gains focus (e.g., coming back from profile page)
-    window.addEventListener('focus', handleFocus);
-    
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, [queryClient]);
+  // Use fresh user data if available, fallback to auth user
+  const activeUser = currentUser || user;
   
   // Query for user's created programs
   const { 
@@ -482,7 +476,7 @@ export default function ProgramsPage() {
       {/* Floating Action Button */}
       {activeTab === "my-programs" && (
         <div className="fixed bottom-20 right-6 z-50">
-          {user?.isCoach ? (
+          {activeUser?.isCoach ? (
             <Button 
               asChild 
               className="h-14 w-14 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"

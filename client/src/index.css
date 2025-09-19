@@ -533,7 +533,7 @@ article::-webkit-scrollbar,
   margin-bottom: 0 !important;
 }
 
-/* Force solid toast backgrounds - override all possible selectors */
+/* Force solid black toast backgrounds - override all possible selectors */
 [data-radix-toast-root],
 [data-state="open"][data-radix-toast-root],
 .group[data-radix-toast-root],
@@ -543,12 +543,12 @@ article::-webkit-scrollbar,
 [role="status"],
 .toast,
 .group.pointer-events-auto {
-  background-color: hsl(var(--background)) !important;
-  background: hsl(var(--background)) !important;
-  border: 1px solid hsl(var(--border)) !important;
+  background-color: #000000 !important;
+  background: #000000 !important;
+  border: 1px solid #333333 !important;
   opacity: 1 !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-  color: hsl(var(--foreground)) !important;
+  color: #ffffff !important;
 }
 
 /* Target specific toast classes that might be causing transparency */
@@ -556,8 +556,8 @@ article::-webkit-scrollbar,
 .group[data-state="open"],
 [class*="toast"][class*="group"],
 [class*="pointer-events-auto"] {
-  background-color: hsl(var(--background)) !important;
-  background: hsl(var(--background)) !important;
+  background-color: #000000 !important;
+  background: #000000 !important;
   opacity: 1 !important;
 }
 
@@ -575,7 +575,7 @@ article::-webkit-scrollbar,
 :root .toast,
 :root [role="status"] {
   --tw-bg-opacity: 1 !important;
-  background-color: hsl(var(--background)) !important;
+  background-color: #000000 !important;
 }
 
 /* Removed iOS-style navigation transitions */
