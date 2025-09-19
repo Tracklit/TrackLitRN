@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { PageHeader } from "@/components/page-header";
 
@@ -79,6 +79,24 @@ export default function ProgramsPage() {
   const [viewMode, setViewMode] = useState<"cards" | "list">("cards");
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Refresh user data when component mounts or window gains focus
+  useEffect(() => {
+    const handleFocus = () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+    };
+
+    // Refresh on mount
+    queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+
+    // Refresh when window gains focus (e.g., coming back from profile page)
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [queryClient]);
   
   // Query for user's created programs
   const { 
