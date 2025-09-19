@@ -75,6 +75,8 @@ export default function ProfilePage() {
       return response.json();
     },
     onSuccess: (updatedUser) => {
+      // Update user data immediately and invalidate all user queries
+      queryClient.setQueryData(['/api/user'], updatedUser);
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
       queryClient.invalidateQueries({ queryKey: ['/api/coach/limits'] });
       toast({
