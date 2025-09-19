@@ -78,6 +78,7 @@ export default function ProgramsPage() {
   const [sortBy, setSortBy] = useState("recent");
   const [viewMode, setViewMode] = useState<"cards" | "list">("cards");
   const { user } = useAuth();
+  const { toast } = useToast();
   
   // Query for user's created programs
   const { 
@@ -461,16 +462,59 @@ export default function ProgramsPage() {
       </div>
 
       {/* Floating Action Button */}
-      {activeTab === "my-programs" && (
+      {(activeTab === "my-programs" || user?.role !== "coach") && (
         <div className="fixed bottom-20 right-6 z-50">
-          <Button 
-            asChild 
-            className="h-14 w-14 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
-          >
-            <Link href="/programs/create">
-              <Plus className="h-6 w-6" />
-            </Link>
-          </Button>
+          {user?.role === "coach" ? (
+            <Button 
+              asChild 
+              className="h-14 w-14 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              <Link href="/programs/create">
+                <Plus className="h-6 w-6" />
+              </Link>
+            </Button>
+          ) : (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  className="h-14 w-14 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
+                  data-testid="button-create-program-menu"
+                >
+                  <Plus className="h-6 w-6" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent 
+                align="end" 
+                className="w-56 bg-gray-800 border-gray-700 mb-4"
+                data-testid="menu-create-program-options"
+              >
+                <DropdownMenuItem asChild>
+                  <Link href="/programs/create" className="flex items-center cursor-pointer" data-testid="link-create-program">
+                    <Plus className="h-4 w-4 mr-3" />
+                    Create a Program
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/coaches" className="flex items-center cursor-pointer" data-testid="link-find-coach">
+                    <User className="h-4 w-4 mr-3" />
+                    Find a Coach
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/marketplace" className="flex items-center cursor-pointer" data-testid="link-find-program">
+                    <Search className="h-4 w-4 mr-3" />
+                    Find a Program
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/profile/settings" className="flex items-center cursor-pointer" data-testid="link-switch-coach">
+                    <UserPlus className="h-4 w-4 mr-3" />
+                    Switch to Coach account
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       )}
     </div>
