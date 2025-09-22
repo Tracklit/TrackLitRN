@@ -74,6 +74,7 @@ import SprinthiaPage from "@/pages/sprinthia-simple";
 import RehabPage from "@/pages/rehab-page";
 import ArcadePage from "@/pages/arcade-page";
 import ChatPage from "@/pages/chat-page";
+import CreateGroupPage from "@/pages/create-group-page";
 import AmbassadorLandingPage from "@/pages/ambassador-landing-page";
 import ChannelSettingsPage from "@/pages/channel-settings-page";
 import JournalEntryPage from "@/pages/journal-entry-page";
@@ -240,6 +241,7 @@ function Router() {
         <ProtectedRoute path="/clubs" component={ClubsPage} />
         <ProtectedRoute path="/club/:id" component={ClubDetailPage} />
         <ProtectedRoute path="/club-management/:id" component={ClubManagementPage} />
+        <ProtectedRoute path="/create-group" component={CreateGroupPage} />
         <ProtectedRoute path="/chats/channels/:id/settings" component={ChannelSettingsPage} />
 
         
