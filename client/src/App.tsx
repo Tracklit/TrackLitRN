@@ -313,9 +313,20 @@ function Router() {
 }
 
 function MainApp() {
-  const { user, loginMutation, registerMutation } = useAuth();
-  const [location] = useLocation();
+  const { user, loginMutation, registerMutation, isLoading } = useAuth();
+  const [location, setLocation] = useLocation();
   const { isPWA, isIOS, canInstall, installPrompt } = usePWA();
+  
+  // Handle root URL authentication redirect
+  useEffect(() => {
+    console.log('MainApp: Auth state check', { user: !!user, isLoading, location });
+    
+    // If user is not authenticated and trying to access a protected route
+    if (!isLoading && !user && location === '/' && location !== '/auth') {
+      console.log('MainApp: Redirecting unauthenticated user from root to /auth');
+      setLocation('/auth');
+    }
+  }, [user, isLoading, location, setLocation]);
   
   // Redirect to onboarding for new user registrations (not logins)
   useEffect(() => {
