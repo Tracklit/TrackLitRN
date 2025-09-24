@@ -19,13 +19,8 @@ try {
   console.log("4. React root created successfully");
   
   console.log("5. Rendering App component");
-  try {
-    root.render(React.createElement(App));
-    console.log("6. App component rendered successfully");
-  } catch (appError) {
-    console.error("=== ERROR RENDERING APP COMPONENT ===", appError);
-    throw appError;
-  }
+  root.render(React.createElement(App));
+  console.log("6. App component rendered successfully");
   
 } catch (error) {
   console.error("=== ERROR IN MAIN.TSX ===", error);

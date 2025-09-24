@@ -16,15 +16,6 @@ export default defineConfig({
         ]
       : []),
   ],
-  server: {
-    host: "0.0.0.0",
-    port: 5000,
-    strictPort: true,
-    allowedHosts: true,
-    hmr: {
-      port: 5000,
-    },
-  },
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
@@ -36,8 +27,5 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
-  },
-  optimizeDeps: {
-    force: true,
   },
 });

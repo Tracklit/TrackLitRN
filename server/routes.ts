@@ -9728,7 +9728,7 @@ Submission Details:
         return res.status(403).json({ error: "Coach access required" });
       }
 
-      const programs = await storage.getCoachPrograms(req.user.id);
+      const programs = await dbStorage.getCoachPrograms(req.user.id);
       res.json({ items: programs });
     } catch (error) {
       console.error("Error fetching coach programs:", error);
@@ -9747,7 +9747,7 @@ Submission Details:
         return res.status(401).json({ error: "Not authenticated" });
       }
 
-      const cartItems = await storage.getCartItems(req.user.id);
+      const cartItems = await dbStorage.getCartItems(req.user.id);
       res.json(cartItems);
     } catch (error) {
       console.error("Error fetching cart items:", error);
@@ -9768,7 +9768,7 @@ Submission Details:
         return res.status(400).json({ error: "Missing required fields" });
       }
 
-      const cartItem = await storage.addToCart({
+      const cartItem = await dbStorage.addToCart({
         userId: req.user.id,
         listingId,
         type,
@@ -9797,7 +9797,7 @@ Submission Details:
         return res.status(400).json({ error: "Invalid parameters" });
       }
 
-      const updatedItem = await storage.updateCartItem(id, quantity);
+      const updatedItem = await dbStorage.updateCartItem(id, quantity);
       if (!updatedItem) {
         return res.status(404).json({ error: "Cart item not found" });
       }
@@ -9821,7 +9821,7 @@ Submission Details:
         return res.status(400).json({ error: "Invalid cart item ID" });
       }
 
-      const removed = await storage.removeFromCart(id);
+      const removed = await dbStorage.removeFromCart(id);
       if (removed) {
         res.json({ success: true });
       } else {
@@ -9846,7 +9846,7 @@ Submission Details:
       }
 
       const buyerTier = req.user.subscriptionTier || 'free';
-      const pricing = await storage.calculateCartPrice(items, buyerTier);
+      const pricing = await dbStorage.calculateCartPrice(items, buyerTier);
       
       res.json(pricing);
     } catch (error) {
@@ -9866,7 +9866,7 @@ Submission Details:
         return res.status(401).json({ error: "Not authenticated" });
       }
 
-      const orders = await storage.getUserOrders(req.user.id);
+      const orders = await dbStorage.getUserOrders(req.user.id);
       res.json(orders);
     } catch (error) {
       console.error("Error fetching orders:", error);
@@ -9886,7 +9886,7 @@ Submission Details:
         return res.status(400).json({ error: "Invalid order ID" });
       }
 
-      const order = await storage.getOrder(id);
+      const order = await dbStorage.getOrder(id);
       if (!order) {
         return res.status(404).json({ error: "Order not found" });
       }
@@ -9920,7 +9920,7 @@ Submission Details:
       const fromDate = from ? new Date(from as string) : undefined;
       const toDate = to ? new Date(to as string) : undefined;
 
-      const slots = await storage.getConsultingSlots(listingId, fromDate, toDate);
+      const slots = await dbStorage.getConsultingSlots(listingId, fromDate, toDate);
       res.json(slots);
     } catch (error) {
       console.error("Error fetching consulting slots:", error);
@@ -9943,12 +9943,12 @@ Submission Details:
       }
 
       // Verify listing ownership
-      const listing = await storage.getMarketplaceListing(listingId);
+      const listing = await dbStorage.getMarketplaceListing(listingId);
       if (!listing || listing.coach.id !== req.user.id) {
         return res.status(403).json({ error: "Not authorized" });
       }
 
-      const createdSlots = await storage.createConsultingSlots(slots);
+      const createdSlots = await dbStorage.createConsultingSlots(slots);
       res.status(201).json(createdSlots);
     } catch (error) {
       console.error("Error creating consulting slots:", error);
@@ -9968,7 +9968,7 @@ Submission Details:
         return res.status(400).json({ error: "Invalid listing ID" });
       }
 
-      const reviews = await storage.getListingReviews(id);
+      const reviews = await dbStorage.getListingReviews(id);
       res.json(reviews);
     } catch (error) {
       console.error("Error fetching reviews:", error);
@@ -9990,7 +9990,7 @@ Submission Details:
         return res.status(400).json({ error: "Invalid parameters" });
       }
 
-      const review = await storage.createReview({
+      const review = await dbStorage.createReview({
         listingId,
         reviewerId: req.user.id,
         rating,

@@ -16,7 +16,7 @@ import {
   JournalPage,
   PaceCalculatorPage,
   PhotoFinishPage,
-  VBTAnalysisPage
+  VelocityTrackerPage
 } from "@/pages/routes";
 import PhotoFinishAnalysisPage from "@/pages/tools/photo-finish-analysis-page";
 
@@ -26,6 +26,7 @@ import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
 import TestPage from "@/pages/test-page-simple";
 import ToolsPreviewPage from "@/pages/tools-preview";
+import MinimalTest from "@/pages/minimal-test";
 import DebugSimple from "@/pages/debug-simple";
 import EmergencyDebug from "@/pages/emergency-debug";
 import MeetsPage from "@/pages/meets-page";
@@ -203,11 +204,11 @@ function Router() {
           <ProtectedRoute path="/tools/start-gun" component={StartGunPage} />
           <ProtectedRoute path="/tools/journal" component={JournalPage} />
           <ProtectedRoute path="/tools/photo-finish" component={PhotoFinishPage} />
+          <ProtectedRoute path="/tools/velocity-tracker" component={VelocityTrackerPage} />
           <ProtectedRoute path="/tools/photo-finish/analysis" component={PhotoFinishAnalysisPage} />
           <ProtectedRoute path="/tools/exercise-library" component={ExerciseLibraryPage} />
           <ProtectedRoute path="/tools/exercise-library/add" component={ExerciseLibraryAddPage} />
           <ProtectedRoute path="/tools/video-analysis" component={VideoAnalysisPage} />
-          <ProtectedRoute path="/tools/vbt-analysis" component={VBTAnalysisPage} />
           <ProtectedRoute path="/programs" component={ProgramsPage} />
           <ProtectedRoute path="/programs/create" component={ProgramCreatePage} />
           <ProtectedRoute path="/programs/:id" component={ProgramDetailPage} />
@@ -284,6 +285,7 @@ function Router() {
         <Route path="/affiliate" component={AmbassadorLandingPage} />
         <Route path="/test" component={TestPage} />
         <Route path="/tools-preview" component={ToolsPreviewPage} />
+        <Route path="/test-minimal" component={MinimalTest} />
         <Route path="/debug" component={DebugSimple} />
         <Route path="/emergency" component={EmergencyDebug} />
         <Route component={NotFound} />

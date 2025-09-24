@@ -14,34 +14,34 @@ import {
   Flag,
   PlayCircle,
   FileText,
-  Activity
+  Zap
 } from "lucide-react";
 import { Link } from "wouter";
 import { OptimizedBackgroundImage } from '@/components/optimized-background-image';
 import { PreloadImages } from '@/components/preload-images';
 
-function WorkoutToolsPage() {
+// Import dashboard card images - temporarily commented out
+// import sprinthiaBackground from '@assets/image_1750019864190.png';
+// import practiceBackground from '@assets/Screenshot 2025-06-15 205621_1750013855167.png';
+// import programsBackground from '@assets/image_1750012192490.png';
+// import raceBackground from '@assets/Screenshot 2025-06-15 205651_1750013855167.png';
+// import toolsBackground from '@assets/Screenshot 2025-06-15 205721_1750013855168.png';
+
+
+
+export default function WorkoutToolsPage() {
   // Background images for tool cards - temporarily disabled
   const toolBackgrounds: string[] = [];
 
   // Tool cards with links to individual pages
   const toolCards = [
     {
-      title: "VBT Analysis",
-      description: "Velocity-based training analysis and metrics",
-      icon: <Activity className="h-8 w-8 text-white" />,
-      href: "/tools/vbt-analysis",
-      disabled: false,
-      backgroundImage: toolBackgrounds[0],
-      hasBackground: false
-    },
-    {
       title: "Video Analysis",
       description: "AI-powered race video analysis with Sprinthia",
       icon: <PlayCircle className="h-8 w-8 text-white" />,
       href: "/tools/video-analysis",
       disabled: false,
-      backgroundImage: toolBackgrounds[1],
+      backgroundImage: toolBackgrounds[0],
       hasBackground: false
     },
     {
@@ -50,7 +50,7 @@ function WorkoutToolsPage() {
       icon: <Flag className="h-8 w-8 text-white" />,
       href: "/tools/photo-finish",
       disabled: false,
-      backgroundImage: toolBackgrounds[2],
+      backgroundImage: toolBackgrounds[1],
       hasBackground: false
     },
     {
@@ -59,7 +59,7 @@ function WorkoutToolsPage() {
       icon: <Volume2 className="h-8 w-8 text-white" />,
       href: "/tools/start-gun",
       disabled: false,
-      backgroundImage: toolBackgrounds[3],
+      backgroundImage: toolBackgrounds[2],
       hasBackground: false
     },
     {
@@ -68,7 +68,7 @@ function WorkoutToolsPage() {
       icon: <Timer className="h-8 w-8 text-white" />,
       href: "/tools/stopwatch",
       disabled: false,
-      backgroundImage: toolBackgrounds[4],
+      backgroundImage: toolBackgrounds[3],
       hasBackground: false
     },
     {
@@ -77,7 +77,7 @@ function WorkoutToolsPage() {
       icon: <FileText className="h-8 w-8 text-white" />,
       href: "/tools/journal",
       disabled: false,
-      backgroundImage: toolBackgrounds[5],
+      backgroundImage: toolBackgrounds[4],
       hasBackground: false
     },
     {
@@ -85,6 +85,15 @@ function WorkoutToolsPage() {
       description: "Store and organize your training videos",
       icon: <Video className="h-8 w-8 text-white" />,
       href: "/tools/exercise-library",
+      disabled: false,
+      backgroundImage: toolBackgrounds[5],
+      hasBackground: false
+    },
+    {
+      title: "Velocity Tracker",
+      description: "Track speed and acceleration metrics",
+      icon: <Zap className="h-8 w-8 text-white" />,
+      href: "/tools/velocity-tracker",
       disabled: false,
       backgroundImage: toolBackgrounds[6],
       hasBackground: false
@@ -199,6 +208,6 @@ function WorkoutToolsPage() {
 // Protected route wrapper
 export function Component() {
   return (
-    <ProtectedRoute path="/tools" component={WorkoutToolsPage} />
+    <ProtectedRoute path="/training-tools" component={WorkoutToolsPage} />
   );
 }

@@ -58,7 +58,6 @@
     "@uppy/core": "^5.0.1",
     "@uppy/dashboard": "^5.0.1",
     "@uppy/react": "^5.0.2",
-    "adm-zip": "^0.5.16",
     "bcrypt": "^6.0.0",
     "chart.js": "^4.4.9",
     "class-variance-authority": "^0.7.1",
