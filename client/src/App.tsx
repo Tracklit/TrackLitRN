@@ -317,6 +317,8 @@ function MainApp() {
   const [location, setLocation] = useLocation();
   const { isPWA, isIOS, canInstall, installPrompt } = usePWA();
   
+  // ALL HOOKS MUST BE AT THE TOP - BEFORE ANY EARLY RETURNS
+  
   // Simplified authentication redirect handling
   useEffect(() => {
     console.log('MainApp: Auth check', { user: !!user, isLoading, location });
@@ -327,6 +329,17 @@ function MainApp() {
       window.location.href = '/auth';
     }
   }, [user, isLoading, location]);
+  
+  // Redirect to onboarding for new user registrations (not logins)
+  useEffect(() => {
+    // For simplicity, check if the user has completed onboarding before
+    const hasCompletedOnboarding = localStorage.getItem('onboardingCompleted');
+    
+    // Only redirect to onboarding if user just registered (not logged in) and hasn't completed it before
+    if (registerMutation.isSuccess && !hasCompletedOnboarding) {
+      window.location.href = '/onboarding/welcome';
+    }
+  }, [registerMutation.isSuccess, registerMutation.data]);
   
   // Show loading only while actually loading authentication
   if (isLoading) {
@@ -339,17 +352,6 @@ function MainApp() {
       </div>
     );
   }
-  
-  // Redirect to onboarding for new user registrations (not logins)
-  useEffect(() => {
-    // For simplicity, check if the user has completed onboarding before
-    const hasCompletedOnboarding = localStorage.getItem('onboardingCompleted');
-    
-    // Only redirect to onboarding if user just registered (not logged in) and hasn't completed it before
-    if (registerMutation.isSuccess && !hasCompletedOnboarding) {
-      window.location.href = '/onboarding/welcome';
-    }
-  }, [registerMutation.isSuccess, registerMutation.data]);
   
 
   // Special handling for admin panel - render without any layout
