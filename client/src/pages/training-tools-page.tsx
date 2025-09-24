@@ -207,7 +207,5 @@ export default function WorkoutToolsPage() {
 
 // Protected route wrapper
 export function Component() {
-  return (
-    <ProtectedRoute path="/training-tools" component={WorkoutToolsPage} />
-  );
+  return <WorkoutToolsPage />;
 }
