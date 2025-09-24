@@ -72,11 +72,14 @@ app.use((req, res, next) => {
     }
   }, 5 * 60 * 1000); // Check every 5 minutes
 
-  // Initial refresh on server start
-  console.log('Running initial Google Sheets data refresh on server start...');
-  refreshAllGoogleSheetPrograms()
-    .then(() => console.log('Initial Google Sheets data refresh completed'))
-    .catch(error => console.error('Error during initial Google Sheets refresh:', error));
+  // Schedule initial refresh to run in background after server starts
+  // This ensures the server is responsive immediately while data processing happens asynchronously
+  setImmediate(() => {
+    console.log('Running initial Google Sheets data refresh in background...');
+    refreshAllGoogleSheetPrograms()
+      .then(() => console.log('Initial Google Sheets data refresh completed'))
+      .catch(error => console.error('Error during initial Google Sheets refresh:', error));
+  });
 
   // Initialize video cleanup service
   console.log('Initializing video cleanup service...');
