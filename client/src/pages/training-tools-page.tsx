@@ -36,12 +36,21 @@ export default function WorkoutToolsPage() {
   // Tool cards with links to individual pages
   const toolCards = [
     {
+      title: "VBT Analysis",
+      description: "Velocity-based training analysis and metrics",
+      icon: <Timer className="h-8 w-8 text-white" />,
+      href: "/tools/vbt-analysis",
+      disabled: false,
+      backgroundImage: toolBackgrounds[0],
+      hasBackground: false
+    },
+    {
       title: "Video Analysis",
       description: "AI-powered race video analysis with Sprinthia",
       icon: <PlayCircle className="h-8 w-8 text-white" />,
       href: "/tools/video-analysis",
       disabled: false,
-      backgroundImage: toolBackgrounds[0],
+      backgroundImage: toolBackgrounds[1],
       hasBackground: false
     },
     {
@@ -50,7 +59,7 @@ export default function WorkoutToolsPage() {
       icon: <Flag className="h-8 w-8 text-white" />,
       href: "/tools/photo-finish",
       disabled: false,
-      backgroundImage: toolBackgrounds[1],
+      backgroundImage: toolBackgrounds[2],
       hasBackground: false
     },
     {
@@ -59,7 +68,7 @@ export default function WorkoutToolsPage() {
       icon: <Volume2 className="h-8 w-8 text-white" />,
       href: "/tools/start-gun",
       disabled: false,
-      backgroundImage: toolBackgrounds[2],
+      backgroundImage: toolBackgrounds[3],
       hasBackground: false
     },
     {
@@ -68,7 +77,7 @@ export default function WorkoutToolsPage() {
       icon: <Timer className="h-8 w-8 text-white" />,
       href: "/tools/stopwatch",
       disabled: false,
-      backgroundImage: toolBackgrounds[3],
+      backgroundImage: toolBackgrounds[4],
       hasBackground: false
     },
     {
@@ -77,7 +86,7 @@ export default function WorkoutToolsPage() {
       icon: <FileText className="h-8 w-8 text-white" />,
       href: "/tools/journal",
       disabled: false,
-      backgroundImage: toolBackgrounds[4],
+      backgroundImage: toolBackgrounds[5],
       hasBackground: false
     },
     {
@@ -85,15 +94,6 @@ export default function WorkoutToolsPage() {
       description: "Store and organize your training videos",
       icon: <Video className="h-8 w-8 text-white" />,
       href: "/tools/exercise-library",
-      disabled: false,
-      backgroundImage: toolBackgrounds[5],
-      hasBackground: false
-    },
-    {
-      title: "VBT Analysis",
-      description: "Velocity-based training analysis and metrics",
-      icon: <Activity className="h-8 w-8 text-white" />,
-      href: "/tools/vbt-analysis",
       disabled: false,
       backgroundImage: toolBackgrounds[6],
       hasBackground: false
