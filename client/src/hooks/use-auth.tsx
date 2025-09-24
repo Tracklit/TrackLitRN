@@ -52,28 +52,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  const registerMutation = useMutation({
+  const registerMutation = useMutation<SelectUser, Error, InsertUser>({
     mutationFn: async (credentials: InsertUser) => {
       const res = await apiRequest("POST", "/api/register", credentials);
-      return await res.json();
+      const data = await res.json();
+      // Always return just the user for consistency with the mutation type
+      return 'user' in data ? data.user : data;
     },
-    onSuccess: (data: { user: SelectUser; requiresOnboarding: boolean }) => {
-      // Handle both old format (just user) and new format (user + requiresOnboarding)
-      const user = data.user || data;
-      const requiresOnboarding = data.requiresOnboarding || false;
-      
+    onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
       toast({
         title: "Registration successful",
         description: `Welcome to TrackLit, ${user.name}!`,
       });
       
-      // Redirect based on onboarding requirements
-      if (requiresOnboarding) {
-        window.location.href = '/onboarding';
-      } else {
-        window.location.href = '/';
-      }
+      // Redirect to home after successful registration
+      window.location.href = '/';
     },
     onError: (error: Error) => {
       toast({
