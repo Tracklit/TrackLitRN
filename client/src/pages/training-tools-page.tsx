@@ -29,7 +29,7 @@ import { PreloadImages } from '@/components/preload-images';
 
 
 
-export default function WorkoutToolsPage() {
+function WorkoutToolsPage() {
   // Background images for tool cards - temporarily disabled
   const toolBackgrounds: string[] = [];
 
@@ -205,7 +205,7 @@ export default function WorkoutToolsPage() {
   );
 }
 
-// Protected route wrapper
-export function Component() {
+// Default export  
+export default function TrainingToolsPageWithProtection() {
   return <WorkoutToolsPage />;
 }
