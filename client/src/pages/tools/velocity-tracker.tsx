@@ -18,7 +18,6 @@ import {
   Calculator
 } from "lucide-react";
 import { Link } from "wouter";
-
 interface TimeEntry {
   distance: number;
   time: number;
