@@ -15,7 +15,8 @@ import {
   StartGunPage,
   JournalPage,
   PaceCalculatorPage,
-  PhotoFinishPage
+  PhotoFinishPage,
+  VelocityTrackerPage
 } from "@/pages/routes";
 import PhotoFinishAnalysisPage from "@/pages/tools/photo-finish-analysis-page";
 
@@ -203,6 +204,7 @@ function Router() {
           <ProtectedRoute path="/tools/start-gun" component={StartGunPage} />
           <ProtectedRoute path="/tools/journal" component={JournalPage} />
           <ProtectedRoute path="/tools/photo-finish" component={PhotoFinishPage} />
+          <ProtectedRoute path="/tools/velocity-tracker" component={VelocityTrackerPage} />
           <ProtectedRoute path="/tools/photo-finish/analysis" component={PhotoFinishAnalysisPage} />
           <ProtectedRoute path="/tools/exercise-library" component={ExerciseLibraryPage} />
           <ProtectedRoute path="/tools/exercise-library/add" component={ExerciseLibraryAddPage} />
