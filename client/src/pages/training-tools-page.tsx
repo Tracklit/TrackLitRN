@@ -13,7 +13,8 @@ import {
   Camera,
   Flag,
   PlayCircle,
-  FileText
+  FileText,
+  Activity
 } from "lucide-react";
 import { Link } from "wouter";
 import { OptimizedBackgroundImage } from '@/components/optimized-background-image';
@@ -86,6 +87,15 @@ export default function WorkoutToolsPage() {
       href: "/tools/exercise-library",
       disabled: false,
       backgroundImage: toolBackgrounds[5],
+      hasBackground: false
+    },
+    {
+      title: "VBT Analysis",
+      description: "Velocity-based training analysis and metrics",
+      icon: <Activity className="h-8 w-8 text-white" />,
+      href: "/tools/vbt-analysis",
+      disabled: false,
+      backgroundImage: toolBackgrounds[6],
       hasBackground: false
     },
     {
