@@ -26,7 +26,6 @@ import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
 import TestPage from "@/pages/test-page-simple";
 import ToolsPreviewPage from "@/pages/tools-preview";
-import MinimalTest from "@/pages/minimal-test";
 import DebugSimple from "@/pages/debug-simple";
 import EmergencyDebug from "@/pages/emergency-debug";
 import MeetsPage from "@/pages/meets-page";
@@ -285,7 +284,6 @@ function Router() {
         <Route path="/affiliate" component={AmbassadorLandingPage} />
         <Route path="/test" component={TestPage} />
         <Route path="/tools-preview" component={ToolsPreviewPage} />
-        <Route path="/test-minimal" component={MinimalTest} />
         <Route path="/debug" component={DebugSimple} />
         <Route path="/emergency" component={EmergencyDebug} />
         <Route component={NotFound} />
