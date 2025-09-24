@@ -20,15 +20,6 @@ import { Link } from "wouter";
 import { OptimizedBackgroundImage } from '@/components/optimized-background-image';
 import { PreloadImages } from '@/components/preload-images';
 
-// Import dashboard card images - temporarily commented out
-// import sprinthiaBackground from '@assets/image_1750019864190.png';
-// import practiceBackground from '@assets/Screenshot 2025-06-15 205621_1750013855167.png';
-// import programsBackground from '@assets/image_1750012192490.png';
-// import raceBackground from '@assets/Screenshot 2025-06-15 205651_1750013855167.png';
-// import toolsBackground from '@assets/Screenshot 2025-06-15 205721_1750013855168.png';
-
-
-
 function WorkoutToolsPage() {
   // Background images for tool cards - temporarily disabled
   const toolBackgrounds: string[] = [];
@@ -38,7 +29,7 @@ function WorkoutToolsPage() {
     {
       title: "VBT Analysis",
       description: "Velocity-based training analysis and metrics",
-      icon: <Timer className="h-8 w-8 text-white" />,
+      icon: <Activity className="h-8 w-8 text-white" />,
       href: "/tools/vbt-analysis",
       disabled: false,
       backgroundImage: toolBackgrounds[0],
@@ -205,7 +196,9 @@ function WorkoutToolsPage() {
   );
 }
 
-// Default export  
-export default function TrainingToolsPageWithProtection() {
-  return <WorkoutToolsPage />;
+// Protected route wrapper
+export function Component() {
+  return (
+    <ProtectedRoute path="/tools" component={WorkoutToolsPage} />
+  );
 }
