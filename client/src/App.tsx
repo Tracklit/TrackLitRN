@@ -15,7 +15,8 @@ import {
   StartGunPage,
   JournalPage,
   PaceCalculatorPage,
-  PhotoFinishPage
+  PhotoFinishPage,
+  VBTAnalysisPage
 } from "@/pages/routes";
 import PhotoFinishAnalysisPage from "@/pages/tools/photo-finish-analysis-page";
 
@@ -207,6 +208,7 @@ function Router() {
           <ProtectedRoute path="/tools/exercise-library" component={ExerciseLibraryPage} />
           <ProtectedRoute path="/tools/exercise-library/add" component={ExerciseLibraryAddPage} />
           <ProtectedRoute path="/tools/video-analysis" component={VideoAnalysisPage} />
+          <ProtectedRoute path="/tools/vbt-analysis" component={VBTAnalysisPage} />
           <ProtectedRoute path="/programs" component={ProgramsPage} />
           <ProtectedRoute path="/programs/create" component={ProgramCreatePage} />
           <ProtectedRoute path="/programs/:id" component={ProgramDetailPage} />
