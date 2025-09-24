@@ -66,6 +66,9 @@ export function setupAuth(app: Express) {
     store: storage.sessionStore,
     cookie: {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      httpOnly: true,
+      secure: false, // Set to false for development/HTTP, will be overridden for production
+      sameSite: 'lax' // Important for cross-origin scenarios in Replit
     }
   };
 

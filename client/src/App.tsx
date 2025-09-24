@@ -317,16 +317,28 @@ function MainApp() {
   const [location, setLocation] = useLocation();
   const { isPWA, isIOS, canInstall, installPrompt } = usePWA();
   
-  // Handle root URL authentication redirect
+  // Simplified authentication redirect handling
   useEffect(() => {
-    console.log('MainApp: Auth state check', { user: !!user, isLoading, location });
+    console.log('MainApp: Auth check', { user: !!user, isLoading, location });
     
-    // If user is not authenticated and trying to access a protected route
-    if (!isLoading && !user && location === '/' && location !== '/auth') {
-      console.log('MainApp: Redirecting unauthenticated user from root to /auth');
-      setLocation('/auth');
+    // Simple redirect logic: if not loading and no user and on root, go to auth
+    if (!isLoading && !user && location === '/') {
+      console.log('MainApp: Redirecting to /auth');
+      window.location.href = '/auth';
     }
-  }, [user, isLoading, location, setLocation]);
+  }, [user, isLoading, location]);
+  
+  // Show loading only while actually loading authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
   
   // Redirect to onboarding for new user registrations (not logins)
   useEffect(() => {

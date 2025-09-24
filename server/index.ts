@@ -18,6 +18,17 @@ app.get('/ping', (req, res) => {
   res.status(200).send('pong');
 });
 
+// Debug endpoint to test authentication status
+app.get('/debug-auth', (req, res) => {
+  res.status(200).json({
+    message: 'Debug endpoint reached',
+    authenticated: !!req.user,
+    userId: req.user?.id || null,
+    sessionId: req.sessionID || null,
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Serve static files from the public directory
 app.use(express.static(path.join(process.cwd(), 'public')));
 
