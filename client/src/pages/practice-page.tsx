@@ -1103,6 +1103,27 @@ function PracticePage() {
                 </div>
               </div>
               
+              {/* Adjust for Track Type Toggle */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-sm font-semibold text-white">Adjust for Track Type</label>
+                    <p className="text-xs text-white/70 mt-1">Apply track-specific timing adjustments</p>
+                  </div>
+                  <Switch
+                    checked={adjustForTrackType}
+                    onCheckedChange={(checked) => {
+                      setAdjustForTrackType(checked);
+                      const saved = safeStorage.setItem('tracklit_adjustForTrackType', JSON.stringify(checked));
+                      if (!saved) {
+                        setSessionSettings(prev => ({ ...prev, adjustForTrackType: checked }));
+                      }
+                    }}
+                    className="data-[state=checked]:bg-white data-[state=unchecked]:bg-white/20"
+                  />
+                </div>
+              </div>
+              
               {/* Timing Options */}
               <div className="space-y-3">
                 <label className="text-sm font-semibold text-white">Timing Method</label>
