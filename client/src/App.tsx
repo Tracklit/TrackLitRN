@@ -62,6 +62,7 @@ import { Component as AssignedProgramsPage } from "@/pages/assigned-programs-pag
 import { AssignProgramPage } from "@/pages/assign-program-page";
 import CheckoutPage from "@/pages/checkout-page";
 import AthleteProfilePage from "@/pages/athlete-profile-page";
+import TimingSettingsPage from "@/pages/timing-settings-page";
 
 import AthleteProfile from "@/pages/athlete-profile";
 import PublicProfilePage from "@/pages/public-profile-page";
@@ -266,7 +267,7 @@ function Router() {
         <ProtectedRoute path="/spikes" component={SpikesPage} />
         <ProtectedRoute path="/subscription" component={SubscriptionPage} />
         <ProtectedRoute path="/profile" component={ProfilePage} />
-        <ProtectedRoute path="/timing-settings" component={AthleteProfilePage} />
+        <ProtectedRoute path="/timing-settings" component={TimingSettingsPage} />
 
         
         {/* Public Profiles - separate URL pattern */}
