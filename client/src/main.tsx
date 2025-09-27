@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 
-console.log("=== MAIN.TSX STARTING v2 ===");
+console.log(`=== MAIN.TSX STARTING v3 - ${Date.now()} ===`);
 
 // Add immediate loading fallback to prevent white page
 document.body.style.margin = "0";
