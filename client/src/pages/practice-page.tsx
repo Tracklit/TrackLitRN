@@ -1131,16 +1131,6 @@ function PracticePage() {
                 Times are estimates based on selected track type and timing method. Percentages represent speed intensity levels.
               </div>
             </div>
-
-            {/* Footer */}
-            <div className="px-6 py-6 border-t border-white/20 bg-white/5 backdrop-blur-sm">
-              <button 
-                onClick={() => setTargetTimesModalOpen(false)}
-                className="w-full h-12 bg-white text-blue-900 font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95"
-              >
-                Close
-              </button>
-            </div>
           </div>
       </div>
 
