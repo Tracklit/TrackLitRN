@@ -482,7 +482,7 @@ function PracticePage() {
   };
   
   // Calculator states
-  const [targetTimesExpanded, setTargetTimesExpanded] = useState(false);
+  const [targetTimesModalOpen, setTargetTimesModalOpen] = useState(false);
   const [useFirstFootTiming, setUseFirstFootTiming] = useState(false);
   const [adjustForTrackType, setAdjustForTrackType] = useState(false);
   const [currentTrackType, setCurrentTrackType] = useState<"indoor" | "outdoor">("outdoor");
@@ -812,19 +812,11 @@ function PracticePage() {
 
   return (
     <PageContainer className="pb-24">
-      {/* Fixed Target Times Header */}
-      <div className="fixed top-16 left-0 right-0 z-50 bg-black border-b shadow-sm">
+      {/* Fixed Header */}
+      <div className="fixed top-16 left-0 right-0 z-40 bg-black border-b shadow-sm">
         <div className="max-w-md mx-auto">
           <div className="flex items-center justify-between px-4 py-2">
             <div className="flex items-center gap-2">
-              <button 
-                onClick={() => setTargetTimesExpanded(!targetTimesExpanded)}
-                className="flex items-center gap-1 px-2 py-1 bg-white/10 hover:bg-white/20 rounded text-xs text-white"
-              >
-                <Calculator className="h-3 w-3" />
-                Target Times
-                <ChevronDown className={`h-3 w-3 transition-transform ${targetTimesExpanded ? 'rotate-180' : ''}`} />
-              </button>
               <button 
                 onClick={() => setShowAssignedPrograms(true)}
                 className="flex items-center gap-1 px-2 py-1 bg-white/10 hover:bg-white/20 rounded text-xs text-white"
@@ -834,100 +826,6 @@ function PracticePage() {
               </button>
             </div>
           </div>
-          
-          {/* Collapsible Content */}
-          {targetTimesExpanded && (
-            <div className="px-4 pb-4 space-y-3 border-t">
-              <div className="space-y-2 pt-3">
-                <label className="text-xs font-medium text-white">Track Type</label>
-                <div className="flex gap-2">
-                  <Button
-                    variant={currentTrackType === "outdoor" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setCurrentTrackType("outdoor")}
-                    className="h-7 text-xs"
-                  >
-                    Outdoor
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-white">Timing Options</label>
-                <div className="space-y-1">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="firstFootTiming"
-                      checked={useFirstFootTiming}
-                      onCheckedChange={(checked) => setUseFirstFootTiming(checked as boolean)}
-                    />
-                    <label htmlFor="firstFootTiming" className="text-xs text-white">
-                      First Foot
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="onMovement"
-                      checked={useOnMovement}
-                      onCheckedChange={(checked) => setUseOnMovement(checked as boolean)}
-                    />
-                    <label htmlFor="onMovement" className="text-xs text-white">
-                      On Movement
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              {/* Target Times Table */}
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-white">Target Times</label>
-                <div className="bg-muted/20 rounded-md overflow-hidden">
-                  <div className="relative">
-                    {(() => {
-                      const data = calculateTargetTimes();
-                      return (
-                        <div className="flex">
-                          {/* Frozen Distance Column */}
-                          <div className="flex-shrink-0 bg-background border-r border-border">
-                            <div className="w-20 px-2 py-1.5 text-xs font-medium text-center bg-muted/50 border-b border-border">
-                              Distance
-                            </div>
-                            {data.distances.map((distance) => (
-                              <div key={`frozen-${distance}`} className="w-20 px-2 py-1.5 text-xs font-medium text-center bg-background border-b border-border last:border-b-0">
-                                {distance}
-                              </div>
-                            ))}
-                          </div>
-                          
-                          {/* Scrollable Percentage Columns */}
-                          <div className="overflow-x-auto flex-1">
-                            <div className="flex min-w-fit">
-                              {data.percentages.map((percentage) => (
-                                <div key={`col-${percentage}`} className="flex-shrink-0 w-16">
-                                  <div className="px-1 py-1.5 text-xs font-medium text-center bg-muted/50 border-b border-border">
-                                    {percentage}%
-                                  </div>
-                                  {data.distances.map((distance) => (
-                                    <div key={`${distance}-${percentage}`} className="px-1 py-1.5 text-xs text-center font-mono bg-background border-b border-border last:border-b-0">
-                                      {data.getTime(distance, percentage)}
-                                    </div>
-                                  ))}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                </div>
-              </div>
-
-              <div className="text-xs text-white/80">
-                Times are estimates based on selected track type and timing method.
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
@@ -1064,6 +962,148 @@ function PracticePage() {
 
 
       </div>
+
+      {/* Floating Target Times Button */}
+      <button
+        onClick={() => setTargetTimesModalOpen(true)}
+        className="fixed bottom-20 right-4 z-50 w-14 h-14 bg-gradient-to-br from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
+        data-testid="button-target-times"
+      >
+        <div className="flex flex-col items-center justify-center">
+          <Timer className="h-6 w-6 mb-0.5" />
+          <span className="text-xs font-bold">%</span>
+        </div>
+      </button>
+
+      {/* Target Times Modal */}
+      <Dialog open={targetTimesModalOpen} onOpenChange={setTargetTimesModalOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Timer className="h-5 w-5" />
+              Target Times Calculator
+            </DialogTitle>
+            <DialogDescription>
+              Calculate target times based on your goals and track conditions.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* Track Type Selection */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Track Type</label>
+              <div className="flex gap-2">
+                <Button
+                  variant={currentTrackType === "outdoor" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setCurrentTrackType("outdoor")}
+                  className="h-8 text-xs"
+                >
+                  Outdoor
+                </Button>
+                <Button
+                  variant={currentTrackType === "indoor" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setCurrentTrackType("indoor")}
+                  className="h-8 text-xs"
+                >
+                  Indoor
+                </Button>
+              </div>
+            </div>
+            
+            {/* Timing Options */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Timing Options</label>
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="firstFootTiming"
+                    checked={useFirstFootTiming}
+                    onCheckedChange={(checked) => setUseFirstFootTiming(checked as boolean)}
+                  />
+                  <label htmlFor="firstFootTiming" className="text-sm">
+                    First Foot Timing
+                  </label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="onMovement"
+                    checked={useOnMovement}
+                    onCheckedChange={(checked) => setUseOnMovement(checked as boolean)}
+                  />
+                  <label htmlFor="onMovement" className="text-sm">
+                    On Movement Timing
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Target Times Table */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Target Times</label>
+              <div className="bg-muted/20 rounded-md overflow-hidden border">
+                <div className="relative">
+                  {(() => {
+                    const data = calculateTargetTimes();
+                    if (data.distances.length === 0) {
+                      return (
+                        <div className="p-4 text-center text-muted-foreground">
+                          <p className="text-sm">No goal times set in your profile.</p>
+                          <p className="text-xs mt-1">Update your profile to see target times.</p>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="flex">
+                        {/* Frozen Distance Column */}
+                        <div className="flex-shrink-0 bg-background border-r border-border">
+                          <div className="w-20 px-2 py-1.5 text-xs font-medium text-center bg-muted/50 border-b border-border">
+                            Distance
+                          </div>
+                          {data.distances.map((distance) => (
+                            <div key={`frozen-${distance}`} className="w-20 px-2 py-1.5 text-xs font-medium text-center bg-background border-b border-border last:border-b-0">
+                              {distance}
+                            </div>
+                          ))}
+                        </div>
+                        
+                        {/* Scrollable Percentage Columns */}
+                        <div className="overflow-x-auto flex-1">
+                          <div className="flex min-w-fit">
+                            {data.percentages.map((percentage) => (
+                              <div key={`col-${percentage}`} className="flex-shrink-0 w-16">
+                                <div className="px-1 py-1.5 text-xs font-medium text-center bg-muted/50 border-b border-border">
+                                  {percentage}%
+                                </div>
+                                {data.distances.map((distance) => (
+                                  <div key={`${distance}-${percentage}`} className="px-1 py-1.5 text-xs text-center font-mono bg-background border-b border-border last:border-b-0">
+                                    {data.getTime(distance, percentage)}
+                                  </div>
+                                ))}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            </div>
+
+            <div className="text-xs text-muted-foreground">
+              Times are estimates based on selected track type and timing method. Percentages represent speed intensity levels.
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTargetTimesModalOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Assigned Programs Modal - Custom React Native Style */}
       {showAssignedPrograms && (
