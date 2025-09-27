@@ -466,6 +466,7 @@ function PracticePage() {
   
   // State for selected program
   const [selectedProgram, setSelectedProgram] = useState<any>(null);
+  const [userHasSelectedProgram, setUserHasSelectedProgram] = useState<boolean>(false);
   const [showAssignedPrograms, setShowAssignedPrograms] = useState<boolean>(false);
   
   // State for daily workout cards
@@ -808,13 +809,15 @@ function PracticePage() {
 
   // Set up effects for program selection and session loading
   useEffect(() => {
-    if (availablePrograms && availablePrograms.length > 0 && !selectedProgram) {
+    // Only auto-select the first program if user hasn't made an explicit choice
+    if (availablePrograms && availablePrograms.length > 0 && !selectedProgram && !userHasSelectedProgram) {
       setSelectedProgram(availablePrograms[0]);
     } else if (availablePrograms && availablePrograms.length === 0) {
       // Clear selected program if no programs are available
       setSelectedProgram(null);
+      setUserHasSelectedProgram(false);
     }
-  }, [availablePrograms, selectedProgram]);
+  }, [availablePrograms, selectedProgram, userHasSelectedProgram]);
 
   return (
     <PageContainer className="pb-24">
@@ -1179,6 +1182,7 @@ function PracticePage() {
                       }`}
                       onClick={async () => {
                         setSelectedProgram(programAssignment);
+                        setUserHasSelectedProgram(true); // Mark that user has made explicit selection
                         setShowAssignedPrograms(false);
                         // Reset days to show when switching programs
                         setDaysToShow(7);
