@@ -481,19 +481,37 @@ function PracticePage() {
     window.dispatchEvent(new PopStateEvent('popstate'));
   };
   
-  // Calculator states with localStorage persistence
+  // Calculator states with localStorage persistence and debugging
   const [targetTimesModalOpen, setTargetTimesModalOpen] = useState(false);
   const [adjustForTrackType, setAdjustForTrackType] = useState(() => {
-    const saved = localStorage.getItem('adjustForTrackType');
-    return saved ? JSON.parse(saved) : false;
+    try {
+      const saved = localStorage.getItem('tracklit_adjustForTrackType');
+      console.log('Loading adjustForTrackType from localStorage:', saved);
+      return saved ? JSON.parse(saved) : false;
+    } catch (error) {
+      console.error('Error loading adjustForTrackType:', error);
+      return false;
+    }
   });
   const [currentTrackType, setCurrentTrackType] = useState<"indoor" | "outdoor">(() => {
-    const saved = localStorage.getItem('currentTrackType');
-    return (saved && (saved === 'indoor' || saved === 'outdoor')) ? saved as "indoor" | "outdoor" : "outdoor";
+    try {
+      const saved = localStorage.getItem('tracklit_currentTrackType');
+      console.log('Loading currentTrackType from localStorage:', saved);
+      return (saved && (saved === 'indoor' || saved === 'outdoor')) ? saved as "indoor" | "outdoor" : "outdoor";
+    } catch (error) {
+      console.error('Error loading currentTrackType:', error);
+      return "outdoor";
+    }
   });
   const [timingMethod, setTimingMethod] = useState<"reaction" | "firstFoot" | "onMovement">(() => {
-    const saved = localStorage.getItem('timingMethod');
-    return (saved && ['reaction', 'firstFoot', 'onMovement'].includes(saved)) ? saved as "reaction" | "firstFoot" | "onMovement" : "firstFoot";
+    try {
+      const saved = localStorage.getItem('tracklit_timingMethod');
+      console.log('Loading timingMethod from localStorage:', saved);
+      return (saved && ['reaction', 'firstFoot', 'onMovement'].includes(saved)) ? saved as "reaction" | "firstFoot" | "onMovement" : "firstFoot";
+    } catch (error) {
+      console.error('Error loading timingMethod:', error);
+      return "firstFoot";
+    }
   });
   
   // Target times calculator with comprehensive format
@@ -1038,8 +1056,14 @@ function PracticePage() {
                 <div className="flex gap-3">
                   <button
                     onClick={() => {
+                      console.log('Setting currentTrackType to outdoor');
                       setCurrentTrackType("outdoor");
-                      localStorage.setItem('currentTrackType', 'outdoor');
+                      try {
+                        localStorage.setItem('tracklit_currentTrackType', 'outdoor');
+                        console.log('Successfully saved currentTrackType to localStorage');
+                      } catch (error) {
+                        console.error('Error saving currentTrackType:', error);
+                      }
                     }}
                     className={`flex-1 h-11 px-4 rounded-xl font-medium text-sm transition-all duration-300 transform hover:scale-105 ${
                       currentTrackType === "outdoor" 
@@ -1051,8 +1075,14 @@ function PracticePage() {
                   </button>
                   <button
                     onClick={() => {
+                      console.log('Setting currentTrackType to indoor');
                       setCurrentTrackType("indoor");
-                      localStorage.setItem('currentTrackType', 'indoor');
+                      try {
+                        localStorage.setItem('tracklit_currentTrackType', 'indoor');
+                        console.log('Successfully saved currentTrackType to localStorage');
+                      } catch (error) {
+                        console.error('Error saving currentTrackType:', error);
+                      }
                     }}
                     className={`flex-1 h-11 px-4 rounded-xl font-medium text-sm transition-all duration-300 transform hover:scale-105 ${
                       currentTrackType === "indoor" 
@@ -1071,8 +1101,14 @@ function PracticePage() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => {
+                      console.log('Setting timingMethod to reaction');
                       setTimingMethod("reaction");
-                      localStorage.setItem('timingMethod', 'reaction');
+                      try {
+                        localStorage.setItem('tracklit_timingMethod', 'reaction');
+                        console.log('Successfully saved timingMethod to localStorage');
+                      } catch (error) {
+                        console.error('Error saving timingMethod:', error);
+                      }
                     }}
                     className={`flex-1 h-10 px-3 rounded-lg font-medium text-xs transition-all duration-300 transform hover:scale-105 ${
                       timingMethod === "reaction" 
@@ -1084,8 +1120,14 @@ function PracticePage() {
                   </button>
                   <button
                     onClick={() => {
+                      console.log('Setting timingMethod to firstFoot');
                       setTimingMethod("firstFoot");
-                      localStorage.setItem('timingMethod', 'firstFoot');
+                      try {
+                        localStorage.setItem('tracklit_timingMethod', 'firstFoot');
+                        console.log('Successfully saved timingMethod to localStorage');
+                      } catch (error) {
+                        console.error('Error saving timingMethod:', error);
+                      }
                     }}
                     className={`flex-1 h-10 px-3 rounded-lg font-medium text-xs transition-all duration-300 transform hover:scale-105 ${
                       timingMethod === "firstFoot" 
@@ -1097,8 +1139,14 @@ function PracticePage() {
                   </button>
                   <button
                     onClick={() => {
+                      console.log('Setting timingMethod to onMovement');
                       setTimingMethod("onMovement");
-                      localStorage.setItem('timingMethod', 'onMovement');
+                      try {
+                        localStorage.setItem('tracklit_timingMethod', 'onMovement');
+                        console.log('Successfully saved timingMethod to localStorage');
+                      } catch (error) {
+                        console.error('Error saving timingMethod:', error);
+                      }
                     }}
                     className={`flex-1 h-10 px-3 rounded-lg font-medium text-xs transition-all duration-300 transform hover:scale-105 ${
                       timingMethod === "onMovement" 
