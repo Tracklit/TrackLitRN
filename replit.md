@@ -10,6 +10,11 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **Target Times API Fix (September 27, 2025)**: Resolved critical 500 errors preventing Target Times functionality from working
+  - Fixed database schema enum mismatch: Updated timing preference from `['on_movement', 'first_foot']` to `['reaction', 'firstFoot', 'onMovement']`
+  - Updated all frontend forms and validation to use correct enum values (`onMovement`, `firstFoot`, `reaction`)
+  - Eliminated 400/500 API errors on `/api/athlete-profile` endpoints that were blocking Target Times calculations
+  - Target Times localStorage persistence was already correctly implemented and now functions properly
 - **White Page Fix (September 27, 2025)**: Resolved persistent white page issue on root path (`/`) with comprehensive loading state improvements and cache-busting measures
   - Added immediate loading screen with branded design to prevent white page during app initialization
   - Implemented cache-busting headers in server configuration to prevent JavaScript/CSS caching issues
