@@ -481,11 +481,20 @@ function PracticePage() {
     window.dispatchEvent(new PopStateEvent('popstate'));
   };
   
-  // Calculator states
+  // Calculator states with localStorage persistence
   const [targetTimesModalOpen, setTargetTimesModalOpen] = useState(false);
-  const [adjustForTrackType, setAdjustForTrackType] = useState(false);
-  const [currentTrackType, setCurrentTrackType] = useState<"indoor" | "outdoor">("outdoor");
-  const [timingMethod, setTimingMethod] = useState<"reaction" | "firstFoot" | "onMovement">("firstFoot");
+  const [adjustForTrackType, setAdjustForTrackType] = useState(() => {
+    const saved = localStorage.getItem('adjustForTrackType');
+    return saved ? JSON.parse(saved) : false;
+  });
+  const [currentTrackType, setCurrentTrackType] = useState<"indoor" | "outdoor">(() => {
+    const saved = localStorage.getItem('currentTrackType');
+    return (saved && (saved === 'indoor' || saved === 'outdoor')) ? saved as "indoor" | "outdoor" : "outdoor";
+  });
+  const [timingMethod, setTimingMethod] = useState<"reaction" | "firstFoot" | "onMovement">(() => {
+    const saved = localStorage.getItem('timingMethod');
+    return (saved && ['reaction', 'firstFoot', 'onMovement'].includes(saved)) ? saved as "reaction" | "firstFoot" | "onMovement" : "firstFoot";
+  });
   
   // Target times calculator with comprehensive format
   const calculateTargetTimes = () => {
@@ -1028,7 +1037,10 @@ function PracticePage() {
                 <label className="text-sm font-semibold text-white">Track Type</label>
                 <div className="flex gap-3">
                   <button
-                    onClick={() => setCurrentTrackType("outdoor")}
+                    onClick={() => {
+                      setCurrentTrackType("outdoor");
+                      localStorage.setItem('currentTrackType', 'outdoor');
+                    }}
                     className={`flex-1 h-11 px-4 rounded-xl font-medium text-sm transition-all duration-300 transform hover:scale-105 ${
                       currentTrackType === "outdoor" 
                         ? "bg-white text-blue-900 shadow-lg" 
@@ -1038,7 +1050,10 @@ function PracticePage() {
                     Outdoor
                   </button>
                   <button
-                    onClick={() => setCurrentTrackType("indoor")}
+                    onClick={() => {
+                      setCurrentTrackType("indoor");
+                      localStorage.setItem('currentTrackType', 'indoor');
+                    }}
                     className={`flex-1 h-11 px-4 rounded-xl font-medium text-sm transition-all duration-300 transform hover:scale-105 ${
                       currentTrackType === "indoor" 
                         ? "bg-white text-blue-900 shadow-lg" 
@@ -1055,7 +1070,10 @@ function PracticePage() {
                 <label className="text-sm font-semibold text-white">Timing Method</label>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setTimingMethod("reaction")}
+                    onClick={() => {
+                      setTimingMethod("reaction");
+                      localStorage.setItem('timingMethod', 'reaction');
+                    }}
                     className={`flex-1 h-10 px-3 rounded-lg font-medium text-xs transition-all duration-300 transform hover:scale-105 ${
                       timingMethod === "reaction" 
                         ? "bg-white text-blue-900 shadow-lg" 
@@ -1065,7 +1083,10 @@ function PracticePage() {
                     Reaction
                   </button>
                   <button
-                    onClick={() => setTimingMethod("firstFoot")}
+                    onClick={() => {
+                      setTimingMethod("firstFoot");
+                      localStorage.setItem('timingMethod', 'firstFoot');
+                    }}
                     className={`flex-1 h-10 px-3 rounded-lg font-medium text-xs transition-all duration-300 transform hover:scale-105 ${
                       timingMethod === "firstFoot" 
                         ? "bg-white text-blue-900 shadow-lg" 
@@ -1075,7 +1096,10 @@ function PracticePage() {
                     First Foot
                   </button>
                   <button
-                    onClick={() => setTimingMethod("onMovement")}
+                    onClick={() => {
+                      setTimingMethod("onMovement");
+                      localStorage.setItem('timingMethod', 'onMovement');
+                    }}
                     className={`flex-1 h-10 px-3 rounded-lg font-medium text-xs transition-all duration-300 transform hover:scale-105 ${
                       timingMethod === "onMovement" 
                         ? "bg-white text-blue-900 shadow-lg" 
