@@ -8,6 +8,17 @@ TrackLit is a comprehensive web application designed for track and field athlete
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+- **White Page Fix (September 27, 2025)**: Resolved persistent white page issue on root path (`/`) with comprehensive loading state improvements and cache-busting measures
+  - Added immediate loading screen with branded design to prevent white page during app initialization
+  - Implemented cache-busting headers in server configuration to prevent JavaScript/CSS caching issues
+  - Enhanced authentication flow with better loading state management
+  - Added timestamp-based version tracking for development cache invalidation
+- Previously completed Target Times drawer modernization with proper spacing and glassmorphism design
+- Successfully implemented localStorage-based program selection persistence to prevent assignments reverting to latest created program
+- Fixed authentication redirect conflicts between ProtectedRoute and MainApp components
+
 ## System Architecture
 
 ### Frontend
