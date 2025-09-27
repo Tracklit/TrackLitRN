@@ -533,6 +533,7 @@ function PracticePage() {
     return (stored && (stored === 'indoor' || stored === 'outdoor')) ? stored as "indoor" | "outdoor" : sessionSettings.currentTrackType ?? "outdoor";
   });
   const [timingMethod, setTimingMethod] = useState<"reaction" | "firstFoot" | "onMovement">(() => {
+    // First try to get from athlete profile, then localStorage, then fallback
     const stored = safeStorage.getItem('tracklit_timingMethod');
     return (stored && ['reaction', 'firstFoot', 'onMovement'].includes(stored)) ? stored as "reaction" | "firstFoot" | "onMovement" : sessionSettings.timingMethod ?? "firstFoot";
   });
@@ -621,6 +622,14 @@ function PracticePage() {
     };
   };
   
+  // Sync timing method with athlete profile when it loads
+  useEffect(() => {
+    if (athleteProfile?.timingPreference) {
+      setTimingMethod(athleteProfile.timingPreference);
+      // Also save to localStorage for consistency
+      safeStorage.setItem('tracklit_timingMethod', athleteProfile.timingPreference);
+    }
+  }, [athleteProfile]);
 
   
   // Fetch program sessions if we have a selected program
