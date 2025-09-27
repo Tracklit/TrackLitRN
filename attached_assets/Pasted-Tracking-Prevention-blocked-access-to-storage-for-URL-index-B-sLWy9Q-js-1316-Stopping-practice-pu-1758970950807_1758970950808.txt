@@ -1,0 +1,101 @@
+Tracking Prevention blocked access to storage for <URL>.
+index-B_sLWy9Q.js:1316 Stopping practice pulse animation
+unread-counts:1   Failed to load resource: the server responded with a status of 400 ()
+index-B_sLWy9Q.js:1472 MainApp: Auth check Object
+api/athlete-profile:1   Failed to load resource: the server responded with a status of 500 ()
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again
+index-B_sLWy9Q.js:1432   GET https://alpha.tracklitapp.com/api/chat/groups/unread-counts 400 (Bad Request)
+queryFn @ index-B_sLWy9Q.js:1432
+i @ index-B_sLWy9Q.js:48
+x @ index-B_sLWy9Q.js:48
+start @ index-B_sLWy9Q.js:48
+fetch @ index-B_sLWy9Q.js:48
+lh @ index-B_sLWy9Q.js:48
+(anonymous) @ index-B_sLWy9Q.js:48
+index-B_sLWy9Q.js:48 Making POST request to /api/athlete-profile {sprint60m100m: true, sprint200m: false, sprint400m: false, hurdles100m110m: false, hurdles400m: false, …}
+index-B_sLWy9Q.js:48   POST https://alpha.tracklitapp.com/api/athlete-profile 500 (Internal Server Error)
+Ie @ index-B_sLWy9Q.js:48
+mutationFn @ index-B_sLWy9Q.js:1410
+fn @ index-B_sLWy9Q.js:48
+x @ index-B_sLWy9Q.js:48
+start @ index-B_sLWy9Q.js:48
+execute @ index-B_sLWy9Q.js:48
+await in execute
+mutate @ index-B_sLWy9Q.js:48
+(anonymous) @ index-B_sLWy9Q.js:48
+y @ index-B_sLWy9Q.js:1410
+(anonymous) @ index-B_sLWy9Q.js:1316
+await in (anonymous)
+dQ @ index-B_sLWy9Q.js:29
+mQ @ index-B_sLWy9Q.js:29
+fQ @ index-B_sLWy9Q.js:29
+vA @ index-B_sLWy9Q.js:29
+S8 @ index-B_sLWy9Q.js:29
+(anonymous) @ index-B_sLWy9Q.js:29
+vC @ index-B_sLWy9Q.js:32
+G$ @ index-B_sLWy9Q.js:29
+gj @ index-B_sLWy9Q.js:29
+H4 @ index-B_sLWy9Q.js:29
+AQ @ index-B_sLWy9Q.js:29
+index-B_sLWy9Q.js:48 Response status: 500
+index-B_sLWy9Q.js:48   GET https://alpha.tracklitapp.com/api/athlete-profile 500 (Internal Server Error)
+(anonymous) @ index-B_sLWy9Q.js:48
+i @ index-B_sLWy9Q.js:48
+x @ index-B_sLWy9Q.js:48
+start @ index-B_sLWy9Q.js:48
+fetch @ index-B_sLWy9Q.js:48
+(anonymous) @ index-B_sLWy9Q.js:48
+(anonymous) @ index-B_sLWy9Q.js:48
+batch @ index-B_sLWy9Q.js:48
+refetchQueries @ index-B_sLWy9Q.js:48
+(anonymous) @ index-B_sLWy9Q.js:48
+batch @ index-B_sLWy9Q.js:48
+invalidateQueries @ index-B_sLWy9Q.js:48
+onSuccess @ index-B_sLWy9Q.js:1410
+execute @ index-B_sLWy9Q.js:48
+await in execute
+mutate @ index-B_sLWy9Q.js:48
+(anonymous) @ index-B_sLWy9Q.js:48
+y @ index-B_sLWy9Q.js:1410
+(anonymous) @ index-B_sLWy9Q.js:1316
+await in (anonymous)
+dQ @ index-B_sLWy9Q.js:29
+mQ @ index-B_sLWy9Q.js:29
+fQ @ index-B_sLWy9Q.js:29
+vA @ index-B_sLWy9Q.js:29
+S8 @ index-B_sLWy9Q.js:29
+(anonymous) @ index-B_sLWy9Q.js:29
+vC @ index-B_sLWy9Q.js:32
+G$ @ index-B_sLWy9Q.js:29
+gj @ index-B_sLWy9Q.js:29
+H4 @ index-B_sLWy9Q.js:29
+AQ @ index-B_sLWy9Q.js:29
+index-B_sLWy9Q.js:1432   GET https://alpha.tracklitapp.com/api/chat/groups/unread-counts 400 (Bad Request)
+queryFn @ index-B_sLWy9Q.js:1432
+i @ index-B_sLWy9Q.js:48
+x @ index-B_sLWy9Q.js:48
+start @ index-B_sLWy9Q.js:48
+fetch @ index-B_sLWy9Q.js:48
+lh @ index-B_sLWy9Q.js:48
+(anonymous) @ index-B_sLWy9Q.js:48
+setInterval
+BN @ index-B_sLWy9Q.js:48
+VN @ index-B_sLWy9Q.js:48
+onQueryUpdate @ index-B_sLWy9Q.js:48
+(anonymous) @ index-B_sLWy9Q.js:48
+(anonymous) @ index-B_sLWy9Q.js:48
+batch @ index-B_sLWy9Q.js:48
+So @ index-B_sLWy9Q.js:48
+l @ index-B_sLWy9Q.js:48
+f @ index-B_sLWy9Q.js:48
+(anonymous) @ index-B_sLWy9Q.js:48
+Promise.catch
+x @ index-B_sLWy9Q.js:48
+start @ index-B_sLWy9Q.js:48
+fetch @ index-B_sLWy9Q.js:48
+lh @ index-B_sLWy9Q.js:48
+(anonymous) @ index-B_sLWy9Q.js:48

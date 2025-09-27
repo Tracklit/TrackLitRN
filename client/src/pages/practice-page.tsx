@@ -481,37 +481,59 @@ function PracticePage() {
     window.dispatchEvent(new PopStateEvent('popstate'));
   };
   
-  // Calculator states with localStorage persistence and debugging
+  // Storage utility that handles tracking prevention
+  const safeStorage = {
+    isAvailable: (() => {
+      try {
+        const test = '__tracklit_test__';
+        localStorage.setItem(test, test);
+        localStorage.removeItem(test);
+        return true;
+      } catch {
+        return false;
+      }
+    })(),
+    
+    getItem: (key: string) => {
+      try {
+        if (!safeStorage.isAvailable) return null;
+        return localStorage.getItem(key);
+      } catch {
+        return null;
+      }
+    },
+    
+    setItem: (key: string, value: string) => {
+      try {
+        if (!safeStorage.isAvailable) return false;
+        localStorage.setItem(key, value);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+  };
+
+  // Session-based fallback storage for when localStorage is blocked
+  const [sessionSettings, setSessionSettings] = useState<{
+    adjustForTrackType?: boolean;
+    currentTrackType?: "indoor" | "outdoor";
+    timingMethod?: "reaction" | "firstFoot" | "onMovement";
+  }>({});
+
+  // Calculator states with robust storage handling
   const [targetTimesModalOpen, setTargetTimesModalOpen] = useState(false);
   const [adjustForTrackType, setAdjustForTrackType] = useState(() => {
-    try {
-      const saved = localStorage.getItem('tracklit_adjustForTrackType');
-      console.log('Loading adjustForTrackType from localStorage:', saved);
-      return saved ? JSON.parse(saved) : false;
-    } catch (error) {
-      console.error('Error loading adjustForTrackType:', error);
-      return false;
-    }
+    const stored = safeStorage.getItem('tracklit_adjustForTrackType');
+    return stored ? JSON.parse(stored) : sessionSettings.adjustForTrackType ?? false;
   });
   const [currentTrackType, setCurrentTrackType] = useState<"indoor" | "outdoor">(() => {
-    try {
-      const saved = localStorage.getItem('tracklit_currentTrackType');
-      console.log('Loading currentTrackType from localStorage:', saved);
-      return (saved && (saved === 'indoor' || saved === 'outdoor')) ? saved as "indoor" | "outdoor" : "outdoor";
-    } catch (error) {
-      console.error('Error loading currentTrackType:', error);
-      return "outdoor";
-    }
+    const stored = safeStorage.getItem('tracklit_currentTrackType');
+    return (stored && (stored === 'indoor' || stored === 'outdoor')) ? stored as "indoor" | "outdoor" : sessionSettings.currentTrackType ?? "outdoor";
   });
   const [timingMethod, setTimingMethod] = useState<"reaction" | "firstFoot" | "onMovement">(() => {
-    try {
-      const saved = localStorage.getItem('tracklit_timingMethod');
-      console.log('Loading timingMethod from localStorage:', saved);
-      return (saved && ['reaction', 'firstFoot', 'onMovement'].includes(saved)) ? saved as "reaction" | "firstFoot" | "onMovement" : "firstFoot";
-    } catch (error) {
-      console.error('Error loading timingMethod:', error);
-      return "firstFoot";
-    }
+    const stored = safeStorage.getItem('tracklit_timingMethod');
+    return (stored && ['reaction', 'firstFoot', 'onMovement'].includes(stored)) ? stored as "reaction" | "firstFoot" | "onMovement" : sessionSettings.timingMethod ?? "firstFoot";
   });
   
   // Target times calculator with comprehensive format
@@ -1056,13 +1078,10 @@ function PracticePage() {
                 <div className="flex gap-3">
                   <button
                     onClick={() => {
-                      console.log('Setting currentTrackType to outdoor');
                       setCurrentTrackType("outdoor");
-                      try {
-                        localStorage.setItem('tracklit_currentTrackType', 'outdoor');
-                        console.log('Successfully saved currentTrackType to localStorage');
-                      } catch (error) {
-                        console.error('Error saving currentTrackType:', error);
+                      const saved = safeStorage.setItem('tracklit_currentTrackType', 'outdoor');
+                      if (!saved) {
+                        setSessionSettings(prev => ({ ...prev, currentTrackType: "outdoor" }));
                       }
                     }}
                     className={`flex-1 h-11 px-4 rounded-xl font-medium text-sm transition-all duration-300 transform hover:scale-105 ${
@@ -1075,13 +1094,10 @@ function PracticePage() {
                   </button>
                   <button
                     onClick={() => {
-                      console.log('Setting currentTrackType to indoor');
                       setCurrentTrackType("indoor");
-                      try {
-                        localStorage.setItem('tracklit_currentTrackType', 'indoor');
-                        console.log('Successfully saved currentTrackType to localStorage');
-                      } catch (error) {
-                        console.error('Error saving currentTrackType:', error);
+                      const saved = safeStorage.setItem('tracklit_currentTrackType', 'indoor');
+                      if (!saved) {
+                        setSessionSettings(prev => ({ ...prev, currentTrackType: "indoor" }));
                       }
                     }}
                     className={`flex-1 h-11 px-4 rounded-xl font-medium text-sm transition-all duration-300 transform hover:scale-105 ${
@@ -1101,13 +1117,10 @@ function PracticePage() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => {
-                      console.log('Setting timingMethod to reaction');
                       setTimingMethod("reaction");
-                      try {
-                        localStorage.setItem('tracklit_timingMethod', 'reaction');
-                        console.log('Successfully saved timingMethod to localStorage');
-                      } catch (error) {
-                        console.error('Error saving timingMethod:', error);
+                      const saved = safeStorage.setItem('tracklit_timingMethod', 'reaction');
+                      if (!saved) {
+                        setSessionSettings(prev => ({ ...prev, timingMethod: "reaction" }));
                       }
                     }}
                     className={`flex-1 h-10 px-3 rounded-lg font-medium text-xs transition-all duration-300 transform hover:scale-105 ${
@@ -1120,13 +1133,10 @@ function PracticePage() {
                   </button>
                   <button
                     onClick={() => {
-                      console.log('Setting timingMethod to firstFoot');
                       setTimingMethod("firstFoot");
-                      try {
-                        localStorage.setItem('tracklit_timingMethod', 'firstFoot');
-                        console.log('Successfully saved timingMethod to localStorage');
-                      } catch (error) {
-                        console.error('Error saving timingMethod:', error);
+                      const saved = safeStorage.setItem('tracklit_timingMethod', 'firstFoot');
+                      if (!saved) {
+                        setSessionSettings(prev => ({ ...prev, timingMethod: "firstFoot" }));
                       }
                     }}
                     className={`flex-1 h-10 px-3 rounded-lg font-medium text-xs transition-all duration-300 transform hover:scale-105 ${
@@ -1139,13 +1149,10 @@ function PracticePage() {
                   </button>
                   <button
                     onClick={() => {
-                      console.log('Setting timingMethod to onMovement');
                       setTimingMethod("onMovement");
-                      try {
-                        localStorage.setItem('tracklit_timingMethod', 'onMovement');
-                        console.log('Successfully saved timingMethod to localStorage');
-                      } catch (error) {
-                        console.error('Error saving timingMethod:', error);
+                      const saved = safeStorage.setItem('tracklit_timingMethod', 'onMovement');
+                      if (!saved) {
+                        setSessionSettings(prev => ({ ...prev, timingMethod: "onMovement" }));
                       }
                     }}
                     className={`flex-1 h-10 px-3 rounded-lg font-medium text-xs transition-all duration-300 transform hover:scale-105 ${
@@ -1218,6 +1225,11 @@ function PracticePage() {
 
               <div className="text-xs text-white/60 bg-white/5 rounded-lg p-3 border border-white/10">
                 Times are estimates based on selected track type and timing method. Percentages represent speed intensity levels.
+                {!safeStorage.isAvailable && (
+                  <div className="mt-2 pt-2 border-t border-white/10">
+                    ⚠️ Settings will persist during this session only due to browser privacy settings.
+                  </div>
+                )}
               </div>
             </div>
           </div>
