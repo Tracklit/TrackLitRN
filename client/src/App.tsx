@@ -316,13 +316,23 @@ function MainApp() {
   const { user, loginMutation, registerMutation, isLoading } = useAuth();
   const [location, setLocation] = useLocation();
   const { isPWA, isIOS, canInstall, installPrompt } = usePWA();
+  const [initialLoading, setInitialLoading] = useState(true);
   
   // ALL HOOKS MUST BE AT THE TOP - BEFORE ANY EARLY RETURNS
   
+  // Handle initial loading state to prevent white page
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setInitialLoading(false);
+    }, 100); // Brief delay to ensure auth query has started
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
   // Authentication logging for debugging
   useEffect(() => {
-    console.log('MainApp: Auth check', { user: !!user, isLoading, location });
-  }, [user, isLoading, location]);
+    console.log('MainApp: Auth check', { user: !!user, isLoading, location, initialLoading });
+  }, [user, isLoading, location, initialLoading]);
   
   // Redirect to onboarding for new user registrations (not logins)
   useEffect(() => {
@@ -335,8 +345,8 @@ function MainApp() {
     }
   }, [registerMutation.isSuccess, registerMutation.data]);
   
-  // Show loading only while actually loading authentication
-  if (isLoading) {
+  // Show loading while authentication is loading or during initial load
+  if (isLoading || initialLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
