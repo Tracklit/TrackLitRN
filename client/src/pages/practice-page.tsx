@@ -994,11 +994,11 @@ function PracticePage() {
         />
         
         {/* Drawer Content */}
-        <div className={`relative ml-auto w-full max-w-md h-full bg-background shadow-2xl transform transition-transform duration-300 ease-out ${
+        <div className={`relative ml-auto w-full max-w-md h-full bg-gradient-to-br from-blue-800 to-purple-400 shadow-2xl transform transition-transform duration-300 ease-out ${
           targetTimesModalOpen ? 'translate-x-0' : 'translate-x-full'
         } flex flex-col`}>
             {/* Header */}
-            <div className="px-6 py-4 border-b border-border bg-background/95 backdrop-blur-sm">
+            <div className="px-6 py-4 border-b border-border bg-gradient-to-br from-blue-800/95 to-purple-400/95 backdrop-blur-sm">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Timer className="h-5 w-5 text-primary" />
