@@ -124,13 +124,8 @@ export function setupAuth(app: Express) {
         password: await hashPassword(userData.password),
       });
 
-      // Send automatic friend request from Lion Martinez to new user
-      try {
-        await storage.sendAutomaticFriendRequests();
-      } catch (error) {
-        console.error("Error sending automatic friend request to new user:", error);
-        // Don't fail registration if friend request fails
-      }
+      // TODO: Send automatic friend request from Lion Martinez to new user
+      // Note: sendAutomaticFriendRequests method needs to be implemented
 
       // Log the user in
       req.login(user, async (err) => {
