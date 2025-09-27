@@ -9,6 +9,7 @@ import { useGymData } from "@/hooks/use-gym-data";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Meet } from "@shared/schema";
+import { AthleteProfile } from "@shared/athlete-profile-schema";
 import { PageContainer } from "@/components/page-container";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -459,7 +460,7 @@ function PracticePage() {
   });
   
   // Fetch athlete profile to check subscription
-  const { data: athleteProfile } = useQuery({
+  const { data: athleteProfile } = useQuery<AthleteProfile | null>({
     queryKey: ["/api/athlete-profile"],
     enabled: !!user,
   });
@@ -749,7 +750,7 @@ function PracticePage() {
   const [isSaving, setIsSaving] = useState(false);
   
   // Check if user is premium (Pro or Star subscription)
-  const isPremiumUser = athleteProfile?.subscription === 'pro' || athleteProfile?.subscription === 'star';
+  const isPremiumUser = user?.subscriptionTier === 'pro' || user?.subscriptionTier === 'star';
 
   // Best times for common distances (in seconds)
   const bestTimes: Record<string, number> = {
