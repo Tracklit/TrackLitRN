@@ -96,18 +96,20 @@ app.use((req, res, next) => {
     }
   }, 5 * 60 * 1000); // Check every 5 minutes
 
-  // Schedule initial refresh to run in background after server starts
-  // This ensures the server is responsive immediately while data processing happens asynchronously
-  setImmediate(() => {
+  // Schedule initial refresh to run 30 seconds after server starts (non-blocking)
+  setTimeout(() => {
     console.log('Running initial Google Sheets data refresh in background...');
     refreshAllGoogleSheetPrograms()
       .then(() => console.log('Initial Google Sheets data refresh completed'))
       .catch(error => console.error('Error during initial Google Sheets refresh:', error));
-  });
+  }, 30000); // Wait 30 seconds after server starts
 
   // Initialize video cleanup service
-  console.log('Initializing video cleanup service...');
-  VideoCleanupService.schedulePeriodicCleanup();
+  // Schedule video cleanup to run 60 seconds after server starts (non-blocking)
+  setTimeout(() => {
+    console.log('Initializing video cleanup service...');
+    VideoCleanupService.schedulePeriodicCleanup();
+  }, 60000); // Wait 60 seconds after server starts
 
   const server = await registerRoutes(app);
 
@@ -127,6 +129,15 @@ app.use((req, res, next) => {
       </body>
       </html>
     `);
+  });
+
+  // Add health check endpoint for deployments
+  app.get('/health', (_req: Request, res: Response) => {
+    res.status(200).json({ 
+      status: 'OK', 
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime()
+    });
   });
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

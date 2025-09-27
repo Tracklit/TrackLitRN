@@ -6623,7 +6623,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Search term must be at least 2 characters" });
       }
       
-      const users = await dbStorage.searchUsers(search);
+      const users = await dbStorage.searchUsersForAdmin(search);
       res.json(users);
     } catch (error) {
       console.error("Error searching users:", error);

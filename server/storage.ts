@@ -2142,7 +2142,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Admin methods
-  async searchUsers(searchTerm: string) {
+  async searchUsersForAdmin(searchTerm: string) {
     const { ilike, or } = await import('drizzle-orm');
     
     const userResults = await db
