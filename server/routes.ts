@@ -2282,7 +2282,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Unauthorized" });
       }
 
-      const profileData = req.body;
+      // Validate the incoming data using the schema
+      const profileData = insertAthleteProfileSchema.partial().parse({
+        ...req.body,
+        userId
+      });
+
       const profile = await dbStorage.updateAthleteProfile(userId, profileData);
 
       if (!profile) {
@@ -2292,6 +2297,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.json(profile);
     } catch (err) {
       console.error("Error updating athlete profile:", err);
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ error: err.errors });
+      }
       return res.status(500).json({ error: "Failed to update athlete profile" });
     }
   });
