@@ -1108,8 +1108,10 @@ function PracticePage() {
                             <div className="w-16 px-2 py-3 text-xs font-bold text-center bg-white/20 border-b border-white/20 text-white">
                               Dist
                             </div>
-                            {data.distances.map((distance) => (
-                              <div key={`frozen-${distance}`} className="w-16 px-2 py-2.5 text-xs font-semibold text-center bg-white/5 border-b border-white/10 last:border-b-0 text-white">
+                            {data.distances.map((distance, index) => (
+                              <div key={`frozen-${distance}`} className={`w-16 px-2 py-2.5 text-xs font-semibold text-center border-b border-white/10 last:border-b-0 text-white ${
+                                index % 2 === 0 ? 'bg-white/5' : 'bg-white/10'
+                              }`}>
                                 {distance}
                               </div>
                             ))}
@@ -1123,8 +1125,10 @@ function PracticePage() {
                                   <div className="px-1 py-3 text-xs font-bold text-center bg-white/20 border-b border-white/20 text-white">
                                     {percentage}%
                                   </div>
-                                  {data.distances.map((distance) => (
-                                    <div key={`${distance}-${percentage}`} className="px-1 py-2.5 text-xs text-center font-mono bg-white/5 border-b border-white/10 last:border-b-0 text-white hover:bg-white/10 transition-colors duration-200">
+                                  {data.distances.map((distance, index) => (
+                                    <div key={`${distance}-${percentage}`} className={`px-1 py-2.5 text-xs text-center font-mono border-b border-white/10 last:border-b-0 text-white hover:bg-white/15 transition-colors duration-200 ${
+                                      index % 2 === 0 ? 'bg-white/5' : 'bg-white/10'
+                                    }`}>
                                       {data.getTime(distance, percentage)}
                                     </div>
                                   ))}
