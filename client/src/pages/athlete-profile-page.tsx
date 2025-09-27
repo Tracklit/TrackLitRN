@@ -54,7 +54,7 @@ const athleteProfileSchema = z.object({
   hurdles400mGoal: z.string().optional().transform(val => val ? parseFloat(val) : null),
   otherEventGoal: z.string().optional().transform(val => val ? parseFloat(val) : null),
   otherEventDistance: z.string().optional(),
-  timingPreference: z.enum(["on_movement", "first_foot"]).default("on_movement"),
+  timingPreference: z.enum(["onMovement", "firstFoot", "reaction"]).default("onMovement"),
   
 
 });
@@ -603,8 +603,9 @@ export default function AthleteProfilePage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="on_movement">On Movement (-0.15s)</SelectItem>
-                          <SelectItem value="first_foot">First Foot (-0.55s)</SelectItem>
+                          <SelectItem value="reaction">Reaction Time (0.00s)</SelectItem>
+                          <SelectItem value="firstFoot">First Foot (-0.55s)</SelectItem>
+                          <SelectItem value="onMovement">On Movement (-0.15s)</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormDescription>
@@ -673,8 +674,10 @@ export default function AthleteProfilePage() {
           <div className="overflow-hidden rounded-md border border-amber-500/70">
             <div className="bg-[#111827] text-white px-4 py-3">
               <p className="text-sm text-blue-200">
-                {form.watch("timingPreference") === "first_foot" 
+                {form.watch("timingPreference") === "firstFoot" 
                   ? "Times shown with first foot contact timing (-0.55s)"
+                  : form.watch("timingPreference") === "reaction"
+                  ? "Times shown with reaction timing (0.00s)"
                   : "Times shown with movement timing (-0.15s)"}
               </p>
             </div>
@@ -699,7 +702,7 @@ export default function AthleteProfilePage() {
                     const calculatedTimes = getAllTimes();
                     const distances = ["50m", "60m", "80m", "100m", "120m", "150m", "200m", "250m", "300m", "400m"];
                     const editableDistances = ["60m", "100m", "200m", "300m", "400m"];
-                    const timingAdjustment = form.watch("timingPreference") === "first_foot" ? 0.55 : 0.15;
+                    const timingAdjustment = form.watch("timingPreference") === "firstFoot" ? 0.55 : form.watch("timingPreference") === "reaction" ? 0.0 : 0.15;
                     
                     return distances.map((distance) => {
                       const baseTime = calculatedTimes[distance];
