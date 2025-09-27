@@ -546,19 +546,10 @@ function PracticePage() {
       };
     }
     
-    // Get base goal times from athlete profile
-    const goal100m = athleteProfile.sprint60m100mGoal;
-    const goal200m = athleteProfile.sprint200mGoal;
-    const goal400m = athleteProfile.sprint400mGoal;
-    
-    // If no goals are set, return empty calculator
-    if (!goal100m && !goal200m && !goal400m) {
-      return {
-        distances: [],
-        percentages: [],
-        getTime: () => "-"
-      };
-    }
+    // Get base goal times from athlete profile with fallbacks
+    const goal100m = athleteProfile?.sprint60m100mGoal || 11.0; // Fallback 100m goal
+    const goal200m = athleteProfile?.sprint200mGoal || 22.5; // Fallback 200m goal
+    const goal400m = athleteProfile?.sprint400mGoal || 50.0; // Fallback 400m goal
     
     // Calculate base times for each distance from the set goals
     const baseTimesByDistance: { [key: string]: number } = {};
