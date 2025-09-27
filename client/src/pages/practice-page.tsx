@@ -485,7 +485,7 @@ function PracticePage() {
   const [targetTimesModalOpen, setTargetTimesModalOpen] = useState(false);
   const [adjustForTrackType, setAdjustForTrackType] = useState(false);
   const [currentTrackType, setCurrentTrackType] = useState<"indoor" | "outdoor">("outdoor");
-  const [timingMethod, setTimingMethod] = useState<"standard" | "firstFoot" | "onMovement">("standard");
+  const [timingMethod, setTimingMethod] = useState<"reaction" | "firstFoot" | "onMovement">("firstFoot");
   
   // Target times calculator with comprehensive format
   const calculateTargetTimes = () => {
@@ -819,7 +819,7 @@ function PracticePage() {
   return (
     <PageContainer className="pb-24">
       {/* Fixed Header */}
-      <div className="fixed top-16 left-0 right-0 z-40 bg-black border-b shadow-sm">
+      <div className="fixed top-16 left-0 right-0 z-40 bg-gradient-to-br from-blue-800 to-purple-400 border-b shadow-sm">
         <div className="max-w-md mx-auto">
           <div className="flex items-center justify-between px-4 py-2">
             <div className="flex items-center gap-2">
@@ -1048,12 +1048,12 @@ function PracticePage() {
                 <label className="text-sm font-medium">Timing Method</label>
                 <div className="flex gap-1">
                   <Button
-                    variant={timingMethod === "standard" ? "default" : "outline"}
+                    variant={timingMethod === "reaction" ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setTimingMethod("standard")}
+                    onClick={() => setTimingMethod("reaction")}
                     className="h-8 text-xs flex-1"
                   >
-                    Standard
+                    Reaction
                   </Button>
                   <Button
                     variant={timingMethod === "firstFoot" ? "default" : "outline"}
@@ -1155,7 +1155,7 @@ function PracticePage() {
           />
           
           {/* Modal Content */}
-          <div className="relative bg-black rounded-lg shadow-2xl w-full max-w-md mx-4 max-h-[80vh] flex flex-col">
+          <div className="relative bg-gradient-to-br from-blue-800 to-purple-400 rounded-lg shadow-2xl w-full max-w-md mx-4 max-h-[80vh] flex flex-col">
             {/* Header */}
             <div className="px-6 py-4 border-b border-gray-700">
               <h2 className="text-lg font-semibold text-white">Your Programs</h2>
