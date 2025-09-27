@@ -466,7 +466,6 @@ function PracticePage() {
   
   // State for selected program
   const [selectedProgram, setSelectedProgram] = useState<any>(null);
-  const [userHasSelectedProgram, setUserHasSelectedProgram] = useState<boolean>(false);
   const [showAssignedPrograms, setShowAssignedPrograms] = useState<boolean>(false);
   
   // State for daily workout cards
@@ -809,24 +808,39 @@ function PracticePage() {
 
   // Set up effects for program selection and session loading
   useEffect(() => {
+    if (!availablePrograms || availablePrograms.length === 0) {
+      console.log('🧹 No programs available - clearing selection');
+      setSelectedProgram(null);
+      localStorage.removeItem('selectedProgramId');
+      return;
+    }
+
+    // Try to load saved program from localStorage
+    const savedProgramId = localStorage.getItem('selectedProgramId');
     console.log('🔄 Program selection useEffect triggered:', {
-      availablePrograms: availablePrograms?.length || 0,
-      selectedProgram: selectedProgram?.id || 'none',
-      userHasSelectedProgram,
-      firstProgramId: availablePrograms?.[0]?.id || 'none'
+      availablePrograms: availablePrograms.length,
+      currentSelected: selectedProgram?.id || 'none',
+      savedProgramId: savedProgramId || 'none',
+      firstProgramId: availablePrograms[0]?.id || 'none'
     });
-    
-    // Only auto-select the first program if user hasn't made an explicit choice
-    if (availablePrograms && availablePrograms.length > 0 && !selectedProgram && !userHasSelectedProgram) {
+
+    if (savedProgramId) {
+      // Find the saved program in available programs
+      const savedProgram = availablePrograms.find(p => p.id === savedProgramId);
+      if (savedProgram && savedProgram.id !== selectedProgram?.id) {
+        console.log('🔄 Restoring saved program selection:', savedProgramId);
+        setSelectedProgram(savedProgram);
+        return;
+      }
+    }
+
+    // If no saved selection and no current selection, auto-select first program
+    if (!selectedProgram && !savedProgramId) {
       console.log('🚀 Auto-selecting first program:', availablePrograms[0].id);
       setSelectedProgram(availablePrograms[0]);
-    } else if (availablePrograms && availablePrograms.length === 0) {
-      // Clear selected program if no programs are available
-      console.log('🧹 Clearing selected program - no programs available');
-      setSelectedProgram(null);
-      setUserHasSelectedProgram(false);
+      localStorage.setItem('selectedProgramId', availablePrograms[0].id);
     }
-  }, [availablePrograms, userHasSelectedProgram]); // Removed selectedProgram from dependencies
+  }, [availablePrograms]); // Only depend on availablePrograms
 
   return (
     <PageContainer className="pb-24">
@@ -1196,7 +1210,8 @@ function PracticePage() {
                           currentSelected: selectedProgram?.id
                         });
                         setSelectedProgram(programAssignment);
-                        setUserHasSelectedProgram(true); // Mark that user has made explicit selection
+                        // Save selection to localStorage for persistence
+                        localStorage.setItem('selectedProgramId', programAssignment.id);
                         setShowAssignedPrograms(false);
                         // Reset days to show when switching programs
                         setDaysToShow(7);
@@ -1207,7 +1222,7 @@ function PracticePage() {
                         await queryClient.invalidateQueries({
                           queryKey: ["/api/program-sessions", programAssignment.programId]
                         });
-                        console.log('✅ Program selection completed:', programAssignment.id);
+                        console.log('✅ Program selection completed and saved:', programAssignment.id);
                       }}
                       style={{ touchAction: 'manipulation' }}
                     >
