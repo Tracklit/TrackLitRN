@@ -997,31 +997,15 @@ function PracticePage() {
         <div className={`relative ml-auto w-full max-w-md h-full bg-white/10 backdrop-blur-xl border-l border-white/20 shadow-2xl transform transition-all duration-500 ease-out ${
           targetTimesModalOpen ? 'translate-x-0' : 'translate-x-full'
         } flex flex-col overflow-hidden`}>
-            {/* Header */}
-            <div className="px-6 py-6 border-b border-white/20 bg-gradient-to-r from-white/10 to-white/5 backdrop-blur-sm">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white/10 rounded-xl backdrop-blur-sm">
-                    <Timer className="h-5 w-5 text-white" />
-                  </div>
-                  <h2 className="text-xl font-bold text-white">Target Times</h2>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setTargetTimesModalOpen(false)}
-                  className="h-9 w-9 p-0 text-white hover:bg-white/10 rounded-xl transition-all duration-200"
-                >
-                  <X className="h-5 w-5" />
-                </Button>
-              </div>
-              <p className="text-sm text-white/80 mt-2">
-                Calculate target times based on your goals and track conditions.
-              </p>
-            </div>
-            
             {/* Content */}
-            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 relative">
+              {/* Close Button */}
+              <button
+                onClick={() => setTargetTimesModalOpen(false)}
+                className="absolute top-4 right-4 h-8 w-8 text-white hover:bg-white/10 rounded-lg transition-all duration-200 flex items-center justify-center z-10"
+              >
+                <X className="h-4 w-4" />
+              </button>
               {/* Track Type Selection */}
               <div className="space-y-3">
                 <label className="text-sm font-semibold text-white">Track Type</label>
