@@ -809,11 +809,20 @@ function PracticePage() {
 
   // Set up effects for program selection and session loading
   useEffect(() => {
+    console.log('🔄 Program selection useEffect triggered:', {
+      availablePrograms: availablePrograms?.length || 0,
+      selectedProgram: selectedProgram?.id || 'none',
+      userHasSelectedProgram,
+      firstProgramId: availablePrograms?.[0]?.id || 'none'
+    });
+    
     // Only auto-select the first program if user hasn't made an explicit choice
     if (availablePrograms && availablePrograms.length > 0 && !selectedProgram && !userHasSelectedProgram) {
+      console.log('🚀 Auto-selecting first program:', availablePrograms[0].id);
       setSelectedProgram(availablePrograms[0]);
     } else if (availablePrograms && availablePrograms.length === 0) {
       // Clear selected program if no programs are available
+      console.log('🧹 Clearing selected program - no programs available');
       setSelectedProgram(null);
       setUserHasSelectedProgram(false);
     }
@@ -1181,6 +1190,11 @@ function PracticePage() {
                           : 'bg-gray-800 border-2 border-transparent active:bg-gray-700'
                       }`}
                       onClick={async () => {
+                        console.log('👆 User manually selected program:', {
+                          programId: programAssignment.id,
+                          programTitle: programAssignment.program?.title,
+                          currentSelected: selectedProgram?.id
+                        });
                         setSelectedProgram(programAssignment);
                         setUserHasSelectedProgram(true); // Mark that user has made explicit selection
                         setShowAssignedPrograms(false);
@@ -1193,6 +1207,7 @@ function PracticePage() {
                         await queryClient.invalidateQueries({
                           queryKey: ["/api/program-sessions", programAssignment.programId]
                         });
+                        console.log('✅ Program selection completed:', programAssignment.id);
                       }}
                       style={{ touchAction: 'manipulation' }}
                     >
