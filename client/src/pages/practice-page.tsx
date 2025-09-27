@@ -998,7 +998,7 @@ function PracticePage() {
           targetTimesModalOpen ? 'translate-x-0' : 'translate-x-full'
         } flex flex-col overflow-hidden`}>
             {/* Content */}
-            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 relative">
+            <div className="flex-1 overflow-y-auto px-6 pt-20 pb-24 space-y-6 relative">
               {/* Close Button */}
               <button
                 onClick={() => setTargetTimesModalOpen(false)}
