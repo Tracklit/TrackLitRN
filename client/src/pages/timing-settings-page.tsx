@@ -18,22 +18,23 @@ import { z } from "zod";
 
 type TimingPreference = "reaction" | "firstFoot" | "onMovement";
 
-// Create form schema with validation
-const timingSettingsSchema = insertAthleteProfileSchema.pick({
-  sprint60m100m: true,
-  sprint200m: true,
-  sprint400m: true,
-  hurdles100m110m: true,
-  hurdles400m: true,
-  otherEvent: true,
-  otherEventName: true,
-  sprint60m100mGoal: true,
-  sprint200mGoal: true,
-  sprint400mGoal: true,
-  hurdles100m110mGoal: true,
-  hurdles400mGoal: true,
-  otherEventGoal: true,
-  timingPreference: true,
+// Create form schema with validation - handle string inputs from form fields
+const timingSettingsSchema = z.object({
+  sprint60m100m: z.boolean(),
+  sprint200m: z.boolean(),
+  sprint400m: z.boolean(),
+  hurdles100m110m: z.boolean(),
+  hurdles400m: z.boolean(),
+  otherEvent: z.boolean(),
+  otherEventName: z.string().optional(),
+  // Goal time fields accept strings and convert to numbers
+  sprint60m100mGoal: z.string().optional(),
+  sprint200mGoal: z.string().optional(),
+  sprint400mGoal: z.string().optional(),
+  hurdles100m110mGoal: z.string().optional(),
+  hurdles400mGoal: z.string().optional(),
+  otherEventGoal: z.string().optional(),
+  timingPreference: z.enum(["reaction", "firstFoot", "onMovement"]),
 });
 
 type TimingSettingsForm = z.infer<typeof timingSettingsSchema>;
