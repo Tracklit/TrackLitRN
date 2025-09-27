@@ -1,0 +1,88 @@
+Failed to load resource: the server responded with a status of 500 ()
+15Tracking Prevention blocked access to storage for <URL>.
+index-tpw5RAEr.js:48 Making POST request to /api/athlete-profile Object
+api/athlete-profile:1   Failed to load resource: the server responded with a status of 400 ()
+index-tpw5RAEr.js:48 Response status: 400
+api/athlete-profile:1   Failed to load resource: the server responded with a status of 500 ()
+index-tpw5RAEr.js:1472 MainApp: Auth check Object
+index-tpw5RAEr.js:1316 Home page navigation detected, triggering practice pulse animation
+index-tpw5RAEr.js:1316 Starting practice pulse animation
+images.unsplash.com/photo-1494790108755-2616b612b002?w=150&h=150&fit=crop&crop=face:1   Failed to load resource: the server responded with a status of 404 ()
+index-tpw5RAEr.js:1472 MainApp: Auth check Object
+api/athlete-profile:1   Failed to load resource: the server responded with a status of 500 ()
+index-tpw5RAEr.js:1316 Stopping practice pulse animation
+api/chat/groups/unread-counts:1   Failed to load resource: the server responded with a status of 400 ()
+index-tpw5RAEr.js:1472 MainApp: Auth check Object
+index-tpw5RAEr.js:1472 MainApp: Auth check Object
+api/athlete-profile:1   Failed to load resource: the server responded with a status of 500 ()
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again
+index-tpw5RAEr.js:48 Making POST request to /api/athlete-profile {sprint60m100m: true, sprint200m: false, sprint400m: false, hurdles100m110m: false, hurdles400m: false, …}
+index-tpw5RAEr.js:1432   GET https://alpha.tracklitapp.com/api/chat/groups/unread-counts 400 (Bad Request)
+queryFn @ index-tpw5RAEr.js:1432
+i @ index-tpw5RAEr.js:48
+x @ index-tpw5RAEr.js:48
+start @ index-tpw5RAEr.js:48
+fetch @ index-tpw5RAEr.js:48
+lh @ index-tpw5RAEr.js:48
+(anonymous) @ index-tpw5RAEr.js:48
+index-tpw5RAEr.js:48   POST https://alpha.tracklitapp.com/api/athlete-profile 400 (Bad Request)
+Ie @ index-tpw5RAEr.js:48
+mutationFn @ index-tpw5RAEr.js:1410
+fn @ index-tpw5RAEr.js:48
+x @ index-tpw5RAEr.js:48
+start @ index-tpw5RAEr.js:48
+execute @ index-tpw5RAEr.js:48
+await in execute
+mutate @ index-tpw5RAEr.js:48
+(anonymous) @ index-tpw5RAEr.js:48
+y @ index-tpw5RAEr.js:1410
+(anonymous) @ index-tpw5RAEr.js:1316
+await in (anonymous)
+dQ @ index-tpw5RAEr.js:29
+mQ @ index-tpw5RAEr.js:29
+fQ @ index-tpw5RAEr.js:29
+vA @ index-tpw5RAEr.js:29
+S8 @ index-tpw5RAEr.js:29
+(anonymous) @ index-tpw5RAEr.js:29
+vC @ index-tpw5RAEr.js:32
+G$ @ index-tpw5RAEr.js:29
+gj @ index-tpw5RAEr.js:29
+H4 @ index-tpw5RAEr.js:29
+AQ @ index-tpw5RAEr.js:29
+index-tpw5RAEr.js:48 Response status: 400
+index-tpw5RAEr.js:48   GET https://alpha.tracklitapp.com/api/athlete-profile 500 (Internal Server Error)
+(anonymous) @ index-tpw5RAEr.js:48
+i @ index-tpw5RAEr.js:48
+x @ index-tpw5RAEr.js:48
+start @ index-tpw5RAEr.js:48
+fetch @ index-tpw5RAEr.js:48
+(anonymous) @ index-tpw5RAEr.js:48
+(anonymous) @ index-tpw5RAEr.js:48
+batch @ index-tpw5RAEr.js:48
+refetchQueries @ index-tpw5RAEr.js:48
+(anonymous) @ index-tpw5RAEr.js:48
+batch @ index-tpw5RAEr.js:48
+invalidateQueries @ index-tpw5RAEr.js:48
+onSuccess @ index-tpw5RAEr.js:1410
+execute @ index-tpw5RAEr.js:48
+await in execute
+mutate @ index-tpw5RAEr.js:48
+(anonymous) @ index-tpw5RAEr.js:48
+y @ index-tpw5RAEr.js:1410
+(anonymous) @ index-tpw5RAEr.js:1316
+await in (anonymous)
+dQ @ index-tpw5RAEr.js:29
+mQ @ index-tpw5RAEr.js:29
+fQ @ index-tpw5RAEr.js:29
+vA @ index-tpw5RAEr.js:29
+S8 @ index-tpw5RAEr.js:29
+(anonymous) @ index-tpw5RAEr.js:29
+vC @ index-tpw5RAEr.js:32
+G$ @ index-tpw5RAEr.js:29
+gj @ index-tpw5RAEr.js:29
+H4 @ index-tpw5RAEr.js:29
+AQ @ index-tpw5RAEr.js:29

@@ -193,7 +193,7 @@ export default function AthleteProfilePage() {
       hurdles100m110mGoal: "",
       hurdles400mGoal: "",
       otherEventGoal: "",
-      timingPreference: "on_movement",
+      timingPreference: "onMovement",
     },
   });
 
@@ -214,7 +214,7 @@ export default function AthleteProfilePage() {
         hurdles100m110mGoal: profile.hurdles100m110mGoal?.toString() || "",
         hurdles400mGoal: profile.hurdles400mGoal?.toString() || "",
         otherEventGoal: profile.otherEventGoal?.toString() || "",
-        timingPreference: profile.timingPreference || "on_movement",
+        timingPreference: profile.timingPreference || "onMovement",
       });
     }
   }, [profile, form]);
@@ -269,7 +269,7 @@ export default function AthleteProfilePage() {
       hurdles100m110mGoal: profile.hurdles100m110mGoal?.toString() || "",
       hurdles400mGoal: profile.hurdles400mGoal?.toString() || "",
       otherEventGoal: profile.otherEventGoal?.toString() || "",
-      timingPreference: profile.timingPreference || "on_movement",
+      timingPreference: profile.timingPreference || "onMovement",
     });
   };
 
