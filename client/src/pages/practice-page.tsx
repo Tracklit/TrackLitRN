@@ -817,7 +817,7 @@ function PracticePage() {
       setSelectedProgram(null);
       setUserHasSelectedProgram(false);
     }
-  }, [availablePrograms, selectedProgram, userHasSelectedProgram]);
+  }, [availablePrograms, userHasSelectedProgram]); // Removed selectedProgram from dependencies
 
   return (
     <PageContainer className="pb-24">
