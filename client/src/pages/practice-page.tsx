@@ -972,11 +972,11 @@ function PracticePage() {
       {/* Floating Target Times Button */}
       <button
         onClick={() => setTargetTimesModalOpen(!targetTimesModalOpen)}
-        className="fixed bottom-20 right-4 z-[110] w-14 h-14 bg-gradient-to-br from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
+        className="fixed bottom-20 right-4 z-[110] w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-300 flex items-center justify-center transform hover:scale-110 active:scale-95"
         data-testid="button-target-times"
       >
         <div className="flex flex-col items-center justify-center">
-          <Timer className="h-6 w-6 mb-0.5" />
+          <Timer className="h-7 w-7 mb-0.5" />
           <span className="text-xs font-bold">%</span>
         </div>
       </button>
@@ -994,110 +994,122 @@ function PracticePage() {
         />
         
         {/* Drawer Content */}
-        <div className={`relative ml-auto w-full max-w-md h-full bg-gradient-to-br from-blue-800 to-purple-400 shadow-2xl transform transition-transform duration-300 ease-out ${
+        <div className={`relative ml-auto w-full max-w-md h-full bg-white/10 backdrop-blur-xl border-l border-white/20 shadow-2xl transform transition-all duration-500 ease-out ${
           targetTimesModalOpen ? 'translate-x-0' : 'translate-x-full'
-        } flex flex-col`}>
+        } flex flex-col overflow-hidden`}>
             {/* Header */}
-            <div className="px-6 py-4 border-b border-border bg-gradient-to-br from-blue-800/95 to-purple-400/95 backdrop-blur-sm">
+            <div className="px-6 py-6 border-b border-white/20 bg-gradient-to-r from-white/10 to-white/5 backdrop-blur-sm">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Timer className="h-5 w-5 text-primary" />
-                  <h2 className="text-lg font-semibold">Target Times</h2>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white/10 rounded-xl backdrop-blur-sm">
+                    <Timer className="h-5 w-5 text-white" />
+                  </div>
+                  <h2 className="text-xl font-bold text-white">Target Times</h2>
                 </div>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setTargetTimesModalOpen(false)}
-                  className="h-8 w-8 p-0"
+                  className="h-9 w-9 p-0 text-white hover:bg-white/10 rounded-xl transition-all duration-200"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-5 w-5" />
                 </Button>
               </div>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-sm text-white/80 mt-2">
                 Calculate target times based on your goals and track conditions.
               </p>
             </div>
             
             {/* Content */}
-            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
               {/* Track Type Selection */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Track Type</label>
-                <div className="flex gap-2">
-                  <Button
-                    variant={currentTrackType === "outdoor" ? "default" : "outline"}
-                    size="sm"
+              <div className="space-y-3">
+                <label className="text-sm font-semibold text-white">Track Type</label>
+                <div className="flex gap-3">
+                  <button
                     onClick={() => setCurrentTrackType("outdoor")}
-                    className={`h-8 text-xs flex-1 border-white ${currentTrackType !== "outdoor" ? "bg-blue-900 text-white hover:bg-blue-800" : ""}`}
+                    className={`flex-1 h-11 px-4 rounded-xl font-medium text-sm transition-all duration-300 transform hover:scale-105 ${
+                      currentTrackType === "outdoor" 
+                        ? "bg-white text-blue-900 shadow-lg" 
+                        : "bg-white/10 text-white border border-white/30 hover:bg-white/20 shadow-md"
+                    }`}
                   >
                     Outdoor
-                  </Button>
-                  <Button
-                    variant={currentTrackType === "indoor" ? "default" : "outline"}
-                    size="sm"
+                  </button>
+                  <button
                     onClick={() => setCurrentTrackType("indoor")}
-                    className={`h-8 text-xs flex-1 border-white ${currentTrackType !== "indoor" ? "bg-blue-900 text-white hover:bg-blue-800" : ""}`}
+                    className={`flex-1 h-11 px-4 rounded-xl font-medium text-sm transition-all duration-300 transform hover:scale-105 ${
+                      currentTrackType === "indoor" 
+                        ? "bg-white text-blue-900 shadow-lg" 
+                        : "bg-white/10 text-white border border-white/30 hover:bg-white/20 shadow-md"
+                    }`}
                   >
                     Indoor
-                  </Button>
+                  </button>
                 </div>
               </div>
               
               {/* Timing Options */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Timing Method</label>
-                <div className="flex gap-1">
-                  <Button
-                    variant={timingMethod === "reaction" ? "default" : "outline"}
-                    size="sm"
+              <div className="space-y-3">
+                <label className="text-sm font-semibold text-white">Timing Method</label>
+                <div className="flex gap-2">
+                  <button
                     onClick={() => setTimingMethod("reaction")}
-                    className={`h-8 text-xs flex-1 border-white ${timingMethod !== "reaction" ? "bg-blue-900 text-white hover:bg-blue-800" : ""}`}
+                    className={`flex-1 h-10 px-3 rounded-lg font-medium text-xs transition-all duration-300 transform hover:scale-105 ${
+                      timingMethod === "reaction" 
+                        ? "bg-white text-blue-900 shadow-lg" 
+                        : "bg-white/10 text-white border border-white/30 hover:bg-white/20 shadow-md"
+                    }`}
                   >
                     Reaction
-                  </Button>
-                  <Button
-                    variant={timingMethod === "firstFoot" ? "default" : "outline"}
-                    size="sm"
+                  </button>
+                  <button
                     onClick={() => setTimingMethod("firstFoot")}
-                    className={`h-8 text-xs flex-1 border-white ${timingMethod !== "firstFoot" ? "bg-blue-900 text-white hover:bg-blue-800" : ""}`}
+                    className={`flex-1 h-10 px-3 rounded-lg font-medium text-xs transition-all duration-300 transform hover:scale-105 ${
+                      timingMethod === "firstFoot" 
+                        ? "bg-white text-blue-900 shadow-lg" 
+                        : "bg-white/10 text-white border border-white/30 hover:bg-white/20 shadow-md"
+                    }`}
                   >
                     First Foot
-                  </Button>
-                  <Button
-                    variant={timingMethod === "onMovement" ? "default" : "outline"}
-                    size="sm"
+                  </button>
+                  <button
                     onClick={() => setTimingMethod("onMovement")}
-                    className={`h-8 text-xs flex-1 border-white ${timingMethod !== "onMovement" ? "bg-blue-900 text-white hover:bg-blue-800" : ""}`}
+                    className={`flex-1 h-10 px-3 rounded-lg font-medium text-xs transition-all duration-300 transform hover:scale-105 ${
+                      timingMethod === "onMovement" 
+                        ? "bg-white text-blue-900 shadow-lg" 
+                        : "bg-white/10 text-white border border-white/30 hover:bg-white/20 shadow-md"
+                    }`}
                   >
                     On Movement
-                  </Button>
+                  </button>
                 </div>
               </div>
 
               {/* Target Times Table */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Target Times</label>
-                <div className="bg-muted/20 rounded-md overflow-hidden border">
+              <div className="space-y-3">
+                <label className="text-sm font-semibold text-white">Target Times</label>
+                <div className="bg-white/5 backdrop-blur-sm rounded-2xl overflow-hidden border border-white/20 shadow-xl">
                   <div className="relative">
                     {(() => {
                       const data = calculateTargetTimes();
                       if (data.distances.length === 0) {
                         return (
-                          <div className="p-4 text-center text-muted-foreground">
-                            <p className="text-sm">No goal times set in your profile.</p>
-                            <p className="text-xs mt-1">Update your profile to see target times.</p>
+                          <div className="p-6 text-center">
+                            <p className="text-sm text-white/80">No goal times set in your profile.</p>
+                            <p className="text-xs mt-2 text-white/60">Update your profile to see target times.</p>
                           </div>
                         );
                       }
                       return (
                         <div className="flex">
                           {/* Frozen Distance Column */}
-                          <div className="flex-shrink-0 bg-background border-r border-white">
-                            <div className="w-16 px-2 py-1.5 text-xs font-medium text-center bg-muted/50 border-b border-white">
+                          <div className="flex-shrink-0 bg-white/10 border-r border-white/20">
+                            <div className="w-16 px-2 py-3 text-xs font-bold text-center bg-white/20 border-b border-white/20 text-white">
                               Dist
                             </div>
                             {data.distances.map((distance) => (
-                              <div key={`frozen-${distance}`} className="w-16 px-2 py-1.5 text-xs font-medium text-center bg-background border-b border-white last:border-b-0">
+                              <div key={`frozen-${distance}`} className="w-16 px-2 py-2.5 text-xs font-semibold text-center bg-white/5 border-b border-white/10 last:border-b-0 text-white">
                                 {distance}
                               </div>
                             ))}
@@ -1108,11 +1120,11 @@ function PracticePage() {
                             <div className="flex min-w-fit">
                               {data.percentages.map((percentage) => (
                                 <div key={`col-${percentage}`} className="flex-shrink-0 w-14">
-                                  <div className="px-1 py-1.5 text-xs font-medium text-center bg-muted/50 border-b border-white">
+                                  <div className="px-1 py-3 text-xs font-bold text-center bg-white/20 border-b border-white/20 text-white">
                                     {percentage}%
                                   </div>
                                   {data.distances.map((distance) => (
-                                    <div key={`${distance}-${percentage}`} className="px-1 py-1.5 text-xs text-center font-mono bg-background border-b border-white last:border-b-0">
+                                    <div key={`${distance}-${percentage}`} className="px-1 py-2.5 text-xs text-center font-mono bg-white/5 border-b border-white/10 last:border-b-0 text-white hover:bg-white/10 transition-colors duration-200">
                                       {data.getTime(distance, percentage)}
                                     </div>
                                   ))}
@@ -1127,20 +1139,19 @@ function PracticePage() {
                 </div>
               </div>
 
-              <div className="text-xs text-muted-foreground">
+              <div className="text-xs text-white/60 bg-white/5 rounded-lg p-3 border border-white/10">
                 Times are estimates based on selected track type and timing method. Percentages represent speed intensity levels.
               </div>
             </div>
 
             {/* Footer */}
-            <div className="px-6 py-4 border-t border-border bg-background/95 backdrop-blur-sm">
-              <Button 
-                variant="outline" 
+            <div className="px-6 py-6 border-t border-white/20 bg-white/5 backdrop-blur-sm">
+              <button 
                 onClick={() => setTargetTimesModalOpen(false)}
-                className="w-full"
+                className="w-full h-12 bg-white text-blue-900 font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95"
               >
                 Close
-              </Button>
+              </button>
             </div>
           </div>
       </div>
