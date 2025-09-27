@@ -483,10 +483,9 @@ function PracticePage() {
   
   // Calculator states
   const [targetTimesModalOpen, setTargetTimesModalOpen] = useState(false);
-  const [useFirstFootTiming, setUseFirstFootTiming] = useState(false);
   const [adjustForTrackType, setAdjustForTrackType] = useState(false);
   const [currentTrackType, setCurrentTrackType] = useState<"indoor" | "outdoor">("outdoor");
-  const [useOnMovement, setUseOnMovement] = useState(false);
+  const [timingMethod, setTimingMethod] = useState<"standard" | "firstFoot" | "onMovement">("standard");
   
   // Target times calculator with comprehensive format
   const calculateTargetTimes = () => {
@@ -518,8 +517,8 @@ function PracticePage() {
     // If 100m goal is set, use it as base for short distances
     if (goal100m) {
       let adjusted100m = goal100m;
-      if (useFirstFootTiming) adjusted100m -= 0.55;
-      if (useOnMovement) adjusted100m -= 0.15;
+      if (timingMethod === "firstFoot") adjusted100m -= 0.55;
+      if (timingMethod === "onMovement") adjusted100m -= 0.15;
       
       baseTimesByDistance["50m"] = adjusted100m * 0.50;
       baseTimesByDistance["60m"] = adjusted100m * 0.60;
@@ -543,8 +542,7 @@ function PracticePage() {
     // If 200m goal is set, use it as base for medium distances  
     if (goal200m) {
       let adjusted200m = goal200m;
-      if (useFirstFootTiming) adjusted200m -= 0.55;
-      if (useOnMovement) adjusted200m -= 0.15;
+      // No timing adjustments for 200m, 250m, 300m distances
       
       baseTimesByDistance["200m"] = adjusted200m;
       baseTimesByDistance["250m"] = adjusted200m * 1.25; // Calculated from 200m
@@ -554,8 +552,8 @@ function PracticePage() {
     // If 400m goal is set, use it as base
     if (goal400m) {
       let adjusted400m = goal400m;
-      if (useFirstFootTiming) adjusted400m -= 0.55;
-      if (useOnMovement) adjusted400m -= 0.15;
+      if (timingMethod === "firstFoot") adjusted400m -= 0.55;
+      if (timingMethod === "onMovement") adjusted400m -= 0.15;
       
       baseTimesByDistance["400m"] = adjusted400m;
     }
@@ -1047,28 +1045,32 @@ function PracticePage() {
               
               {/* Timing Options */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Timing Options</label>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="firstFootTiming"
-                      checked={useFirstFootTiming}
-                      onCheckedChange={(checked) => setUseFirstFootTiming(checked as boolean)}
-                    />
-                    <label htmlFor="firstFootTiming" className="text-sm">
-                      First Foot Timing
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="onMovement"
-                      checked={useOnMovement}
-                      onCheckedChange={(checked) => setUseOnMovement(checked as boolean)}
-                    />
-                    <label htmlFor="onMovement" className="text-sm">
-                      On Movement Timing
-                    </label>
-                  </div>
+                <label className="text-sm font-medium">Timing Method</label>
+                <div className="flex gap-1">
+                  <Button
+                    variant={timingMethod === "standard" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setTimingMethod("standard")}
+                    className="h-8 text-xs flex-1"
+                  >
+                    Standard
+                  </Button>
+                  <Button
+                    variant={timingMethod === "firstFoot" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setTimingMethod("firstFoot")}
+                    className="h-8 text-xs flex-1"
+                  >
+                    First Foot
+                  </Button>
+                  <Button
+                    variant={timingMethod === "onMovement" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setTimingMethod("onMovement")}
+                    className="h-8 text-xs flex-1"
+                  >
+                    On Movement
+                  </Button>
                 </div>
               </div>
 
