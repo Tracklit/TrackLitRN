@@ -319,15 +319,9 @@ function MainApp() {
   
   // ALL HOOKS MUST BE AT THE TOP - BEFORE ANY EARLY RETURNS
   
-  // Simplified authentication redirect handling
+  // Authentication logging for debugging
   useEffect(() => {
     console.log('MainApp: Auth check', { user: !!user, isLoading, location });
-    
-    // Simple redirect logic: if not loading and no user and on root, go to auth
-    if (!isLoading && !user && location === '/') {
-      console.log('MainApp: Redirecting to /auth');
-      window.location.href = '/auth';
-    }
   }, [user, isLoading, location]);
   
   // Redirect to onboarding for new user registrations (not logins)
