@@ -9,7 +9,7 @@ packages = ["atk", "ffmpeg", "gcc-unwrapped", "gdk-pixbuf", "glib", "gtk3", "ima
 [deployment]
 deploymentTarget = "autoscale"
 build = ["npm", "run", "build"]
-run = ["npm", "start"]
+run = ["npm", "run", "dev"]
 
 [[ports]]
 localPort = 5000
@@ -46,6 +46,10 @@ externalPort = 5000
 [[ports]]
 localPort = 43877
 externalPort = 3000
+
+[[ports]]
+localPort = 44855
+externalPort = 8000
 
 [[ports]]
 localPort = 45037
