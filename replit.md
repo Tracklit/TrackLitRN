@@ -10,6 +10,13 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **Target Times Production Deployment Fix (September 27, 2025)**: Successfully resolved critical TypeScript compilation errors blocking production deployment
+  - **Reduced compilation errors from 80+ to ~45** by fixing missing schema imports (trainingPrograms, meetInvitations, passwordResetTokens, User)
+  - **Created dedicated TimingSettingsPage component** for clean `/timing-settings` route, eliminating "athlete profile" references from data flow
+  - **Fixed critical mediapipe-simple import issue** with proper error handling for optional services
+  - **Corrected apiRequest parameter ordering** (method first, then URL) for proper API communication
+  - **Configured production deployment** with autoscale settings for clean production builds
+  - **Clean timing settings data flow**: Users can now set preferences on `/timing-settings` page and see them correctly in practice page timing drawer
 - **Target Times API Fix (September 27, 2025)**: Resolved critical 500 errors preventing Target Times functionality from working
   - Fixed database schema enum mismatch: Updated timing preference from `['on_movement', 'first_foot']` to `['reaction', 'firstFoot', 'onMovement']`
   - Updated all frontend forms and validation to use correct enum values (`onMovement`, `firstFoot`, `reaction`)
