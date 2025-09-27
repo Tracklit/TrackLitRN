@@ -1028,7 +1028,7 @@ function PracticePage() {
                     variant={currentTrackType === "outdoor" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setCurrentTrackType("outdoor")}
-                    className="h-8 text-xs flex-1"
+                    className={`h-8 text-xs flex-1 border-white ${currentTrackType !== "outdoor" ? "bg-blue-900 text-white hover:bg-blue-800" : ""}`}
                   >
                     Outdoor
                   </Button>
@@ -1036,7 +1036,7 @@ function PracticePage() {
                     variant={currentTrackType === "indoor" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setCurrentTrackType("indoor")}
-                    className="h-8 text-xs flex-1"
+                    className={`h-8 text-xs flex-1 border-white ${currentTrackType !== "indoor" ? "bg-blue-900 text-white hover:bg-blue-800" : ""}`}
                   >
                     Indoor
                   </Button>
@@ -1051,7 +1051,7 @@ function PracticePage() {
                     variant={timingMethod === "reaction" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setTimingMethod("reaction")}
-                    className="h-8 text-xs flex-1"
+                    className={`h-8 text-xs flex-1 border-white ${timingMethod !== "reaction" ? "bg-blue-900 text-white hover:bg-blue-800" : ""}`}
                   >
                     Reaction
                   </Button>
@@ -1059,7 +1059,7 @@ function PracticePage() {
                     variant={timingMethod === "firstFoot" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setTimingMethod("firstFoot")}
-                    className="h-8 text-xs flex-1"
+                    className={`h-8 text-xs flex-1 border-white ${timingMethod !== "firstFoot" ? "bg-blue-900 text-white hover:bg-blue-800" : ""}`}
                   >
                     First Foot
                   </Button>
@@ -1067,7 +1067,7 @@ function PracticePage() {
                     variant={timingMethod === "onMovement" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setTimingMethod("onMovement")}
-                    className="h-8 text-xs flex-1"
+                    className={`h-8 text-xs flex-1 border-white ${timingMethod !== "onMovement" ? "bg-blue-900 text-white hover:bg-blue-800" : ""}`}
                   >
                     On Movement
                   </Button>
@@ -1092,12 +1092,12 @@ function PracticePage() {
                       return (
                         <div className="flex">
                           {/* Frozen Distance Column */}
-                          <div className="flex-shrink-0 bg-background border-r border-border">
-                            <div className="w-16 px-2 py-1.5 text-xs font-medium text-center bg-muted/50 border-b border-border">
+                          <div className="flex-shrink-0 bg-background border-r border-white">
+                            <div className="w-16 px-2 py-1.5 text-xs font-medium text-center bg-muted/50 border-b border-white">
                               Dist
                             </div>
                             {data.distances.map((distance) => (
-                              <div key={`frozen-${distance}`} className="w-16 px-2 py-1.5 text-xs font-medium text-center bg-background border-b border-border last:border-b-0">
+                              <div key={`frozen-${distance}`} className="w-16 px-2 py-1.5 text-xs font-medium text-center bg-background border-b border-white last:border-b-0">
                                 {distance}
                               </div>
                             ))}
@@ -1108,11 +1108,11 @@ function PracticePage() {
                             <div className="flex min-w-fit">
                               {data.percentages.map((percentage) => (
                                 <div key={`col-${percentage}`} className="flex-shrink-0 w-14">
-                                  <div className="px-1 py-1.5 text-xs font-medium text-center bg-muted/50 border-b border-border">
+                                  <div className="px-1 py-1.5 text-xs font-medium text-center bg-muted/50 border-b border-white">
                                     {percentage}%
                                   </div>
                                   {data.distances.map((distance) => (
-                                    <div key={`${distance}-${percentage}`} className="px-1 py-1.5 text-xs text-center font-mono bg-background border-b border-border last:border-b-0">
+                                    <div key={`${distance}-${percentage}`} className="px-1 py-1.5 text-xs text-center font-mono bg-background border-b border-white last:border-b-0">
                                       {data.getTime(distance, percentage)}
                                     </div>
                                   ))}
