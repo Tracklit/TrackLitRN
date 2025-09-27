@@ -27,7 +27,7 @@ export const athleteProfiles = pgTable("athlete_profiles", {
   otherEventGoal: real("other_event_goal"),
   
   // Timing preference for display
-  timingPreference: text("timing_preference", { enum: ['on_movement', 'first_foot'] }).default('on_movement'),
+  timingPreference: text("timing_preference", { enum: ['reaction', 'firstFoot', 'onMovement'] }).default('firstFoot'),
   
   // When the profile was last updated
   updatedAt: timestamp("updated_at").defaultNow(),
