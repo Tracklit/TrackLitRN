@@ -809,7 +809,6 @@ function PracticePage() {
   // Set up effects for program selection and session loading
   useEffect(() => {
     if (!availablePrograms || availablePrograms.length === 0) {
-      console.log('🧹 No programs available - clearing selection');
       setSelectedProgram(null);
       localStorage.removeItem('selectedProgramId');
       return;
@@ -817,18 +816,11 @@ function PracticePage() {
 
     // Try to load saved program from localStorage
     const savedProgramId = localStorage.getItem('selectedProgramId');
-    console.log('🔄 Program selection useEffect triggered:', {
-      availablePrograms: availablePrograms.length,
-      currentSelected: selectedProgram?.id || 'none',
-      savedProgramId: savedProgramId || 'none',
-      firstProgramId: availablePrograms[0]?.id || 'none'
-    });
 
     if (savedProgramId) {
       // Find the saved program in available programs
       const savedProgram = availablePrograms.find(p => p.id === savedProgramId);
       if (savedProgram && savedProgram.id !== selectedProgram?.id) {
-        console.log('🔄 Restoring saved program selection:', savedProgramId);
         setSelectedProgram(savedProgram);
         return;
       }
@@ -836,7 +828,6 @@ function PracticePage() {
 
     // If no saved selection and no current selection, auto-select first program
     if (!selectedProgram && !savedProgramId) {
-      console.log('🚀 Auto-selecting first program:', availablePrograms[0].id);
       setSelectedProgram(availablePrograms[0]);
       localStorage.setItem('selectedProgramId', availablePrograms[0].id);
     }
@@ -1204,11 +1195,6 @@ function PracticePage() {
                           : 'bg-gray-800 border-2 border-transparent active:bg-gray-700'
                       }`}
                       onClick={async () => {
-                        console.log('👆 User manually selected program:', {
-                          programId: programAssignment.id,
-                          programTitle: programAssignment.program?.title,
-                          currentSelected: selectedProgram?.id
-                        });
                         setSelectedProgram(programAssignment);
                         // Save selection to localStorage for persistence
                         localStorage.setItem('selectedProgramId', programAssignment.id);
@@ -1222,7 +1208,6 @@ function PracticePage() {
                         await queryClient.invalidateQueries({
                           queryKey: ["/api/program-sessions", programAssignment.programId]
                         });
-                        console.log('✅ Program selection completed and saved:', programAssignment.id);
                       }}
                       style={{ touchAction: 'manipulation' }}
                     >
