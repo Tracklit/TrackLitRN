@@ -30,10 +30,7 @@ export default function TimingSettingsPage() {
   // Update timing settings
   const { mutate: saveSettings, isPending } = useMutation({
     mutationFn: async (newSettings: TimingSettings) => {
-      return apiRequest('/api/athlete-profile', {
-        method: 'PATCH',
-        body: JSON.stringify(newSettings)
-      });
+      return apiRequest('PATCH', '/api/athlete-profile', newSettings);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/athlete-profile'] });
@@ -56,7 +53,7 @@ export default function TimingSettingsPage() {
     if (settings?.timingPreference) {
       setTimingPreference(settings.timingPreference);
     }
-  });
+  })
 
   const handleSave = () => {
     saveSettings({ timingPreference });

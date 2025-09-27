@@ -2,8 +2,8 @@ import express, { type Express, type Request, type Response } from "express";
 import { createServer, type Server } from "http";
 import { storage as dbStorage } from "./storage";
 import { pool, db } from "./db";
-import { meets, notifications, users, messageReactions, userSubscriptions, userSubscriptionPurchases } from "@shared/schema";
-import { and, eq, or, sql, isNotNull, desc, asc } from "drizzle-orm";
+import { meets, notifications, users, messageReactions, userSubscriptions, userSubscriptionPurchases, trainingPrograms, meetInvitations, passwordResetTokens, User } from "@shared/schema";
+import { and, eq, or, sql, isNotNull, desc, asc, inArray } from "drizzle-orm";
 import { setupAuth } from "./auth";
 import { z } from "zod";
 import multer from "multer";
@@ -8555,10 +8555,15 @@ Keep the response professional, evidence-based, and specific to track and field 
       
       try {
         // Use simplified MediaPipe + OpenAI integration for enhanced analysis
-        const { simplifiedMediaPipeService } = await import('./mediapipe-simple');
-        console.log('Starting enhanced biomechanical analysis...');
-        
-        const completeAnalysis = await simplifiedMediaPipeService.analyzeVideoComplete(videoPath);
+        try {
+          const { simplifiedMediaPipeService } = await import('./mediapipe-simple');
+          console.log('Starting enhanced biomechanical analysis...');
+          
+          const completeAnalysis = await simplifiedMediaPipeService.analyzeVideoComplete(videoPath);
+        } catch (importError) {
+          console.error('MediaPipe service not available:', importError);
+          return res.status(503).json({ error: 'Video analysis service temporarily unavailable' });
+        }
 
         // Update user's prompt usage
         if (subscriptionTier !== "star") {
