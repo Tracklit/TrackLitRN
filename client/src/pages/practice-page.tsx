@@ -965,8 +965,8 @@ function PracticePage() {
 
       {/* Floating Target Times Button */}
       <button
-        onClick={() => setTargetTimesModalOpen(true)}
-        className="fixed bottom-20 right-4 z-50 w-14 h-14 bg-gradient-to-br from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
+        onClick={() => setTargetTimesModalOpen(!targetTimesModalOpen)}
+        className="fixed bottom-20 right-4 z-[110] w-14 h-14 bg-gradient-to-br from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
         data-testid="button-target-times"
       >
         <div className="flex flex-col items-center justify-center">
@@ -976,20 +976,23 @@ function PracticePage() {
       </button>
 
       {/* Target Times Drawer */}
-      {targetTimesModalOpen && (
-        <div className="fixed inset-0 z-[100] flex">
-          {/* Backdrop */}
-          <div 
-            className="absolute inset-0 bg-black/50 transition-opacity"
-            onClick={() => setTargetTimesModalOpen(false)}
-          />
-          
-          {/* Drawer Content */}
-          <div className={`relative ml-auto w-full max-w-md h-full bg-background shadow-2xl transform transition-transform duration-300 ease-out ${
-            targetTimesModalOpen ? 'translate-x-0' : 'translate-x-full'
-          } flex flex-col`}>
+      <div className={`fixed inset-0 z-[100] flex transition-all duration-300 ease-out ${
+        targetTimesModalOpen ? 'pointer-events-auto' : 'pointer-events-none'
+      }`}>
+        {/* Backdrop */}
+        <div 
+          className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${
+            targetTimesModalOpen ? 'opacity-100' : 'opacity-0'
+          }`}
+          onClick={() => setTargetTimesModalOpen(false)}
+        />
+        
+        {/* Drawer Content */}
+        <div className={`relative ml-auto w-full max-w-md h-full bg-background shadow-2xl transform transition-transform duration-300 ease-out ${
+          targetTimesModalOpen ? 'translate-x-0' : 'translate-x-full'
+        } flex flex-col`}>
             {/* Header */}
-            <div className="px-6 py-4 border-b border-border bg-background">
+            <div className="px-6 py-4 border-b border-border bg-background/95 backdrop-blur-sm">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Timer className="h-5 w-5 text-primary" />
@@ -1120,7 +1123,7 @@ function PracticePage() {
             </div>
 
             {/* Footer */}
-            <div className="px-6 py-4 border-t border-border bg-background">
+            <div className="px-6 py-4 border-t border-border bg-background/95 backdrop-blur-sm">
               <Button 
                 variant="outline" 
                 onClick={() => setTargetTimesModalOpen(false)}
@@ -1130,8 +1133,7 @@ function PracticePage() {
               </Button>
             </div>
           </div>
-        </div>
-      )}
+      </div>
 
       {/* Assigned Programs Modal - Custom React Native Style */}
       {showAssignedPrograms && (
