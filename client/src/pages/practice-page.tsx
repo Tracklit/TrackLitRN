@@ -512,15 +512,12 @@ function PracticePage() {
       };
     }
     
-    // Track type adjustments
-    const trackAdjustment = currentTrackType === "indoor" ? 0.98 : 1.0;
-    
     // Calculate base times for each distance from the set goals
     const baseTimesByDistance: { [key: string]: number } = {};
     
     // If 100m goal is set, use it as base for short distances
     if (goal100m) {
-      let adjusted100m = goal100m * trackAdjustment;
+      let adjusted100m = goal100m;
       if (useFirstFootTiming) adjusted100m -= 0.55;
       if (useOnMovement) adjusted100m -= 0.15;
       
@@ -528,13 +525,24 @@ function PracticePage() {
       baseTimesByDistance["60m"] = adjusted100m * 0.60;
       baseTimesByDistance["80m"] = adjusted100m * 0.80;
       baseTimesByDistance["100m"] = adjusted100m;
-      baseTimesByDistance["120m"] = adjusted100m * 1.20; // Calculated from 100m
-      baseTimesByDistance["150m"] = adjusted100m * 1.50; // Calculated from 100m
+      
+      // Calculate 120m and 150m times with indoor adjustments
+      let time120m = adjusted100m * 1.20;
+      let time150m = adjusted100m * 1.50;
+      
+      // Add indoor track adjustments for specific distances
+      if (currentTrackType === "indoor") {
+        time120m += 0.2;  // Add 0.2s for 120m indoor
+        time150m += 0.42; // Add 0.2s + 0.22s = 0.42s for 150m indoor
+      }
+      
+      baseTimesByDistance["120m"] = time120m;
+      baseTimesByDistance["150m"] = time150m;
     }
     
     // If 200m goal is set, use it as base for medium distances  
     if (goal200m) {
-      let adjusted200m = goal200m * trackAdjustment;
+      let adjusted200m = goal200m;
       if (useFirstFootTiming) adjusted200m -= 0.55;
       if (useOnMovement) adjusted200m -= 0.15;
       
@@ -545,7 +553,7 @@ function PracticePage() {
     
     // If 400m goal is set, use it as base
     if (goal400m) {
-      let adjusted400m = goal400m * trackAdjustment;
+      let adjusted400m = goal400m;
       if (useFirstFootTiming) adjusted400m -= 0.55;
       if (useOnMovement) adjusted400m -= 0.15;
       
