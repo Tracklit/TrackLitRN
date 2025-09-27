@@ -29,6 +29,19 @@ app.get('/debug-auth', (req, res) => {
   });
 });
 
+// Add cache-busting middleware for development
+app.use((req, res, next) => {
+  // Prevent caching of JS, CSS, and HTML files during development
+  if (req.url.endsWith('.js') || req.url.endsWith('.css') || req.url.endsWith('.html') || req.url === '/') {
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+  }
+  next();
+});
+
 // Serve static files from the public directory
 app.use(express.static(path.join(process.cwd(), 'public')));
 
