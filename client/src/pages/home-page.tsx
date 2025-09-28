@@ -91,13 +91,15 @@ export default function HomePage() {
   const isTickerVisible = true;
   const toggleTickerVisibility = (visible: boolean) => {};
   
-  // Fetch data for stats
+  // Fetch data for stats - only when authenticated
   const { data: meets } = useQuery<Meet[]>({
     queryKey: ['/api/meets'],
+    enabled: !!user, // Only fetch when user is authenticated
   });
   
   const { data: results } = useQuery<Result[]>({
     queryKey: ['/api/results'],
+    enabled: !!user, // Only fetch when user is authenticated
   });
   
   // Static content for practice card - no more dynamic workout fetching
@@ -117,9 +119,10 @@ export default function HomePage() {
     };
   };
   
-  // Fetch workout session previews
+  // Fetch workout session previews - only when authenticated
   const { data: sessionPreviews, isLoading: isLoadingPreviews } = useQuery<SessionPreviewWithUser[]>({
-    queryKey: ['/api/workout-previews']
+    queryKey: ['/api/workout-previews'],
+    enabled: !!user, // Only fetch when user is authenticated
   });
   
 
