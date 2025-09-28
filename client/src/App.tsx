@@ -544,13 +544,11 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TickerProvider>
-          <KeyboardProvider>
-            <TooltipProvider>
-              <MainApp />
-            </TooltipProvider>
-          </KeyboardProvider>
-        </TickerProvider>
+        <KeyboardProvider>
+          <TooltipProvider>
+            <MainApp />
+          </TooltipProvider>
+        </KeyboardProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

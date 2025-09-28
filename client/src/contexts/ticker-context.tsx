@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 
 interface TickerContextType {
   isTickerVisible: boolean;
@@ -7,11 +7,8 @@ interface TickerContextType {
 
 const TickerContext = createContext<TickerContextType | undefined>(undefined);
 
-export function TickerProvider({ children }: { children: React.ReactNode }) {
-  const [isTickerVisible, setIsTickerVisible] = useState(() => {
-    const saved = localStorage.getItem('tickerVisible');
-    return saved !== null ? JSON.parse(saved) : true;
-  });
+export function TickerProvider({ children }: { children: ReactNode }) {
+  const [isTickerVisible, setIsTickerVisible] = useState(true);
 
   const toggleTickerVisibility = (visible: boolean) => {
     setIsTickerVisible(visible);
