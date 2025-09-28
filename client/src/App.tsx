@@ -164,12 +164,20 @@ function ScrollRestoration() {
 
 // Component to handle root path redirect - TEMPORARY: redirect all users to /auth
 function RootRedirect() {
-  // Temporary fix: redirect ALL users to /auth regardless of authentication status
+  const [, setLocation] = useLocation();
+  
+  useEffect(() => {
+    console.log('RootRedirect: Forcefully redirecting from root path to /auth');
+    setLocation('/auth');
+  }, [setLocation]);
+  
+  // Also return declarative redirect as backup
   return <Redirect to="/auth" />;
 }
 
 function Router() {
   const [location] = useLocation();
+  console.log('Router: Current location:', location);
   const isChatRoute = location.startsWith('/chat') || location.startsWith('/chats');
   
   // For chat routes, determine the base route to keep mounted
