@@ -162,17 +162,17 @@ function ScrollRestoration() {
   return null;
 }
 
-// Component to handle root path redirect - TEMPORARY: redirect all users to /auth
+// Component to handle root path redirect - redirect to /home as default
 function RootRedirect() {
   const [, setLocation] = useLocation();
   
   useEffect(() => {
-    console.log('RootRedirect: Forcefully redirecting from root path to /auth');
-    setLocation('/auth');
+    console.log('RootRedirect: Redirecting from root path to /home');
+    setLocation('/home');
   }, [setLocation]);
   
   // Also return declarative redirect as backup
-  return <Redirect to="/auth" />;
+  return <Redirect to="/home" />;
 }
 
 function Router() {
@@ -207,6 +207,9 @@ function Router() {
         {/* Main App Routes - always rendered, but use baseRoute for chat scenarios */}
         <PageTransition>
           <Switch location={isChatRoute ? baseRoute : location}>
+          {/* Home route */}
+          <ProtectedRoute path="/home" component={HomePage} />
+          
           {/* Explicit redirect for root path */}
           <Route path="/">
             <RootRedirect />
