@@ -43,7 +43,7 @@ import { cn } from '@/lib/utils';
 import { useAssignedPrograms } from '@/hooks/use-assigned-programs';
 import { useProgramSessions } from '@/hooks/use-program-sessions';
 import { SimpleWorkoutLike } from '@/components/workout-reactions';
-import { useTicker } from '@/contexts/ticker-context';
+// import { useTicker } from '@/contexts/ticker-context';
 import { CommunityCarousel } from '@/components/community-carousel';
 
 import { BackgroundImageContainer, OptimizedBackgroundImage } from '@/components/optimized-background-image';
@@ -87,7 +87,9 @@ export default function HomePage() {
   const [activeSessionIndex, setActiveSessionIndex] = useState(0);
   const [isSessionFading, setIsSessionFading] = useState(false);
   const [showProgramsPreview, setShowProgramsPreview] = useState(false);
-  const { isTickerVisible, toggleTickerVisibility } = useTicker();
+  // const { isTickerVisible, toggleTickerVisibility } = useTicker();
+  const isTickerVisible = true;
+  const toggleTickerVisibility = (visible: boolean) => {};
   
   // Fetch data for stats
   const { data: meets } = useQuery<Meet[]>({

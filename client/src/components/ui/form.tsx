@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, forwardRef, type ComponentPropsWithoutRef, type ElementRef } from "react"
+import { createContext, useContext, forwardRef, useId, type ComponentPropsWithoutRef, type ElementRef } from "react"
 import * as LabelPrimitive from "@radix-ui/react-label"
 import { Slot } from "@radix-ui/react-slot"
 import {
@@ -74,9 +74,9 @@ const FormItemContext = createContext<FormItemContextValue>(
 
 const FormItem = forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
+  ComponentPropsWithoutRef<"div">
 >(({ className, ...props }, ref) => {
-  const id = React.useId()
+  const id = useId()
 
   return (
     <FormItemContext.Provider value={{ id }}>
@@ -87,8 +87,8 @@ const FormItem = forwardRef<
 FormItem.displayName = "FormItem"
 
 const FormLabel = forwardRef<
-  React.ElementRef<typeof LabelPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root>
+  ElementRef<typeof LabelPrimitive.Root>,
+  ComponentPropsWithoutRef<typeof LabelPrimitive.Root>
 >(({ className, ...props }, ref) => {
   const { error, formItemId } = useFormField()
 
@@ -104,8 +104,8 @@ const FormLabel = forwardRef<
 FormLabel.displayName = "FormLabel"
 
 const FormControl = forwardRef<
-  React.ElementRef<typeof Slot>,
-  React.ComponentPropsWithoutRef<typeof Slot>
+  ElementRef<typeof Slot>,
+  ComponentPropsWithoutRef<typeof Slot>
 >(({ ...props }, ref) => {
   const { error, formItemId, formDescriptionId, formMessageId } = useFormField()
 

@@ -10,7 +10,7 @@ import { MessageButton } from "@/components/message-button";
 import { ChatButton } from "@/components/chat-button";
 
 import { Button } from "@/components/ui/button";
-import { useTicker } from "@/contexts/ticker-context";
+// import { useTicker } from "@/contexts/ticker-context";
 
 interface HeaderProps {
   title?: string;
@@ -19,7 +19,9 @@ interface HeaderProps {
 
 export function Header({ title = "TrackLit", className }: HeaderProps) {
   const { user, logoutMutation } = useAuth();
-  const { isTickerVisible, toggleTickerVisibility } = useTicker();
+  // const { isTickerVisible, toggleTickerVisibility } = useTicker();
+  const isTickerVisible = true;
+  const toggleTickerVisibility = (visible: boolean) => {};
 
   const handleLogout = () => {
     logoutMutation.mutate();
