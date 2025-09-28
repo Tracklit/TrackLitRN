@@ -270,11 +270,9 @@ export default function AuthPage() {
   };
 
   // Redirect if user is already logged in
-  // TEMPORARILY DISABLED: Since we're redirecting all users to /auth, 
-  // this would create a redirect loop
-  // if (user) {
-  //   return <Redirect to="/" />;
-  // }
+  if (user) {
+    return <Redirect to="/" />;
+  }
 
   return (
     <div className="min-h-screen grid md:grid-cols-2">
