@@ -254,17 +254,34 @@ function ScrollRestoration() {
   return null;
 }
 
-// Component to handle root path redirect - redirect to /home as default
+// Component to handle root path redirect - redirect intelligently based on auth state
 function RootRedirect() {
   const [, setLocation] = useLocation();
+  const { user, isLoading } = useAuth();
   
   useEffect(() => {
-    console.log('RootRedirect: Redirecting from root path to /home');
-    setLocation('/home');
-  }, [setLocation]);
+    if (!isLoading) {
+      if (user) {
+        console.log('RootRedirect: Redirecting authenticated user to /home');
+        setLocation('/home');
+      } else {
+        console.log('RootRedirect: Redirecting unauthenticated user to /auth');
+        setLocation('/auth');
+      }
+    }
+  }, [setLocation, user, isLoading]);
   
-  // Also return declarative redirect as backup
-  return <Redirect to="/home" />;
+  // Show loading while determining redirect
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-border" />
+      </div>
+    );
+  }
+  
+  // Fallback declarative redirect
+  return user ? <Redirect to="/home" /> : <Redirect to="/auth" />;
 }
 
 function Router() {
