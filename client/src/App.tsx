@@ -1,5 +1,5 @@
 import { Switch, Route, useLocation, Redirect } from "wouter";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense, lazy } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -9,87 +9,107 @@ import { Header } from "@/components/layout/header";
 import { BottomNavigation } from "@/components/layout/bottom-navigation";
 import { KeyboardProvider } from "@/contexts/keyboard-context";
 import { usePWA } from "@/hooks/use-pwa";
-// Import tool components
-import { 
-  StopwatchPage,
-  StartGunPage,
-  JournalPage,
-  PaceCalculatorPage,
-  PhotoFinishPage,
-  VelocityTrackerPage
-} from "@/pages/routes";
-import PhotoFinishAnalysisPage from "@/pages/tools/photo-finish-analysis-page";
 
+// Only import core components that are always needed
 import { PageTransition } from "@/components/page-transition";
-import NotFound from "@/pages/not-found";
-import HomePage from "@/pages/home-page";
-import AuthPage from "@/pages/auth-page";
-import TestPage from "@/pages/test-page-simple";
-import ToolsPreviewPage from "@/pages/tools-preview";
-import MinimalTest from "@/pages/minimal-test";
-import DebugSimple from "@/pages/debug-simple";
-import EmergencyDebug from "@/pages/emergency-debug";
-import MeetsPage from "@/pages/meets-page";
-import CreateMeetPage from "@/pages/create-meet-page";
-import ResultsPage from "@/pages/results-page";
 
-import ProfilePage from "@/pages/profile-page-new";
-import CoachesPage from "@/pages/coaches-page";
-import RosterStatsPage from "@/pages/roster-stats-page";
-import PracticePage from "@/pages/practice-page";
-import { Component as WorkoutToolsPage } from "@/pages/training-tools-page";
-import ClubsPage from "@/pages/clubs-page";
-import { Component as ClubDetailPage } from "@/pages/club-detail-page";
-import { Component as ClubManagementPage } from "@/pages/club-management-page";
+// Dynamic imports for all page components using React.lazy
+const HomePage = lazy(() => import("@/pages/home-page"));
+const AuthPage = lazy(() => import("@/pages/auth-page"));
+const ChatPage = lazy(() => import("@/pages/chat-page"));
+const NotFound = lazy(() => import("@/pages/not-found"));
 
+// Tools
+const StopwatchPage = lazy(() => import("@/pages/routes").then(m => ({ default: m.StopwatchPage })));
+const StartGunPage = lazy(() => import("@/pages/routes").then(m => ({ default: m.StartGunPage })));
+const JournalPage = lazy(() => import("@/pages/routes").then(m => ({ default: m.JournalPage })));
+const PaceCalculatorPage = lazy(() => import("@/pages/routes").then(m => ({ default: m.PaceCalculatorPage })));
+const PhotoFinishPage = lazy(() => import("@/pages/routes").then(m => ({ default: m.PhotoFinishPage })));
+const VelocityTrackerPage = lazy(() => import("@/pages/routes").then(m => ({ default: m.VelocityTrackerPage })));
+const PhotoFinishAnalysisPage = lazy(() => import("@/pages/tools/photo-finish-analysis-page"));
+const ExerciseLibraryPage = lazy(() => import("@/pages/exercise-library-page"));
+const ExerciseLibraryAddPage = lazy(() => import("@/pages/exercise-library-add-page"));
+const VideoAnalysisPage = lazy(() => import("@/pages/video-analysis-page"));
 
-import ConversationDetailPage from "@/pages/conversation-detail-page";
+// Training & Programs
+const PracticePage = lazy(() => import("@/pages/practice-page"));
+const JournalEntryPage = lazy(() => import("@/pages/journal-entry-page"));
+const WorkoutToolsPage = lazy(() => import("@/pages/training-tools-page").then(m => ({ default: m.Component })));
+const ProgramsPage = lazy(() => import("@/pages/programs-page").then(m => ({ default: m.Component })));
+const ProgramCreatePage = lazy(() => import("@/pages/program-create-page").then(m => ({ default: m.Component })));
+const ProgramDetailPage = lazy(() => import("@/pages/program-detail-page").then(m => ({ default: m.Component })));
+const ProgramEditorPage = lazy(() => import("@/pages/program-editor-page").then(m => ({ default: m.Component })));
+const DocumentProgramViewer = lazy(() => import("@/pages/document-program-viewer").then(m => ({ default: m.Component })));
+const AssignedProgramsPage = lazy(() => import("@/pages/assigned-programs-page").then(m => ({ default: m.Component })));
+const AssignProgramPage = lazy(() => import("@/pages/assign-program-page").then(m => ({ default: m.AssignProgramPage })));
 
-import AthletesPage from "@/pages/athletes-page";
-import FriendsPage from "@/pages/friends-page";
-import ConnectionsPage from "@/pages/connections-page";
-import MyAthletesPage from "@/pages/my-athletes-page";
-import SpikesPage from "@/pages/spikes-page";
-import SubscriptionPage from "@/pages/subscription-page";
-import { Component as ProgramsPage } from "@/pages/programs-page";
-import { Component as ProgramCreatePage } from "@/pages/program-create-page";
-import { Component as ProgramDetailPage } from "@/pages/program-detail-page";
-import { Component as ProgramEditorPage } from "@/pages/program-editor-page";
-import { ReactNativePreview } from "@/pages/react-native-preview";
-import { Component as DocumentProgramViewer } from "@/pages/document-program-viewer";
-import CompetitionCalendarPage from "@/pages/competition-calendar-page";
-import { Component as AssignedProgramsPage } from "@/pages/assigned-programs-page";
-import { AssignProgramPage } from "@/pages/assign-program-page";
-import CheckoutPage from "@/pages/checkout-page";
-import AthleteProfilePage from "@/pages/athlete-profile-page";
-import TimingSettingsPage from "@/pages/timing-settings-page";
+// Competition & Meets
+const MeetsPage = lazy(() => import("@/pages/meets-page"));
+const CreateMeetPage = lazy(() => import("@/pages/create-meet-page"));
+const ResultsPage = lazy(() => import("@/pages/results-page"));
+const CompetitionCalendarPage = lazy(() => import("@/pages/competition-calendar-page"));
 
-import AthleteProfile from "@/pages/athlete-profile";
-import PublicProfilePage from "@/pages/public-profile-page";
-import ExerciseLibraryPage from "@/pages/exercise-library-page";
-import ExerciseLibraryAddPage from "@/pages/exercise-library-add-page";
-import VideoAnalysisPage from "@/pages/video-analysis-page";
-import { VideoPlayerPage } from "@/pages/video-player-page";
-import AdminPanelPage from "@/pages/admin-panel-page";
-import AdminAffiliateSubmissions from "@/pages/admin-affiliate-submissions";
-import SprinthiaPage from "@/pages/sprinthia-simple";
-import RehabPage from "@/pages/rehab-page";
-import ArcadePage from "@/pages/arcade-page";
-import ChatPage from "@/pages/chat-page";
-import CreateGroupPage from "@/pages/create-group-page";
-import AmbassadorLandingPage from "@/pages/ambassador-landing-page";
-import ChannelSettingsPage from "@/pages/channel-settings-page";
-import JournalEntryPage from "@/pages/journal-entry-page";
+// Social & Athletes
+const ConnectionsPage = lazy(() => import("@/pages/connections-page"));
+const MyAthletesPage = lazy(() => import("@/pages/my-athletes-page"));
+const AthletesPage = lazy(() => import("@/pages/athletes-page"));
+const CoachesPage = lazy(() => import("@/pages/coaches-page"));
+const RosterStatsPage = lazy(() => import("@/pages/roster-stats-page"));
+const ClubsPage = lazy(() => import("@/pages/clubs-page"));
+const ClubDetailPage = lazy(() => import("@/pages/club-detail-page").then(m => ({ default: m.Component })));
+const ClubManagementPage = lazy(() => import("@/pages/club-management-page").then(m => ({ default: m.Component })));
+const CreateGroupPage = lazy(() => import("@/pages/create-group-page"));
+const ChannelSettingsPage = lazy(() => import("@/pages/channel-settings-page"));
 
-import HamstringRehabPage from "@/pages/rehab/acute-muscle/hamstring";
-import FootRehabPage from "@/pages/rehab/chronic-injuries/foot";
-import OnboardingContainer from "@/pages/onboarding/onboarding-container";
-import MarketplacePage from "@/pages/marketplace-page";
-import MarketplaceListingDetails from "@/pages/marketplace-listing-details";
-import MarketplaceCart from "@/pages/marketplace-cart";
-import MarketplaceCreateListingPage from "@/pages/marketplace-create-listing-page";
-import MySubscriptionsPage from "@/pages/my-subscriptions-page";
-import SubscriptionManagementPage from "@/pages/subscription-management-page";
+// Profiles
+const ProfilePage = lazy(() => import("@/pages/profile-page-new"));
+const AthleteProfile = lazy(() => import("@/pages/athlete-profile"));
+const AthleteProfilePage = lazy(() => import("@/pages/athlete-profile-page"));
+const PublicProfilePage = lazy(() => import("@/pages/public-profile-page"));
+
+// Marketplace
+const MarketplacePage = lazy(() => import("@/pages/marketplace-page"));
+const MarketplaceListingDetails = lazy(() => import("@/pages/marketplace-listing-details"));
+const MarketplaceCart = lazy(() => import("@/pages/marketplace-cart"));
+const MarketplaceCreateListingPage = lazy(() => import("@/pages/marketplace-create-listing-page"));
+
+// Subscriptions & Payment
+const MySubscriptionsPage = lazy(() => import("@/pages/my-subscriptions-page"));
+const SubscriptionManagementPage = lazy(() => import("@/pages/subscription-management-page"));
+const SubscriptionPage = lazy(() => import("@/pages/subscription-page"));
+const CheckoutPage = lazy(() => import("@/pages/checkout-page"));
+const SpikesPage = lazy(() => import("@/pages/spikes-page"));
+
+// Rehab & Health
+const RehabPage = lazy(() => import("@/pages/rehab-page"));
+const HamstringRehabPage = lazy(() => import("@/pages/rehab/acute-muscle/hamstring"));
+const FootRehabPage = lazy(() => import("@/pages/rehab/chronic-injuries/foot"));
+
+// AI & Special Features
+const SprinthiaPage = lazy(() => import("@/pages/sprinthia-simple"));
+const VideoPlayerPage = lazy(() => import("@/pages/video-player-page").then(m => ({ default: m.VideoPlayerPage })));
+const ArcadePage = lazy(() => import("@/pages/arcade-page"));
+
+// Admin & Management
+const AdminPanelPage = lazy(() => import("@/pages/admin-panel-page"));
+const AdminAffiliateSubmissions = lazy(() => import("@/pages/admin-affiliate-submissions"));
+const TimingSettingsPage = lazy(() => import("@/pages/timing-settings-page"));
+
+// Onboarding & Auth
+const OnboardingContainer = lazy(() => import("@/pages/onboarding/onboarding-container"));
+const AmbassadorLandingPage = lazy(() => import("@/pages/ambassador-landing-page"));
+
+// Test & Debug pages  
+const TestPage = lazy(() => import("@/pages/test-page-simple"));
+const ToolsPreviewPage = lazy(() => import("@/pages/tools-preview"));
+const MinimalTest = lazy(() => import("@/pages/minimal-test"));
+const DebugSimple = lazy(() => import("@/pages/debug-simple"));
+const EmergencyDebug = lazy(() => import("@/pages/emergency-debug"));
+const ReactNativePreview = lazy(() => import("@/pages/react-native-preview").then(m => ({ default: m.ReactNativePreview })));
+
+// Legacy
+const ConversationDetailPage = lazy(() => import("@/pages/conversation-detail-page"));
+const FriendsPage = lazy(() => import("@/pages/friends-page"));
 import { ProtectedRoute } from "@/lib/protected-route";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { TickerProvider } from "@/contexts/ticker-context";
@@ -206,7 +226,15 @@ function Router() {
       >
         {/* Main App Routes - always rendered, but use baseRoute for chat scenarios */}
         <PageTransition>
-          <Switch location={isChatRoute ? baseRoute : location}>
+          <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-background">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Loading...</p>
+              </div>
+            </div>
+          }>
+            <Switch location={isChatRoute ? baseRoute : location}>
           {/* Home route */}
           <ProtectedRoute path="/home" component={HomePage} />
           
@@ -309,7 +337,8 @@ function Router() {
         <Route path="/debug" component={DebugSimple} />
         <Route path="/emergency" component={EmergencyDebug} />
         <Route component={NotFound} />
-        </Switch>
+            </Switch>
+          </Suspense>
         </PageTransition>
       </div>
       
@@ -326,7 +355,9 @@ function Router() {
           isolation: 'isolate'
         }}
       >
-        <ChatPage />
+        <Suspense fallback={null}>
+          <ChatPage />
+        </Suspense>
       </div>
     </>
   );
