@@ -113,6 +113,13 @@ app.use((req, res, next) => {
 
   const server = await registerRoutes(app);
 
+  // CRITICAL: Add server-side redirect for root path "/" to "/auth"
+  // This ensures redirect works even if React routing fails
+  app.get('/', (req, res) => {
+    console.log('Server: Root path "/" accessed, redirecting to "/auth"');
+    res.redirect(302, '/auth');
+  });
+
   // Add debug route after registerRoutes but before Vite
   app.get('/simple-test', (req, res) => {
     res.send(`
