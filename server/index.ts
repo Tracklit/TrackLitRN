@@ -113,6 +113,11 @@ app.use((req, res, next) => {
 
   const server = await registerRoutes(app);
 
+  // Handle root path "/" by redirecting to "/home" at server level
+  app.get('/', (req, res) => {
+    console.log('Server: Root path "/" accessed, redirecting to "/home"');
+    res.redirect(302, '/home');
+  });
 
   // Add debug route after registerRoutes but before Vite
   app.get('/simple-test', (req, res) => {
