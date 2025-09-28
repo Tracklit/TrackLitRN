@@ -76,23 +76,27 @@ export function serveStatic(app: Express) {
     );
   }
 
-  // Configure static file serving with proper cache control and MIME types
+  // Configure static file serving with proper MIME types and cache control
   app.use(express.static(distPath, {
-    // Set cache control headers to prevent stale file issues
-    setHeaders: (res, filePath) => {
-      // Cache static assets for 1 year (they have hash in filename)
-      if (filePath.includes('/assets/')) {
-        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-      } 
-      // Don't cache HTML files to prevent stale app issues
-      else if (filePath.endsWith('.html')) {
-        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-        res.setHeader('Pragma', 'no-cache');
-        res.setHeader('Expires', '0');
-      }
-      // Ensure proper MIME type for JavaScript modules
-      else if (filePath.endsWith('.js')) {
-        res.setHeader('Content-Type', 'application/javascript');
+    setHeaders: (res, filePath, stat) => {
+      try {
+        // Ensure proper MIME type for JavaScript modules to prevent module loading errors
+        if (filePath.endsWith('.js')) {
+          res.setHeader('Content-Type', 'application/javascript; charset=UTF-8');
+        }
+        // Prevent HTML caching to ensure fresh app updates
+        else if (filePath.endsWith('.html')) {
+          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+          res.setHeader('Pragma', 'no-cache');
+          res.setHeader('Expires', '0');
+        }
+        // Cache static assets efficiently (they have content hashes)
+        else if (filePath.includes('/assets/')) {
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        }
+      } catch (error) {
+        console.warn('Static file header error:', error);
+        // Don't crash the server on header errors
       }
     }
   }));
