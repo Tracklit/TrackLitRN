@@ -1,4 +1,4 @@
-import { Switch, Route, useLocation } from "wouter";
+import { Switch, Route, useLocation, Redirect } from "wouter";
 import { useState, useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -162,6 +162,26 @@ function ScrollRestoration() {
   return null;
 }
 
+// Component to handle root path redirect
+function RootRedirect() {
+  const { user, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+  
+  if (!user) {
+    return <Redirect to="/auth" />;
+  }
+  
+  return <HomePage />;
+}
+
 function Router() {
   const [location] = useLocation();
   const isChatRoute = location.startsWith('/chat') || location.startsWith('/chats');
@@ -193,8 +213,10 @@ function Router() {
         {/* Main App Routes - always rendered, but use baseRoute for chat scenarios */}
         <PageTransition>
           <Switch location={isChatRoute ? baseRoute : location}>
-          {/* Dashboard */}
-          <ProtectedRoute path="/" component={HomePage} />
+          {/* Explicit redirect for root path */}
+          <Route path="/">
+            <RootRedirect />
+          </Route>
         
           {/* Training */}
           <ProtectedRoute path="/practice" component={PracticePage} />
