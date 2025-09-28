@@ -13,14 +13,19 @@ export function ProtectedRoute({
   const { user, isLoading } = useAuth();
   const [location, setLocation] = useLocation();
 
-  // Force redirect if user is not authenticated and we're on a protected route
-  useEffect(() => {
-    if (!isLoading && !user && location === path) {
-      console.log(`ProtectedRoute: Redirecting unauthenticated user from ${path} to /auth`);
-      setLocation("/auth");
-    }
-  }, [user, isLoading, location, path, setLocation]);
+  console.log(`ProtectedRoute ${path}: user=${!!user}, isLoading=${isLoading}, location=${location}`);
 
+  // Immediate redirect if not authenticated and not loading
+  if (!isLoading && !user) {
+    console.log(`ProtectedRoute: Redirecting unauthenticated user from ${path} to /auth`);
+    return (
+      <Route path={path}>
+        <Redirect to="/auth" />
+      </Route>
+    );
+  }
+
+  // Loading state
   if (isLoading) {
     return (
       <Route path={path}>
@@ -31,14 +36,6 @@ export function ProtectedRoute({
     );
   }
 
-  if (!user) {
-    // Double redirect mechanism for reliability
-    return (
-      <Route path={path}>
-        <Redirect to="/auth" />
-      </Route>
-    );
-  }
-
+  // Authenticated - render component
   return <Route path={path} component={Component} />;
 }

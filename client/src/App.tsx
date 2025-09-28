@@ -296,11 +296,11 @@ function Router() {
             </div>
           }>
             <Switch location={isChatRoute ? baseRoute : location}>
+          {/* Root path - require authentication (must be first to match correctly) */}
+          <ProtectedRoute path="/" component={HomePage} />
+          
           {/* Home route */}
           <ProtectedRoute path="/home" component={HomePage} />
-          
-          {/* Root path - allow direct access */}
-          <Route path="/" component={HomePage} />
         
           {/* Training */}
           <ProtectedRoute path="/practice" component={PracticePage} />
