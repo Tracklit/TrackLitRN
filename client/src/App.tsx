@@ -162,24 +162,10 @@ function ScrollRestoration() {
   return null;
 }
 
-// Component to handle root path redirect
+// Component to handle root path redirect - TEMPORARY: redirect all users to /auth
 function RootRedirect() {
-  const { user, isLoading } = useAuth();
-  
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    );
-  }
-  
-  if (!user) {
-    return <Redirect to="/auth" />;
-  }
-  
-  return <HomePage />;
+  // Temporary fix: redirect ALL users to /auth regardless of authentication status
+  return <Redirect to="/auth" />;
 }
 
 function Router() {
