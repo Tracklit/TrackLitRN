@@ -9,7 +9,7 @@ packages = ["atk", "ffmpeg", "gcc-unwrapped", "gdk-pixbuf", "glib", "gtk3", "ima
 [deployment]
 deploymentTarget = "autoscale"
 build = ["npm", "run", "build"]
-run = ["npm", "start"]
+run = ["node", "dist/index.js"]
 
 [[ports]]
 localPort = 5000
