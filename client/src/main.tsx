@@ -67,13 +67,25 @@ try {
   console.log("6. App component rendered successfully");
   
   // Remove the loading screen once React is ready
-  setTimeout(() => {
+  // Remove loading screen with multiple fallbacks
+  const removeLoadingScreen = () => {
     const loadingElement = document.getElementById("initial-loading");
     if (loadingElement) {
       loadingElement.remove();
       console.log("7. Initial loading screen removed");
     }
-  }, 200);
+  };
+  
+  setTimeout(removeLoadingScreen, 200);
+  
+  // Backup removal after 2 seconds to prevent permanent loading
+  setTimeout(() => {
+    const loadingElement = document.getElementById("initial-loading");
+    if (loadingElement) {
+      console.log("Force removing loading screen after 2s");
+      loadingElement.remove();
+    }
+  }, 2000);
   
 } catch (error) {
   console.error("=== ERROR IN MAIN.TSX ===", error);
