@@ -483,11 +483,11 @@ function MainApp() {
       {/* iOS Status Bar Spacer - Only show in PWA mode on iOS */}
       {isPWA && isIOS && <div className="ios-status-bar-height" />}
       
-      {/* Top Header Bar - Hide for chat routes, auth page, and affiliate page */}
-      {!location.startsWith('/chat') && location !== '/auth' && location !== '/affiliate' && <Header />}
+      {/* Top Header Bar - Hide for chat routes, auth page, and affiliate page. Only show for authenticated users */}
+      {!location.startsWith('/chat') && location !== '/auth' && location !== '/affiliate' && user && <Header />}
       
-      {/* Hamburger Menu for all screens - Hide for chat routes, auth page, and affiliate page */}
-      {!location.startsWith('/chat') && location !== '/auth' && location !== '/affiliate' && (
+      {/* Hamburger Menu for all screens - Hide for chat routes, auth page, and affiliate page. Only show for authenticated users */}
+      {!location.startsWith('/chat') && location !== '/auth' && location !== '/affiliate' && user && (
         <div className="fixed top-4 left-4 z-50">
           <HamburgerMenu />
         </div>
@@ -500,8 +500,8 @@ function MainApp() {
         </div>
       </main>
       
-      {/* Bottom Navigation - Hide for chat routes, auth page, and affiliate page */}
-      {!location.startsWith('/chat') && location !== '/auth' && location !== '/affiliate' && <BottomNavigation />}
+      {/* Bottom Navigation - Hide for chat routes, auth page, and affiliate page. Only show for authenticated users */}
+      {!location.startsWith('/chat') && location !== '/auth' && location !== '/affiliate' && user && <BottomNavigation />}
       
       {/* Onboarding flow moved to separate pages */}
       
