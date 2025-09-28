@@ -76,10 +76,33 @@ export function serveStatic(app: Express) {
     );
   }
 
-  app.use(express.static(distPath));
+  // Configure static file serving with proper cache control and MIME types
+  app.use(express.static(distPath, {
+    // Set cache control headers to prevent stale file issues
+    setHeaders: (res, filePath) => {
+      // Cache static assets for 1 year (they have hash in filename)
+      if (filePath.includes('/assets/')) {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      } 
+      // Don't cache HTML files to prevent stale app issues
+      else if (filePath.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+      }
+      // Ensure proper MIME type for JavaScript modules
+      else if (filePath.endsWith('.js')) {
+        res.setHeader('Content-Type', 'application/javascript');
+      }
+    }
+  }));
 
   // fall through to index.html if the file doesn't exist
   app.use("*", (_req, res) => {
+    // Ensure HTML is never cached to prevent stale app issues
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }
