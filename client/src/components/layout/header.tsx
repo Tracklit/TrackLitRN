@@ -19,6 +19,7 @@ interface HeaderProps {
 
 export function Header({ title = "TrackLit", className }: HeaderProps) {
   const { user, logoutMutation } = useAuth();
+  
   // const { isTickerVisible, toggleTickerVisibility } = useTicker();
   const isTickerVisible = true;
   const toggleTickerVisibility = (visible: boolean) => {};
