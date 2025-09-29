@@ -510,7 +510,6 @@ function PracticePage() {
 
   // Calculator states with robust storage handling
   const [targetTimesModalOpen, setTargetTimesModalOpen] = useState(false);
-  const [editSectionOpen, setEditSectionOpen] = useState(false);
   const [adjustForTrackType, setAdjustForTrackType] = useState(() => {
     const stored = safeStorage.getItem('tracklit_adjustForTrackType');
     return stored ? JSON.parse(stored) : sessionSettings.adjustForTrackType ?? false;
@@ -526,20 +525,12 @@ function PracticePage() {
   });
 
   
-  // Target times calculator with comprehensive format
+  // Target times calculator with simple default values
   const calculateTargetTimes = () => {
-    if (!athleteProfile) {
-      return {
-        distances: [],
-        percentages: [],
-        getTime: () => "-"
-      };
-    }
-    
-    // Get base goal times from athlete profile with fallbacks
-    const goal100m = athleteProfile?.sprint60m100mGoal || 11.0; // Fallback 100m goal
-    const goal200m = athleteProfile?.sprint200mGoal || 22.5; // Fallback 200m goal
-    const goal400m = athleteProfile?.sprint400mGoal || 50.0; // Fallback 400m goal
+    // Use simple default goal times
+    const goal100m = 11.0; // Default 100m goal
+    const goal200m = 22.5; // Default 200m goal
+    const goal400m = 50.0; // Default 400m goal
     
     // Calculate base times for each distance from the set goals
     const baseTimesByDistance: { [key: string]: number } = {};
@@ -1231,8 +1222,6 @@ function PracticePage() {
                 </div>
               </div>
 
-              {/* Expandable Edit Section */}
-              <Collapsible open={editSectionOpen} onOpenChange={setEditSectionOpen}>
                 <CollapsibleTrigger asChild>
                   <button className="w-full flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 border border-white/20 rounded-xl transition-all duration-300">
                     <div className="flex items-center gap-3">
