@@ -291,7 +291,7 @@ function JournalEntryModal({ isOpen, onClose, date }: { isOpen: boolean; onClose
 }
 
 // Component to render workout content within each card
-function WorkoutCard({ card, athleteProfile, onOpenJournal }: { card: any, athleteProfile: any, onOpenJournal: (date: string) => void }) {
+function WorkoutCard({ card, onOpenJournal }: { card: any, onOpenJournal: (date: string) => void }) {
   const { gymData } = useGymData(card.sessionData?.dayNumber);
   
   return (
@@ -317,13 +317,13 @@ function WorkoutCard({ card, athleteProfile, onOpenJournal }: { card: any, athle
         </div>
         
         {/* Workout content */}
-        <WorkoutCardContent sessionData={card.sessionData} athleteProfile={athleteProfile} gymData={gymData} />
+        <WorkoutCardContent sessionData={card.sessionData} gymData={gymData} />
       </div>
     </div>
   );
 }
 
-function WorkoutCardContent({ sessionData, athleteProfile, gymData }: { sessionData: any, athleteProfile: any, gymData?: any }) {
+function WorkoutCardContent({ sessionData, gymData }: { sessionData: any, gymData?: any }) {
   if (!sessionData) return null;
 
   if (sessionData.isRestDay || 
@@ -363,11 +363,7 @@ function WorkoutCardContent({ sessionData, athleteProfile, gymData }: { sessionD
 
       {/* 60m/100m Sprint */}
       {sessionData.shortDistanceWorkout && 
-       sessionData.shortDistanceWorkout.trim() !== "" && 
-       (!athleteProfile || athleteProfile.sprint60m100m !== false || 
-        (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
-         !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
-         !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
+       sessionData.shortDistanceWorkout.trim() !== "" && (
         <div className="p-4 bg-white/10 rounded-lg">
           <div className="flex items-start">
             <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
@@ -385,11 +381,7 @@ function WorkoutCardContent({ sessionData, athleteProfile, gymData }: { sessionD
       
       {/* 200m Sprint */}
       {sessionData.mediumDistanceWorkout && 
-       sessionData.mediumDistanceWorkout.trim() !== "" && 
-       (!athleteProfile || athleteProfile.sprint200m || 
-        (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
-         !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
-         !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
+       sessionData.mediumDistanceWorkout.trim() !== "" && (
         <div className="p-4 bg-white/10 rounded-lg">
           <div className="flex items-start">
             <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
@@ -407,11 +399,7 @@ function WorkoutCardContent({ sessionData, athleteProfile, gymData }: { sessionD
       
       {/* 400m Sprint */}
       {sessionData.longDistanceWorkout && 
-       sessionData.longDistanceWorkout.trim() !== "" && 
-       (!athleteProfile || athleteProfile.sprint400m || 
-        (!athleteProfile.sprint60m100m && !athleteProfile.sprint200m && 
-         !athleteProfile.sprint400m && !athleteProfile.hurdles100m110m && 
-         !athleteProfile.hurdles400m && !athleteProfile.otherEvent)) && (
+       sessionData.longDistanceWorkout.trim() !== "" && (
         <div className="p-4 bg-white/10 rounded-lg">
           <div className="flex items-start">
             <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
@@ -537,111 +525,6 @@ function PracticePage() {
     return (stored && ['reaction', 'firstFoot', 'onMovement'].includes(stored)) ? stored as "reaction" | "firstFoot" | "onMovement" : sessionSettings.timingMethod ?? "firstFoot";
   });
 
-  // Form schema for editing goal times
-  const timingSettingsSchema = z.object({
-    sprint60m100m: z.boolean(),
-    sprint200m: z.boolean(),
-    sprint400m: z.boolean(),
-    hurdles100m110m: z.boolean(),
-    hurdles400m: z.boolean(),
-    otherEvent: z.boolean(),
-    otherEventName: z.string().optional(),
-    sprint60m100mGoal: z.string().optional(),
-    sprint200mGoal: z.string().optional(),
-    sprint400mGoal: z.string().optional(),
-    hurdles100m110mGoal: z.string().optional(),
-    hurdles400mGoal: z.string().optional(),
-    otherEventGoal: z.string().optional(),
-    timingPreference: z.enum(["reaction", "firstFoot", "onMovement"]),
-  });
-
-  type TimingSettingsForm = z.infer<typeof timingSettingsSchema>;
-
-  // Initialize form with default values
-  const form = useForm<TimingSettingsForm>({
-    resolver: zodResolver(timingSettingsSchema),
-    defaultValues: {
-      sprint60m100m: false,
-      sprint200m: false,
-      sprint400m: false,
-      hurdles100m110m: false,
-      hurdles400m: false,
-      otherEvent: false,
-      otherEventName: "",
-      sprint60m100mGoal: "",
-      sprint200mGoal: "",
-      sprint400mGoal: "",
-      hurdles100m110mGoal: "",
-      hurdles400mGoal: "",
-      otherEventGoal: "",
-      timingPreference: "onMovement",
-    },
-  });
-
-  // Update form when athlete profile data loads
-  useEffect(() => {
-    if (athleteProfile) {
-      form.reset({
-        sprint60m100m: athleteProfile.sprint60m100m || false,
-        sprint200m: athleteProfile.sprint200m || false,
-        sprint400m: athleteProfile.sprint400m || false,
-        hurdles100m110m: athleteProfile.hurdles100m110m || false,
-        hurdles400m: athleteProfile.hurdles400m || false,
-        otherEvent: athleteProfile.otherEvent || false,
-        otherEventName: athleteProfile.otherEventName || "",
-        sprint60m100mGoal: athleteProfile.sprint60m100mGoal?.toString() || "",
-        sprint200mGoal: athleteProfile.sprint200mGoal?.toString() || "",
-        sprint400mGoal: athleteProfile.sprint400mGoal?.toString() || "",
-        hurdles100m110mGoal: athleteProfile.hurdles100m110mGoal?.toString() || "",
-        hurdles400mGoal: athleteProfile.hurdles400mGoal?.toString() || "",
-        otherEventGoal: athleteProfile.otherEventGoal?.toString() || "",
-        timingPreference: athleteProfile.timingPreference || "onMovement",
-      });
-    }
-  }, [athleteProfile, form]);
-
-  // Update timing settings mutation
-  const { mutate: saveTimingSettings, isPending: isSavingSettings } = useMutation({
-    mutationFn: async (newSettings: TimingSettingsForm) => {
-      // Convert string values to numbers for goal times
-      const processedSettings = {
-        ...newSettings,
-        sprint60m100mGoal: newSettings.sprint60m100mGoal ? parseFloat(newSettings.sprint60m100mGoal) : null,
-        sprint200mGoal: newSettings.sprint200mGoal ? parseFloat(newSettings.sprint200mGoal) : null,
-        sprint400mGoal: newSettings.sprint400mGoal ? parseFloat(newSettings.sprint400mGoal) : null,
-        hurdles100m110mGoal: newSettings.hurdles100m110mGoal ? parseFloat(newSettings.hurdles100m110mGoal) : null,
-        hurdles400mGoal: newSettings.hurdles400mGoal ? parseFloat(newSettings.hurdles400mGoal) : null,
-        otherEventGoal: newSettings.otherEventGoal ? parseFloat(newSettings.otherEventGoal) : null,
-      };
-      
-      const response = await fetch('/api/athlete-profile', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(processedSettings),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to save settings');
-      }
-      
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/athlete-profile'] });
-      toast.toast({
-        title: "Settings saved",
-        description: "Your timing settings and event preferences have been updated.",
-      });
-      setEditSectionOpen(false);
-    },
-    onError: (error) => {
-      toast.toast({
-        title: "Error saving settings",
-        description: "Failed to save timing settings. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
   
   // Target times calculator with comprehensive format
   const calculateTargetTimes = () => {
@@ -1079,7 +962,6 @@ function PracticePage() {
                       <WorkoutCard 
                         key={card.id} 
                         card={card} 
-                        athleteProfile={athleteProfile} 
                         onOpenJournal={handleOpenJournal}
                       />
                     ))}
