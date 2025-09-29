@@ -722,14 +722,12 @@ const ChatPage = () => {
           {/* Header */}
           <div className="p-4 border-b border-gray-600/30 flex-shrink-0 bg-black/20 backdrop-blur-sm">
             <div className="flex items-center gap-4">
-              {/* Logo and Home Link */}
+              {/* Close Chat Drawer */}
               <div className="flex-shrink-0">
                 <Link href="/" className="block">
-                  <img 
-                    src={flameLogoPath} 
-                    alt="TrackLit Logo" 
-                    className="h-12 w-12 hover:opacity-80 transition-opacity"
-                  />
+                  <Button size="sm" variant="ghost" className="text-white p-2 h-12 w-12">
+                    <ArrowLeft className="h-6 w-6" />
+                  </Button>
                 </Link>
               </div>
 
