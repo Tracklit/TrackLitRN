@@ -63,8 +63,6 @@ const ChannelSettingsPageLazy = lazy(() => import("@/pages/channel-settings-page
 
 // Profiles
 const ProfilePageLazy = lazy(() => import("@/pages/profile-page-new"));
-const AthleteProfileLazy = lazy(() => import("@/pages/athlete-profile"));
-const AthleteProfilePageLazy = lazy(() => import("@/pages/athlete-profile-page"));
 const PublicProfilePageLazy = lazy(() => import("@/pages/public-profile-page"));
 
 // Marketplace
@@ -93,7 +91,6 @@ const ArcadePageLazy = lazy(() => import("@/pages/arcade-page"));
 // Admin & Management
 const AdminPanelPageLazy = lazy(() => import("@/pages/admin-panel-page"));
 const AdminAffiliateSubmissionsLazy = lazy(() => import("@/pages/admin-affiliate-submissions"));
-const TimingSettingsPageLazy = lazy(() => import("@/pages/timing-settings-page"));
 
 // Onboarding & Auth
 const OnboardingContainerLazy = lazy(() => import("@/pages/onboarding/onboarding-container"));
@@ -151,8 +148,6 @@ const ClubManagementPage = () => <ClubManagementPageLazy />;
 const CreateGroupPage = () => <CreateGroupPageLazy />;
 const ChannelSettingsPage = () => <ChannelSettingsPageLazy />;
 const ProfilePage = () => <ProfilePageLazy />;
-const AthleteProfile = () => <AthleteProfileLazy />;
-const AthleteProfilePage = () => <AthleteProfilePageLazy />;
 const PublicProfilePage = () => <PublicProfilePageLazy />;
 const MarketplacePage = () => <MarketplacePageLazy />;
 const MarketplaceListingDetails = () => <MarketplaceListingDetailsLazy />;
@@ -171,7 +166,6 @@ const VideoPlayerPage = () => <VideoPlayerPageLazy />;
 const ArcadePage = () => <ArcadePageLazy />;
 const AdminPanelPage = () => <AdminPanelPageLazy />;
 const AdminAffiliateSubmissions = () => <AdminAffiliateSubmissionsLazy />;
-const TimingSettingsPage = () => <TimingSettingsPageLazy />;
 const OnboardingContainer = () => <OnboardingContainerLazy />;
 const AmbassadorLandingPage = () => <AmbassadorLandingPageLazy />;
 const TestPage = () => <TestPageLazy />;
@@ -373,7 +367,6 @@ function Router() {
         <ProtectedRoute path="/spikes" component={SpikesPage} />
         <ProtectedRoute path="/subscription" component={SubscriptionPage} />
         <ProtectedRoute path="/profile" component={ProfilePage} />
-        <ProtectedRoute path="/timing-settings" component={TimingSettingsPage} />
 
         
         {/* Public Profiles - separate URL pattern */}
