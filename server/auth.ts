@@ -59,6 +59,23 @@ async function requiresOnboarding(user: User): Promise<boolean> {
 }
 
 export function setupAuth(app: Express) {
+  // Detect environment properly
+  const isProduction = process.env.NODE_ENV === 'production';
+  const isHttps = !!(process.env.REPL_SLUG || process.env.REPLIT_DB_URL || isProduction);
+  
+  console.log('Auth setup:', { 
+    NODE_ENV: process.env.NODE_ENV, 
+    isProduction, 
+    isHttps, 
+    REPL_SLUG: !!process.env.REPL_SLUG 
+  });
+
+  // Adjust sameSite for different environments:
+  // - 'none' for iframe/preview environments (requires secure: true)
+  // - 'lax' for standard production environments
+  // - 'lax' for local development (works with secure: false)
+  const sameSiteSetting = isHttps && !isProduction ? 'none' : 'lax';
+
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "track-meet-secret-key",
     resave: false,
@@ -67,12 +84,18 @@ export function setupAuth(app: Express) {
     cookie: {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       httpOnly: true,
-      secure: false, // Set to false for development/HTTP, will be overridden for production
-      sameSite: 'lax' // Important for cross-origin scenarios in Replit
+      secure: isHttps, // Use HTTPS in production and Replit environments
+      sameSite: sameSiteSetting // Configured for environment compatibility
     }
   };
 
-  app.set("trust proxy", 1);
+  // Configure proxy trust for different environments
+  if (isProduction || process.env.REPL_SLUG) {
+    app.set("trust proxy", true); // Trust all proxies in production/Replit
+  } else {
+    app.set("trust proxy", 1); // Trust first proxy in development
+  }
+  
   app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());
