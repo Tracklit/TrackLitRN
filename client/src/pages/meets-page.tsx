@@ -370,7 +370,7 @@ export default function MeetsPage() {
                     {upcomingMeets
                       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                       .map(meet => (
-                      <Card key={meet.id} className="overflow-hidden bg-gradient-to-br from-blue-800 to-purple-400 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300" style={{ borderRadius: '6px', boxShadow: '0 0 8px rgba(168, 85, 247, 0.2)' }}>
+                      <Card key={meet.id} className="overflow-hidden hover:shadow-2xl transition-all duration-300" style={{ borderRadius: '6px', background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)', border: '0.5px solid rgba(148, 163, 184, 0.25)', boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.40), 0 15px 20px -5px rgba(0, 0, 0, 0.30)' }}>
                         <CardContent className="p-4">
                           <div className="flex flex-col">
                             <h3 className="font-medium text-xl text-white mb-2">{meet.name}</h3>
@@ -470,7 +470,7 @@ export default function MeetsPage() {
                     ))}
                   </div>
                 ) : (
-                  <Card className="overflow-hidden bg-primary/5 backdrop-blur-sm text-center p-8" style={{ borderRadius: '6px', border: '1px solid rgba(168, 85, 247, 0.1)' }}>
+                  <Card className="overflow-hidden backdrop-blur-sm text-center p-8" style={{ borderRadius: '6px', background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)', border: '0.5px solid rgba(148, 163, 184, 0.25)', boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.40), 0 15px 20px -5px rgba(0, 0, 0, 0.30)' }}>
                     <p className="text-muted-foreground mb-4">No upcoming meets</p>
                     <Button
                       onClick={() => setLocation('/meets/create')}
@@ -492,7 +492,7 @@ export default function MeetsPage() {
                     {pastMeets
                       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                       .map(meet => (
-                      <Card key={meet.id} className="overflow-hidden bg-gradient-to-br from-blue-800 to-purple-400 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300" style={{ borderRadius: '6px', boxShadow: '0 0 8px rgba(168, 85, 247, 0.2)' }}>
+                      <Card key={meet.id} className="overflow-hidden hover:shadow-2xl transition-all duration-300" style={{ borderRadius: '6px', background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)', border: '0.5px solid rgba(148, 163, 184, 0.25)', boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.40), 0 15px 20px -5px rgba(0, 0, 0, 0.30)' }}>
                         <CardContent className="p-4">
                           <div className="flex flex-col">
                             <h3 className="font-medium text-xl text-white mb-2">{meet.name}</h3>
@@ -697,7 +697,7 @@ export default function MeetsPage() {
                     ))}
                   </div>
                 ) : (
-                  <Card className="overflow-hidden bg-primary/5 backdrop-blur-sm text-center p-8" style={{ borderRadius: '6px', border: '1px solid rgba(168, 85, 247, 0.1)' }}>
+                  <Card className="overflow-hidden backdrop-blur-sm text-center p-8" style={{ borderRadius: '6px', background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)', border: '0.5px solid rgba(148, 163, 184, 0.25)', boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.40), 0 15px 20px -5px rgba(0, 0, 0, 0.30)' }}>
                     <p className="text-muted-foreground">No past meets</p>
                   </Card>
                 )}
