@@ -639,6 +639,7 @@ function ProgramCreatePage() {
                       type="submit" 
                       className="w-full"
                       disabled={createProgramMutation.isPending}
+                      data-testid="button-create-program"
                     >
                       {createProgramMutation.isPending ? (
                         <>
@@ -786,6 +787,7 @@ function ProgramCreatePage() {
                       type="submit" 
                       className="w-full"
                       disabled={uploadProgramMutation.isPending}
+                      data-testid="button-upload-program"
                     >
                       {uploadProgramMutation.isPending ? (
                         <>
@@ -912,6 +914,7 @@ function ProgramCreatePage() {
                       type="submit" 
                       className="w-full" 
                       disabled={createProgramMutation.isPending || !formData.title || !formData.textContent}
+                      data-testid="button-create-text-program"
                     >
                       {createProgramMutation.isPending ? (
                         <>
@@ -1071,6 +1074,7 @@ function ProgramCreatePage() {
                             onClick={generateSprinthiaProgram}
                             disabled={isGeneratingProgram || !formData.title || !sprinthiaData.aiPrompt}
                             className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-900 font-semibold"
+                            data-testid="button-generate-sprinthia-program"
                           >
                             {isGeneratingProgram ? (
                               <>
@@ -1116,6 +1120,7 @@ function ProgramCreatePage() {
                           <Button 
                             onClick={continueToEdit}
                             className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white"
+                            data-testid="button-continue-to-edit"
                           >
                             <BookOpen className="h-4 w-4 mr-2" />
                             Continue to Edit and Save
@@ -1126,6 +1131,7 @@ function ProgramCreatePage() {
                             disabled={isRegenerating}
                             variant="outline"
                             className="border-amber-500 text-amber-400 hover:bg-amber-500/10"
+                            data-testid="button-regenerate-program"
                           >
                             {isRegenerating ? (
                               <>
