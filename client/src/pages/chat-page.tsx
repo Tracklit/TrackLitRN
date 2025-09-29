@@ -727,7 +727,7 @@ const ChatPage = () => {
               <div className="flex-shrink-0">
                 <button
                   onClick={() => setShowCreateOptions(true)}
-                  className="w-12 h-12 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors"
+                  className="w-12 h-12 text-white hover:text-gray-300 flex items-center justify-center transition-colors"
                   aria-label="Create new chat"
                 >
                   <Plus className="h-6 w-6" />
