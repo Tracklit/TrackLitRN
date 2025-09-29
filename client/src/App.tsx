@@ -437,19 +437,28 @@ function MainApp() {
     console.log('MainApp: Auth check', { user: !!user, isLoading, location, initialLoading });
   }, [user, isLoading, location, initialLoading]);
   
-  // Handle unauthenticated users for unprotected routes only
-  // ProtectedRoute components handle their own redirects for protected paths
+  // Enhanced authentication redirect with fallback
   useEffect(() => {
-    const unprotectedPaths = ['/auth', '/affiliate'];
+    const unprotectedPaths = ['/auth', '/affiliate', '/emergency', '/debug'];
     const isUnprotectedPath = unprotectedPaths.some(path => 
       location === path || location.startsWith('/onboarding')
     );
+    
+    // Add emergency fallback for stuck authentication
+    const authTimeout = setTimeout(() => {
+      if (isLoading && !user) {
+        console.warn('Authentication taking too long, forcing redirect to /auth');
+        setLocation('/auth');
+      }
+    }, 10000); // 10 second timeout
     
     // Only redirect if user is not authenticated AND it's not an unprotected path
     if (!isLoading && !initialLoading && !user && !isUnprotectedPath) {
       console.log('MainApp: Redirecting unauthenticated user from', location, 'to /auth');
       setLocation('/auth');
     }
+    
+    return () => clearTimeout(authTimeout);
   }, [user, isLoading, initialLoading, location, setLocation]);
   
   // Redirect to onboarding for new user registrations (not logins)

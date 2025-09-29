@@ -28,6 +28,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   } = useQuery<SelectUser | null, Error>({
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
+    retry: (failureCount, error) => {
+      // Only retry on network errors, not auth errors
+      if (error?.message?.includes('401') || error?.message?.includes('Not authenticated')) {
+        return false;
+      }
+      return failureCount < 2;
+    },
+    retryDelay: 1000,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
   });
 
   const loginMutation = useMutation({

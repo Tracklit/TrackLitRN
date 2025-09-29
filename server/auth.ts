@@ -326,7 +326,32 @@ export function setupAuth(app: Express) {
       authenticated: !!req.user,
       userId: req.user?.id || null,
       sessionId: req.sessionID || null,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      environment: {
+        NODE_ENV: process.env.NODE_ENV,
+        isProduction,
+        isHttps,
+        sameSite: sameSiteSetting,
+        trustProxy: app.get('trust proxy'),
+        sessionSecret: !!process.env.SESSION_SECRET
+      },
+      headers: {
+        userAgent: req.get('User-Agent'),
+        host: req.get('Host'),
+        origin: req.get('Origin'),
+        referer: req.get('Referer')
+      }
+    });
+  });
+  
+  // Emergency endpoint for production debugging
+  app.get('/api/health', (req, res) => {
+    res.status(200).json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+      authenticated: !!req.user,
+      session: !!req.sessionID
     });
   });
 }
