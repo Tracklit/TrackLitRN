@@ -19,56 +19,56 @@ export default function ToolsPreviewPage() {
     {
       title: "Video Analysis",
       description: "AI-powered race video analysis with Sprinthia",
-      icon: <PlayCircle className="h-4 w-4 text-white" />,
+      icon: <PlayCircle className="h-3 w-3 text-white" />,
       href: "/tools/video-analysis",
       disabled: false
     },
     {
       title: "Photo Finish",
       description: "Analyze race videos with timing overlays",
-      icon: <Flag className="h-4 w-4 text-white" />,
+      icon: <Flag className="h-3 w-3 text-white" />,
       href: "/tools/photo-finish",
       disabled: false
     },
     {
       title: "Start Gun",
       description: "Simulate a race start signal",
-      icon: <Volume2 className="h-4 w-4 text-white" />,
+      icon: <Volume2 className="h-3 w-3 text-white" />,
       href: "/tools/start-gun",
       disabled: false
     },
     {
       title: "Stopwatch",
       description: "Track your time with precision",
-      icon: <Timer className="h-4 w-4 text-white" />,
+      icon: <Timer className="h-3 w-3 text-white" />,
       href: "/tools/stopwatch",
       disabled: false
     },
     {
       title: "Journal",
       description: "View and search your workout notes",
-      icon: <FileText className="h-4 w-4 text-white" />,
+      icon: <FileText className="h-3 w-3 text-white" />,
       href: "/tools/journal",
       disabled: false
     },
     {
       title: "Exercise Library",
       description: "Store and organize your training videos",
-      icon: <Video className="h-4 w-4 text-white" />,
+      icon: <Video className="h-3 w-3 text-white" />,
       href: "/tools/exercise-library",
       disabled: false
     },
     {
       title: "Rep Starter",
       description: "Countdown timer for repetitions",
-      icon: <RefreshCw className="h-4 w-4 text-muted-foreground" />,
+      icon: <RefreshCw className="h-3 w-3 text-muted-foreground" />,
       href: "#",
       disabled: true
     },
     {
       title: "Pace Calculator",
       description: "Calculate your target pace",
-      icon: <Gauge className="h-4 w-4 text-muted-foreground" />,
+      icon: <Gauge className="h-3 w-3 text-muted-foreground" />,
       href: "#",
       disabled: true
     }
@@ -89,7 +89,7 @@ export default function ToolsPreviewPage() {
               // Disabled card
               <div key={index}>
                 <Card 
-                  className="cursor-not-allowed h-[140px] mx-auto mb-2 overflow-hidden relative bg-muted/30"
+                  className="cursor-not-allowed h-[112px] mx-auto mb-2 overflow-hidden relative bg-muted/30"
                   style={{ 
                     borderRadius: '6px',
                     boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 15px 20px -5px rgba(0, 0, 0, 0.15)'
@@ -99,14 +99,14 @@ export default function ToolsPreviewPage() {
                   <CardContent className="p-2.5 relative h-full flex flex-col justify-center">
                     <div className="flex flex-col items-center text-center gap-2">
                       <div className="p-1.5 rounded-full bg-muted border border-muted">
-                        <div className="h-4 w-4 flex items-center justify-center text-muted-foreground">
+                        <div className="h-3 w-3 flex items-center justify-center text-muted-foreground">
                           {card.icon}
                         </div>
                       </div>
                       <div>
                         <div className="flex items-center justify-center gap-1">
                           <h2 className="text-base font-bold mb-0.5 text-muted-foreground">{card.title}</h2>
-                          <Lock className="h-3 w-3 text-muted-foreground" />
+                          <Lock className="h-2.5 w-2.5 text-muted-foreground" />
                         </div>
                         <p className="text-muted-foreground text-xs px-1 line-clamp-2 overflow-hidden">{card.description}</p>
                       </div>
@@ -121,7 +121,7 @@ export default function ToolsPreviewPage() {
               // Enabled card
               <Link key={index} href={card.href}>
                 <Card 
-                  className="cursor-pointer h-[140px] mx-auto mb-2 overflow-hidden relative group hover:scale-105 transition-all duration-300"
+                  className="cursor-pointer h-[112px] mx-auto mb-2 overflow-hidden relative group hover:scale-105 transition-all duration-300"
                   style={{ 
                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                     border: '0.5px solid rgba(148, 163, 184, 0.25)', 
