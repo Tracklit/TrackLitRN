@@ -370,7 +370,7 @@ export default function MeetsPage() {
                     {upcomingMeets
                       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                       .map(meet => (
-                      <Card key={meet.id} className="overflow-hidden hover:shadow-2xl transition-all duration-300" style={{ borderRadius: '6px', background: 'linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%)', border: '0.5px solid rgba(148, 163, 184, 0.25)', boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.40), 0 15px 20px -5px rgba(0, 0, 0, 0.30)' }}>
+                      <Card key={meet.id} className="overflow-hidden hover:shadow-2xl transition-all duration-300" style={{ borderRadius: '6px', background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)', border: '0.5px solid rgba(148, 163, 184, 0.25)', boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.40), 0 15px 20px -5px rgba(0, 0, 0, 0.30)' }}>
                         <CardContent className="p-4">
                           <div className="flex flex-col">
                             <h3 className="font-medium text-xl text-white mb-2">{meet.name}</h3>
@@ -470,7 +470,7 @@ export default function MeetsPage() {
                     ))}
                   </div>
                 ) : (
-                  <Card className="overflow-hidden backdrop-blur-sm text-center p-8" style={{ borderRadius: '6px', background: 'linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%)', border: '0.5px solid rgba(148, 163, 184, 0.25)', boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.40), 0 15px 20px -5px rgba(0, 0, 0, 0.30)' }}>
+                  <Card className="overflow-hidden backdrop-blur-sm text-center p-8" style={{ borderRadius: '6px', background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)', border: '0.5px solid rgba(148, 163, 184, 0.25)', boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.40), 0 15px 20px -5px rgba(0, 0, 0, 0.30)' }}>
                     <p className="text-muted-foreground mb-4">No upcoming meets</p>
                     <Button
                       onClick={() => setLocation('/meets/create')}
@@ -492,7 +492,7 @@ export default function MeetsPage() {
                     {pastMeets
                       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                       .map(meet => (
-                      <Card key={meet.id} className="overflow-hidden hover:shadow-2xl transition-all duration-300" style={{ borderRadius: '6px', background: 'linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%)', border: '0.5px solid rgba(148, 163, 184, 0.25)', boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.40), 0 15px 20px -5px rgba(0, 0, 0, 0.30)' }}>
+                      <Card key={meet.id} className="overflow-hidden hover:shadow-2xl transition-all duration-300" style={{ borderRadius: '6px', background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)', border: '0.5px solid rgba(148, 163, 184, 0.25)', boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.40), 0 15px 20px -5px rgba(0, 0, 0, 0.30)' }}>
                         <CardContent className="p-4">
                           <div className="flex flex-col">
                             <h3 className="font-medium text-xl text-white mb-2">{meet.name}</h3>
@@ -697,7 +697,7 @@ export default function MeetsPage() {
                     ))}
                   </div>
                 ) : (
-                  <Card className="overflow-hidden backdrop-blur-sm text-center p-8" style={{ borderRadius: '6px', background: 'linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%)', border: '0.5px solid rgba(148, 163, 184, 0.25)', boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.40), 0 15px 20px -5px rgba(0, 0, 0, 0.30)' }}>
+                  <Card className="overflow-hidden backdrop-blur-sm text-center p-8" style={{ borderRadius: '6px', background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)', border: '0.5px solid rgba(148, 163, 184, 0.25)', boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.40), 0 15px 20px -5px rgba(0, 0, 0, 0.30)' }}>
                     <p className="text-muted-foreground">No past meets</p>
                   </Card>
                 )}

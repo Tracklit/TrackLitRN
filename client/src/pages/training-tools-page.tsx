@@ -147,7 +147,7 @@ export default function WorkoutToolsPage() {
                 <Card 
                   className="cursor-pointer h-[112px] mx-auto mb-2 overflow-hidden relative group hover:scale-105 transition-all duration-300"
                   style={{ 
-                    background: 'linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%)',
+                    background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
                     border: '0.5px solid rgba(148, 163, 184, 0.25)', 
                     borderRadius: '6px',
                     boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.40), 0 15px 20px -5px rgba(0, 0, 0, 0.30)'
