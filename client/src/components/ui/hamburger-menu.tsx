@@ -337,18 +337,6 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
             <div className="pt-4 pb-2">
               <p className="text-xs text-gray-400 px-4 font-medium">ACCOUNT</p>
             </div>
-            <Link href="/timing-settings">
-              <div
-                className={cn(
-                  "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
-                  location === "/timing-settings" ? "bg-primary text-primary-foreground" : "text-gray-300"
-                )}
-                onClick={() => setIsOpen(false)}
-              >
-                <FontAwesomeIcon icon={faClock} className="h-4 w-4 mr-3" />
-                Timing Settings
-              </div>
-            </Link>
             <Link href="/spikes">
               <div
                 className={cn(

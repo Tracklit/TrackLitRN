@@ -23,12 +23,6 @@ export default function JournalEntryPage() {
   // Get date from URL parameters (optimized)
   const dateParam = useRef(new URLSearchParams(window.location.search).get('date') || new Date().toLocaleDateString()).current;
   
-  // Fetch athlete profile for subscription check
-  const { data: athleteProfile } = useQuery({
-    queryKey: ["/api/athlete-profile"],
-    enabled: !!user,
-    staleTime: 5 * 60 * 1000, // 5 minutes cache
-  });
   
   // Form state
   const [title, setTitle] = useState("");
@@ -45,8 +39,8 @@ export default function JournalEntryPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   
-  // Check if user has Pro/Star subscription (multiple ways to check)
-  const userTier = user?.subscriptionTier || athleteProfile?.subscription || 'free';
+  // Check if user has Pro/Star subscription
+  const userTier = user?.subscriptionTier || 'free';
   const hasVoiceAccess = userTier === 'pro' || userTier === 'star';
   
 

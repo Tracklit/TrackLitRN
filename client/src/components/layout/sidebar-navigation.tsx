@@ -216,13 +216,6 @@ export function SidebarNavigation({ isMobile = false }: { isMobile?: boolean }) 
             <p className="text-xs text-darkGray px-3 font-medium">ACCOUNT</p>
           </div>
           <NavItem 
-            href="/timing-settings" 
-            icon={<Clock className="h-5 w-5" />} 
-            isActive={location === '/timing-settings'}
-          >
-            Timing Settings
-          </NavItem>
-          <NavItem 
             href="/spikes" 
             icon={<Coins className="h-5 w-5" />} 
             isActive={location === '/spikes'}

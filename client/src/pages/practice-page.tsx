@@ -9,7 +9,6 @@ import { useGymData } from "@/hooks/use-gym-data";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Meet } from "@shared/schema";
-import { AthleteProfile } from "@shared/athlete-profile-schema";
 import { PageContainer } from "@/components/page-container";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -463,11 +462,6 @@ function PracticePage() {
     enabled: !!user,
   });
   
-  // Fetch athlete profile to check subscription
-  const { data: athleteProfile } = useQuery<AthleteProfile | null>({
-    queryKey: ["/api/athlete-profile"],
-    enabled: !!user,
-  });
   
   // State for selected program
   const [selectedProgram, setSelectedProgram] = useState<any>(null);
@@ -733,14 +727,13 @@ function PracticePage() {
     };
   };
   
-  // Sync timing method with athlete profile when it loads
+  // Load timing method from localStorage on component mount
   useEffect(() => {
-    if (athleteProfile?.timingPreference) {
-      setTimingMethod(athleteProfile.timingPreference);
-      // Also save to localStorage for consistency
-      safeStorage.setItem('tracklit_timingMethod', athleteProfile.timingPreference);
+    const savedTimingMethod = safeStorage.getItem('tracklit_timingMethod');
+    if (savedTimingMethod) {
+      setTimingMethod(savedTimingMethod);
     }
-  }, [athleteProfile]);
+  }, []);
 
   
   // Fetch program sessions if we have a selected program
