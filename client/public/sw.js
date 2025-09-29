@@ -1,7 +1,7 @@
 // TrackLit PWA Service Worker
 // Minimal service worker to enable PWA installability on Android/Chrome
 
-const CACHE_NAME = 'tracklit-v1';
+const CACHE_NAME = 'tracklit-v2';
 const urlsToCache = [
   '/',
   '/manifest.json',
