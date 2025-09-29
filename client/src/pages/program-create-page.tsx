@@ -483,10 +483,7 @@ function ProgramCreatePage() {
               onClick={() => setSelectedMethod('sprinthia')}
             >
               <CardContent className="p-2.5 relative h-full flex flex-col justify-center z-10">
-                <div className="flex flex-col items-center text-center gap-3">
-                  <div className="flex justify-center">
-                    <Bot className="h-8 w-8 text-white" />
-                  </div>
+                <div className="flex flex-col items-center text-center">
                   <div>
                     <h2 className="text-base font-bold mb-1 text-white">Build With Sprinthia</h2>
                     <p className="text-white/80 text-xs px-1 line-clamp-2 overflow-hidden">Build a text based program powered by AI. Once generated, you will be able to manually edit before saving.</p>
