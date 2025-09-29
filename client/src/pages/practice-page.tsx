@@ -523,14 +523,32 @@ function PracticePage() {
     const stored = safeStorage.getItem('tracklit_timingMethod');
     return (stored && ['reaction', 'firstFoot', 'onMovement'].includes(stored)) ? stored as "reaction" | "firstFoot" | "onMovement" : sessionSettings.timingMethod ?? "firstFoot";
   });
+  
+  // Goal times state with localStorage persistence
+  const [goal100m, setGoal100m] = useState(() => {
+    const stored = safeStorage.getItem('tracklit_goal100m');
+    return stored ? parseFloat(stored) : 11.0;
+  });
+  const [goal200m, setGoal200m] = useState(() => {
+    const stored = safeStorage.getItem('tracklit_goal200m');
+    return stored ? parseFloat(stored) : 22.5;
+  });
+  const [goal400m, setGoal400m] = useState(() => {
+    const stored = safeStorage.getItem('tracklit_goal400m');
+    return stored ? parseFloat(stored) : 50.0;
+  });
+  const [goalHurdles100, setGoalHurdles100] = useState(() => {
+    const stored = safeStorage.getItem('tracklit_goalHurdles100');
+    return stored ? parseFloat(stored) : 13.5;
+  });
+  const [goalHurdles400, setGoalHurdles400] = useState(() => {
+    const stored = safeStorage.getItem('tracklit_goalHurdles400');
+    return stored ? parseFloat(stored) : 54.0;
+  });
 
   
-  // Target times calculator with simple default values
+  // Target times calculator using user-set goal times
   const calculateTargetTimes = () => {
-    // Use simple default goal times
-    const goal100m = 11.0; // Default 100m goal
-    const goal200m = 22.5; // Default 200m goal
-    const goal400m = 50.0; // Default 400m goal
     
     // Calculate base times for each distance from the set goals
     const baseTimesByDistance: { [key: string]: number } = {};
