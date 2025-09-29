@@ -64,6 +64,18 @@ export async function setupVite(app: Express, server: Server) {
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
 
+    // Skip serving HTML for source files, API routes, and assets
+    // Let Vite middleware handle source files and API routes handle themselves
+    if (
+      url.startsWith('/src/') ||
+      url.startsWith('/api/') ||
+      url.startsWith('/@') ||
+      url.startsWith('/node_modules/') ||
+      url.includes('.') && !url.endsWith('.html') // Files with extensions (except HTML)
+    ) {
+      return next();
+    }
+
     try {
       let template = await getTemplate();
       
