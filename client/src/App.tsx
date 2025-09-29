@@ -444,30 +444,16 @@ function MainApp() {
     console.log('MainApp: Auth check', { user: !!user, isLoading, location, initialLoading });
   }, [user, isLoading, location, initialLoading]);
   
-  // Handle unauthenticated users immediately after loading - redirect to auth
-  // But only for unprotected routes - let ProtectedRoute handle its own redirects
+  // Handle unauthenticated users for unprotected routes only
+  // ProtectedRoute components handle their own redirects for protected paths
   useEffect(() => {
-    const protectedPaths = ['/', '/home', '/practice', '/journal-entry', '/tools', '/training-tools', '/programs', '/meets', '/connections', '/clubs', '/profile', '/timing-settings', '/admin-panel'];
-    const isProtectedPath = protectedPaths.some(path => 
-      location === path || 
-      location.startsWith('/tools/') || 
-      location.startsWith('/programs/') || 
-      location.startsWith('/meets/') || 
-      location.startsWith('/clubs/') ||
-      location.startsWith('/athletes/') ||
-      location.startsWith('/coaches/') ||
-      location.startsWith('/marketplace/') ||
-      location.startsWith('/subscription/') ||
-      location.startsWith('/spikes/') ||
-      location.startsWith('/rehab/') ||
-      location.startsWith('/sprinthia/') ||
-      location.startsWith('/video/') ||
-      location.startsWith('/arcade/') ||
-      location.startsWith('/admin-')
+    const unprotectedPaths = ['/auth', '/affiliate'];
+    const isUnprotectedPath = unprotectedPaths.some(path => 
+      location === path || location.startsWith('/onboarding')
     );
     
-    // Only redirect if it's NOT a protected path and user is not authenticated
-    if (!isLoading && !initialLoading && !user && !isProtectedPath && location !== '/auth' && location !== '/affiliate' && !location.startsWith('/onboarding')) {
+    // Only redirect if user is not authenticated AND it's not an unprotected path
+    if (!isLoading && !initialLoading && !user && !isUnprotectedPath) {
       console.log('MainApp: Redirecting unauthenticated user from', location, 'to /auth');
       setLocation('/auth');
     }
