@@ -351,7 +351,7 @@ export default function HomePage() {
       <PreloadImages images={dashboardImages} quality={20} priority={true} />
       
       {/* Fixed Community Activity Ticker - Below Header */}
-      <div className={`fixed top-[75px] left-5 right-5 z-40 transition-transform duration-300 ease-in-out ${isTickerVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+      <div className={`fixed top-[65px] left-5 right-5 z-40 transition-transform duration-300 ease-in-out ${isTickerVisible ? 'translate-y-0' : '-translate-y-full'}`}>
         <div className="mx-auto px-5" style={{ maxWidth: "480px" }}>
           <div className="relative" style={{ background: 'linear-gradient(135deg, #2d1b4e 0%, #4c2a7e 100%)', border: '0.5px solid rgba(148, 163, 184, 0.25)', boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.40), 0 15px 20px -5px rgba(0, 0, 0, 0.30)', borderRadius: '6px', paddingTop: '10px' }}>
             {/* Control buttons with higher z-index */}
