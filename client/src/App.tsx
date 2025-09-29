@@ -444,6 +444,14 @@ function MainApp() {
     console.log('MainApp: Auth check', { user: !!user, isLoading, location, initialLoading });
   }, [user, isLoading, location, initialLoading]);
   
+  // Handle unauthenticated users immediately after loading - redirect to auth
+  useEffect(() => {
+    if (!isLoading && !initialLoading && !user && location !== '/auth' && location !== '/affiliate' && !location.startsWith('/onboarding')) {
+      console.log('MainApp: Redirecting unauthenticated user from', location, 'to /auth');
+      setLocation('/auth');
+    }
+  }, [user, isLoading, initialLoading, location, setLocation]);
+  
   // Redirect to onboarding for new user registrations (not logins)
   useEffect(() => {
     // For simplicity, check if the user has completed onboarding before
@@ -455,8 +463,14 @@ function MainApp() {
     }
   }, [registerMutation.isSuccess, registerMutation.data]);
   
+  // ALL HOOKS ABOVE - NO EARLY RETURNS BELOW
+  
   // Show loading while authentication is loading or during initial load
-  if (isLoading || initialLoading) {
+  const showLoading = isLoading || initialLoading;
+  const showRedirecting = !user && location !== '/auth' && location !== '/affiliate' && !location.startsWith('/onboarding');
+  const isAdminPanel = location === '/admin-panel';
+  
+  if (showLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -466,10 +480,19 @@ function MainApp() {
       </div>
     );
   }
-  
 
-  // Special handling for admin panel - render without any layout
-  if (location === '/admin-panel') {
+  if (showRedirecting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Redirecting...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (isAdminPanel) {
     return (
       <>
         <Router />
