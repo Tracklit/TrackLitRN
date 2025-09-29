@@ -44,8 +44,10 @@ if (app.get("env") === "development") {
   });
 }
 
-// Serve static files from the public directory
-app.use(express.static(path.join(process.cwd(), 'public')));
+// Serve static files from the public directory (only in development)
+if (app.get("env") === "development") {
+  app.use(express.static(path.join(process.cwd(), 'public')));
+}
 
 // Serve uploaded images
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));

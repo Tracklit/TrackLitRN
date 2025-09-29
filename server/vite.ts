@@ -91,33 +91,41 @@ export function serveStatic(app: Express) {
     );
   }
 
-  // Configure static file serving with proper MIME types and cache control
+  console.log(`Setting up static file serving from: ${distPath}`);
+
+  // Serve assets directory with explicit middleware 
+  app.use('/assets', express.static(path.join(distPath, 'assets'), {
+    setHeaders: (res, filePath) => {
+      console.log(`Serving asset: ${filePath}`);
+      if (filePath.endsWith('.js')) {
+        res.setHeader('Content-Type', 'application/javascript; charset=UTF-8');
+      } else if (filePath.endsWith('.css')) {
+        res.setHeader('Content-Type', 'text/css; charset=UTF-8');
+      }
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    }
+  }));
+
+  // Serve other static files (images, manifest, etc.)
   app.use(express.static(distPath, {
-    setHeaders: (res, filePath, stat) => {
-      try {
-        // Ensure proper MIME type for JavaScript modules to prevent module loading errors
-        if (filePath.endsWith('.js')) {
-          res.setHeader('Content-Type', 'application/javascript; charset=UTF-8');
-        }
-        // Prevent HTML caching to ensure fresh app updates
-        else if (filePath.endsWith('.html')) {
-          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-          res.setHeader('Pragma', 'no-cache');
-          res.setHeader('Expires', '0');
-        }
-        // Cache static assets efficiently (they have content hashes)
-        else if (filePath.includes('/assets/')) {
-          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-        }
-      } catch (error) {
-        console.warn('Static file header error:', error);
-        // Don't crash the server on header errors
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
       }
     }
   }));
 
-  // fall through to index.html if the file doesn't exist
-  app.use("*", (_req, res) => {
+  // fall through to index.html if the file doesn't exist (but skip /assets/ requests)
+  app.use("*", (req, res, next) => {
+    // Don't serve index.html for asset requests - let them 404 instead
+    if (req.originalUrl.startsWith('/assets/')) {
+      console.log(`Skipping index.html fallback for asset request: ${req.originalUrl}`);
+      return res.status(404).send('Asset not found');
+    }
+    
+    console.log(`Serving index.html fallback for: ${req.originalUrl}`);
     // Ensure HTML is never cached to prevent stale app issues
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
