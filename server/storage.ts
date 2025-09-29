@@ -159,7 +159,6 @@ import {
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, lt, gte, desc, asc, inArray, or, isNotNull, isNull, ne, sql, exists } from "drizzle-orm";
-import { AthleteProfile, InsertAthleteProfile, athleteProfiles } from "@shared/athlete-profile-schema";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 
@@ -181,10 +180,6 @@ export interface IStorage {
   removeCoachAthlete(coachId: number, athleteId: number): Promise<boolean>;
   getCoachAthleteCount(coachId: number): Promise<number>;
   
-  // Athlete Profile operations
-  getAthleteProfile(userId: number): Promise<AthleteProfile | undefined>;
-  createAthleteProfile(profile: InsertAthleteProfile): Promise<AthleteProfile>;
-  updateAthleteProfile(userId: number, profileData: Partial<AthleteProfile>): Promise<AthleteProfile | undefined>;
   
   // Club operations
   getClub(id: number): Promise<Club | undefined>;
@@ -441,40 +436,6 @@ export class DatabaseStorage implements IStorage {
     });
   }
   
-  // Athlete Profile operations
-  async getAthleteProfile(userId: number): Promise<AthleteProfile | undefined> {
-    const [profile] = await db.select().from(athleteProfiles).where(eq(athleteProfiles.userId, userId));
-    return profile;
-  }
-
-  async createAthleteProfile(profile: InsertAthleteProfile): Promise<AthleteProfile> {
-    const [newProfile] = await db.insert(athleteProfiles).values(profile).returning();
-    return newProfile;
-  }
-
-  async updateAthleteProfile(userId: number, profileData: Partial<AthleteProfile>): Promise<AthleteProfile | undefined> {
-    // Check if profile exists
-    const existingProfile = await this.getAthleteProfile(userId);
-    
-    if (existingProfile) {
-      // Update existing profile
-      const [profile] = await db
-        .update(athleteProfiles)
-        .set({
-          ...profileData,
-          updatedAt: new Date()
-        })
-        .where(eq(athleteProfiles.userId, userId))
-        .returning();
-      return profile;
-    } else {
-      // Create new profile if one doesn't exist
-      return this.createAthleteProfile({
-        ...profileData,
-        userId
-      });
-    }
-  }
 
   // User operations
   async getUser(id: number): Promise<User | undefined> {
