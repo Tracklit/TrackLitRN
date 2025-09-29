@@ -97,20 +97,6 @@ export default function WorkoutToolsPage() {
       disabled: false,
       backgroundImage: toolBackgrounds[6],
       hasBackground: false
-    },
-    {
-      title: "Rep Starter",
-      description: "Countdown timer for repetitions",
-      icon: <RefreshCw className="h-9 w-9 text-muted-foreground" />,
-      href: "#",
-      disabled: true
-    },
-    {
-      title: "Pace Calculator",
-      description: "Calculate your target pace",
-      icon: <Gauge className="h-9 w-9 text-muted-foreground" />,
-      href: "#",
-      disabled: true
     }
   ];
   
@@ -161,7 +147,7 @@ export default function WorkoutToolsPage() {
                 <Card 
                   className="cursor-pointer h-[112px] mx-auto mb-2 overflow-hidden relative group hover:scale-105 transition-all duration-300"
                   style={{ 
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
                     border: '0.5px solid rgba(148, 163, 184, 0.25)', 
                     borderRadius: '6px',
                     boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.40), 0 15px 20px -5px rgba(0, 0, 0, 0.30)'
