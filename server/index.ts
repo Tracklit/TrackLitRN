@@ -152,11 +152,8 @@ app.use((req, res, next) => {
   
   console.log(`Attempting to start server on ${host}:${port}`);
   
-  // Create server and setup error handling BEFORE listening
-  const { createServer } = await import('http');
-  const httpServer = createServer(app);
-  
-  httpServer.on('error', (err: any) => {
+  // Use the server returned from registerRoutes instead of creating a new one
+  server.on('error', (err: any) => {
     if (err.code === 'EADDRINUSE') {
       console.error(`CRITICAL ERROR: Port ${port} is already in use`);
       console.error('This usually happens in production when another process is using the port');
@@ -167,7 +164,7 @@ app.use((req, res, next) => {
     }
   });
 
-  httpServer.listen(port, host, () => {
+  server.listen(port, host, () => {
     console.log(`Server running on ${host}:${port}`);
     console.log(`External URL: https://${process.env.REPL_SLUG}-${process.env.REPL_OWNER}.replit.app`);
     console.log('REPLIT_SERVER_READY');
