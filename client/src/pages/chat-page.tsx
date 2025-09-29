@@ -23,6 +23,7 @@ import {
   Lock,
   Globe,
   ArrowLeft,
+  ArrowRight,
   Edit,
   Trash,
   Reply,
@@ -764,7 +765,7 @@ const ChatPage = () => {
                 {/* Close Chat Drawer */}
                 <Link href="/" className="block">
                   <Button size="sm" variant="ghost" className="text-white p-2 h-8 w-8">
-                    <ArrowLeft className="h-4 w-4" />
+                    <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
               </div>
