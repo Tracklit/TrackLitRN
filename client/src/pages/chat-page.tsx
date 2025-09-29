@@ -722,16 +722,18 @@ const ChatPage = () => {
           {/* Header */}
           <div className="p-4 border-b border-gray-600/30 flex-shrink-0 bg-black/20 backdrop-blur-sm">
             <div className="flex items-center gap-4">
-              {/* Close Chat Drawer */}
+              {/* Create Chat Button */}
               <div className="flex-shrink-0">
-                <Link href="/" className="block">
-                  <Button size="sm" variant="ghost" className="text-white p-2 h-12 w-12">
-                    <ArrowLeft className="h-6 w-6" />
-                  </Button>
-                </Link>
+                <button
+                  onClick={() => setShowCreateOptions(true)}
+                  className="w-12 h-12 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors"
+                  aria-label="Create new chat"
+                >
+                  <Plus className="h-6 w-6" />
+                </button>
               </div>
 
-              {/* Toggle Filter and Create Group Button - Right Aligned */}
+              {/* Toggle Filter and Close Button - Right Aligned */}
               <div className="flex items-center space-x-3 ml-auto">
                 {/* Group Filter Toggle */}
                 <div className="flex bg-gray-800/50 rounded-md p-0.5 h-8">
@@ -759,14 +761,12 @@ const ChatPage = () => {
                   </button>
                 </div>
 
-                {/* Create Chat Button */}
-                <button
-                  onClick={() => setShowCreateOptions(true)}
-                  className="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors"
-                  aria-label="Create new chat"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
+                {/* Close Chat Drawer */}
+                <Link href="/" className="block">
+                  <Button size="sm" variant="ghost" className="text-white p-2 h-8 w-8">
+                    <ArrowLeft className="h-4 w-4" />
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
