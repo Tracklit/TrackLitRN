@@ -90,6 +90,16 @@ export function serveStatic(app: Express) {
     console.error(`Current working directory: ${process.cwd()}`);
     console.error(`__dirname: ${import.meta.dirname}`);
     console.error(`Available files in parent directory:`, fs.readdirSync(path.resolve(import.meta.dirname, "..")));
+    
+    // FALLBACK: Serve development assets if production build missing
+    console.log('FALLBACK: Attempting to serve from client/public instead');
+    const fallbackPath = path.resolve(import.meta.dirname, "..", "client", "public");
+    if (fs.existsSync(fallbackPath)) {
+      console.log(`Using fallback path: ${fallbackPath}`);
+      app.use(express.static(fallbackPath));
+      return;
+    }
+    
     throw new Error(
       `Could not find the build directory: ${distPath}, make sure to build the client first`,
     );
