@@ -554,7 +554,7 @@ function PracticePage() {
     const baseTimesByDistance: { [key: string]: number } = {};
     
     // If 100m goal is set, use it as base for short distances
-    if (goal100m) {
+    if (goal100m && goal100m > 0) {
       let adjusted100m = goal100m;
       if (timingMethod === "firstFoot") adjusted100m -= 0.55;
       if (timingMethod === "onMovement") adjusted100m -= 0.15;
@@ -579,7 +579,7 @@ function PracticePage() {
     }
     
     // If 200m goal is set, use it as base for medium distances  
-    if (goal200m) {
+    if (goal200m && goal200m > 0) {
       let adjusted200m = goal200m;
       // No timing adjustments for 200m, 250m, 300m distances
       
@@ -589,7 +589,7 @@ function PracticePage() {
     }
     
     // If 400m goal is set, use it as base
-    if (goal400m) {
+    if (goal400m && goal400m > 0) {
       let adjusted400m = goal400m;
       if (timingMethod === "firstFoot") adjusted400m -= 0.55;
       if (timingMethod === "onMovement") adjusted400m -= 0.15;
