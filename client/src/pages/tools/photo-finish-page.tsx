@@ -1,8 +1,7 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { 
@@ -10,46 +9,31 @@ import {
   Upload, 
   Play, 
   Pause,
-  Save,
   FolderOpen,
   ArrowRight,
-  Info,
-  X,
-  Square
+  Trash2,
+  Crown
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import trackImagePath from "@assets/IMG_4075.JPG?url";
-
-interface TimerOverlay {
-  id: string;
-  x: number;
-  y: number;
-  startTime: number; // in seconds relative to video start
-  visible: boolean;
-}
-
-interface FinishLineNode {
-  id: string;
-  x: number;
-  y: number;
-}
-
-interface FinishLine {
-  id: string;
-  nodes: FinishLineNode[];
-  visible: boolean;
-}
-
-interface SavedVideo {
-  id: string;
-  name: string;
-  file: File;
-  thumbnail: string;
-  duration: number;
-  createdAt: Date;
-}
+import {
+  getAllVideoMetadata,
+  getVideoBlob,
+  deleteVideo,
+  getTierLimit,
+  type SavedVideoMetadata,
+} from "@/lib/video-storage";
 
 export default function PhotoFinishPage() {
   const { user } = useAuth();
@@ -70,38 +54,38 @@ export default function PhotoFinishPage() {
   const [uploadStatus, setUploadStatus] = useState<string>("");
 
   // UI state
-  const [savedVideos, setSavedVideos] = useState<SavedVideo[]>([]);
-  const [isRecording, setIsRecording] = useState(false);
-  const [showCamera, setShowCamera] = useState(false);
+  const [savedVideos, setSavedVideos] = useState<SavedVideoMetadata[]>([]);
+  const [isLoadingVideos, setIsLoadingVideos] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [videoToDelete, setVideoToDelete] = useState<string | null>(null);
 
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
-  const cameraPreviewRef = useRef<HTMLVideoElement>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
 
-  const generateVideoThumbnail = (video: HTMLVideoElement): Promise<string> => {
-    return new Promise((resolve) => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      
-      video.currentTime = 1; // Seek to 1 second for thumbnail
-      
-      video.addEventListener('seeked', () => {
-        if (ctx) {
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          resolve(canvas.toDataURL('image/jpeg', 0.8));
-        }
-      }, { once: true });
-    });
+  // Load saved videos on mount
+  useEffect(() => {
+    loadSavedVideos();
+  }, []);
+
+  const loadSavedVideos = async () => {
+    try {
+      setIsLoadingVideos(true);
+      const videos = await getAllVideoMetadata();
+      setSavedVideos(videos);
+    } catch (error) {
+      console.error('Error loading saved videos:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load saved videos.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingVideos(false);
+    }
   };
 
-  const uploadVideo = async (uri: string, file: File) => {
+  const uploadVideo = async (uri: string, file: File, blob?: Blob) => {
     setIsUploading(true);
     setUploadProgress(0);
     setUploadStatus("Uploading video...");
@@ -129,6 +113,16 @@ export default function PhotoFinishPage() {
       
       sessionStorage.setItem('photoFinishVideoData', JSON.stringify(videoData));
       sessionStorage.setItem('photoFinishVideoUrl', uri);
+      
+      // Store blob if available for saving later
+      if (blob) {
+        try {
+          // Convert blob to storable format (base64 would be too large, so we skip this)
+          // The analysis page will re-fetch from the object URL
+        } catch (e) {
+          console.log('Could not store blob');
+        }
+      }
       
       // Navigate to fullscreen analysis immediately
       setTimeout(() => {
@@ -174,7 +168,7 @@ export default function PhotoFinishPage() {
 
     // Create object URL and immediately start upload
     const uri = URL.createObjectURL(file);
-    await uploadVideo(uri, file);
+    await uploadVideo(uri, file, file);
   };
 
   const handleVideoLoad = () => {
@@ -207,111 +201,82 @@ export default function PhotoFinishPage() {
     return `${minutes}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`;
   };
 
-  const saveVideo = async () => {
-    if (!currentVideo) return;
-
-    const thumbnail = videoPoster || '';
-    const savedVideo: SavedVideo = {
-      id: Date.now().toString(),
-      name: currentVideo.name,
-      file: currentVideo,
-      thumbnail,
-      duration,
-      createdAt: new Date(),
-    };
-
-    setSavedVideos(prev => [...prev, savedVideo]);
-    
-    toast({
-      title: "Video saved",
-      description: `${currentVideo.name} has been added to your library.`,
-    });
-  };
-
-  const loadSavedVideo = (savedVideo: SavedVideo) => {
-    setCurrentVideo(savedVideo.file);
-    const url = URL.createObjectURL(savedVideo.file);
-    setVideoUrl(url);
-    setVideoPoster(savedVideo.thumbnail);
-  };
-
-  const startCamera = async () => {
+  const loadSavedVideo = async (savedVideo: SavedVideoMetadata) => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          facingMode: 'environment',
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
-        },
-        audio: true
-      });
-      
-      if (cameraPreviewRef.current) {
-        cameraPreviewRef.current.srcObject = stream;
-        streamRef.current = stream;
-        setShowCamera(true);
+      // Get video blob from IndexedDB
+      const blob = await getVideoBlob(savedVideo.id);
+      if (!blob) {
+        toast({
+          title: "Error",
+          description: "Video not found in storage.",
+          variant: "destructive",
+        });
+        return;
       }
+
+      // Create object URL and navigate to analysis
+      const url = URL.createObjectURL(blob);
+      
+      const videoData = {
+        name: savedVideo.name,
+        type: blob.type,
+        size: savedVideo.size,
+        lastModified: Date.now(),
+      };
+      
+      sessionStorage.setItem('photoFinishVideoData', JSON.stringify(videoData));
+      sessionStorage.setItem('photoFinishVideoUrl', url);
+      
+      navigate('/tools/photo-finish/analysis');
     } catch (error) {
-      console.error('Error accessing camera:', error);
+      console.error('Error loading saved video:', error);
       toast({
-        title: "Camera Access Error",
-        description: "Please allow camera access to record video",
+        title: "Error",
+        description: "Failed to load video from library.",
         variant: "destructive",
       });
     }
   };
 
-  const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-    setShowCamera(false);
-    setIsRecording(false);
+  const confirmDeleteVideo = (videoId: string) => {
+    setVideoToDelete(videoId);
+    setDeleteDialogOpen(true);
   };
 
-  const startRecording = () => {
-    if (!streamRef.current) return;
+  const handleDeleteVideo = async () => {
+    if (!videoToDelete) return;
 
-    const mediaRecorder = new MediaRecorder(streamRef.current);
-    const chunks: BlobPart[] = [];
-
-    mediaRecorder.ondataavailable = (event) => {
-      if (event.data.size > 0) {
-        chunks.push(event.data);
-      }
-    };
-
-    mediaRecorder.onstop = () => {
-      const blob = new Blob(chunks, { type: 'video/webm' });
-      const file = new File([blob], `recording-${Date.now()}.webm`, { type: 'video/webm' });
-      
-      setCurrentVideo(file);
-      const url = URL.createObjectURL(file);
-      setVideoUrl(url);
-      stopCamera();
-      
-      // Auto-open fullscreen analysis
-      navigate('/tools/photo-finish/fullscreen', { 
-        state: { 
-          videoUrl: url, 
-          videoFile: file,
-          fromRecording: true 
-        } 
+    try {
+      await deleteVideo(videoToDelete);
+      setSavedVideos(prev => prev.filter(v => v.id !== videoToDelete));
+      toast({
+        title: "Video Deleted",
+        description: "Video has been removed from your library.",
       });
-    };
-
-    mediaRecorderRef.current = mediaRecorder;
-    mediaRecorder.start();
-    setIsRecording(true);
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
+    } catch (error) {
+      console.error('Error deleting video:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete video.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setVideoToDelete(null);
     }
   };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(1)} KB`;
+    }
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const tierLimit = getTierLimit(user?.subscriptionTier || undefined);
+  const tierName = user?.subscriptionTier === 'star' ? 'Star' : 
+                   user?.subscriptionTier === 'pro' ? 'Pro' : 'Free';
+  const usagePercentage = (savedVideos.length / tierLimit) * 100;
 
   return (
     <div className="container mx-auto px-4 pb-16">
@@ -324,16 +289,6 @@ export default function PhotoFinishPage() {
           <p className="text-muted-foreground mt-1">
             Analyze race videos with precision timing and finish line overlay tools.
           </p>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            <FolderOpen className="h-4 w-4" />
-            Video Library ({savedVideos.length})
-          </Button>
         </div>
       </div>
 
@@ -360,60 +315,11 @@ export default function PhotoFinishPage() {
                     <p className="text-sm text-muted-foreground">{uploadProgress}% complete</p>
                   </div>
                 </div>
-              ) : showCamera ? (
-                <div className="space-y-4">
-                  <div className="relative bg-black rounded-lg overflow-hidden">
-                    <video
-                      ref={cameraPreviewRef}
-                      autoPlay
-                      muted
-                      playsInline
-                      className="w-full aspect-video"
-                    />
-                    
-                    {isRecording && (
-                      <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2">
-                        <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                        Recording
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex justify-center gap-4">
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      onClick={stopCamera}
-                    >
-                      <span className="text-lg">✕</span>
-                      Cancel
-                    </Button>
-                    
-                    {!isRecording ? (
-                      <Button
-                        size="lg"
-                        onClick={startRecording}
-                        className="bg-red-500 hover:bg-red-600 text-white"
-                      >
-                        <Video className="h-5 w-5 mr-2" />
-                        Start Recording
-                      </Button>
-                    ) : (
-                      <Button
-                        size="lg"
-                        onClick={stopRecording}
-                        variant="destructive"
-                      >
-                        <span className="text-lg">⏹</span>
-                        Stop Recording
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ) : !currentVideo ? (
+              ) : (
                 <div 
                   className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center cursor-pointer hover:border-muted-foreground/50 transition-colors min-h-[200px] flex flex-col justify-center"
                   onClick={() => fileInputRef.current?.click()}
+                  data-testid="button-upload-video"
                 >
                   <Upload className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
                   <p className="text-xl font-medium mb-2">Upload Race Video</p>
@@ -432,71 +338,6 @@ export default function PhotoFinishPage() {
                     onClick={(e) => e.currentTarget.value = ''}
                   />
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <div className="text-lg font-medium mb-2">
-                      Ready to analyze: {currentVideo.name}
-                    </div>
-                    <div className="flex justify-center gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setCurrentVideo(null);
-                          setVideoUrl("");
-                        }}
-                      >
-                        Upload Different Video
-                      </Button>
-                      <Button
-                        onClick={() => navigate('/tools/photo-finish/analysis')}
-                        className="flex items-center gap-2"
-                      >
-                        <ArrowRight className="h-4 w-4" />
-                        Open Analysis
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Basic Video Preview */}
-                  <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
-                    <video
-                      ref={videoRef}
-                      src={videoUrl}
-                      poster={videoPoster}
-                      className="w-full h-full object-contain"
-                      onTimeUpdate={handleTimeUpdate}
-                      onLoadedMetadata={handleVideoLoad}
-                      onPlay={() => setIsPlaying(true)}
-                      onPause={() => setIsPlaying(false)}
-                      controls={false}
-                      disablePictureInPicture
-                      controlsList="nodownload nofullscreen noremoteplayback"
-                      playsInline
-                    />
-                    
-                    {/* Basic Controls */}
-                    <div className="absolute bottom-4 left-4 right-4 bg-black/50 rounded-lg p-2">
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={togglePlayPause}
-                          className="text-white hover:bg-white/20"
-                        >
-                          {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                        </Button>
-                        <div className="text-white text-sm">
-                          {formatTime(currentTime)} / {formatTime(duration)}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="text-center text-sm text-muted-foreground">
-                    Video uploaded successfully! Click "Open Analysis" above to start analyzing.
-                  </div>
-                </div>
               )}
             </CardContent>
           </Card>
@@ -506,42 +347,87 @@ export default function PhotoFinishPage() {
         <div>
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FolderOpen className="h-5 w-5" />
-                Video Library
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FolderOpen className="h-5 w-5" />
+                  Video Library
+                </div>
+                {user?.subscriptionTier && (
+                  <div className="flex items-center gap-1 text-xs">
+                    <Crown className="h-3 w-3" />
+                    {tierName}
+                  </div>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {savedVideos.length === 0 ? (
+              {/* Storage usage indicator */}
+              <div className="mb-4 p-3 bg-muted/50 rounded-lg">
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-muted-foreground">Storage</span>
+                  <span className="font-medium">
+                    {savedVideos.length} / {tierLimit} videos
+                  </span>
+                </div>
+                <Progress value={usagePercentage} className="h-2" />
+                <p className="text-xs text-muted-foreground mt-2">
+                  {tierName} tier • {tierLimit} video limit
+                </p>
+              </div>
+
+              {isLoadingVideos ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Video className="h-12 w-12 mx-auto mb-4 opacity-50 animate-pulse" />
+                  <p>Loading videos...</p>
+                </div>
+              ) : savedVideos.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Video className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No saved videos yet</p>
                   <p className="text-sm">Upload and save videos to build your library</p>
                 </div>
               ) : (
-                <div className="space-y-3 max-h-96 overflow-y-auto">
-                  {savedVideos.map((video, index) => (
+                <div className="space-y-3 max-h-[500px] overflow-y-auto">
+                  {savedVideos.map((video) => (
                     <div
-                      key={index}
-                      className="p-3 rounded-lg border cursor-pointer transition-colors hover:bg-muted/50"
-                      onClick={() => loadSavedVideo(video)}
+                      key={video.id}
+                      className="group p-3 rounded-lg border hover:bg-muted/50 transition-colors"
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-start gap-3">
                         {video.thumbnail && (
                           <img
                             src={video.thumbnail}
                             alt="Video thumbnail"
-                            className="w-12 h-8 object-cover rounded"
+                            className="w-16 h-12 object-cover rounded cursor-pointer"
+                            onClick={() => loadSavedVideo(video)}
+                            data-testid={`thumbnail-video-${video.id}`}
                           />
                         )}
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium truncate">
+                          <div 
+                            className="text-sm font-medium truncate cursor-pointer hover:text-primary"
+                            onClick={() => loadSavedVideo(video)}
+                            data-testid={`link-video-${video.id}`}
+                          >
                             {video.name}
                           </div>
-                          <div className="text-xs text-muted-foreground">
-                            {video.createdAt.toLocaleDateString()}
+                          <div className="text-xs text-muted-foreground space-y-0.5">
+                            <div>{new Date(video.createdAt).toLocaleDateString()}</div>
+                            <div>{formatFileSize(video.size)}</div>
                           </div>
                         </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            confirmDeleteVideo(video.id);
+                          }}
+                          data-testid={`button-delete-${video.id}`}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
                       </div>
                     </div>
                   ))}
@@ -551,6 +437,28 @@ export default function PhotoFinishPage() {
           </Card>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Video</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this video from your library? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-delete">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteVideo}
+              data-testid="button-confirm-delete"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

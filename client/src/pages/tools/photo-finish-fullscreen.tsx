@@ -10,7 +10,8 @@ import {
   Timer,
   Zap,
   Clock,
-  Trash2
+  Trash2,
+  Save
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -25,12 +26,16 @@ interface PhotoFinishFullscreenProps {
   videoUrl: string;
   videoName: string;
   onClose: () => void;
+  onSave?: () => void;
+  isSaved?: boolean;
 }
 
 export default function PhotoFinishFullscreen({ 
   videoUrl, 
   videoName,
-  onClose 
+  onClose,
+  onSave,
+  isSaved = false
 }: PhotoFinishFullscreenProps) {
   const { toast } = useToast();
   
@@ -539,18 +544,35 @@ export default function PhotoFinishFullscreen({
         WebkitTouchCallout: 'none'
       }}
     >
-      {/* Close Button - Fixed Position */}
-      <button
-        onClick={onClose}
-        className="fixed top-16 left-4 z-[9999] bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded font-medium text-sm border border-white shadow-lg"
-        style={{ zIndex: 9999 }}
-      >
-        ✕ Close
-      </button>
-      
-      {/* Video Title */}
-      <div className="fixed top-16 left-24 z-[9998] bg-black/60 backdrop-blur-sm px-3 py-1 rounded">
-        <h1 className="text-base font-semibold text-white">{videoName}</h1>
+      {/* Top Bar with Controls */}
+      <div className="fixed top-16 left-0 right-0 z-[9998] flex items-center justify-between px-4 gap-3">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onClose}
+            data-testid="button-close-analysis"
+            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded font-medium text-sm border border-white shadow-lg"
+          >
+            ✕ Close
+          </button>
+          
+          <div className="bg-black/60 backdrop-blur-sm px-3 py-1 rounded">
+            <h1 className="text-base font-semibold text-white">{videoName}</h1>
+          </div>
+        </div>
+        
+        {/* Save Button */}
+        {onSave && (
+          <Button
+            onClick={onSave}
+            data-testid="button-save-video"
+            disabled={isSaved}
+            className={`${isSaved ? 'bg-green-600' : 'bg-blue-600 hover:bg-blue-700'} text-white shadow-lg`}
+            size="sm"
+          >
+            <Save className="h-4 w-4 mr-2" />
+            {isSaved ? 'Saved to Library' : 'Save to Library'}
+          </Button>
+        )}
       </div>
 
       {/* Video Container - takes remaining space */}
