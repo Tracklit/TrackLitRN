@@ -451,7 +451,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <main data-dashboard="true" className={`px-4 container mx-auto max-w-7xl ${isTickerVisible ? 'pt-40' : 'pt-20'}`} style={{ paddingTop: isTickerVisible ? 'calc(10rem + 10px)' : 'calc(5rem + 10px)' }}>
+      <main data-dashboard="true" className={`px-4 container mx-auto max-w-7xl ${isTickerVisible ? 'pt-40' : 'pt-20'}`} style={{ paddingTop: isTickerVisible ? 'calc(10rem + 20px)' : 'calc(5rem + 20px)' }}>
         {/* Logo will be placed here in the future */}
         <div className="h-1 mx-auto" style={{ maxWidth: "540px" }}>
           {/* Reserved space for logo */}
