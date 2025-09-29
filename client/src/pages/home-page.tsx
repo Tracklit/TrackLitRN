@@ -68,6 +68,10 @@ export default function HomePage() {
   const [isCreateMeetOpen, setIsCreateMeetOpen] = useState(false);
   const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
   const [isCarouselPaused, setIsCarouselPaused] = useState(false);
+  const [carouselIndex, setCarouselIndex] = useState(0);
+  const [carouselTotal, setCarouselTotal] = useState(0);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [showPracticePulse, setShowPracticePulse] = useState(false);
   const [animationKey, setAnimationKey] = useState(0);
 
@@ -347,7 +351,7 @@ export default function HomePage() {
       <PreloadImages images={dashboardImages} quality={20} priority={true} />
       
       {/* Fixed Community Activity Ticker - Below Header */}
-      <div className={`fixed top-[65px] left-5 right-5 z-40 transition-transform duration-300 ease-in-out ${isTickerVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+      <div className={`fixed top-[75px] left-5 right-5 z-40 transition-transform duration-300 ease-in-out ${isTickerVisible ? 'translate-y-0' : '-translate-y-full'}`}>
         <div className="mx-auto px-5" style={{ maxWidth: "480px" }}>
           <div className="relative" style={{ background: 'linear-gradient(135deg, #2d1b4e 0%, #4c2a7e 100%)', border: '0.5px solid rgba(148, 163, 184, 0.25)', boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.40), 0 15px 20px -5px rgba(0, 0, 0, 0.30)', borderRadius: '6px', paddingTop: '10px' }}>
             {/* Control buttons with higher z-index */}
@@ -381,9 +385,68 @@ export default function HomePage() {
             </div>
             
             {/* Carousel content */}
-            <div className="relative h-20 overflow-hidden">
-              <CommunityCarousel isPaused={isCarouselPaused} onPauseToggle={setIsCarouselPaused} />
+            <div 
+              className="relative h-20 overflow-hidden"
+              onTouchStart={(e) => {
+                setTouchEnd(null);
+                setTouchStart(e.targetTouches[0].clientX);
+              }}
+              onTouchMove={(e) => setTouchEnd(e.targetTouches[0].clientX)}
+              onTouchEnd={() => {
+                if (!touchStart || !touchEnd) return;
+                const distance = touchStart - touchEnd;
+                const isLeftSwipe = distance > 50;
+                const isRightSwipe = distance < -50;
+                
+                if (isLeftSwipe && carouselTotal > 0) {
+                  setCarouselIndex((prev) => (prev + 1) % carouselTotal);
+                }
+                if (isRightSwipe && carouselTotal > 0) {
+                  setCarouselIndex((prev) => (prev - 1 + carouselTotal) % carouselTotal);
+                }
+              }}
+            >
+              <CommunityCarousel 
+                isPaused={isCarouselPaused} 
+                onPauseToggle={setIsCarouselPaused}
+                currentIndex={carouselIndex}
+                onIndexChange={setCarouselIndex}
+                onTotalChange={setCarouselTotal}
+              />
             </div>
+            
+            {/* Navigation dots */}
+            {carouselTotal > 1 && (
+              <div className="flex justify-center gap-1.5 pb-2">
+                {Array.from({ length: Math.min(3, carouselTotal) }).map((_, index) => {
+                  let dotIndex = index;
+                  if (carouselTotal > 3) {
+                    if (carouselIndex === 0) {
+                      dotIndex = index;
+                    } else if (carouselIndex === carouselTotal - 1) {
+                      dotIndex = carouselTotal - 3 + index;
+                    } else {
+                      dotIndex = carouselIndex - 1 + index;
+                    }
+                  }
+                  const isActive = dotIndex === carouselIndex;
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => setCarouselIndex(dotIndex)}
+                      className="transition-all duration-200"
+                      style={{
+                        width: isActive ? '20px' : '6px',
+                        height: '6px',
+                        borderRadius: '3px',
+                        backgroundColor: isActive ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.3)',
+                      }}
+                      aria-label={`Go to slide ${dotIndex + 1}`}
+                    />
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -40,10 +40,20 @@ interface CommunityActivity {
 interface CommunityCarouselProps {
   isPaused?: boolean;
   onPauseToggle?: (paused: boolean) => void;
+  currentIndex?: number;
+  onIndexChange?: (index: number) => void;
+  onTotalChange?: (total: number) => void;
 }
 
-export function CommunityCarousel({ isPaused = false, onPauseToggle }: CommunityCarouselProps) {
-  const [currentIndex, setCurrentIndex] = useState(0);
+export function CommunityCarousel({ 
+  isPaused = false, 
+  onPauseToggle,
+  currentIndex: externalIndex,
+  onIndexChange,
+  onTotalChange
+}: CommunityCarouselProps) {
+  const [internalIndex, setInternalIndex] = useState(0);
+  const currentIndex = externalIndex !== undefined ? externalIndex : internalIndex;
   const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
   const [currentActivity, setCurrentActivity] = useState<CommunityActivity | null>(null);
   const [isSavingItem, setIsSavingItem] = useState(false);
@@ -156,16 +166,28 @@ export function CommunityCarousel({ isPaused = false, onPauseToggle }: Community
     ]
   });
 
+  // Notify parent of total activities
+  useEffect(() => {
+    if (activities?.length && onTotalChange) {
+      onTotalChange(activities.length);
+    }
+  }, [activities?.length, onTotalChange]);
+
   // Auto-advance to next item every 7 seconds
   useEffect(() => {
     if (!activities?.length || isPaused) return;
 
     const interval = setInterval(() => {
-      setCurrentIndex(prev => (prev + 1) % activities.length);
+      const nextIndex = (currentIndex + 1) % activities.length;
+      if (onIndexChange) {
+        onIndexChange(nextIndex);
+      } else {
+        setInternalIndex(nextIndex);
+      }
     }, 7000);
 
     return () => clearInterval(interval);
-  }, [activities?.length, isPaused]);
+  }, [activities?.length, isPaused, currentIndex, onIndexChange]);
 
   const getActivityIcon = (activityType: string) => {
     switch (activityType) {
