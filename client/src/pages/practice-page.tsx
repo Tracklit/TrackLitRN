@@ -1183,6 +1183,126 @@ function PracticePage() {
                 </div>
               </div>
 
+              {/* Goal Times Input Section */}
+              <div className="space-y-3">
+                <label className="text-sm font-semibold text-white">Goal Times</label>
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/20 space-y-3">
+                  <div className="text-xs text-white/70 mb-3">
+                    Set your personal best or goal times for accurate target calculations
+                  </div>
+                  
+                  {/* 100m Goal */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-16 text-xs text-white font-medium">100m</div>
+                    <div className="flex-1">
+                      <input
+                        type="number"
+                        value={goal100m}
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value) || 11.0;
+                          setGoal100m(value);
+                          safeStorage.setItem('tracklit_goal100m', value.toString());
+                        }}
+                        step="0.01"
+                        min="8"
+                        max="20"
+                        className="w-full h-8 px-3 bg-white/10 border border-white/30 rounded-lg text-white text-xs placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/50"
+                        data-testid="input-goal-100m"
+                      />
+                    </div>
+                    <div className="text-xs text-white/60">sec</div>
+                  </div>
+
+                  {/* 200m Goal */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-16 text-xs text-white font-medium">200m</div>
+                    <div className="flex-1">
+                      <input
+                        type="number"
+                        value={goal200m}
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value) || 22.5;
+                          setGoal200m(value);
+                          safeStorage.setItem('tracklit_goal200m', value.toString());
+                        }}
+                        step="0.01"
+                        min="18"
+                        max="40"
+                        className="w-full h-8 px-3 bg-white/10 border border-white/30 rounded-lg text-white text-xs placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/50"
+                        data-testid="input-goal-200m"
+                      />
+                    </div>
+                    <div className="text-xs text-white/60">sec</div>
+                  </div>
+
+                  {/* 400m Goal */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-16 text-xs text-white font-medium">400m</div>
+                    <div className="flex-1">
+                      <input
+                        type="number"
+                        value={goal400m}
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value) || 50.0;
+                          setGoal400m(value);
+                          safeStorage.setItem('tracklit_goal400m', value.toString());
+                        }}
+                        step="0.01"
+                        min="40"
+                        max="80"
+                        className="w-full h-8 px-3 bg-white/10 border border-white/30 rounded-lg text-white text-xs placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/50"
+                        data-testid="input-goal-400m"
+                      />
+                    </div>
+                    <div className="text-xs text-white/60">sec</div>
+                  </div>
+
+                  {/* 100m/110m Hurdles Goal */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-16 text-xs text-white font-medium">Hurdles</div>
+                    <div className="flex-1">
+                      <input
+                        type="number"
+                        value={goalHurdles100}
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value) || 13.5;
+                          setGoalHurdles100(value);
+                          safeStorage.setItem('tracklit_goalHurdles100', value.toString());
+                        }}
+                        step="0.01"
+                        min="10"
+                        max="20"
+                        className="w-full h-8 px-3 bg-white/10 border border-white/30 rounded-lg text-white text-xs placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/50"
+                        data-testid="input-goal-hurdles100"
+                      />
+                    </div>
+                    <div className="text-xs text-white/60">sec</div>
+                  </div>
+
+                  {/* 400m Hurdles Goal */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-16 text-xs text-white font-medium">400H</div>
+                    <div className="flex-1">
+                      <input
+                        type="number"
+                        value={goalHurdles400}
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value) || 54.0;
+                          setGoalHurdles400(value);
+                          safeStorage.setItem('tracklit_goalHurdles400', value.toString());
+                        }}
+                        step="0.01"
+                        min="45"
+                        max="70"
+                        className="w-full h-8 px-3 bg-white/10 border border-white/30 rounded-lg text-white text-xs placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/50"
+                        data-testid="input-goal-hurdles400"
+                      />
+                    </div>
+                    <div className="text-xs text-white/60">sec</div>
+                  </div>
+                </div>
+              </div>
+
               {/* Target Times Table */}
               <div className="space-y-3">
                 <label className="text-sm font-semibold text-white">Target Times</label>
