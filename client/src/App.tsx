@@ -98,7 +98,6 @@ const AmbassadorLandingPageLazy = lazy(() => import("@/pages/ambassador-landing-
 
 // Test & Debug pages  
 const TestPageLazy = lazy(() => import("@/pages/test-page-simple"));
-const ToolsPreviewPageLazy = lazy(() => import("@/pages/tools-preview"));
 const MinimalTestLazy = lazy(() => import("@/pages/minimal-test"));
 const DebugSimpleLazy = lazy(() => import("@/pages/debug-simple"));
 const EmergencyDebugLazy = lazy(() => import("@/pages/emergency-debug"));
@@ -169,7 +168,6 @@ const AdminAffiliateSubmissions = () => <AdminAffiliateSubmissionsLazy />;
 const OnboardingContainer = () => <OnboardingContainerLazy />;
 const AmbassadorLandingPage = () => <AmbassadorLandingPageLazy />;
 const TestPage = () => <TestPageLazy />;
-const ToolsPreviewPage = () => <ToolsPreviewPageLazy />;
 const MinimalTest = () => <MinimalTestLazy />;
 const DebugSimple = () => <DebugSimpleLazy />;
 const EmergencyDebug = () => <EmergencyDebugLazy />;
@@ -384,7 +382,6 @@ function Router() {
         <Route path="/reset-password" component={AuthPage} />
         <Route path="/affiliate" component={AmbassadorLandingPage} />
         <Route path="/test" component={TestPage} />
-        <Route path="/tools-preview" component={ToolsPreviewPage} />
         <Route path="/test-minimal" component={MinimalTest} />
         <Route path="/debug" component={DebugSimple} />
         <Route path="/emergency" component={EmergencyDebug} />
