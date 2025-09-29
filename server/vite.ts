@@ -86,6 +86,10 @@ export function serveStatic(app: Express) {
   const distPath = path.resolve(import.meta.dirname, "..", "dist", "public");
 
   if (!fs.existsSync(distPath)) {
+    console.error(`CRITICAL ERROR: Build directory not found: ${distPath}`);
+    console.error(`Current working directory: ${process.cwd()}`);
+    console.error(`__dirname: ${import.meta.dirname}`);
+    console.error(`Available files in parent directory:`, fs.readdirSync(path.resolve(import.meta.dirname, "..")));
     throw new Error(
       `Could not find the build directory: ${distPath}, make sure to build the client first`,
     );
