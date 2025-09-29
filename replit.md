@@ -10,6 +10,11 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **CRITICAL: Production Static Asset Fix (September 29, 2025)**: Resolved 500 errors on alpha.tracklitapp.com for CSS, JS, and favicon assets
+  - **Fixed environment detection**: Server was incorrectly defaulting to development mode due to `app.get("env")` vs `process.env.NODE_ENV` mismatch
+  - **Implemented direct asset serving**: Bypassed problematic express.static middleware with custom `/assets/*` route handler
+  - **Configured proper deployment**: Set up autoscale deployment with correct build (`npm run build`) and run (`node dist/index.js`) commands
+  - **Static assets now serve correctly** with proper Content-Type headers (CSS as text/css, JS as application/javascript)
 - **Target Times Production Deployment Fix (September 27, 2025)**: Successfully resolved critical TypeScript compilation errors blocking production deployment
   - **Reduced compilation errors from 80+ to ~45** by fixing missing schema imports (trainingPrograms, meetInvitations, passwordResetTokens, User)
   - **Created dedicated TimingSettingsPage component** for clean `/timing-settings` route, eliminating "athlete profile" references from data flow
