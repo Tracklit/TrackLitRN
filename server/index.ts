@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { VideoCleanupService } from "./video-cleanup";
 import path from "path";
+import fs from "fs";
 
 const app = express();
 app.use(express.json());
@@ -16,6 +17,25 @@ app.get('/health', (req, res) => {
 // Root endpoint for external access verification
 app.get('/ping', (req, res) => {
   res.status(200).send('pong');
+});
+
+// Favicon handler to prevent 404 errors
+app.get('/favicon.ico', (req, res) => {
+  const faviconPath = isProduction 
+    ? path.join(process.cwd(), 'dist', 'public', 'icon-192.png')
+    : path.join(process.cwd(), 'client', 'public', 'icon-192.png');
+  
+  // Check if the file exists, otherwise send a simple response
+  if (fs.existsSync(faviconPath)) {
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
+    res.sendFile(faviconPath);
+  } else {
+    // Return empty response with proper headers if no icon file exists
+    res.setHeader('Content-Type', 'image/x-icon');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.status(204).end(); // No content
+  }
 });
 
 // Debug endpoint will be added after authentication setup in routes.ts
