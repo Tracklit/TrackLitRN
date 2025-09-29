@@ -20,8 +20,8 @@ app.get('/ping', (req, res) => {
 
 // Debug endpoint will be added after authentication setup in routes.ts
 
-// Check production environment consistently
-const isProduction = process.env.NODE_ENV === "production";
+// Check production environment consistently - including deployment environment
+const isProduction = process.env.NODE_ENV === "production" || process.env.NODE_ENV === "prod" || process.env.DEPLOYMENT_TARGET === "vm";
 
 // Add cache-busting middleware for development ONLY
 if (!isProduction) {
@@ -131,10 +131,15 @@ app.use((req, res, next) => {
     throw err;
   });
 
+  // Production deployments use environment PORT, development uses 5000
+  const port = process.env.PORT ? parseInt(process.env.PORT) : 5000;
+  
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
   console.log(`Environment: NODE_ENV=${process.env.NODE_ENV}, isProduction=${isProduction}`);
+  console.log(`Critical env vars: DATABASE_URL=${!!process.env.DATABASE_URL}, SESSION_SECRET=${!!process.env.SESSION_SECRET}`);
+  console.log(`Port config: process.env.PORT=${process.env.PORT}, using port=${port}`);
   
   if (isProduction) {
     console.log('Setting up production static file serving');
@@ -143,9 +148,6 @@ app.use((req, res, next) => {
     console.log('Setting up development Vite server');
     await setupVite(app, server);
   }
-
-  // Production deployments use environment PORT, development uses 5000
-  const port = process.env.PORT ? parseInt(process.env.PORT) : 5000;
   const host = "0.0.0.0";
   
   console.log(`Attempting to start server on ${host}:${port}`);
