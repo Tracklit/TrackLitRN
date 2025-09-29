@@ -349,7 +349,7 @@ export default function HomePage() {
       {/* Fixed Community Activity Ticker - Below Header */}
       <div className={`fixed top-[65px] left-5 right-5 z-40 transition-transform duration-300 ease-in-out ${isTickerVisible ? 'translate-y-0' : '-translate-y-full'}`}>
         <div className="mx-auto px-5" style={{ maxWidth: "480px" }}>
-          <div className="bg-gradient-to-br from-purple-500 to-blue-800 relative rounded-sm" style={{ boxShadow: '0 0 20px rgba(168, 85, 247, 0.5)' }}>
+          <div className="relative rounded-sm" style={{ background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)', border: '0.5px solid rgba(148, 163, 184, 0.25)', boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.40), 0 15px 20px -5px rgba(0, 0, 0, 0.30)' }}>
             {/* Control buttons with higher z-index */}
             <div className="absolute left-2 top-1/2 transform -translate-y-1/2 z-[80]">
               <button
