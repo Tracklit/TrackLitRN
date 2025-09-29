@@ -1199,7 +1199,8 @@ function PracticePage() {
                         type="number"
                         value={goal100m}
                         onChange={(e) => {
-                          const value = parseFloat(e.target.value) || 11.0;
+                          const normalizedValue = e.target.value.replace(',', '.');
+                          const value = parseFloat(normalizedValue) || 11.0;
                           setGoal100m(value);
                           safeStorage.setItem('tracklit_goal100m', value.toString());
                         }}
@@ -1221,7 +1222,8 @@ function PracticePage() {
                         type="number"
                         value={goal200m}
                         onChange={(e) => {
-                          const value = parseFloat(e.target.value) || 22.5;
+                          const normalizedValue = e.target.value.replace(',', '.');
+                          const value = parseFloat(normalizedValue) || 22.5;
                           setGoal200m(value);
                           safeStorage.setItem('tracklit_goal200m', value.toString());
                         }}
@@ -1243,7 +1245,8 @@ function PracticePage() {
                         type="number"
                         value={goal400m}
                         onChange={(e) => {
-                          const value = parseFloat(e.target.value) || 50.0;
+                          const normalizedValue = e.target.value.replace(',', '.');
+                          const value = parseFloat(normalizedValue) || 50.0;
                           setGoal400m(value);
                           safeStorage.setItem('tracklit_goal400m', value.toString());
                         }}
@@ -1265,7 +1268,8 @@ function PracticePage() {
                         type="number"
                         value={goalHurdles100}
                         onChange={(e) => {
-                          const value = parseFloat(e.target.value) || 13.5;
+                          const normalizedValue = e.target.value.replace(',', '.');
+                          const value = parseFloat(normalizedValue) || 13.5;
                           setGoalHurdles100(value);
                           safeStorage.setItem('tracklit_goalHurdles100', value.toString());
                         }}
@@ -1287,7 +1291,8 @@ function PracticePage() {
                         type="number"
                         value={goalHurdles400}
                         onChange={(e) => {
-                          const value = parseFloat(e.target.value) || 54.0;
+                          const normalizedValue = e.target.value.replace(',', '.');
+                          const value = parseFloat(normalizedValue) || 54.0;
                           setGoalHurdles400(value);
                           safeStorage.setItem('tracklit_goalHurdles400', value.toString());
                         }}
