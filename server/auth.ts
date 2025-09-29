@@ -277,4 +277,15 @@ export function setupAuth(app: Express) {
       res.sendStatus(500);
     }
   });
+
+  // Debug endpoint to test authentication status (after auth setup)
+  app.get('/debug-auth', (req, res) => {
+    res.status(200).json({
+      message: 'Debug endpoint reached',
+      authenticated: !!req.user,
+      userId: req.user?.id || null,
+      sessionId: req.sessionID || null,
+      timestamp: new Date().toISOString()
+    });
+  });
 }
