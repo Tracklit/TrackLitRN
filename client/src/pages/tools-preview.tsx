@@ -92,7 +92,7 @@ export default function ToolsPreviewPage() {
                   className="cursor-not-allowed h-[112px] mx-auto mb-2 overflow-hidden relative bg-muted/30"
                   style={{ 
                     borderRadius: '6px',
-                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 15px 20px -5px rgba(0, 0, 0, 0.15)'
+                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.40), 0 15px 20px -5px rgba(0, 0, 0, 0.30)'
                   }}
                 >
                   <div className="absolute inset-0 bg-background/50"></div>
@@ -126,7 +126,7 @@ export default function ToolsPreviewPage() {
                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                     border: '0.5px solid rgba(148, 163, 184, 0.25)', 
                     borderRadius: '6px',
-                    boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.3), 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 15px 20px -5px rgba(0, 0, 0, 0.15)'
+                    boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.40), 0 15px 20px -5px rgba(0, 0, 0, 0.30)'
                   }}
                 >
                   {/* Content Area */}
