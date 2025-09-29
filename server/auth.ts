@@ -59,9 +59,12 @@ async function requiresOnboarding(user: User): Promise<boolean> {
 }
 
 export function setupAuth(app: Express) {
-  // Detect environment properly
-  const isProduction = process.env.NODE_ENV === 'production';
-  const isHttps = !!(process.env.REPL_SLUG || process.env.REPLIT_DB_URL || isProduction);
+  // Robust environment detection - check multiple indicators
+  const isProduction = process.env.NODE_ENV === 'production' || 
+                      process.env.REPL_DEPLOYMENT === 'production' ||
+                      process.env.REPLIT_DEPLOYMENT === 'true' ||
+                      !!process.env.REPL_SLUG;
+  const isHttps = !!(process.env.REPL_SLUG || process.env.REPLIT_DB_URL || isProduction || process.env.HTTPS);
   
   console.log('Auth setup:', { 
     NODE_ENV: process.env.NODE_ENV, 
@@ -70,11 +73,10 @@ export function setupAuth(app: Express) {
     REPL_SLUG: !!process.env.REPL_SLUG 
   });
 
-  // Adjust sameSite for different environments:
-  // - 'none' for iframe/preview environments (requires secure: true)
-  // - 'lax' for standard production environments
-  // - 'lax' for local development (works with secure: false)
-  const sameSiteSetting = isHttps && !isProduction ? 'none' : 'lax';
+  // More robust sameSite configuration for production reliability
+  // Use 'none' for iframe/preview environments, 'lax' for others
+  // In production, be more permissive to avoid cookie issues
+  const sameSiteSetting = isProduction ? 'lax' : (isHttps ? 'none' : 'lax');
 
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "track-meet-secret-key",
@@ -288,16 +290,32 @@ export function setupAuth(app: Express) {
   });
 
   app.get("/api/user", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+    // Enhanced authentication check with detailed logging
+    const isAuth = req.isAuthenticated();
+    const hasUser = !!req.user;
+    const sessionId = req.sessionID;
+    
+    console.log(`/api/user request: authenticated=${isAuth}, hasUser=${hasUser}, sessionId=${sessionId}`);
+    
+    if (!isAuth || !req.user) {
+      console.log('User not authenticated, returning 401');
+      return res.status(401).json({ 
+        error: 'Not authenticated',
+        debug: { isAuth, hasUser, sessionId }
+      });
+    }
     
     // Get fresh user data from database to ensure role is current
     try {
-      const freshUser = await storage.getUser(req.user!.id);
-      if (!freshUser) return res.sendStatus(401);
+      const freshUser = await storage.getUser(req.user.id);
+      if (!freshUser) {
+        console.log(`User ${req.user.id} not found in database`);
+        return res.status(401).json({ error: 'User not found' });
+      }
       res.json(freshUser);
     } catch (error) {
       console.error("Error fetching user:", error);
-      res.sendStatus(500);
+      res.status(500).json({ error: 'Internal server error' });
     }
   });
 
