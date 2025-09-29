@@ -93,20 +93,37 @@ export function serveStatic(app: Express) {
 
   console.log(`Setting up static file serving from: ${distPath}`);
 
-  // Serve assets directory with explicit middleware 
-  app.use('/assets', express.static(path.join(distPath, 'assets'), {
-    setHeaders: (res, filePath) => {
-      console.log(`Serving asset: ${filePath}`);
-      if (filePath.endsWith('.js')) {
-        res.setHeader('Content-Type', 'application/javascript; charset=UTF-8');
-      } else if (filePath.endsWith('.css')) {
-        res.setHeader('Content-Type', 'text/css; charset=UTF-8');
-      }
-      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  // Direct asset serving - bypass express.static
+  app.get('/assets/*', (req, res) => {
+    const assetPath = req.path.substring('/assets/'.length);
+    const fullPath = path.join(distPath, 'assets', assetPath);
+    
+    console.log(`Direct asset request: ${req.path} -> ${fullPath}`);
+    
+    if (!fs.existsSync(fullPath)) {
+      console.log(`Asset not found: ${fullPath}`);
+      return res.status(404).send('Asset not found');
     }
-  }));
+    
+    // Set proper content type
+    if (assetPath.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript; charset=UTF-8');
+    } else if (assetPath.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css; charset=UTF-8');
+    } else if (assetPath.endsWith('.png')) {
+      res.setHeader('Content-Type', 'image/png');
+    } else if (assetPath.endsWith('.jpg') || assetPath.endsWith('.jpeg')) {
+      res.setHeader('Content-Type', 'image/jpeg');
+    }
+    
+    // Cache static assets
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    
+    // Send the file
+    res.sendFile(fullPath);
+  });
 
-  // Serve other static files (images, manifest, etc.)
+  // Serve other static files using express.static  
   app.use(express.static(distPath, {
     setHeaders: (res, filePath) => {
       if (filePath.endsWith('.html')) {
