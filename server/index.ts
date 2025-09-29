@@ -144,23 +144,28 @@ app.use((req, res, next) => {
     await setupVite(app, server);
   }
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
+  // Production deployments use environment PORT, development uses 5000
   const port = process.env.PORT ? parseInt(process.env.PORT) : 5000;
   const host = "0.0.0.0";
   
-  // Add error handling for server startup
-  server.on('error', (err: any) => {
+  console.log(`Attempting to start server on ${host}:${port}`);
+  
+  // Create server and setup error handling BEFORE listening
+  const { createServer } = await import('http');
+  const httpServer = createServer(app);
+  
+  httpServer.on('error', (err: any) => {
     if (err.code === 'EADDRINUSE') {
-      log(`Port ${port} is already in use`);
+      console.error(`CRITICAL ERROR: Port ${port} is already in use`);
+      console.error('This usually happens in production when another process is using the port');
       process.exit(1);
     } else {
-      log(`Server error: ${err.message}`);
+      console.error(`Server startup error: ${err.message}`);
+      process.exit(1);
     }
   });
 
-  server.listen(port, host, () => {
+  httpServer.listen(port, host, () => {
     console.log(`Server running on ${host}:${port}`);
     console.log(`External URL: https://${process.env.REPL_SLUG}-${process.env.REPL_OWNER}.replit.app`);
     console.log('REPLIT_SERVER_READY');
