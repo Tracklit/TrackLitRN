@@ -20,8 +20,11 @@ app.get('/ping', (req, res) => {
 
 // Debug endpoint will be added after authentication setup in routes.ts
 
+// Check production environment consistently
+const isProduction = process.env.NODE_ENV === "production";
+
 // Add cache-busting middleware for development ONLY
-if (app.get("env") === "development") {
+if (!isProduction) {
   app.use((req, res, next) => {
     // Prevent caching of JS, CSS, and HTML files during development
     if (req.url.endsWith('.js') || req.url.endsWith('.css') || req.url.endsWith('.html') || req.url === '/') {
@@ -36,7 +39,7 @@ if (app.get("env") === "development") {
 }
 
 // Serve static files from the public directory (only in development)
-if (app.get("env") === "development") {
+if (!isProduction) {
   app.use(express.static(path.join(process.cwd(), 'public')));
 }
 
@@ -131,7 +134,6 @@ app.use((req, res, next) => {
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
-  const isProduction = process.env.NODE_ENV === "production";
   console.log(`Environment: NODE_ENV=${process.env.NODE_ENV}, isProduction=${isProduction}`);
   
   if (isProduction) {
