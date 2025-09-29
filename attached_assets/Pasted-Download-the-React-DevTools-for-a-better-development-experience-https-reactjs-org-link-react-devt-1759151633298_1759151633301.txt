@@ -1,0 +1,269 @@
+Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+firebase.ts:2 Using direct Google OAuth authentication
+checkout-page.tsx:15  Stripe public key not configured - checkout functionality disabled
+(anonymous) @ checkout-page.tsx:15
+main.tsx:6 === MAIN.TSX STARTING v3 - 1759151540793 ===
+main.tsx:53 1. Finding root element
+main.tsx:55 2. Root element found: <div id=​"root">​…​</div>​<div data-replit-metadata=​"client/​src/​App.tsx:​392:​4" data-component-name=​"div" class=​"min-h-screen text-foreground ">​…​</div>​<header data-replit-metadata=​"client/​src/​components/​layout/​header.tsx:​32:​4" data-component-name=​"header" class=​"bg-[#010a18]​ shadow-sm fixed top-0 left-0 right-0 z-50">​…​</header>​<div data-replit-metadata=​"client/​src/​App.tsx:​401:​6" data-component-name=​"div" class=​"fixed top-4 left-4 z-50">​…​</div>​<main data-replit-metadata=​"client/​src/​App.tsx:​407:​6" data-component-name=​"main" class=​"pt-20 pb-16 md:​pb-0">​…​</main>​<div data-replit-metadata=​"client/​src/​App.tsx:​408:​8" data-component-name=​"div" class=​"max-w-7xl mx-auto px-4 sm:​px-6 lg:​px-8">​…​</div>​<div data-replit-metadata=​"client/​src/​App.tsx:​197:​6" data-component-name=​"div" style=​"position:​ absolute;​ inset:​ 0px;​ isolation:​ isolate;​">​…​</div>​<div data-replit-metadata=​"client/​src/​components/​page-transition.tsx:​27:​4" data-component-name=​"div" class=​"transition-opacity duration-[120ms]​ ease-in-out opacity-100">​…​</div>​<div data-replit-metadata=​"client/​src/​pages/​auth-page.tsx:​278:​4" data-component-name=​"div" class=​"min-h-screen grid md:​grid-cols-2">​…​</div>​grid<div data-replit-metadata=​"client/​src/​pages/​auth-page.tsx:​280:​6" data-component-name=​"div" class=​"flex flex-col justify-center p-6 md:​p-12">​…​</div>​flex<div data-replit-metadata=​"client/​src/​pages/​auth-page.tsx:​281:​8" data-component-name=​"div" class=​"mx-auto w-full max-w-md">​…​</div>​<div data-replit-metadata=​"client/​src/​pages/​auth-page.tsx:​282:​10" data-component-name=​"div" class=​"flex items-center mb-8">​…​</div>​flex<div dir=​"ltr" data-orientation=​"horizontal" data-replit-metadata=​"client/​src/​pages/​auth-page.tsx:​286:​10" data-component-name=​"Tabs">​…​</div>​<div role=​"tablist" aria-orientation=​"horizontal" data-replit-metadata=​"client/​src/​pages/​auth-page.tsx:​294:​12" data-component-name=​"TabsList" class=​"h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground grid grid-cols-2 mb-8" tabindex=​"0" data-orientation=​"horizontal" style=​"outline:​ none;​">​…​</div>​grid<div data-state=​"active" data-orientation=​"horizontal" role=​"tabpanel" aria-labelledby=​"radix-:​r0:​-trigger-login" id=​"radix-:​r0:​-content-login" tabindex=​"0" data-replit-metadata=​"client/​src/​pages/​auth-page.tsx:​300:​12" data-component-name=​"TabsContent" class=​"mt-2 ring-offset-background focus-visible:​outline-none focus-visible:​ring-2 focus-visible:​ring-ring focus-visible:​ring-offset-2" style=​"animation-duration:​ 0s;​">​…​</div>​<form data-replit-metadata=​"client/​src/​pages/​auth-page.tsx:​302:​16" data-component-name=​"form" class=​"space-y-4">​…​</form>​<div data-replit-metadata=​"client/​src/​pages/​auth-page.tsx:​307:​20" data-component-name=​"FormItem" class=​"space-y-2">​…​</div>​<label data-replit-metadata=​"client/​src/​pages/​auth-page.tsx:​308:​24" data-component-name=​"FormLabel" class=​"text-sm font-medium leading-none peer-disabled:​cursor-not-allowed peer-disabled:​opacity-70" for=​":​r3:​-form-item">​Username​</label>​<input data-replit-metadata=​"client/​src/​pages/​auth-page.tsx:​310:​26" data-component-name=​"Input" class=​"flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:​border-0 file:​bg-transparent file:​text-sm file:​font-medium placeholder:​text-muted-foreground focus-visible:​outline-none focus-visible:​ring-2 focus-visible:​ring-ring focus-visible:​ring-offset-2 disabled:​cursor-not-allowed disabled:​opacity-50" placeholder=​"Enter your username" name=​"username" id=​":​r3:​-form-item" aria-describedby=​":​r3:​-form-item-description" aria-invalid=​"false" value>​flex</div>​<div data-replit-metadata=​"client/​src/​pages/​auth-page.tsx:​321:​20" data-component-name=​"FormItem" class=​"space-y-2">​…​</div>​<button data-replit-metadata=​"client/​src/​pages/​auth-page.tsx:​331:​18" data-component-name=​"Button" class=​"inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:​outline-none focus-visible:​ring-2 focus-visible:​ring-ring focus-visible:​ring-offset-2 disabled:​pointer-events-none disabled:​opacity-50 hover:​bg-primary/​90 h-10 px-4 py-2 w-full mt-6 bg-primary text-white" type=​"submit">​Log In​</button>​flex</form>​<div data-replit-metadata=​"client/​src/​pages/​auth-page.tsx:​341:​14" data-component-name=​"div" class=​"mt-4">​…​</div>​<div data-replit-metadata=​"client/​src/​pages/​auth-page.tsx:​380:​14" data-component-name=​"div" class=​"mt-6 text-center text-sm text-darkGray">​…​</div>​</div>​<div data-state=​"inactive" data-orientation=​"horizontal" role=​"tabpanel" aria-labelledby=​"radix-:​r0:​-trigger-register" hidden id=​"radix-:​r0:​-content-register" tabindex=​"0" data-replit-metadata=​"client/​src/​pages/​auth-page.tsx:​402:​12" data-component-name=​"TabsContent" class=​"mt-2 ring-offset-background focus-visible:​outline-none focus-visible:​ring-2 focus-visible:​ring-ring focus-visible:​ring-offset-2">​</div>​<div data-state=​"inactive" data-orientation=​"horizontal" role=​"tabpanel" aria-labelledby=​"radix-:​r0:​-trigger-forgot-password" hidden id=​"radix-:​r0:​-content-forgot-password" tabindex=​"0" data-replit-metadata=​"client/​src/​pages/​auth-page.tsx:​538:​12" data-component-name=​"TabsContent" class=​"mt-2 ring-offset-background focus-visible:​outline-none focus-visible:​ring-2 focus-visible:​ring-ring focus-visible:​ring-offset-2">​</div>​<div data-state=​"inactive" data-orientation=​"horizontal" role=​"tabpanel" aria-labelledby=​"radix-:​r0:​-trigger-reset-password" hidden id=​"radix-:​r0:​-content-reset-password" tabindex=​"0" data-replit-metadata=​"client/​src/​pages/​auth-page.tsx:​593:​12" data-component-name=​"TabsContent" class=​"mt-2 ring-offset-background focus-visible:​outline-none focus-visible:​ring-2 focus-visible:​ring-ring focus-visible:​ring-offset-2">​</div>​</div>​</div>​</div>​<div data-replit-metadata=​"client/​src/​pages/​auth-page.tsx:​670:​6" data-component-name=​"div" class=​"hidden md:​flex items-center justify-center bg-gradient-to-r from-primary/​90 to-secondary/​90 text-white p-12">​…​</div>​flex</div>​</div>​</div>​<div data-replit-metadata=​"client/​src/​App.tsx:​317:​6" data-component-name=​"div" class=​"fixed inset-0 z-50 pointer-events-none" style=​"position:​ fixed;​ inset:​ 0px;​ contain:​ strict;​ isolation:​ isolate;​">​…​</div>​<div data-replit-metadata=​"client/​src/​pages/​chat-page.tsx:​712:​4" data-component-name=​"div" class=​"w-full h-full overflow-hidden bg-slate-900 transition-transform duration-300 ease-in-out translate-x-full pointer-events-none">​…​</div>​<div data-replit-metadata=​"client/​src/​pages/​chat-page.tsx:​716:​6" data-component-name=​"div" class=​"absolute inset-0 w-full h-full bg-slate-900 transition-transform duration-300 ease-in-out z-10 translate-x-0">​…​</div>​<div data-replit-metadata=​"client/​src/​pages/​chat-page.tsx:​721:​8" data-component-name=​"div" class=​"flex flex-col w-full h-full bg-slate-900">​…​</div>​flex<div data-replit-metadata=​"client/​src/​pages/​chat-page.tsx:​723:​10" data-component-name=​"div" class=​"p-4 border-b border-gray-600/​30 flex-shrink-0 bg-black/​20 backdrop-blur-sm">​…​</div>​<div data-replit-metadata=​"client/​src/​pages/​chat-page.tsx:​777:​10" data-component-name=​"div" class=​"w-full overflow-hidden transition-all duration-300 ease-out bg-slate-900/​95 backdrop-blur-sm border-b border-gray-600/​30" style=​"height:​ 0px;​">​…​</div>​<div data-replit-metadata=​"client/​src/​pages/​chat-page.tsx:​787:​12" data-component-name=​"div" class=​"p-4 h-full flex items-center">​…​</div>​flex<div data-replit-metadata=​"client/​src/​pages/​chat-page.tsx:​788:​14" data-component-name=​"div" class=​"relative w-full">​…​</div>​<svg xmlns=​"http:​/​/​www.w3.org/​2000/​svg" width=​"24" height=​"24" viewBox=​"0 0 24 24" fill=​"none" stroke=​"currentColor" stroke-width=​"2" stroke-linecap=​"round" stroke-linejoin=​"round" class=​"lucide lucide-search absolute left-3 top-1/​2 transform -translate-y-1/​2 text-gray-400 h-4 w-4" data-replit-metadata=​"client/​src/​pages/​chat-page.tsx:​789:​16" data-component-name=​"Search">​…​</svg>​<input data-replit-metadata=​"client/​src/​pages/​chat-page.tsx:​790:​16" data-component-name=​"input" type=​"text" placeholder=​"Search conversations..." class=​"w-full pl-10 bg-gray-800 text-white placeholder-gray-400 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:​outline-none focus:​border-blue-500" value>​</div>​</div>​</div>​<div data-replit-metadata=​"client/​src/​pages/​chat-page.tsx:​803:​10" data-component-name=​"div" class=​"flex-1 overflow-y-auto relative">​…​</div>​</div>​</div>​<div data-replit-metadata=​"client/​src/​pages/​chat-page.tsx:​927:​6" data-component-name=​"div" class=​"absolute inset-0 w-full h-full bg-slate-900 transition-transform duration-300 ease-in-out z-20 translate-x-full">​…​</div>​</div>​</div>​</div>​</main>​<div data-replit-metadata=​"client/​src/​components/​layout/​bottom-navigation.tsx:​148:​4" data-component-name=​"div" class=​"fixed bottom-0 left-0 right-0 z-10 transition-transform duration-300 ease-in-out translate-y-0">​…​</div>​<div role=​"region" aria-label=​"Notifications (F8)​" tabindex=​"-1" style=​"pointer-events:​ none;​">​…​</div>​</div>​</div>​
+main.tsx:61 3. Creating React root
+main.tsx:63 4. React root created successfully
+main.tsx:65 5. Rendering App component
+main.tsx:67 6. App component rendered successfully
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again
+App.tsx:354 MainApp: Auth check {user: false, isLoading: true, location: '/', initialLoading: true}
+main.tsx:95 SW registered:  ServiceWorkerRegistration {installing: null, waiting: null, active: ServiceWorker, navigationPreload: NavigationPreloadManager, scope: 'https://fcd21b23-4cdd-4f97-bcb8-a733dfa634a4-00-kvblgqxbxgcw.worf.replit.dev/', …}
+main.tsx:74 7. Initial loading screen removed
+App.tsx:354 MainApp: Auth check {user: false, isLoading: true, location: '/', initialLoading: false}
+(index):1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+queryClient.ts:45   GET https://fcd21b23-4cdd-4f97-bcb8-a733dfa634a4-00-kvblgqxbxgcw.worf.replit.dev/api/user 401 (Unauthorized)
+(anonymous) @ queryClient.ts:45
+fetchFn @ query.ts:429
+run @ retryer.ts:153
+start @ retryer.ts:218
+fetch @ query.ts:540
+executeFetch_fn @ queryObserver.ts:346
+onSubscribe @ queryObserver.ts:108
+subscribe @ subscribable.ts:11
+(anonymous) @ useBaseQuery.ts:92
+subscribeToStore @ react-dom.development.js:16139
+commitHookEffectListMount @ react-dom.development.js:23189
+commitPassiveMountOnFiber @ react-dom.development.js:24965
+commitPassiveMountEffects_complete @ react-dom.development.js:24930
+commitPassiveMountEffects_begin @ react-dom.development.js:24917
+commitPassiveMountEffects @ react-dom.development.js:24905
+flushPassiveEffectsImpl @ react-dom.development.js:27078
+flushPassiveEffects @ react-dom.development.js:27023
+(anonymous) @ react-dom.development.js:26808
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+App.tsx:180 Router: Current location: /
+App.tsx:170 RootRedirect: Redirecting from root path to /home
+chat-page.tsx:412 Fetching chat channels...
+queryClient.ts:15 Making GET request to /api/conversations undefined
+App.tsx:354 MainApp: Auth check {user: false, isLoading: false, location: '/', initialLoading: false}
+App.tsx:180 Router: Current location: /home
+App.tsx:354 MainApp: Auth check {user: false, isLoading: false, location: '/home', initialLoading: false}
+chat-page.tsx:414   GET https://fcd21b23-4cdd-4f97-bcb8-a733dfa634a4-00-kvblgqxbxgcw.worf.replit.dev/api/chat/groups 401 (Unauthorized)
+queryFn @ chat-page.tsx:414
+fetchFn @ query.ts:429
+run @ retryer.ts:153
+start @ retryer.ts:218
+fetch @ query.ts:540
+executeFetch_fn @ queryObserver.ts:346
+onSubscribe @ queryObserver.ts:108
+subscribe @ subscribable.ts:11
+(anonymous) @ useBaseQuery.ts:92
+subscribeToStore @ react-dom.development.js:16139
+commitHookEffectListMount @ react-dom.development.js:23189
+commitPassiveMountOnFiber @ react-dom.development.js:24965
+commitPassiveMountEffects_complete @ react-dom.development.js:24930
+commitPassiveMountEffects_begin @ react-dom.development.js:24917
+commitPassiveMountEffects @ react-dom.development.js:24905
+flushPassiveEffectsImpl @ react-dom.development.js:27078
+flushPassiveEffects @ react-dom.development.js:27023
+commitRootImpl @ react-dom.development.js:26974
+commitRoot @ react-dom.development.js:26721
+performSyncWorkOnRoot @ react-dom.development.js:26156
+flushSyncCallbacks @ react-dom.development.js:12042
+(anonymous) @ react-dom.development.js:25690
+setTimeout
+scheduleFn @ notifyManager.ts:22
+flush @ notifyManager.ts:37
+batch @ notifyManager.ts:56
+dispatch_fn @ query.ts:617
+setData @ query.ts:218
+onSuccess @ query.ts:507
+resolve @ retryer.ts:107
+Promise.then
+run @ retryer.ts:159
+start @ retryer.ts:218
+fetch @ query.ts:540
+executeFetch_fn @ queryObserver.ts:346
+onSubscribe @ queryObserver.ts:108
+subscribe @ subscribable.ts:11
+(anonymous) @ useBaseQuery.ts:92
+subscribeToStore @ react-dom.development.js:16139
+commitHookEffectListMount @ react-dom.development.js:23189
+commitPassiveMountOnFiber @ react-dom.development.js:24965
+commitPassiveMountEffects_complete @ react-dom.development.js:24930
+commitPassiveMountEffects_begin @ react-dom.development.js:24917
+commitPassiveMountEffects @ react-dom.development.js:24905
+flushPassiveEffectsImpl @ react-dom.development.js:27078
+flushPassiveEffects @ react-dom.development.js:27023
+(anonymous) @ react-dom.development.js:26808
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+queryClient.ts:18   GET https://fcd21b23-4cdd-4f97-bcb8-a733dfa634a4-00-kvblgqxbxgcw.worf.replit.dev/api/conversations 401 (Unauthorized)
+apiRequest @ queryClient.ts:18
+queryFn @ chat-page.tsx:506
+fetchFn @ query.ts:429
+run @ retryer.ts:153
+start @ retryer.ts:218
+fetch @ query.ts:540
+executeFetch_fn @ queryObserver.ts:346
+onSubscribe @ queryObserver.ts:108
+subscribe @ subscribable.ts:11
+(anonymous) @ useBaseQuery.ts:92
+subscribeToStore @ react-dom.development.js:16139
+commitHookEffectListMount @ react-dom.development.js:23189
+commitPassiveMountOnFiber @ react-dom.development.js:24965
+commitPassiveMountEffects_complete @ react-dom.development.js:24930
+commitPassiveMountEffects_begin @ react-dom.development.js:24917
+commitPassiveMountEffects @ react-dom.development.js:24905
+flushPassiveEffectsImpl @ react-dom.development.js:27078
+flushPassiveEffects @ react-dom.development.js:27023
+commitRootImpl @ react-dom.development.js:26974
+commitRoot @ react-dom.development.js:26721
+performSyncWorkOnRoot @ react-dom.development.js:26156
+flushSyncCallbacks @ react-dom.development.js:12042
+(anonymous) @ react-dom.development.js:25690
+setTimeout
+scheduleFn @ notifyManager.ts:22
+flush @ notifyManager.ts:37
+batch @ notifyManager.ts:56
+dispatch_fn @ query.ts:617
+setData @ query.ts:218
+onSuccess @ query.ts:507
+resolve @ retryer.ts:107
+Promise.then
+run @ retryer.ts:159
+start @ retryer.ts:218
+fetch @ query.ts:540
+executeFetch_fn @ queryObserver.ts:346
+onSubscribe @ queryObserver.ts:108
+subscribe @ subscribable.ts:11
+(anonymous) @ useBaseQuery.ts:92
+subscribeToStore @ react-dom.development.js:16139
+commitHookEffectListMount @ react-dom.development.js:23189
+commitPassiveMountOnFiber @ react-dom.development.js:24965
+commitPassiveMountEffects_complete @ react-dom.development.js:24930
+commitPassiveMountEffects_begin @ react-dom.development.js:24917
+commitPassiveMountEffects @ react-dom.development.js:24905
+flushPassiveEffectsImpl @ react-dom.development.js:27078
+flushPassiveEffects @ react-dom.development.js:27023
+(anonymous) @ react-dom.development.js:26808
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+queryClient.ts:25 Response status: 401
+queryClient.ts:28  Authentication error - user not authenticated
+apiRequest @ queryClient.ts:28
+await in apiRequest
+queryFn @ chat-page.tsx:506
+fetchFn @ query.ts:429
+run @ retryer.ts:153
+start @ retryer.ts:218
+fetch @ query.ts:540
+executeFetch_fn @ queryObserver.ts:346
+onSubscribe @ queryObserver.ts:108
+subscribe @ subscribable.ts:11
+(anonymous) @ useBaseQuery.ts:92
+subscribeToStore @ react-dom.development.js:16139
+commitHookEffectListMount @ react-dom.development.js:23189
+commitPassiveMountOnFiber @ react-dom.development.js:24965
+commitPassiveMountEffects_complete @ react-dom.development.js:24930
+commitPassiveMountEffects_begin @ react-dom.development.js:24917
+commitPassiveMountEffects @ react-dom.development.js:24905
+flushPassiveEffectsImpl @ react-dom.development.js:27078
+flushPassiveEffects @ react-dom.development.js:27023
+commitRootImpl @ react-dom.development.js:26974
+commitRoot @ react-dom.development.js:26721
+performSyncWorkOnRoot @ react-dom.development.js:26156
+flushSyncCallbacks @ react-dom.development.js:12042
+(anonymous) @ react-dom.development.js:25690
+setTimeout
+scheduleFn @ notifyManager.ts:22
+flush @ notifyManager.ts:37
+batch @ notifyManager.ts:56
+dispatch_fn @ query.ts:617
+setData @ query.ts:218
+onSuccess @ query.ts:507
+resolve @ retryer.ts:107
+Promise.then
+run @ retryer.ts:159
+start @ retryer.ts:218
+fetch @ query.ts:540
+executeFetch_fn @ queryObserver.ts:346
+onSubscribe @ queryObserver.ts:108
+subscribe @ subscribable.ts:11
+(anonymous) @ useBaseQuery.ts:92
+subscribeToStore @ react-dom.development.js:16139
+commitHookEffectListMount @ react-dom.development.js:23189
+commitPassiveMountOnFiber @ react-dom.development.js:24965
+commitPassiveMountEffects_complete @ react-dom.development.js:24930
+commitPassiveMountEffects_begin @ react-dom.development.js:24917
+commitPassiveMountEffects @ react-dom.development.js:24905
+flushPassiveEffectsImpl @ react-dom.development.js:27078
+flushPassiveEffects @ react-dom.development.js:27023
+(anonymous) @ react-dom.development.js:26808
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+queryClient.ts:34  API request error: Error: You must be logged in to perform this action
+    at apiRequest (queryClient.ts:29:13)
+    at async queryFn (chat-page.tsx:506:24)
+apiRequest @ queryClient.ts:34
+await in apiRequest
+queryFn @ chat-page.tsx:506
+fetchFn @ query.ts:429
+run @ retryer.ts:153
+start @ retryer.ts:218
+fetch @ query.ts:540
+executeFetch_fn @ queryObserver.ts:346
+onSubscribe @ queryObserver.ts:108
+subscribe @ subscribable.ts:11
+(anonymous) @ useBaseQuery.ts:92
+subscribeToStore @ react-dom.development.js:16139
+commitHookEffectListMount @ react-dom.development.js:23189
+commitPassiveMountOnFiber @ react-dom.development.js:24965
+commitPassiveMountEffects_complete @ react-dom.development.js:24930
+commitPassiveMountEffects_begin @ react-dom.development.js:24917
+commitPassiveMountEffects @ react-dom.development.js:24905
+flushPassiveEffectsImpl @ react-dom.development.js:27078
+flushPassiveEffects @ react-dom.development.js:27023
+commitRootImpl @ react-dom.development.js:26974
+commitRoot @ react-dom.development.js:26721
+performSyncWorkOnRoot @ react-dom.development.js:26156
+flushSyncCallbacks @ react-dom.development.js:12042
+(anonymous) @ react-dom.development.js:25690
+setTimeout
+scheduleFn @ notifyManager.ts:22
+flush @ notifyManager.ts:37
+batch @ notifyManager.ts:56
+dispatch_fn @ query.ts:617
+setData @ query.ts:218
+onSuccess @ query.ts:507
+resolve @ retryer.ts:107
+Promise.then
+run @ retryer.ts:159
+start @ retryer.ts:218
+fetch @ query.ts:540
+executeFetch_fn @ queryObserver.ts:346
+onSubscribe @ queryObserver.ts:108
+subscribe @ subscribable.ts:11
+(anonymous) @ useBaseQuery.ts:92
+subscribeToStore @ react-dom.development.js:16139
+commitHookEffectListMount @ react-dom.development.js:23189
+commitPassiveMountOnFiber @ react-dom.development.js:24965
+commitPassiveMountEffects_complete @ react-dom.development.js:24930
+commitPassiveMountEffects_begin @ react-dom.development.js:24917
+commitPassiveMountEffects @ react-dom.development.js:24905
+flushPassiveEffectsImpl @ react-dom.development.js:27078
+flushPassiveEffects @ react-dom.development.js:27023
+(anonymous) @ react-dom.development.js:26808
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+protected-route.tsx:16 ProtectedRoute /home: user=false, isLoading=false, location=/home
+protected-route.tsx:20 ProtectedRoute: Redirecting unauthenticated user from /home to /auth
+App.tsx:180 Router: Current location: /auth
+protected-route.tsx:16 ProtectedRoute /home: user=false, isLoading=false, location=/auth
+protected-route.tsx:20 ProtectedRoute: Redirecting unauthenticated user from /home to /auth
+App.tsx:354 MainApp: Auth check {user: false, isLoading: false, location: '/auth', initialLoading: false}
+10Tracking Prevention blocked access to storage for <URL>.
