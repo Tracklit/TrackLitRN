@@ -143,10 +143,12 @@ export function serveStatic(app: Express) {
     }
     
     console.log(`Serving index.html fallback for: ${req.originalUrl}`);
-    // Ensure HTML is never cached to prevent stale app issues
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    // CRITICAL: Ensure HTML is never cached to prevent stale app issues
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
+    res.setHeader('Last-Modified', new Date().toUTCString());
+    res.setHeader('ETag', Date.now().toString());
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }
