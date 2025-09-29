@@ -445,8 +445,29 @@ function MainApp() {
   }, [user, isLoading, location, initialLoading]);
   
   // Handle unauthenticated users immediately after loading - redirect to auth
+  // But only for unprotected routes - let ProtectedRoute handle its own redirects
   useEffect(() => {
-    if (!isLoading && !initialLoading && !user && location !== '/auth' && location !== '/affiliate' && !location.startsWith('/onboarding')) {
+    const protectedPaths = ['/', '/home', '/practice', '/journal-entry', '/tools', '/training-tools', '/programs', '/meets', '/connections', '/clubs', '/profile', '/timing-settings', '/admin-panel'];
+    const isProtectedPath = protectedPaths.some(path => 
+      location === path || 
+      location.startsWith('/tools/') || 
+      location.startsWith('/programs/') || 
+      location.startsWith('/meets/') || 
+      location.startsWith('/clubs/') ||
+      location.startsWith('/athletes/') ||
+      location.startsWith('/coaches/') ||
+      location.startsWith('/marketplace/') ||
+      location.startsWith('/subscription/') ||
+      location.startsWith('/spikes/') ||
+      location.startsWith('/rehab/') ||
+      location.startsWith('/sprinthia/') ||
+      location.startsWith('/video/') ||
+      location.startsWith('/arcade/') ||
+      location.startsWith('/admin-')
+    );
+    
+    // Only redirect if it's NOT a protected path and user is not authenticated
+    if (!isLoading && !initialLoading && !user && !isProtectedPath && location !== '/auth' && location !== '/affiliate' && !location.startsWith('/onboarding')) {
       console.log('MainApp: Redirecting unauthenticated user from', location, 'to /auth');
       setLocation('/auth');
     }
