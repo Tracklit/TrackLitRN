@@ -489,7 +489,7 @@ function ProgramCreatePage() {
                   </div>
                   <div>
                     <h2 className="text-base font-bold mb-1 text-white">Build With Sprinthia</h2>
-                    <p className="text-white/80 text-xs px-1 line-clamp-2 overflow-hidden">Your AI Companion</p>
+                    <p className="text-white/80 text-xs px-1 line-clamp-2 overflow-hidden">Build a text based program powered by AI. Once generated, you will be able to manually edit before saving.</p>
                     {user?.subscriptionTier === 'free' && (
                       <div className="mt-1">
                         <div className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-amber-100 text-amber-800 border border-amber-200">
