@@ -408,7 +408,7 @@ function ProgramCreatePage() {
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 border: '0.5px solid rgba(148, 163, 184, 0.25)', 
                 borderRadius: '6px',
-                boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.3), 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 15px 20px -5px rgba(0, 0, 0, 0.15)'
+                boxShadow: '0 0 10px 4px rgba(102, 126, 234, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 15px 20px -5px rgba(0, 0, 0, 0.15)'
               }}
               onClick={() => setSelectedMethod('upload')}
             >
@@ -432,7 +432,7 @@ function ProgramCreatePage() {
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 border: '0.5px solid rgba(148, 163, 184, 0.25)', 
                 borderRadius: '6px',
-                boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.3), 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 15px 20px -5px rgba(0, 0, 0, 0.15)'
+                boxShadow: '0 0 10px 4px rgba(102, 126, 234, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 15px 20px -5px rgba(0, 0, 0, 0.15)'
               }}
               onClick={() => setSelectedMethod('builder')}
             >
@@ -455,7 +455,7 @@ function ProgramCreatePage() {
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 border: '0.5px solid rgba(148, 163, 184, 0.25)', 
                 borderRadius: '6px',
-                boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.3), 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 15px 20px -5px rgba(0, 0, 0, 0.15)'
+                boxShadow: '0 0 10px 4px rgba(102, 126, 234, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 15px 20px -5px rgba(0, 0, 0, 0.15)'
               }}
               onClick={() => setSelectedMethod('text')}
             >
@@ -478,7 +478,7 @@ function ProgramCreatePage() {
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 border: '0.5px solid rgba(148, 163, 184, 0.25)', 
                 borderRadius: '6px',
-                boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.3), 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 15px 20px -5px rgba(0, 0, 0, 0.15)'
+                boxShadow: '0 0 10px 4px rgba(102, 126, 234, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 15px 20px -5px rgba(0, 0, 0, 0.15)'
               }}
               onClick={() => setSelectedMethod('sprinthia')}
             >
@@ -505,7 +505,7 @@ function ProgramCreatePage() {
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 border: '0.5px solid rgba(148, 163, 184, 0.25)', 
                 borderRadius: '6px',
-                boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.3), 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 15px 20px -5px rgba(0, 0, 0, 0.15)'
+                boxShadow: '0 0 10px 4px rgba(102, 126, 234, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 15px 20px -5px rgba(0, 0, 0, 0.15)'
               }}
               onClick={() => setSelectedMethod('import')}
             >
