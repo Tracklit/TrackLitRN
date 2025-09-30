@@ -17,7 +17,6 @@ import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AssignProgramDialog } from "@/components/assign-program-dialog-updated";
 import { SelfAssignProgramDialog } from "@/components/self-assign-program-dialog";
-import { GoogleSheetImportDialog } from "@/components/google-sheet-import-dialog";
 import { DeleteProgramDialog } from "@/components/delete-program-dialog";
 import {
   Dialog,
