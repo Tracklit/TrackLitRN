@@ -295,7 +295,7 @@ function WorkoutCard({ card, onOpenJournal }: { card: any, onOpenJournal: (date:
   const { gymData } = useGymData(card.sessionData?.dayNumber);
   
   return (
-    <div className={`p-4 bg-gradient-to-br from-blue-800 to-purple-400 ${card.isToday ? 'ring-2 ring-yellow-400' : ''}`} style={{ borderRadius: '6px', boxShadow: '0 0 8px rgba(168, 85, 247, 0.2)' }}>
+    <div className={`p-4 ${card.isToday ? 'ring-2 ring-yellow-400' : ''}`} style={{ background: 'linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%)', borderRadius: '6px', boxShadow: '0 0 8px rgba(168, 85, 247, 0.2)' }}>
       <div className="space-y-3">
         {/* Date header */}
         <div className="flex items-center justify-between mb-3">
