@@ -882,7 +882,7 @@ function PracticePage() {
   return (
     <PageContainer className="pb-24">
       {/* Fixed Header */}
-      <div className="fixed top-16 left-0 right-0 z-40 bg-gradient-to-br from-blue-800 to-purple-400 border-b shadow-sm">
+      <div className="fixed top-16 left-0 right-0 z-40 border-b shadow-sm" style={{ background: 'linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%)' }}>
         <div className="max-w-md mx-auto">
           <div className="flex items-center justify-between px-4 py-2">
             <div className="flex items-center gap-2">

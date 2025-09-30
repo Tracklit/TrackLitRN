@@ -238,11 +238,11 @@ export default function ProgramsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
       {/* Header */}
-      <div className="sticky top-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800/50">
+      <div className="sticky top-0 z-50 backdrop-blur-sm border-b border-white/10" style={{ background: 'linear-gradient(135deg, rgba(91, 33, 182, 0.95) 0%, rgba(124, 58, 237, 0.95) 100%)' }}>
         <div className="container max-w-screen-xl mx-auto px-4 py-4">
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-4">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+              <h1 className="text-2xl font-bold text-white">
                 Programs
               </h1>
             </div>
@@ -250,11 +250,11 @@ export default function ProgramsPage() {
             {/* Search and Filter Bar */}
             <div className="flex items-center gap-2 flex-wrap">
               <div className="relative flex-1 min-w-0">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/60" />
                 <Input
                   type="search"
                   placeholder="Search programs..."
-                  className="pl-10 w-full min-w-[200px] bg-gray-800/50 border-gray-700 focus:border-blue-500"
+                  className="pl-10 w-full min-w-[200px] bg-white/10 border-white/20 focus:border-white/40 text-white placeholder:text-white/60"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -262,7 +262,7 @@ export default function ProgramsPage() {
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="bg-gray-800/50 border-gray-700 hover:bg-gray-700 flex-shrink-0">
+                  <Button variant="outline" className="bg-white/10 border-white/20 hover:bg-white/20 text-white flex-shrink-0">
                     <Filter className="h-4 w-4 mr-2" />
                     Filter
                     <ChevronDown className="h-4 w-4 ml-2" />
@@ -285,12 +285,12 @@ export default function ProgramsPage() {
               </DropdownMenu>
               
               {/* View Toggle */}
-              <div className="flex items-center bg-gray-800/50 border border-gray-700 rounded-md flex-shrink-0">
+              <div className="flex items-center bg-white/10 border border-white/20 rounded-md flex-shrink-0">
                 <Button
                   variant={viewMode === "cards" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setViewMode("cards")}
-                  className={`px-3 py-1 rounded-l-md ${viewMode === "cards" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white"}`}
+                  className={`px-3 py-1 rounded-l-md ${viewMode === "cards" ? "bg-white text-purple-600" : "text-white/60 hover:text-white"}`}
                 >
                   <Grid3X3 className="h-4 w-4" />
                 </Button>
@@ -298,7 +298,7 @@ export default function ProgramsPage() {
                   variant={viewMode === "list" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setViewMode("list")}
-                  className={`px-3 py-1 rounded-r-md ${viewMode === "list" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white"}`}
+                  className={`px-3 py-1 rounded-r-md ${viewMode === "list" ? "bg-white text-purple-600" : "text-white/60 hover:text-white"}`}
                 >
                   <List className="h-4 w-4" />
                 </Button>
@@ -312,22 +312,22 @@ export default function ProgramsPage() {
       <div className="container max-w-screen-xl mx-auto px-4 py-6 pb-24">{/* Extra bottom padding for FAB */}
       
         <Tabs defaultValue="my-programs" onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full md:w-auto grid grid-cols-3 mb-8 bg-gray-800/50 border-gray-700 backdrop-blur-sm">
+          <TabsList className="w-full md:w-auto grid grid-cols-3 mb-8 backdrop-blur-sm" style={{ background: 'linear-gradient(135deg, rgba(91, 33, 182, 0.3) 0%, rgba(124, 58, 237, 0.3) 100%)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
             <TabsTrigger 
               value="my-programs" 
-              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white font-medium"
+              className="data-[state=active]:bg-white data-[state=active]:text-purple-600 font-medium text-white"
             >
               My Programs
             </TabsTrigger>
             <TabsTrigger 
               value="purchased" 
-              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white font-medium"
+              className="data-[state=active]:bg-white data-[state=active]:text-purple-600 font-medium text-white"
             >
               Purchased
             </TabsTrigger>
             <TabsTrigger 
               value="workout-library" 
-              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white font-medium"
+              className="data-[state=active]:bg-white data-[state=active]:text-purple-600 font-medium text-white"
             >
               Workout Library
             </TabsTrigger>
@@ -346,7 +346,7 @@ export default function ProgramsPage() {
                 title="No programs yet"
                 description="You haven't created any training programs yet. Get started by creating your first program."
                 action={
-                  <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                  <Button className="text-white" style={{ background: 'linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%)' }}>
                     <Plus className="h-4 w-4 mr-2" />
                     Create Program
                   </Button>
