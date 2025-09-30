@@ -434,7 +434,7 @@ export default function MeetsPage() {
                                   </DropdownMenuItem>
                                   {meet.websiteUrl && (
                                     <DropdownMenuItem 
-                                      onClick={() => window.open(meet.websiteUrl, '_blank')}
+                                      onClick={() => window.open(meet.websiteUrl || undefined, '_blank')}
                                       className="text-foreground hover:bg-primary/10 cursor-pointer"
                                     >
                                       <ExternalLink className="h-4 w-4 mr-2" />
@@ -554,7 +554,7 @@ export default function MeetsPage() {
                                   </DropdownMenuItem>
                                   {meet.websiteUrl && (
                                     <DropdownMenuItem 
-                                      onClick={() => window.open(meet.websiteUrl, '_blank')}
+                                      onClick={() => window.open(meet.websiteUrl || undefined, '_blank')}
                                       className="text-foreground hover:bg-primary/10 cursor-pointer"
                                     >
                                       <ExternalLink className="h-4 w-4 mr-2" />
