@@ -34,6 +34,8 @@ interface GoogleSheetImportDialogProps {
   buttonText?: string;
   variant?: "default" | "outline" | "ghost";
   size?: "sm" | "default" | "lg";
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const googleSheetSchema = z.object({
@@ -59,9 +61,14 @@ export function GoogleSheetImportDialog({
   buttonText = "Import from Google Sheet",
   variant = "default",
   size = "default",
+  open: externalOpen,
+  onOpenChange: externalOnOpenChange,
 }: GoogleSheetImportDialogProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const { toast } = useToast();
+  
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setOpen = externalOnOpenChange || setInternalOpen;
 
   const form = useForm<GoogleSheetFormData>({
     resolver: zodResolver(googleSheetSchema),
@@ -113,16 +120,18 @@ export function GoogleSheetImportDialog({
 
   return (
     <>
-      <Button 
-        variant={variant} 
-        size={size} 
-        className={className}
-        onClick={() => setOpen(true)}
-        data-testid="button-import-google-sheet"
-      >
-        <FileTextIcon className="mr-2 h-4 w-4" />
-        {buttonText}
-      </Button>
+      {!externalOpen && (
+        <Button 
+          variant={variant} 
+          size={size} 
+          className={className}
+          onClick={() => setOpen(true)}
+          data-testid="button-import-google-sheet"
+        >
+          <FileTextIcon className="mr-2 h-4 w-4" />
+          {buttonText}
+        </Button>
+      )}
 
       {/* Import Drawer */}
       <div className={`fixed inset-0 z-[100] flex transition-all duration-300 ease-out ${

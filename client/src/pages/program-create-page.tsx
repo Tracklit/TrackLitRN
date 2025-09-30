@@ -57,8 +57,9 @@ function ProgramCreatePage() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   
-  const [selectedMethod, setSelectedMethod] = useState<'builder' | 'upload' | 'import' | 'text' | 'sprinthia' | null>(null);
+  const [selectedMethod, setSelectedMethod] = useState<'builder' | 'upload' | 'text' | 'sprinthia' | null>(null);
   const [isNavigatingToEdit, setIsNavigatingToEdit] = useState(false);
+  const [isImportDrawerOpen, setIsImportDrawerOpen] = useState(false);
   const [formData, setFormData] = useState<CreateProgramForm>({
     title: "",
     description: "",
@@ -507,7 +508,7 @@ function ProgramCreatePage() {
                 borderRadius: '6px',
                 boxShadow: '0 0 10px 4px rgba(102, 126, 234, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 15px 20px -5px rgba(0, 0, 0, 0.15)'
               }}
-              onClick={() => setSelectedMethod('import')}
+              onClick={() => setIsImportDrawerOpen(true)}
             >
               <CardContent className="p-2.5 relative h-full flex flex-col justify-center z-10">
                 <div className="flex flex-col items-center text-center gap-3">
@@ -806,36 +807,6 @@ function ProgramCreatePage() {
               </Card>
             )}
 
-            {selectedMethod === 'import' && (
-              <Card className="border-2">
-                <CardHeader className="bg-muted/30">
-                  <CardTitle className="flex items-center">
-                    <Upload className="h-5 w-5 mr-2 text-primary" />
-                    Import from Google Sheets
-                  </CardTitle>
-                  <CardDescription>
-                    Connect your Google Sheets training program for automatic synchronization
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="text-center py-8">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Upload className="h-8 w-8 text-primary" />
-                    </div>
-                    <h3 className="text-lg font-semibold mb-2">Import Training Program</h3>
-                    <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                      Connect your Google Sheets program to automatically sync training sessions and updates
-                    </p>
-                    <GoogleSheetImportDialog 
-                      buttonText="Import from Google Sheets"
-                      variant="default"
-                      size="lg"
-                      className="min-w-[200px]"
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            )}
 
             {selectedMethod === 'text' && (
               <Card className="border-2">
@@ -1162,6 +1133,20 @@ function ProgramCreatePage() {
           </div>
         )}
       </div>
+
+      {/* Google Sheet Import Drawer */}
+      <GoogleSheetImportDialog
+        open={isImportDrawerOpen}
+        onOpenChange={setIsImportDrawerOpen}
+        onSuccess={(programId) => {
+          setIsImportDrawerOpen(false);
+          toast({
+            title: "Success",
+            description: "Program imported successfully!",
+          });
+          setLocation(`/programs/${programId}`);
+        }}
+      />
     </div>
   );
 }
