@@ -33,7 +33,7 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center">
           <Link href="/">
-            <h1 className="text-xl font-bold text-white ml-11 cursor-pointer hover:text-blue-300 transition-colors">{title}</h1>
+            <div className="ml-11 cursor-pointer"></div>
           </Link>
         </div>
         
