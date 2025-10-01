@@ -95,7 +95,12 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(import.meta.dirname, "..", "dist", "public");
+  // When running from dist/index.js in production, public folder is in dist/public
+  // When running from server/vite.ts in dev, we need to go up and into dist/public
+  const isRunningFromDist = import.meta.dirname.endsWith('dist');
+  const distPath = isRunningFromDist 
+    ? path.resolve(import.meta.dirname, "public")
+    : path.resolve(import.meta.dirname, "..", "dist", "public");
 
   if (!fs.existsSync(distPath)) {
     console.error(`CRITICAL ERROR: Build directory not found: ${distPath}`);
@@ -145,8 +150,15 @@ export function serveStatic(app: Express) {
     // Cache static assets
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     
-    // Send the file
-    res.sendFile(fullPath);
+    // Send the file with error handling
+    res.sendFile(fullPath, (err) => {
+      if (err) {
+        console.error(`Error sending file ${fullPath}:`, err.message);
+        if (!res.headersSent) {
+          res.status(500).send('Error loading asset');
+        }
+      }
+    });
   });
 
   // Serve other static files using express.static  
