@@ -185,8 +185,6 @@ export function serveStatic(app: Express) {
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
-    res.setHeader('Last-Modified', new Date().toUTCString());
-    res.setHeader('ETag', Date.now().toString());
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }
