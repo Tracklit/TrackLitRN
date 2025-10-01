@@ -48,14 +48,8 @@ async function comparePasswords(supplied: string, stored: string) {
 
 // Helper function to determine if user needs onboarding
 async function requiresOnboarding(user: User): Promise<boolean> {
-  try {
-    const profile = await storage.getAthleteProfile(user.id);
-    // User needs onboarding if they don't have a profile or missing essential data
-    return !profile || !user.username || !user.name;
-  } catch (error) {
-    // If error fetching profile, assume onboarding is needed
-    return true;
-  }
+  // User needs onboarding if they're missing essential data
+  return !user.username || !user.name;
 }
 
 export function setupAuth(app: Express) {
