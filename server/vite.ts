@@ -96,26 +96,17 @@ export async function setupVite(app: Express, server: Server) {
 
 export function serveStatic(app: Express) {
   // When running from dist/index.js in production, public folder is in dist/public
-  // When running from server/vite.ts in dev, we need to go up and into dist/public
-  const isRunningFromDist = import.meta.dirname.endsWith('dist');
-  const distPath = isRunningFromDist 
-    ? path.resolve(import.meta.dirname, "public")
-    : path.resolve(import.meta.dirname, "..", "dist", "public");
+  const distPath = path.resolve(process.cwd(), "dist", "public");
+
+  console.log(`Production static file setup:`);
+  console.log(`  - Working directory: ${process.cwd()}`);
+  console.log(`  - Module directory: ${import.meta.dirname}`);
+  console.log(`  - Calculated dist path: ${distPath}`);
+  console.log(`  - Dist path exists: ${fs.existsSync(distPath)}`);
 
   if (!fs.existsSync(distPath)) {
     console.error(`CRITICAL ERROR: Build directory not found: ${distPath}`);
-    console.error(`Current working directory: ${process.cwd()}`);
-    console.error(`__dirname: ${import.meta.dirname}`);
-    console.error(`Available files in parent directory:`, fs.readdirSync(path.resolve(import.meta.dirname, "..")));
-    
-    // FALLBACK: Serve development assets if production build missing
-    console.log('FALLBACK: Attempting to serve from client/public instead');
-    const fallbackPath = path.resolve(import.meta.dirname, "..", "client", "public");
-    if (fs.existsSync(fallbackPath)) {
-      console.log(`Using fallback path: ${fallbackPath}`);
-      app.use(express.static(fallbackPath));
-      return;
-    }
+    console.error(`Available files in cwd:`, fs.readdirSync(process.cwd()));
     
     throw new Error(
       `Could not find the build directory: ${distPath}, make sure to build the client first`,
@@ -129,10 +120,10 @@ export function serveStatic(app: Express) {
     const assetPath = req.path.substring('/assets/'.length);
     const fullPath = path.join(distPath, 'assets', assetPath);
     
-    console.log(`Direct asset request: ${req.path} -> ${fullPath}`);
-    
     if (!fs.existsSync(fullPath)) {
-      console.log(`Asset not found: ${fullPath}`);
+      console.error(`[PROD] Asset not found: ${fullPath}`);
+      console.error(`[PROD] Requested path: ${req.path}`);
+      console.error(`[PROD] Asset path: ${assetPath}`);
       return res.status(404).send('Asset not found');
     }
     
@@ -153,7 +144,8 @@ export function serveStatic(app: Express) {
     // Send the file with error handling
     res.sendFile(fullPath, (err) => {
       if (err) {
-        console.error(`Error sending file ${fullPath}:`, err.message);
+        console.error(`[PROD] Error sending file: ${fullPath}`);
+        console.error(`[PROD] Error details:`, err);
         if (!res.headersSent) {
           res.status(500).send('Error loading asset');
         }
