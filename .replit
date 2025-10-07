@@ -8,12 +8,16 @@ packages = ["atk", "ffmpeg", "gcc-unwrapped", "gdk-pixbuf", "glib", "gtk3", "ima
 
 [deployment]
 deploymentTarget = "autoscale"
-build = ["npm", "run", "build"]
-run = ["node", "dist/index.js"]
+build = ["sh", "-c", "NODE_ENV=production npm run build"]
+run = ["sh", "-c", "NODE_ENV=production node dist/index.js"]
 
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[[ports]]
+localPort = 34137
+externalPort = 3000
 
 
 
