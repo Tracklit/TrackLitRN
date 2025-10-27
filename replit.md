@@ -10,6 +10,13 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **CRITICAL: Production URL Configuration Fix (October 27, 2025)**: Resolved app not loading in production by eliminating hardcoded localhost URLs
+  - **Created URL helper utility** (`server/utils/url-helper.ts`) that automatically detects the correct base URL in both development and production
+  - **Updated password reset emails** to use dynamic URLs instead of hardcoded localhost (fixed in `server/auth.ts`)
+  - **Fixed club invite links** to use production URLs instead of localhost fallback (fixed in `server/routes.ts`)
+  - **Proper environment detection** using Replit's deployment environment variables (`REPL_SLUG`, `REPL_OWNER`, `REPLIT_DEPLOYMENT_URL`)
+  - **OAuth-ready configuration** with helper function for OAuth callback URLs supporting both dev and production
+  - **Production deployment now works correctly** with proper URL resolution for emails, invites, and OAuth flows
 - **CRITICAL: Authentication Flow Fix (September 29, 2025)**: Completely resolved authentication failures and infinite redirect loops in production
   - **Enhanced production environment detection**: Improved detection logic to properly identify production environments even when NODE_ENV isn't set to 'production'
   - **Robust session configuration**: Fixed sameSite cookie settings and proxy trust configuration for production deployment environments
