@@ -9,6 +9,7 @@ import { storage } from "./storage";
 import { User, User as SelectUser, insertUserSchema } from "@shared/schema";
 import { z } from "zod";
 import { sendEmail, generatePasswordResetToken, generatePasswordResetEmail } from "./utils/email";
+import { getBaseUrl } from "./utils/url-helper";
 
 declare global {
   namespace Express {
@@ -212,9 +213,7 @@ export function setupAuth(app: Express) {
       await storage.createPasswordResetToken(user.id, token, expiresAt);
 
       // Send email
-      const baseUrl = process.env.NODE_ENV === 'production' 
-        ? 'https://tracklit.app' 
-        : `http://localhost:${process.env.PORT || 3000}`;
+      const baseUrl = getBaseUrl();
       
       const emailContent = generatePasswordResetEmail(email, token, baseUrl);
       const emailSent = await sendEmail(emailContent);

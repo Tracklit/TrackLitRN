@@ -21,6 +21,7 @@ import { notificationSystem } from "./notification-system";
 import { worldAthleticsService } from "./world-athletics";
 import communityRoutes from "./routes/community";
 import chatRoutes from "./chat-routes-simple";
+import { getBaseUrl } from "./utils/url-helper";
 
 // Coach-athlete relationship API functions will be moved inside registerRoutes
 
@@ -2522,7 +2523,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Return the full invite link
-      const inviteLink = `${process.env.BASE_URL || 'http://localhost:5000'}/clubs/join/${inviteCode}`;
+      const inviteLink = `${getBaseUrl()}/clubs/join/${inviteCode}`;
       res.json({ inviteLink, inviteCode });
     } catch (error: any) {
       console.error("Error generating invite link:", error);
