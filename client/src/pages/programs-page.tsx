@@ -90,6 +90,10 @@ export default function ProgramsPage() {
   // Use fresh user data if available, fallback to auth user
   const activeUser = currentUser || user;
   
+  // Debug logging
+  console.log("Programs Page - activeUser:", activeUser);
+  console.log("Programs Page - isCoach check:", activeUser?.isCoach);
+  
   // Query for user's created programs
   const { 
     data: userPrograms = [], 
