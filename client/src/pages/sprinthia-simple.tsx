@@ -348,7 +348,7 @@ export default function SprinthiaSimple() {
           </div>
 
           {/* Input */}
-          <div className="p-6 border-t border-white/20 bg-transparent">
+          <div className="p-6 pb-20 border-t border-white/20 bg-transparent">
             <div className="flex gap-3 max-w-4xl mx-auto">
               <div className="flex-1 relative">
                 <Input
