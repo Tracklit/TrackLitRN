@@ -147,11 +147,12 @@ export function BottomNavigation() {
   return (
     <div 
       className={cn(
-        "fixed bottom-0 left-0 right-0 z-10 transition-transform duration-300 ease-in-out",
+        "fixed left-0 right-0 z-10 transition-transform duration-300 ease-in-out",
         isVisible ? "translate-y-0" : "translate-y-full"
       )}
+      style={{ bottom: '-5px' }}
     >
-      <nav className="bg-gray-900 shadow-lg border-t border-gray-700 h-16">
+      <nav className="bg-gray-900 shadow-lg border-t border-gray-700 h-16 pb-[5px]">
         <div className="grid grid-cols-6 h-full">
           {navItems.map((item, index) => (
             <NavItem
