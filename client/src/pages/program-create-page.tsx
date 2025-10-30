@@ -1040,10 +1040,18 @@ function ProgramCreatePage() {
                         </div>
 
                         <div className="flex flex-col gap-3">
+                          {(!formData.title || !sprinthiaData.aiPrompt) && !isGeneratingProgram && (
+                            <div className="bg-amber-900/30 border border-amber-600/50 rounded-md p-3 text-center">
+                              <p className="text-amber-200/90 text-sm font-medium">
+                                Please fill in the {!formData.title && !sprinthiaData.aiPrompt ? 'Program Title and AI Prompt' : !formData.title ? 'Program Title' : 'AI Prompt'} to generate
+                              </p>
+                            </div>
+                          )}
+                          
                           <Button 
                             onClick={generateSprinthiaProgram}
                             disabled={isGeneratingProgram || !formData.title || !sprinthiaData.aiPrompt}
-                            className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-900 font-semibold"
+                            className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-900 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                             data-testid="button-generate-sprinthia-program"
                           >
                             {isGeneratingProgram ? (
