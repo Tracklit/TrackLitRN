@@ -485,7 +485,7 @@ export default function HomePage() {
                 </Card>
               ) : (
                 <Link href={card.href} key={index}>
-                  <Card key={card.isSpecial ? `practice-${animationKey}` : index} className={`cursor-pointer shadow-2xl h-[90px] overflow-hidden group relative bg-primary/5 ${index > 0 ? 'mt-6' : ''} ${card.isSpecial && showPracticePulse ? 'practice-pulse' : ''} ${card.isSpecial ? 'gradient-border' : ''}`} style={{ border: '0.5px solid rgba(168, 85, 247, 0.25)', borderRadius: '6px' }}>
+                  <Card key={card.isSpecial ? `practice-${animationKey}` : index} className={`cursor-pointer shadow-2xl h-[90px] overflow-hidden group relative bg-primary/5 ${index > 0 ? 'mt-6' : ''} ${card.isSpecial && showPracticePulse ? 'practice-pulse' : ''} ${card.isSpecial ? 'gradient-border' : ''}`} style={card.isSpecial ? { borderRadius: '6px' } : { border: '0.5px solid rgba(168, 85, 247, 0.25)', borderRadius: '6px' }}>
                     
                     {/* Special Practice Session - Full Width */}
                     {card.isSpecial ? (
