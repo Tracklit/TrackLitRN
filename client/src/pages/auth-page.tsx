@@ -321,7 +321,7 @@ export default function AuthPage() {
           </video>
           
           {/* Swipe Bar at Bottom */}
-          <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-1.5 pointer-events-none">
+          <div className="absolute bottom-0 left-0 right-0 flex justify-center gap-1.5 pb-8 pointer-events-none">
             <button
               className="transition-all duration-200"
               style={{
