@@ -235,7 +235,7 @@ function ProgramCreatePage() {
 
   // Check subscription limits for Sprinthia
   const checkSprinthiaUsage = () => {
-    if (!user) return false;
+    if (!user) return { allowed: false, reason: 'no-user' };
     
     const tier = user.subscriptionTier || 'free';
     if (tier === 'free') {
@@ -254,7 +254,7 @@ function ProgramCreatePage() {
   };
 
   const checkRegenerationUsage = () => {
-    if (!user) return false;
+    if (!user) return { allowed: false, reason: 'no-user' };
     
     const tier = user.subscriptionTier || 'free';
     if (tier === 'free') {
