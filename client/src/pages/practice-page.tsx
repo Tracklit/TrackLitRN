@@ -291,8 +291,9 @@ function JournalEntryModal({ isOpen, onClose, date }: { isOpen: boolean; onClose
 }
 
 // Component to render workout content within each card
-function WorkoutCard({ card, onOpenJournal }: { card: any, onOpenJournal: (date: string) => void }) {
-  const { gymData } = useGymData(card.sessionData?.dayNumber);
+function WorkoutCard({ card, programId, onOpenJournal }: { card: any, programId: number | null, onOpenJournal: (date: string) => void }) {
+  const { data: gymDataResponse } = useGymData(programId, card.sessionData?.dayNumber);
+  const gymData = gymDataResponse?.gymData || [];
   
   return (
     <div className={`p-4 ${card.isToday ? 'ring-2 ring-yellow-400' : ''}`} style={{ background: 'linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%)', borderRadius: '6px', boxShadow: '0 0 8px rgba(168, 85, 247, 0.2)' }}>
@@ -309,6 +310,7 @@ function WorkoutCard({ card, onOpenJournal }: { card: any, onOpenJournal: (date:
               size="sm"
               onClick={() => onOpenJournal(card.dateString)}
               className="h-8 px-3 text-white hover:bg-white/10 text-xs"
+              data-testid="button-finish-session"
             >
               Finish
             </Button>
@@ -970,7 +972,8 @@ function PracticePage() {
                     {workoutCards.map((card) => (
                       <WorkoutCard 
                         key={card.id} 
-                        card={card} 
+                        card={card}
+                        programId={selectedProgram?.programId || null}
                         onOpenJournal={handleOpenJournal}
                       />
                     ))}
