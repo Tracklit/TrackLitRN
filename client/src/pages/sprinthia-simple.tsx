@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
-import { Header } from '@/components/layout/header';
-import { SidebarNavigation } from '@/components/layout/sidebar-navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -170,11 +168,7 @@ export default function SprinthiaSimple() {
     <div className="flex h-screen" data-sprinthia-page style={{ 
       background: 'linear-gradient(135deg, #8b5cf6 0%, #1e40af 100%)' 
     }}>
-      <SidebarNavigation />
-      
       <div className="flex-1 flex flex-col">
-        <Header />
-        
         <div className="flex-1 flex">
           {/* Conversation History Sidebar */}
           {showHistory && (
