@@ -328,6 +328,9 @@ function WorkoutCard({ card, programId, onOpenJournal }: { card: any, programId:
 function WorkoutCardContent({ sessionData, gymData }: { sessionData: any, gymData?: any }) {
   if (!sessionData) return null;
 
+  // Check if gym exercises are present
+  const hasGymExercises = gymData && gymData.length > 0;
+
   if (sessionData.isRestDay || 
       !sessionData.date || 
       sessionData.date.trim() === '' ||
@@ -363,62 +366,67 @@ function WorkoutCardContent({ sessionData, gymData }: { sessionData: any, gymDat
         </div>
       )}
 
-      {/* 60m/100m Sprint */}
-      {sessionData.shortDistanceWorkout && 
-       sessionData.shortDistanceWorkout.trim() !== "" && (
-        <div className="p-4 bg-white/10 rounded-lg">
-          <div className="flex items-start">
-            <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
-              <Circle className="h-4 w-4 text-white fill-current" />
-            </div>
-            <div className="flex-1">
-              <p className="font-medium text-sm text-white mb-1">60m/100m Sprint</p>
-              <div className="whitespace-pre-line text-sm text-white/80 leading-relaxed">
-                {sessionData.shortDistanceWorkout.replace(/^"|"$/g, '')}
+      {/* Hide distance workouts if gym exercises are present */}
+      {!hasGymExercises && (
+        <>
+          {/* 60m/100m Sprint */}
+          {sessionData.shortDistanceWorkout && 
+           sessionData.shortDistanceWorkout.trim() !== "" && (
+            <div className="p-4 bg-white/10 rounded-lg">
+              <div className="flex items-start">
+                <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
+                  <Circle className="h-4 w-4 text-white fill-current" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-sm text-white mb-1">60m/100m Sprint</p>
+                  <div className="whitespace-pre-line text-sm text-white/80 leading-relaxed">
+                    {sessionData.shortDistanceWorkout.replace(/^"|"$/g, '')}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
-      
-      {/* 200m Sprint */}
-      {sessionData.mediumDistanceWorkout && 
-       sessionData.mediumDistanceWorkout.trim() !== "" && (
-        <div className="p-4 bg-white/10 rounded-lg">
-          <div className="flex items-start">
-            <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
-              <Circle className="h-4 w-4 text-white fill-current" />
-            </div>
-            <div className="flex-1">
-              <p className="font-medium text-sm text-white mb-1">200m Sprint</p>
-              <div className="whitespace-pre-line text-sm text-white/80 leading-relaxed">
-                {sessionData.mediumDistanceWorkout.replace(/^"|"$/g, '')}
+          )}
+          
+          {/* 200m Sprint */}
+          {sessionData.mediumDistanceWorkout && 
+           sessionData.mediumDistanceWorkout.trim() !== "" && (
+            <div className="p-4 bg-white/10 rounded-lg">
+              <div className="flex items-start">
+                <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
+                  <Circle className="h-4 w-4 text-white fill-current" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-sm text-white mb-1">200m Sprint</p>
+                  <div className="whitespace-pre-line text-sm text-white/80 leading-relaxed">
+                    {sessionData.mediumDistanceWorkout.replace(/^"|"$/g, '')}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
-      
-      {/* 400m Sprint */}
-      {sessionData.longDistanceWorkout && 
-       sessionData.longDistanceWorkout.trim() !== "" && (
-        <div className="p-4 bg-white/10 rounded-lg">
-          <div className="flex items-start">
-            <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
-              <Circle className="h-4 w-4 text-white fill-current" />
-            </div>
-            <div className="flex-1">
-              <p className="font-medium text-sm text-white mb-1">400m Sprint</p>
-              <div className="whitespace-pre-line text-sm text-white/80 leading-relaxed">
-                {sessionData.longDistanceWorkout.replace(/^"|"$/g, '')}
+          )}
+          
+          {/* 400m Sprint */}
+          {sessionData.longDistanceWorkout && 
+           sessionData.longDistanceWorkout.trim() !== "" && (
+            <div className="p-4 bg-white/10 rounded-lg">
+              <div className="flex items-start">
+                <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
+                  <Circle className="h-4 w-4 text-white fill-current" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-sm text-white mb-1">400m Sprint</p>
+                  <div className="whitespace-pre-line text-sm text-white/80 leading-relaxed">
+                    {sessionData.longDistanceWorkout.replace(/^"|"$/g, '')}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+          )}
+        </>
       )}
 
       {/* Gym Exercises */}
-      {gymData && gymData.length > 0 && (
+      {hasGymExercises && (
         <div className="p-4 bg-white/10 rounded-lg">
           <div className="flex items-start">
             <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
