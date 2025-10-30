@@ -507,8 +507,9 @@ export default function ProgramsPage() {
               </DropdownMenuTrigger>
               <DropdownMenuContent 
                 align="end" 
-                className="w-56 bg-gray-800 border-gray-700 mb-4"
+                className="w-56 bg-gray-800 border-gray-700 mb-4 z-[100]"
                 data-testid="menu-create-program-options"
+                sideOffset={8}
               >
                 <DropdownMenuItem asChild>
                   <Link href="/programs/create" className="flex items-center cursor-pointer" data-testid="link-create-program">
