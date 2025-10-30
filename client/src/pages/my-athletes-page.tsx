@@ -164,7 +164,7 @@ export default function MyAthletesPage() {
                           <div className="flex items-center space-x-3">
                             <Avatar className="h-8 w-8">
                               <AvatarImage src={connection.profileImageUrl} />
-                              <AvatarFallback>{connection.name.charAt(0).toUpperCase()}</AvatarFallback>
+                              <AvatarFallback />
                             </Avatar>
                             <div>
                               <p className="font-medium text-white">{connection.name}</p>

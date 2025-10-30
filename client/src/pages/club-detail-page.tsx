@@ -620,7 +620,7 @@ export function Component() {
                           >
                             <div className={`flex ${message.userId === user?.id ? 'flex-row-reverse' : 'flex-row'} max-w-[80%] gap-2`}>
                               <Avatar className="h-8 w-8">
-                                <AvatarFallback>{message.username?.[0] || 'U'}</AvatarFallback>
+                                <AvatarFallback />
                               </Avatar>
                               <div className={`
                                 rounded-lg p-3 
@@ -704,7 +704,7 @@ export function Component() {
                           .map(member => (
                             <div key={member.id} className="flex items-center space-x-3 p-3 rounded-md bg-muted/50">
                               <Avatar>
-                                <AvatarFallback>{member.username?.[0] || 'U'}</AvatarFallback>
+                                <AvatarFallback />
                               </Avatar>
                               <div>
                                 <p className="font-medium">{member.username || 'Unknown user'}</p>
@@ -724,7 +724,7 @@ export function Component() {
                           .map(member => (
                             <div key={member.id} className="flex items-center space-x-3 p-3 rounded-md bg-muted/50">
                               <Avatar>
-                                <AvatarFallback>{member.username?.[0] || 'U'}</AvatarFallback>
+                                <AvatarFallback />
                               </Avatar>
                               <div>
                                 <p className="font-medium">{member.username || 'Unknown user'}</p>
@@ -746,7 +746,7 @@ export function Component() {
                               <div key={member.id} className="flex items-center justify-between p-3 rounded-md bg-muted/50">
                                 <div className="flex items-center space-x-3">
                                   <Avatar>
-                                    <AvatarFallback>{member.username?.[0] || 'U'}</AvatarFallback>
+                                    <AvatarFallback />
                                   </Avatar>
                                   <div>
                                     <p className="font-medium">{member.username || 'Unknown user'}</p>
