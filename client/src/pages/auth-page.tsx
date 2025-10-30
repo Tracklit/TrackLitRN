@@ -320,15 +320,28 @@ export default function AuthPage() {
             <source src={authVideoUrl} type="video/mp4" />
           </video>
           
-          {/* Swipe/Tap Instructions */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="text-white text-center space-y-4">
-              <div className="flex items-center justify-center gap-2 animate-pulse">
-                <ChevronLeft className="h-8 w-8" />
-                <span className="text-lg font-medium">Swipe left or tap to continue</span>
-                <ChevronLeft className="h-8 w-8" />
-              </div>
-            </div>
+          {/* Swipe Bar at Bottom */}
+          <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-1.5 pointer-events-none">
+            <button
+              className="transition-all duration-200"
+              style={{
+                width: '20px',
+                height: '6px',
+                borderRadius: '3px',
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              }}
+              aria-label="Current view"
+            />
+            <button
+              className="transition-all duration-200"
+              style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '3px',
+                backgroundColor: 'rgba(255, 255, 255, 0.3)',
+              }}
+              aria-label="Go to auth"
+            />
           </div>
         </div>
       )}
