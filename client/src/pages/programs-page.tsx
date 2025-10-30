@@ -496,7 +496,7 @@ export default function ProgramsPage() {
               </Link>
             </Button>
           ) : (
-            <DropdownMenu>
+            <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button 
                   className="h-14 w-14 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
@@ -506,10 +506,11 @@ export default function ProgramsPage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent 
+                side="top"
                 align="end" 
-                className="w-56 bg-gray-800 border-gray-700 mb-4 z-[100]"
+                className="w-56 bg-gray-800 border-gray-700"
                 data-testid="menu-create-program-options"
-                sideOffset={8}
+                sideOffset={16}
               >
                 <DropdownMenuItem asChild>
                   <Link href="/programs/create" className="flex items-center cursor-pointer" data-testid="link-create-program">
