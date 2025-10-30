@@ -529,7 +529,7 @@ export default function ProgramsPage() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/profile/settings" className="flex items-center cursor-pointer" data-testid="link-switch-coach">
+                  <Link href="/profile" className="flex items-center cursor-pointer" data-testid="link-switch-coach">
                     <UserPlus className="h-4 w-4 mr-3" />
                     Switch to Coach account
                   </Link>
