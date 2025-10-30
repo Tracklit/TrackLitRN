@@ -301,7 +301,7 @@ export default function AuthPage() {
 
   return (
     <>
-      {/* Video Overlay on Left Side */}
+      {/* Video Overlay */}
       {showVideo && (
         <div 
           className="fixed inset-0 z-50 bg-black flex items-center justify-center cursor-pointer"
@@ -310,24 +310,46 @@ export default function AuthPage() {
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-full object-cover"
-          >
-            <source src={authVideoUrl} type="video/mp4" />
-          </video>
-          
-          {/* Swipe/Tap Instructions */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="text-white text-center space-y-4">
-              <div className="flex items-center justify-center gap-2 animate-pulse">
-                <ChevronLeft className="h-8 w-8" />
-                <span className="text-lg font-medium">Swipe left or tap to continue</span>
-                <ChevronLeft className="h-8 w-8" />
-              </div>
+          <div className="relative w-full h-full flex items-center justify-center">
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="max-w-full max-h-full object-contain"
+            >
+              <source src={authVideoUrl} type="video/mp4" />
+            </video>
+            
+            {/* Swipe Bar at Bottom */}
+            <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-1.5 pointer-events-none">
+              <div
+                className="transition-all duration-200"
+                style={{
+                  width: '20px',
+                  height: '3px',
+                  borderRadius: '3px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                }}
+              />
+              <div
+                className="transition-all duration-200"
+                style={{
+                  width: '6px',
+                  height: '3px',
+                  borderRadius: '3px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                }}
+              />
+              <div
+                className="transition-all duration-200"
+                style={{
+                  width: '6px',
+                  height: '3px',
+                  borderRadius: '3px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                }}
+              />
             </div>
           </div>
         </div>
