@@ -329,7 +329,7 @@ export default function HomePage() {
     },
     {
       title: "Sprinthia",
-      description: "World's First AI Track Coach & Companion",
+      description: "Your track AI companion",
       icon: <MessageCircle className="h-6 w-6 text-primary" />,
       href: "/sprinthia",
       disabled: false,
