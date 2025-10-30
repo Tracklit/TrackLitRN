@@ -30,6 +30,16 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { GoogleSheetImportDialog } from "@/components/google-sheet-import-dialog";
 
 interface CreateProgramForm {
@@ -1154,6 +1164,67 @@ function ProgramCreatePage() {
           setLocation(`/programs/${programId}`);
         }}
       />
+
+      {/* Usage Limit Modal */}
+      <AlertDialog open={showUsageLimitModal} onOpenChange={setShowUsageLimitModal}>
+        <AlertDialogContent className="bg-slate-900 border-slate-700">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-amber-100">
+              Subscription Required
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-300">
+              {usageLimitType === 'creation' ? (
+                user?.subscriptionTier === 'free' ? (
+                  <>
+                    Sprinthia AI program generation is available for Pro and Star subscribers only.
+                    <br /><br />
+                    <strong>Upgrade to unlock:</strong>
+                    <ul className="list-disc list-inside mt-2 space-y-1">
+                      <li><strong>Pro:</strong> 3 AI program creations per month + 3 regenerations</li>
+                      <li><strong>Star:</strong> 12 AI program creations per month + 12 regenerations</li>
+                    </ul>
+                  </>
+                ) : (
+                  <>
+                    You've reached your monthly limit of {user?.subscriptionTier === 'pro' ? '3' : '12'} AI program creations.
+                    <br /><br />
+                    Your limit will reset at the beginning of next month.
+                    {user?.subscriptionTier === 'pro' && ' Or upgrade to Star for 12 creations per month!'}
+                  </>
+                )
+              ) : (
+                user?.subscriptionTier === 'free' ? (
+                  <>
+                    Program regeneration is available for Pro and Star subscribers only.
+                    <br /><br />
+                    Upgrade to unlock unlimited improvements to your AI-generated programs.
+                  </>
+                ) : (
+                  <>
+                    You've reached your monthly limit of {user?.subscriptionTier === 'pro' ? '3' : '12'} regenerations.
+                    <br /><br />
+                    Your limit will reset at the beginning of next month.
+                  </>
+                )
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-slate-800 border-slate-600 text-slate-100 hover:bg-slate-700">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                setShowUsageLimitModal(false);
+                setLocation('/profile');
+              }}
+              className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-900"
+            >
+              View Subscription Plans
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
