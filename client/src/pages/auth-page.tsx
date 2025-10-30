@@ -16,10 +16,10 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Terminal } from 'lucide-react';
+import { Terminal, ChevronLeft } from 'lucide-react';
 import { signInWithGoogle } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
-import authVideoUrl from '@assets/THE ULTIMATE TOOLKIT FOR TRACK & FIELD_1761861653988.mp4';
+import authVideoUrl from '@assets/THE ULTIMATE TOOLKIT FOR TRACK & FIELD (1)_1761862317351.mp4';
 
 // Extend the schemas with validation
 const loginFormSchema = z.object({
@@ -55,8 +55,31 @@ export default function AuthPage() {
   const [resetPasswordMessage, setResetPasswordMessage] = useState<string>('');
   const [isSubmittingResetPassword, setIsSubmittingResetPassword] = useState(false);
   const [isVerifyingToken, setIsVerifyingToken] = useState(false);
-  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
+  const [showVideo, setShowVideo] = useState(true);
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
   const { toast } = useToast();
+
+  // Handle swipe gestures
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStart - touchEnd > 75) {
+      // Swiped left
+      setShowVideo(false);
+    }
+  };
+
+  // Handle tap to dismiss
+  const handleVideoTap = () => {
+    setShowVideo(false);
+  };
 
   // Check for reset token in URL on component mount
   useEffect(() => {
@@ -278,18 +301,35 @@ export default function AuthPage() {
 
   return (
     <>
-      {/* Loading Video Overlay */}
-      {!isVideoLoaded && (
-        <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
+      {/* Video Overlay on Left Side */}
+      {showVideo && (
+        <div 
+          className="fixed inset-0 z-50 bg-black flex items-center justify-center cursor-pointer"
+          onClick={handleVideoTap}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           <video
             autoPlay
+            loop
             muted
             playsInline
             className="w-full h-full object-cover"
-            onCanPlayThrough={() => setIsVideoLoaded(true)}
           >
             <source src={authVideoUrl} type="video/mp4" />
           </video>
+          
+          {/* Swipe/Tap Instructions */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="text-white text-center space-y-4">
+              <div className="flex items-center justify-center gap-2 animate-pulse">
+                <ChevronLeft className="h-8 w-8" />
+                <span className="text-lg font-medium">Swipe left or tap to continue</span>
+                <ChevronLeft className="h-8 w-8" />
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
