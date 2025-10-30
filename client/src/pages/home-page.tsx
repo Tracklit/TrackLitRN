@@ -40,7 +40,6 @@ import {
 import { useAuth } from '@/hooks/use-auth';
 import { CreateMeetModal } from '@/components/create-meet-modal';
 import { cn } from '@/lib/utils';
-import { useAssignedPrograms } from '@/hooks/use-assigned-programs';
 import { useProgramSessions } from '@/hooks/use-program-sessions';
 import { SimpleWorkoutLike } from '@/components/workout-reactions';
 // import { useTicker } from '@/contexts/ticker-context';
@@ -188,11 +187,14 @@ export default function HomePage() {
     backgroundImage5
   ];
 
-  // Get assigned programs data - replicate practice page logic
-  const { assignedPrograms, isLoading: isLoadingPrograms } = useAssignedPrograms();
+  // Get purchased programs data (includes assigned, purchased, and created programs)
+  const { data: purchasedPrograms = [], isLoading: isLoadingPrograms } = useQuery<any[]>({
+    queryKey: ['/api/purchased-programs'],
+    enabled: !!user,
+  });
   
-  // Use the same selectedProgram logic as practice page
-  const selectedProgram = assignedPrograms && assignedPrograms.length > 0 ? assignedPrograms[0] : null;
+  // Use the same selectedProgram logic as practice page - get the first available program
+  const selectedProgram = purchasedPrograms.length > 0 ? purchasedPrograms[0] : null;
   
   // Fetch program sessions exactly like practice page
   const { 
