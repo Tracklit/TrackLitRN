@@ -5422,6 +5422,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get current user's own subscription offering (as coach)
+  app.get("/api/my-subscription", async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const coachId = req.user!.id;
+      
+      const subscription = await db.select()
+        .from(userSubscriptions)
+        .where(and(
+          eq(userSubscriptions.coachId, coachId),
+          eq(userSubscriptions.isActive, true)
+        ))
+        .limit(1);
+      
+      if (subscription.length === 0) {
+        return res.json(null);
+      }
+      
+      res.json(subscription[0]);
+    } catch (error: any) {
+      console.error("Error fetching my subscription:", error);
+      res.status(500).json({ error: "Error fetching subscription" });
+    }
+  });
+
   // Create or update coach's subscription offering
   app.post("/api/subscriptions", async (req: Request, res: Response) => {
     try {

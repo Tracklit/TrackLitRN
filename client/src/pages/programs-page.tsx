@@ -85,7 +85,6 @@ export default function ProgramsPage() {
     staleTime: 0,
     refetchOnMount: "always",
     refetchOnWindowFocus: true,
-    keepPreviousData: true, // Prevent flicker
   });
 
   // Use fresh user data if available, fallback to auth user
@@ -131,7 +130,19 @@ export default function ProgramsPage() {
   });
 
   // Query for coach's subscription offering
-  const { data: mySubscription } = useQuery({
+  const { data: mySubscription } = useQuery<{
+    id: number;
+    coachId: number;
+    title: string;
+    description: string | null;
+    priceAmount: number;
+    priceCurrency: string;
+    priceInterval: string;
+    includedPrograms: string[];
+    isActive: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+  } | null>({
     queryKey: ["/api/my-subscription"],
     enabled: !!user,
   });
