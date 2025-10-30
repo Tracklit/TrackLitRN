@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "TrackLit Mobile",
+    "slug": "tracklit-mobile",
+    "scheme": "tracklitmobile",
+    "version": "1.0.0",
+    "sdkVersion": "51.0.0",
+    "platforms": ["ios", "android"],
+    "ios": {
+      "bundleIdentifier": "com.tracklit.mobile",
+      "supportsTablet": true,
+      "deploymentTarget": "14.0"
+    },
+    "android": {
+      "package": "com.tracklit.app"
+    }
+  }
+}

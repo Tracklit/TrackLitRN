@@ -7,6 +7,7 @@ export const colors = {
   primaryForeground: '#000000', // hsl(0, 0%, 0%)
   secondary: '#E2994B', // hsl(38, 92%, 50%) - Deep gold  
   secondaryForeground: '#000000', // hsl(0, 0%, 0%)
+  deepGold: '#E2994B', // alias for secondary used in some components
   accent: '#F5C842', // hsl(45, 93%, 58%) - Gold
   accentForeground: '#000000', // hsl(0, 0%, 0%)
   
@@ -81,6 +82,12 @@ export const gradients = {
     start: {x: 0, y: 0},
     end: {x: 1, y: 1},
   }
+};
+
+// Backward-compatible alias for existing screens that use theme.gradient
+export const gradient = {
+  background: gradients.background.colors,
+  locations: gradients.background.locations,
 };
 
 // Spacing system - consistent with web app (8px base unit)
@@ -194,6 +201,7 @@ export const layout = {
 export default {
   colors,
   gradients,
+  gradient,
   spacing,
   borderRadius,
   typography,

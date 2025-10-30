@@ -5,9 +5,11 @@ import {
   ViewStyle,
   TouchableOpacity,
   TouchableOpacityProps,
+  TextStyle,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import theme from '@/utils/theme';
+import { Text } from './Text';
 
 interface CardProps extends TouchableOpacityProps {
   children: React.ReactNode;
@@ -35,12 +37,12 @@ interface CardFooterProps {
 
 interface CardTitleProps {
   children: React.ReactNode;
-  style?: ViewStyle;
+  style?: TextStyle;
 }
 
 interface CardDescriptionProps {
   children: React.ReactNode;
-  style?: ViewStyle;
+  style?: TextStyle;
 }
 
 export const Card: React.FC<CardProps> = ({ 
@@ -110,15 +112,15 @@ export const CardFooter: React.FC<CardFooterProps> = ({ children, style }) => (
 );
 
 export const CardTitle: React.FC<CardTitleProps> = ({ children, style }) => (
-  <View style={[styles.cardTitle, style]}>
+  <Text variant="h4" weight="semiBold" style={[styles.cardTitle, style]}>
     {children}
-  </View>
+  </Text>
 );
 
 export const CardDescription: React.FC<CardDescriptionProps> = ({ children, style }) => (
-  <View style={[styles.cardDescription, style]}>
+  <Text variant="body" color="secondary" style={[styles.cardDescription, style]}>
     {children}
-  </View>
+  </Text>
 );
 
 const styles = StyleSheet.create({
