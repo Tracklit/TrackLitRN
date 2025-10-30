@@ -122,11 +122,6 @@ export default function WorkoutToolsPage() {
                   <div className="absolute inset-0 bg-background/50"></div>
                   <CardContent className="p-2.5 relative h-full flex flex-col justify-center">
                     <div className="flex flex-col items-center text-center gap-2">
-                      <div className="p-1.5 rounded-full bg-muted border border-muted">
-                        <div className="h-3 w-3 flex items-center justify-center text-muted-foreground">
-                          {card.icon}
-                        </div>
-                      </div>
                       <div>
                         <div className="flex items-center justify-center gap-1">
                           <h2 className="text-base font-bold mb-0.5 text-muted-foreground">{card.title}</h2>
@@ -169,11 +164,6 @@ export default function WorkoutToolsPage() {
                   {/* Content Area */}
                   <CardContent className="p-2.5 relative h-full flex flex-col justify-center z-10">
                     <div className="flex flex-col items-center text-center gap-3">
-                      {/* Icon at top */}
-                      <div className="flex justify-center">
-                        {card.icon}
-                      </div>
-                      
                       {/* Title and description */}
                       <div>
                         <h2 className="text-base font-bold mb-1 text-white">{card.title}</h2>
