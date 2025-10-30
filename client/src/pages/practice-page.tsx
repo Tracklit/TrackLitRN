@@ -331,6 +331,30 @@ function WorkoutCardContent({ sessionData, gymData }: { sessionData: any, gymDat
   // Check if gym exercises are present
   const hasGymExercises = gymData && gymData.length > 0;
 
+  // Extract gym number from session data
+  const extractGymNumber = () => {
+    const fields = [
+      sessionData.shortDistanceWorkout,
+      sessionData.mediumDistanceWorkout,
+      sessionData.longDistanceWorkout,
+      sessionData.preActivation1,
+      sessionData.preActivation2,
+      sessionData.extraSession
+    ];
+
+    for (const field of fields) {
+      if (field && typeof field === 'string') {
+        const match = field.match(/Gym\s*(\d+)/i);
+        if (match && match[1]) {
+          return match[1];
+        }
+      }
+    }
+    return null;
+  };
+
+  const gymNumber = extractGymNumber();
+
   if (sessionData.isRestDay || 
       !sessionData.date || 
       sessionData.date.trim() === '' ||
@@ -433,7 +457,9 @@ function WorkoutCardContent({ sessionData, gymData }: { sessionData: any, gymDat
               <Circle className="h-4 w-4 text-white fill-current" />
             </div>
             <div className="flex-1">
-              <p className="font-medium text-sm text-white mb-1">Gym Exercises</p>
+              <p className="font-medium text-sm text-white mb-1">
+                {gymNumber ? `Gym ${gymNumber}` : 'Gym Exercises'}
+              </p>
               <div className="space-y-2">
                 {gymData.map((exercise: string, index: number) => (
                   <div key={index} className="text-sm text-white/80 leading-relaxed">
