@@ -498,12 +498,12 @@ export default function ProgramsPage() {
           ) : (
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
-                <Button 
-                  className="h-14 w-14 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
+                <button 
+                  className="h-14 w-14 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center"
                   data-testid="button-create-program-menu"
                 >
-                  <Plus className="h-6 w-6" />
-                </Button>
+                  <Plus className="h-6 w-6 text-white" />
+                </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent 
                 side="top"
