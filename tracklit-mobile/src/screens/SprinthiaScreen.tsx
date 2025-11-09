@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 
 import { Text } from '../components/ui/Text';
 import { Card, CardContent } from '../components/ui/Card';
@@ -119,7 +119,7 @@ export const SprinthiaScreen: React.FC = () => {
               colors={[theme.colors.primary, theme.colors.deepGold]}
               style={styles.aiAvatar}
             >
-              <FontAwesome5 name="robot" size={24} color="white" />
+              <FontAwesome5 name="robot" size={24} color="white" solid />
             </LinearGradient>
           </View>
           <View style={styles.headerText}>
@@ -223,7 +223,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   return (
     <View style={styles.aiMessageContainer}>
       <View style={styles.aiAvatarSmall}>
-        <FontAwesome5 name="robot" size={16} color={theme.colors.primary} />
+        <FontAwesome5 name="robot" size={16} color={theme.colors.primary} solid />
       </View>
       <View style={styles.aiMessageBubble}>
         <Text variant="body" color="foreground">

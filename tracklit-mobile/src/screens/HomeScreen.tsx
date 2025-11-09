@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Text } from '../components/ui/Text';
-import Icon from 'react-native-vector-icons/FontAwesome5';
+import Icon from '@expo/vector-icons/FontAwesome5';
 import theme from '../utils/theme';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -107,6 +107,7 @@ const DashboardCardComponent: React.FC<DashboardCardProps> = ({ card, onPress })
           name="chevron-right"
           size={theme.iconSizes.sm}
           color={theme.colors.primary}
+          solid
         />
       </View>
     </LinearGradient>

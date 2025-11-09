@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 
 import { Text } from '../components/ui/Text';
 import { Card, CardContent } from '../components/ui/Card';
@@ -75,7 +75,7 @@ export const StopwatchScreen: React.FC = () => {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton}>
-            <FontAwesome5 name="arrow-left" size={20} color={theme.colors.foreground} />
+            <FontAwesome5 name="arrow-left" size={20} color={theme.colors.foreground} solid />
           </TouchableOpacity>
           <Text variant="h2" weight="bold" color="foreground">
             Stopwatch
@@ -103,7 +103,7 @@ export const StopwatchScreen: React.FC = () => {
                 style={styles.startButton}
                 data-testid="button-start"
               >
-                <FontAwesome5 name="play" size={20} color="white" />
+                <FontAwesome5 name="play" size={20} color="white" solid />
                 <Text variant="body" weight="bold" color="primary-foreground" style={styles.buttonText}>
                   Start
                 </Text>
@@ -116,7 +116,7 @@ export const StopwatchScreen: React.FC = () => {
                 style={styles.pauseButton}
                 data-testid="button-pause"
               >
-                <FontAwesome5 name="pause" size={20} color={theme.colors.foreground} />
+                <FontAwesome5 name="pause" size={20} color={theme.colors.foreground} solid />
                 <Text variant="body" weight="bold" color="foreground" style={styles.buttonText}>
                   Pause
                 </Text>
@@ -130,7 +130,7 @@ export const StopwatchScreen: React.FC = () => {
               style={styles.resetButton}
               data-testid="button-reset"
             >
-              <FontAwesome5 name="redo" size={18} color={theme.colors.foreground} />
+              <FontAwesome5 name="redo" size={18} color={theme.colors.foreground} solid />
               <Text variant="body" weight="bold" color="foreground" style={styles.buttonText}>
                 Reset
               </Text>
@@ -145,7 +145,7 @@ export const StopwatchScreen: React.FC = () => {
               style={styles.lapButton}
               data-testid="button-lap"
             >
-              <FontAwesome5 name="flag" size={16} color={theme.colors.primary} />
+              <FontAwesome5 name="flag" size={16} color={theme.colors.primary} solid />
               <Text variant="body" weight="medium" color="primary" style={styles.buttonText}>
                 Lap
               </Text>

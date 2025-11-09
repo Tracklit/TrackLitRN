@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 
 import { Text } from '../components/ui/Text';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
@@ -142,7 +142,7 @@ export const PracticeScreen: React.FC = () => {
           colors={[theme.colors.primary, theme.colors.deepGold]}
           style={styles.fabGradient}
         >
-          <FontAwesome5 name="plus" size={20} color={theme.colors.primaryForeground} />
+          <FontAwesome5 name="plus" size={20} color={theme.colors.primaryForeground} solid />
         </LinearGradient>
       </TouchableOpacity>
     </LinearGradient>
@@ -216,7 +216,7 @@ const WorkoutsTab: React.FC<WorkoutsTabProps> = ({ workouts }) => {
             <View style={styles.workoutDetails}>
               {workout.distance && (
                 <View style={styles.workoutStat}>
-                  <FontAwesome5 name="route" size={14} color={theme.colors.textMuted} />
+                  <FontAwesome5 name="route" size={14} color={theme.colors.textMuted} solid />
                   <Text variant="small" color="muted" style={styles.statText}>
                     {workout.distance}
                   </Text>
@@ -225,7 +225,7 @@ const WorkoutsTab: React.FC<WorkoutsTabProps> = ({ workouts }) => {
               
               {workout.sets && (
                 <View style={styles.workoutStat}>
-                  <FontAwesome5 name="repeat" size={14} color={theme.colors.textMuted} />
+                  <FontAwesome5 name="redo" size={14} color={theme.colors.textMuted} />
                   <Text variant="small" color="muted" style={styles.statText}>
                     {workout.sets} sets
                   </Text>
@@ -266,7 +266,7 @@ const JournalTab: React.FC = () => (
           style={styles.journalButton}
           data-testid="button-add-journal-entry"
         >
-          <FontAwesome5 name="pen" size={16} color={theme.colors.primary} />
+          <FontAwesome5 name="pen" size={16} color={theme.colors.primary} solid />
           <Text variant="body" weight="medium" color="primary" style={styles.journalButtonText}>
             Add Journal Entry
           </Text>

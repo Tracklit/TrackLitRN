@@ -11,6 +11,7 @@
     "build": "npx react-native build-android"
   },
   "dependencies": {
+    "@expo/vector-icons": "^15.0.3",
     "@hookform/resolvers": "^3.10.0",
     "@react-native-async-storage/async-storage": "^2.1.0",
     "@react-native-community/slider": "^4.5.7",
@@ -44,6 +45,7 @@
     "@babel/core": "^7.20.0",
     "@babel/preset-env": "^7.20.0",
     "@babel/runtime": "^7.20.0",
+    "@react-native-community/cli": "latest",
     "@react-native/eslint-config": "^0.76.0",
     "@react-native/metro-config": "^0.76.0",
     "@react-native/typescript-config": "^0.76.0",

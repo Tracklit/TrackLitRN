@@ -1502,27 +1502,8 @@ PODS:
     - React-utils (= 0.74.7)
   - RNCAsyncStorage (2.2.0):
     - React-Core
-  - RNGestureHandler (2.29.0):
-    - DoubleConversion
-    - glog
-    - hermes-engine
-    - RCT-Folly (= 2024.01.01.00)
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Codegen
+  - RNGestureHandler (2.10.0):
     - React-Core
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-rendererdebug
-    - React-utils
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - Yoga
   - RNReanimated (3.10.1):
     - DoubleConversion
     - glog
@@ -1544,7 +1525,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNScreens (4.18.0):
+  - RNScreens (3.29.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1560,7 +1541,6 @@ PODS:
     - React-ImageManager
     - React-NativeModulesApple
     - React-RCTFabric
-    - React-RCTImage
     - React-rendererdebug
     - React-utils
     - ReactCommon/turbomodule/bridging
@@ -1571,7 +1551,7 @@ PODS:
     - RNSound/Core (= 0.11.2)
   - RNSound/Core (0.11.2):
     - React-Core
-  - RNSVG (15.14.0):
+  - RNSVG (14.1.0):
     - React-Core
   - RNVectorIcons (10.3.0):
     - DoubleConversion
@@ -1922,11 +1902,11 @@ SPEC CHECKSUMS:
   React-utils: 005eaf562b377922d8cf8a5e433046185e479796
   ReactCommon: 788c996e0ae30635a67c2567db2e21f459bcd632
   RNCAsyncStorage: b44e8a4e798c3e1f56bffccd0f591f674fb9198f
-  RNGestureHandler: 73558c34ce2fd43e072a943d21ab90a09549a897
+  RNGestureHandler: 29236562de02ae3411b827cac405403a2251894b
   RNReanimated: def444e044c354f38bb0a5926a8583ba19d944c1
-  RNScreens: 656c69a4870be23beedc8716743b90731e59a3dd
+  RNScreens: 5d770465a09cbb7cf83e2ad43d6f049b52e62bad
   RNSound: 314cc5226453ef4a3314a196c65e8a65e5106a7b
-  RNSVG: 197ddaa1219171ebb0542bc4d10bcde7d6f39f57
+  RNSVG: 6d5ed33b6635ed6d6ecb50744dcf127580c39ed5
   RNVectorIcons: 1b7e9f6a06b5572f3b4e313320b5e566def26c7f
   SocketRocket: abac6f5de4d4d62d24e11868d7a2f427e0ef940d
   Yoga: 9db4b2da1ed5d8e0c94158f9ac379c8b1b529f59

@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 
 import { Text } from '../components/ui/Text';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
@@ -166,7 +166,7 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({ programs }) => {
   if (programs.length === 0) {
     return (
       <View style={styles.emptyState}>
-        <FontAwesome5 name="clipboard-list" size={48} color={theme.colors.textMuted} />
+        <FontAwesome5 name="clipboard-list" size={48} color={theme.colors.textMuted} solid />
         <Text variant="h4" weight="semibold" color="foreground" style={styles.emptyTitle}>
           No Programs Yet
         </Text>

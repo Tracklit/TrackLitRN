@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 
 import { Text } from '../components/ui/Text';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
@@ -213,13 +213,13 @@ const UpcomingMeetsTab: React.FC<UpcomingMeetsTabProps> = ({ meets }) => {
             </View>
             <View style={styles.meetMeta}>
               <View style={styles.meetInfo}>
-                <FontAwesome5 name="calendar" size={14} color={theme.colors.textMuted} />
+                <FontAwesome5 name="calendar" size={14} color={theme.colors.textMuted} solid />
                 <Text variant="small" color="muted" style={styles.metaText}>
                   {meet.date}
                 </Text>
               </View>
               <View style={styles.meetInfo}>
-                <FontAwesome5 name="map-marker-alt" size={14} color={theme.colors.textMuted} />
+                <FontAwesome5 name="map-marker-alt" size={14} color={theme.colors.textMuted} solid />
                 <Text variant="small" color="muted" style={styles.metaText}>
                   {meet.location}
                 </Text>
@@ -255,7 +255,7 @@ const UpcomingMeetsTab: React.FC<UpcomingMeetsTabProps> = ({ meets }) => {
             <View style={styles.meetActions}>
               {meet.registered ? (
                 <Badge variant="success" size="md">
-                  <FontAwesome5 name="check" size={12} color={theme.colors.destructiveForeground} />
+                  <FontAwesome5 name="check" size={12} color={theme.colors.destructiveForeground} solid />
                   <Text variant="small" weight="medium" style={styles.registeredText}>
                     Registered
                   </Text>
@@ -297,7 +297,7 @@ const CalendarTab: React.FC = () => (
           Calendar view with meet dates and training schedule coming soon.
         </Text>
         <Button variant="outline" style={styles.calendarButton}>
-          <FontAwesome5 name="calendar-plus" size={16} color={theme.colors.primary} />
+          <FontAwesome5 name="calendar-plus" size={16} color={theme.colors.primary} solid />
           <Text variant="body" weight="medium" color="primary" style={styles.calendarButtonText}>
             Add to Calendar
           </Text>
