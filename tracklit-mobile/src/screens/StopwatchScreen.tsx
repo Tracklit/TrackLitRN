@@ -157,7 +157,7 @@ export const StopwatchScreen: React.FC = () => {
         {laps.length > 0 && (
           <Card style={styles.lapsCard}>
             <CardContent>
-              <Text variant="h4" weight="semibold" color="foreground" style={styles.lapsTitle}>
+              <Text variant="h4" weight="semiBold" color="foreground" style={styles.lapsTitle}>
                 Lap Times
               </Text>
               <View style={styles.lapsList}>

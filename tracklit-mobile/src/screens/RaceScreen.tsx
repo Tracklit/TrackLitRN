@@ -4,6 +4,7 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -274,6 +275,7 @@ const UpcomingMeetsTab: React.FC<UpcomingMeetsTabProps> = ({ meets }) => {
               <Button 
                 variant="outline" 
                 size="sm"
+                onPress={() => Alert.alert('Meet Details', 'Detailed view coming soon!')}
                 data-testid={`button-view-meet-${meet.id}`}
               >
                 View Details

@@ -19,7 +19,11 @@ interface RegisterFormData {
   confirmPassword: string;
 }
 
-export const RegisterForm: React.FC = () => {
+interface RegisterFormProps {
+  onSwitchToLogin?: () => void;
+}
+
+export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
   const { register } = useAuth();
   const [formData, setFormData] = useState<RegisterFormData>({
     name: '',
@@ -210,7 +214,7 @@ export const RegisterForm: React.FC = () => {
         <Text variant="small" color="muted">
           Already have an account?{' '}
         </Text>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={onSwitchToLogin} data-testid="link-switch-to-login">
           <Text variant="small" color="primary" weight="medium">
             Log in
           </Text>

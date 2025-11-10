@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   TouchableOpacity,
-  Text,
+  Text as RNText,
   StyleSheet,
   ActivityIndicator,
   TouchableOpacityProps,
@@ -11,8 +11,9 @@ import {
 import theme from '@/utils/theme';
 
 interface ButtonProps extends TouchableOpacityProps {
-  title: string;
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive';
+  title?: string;
+  children?: React.ReactNode;
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive' | 'default';
   size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
   disabled?: boolean;
@@ -22,6 +23,7 @@ interface ButtonProps extends TouchableOpacityProps {
 
 export const Button: React.FC<ButtonProps> = ({
   title,
+  children,
   variant = 'primary',
   size = 'md',
   loading = false,
@@ -47,6 +49,19 @@ export const Button: React.FC<ButtonProps> = ({
     textStyle,
   ];
 
+  const content = loading ? (
+    <ActivityIndicator 
+      color={variant === 'outline' || variant === 'ghost' ? theme.colors.primary : theme.colors.primaryForeground}
+      size="small"
+    />
+  ) : (
+    children !== undefined
+      ? (typeof children === 'string' || typeof children === 'number'
+          ? <RNText style={textStyleCombined}>{children}</RNText>
+          : children)
+      : <RNText style={textStyleCombined}>{title}</RNText>
+  );
+
   return (
     <TouchableOpacity
       style={buttonStyle}
@@ -54,14 +69,7 @@ export const Button: React.FC<ButtonProps> = ({
       disabled={disabled || loading}
       {...props}
     >
-      {loading ? (
-        <ActivityIndicator 
-          color={variant === 'outline' || variant === 'ghost' ? theme.colors.primary : theme.colors.primaryForeground}
-          size="small"
-        />
-      ) : (
-        <Text style={textStyleCombined}>{title}</Text>
-      )}
+      {content}
     </TouchableOpacity>
   );
 };
@@ -94,6 +102,10 @@ const styles = StyleSheet.create({
   
   // Variants
   primary: {
+    backgroundColor: theme.colors.primary,
+    borderWidth: 0,
+  },
+  default: {
     backgroundColor: theme.colors.primary,
     borderWidth: 0,
   },
@@ -132,6 +144,9 @@ const styles = StyleSheet.create({
   
   // Text variants
   primaryText: {
+    color: theme.colors.primaryForeground,
+  },
+  defaultText: {
     color: theme.colors.primaryForeground,
   },
   secondaryText: {

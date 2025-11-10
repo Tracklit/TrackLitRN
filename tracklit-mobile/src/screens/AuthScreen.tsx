@@ -91,7 +91,11 @@ export const AuthScreen: React.FC = () => {
 
             {/* Form Content */}
             <View style={styles.formContainer}>
-              {activeTab === 'login' ? <LoginForm /> : <RegisterForm />}
+              {activeTab === 'login' ? (
+                <LoginForm onSwitchToRegister={() => setActiveTab('register')} />
+              ) : (
+                <RegisterForm onSwitchToLogin={() => setActiveTab('login')} />
+              )}
             </View>
           </Card>
 
@@ -133,7 +137,7 @@ interface FeatureItemProps {
 
 const FeatureItem: React.FC<FeatureItemProps> = ({ title, description }) => (
   <View style={styles.featureItem}>
-    <Text variant="body" weight="semibold" color="primary" style={styles.featureTitle}>
+    <Text variant="body" weight="semiBold" color="primary" style={styles.featureTitle}>
       {title}
     </Text>
     <Text variant="small" color="muted" style={styles.featureDescription}>

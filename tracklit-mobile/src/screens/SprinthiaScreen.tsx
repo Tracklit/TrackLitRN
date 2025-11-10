@@ -138,6 +138,7 @@ export const SprinthiaScreen: React.FC = () => {
         style={styles.messagesContainer}
         contentContainerStyle={styles.messagesContent}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         {messages.map((message) => (
           <MessageBubble key={message.id} message={message} />
@@ -178,6 +179,7 @@ export const SprinthiaScreen: React.FC = () => {
               placeholderTextColor={theme.colors.textMuted}
               multiline
               maxLength={500}
+              autoFocus
               data-testid="input-message"
             />
             <TouchableOpacity

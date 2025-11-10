@@ -32,7 +32,7 @@ const AppContent: React.FC = () => {
 
     switch (currentScreen) {
       case 'Home':
-        return <HomeScreen />;
+        return <HomeScreen onNavigate={handleNavigation} />;
       case 'Practice':
         return <PracticeScreen />;
       case 'Programs':

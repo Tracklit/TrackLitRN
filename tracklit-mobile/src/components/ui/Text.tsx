@@ -4,7 +4,7 @@ import theme from '@/utils/theme';
 
 interface TextProps extends RNTextProps {
   variant?: 'h1' | 'h2' | 'h3' | 'h4' | 'body' | 'caption' | 'small';
-  color?: 'primary' | 'secondary' | 'muted' | 'accent' | 'destructive' | 'success' | 'warning';
+  color?: 'primary' | 'secondary' | 'muted' | 'accent' | 'destructive' | 'success' | 'warning' | 'foreground' | 'primary-foreground';
   weight?: 'light' | 'regular' | 'medium' | 'semiBold' | 'bold' | 'extraBold';
   center?: boolean;
   children: React.ReactNode;
@@ -91,6 +91,12 @@ const styles = StyleSheet.create({
   },
   warning: {
     color: theme.colors.warning,
+  },
+  foreground: {
+    color: theme.colors.foreground,
+  },
+  'primary-foreground': {
+    color: theme.colors.primaryForeground,
   },
   
   // Weights

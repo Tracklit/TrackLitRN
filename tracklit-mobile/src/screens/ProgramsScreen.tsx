@@ -140,7 +140,10 @@ export const ProgramsScreen: React.FC = () => {
 
         {/* Content */}
         {activeTab === 'my-programs' ? (
-          <MyProgramsTab programs={myPrograms} />
+          <MyProgramsTab
+            programs={myPrograms}
+            onBrowseMarketplace={() => setActiveTab('marketplace')}
+          />
         ) : (
           <MarketplaceTab programs={marketplacePrograms} />
         )}
@@ -151,9 +154,10 @@ export const ProgramsScreen: React.FC = () => {
 
 interface MyProgramsTabProps {
   programs: Program[];
+  onBrowseMarketplace?: () => void;
 }
 
-const MyProgramsTab: React.FC<MyProgramsTabProps> = ({ programs }) => {
+const MyProgramsTab: React.FC<MyProgramsTabProps> = ({ programs, onBrowseMarketplace }) => {
   const getLevelColor = (level: Program['level']) => {
     switch (level) {
       case 'Beginner': return 'success';
@@ -167,13 +171,18 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({ programs }) => {
     return (
       <View style={styles.emptyState}>
         <FontAwesome5 name="clipboard-list" size={48} color={theme.colors.textMuted} solid />
-        <Text variant="h4" weight="semibold" color="foreground" style={styles.emptyTitle}>
+        <Text variant="h4" weight="semiBold" color="foreground" style={styles.emptyTitle}>
           No Programs Yet
         </Text>
         <Text variant="body" color="muted" style={styles.emptyDescription}>
           Browse the marketplace to find training programs that match your goals.
         </Text>
-        <Button variant="outline" style={styles.emptyButton}>
+        <Button
+          variant="outline"
+          style={styles.emptyButton}
+          onPress={onBrowseMarketplace}
+          data-testid="button-browse-marketplace"
+        >
           Browse Marketplace
         </Button>
       </View>

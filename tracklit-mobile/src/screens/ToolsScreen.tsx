@@ -194,7 +194,7 @@ export const ToolsScreen: React.FC = () => {
                   
                   {/* Tool Info */}
                   <View style={styles.toolInfo}>
-                    <Text variant="body" weight="semibold" color="foreground">
+                    <Text variant="body" weight="semiBold" color="foreground">
                       {tool.title}
                     </Text>
                     <Text variant="small" color="muted" style={styles.toolDescription}>

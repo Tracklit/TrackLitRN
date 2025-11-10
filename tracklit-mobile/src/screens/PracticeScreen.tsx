@@ -276,7 +276,7 @@ const JournalTab: React.FC = () => (
     
     {/* Recent Entries Placeholder */}
     <View style={styles.recentEntries}>
-      <Text variant="h4" weight="semibold" color="foreground" style={styles.recentTitle}>
+      <Text variant="h4" weight="semiBold" color="foreground" style={styles.recentTitle}>
         Recent Entries
       </Text>
       <Text variant="body" color="muted" style={styles.noEntries}>
