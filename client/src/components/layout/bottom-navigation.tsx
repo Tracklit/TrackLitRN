@@ -98,9 +98,6 @@ function NavItem({ href, icon, title, isActive, onClick, showBadge, badgeCount, 
           {icon}
         </div>
         <span className="font-medium" style={{ fontSize: '8px' }}>{title}</span>
-        {disabled && (
-          <span className="text-[6px] text-gray-500 bg-gray-800 px-1 rounded mt-0.5">Soon</span>
-        )}
       </div>
       {showBadge && badgeCount && badgeCount > 0 && !disabled && (
         <Badge 

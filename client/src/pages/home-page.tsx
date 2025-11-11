@@ -314,18 +314,18 @@ export default function HomePage() {
       disabled: false
     },
     {
-      title: "Race",
-      description: "Coming Soon",
-      icon: <Trophy className="h-6 w-6 text-primary" />,
-      href: "/meets",
-      disabled: true
-    },
-    {
       title: "Tools",
       description: "Training and performance tools",
       icon: <Clock className="h-6 w-6 text-primary" />,
       href: "/training-tools",
       disabled: false
+    },
+    {
+      title: "Race",
+      description: "Coming Soon",
+      icon: <Trophy className="h-6 w-6 text-primary" />,
+      href: "/meets",
+      disabled: true
     },
     {
       title: "Sprinthia",
