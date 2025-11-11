@@ -315,10 +315,10 @@ export default function HomePage() {
     },
     {
       title: "Race",
-      description: raceDescription,
+      description: "Coming Soon",
       icon: <Trophy className="h-6 w-6 text-primary" />,
       href: "/meets",
-      disabled: false
+      disabled: true
     },
     {
       title: "Tools",
@@ -329,10 +329,10 @@ export default function HomePage() {
     },
     {
       title: "Sprinthia",
-      description: "Your track AI companion",
+      description: "Coming Soon",
       icon: <MessageCircle className="h-6 w-6 text-primary" />,
       href: "/sprinthia",
-      disabled: false,
+      disabled: true,
       showStar: true
     }
   ];

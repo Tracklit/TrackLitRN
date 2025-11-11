@@ -21,37 +21,43 @@ const navItems = [
     title: "Home", 
     href: "/", 
     icon: <FontAwesomeIcon icon={faHome} className="h-4 w-4" />,
-    key: "dashboard"
+    key: "dashboard",
+    disabled: false
   },
   { 
     title: "Practice", 
     href: "/practice", 
     icon: <FontAwesomeIcon icon={faCalendarDays} className="h-4 w-4" />,
-    key: "practice"
+    key: "practice",
+    disabled: false
   },
   { 
     title: "Programs", 
     href: "/programs", 
     icon: <FontAwesomeIcon icon={faBook} className="h-4 w-4" />,
-    key: "programs"
+    key: "programs",
+    disabled: false
   },
   { 
     title: "Race", 
     href: "/meets", 
     icon: <FontAwesomeIcon icon={faTrophy} className="h-4 w-4" />,
-    key: "race"
+    key: "race",
+    disabled: true
   },
   { 
     title: "Tools", 
     href: "/training-tools", 
     icon: <FontAwesomeIcon icon={faImage} className="h-4 w-4" />,
-    key: "tools"
+    key: "tools",
+    disabled: false
   },
   { 
     title: "Sprinthia", 
     href: "/sprinthia", 
     icon: <span className="text-xs font-bold">AI</span>,
-    key: "sprinthia"
+    key: "sprinthia",
+    disabled: true
   }
 ];
 
@@ -63,38 +69,57 @@ interface NavItemProps {
   onClick?: () => void;
   showBadge?: boolean;
   badgeCount?: number;
+  disabled?: boolean;
 }
 
-function NavItem({ href, icon, title, isActive, onClick, showBadge, badgeCount }: NavItemProps) {
+function NavItem({ href, icon, title, isActive, onClick, showBadge, badgeCount, disabled }: NavItemProps) {
   
   const handleClick = (e: React.MouseEvent) => {
+    if (disabled) {
+      e.preventDefault();
+      return;
+    }
     if (onClick) onClick();
   };
 
-  return (
-    <Link href={href}>
-      <div 
-        className="flex flex-col items-center justify-center h-full px-2 cursor-pointer transition-colors relative"
-        onClick={handleClick}
-      >
-        <div className={cn(
-          "transition-colors duration-200 flex flex-col items-center gap-1",
-          isActive ? "text-accent" : "text-gray-300"
-        )}>
-          <div className="flex items-center justify-center">
-            {icon}
-          </div>
-          <span className="font-medium" style={{ fontSize: '8px' }}>{title}</span>
+  const content = (
+    <div 
+      className={cn(
+        "flex flex-col items-center justify-center h-full px-2 transition-colors relative",
+        disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+      )}
+      onClick={handleClick}
+    >
+      <div className={cn(
+        "transition-colors duration-200 flex flex-col items-center gap-1",
+        disabled ? "text-gray-500" : (isActive ? "text-accent" : "text-gray-300")
+      )}>
+        <div className="flex items-center justify-center">
+          {icon}
         </div>
-        {showBadge && badgeCount && badgeCount > 0 && (
-          <Badge 
-            variant="destructive" 
-            className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs font-medium min-w-[20px] rounded-full"
-          >
-            {badgeCount > 99 ? '99+' : badgeCount}
-          </Badge>
+        <span className="font-medium" style={{ fontSize: '8px' }}>{title}</span>
+        {disabled && (
+          <span className="text-[6px] text-gray-500 bg-gray-800 px-1 rounded mt-0.5">Soon</span>
         )}
       </div>
+      {showBadge && badgeCount && badgeCount > 0 && !disabled && (
+        <Badge 
+          variant="destructive" 
+          className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs font-medium min-w-[20px] rounded-full"
+        >
+          {badgeCount > 99 ? '99+' : badgeCount}
+        </Badge>
+      )}
+    </div>
+  );
+
+  if (disabled) {
+    return content;
+  }
+
+  return (
+    <Link href={href}>
+      {content}
     </Link>
   );
 }
@@ -163,6 +188,7 @@ export function BottomNavigation() {
               isActive={index === currentIndex}
               showBadge={false}
               badgeCount={undefined}
+              disabled={item.disabled}
             />
           ))}
         </div>
