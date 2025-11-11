@@ -175,47 +175,38 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               <p className="text-xs text-gray-400 px-4 font-medium">COMPETITION</p>
             </div>
 
-            <Link href="/meets">
-              <div
-                className={cn(
-                  "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
-                  location === "/meets" ? "bg-primary text-primary-foreground" : "text-gray-300"
-                )}
-                onClick={() => setIsOpen(false)}
-              >
+            <div
+              className="flex items-center justify-between px-4 py-2 rounded-md text-xs font-medium text-gray-500 opacity-50 cursor-not-allowed"
+            >
+              <div className="flex items-center">
                 <FontAwesomeIcon icon={faTrophy} className="h-4 w-4 mr-3" />
                 Meets
               </div>
-            </Link>
-            <Link href="/results">
-              <div
-                className={cn(
-                  "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
-                  location === "/results" ? "bg-primary text-primary-foreground" : "text-gray-300"
-                )}
-                onClick={() => setIsOpen(false)}
-              >
+              <span className="text-[10px] text-gray-500 bg-gray-800 px-2 py-0.5 rounded">Coming Soon</span>
+            </div>
+            <div
+              className="flex items-center justify-between px-4 py-2 rounded-md text-xs font-medium text-gray-500 opacity-50 cursor-not-allowed"
+            >
+              <div className="flex items-center">
                 <FontAwesomeIcon icon={faChartLine} className="h-4 w-4 mr-3" />
                 Results
               </div>
-            </Link>
+              <span className="text-[10px] text-gray-500 bg-gray-800 px-2 py-0.5 rounded">Coming Soon</span>
+            </div>
             
             {/* Marketplace Section */}
             <div className="pt-4 pb-2">
               <p className="text-xs text-gray-400 px-4 font-medium">MARKETPLACE</p>
             </div>
-            <Link href="/marketplace">
-              <div
-                className={cn(
-                  "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
-                  location.startsWith("/marketplace") ? "bg-primary text-primary-foreground" : "text-gray-300"
-                )}
-                onClick={() => setIsOpen(false)}
-              >
+            <div
+              className="flex items-center justify-between px-4 py-2 rounded-md text-xs font-medium text-gray-500 opacity-50 cursor-not-allowed"
+            >
+              <div className="flex items-center">
                 <FontAwesomeIcon icon={faShoppingCart} className="h-4 w-4 mr-3" />
                 Marketplace
               </div>
-            </Link>
+              <span className="text-[10px] text-gray-500 bg-gray-800 px-2 py-0.5 rounded">Coming Soon</span>
+            </div>
             
             {/* Social Section */}
             <div className="pt-4 pb-2">
@@ -260,18 +251,15 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               </Link>
             )}
             {(currentUser as any)?.isCoach && (
-              <Link href="/roster-stats">
-                <div
-                  className={cn(
-                    "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
-                    location === "/roster-stats" ? "bg-primary text-primary-foreground" : "text-gray-300"
-                  )}
-                  onClick={() => setIsOpen(false)}
-                >
+              <div
+                className="flex items-center justify-between px-4 py-2 rounded-md text-xs font-medium text-gray-500 opacity-50 cursor-not-allowed"
+              >
+                <div className="flex items-center">
                   <FontAwesomeIcon icon={faChartLine} className="h-4 w-4 mr-3" />
                   Roster Stats
                 </div>
-              </Link>
+                <span className="text-[10px] text-gray-500 bg-gray-800 px-2 py-0.5 rounded">Coming Soon</span>
+              </div>
             )}
             <Link href="/athletes">
               <div
@@ -299,18 +287,15 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                 Coaches
               </div>
             </Link>
-            <Link href="/groups">
-              <div
-                className={cn(
-                  "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
-                  location === "/groups" ? "bg-primary text-primary-foreground" : "text-gray-300"
-                )}
-                onClick={() => setIsOpen(false)}
-              >
+            <div
+              className="flex items-center justify-between px-4 py-2 rounded-md text-xs font-medium text-gray-500 opacity-50 cursor-not-allowed"
+            >
+              <div className="flex items-center">
                 <FontAwesomeIcon icon={faUsers} className="h-4 w-4 mr-3" />
                 Groups
               </div>
-            </Link>
+              <span className="text-[10px] text-gray-500 bg-gray-800 px-2 py-0.5 rounded">Coming Soon</span>
+            </div>
             
             {/* Admin Section - Only show for admin users */}
             {(currentUser as any)?.role === 'admin' && (
