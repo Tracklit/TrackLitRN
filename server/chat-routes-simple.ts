@@ -103,12 +103,17 @@ router.get("/api/chat/groups/debug", async (req: Request, res: Response) => {
 
 // Get unread message counts per group for user
 router.get("/api/chat/groups/unread-counts", async (req: Request, res: Response) => {
+  console.log('=== UNREAD COUNTS API CALLED ===');
+  console.log('Authenticated:', req.isAuthenticated());
+  
   if (!req.isAuthenticated()) {
+    console.log('Not authenticated, returning 401');
     return res.sendStatus(401);
   }
   
   try {
     const userId = req.user!.id;
+    console.log('Getting unread counts for user:', userId);
     
     // Get unread message counts for each group where user is a member
     const unreadCounts = await db.execute(sql`
@@ -125,12 +130,15 @@ router.get("/api/chat/groups/unread-counts", async (req: Request, res: Response)
       GROUP BY cgm.group_id
     `);
     
+    console.log('Unread counts query result:', unreadCounts.rows);
+    
     // Transform to object for easy lookup
     const unreadCountsMap = unreadCounts.rows.reduce((acc: any, row: any) => {
       acc[row.group_id] = Number(row.unread_count);
       return acc;
     }, {});
     
+    console.log('Returning unread counts map:', unreadCountsMap);
     res.json(unreadCountsMap);
   } catch (error) {
     console.error("Error fetching unread counts:", error);
@@ -399,8 +407,10 @@ router.get("/api/chat/groups/:groupId", async (req: Request, res: Response) => {
     const memberIds = (group as any).member_ids || [];
     const isMember = Array.isArray(memberIds) ? memberIds.includes(userId) : false;
     const isCreator = (group as any).creator_id === userId;
+    const isPublic = !(group as any).is_private;
     
-    if (!isMember && !isCreator) {
+    // Allow access if user is member, creator, or group is public
+    if (!isMember && !isCreator && !isPublic) {
       return res.status(403).json({ error: "Not a member of this group" });
     }
 
@@ -883,10 +893,10 @@ router.get("/api/chat/groups/:groupId/messages", async (req: Request, res: Respo
       return res.status(400).json({ error: "Invalid group ID" });
     }
 
-    // Check if user is a member of this group using the member_ids array
+    // Check if user is a member OR if it's a public group
     const groupCheck = await db.execute(sql`
-      SELECT member_ids FROM chat_groups 
-      WHERE id = ${groupId} AND ${userId} = ANY(member_ids)
+      SELECT member_ids, is_private FROM chat_groups 
+      WHERE id = ${groupId} AND (${userId} = ANY(member_ids) OR is_private = false)
     `);
 
     if (groupCheck.rows.length === 0) {
@@ -1030,10 +1040,10 @@ router.post("/api/chat/groups/:groupId/messages", upload.single('media'), async 
       return res.status(400).json({ error: "Message text or media is required" });
     }
 
-    // Check if user is a member of this group using the member_ids array
+    // Check if user is a member OR if it's a public group (allow posting to public channels)
     const groupCheck = await db.execute(sql`
-      SELECT member_ids FROM chat_groups 
-      WHERE id = ${groupId} AND ${userId} = ANY(member_ids)
+      SELECT member_ids, is_private FROM chat_groups 
+      WHERE id = ${groupId} AND (${userId} = ANY(member_ids) OR is_private = false)
     `);
 
     if (groupCheck.rows.length === 0) {

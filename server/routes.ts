@@ -2930,37 +2930,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============ TELEGRAM-STYLE CHAT SYSTEM API ROUTES ============
 
   // Chat Groups Management - Handled by chat-routes-simple.ts with FormData support
-
-  // Chat groups route moved to chat-routes-simple.ts
-
-  app.get("/api/chat/groups/:groupId", async (req: Request, res: Response) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    
-    try {
-      const groupId = parseInt(req.params.groupId);
-      const userId = req.user!.id;
-
-      if (isNaN(groupId)) {
-        return res.status(400).json({ error: "Invalid group ID" });
-      }
-
-      // Check if user is a member
-      const isMember = await dbStorage.isUserInChatGroup(userId, groupId);
-      if (!isMember) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-
-      const group = await dbStorage.getChatGroup(groupId);
-      if (!group) {
-        return res.status(404).json({ error: "Group not found" });
-      }
-
-      res.json(group);
-    } catch (error) {
-      console.error("Error fetching chat group:", error);
-      res.status(500).json({ error: "Failed to fetch group" });
-    }
-  });
+  // All /api/chat/groups routes moved to chat-routes-simple.ts
 
   app.post("/api/chat/groups/:groupId/join", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
@@ -3030,30 +3000,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/chat/groups/:groupId/members", async (req: Request, res: Response) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    
-    try {
-      const groupId = parseInt(req.params.groupId);
-      const userId = req.user!.id;
-
-      if (isNaN(groupId)) {
-        return res.status(400).json({ error: "Invalid group ID" });
-      }
-
-      // Check if user is a member
-      const isMember = await dbStorage.isUserInChatGroup(userId, groupId);
-      if (!isMember) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-
-      const members = await dbStorage.getChatGroupMembers(groupId);
-      res.json(members);
-    } catch (error) {
-      console.error("Error fetching group members:", error);
-      res.status(500).json({ error: "Failed to fetch members" });
-    }
-  });
+  // GET /api/chat/groups/:groupId/members moved to chat-routes-simple.ts
 
   // Get unread chat count across all channels
   app.get("/api/chat/unread-count", async (req: Request, res: Response) => {
