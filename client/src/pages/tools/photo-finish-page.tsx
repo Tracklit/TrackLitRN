@@ -407,26 +407,24 @@ export default function PhotoFinishPage() {
                 </div>
 
                 {/* Empty thumbnail slots */}
-                {savedVideos.length < tierLimit && (
-                  <div className="grid grid-cols-5 gap-3">
-                    {Array.from({ length: tierLimit }).map((_, i) => (
-                      <div
-                        key={i}
-                        className={`aspect-video rounded-xl border-2 border-dashed transition-all duration-300 ${
-                          i < savedVideos.length
-                            ? 'border-purple-600/50 bg-purple-950/30'
-                            : 'border-gray-700/50 bg-gray-900/30 hover:border-purple-500/30 hover:bg-purple-950/10'
-                        }`}
-                      >
-                        {i < savedVideos.length && (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <div className="h-2 w-2 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 shadow-lg shadow-purple-500/50" />
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <div className="grid grid-cols-5 gap-3">
+                  {Array.from({ length: savedVideos.length === 0 ? 1 : tierLimit }).map((_, i) => (
+                    <div
+                      key={i}
+                      className={`aspect-video rounded-xl border-2 border-dashed transition-all duration-300 ${
+                        i < savedVideos.length
+                          ? 'border-purple-600/50 bg-purple-950/30'
+                          : 'border-gray-700/50 bg-gray-900/30 hover:border-purple-500/30 hover:bg-purple-950/10'
+                      }`}
+                    >
+                      {i < savedVideos.length && (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <div className="h-2 w-2 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 shadow-lg shadow-purple-500/50" />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
 
                 {/* Video list */}
                 {isLoadingVideos ? (
