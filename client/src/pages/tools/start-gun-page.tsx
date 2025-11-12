@@ -801,27 +801,32 @@ export default function StartGunPage() {
               </div>
             </div>
 
-            {/* Large Start Button with Gradient Glow */}
-            <div className="flex justify-center mb-8">
+            {/* Control Buttons - Start and Stop Separate */}
+            <div className="flex justify-center gap-4 mb-8">
+              {/* Start Button */}
               <div className="relative">
-                {!isPlaying && (
+                {!isPlaying && !isStarting && (
                   <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-xl opacity-50 animate-pulse"></div>
                 )}
                 <button
-                  onClick={isPlaying ? cancelSequence : startSequence}
-                  disabled={isStarting}
-                  data-testid={isPlaying ? "button-stop-gun" : "button-start-gun"}
-                  className={`relative w-40 h-40 rounded-full font-bold text-white shadow-2xl transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none ${
-                    isPlaying 
-                      ? 'bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700' 
-                      : 'bg-gradient-to-br from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
-                  }`}
+                  onClick={startSequence}
+                  disabled={isPlaying || isStarting}
+                  data-testid="button-start-gun"
+                  className={`relative w-36 h-36 rounded-full font-bold text-white shadow-2xl transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none bg-gradient-to-br from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700`}
                 >
-                  {isPlaying ? (
-                    <StopCircle className="h-16 w-16" />
-                  ) : (
-                    <Play className="h-16 w-16" style={{ marginLeft: '4px' }} />
-                  )}
+                  <Play className="h-14 w-14" style={{ marginLeft: '4px' }} />
+                </button>
+              </div>
+              
+              {/* Stop Button - Always visible, enabled when playing */}
+              <div className="relative">
+                <button
+                  onClick={cancelSequence}
+                  disabled={!isPlaying && !isStarting}
+                  data-testid="button-stop-gun"
+                  className={`relative w-36 h-36 rounded-full font-bold text-white shadow-2xl transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700`}
+                >
+                  <StopCircle className="h-14 w-14" />
                 </button>
               </div>
             </div>
