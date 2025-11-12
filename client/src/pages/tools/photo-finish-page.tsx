@@ -406,24 +406,36 @@ export default function PhotoFinishPage() {
                   </div>
                 </div>
 
-                {/* Empty thumbnail slots */}
+                {/* Thumbnail slots */}
                 <div className="grid grid-cols-5 gap-3">
-                  {Array.from({ length: savedVideos.length === 0 ? 1 : tierLimit }).map((_, i) => (
-                    <div
-                      key={i}
-                      className={`aspect-video rounded-xl border-2 border-dashed transition-all duration-300 ${
-                        i < savedVideos.length
-                          ? 'border-purple-600/50 bg-purple-950/30'
-                          : 'border-gray-700/50 bg-gray-900/30 hover:border-purple-500/30 hover:bg-purple-950/10'
-                      }`}
-                    >
-                      {i < savedVideos.length && (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <div className="h-2 w-2 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 shadow-lg shadow-purple-500/50" />
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                  {Array.from({ length: savedVideos.length === 0 ? 1 : tierLimit }).map((_, i) => {
+                    const video = savedVideos[i];
+                    return (
+                      <div
+                        key={i}
+                        className={`aspect-video rounded-xl border-2 transition-all duration-300 overflow-hidden ${
+                          video
+                            ? 'border-purple-600/50 bg-purple-950/30 cursor-pointer hover:border-purple-500 hover:scale-105'
+                            : 'border-dashed border-gray-700/50 bg-gray-900/30 hover:border-purple-500/30 hover:bg-purple-950/10'
+                        }`}
+                        onClick={() => video && loadSavedVideo(video)}
+                      >
+                        {video ? (
+                          video.thumbnail ? (
+                            <img
+                              src={video.thumbnail}
+                              alt={video.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-900/30 to-pink-900/30">
+                              <Video className="h-4 w-4 text-purple-400" />
+                            </div>
+                          )
+                        ) : null}
+                      </div>
+                    );
+                  })}
                 </div>
 
                 {/* Video list */}
