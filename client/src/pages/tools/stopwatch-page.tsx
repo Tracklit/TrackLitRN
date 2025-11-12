@@ -343,15 +343,6 @@ export default function StopwatchPage() {
           </button>
         </div>
 
-        {/* Volume Button Tip */}
-        {showTip && (
-          <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4 mb-8 backdrop-blur-xl">
-            <p className="text-sm text-blue-300 text-center">
-              💡 Pro tip: Use your volume up button to start/stop the timer hands-free
-            </p>
-          </div>
-        )}
-
         {/* Laps Section */}
         {laps.length > 0 && (
           <div className="bg-slate-800/30 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-6 shadow-xl">
