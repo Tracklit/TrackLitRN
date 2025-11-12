@@ -147,18 +147,16 @@ export default function PhotoFinishFullscreen({
   const handleTimelineInteraction = (clientX: number, element: HTMLDivElement, deltaX?: number) => {
     if (isTimelineLocked && deltaX !== undefined) {
       // When locked, adjust the scroll position
-      setTimelineScrollPosition(prev => {
-        const sensitivity = 0.01; // Adjust sensitivity of scrolling
-        const timeShift = -deltaX * sensitivity; // Negative because dragging right should move timeline left
-        const newPosition = prev + timeShift;
-        // Clamp between 0 and duration
-        return Math.max(0, Math.min(duration - 0.01, newPosition));
-      });
+      const sensitivity = 0.01; // Adjust sensitivity of scrolling
+      const timeShift = -deltaX * sensitivity; // Negative because dragging right should move timeline left
+      const newPosition = Math.max(0, Math.min(duration - 0.01, timelineScrollPosition + timeShift));
+      
+      setTimelineScrollPosition(newPosition);
       
       // Update video time based on scroll position
-      if (videoRef.current && timelineScrollPosition >= 0 && timelineScrollPosition <= duration) {
-        videoRef.current.currentTime = timelineScrollPosition;
-        setCurrentTime(timelineScrollPosition);
+      if (videoRef.current && newPosition >= 0 && newPosition <= duration) {
+        videoRef.current.currentTime = newPosition;
+        setCurrentTime(newPosition);
       }
     } else {
       // Default behavior: move the time indicator
@@ -816,6 +814,11 @@ export default function PhotoFinishFullscreen({
             <div
               ref={timelineRef}
               className={`h-full relative ${isTimelineLocked ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}`}
+              style={isTimelineLocked ? {
+                transform: `translateX(${-(timelineScrollPosition / duration) * 100}%)`,
+                transition: isDragging ? 'none' : 'transform 0.1s ease-out',
+                width: '200%'
+              } : {}}
               onMouseDown={handleTimelineMouseDown}
               onMouseMove={(e) => {
                 handleTimelineMouseMove(e);
