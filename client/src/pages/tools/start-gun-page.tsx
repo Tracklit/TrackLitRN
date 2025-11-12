@@ -83,10 +83,10 @@ export default function StartGunPage() {
         // Set up audio context for potential use - needed for oscillator fallback
         audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
         
-        // Preload audio files with proper deployment paths
-        marksAudioRef.current = new Audio('/On Your Marks.mp3');
-        setAudioRef.current = new Audio('/Set.mp3');
-        bangAudioRef.current = new Audio('/Bang.mp3');
+        // Preload audio files with proper deployment paths (lowercase for consistency)
+        marksAudioRef.current = new Audio('/on-your-marks.mp3');
+        setAudioRef.current = new Audio('/set.mp3');
+        bangAudioRef.current = new Audio('/bang.mp3');
         
         // Configure audio elements for Samsung device compatibility
         [marksAudioRef.current, setAudioRef.current, bangAudioRef.current].forEach(audio => {
@@ -204,7 +204,14 @@ export default function StartGunPage() {
   
   // Function to play audio - optimized for Samsung/Android devices
   const playAudio = (audioType: 'marks' | 'set' | 'bang', onEnded?: () => void) => {
-    if (isMuted) return;
+    if (isMuted) {
+      // Even when muted, we need to trigger the callback for timing purposes
+      if (onEnded) {
+        const estimatedDurations = { marks: 2000, set: 1000, bang: 500 };
+        setTimeout(onEnded, estimatedDurations[audioType]);
+      }
+      return;
+    }
     
     // Ensure audio context is resumed (critical for Samsung devices)
     if (audioContext.current && audioContext.current.state === 'suspended') {
@@ -255,9 +262,8 @@ export default function StartGunPage() {
       audioElement.currentTime = 0;
       audioElement.volume = volume / 100;
       
-      // Remove any existing event listeners to prevent duplicates
-      audioElement.removeEventListener('ended', audioElement.onended as any);
-      audioElement.removeEventListener('error', audioElement.onerror as any);
+      // Note: We can't remove anonymous listeners, so we'll rely on the hasCompleted flag
+      // to prevent duplicate callbacks
       
       // Set up completion detection with multiple fallbacks for Samsung devices
       let hasCompleted = false;
@@ -526,7 +532,7 @@ export default function StartGunPage() {
       console.log("'On your marks' audio ended, waiting for delay");
       
       // After the marks audio completes, wait for the set delay
-      setTimeout(() => {
+      timerRefs.current.setTimer = setTimeout(() => {
         if (sequenceCancelledRef.current) return;
         setStatus('set');
         
@@ -608,33 +614,32 @@ export default function StartGunPage() {
     // Clear the active audio elements array
     activeAudioElements.current = [];
     
-    // Also stop the preloaded audio refs if they exist and remove their listeners
+    // Also stop the preloaded audio refs if they exist
+    // Note: We can't effectively remove anonymous listeners, but the hasCompleted flag
+    // in playAudioInternal will prevent callbacks from firing
     if (marksAudioRef.current) {
-      marksAudioRef.current.pause();
-      marksAudioRef.current.currentTime = 0;
-      // Remove all event listeners
-      const marks = marksAudioRef.current;
-      marks.removeEventListener('ended', marks.onended as any);
-      marks.removeEventListener('error', marks.onerror as any);
-      marks.removeEventListener('pause', marks.onpause as any);
+      try {
+        marksAudioRef.current.pause();
+        marksAudioRef.current.currentTime = 0;
+      } catch (e) {
+        console.log("Error stopping marks audio:", e);
+      }
     }
     if (setAudioRef.current) {
-      setAudioRef.current.pause();
-      setAudioRef.current.currentTime = 0;
-      // Remove all event listeners
-      const set = setAudioRef.current;
-      set.removeEventListener('ended', set.onended as any);
-      set.removeEventListener('error', set.onerror as any);
-      set.removeEventListener('pause', set.onpause as any);
+      try {
+        setAudioRef.current.pause();
+        setAudioRef.current.currentTime = 0;
+      } catch (e) {
+        console.log("Error stopping set audio:", e);
+      }
     }
     if (bangAudioRef.current) {
-      bangAudioRef.current.pause();
-      bangAudioRef.current.currentTime = 0;
-      // Remove all event listeners
-      const bang = bangAudioRef.current;
-      bang.removeEventListener('ended', bang.onended as any);
-      bang.removeEventListener('error', bang.onerror as any);
-      bang.removeEventListener('pause', bang.onpause as any);
+      try {
+        bangAudioRef.current.pause();
+        bangAudioRef.current.currentTime = 0;
+      } catch (e) {
+        console.log("Error stopping bang audio:", e);
+      }
     }
     
     // Reset state
