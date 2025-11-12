@@ -634,7 +634,7 @@ export default function PhotoFinishFullscreen({
 
   return (
     <div 
-      className="fixed inset-0 bg-black text-white flex flex-col"
+      className="fixed inset-0 bg-black text-white flex flex-col pt-16"
       style={{ 
         touchAction: 'none',
         userSelect: 'none',
@@ -642,8 +642,8 @@ export default function PhotoFinishFullscreen({
         WebkitTouchCallout: 'none'
       }}
     >
-      {/* Top Bar with Controls */}
-      <div className="fixed top-16 left-0 right-0 z-[9998] bg-gray-900 border-b border-gray-800">
+      {/* Top Bar with Controls - not fixed, part of flex flow */}
+      <div className="bg-gray-900 border-b border-gray-800 flex-shrink-0">
         <div className="flex items-center justify-end px-4 py-3 gap-3">
           {/* Buttons */}
           {onSave && (
@@ -681,7 +681,6 @@ export default function PhotoFinishFullscreen({
         onTouchMove={handleVideoTouchMove}
         onTouchEnd={handleVideoTouchEnd}
         style={{ 
-          marginTop: '52px',
           cursor: isPanning ? 'grabbing' : (videoScale > 1 ? 'grab' : 'default'),
           touchAction: 'manipulation',
           userSelect: 'none',
