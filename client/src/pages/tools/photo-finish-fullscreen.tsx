@@ -867,10 +867,10 @@ export default function PhotoFinishFullscreen({
       </div>
 
       {/* Timeline Scrubber - No background bar */}
-      <div className="bg-gray-900 h-32 flex-shrink-0 mb-4">
-        <div className="p-6 h-full">
+      <div className="bg-gray-900 h-40 flex-shrink-0 mb-4">
+        <div className="px-6 pt-6 pb-10 h-full">
           {/* Timeline with vertical markers */}
-          <div className="h-full relative overflow-hidden">
+          <div className="h-full relative overflow-visible">
             <div
               ref={timelineRef}
               className={`h-full relative ${isTimelineLocked ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}`}
@@ -906,10 +906,11 @@ export default function PhotoFinishFullscreen({
                 return (
                   <div
                     key={i}
-                    className={`absolute bottom-0 z-10 transition-all duration-150 ${isSecondMark ? 'bg-white/50 w-0.5' : 'bg-white/30 w-px'}`}
+                    className={`absolute bottom-0 z-10 transition-all duration-150 ${isSecondMark ? 'bg-white/60' : 'bg-white/40'}`}
                     style={{ 
                       left: `${timePosition}%`,
-                      height: `${markerHeight}%`
+                      height: `${markerHeight}%`,
+                      width: isSecondMark ? '2px' : '1px'
                     }}
                   />
                 );
@@ -932,7 +933,7 @@ export default function PhotoFinishFullscreen({
                   return (
                     <div
                       key={`label-${i}`}
-                      className="absolute -bottom-5 text-xs text-gray-300 transform -translate-x-1/2 z-20 transition-opacity duration-150"
+                      className="absolute bottom-0 translate-y-full pt-1 text-xs text-gray-300 transform -translate-x-1/2 z-20 transition-opacity duration-150"
                       style={{ 
                         left: `${timePosition}%`,
                         opacity: opacityMultiplier
