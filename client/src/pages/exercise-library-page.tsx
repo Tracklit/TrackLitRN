@@ -494,11 +494,8 @@ export default function ExerciseLibraryPage() {
             )}
           </>
         ) : (
-          <div className="bg-slate-800/30 backdrop-blur-xl rounded-3xl border border-slate-700/50 py-24 px-16 text-center">
-            <h3 className="text-2xl font-bold text-white mb-4">No exercises yet</h3>
-            <p className="text-slate-400 mb-8 max-w-md mx-auto">
-              Start building your exercise library by uploading videos or adding YouTube links
-            </p>
+          <div className="bg-slate-800/30 backdrop-blur-xl rounded-3xl border border-slate-700/50 py-24 px-16 flex flex-col items-center justify-center">
+            <h3 className="text-2xl font-bold text-white mb-8">No exercises yet</h3>
             <Link href="/tools/exercise-library/add">
               <button
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
