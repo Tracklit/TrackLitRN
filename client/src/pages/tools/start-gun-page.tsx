@@ -13,7 +13,7 @@ import {
   Timer, 
   Dices, 
   Play, 
-  StopCircle
+  RotateCcw
 } from "lucide-react";
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -637,9 +637,9 @@ export default function StartGunPage() {
     });
   };
   
-  // Function to cancel the sequence and stop all audio
-  const cancelSequence = () => {
-    console.log("Cancelling sequence and stopping all audio");
+  // Function to reset sequence - stops audio and prevents immediate restart
+  const resetSequence = () => {
+    console.log("Resetting sequence and stopping all audio");
     
     // Set cancellation flag to prevent callbacks from executing
     setSequenceCancelled(true);
@@ -674,8 +674,6 @@ export default function StartGunPage() {
     activeAudioElements.current = [];
     
     // Also stop the preloaded audio refs if they exist
-    // Note: We can't effectively remove anonymous listeners, but the hasCompleted flag
-    // in playAudioInternal will prevent callbacks from firing
     if (marksAudioRef.current) {
       try {
         marksAudioRef.current.pause();
@@ -701,11 +699,14 @@ export default function StartGunPage() {
       }
     }
     
-    // Reset state
-    setIsPlaying(false);
-    isPlayingRef.current = false;
-    setIsStarting(false); // Also clear starting flag in case it's stuck
+    // Reset status immediately but keep button locked briefly
     setStatus('idle');
+    
+    // Wait 500ms before unlocking the start button to prevent rapid restart
+    setTimeout(() => {
+      setIsPlaying(false);
+      isPlayingRef.current = false;
+    }, 500);
   };
   
   // Toggle mute/unmute
@@ -825,15 +826,16 @@ export default function StartGunPage() {
                 </button>
               </div>
               
-              {/* Stop Button - Always visible, enabled when playing */}
+              {/* Reset Button - Stops sequence and prevents immediate restart */}
               <div className="relative">
                 <button
-                  onClick={cancelSequence}
+                  onClick={resetSequence}
                   disabled={!isPlaying}
-                  data-testid="button-stop-gun"
-                  className={`relative w-36 h-36 rounded-full font-bold text-white shadow-2xl transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700`}
+                  data-testid="button-reset-gun"
+                  className={`relative w-36 h-36 rounded-full font-bold text-white shadow-2xl transition-all transform hover:scale-105 active:scale-95 flex flex-col items-center justify-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700`}
                 >
-                  <StopCircle className="h-14 w-14" />
+                  <RotateCcw className="h-12 w-12" />
+                  <span className="text-xs font-semibold">RESET</span>
                 </button>
               </div>
             </div>
