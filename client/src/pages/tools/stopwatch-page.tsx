@@ -221,15 +221,16 @@ export default function StopwatchPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white pb-20">
       <div className="container max-w-2xl mx-auto px-4 pt-20">
         
-        {/* Main Timer Display */}
+        {/* Main Timer Display and Controls */}
         <div className="relative mb-12">
           {/* Animated glow effect */}
           {isRunning && (
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-3xl blur-xl animate-pulse" />
           )}
           
-          {/* Timer card */}
+          {/* Timer card - extended to include button */}
           <div className="relative bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl rounded-3xl p-8 border border-slate-700/50 shadow-2xl">
+            {/* Timer Display */}
             <div className="text-center mb-6">
               <div className="text-7xl md:text-8xl font-bold font-mono tracking-tight bg-gradient-to-br from-white to-slate-300 bg-clip-text text-transparent leading-tight">
                 {formatTime(time)}
@@ -240,55 +241,55 @@ export default function StopwatchPage() {
                 </div>
               )}
             </div>
-          </div>
-        </div>
 
-        {/* Massive Start/Stop Button */}
-        <div className="flex justify-center mb-8">
-          <button
-            onClick={handleStartStop}
-            data-testid="button-start-stop-timer"
-            className={`
-              relative group w-72 h-72 rounded-full 
-              transition-all duration-500 ease-out
-              transform hover:scale-105 active:scale-95
-              focus:outline-none focus:ring-4 focus:ring-offset-4 focus:ring-offset-slate-950
-              drop-shadow-xl
-              ${isRunning 
-                ? 'bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-[0_0_40px_rgba(239,68,68,0.3)] focus:ring-red-500/50' 
-                : 'bg-gradient-to-br from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 shadow-[0_0_40px_rgba(59,130,246,0.3)] focus:ring-blue-500/50'
-              }
-            `}
-          >
-            {/* Animated ring */}
-            <div className={`
-              absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500
-              ${isRunning 
-                ? 'bg-gradient-to-br from-red-400 to-red-500' 
-                : 'bg-gradient-to-br from-blue-400 to-cyan-400'
-              }
-              animate-ping
-            `} style={{ animationDuration: '2s' }} />
-            
-            {/* Button content */}
-            <div className="relative flex flex-col items-center justify-center h-full">
-              {isRunning ? (
-                <>
-                  <Pause className="h-24 w-24 mb-4 drop-shadow-2xl" strokeWidth={2.5} />
-                  <span className="text-3xl font-bold uppercase tracking-wider drop-shadow-lg">
-                    Stop
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Play className="h-24 w-24 mb-4 drop-shadow-2xl ml-2" strokeWidth={2.5} />
-                  <span className="text-3xl font-bold uppercase tracking-wider drop-shadow-lg">
-                    Start
-                  </span>
-                </>
-              )}
+            {/* Massive Start/Stop Button */}
+            <div className="flex justify-center">
+              <button
+                onClick={handleStartStop}
+                data-testid="button-start-stop-timer"
+                className={`
+                  relative group w-72 h-72 rounded-full 
+                  transition-all duration-500 ease-out
+                  transform hover:scale-105 active:scale-95
+                  focus:outline-none focus:ring-4 focus:ring-offset-4 focus:ring-offset-slate-950
+                  drop-shadow-xl
+                  ${isRunning 
+                    ? 'bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-[0_0_40px_rgba(239,68,68,0.3)] focus:ring-red-500/50' 
+                    : 'bg-gradient-to-br from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 shadow-[0_0_40px_rgba(59,130,246,0.3)] focus:ring-blue-500/50'
+                  }
+                `}
+              >
+                {/* Animated ring */}
+                <div className={`
+                  absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500
+                  ${isRunning 
+                    ? 'bg-gradient-to-br from-red-400 to-red-500' 
+                    : 'bg-gradient-to-br from-blue-400 to-cyan-400'
+                  }
+                  animate-ping
+                `} style={{ animationDuration: '2s' }} />
+                
+                {/* Button content */}
+                <div className="relative flex flex-col items-center justify-center h-full">
+                  {isRunning ? (
+                    <>
+                      <Pause className="h-24 w-24 mb-4 drop-shadow-2xl" strokeWidth={2.5} />
+                      <span className="text-3xl font-bold uppercase tracking-wider drop-shadow-lg">
+                        Stop
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-24 w-24 mb-4 drop-shadow-2xl ml-2" strokeWidth={2.5} />
+                      <span className="text-3xl font-bold uppercase tracking-wider drop-shadow-lg">
+                        Start
+                      </span>
+                    </>
+                  )}
+                </div>
+              </button>
             </div>
-          </button>
+          </div>
         </div>
 
         {/* Control Buttons */}
