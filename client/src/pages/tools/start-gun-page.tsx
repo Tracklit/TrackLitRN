@@ -565,10 +565,10 @@ export default function StartGunPage() {
       return;
     }
     
-    // Set ref HERE - BEFORE calling async function
-    // This ensures it's set synchronously and immediately blocks subsequent clicks
+    // IMMEDIATELY lock the button by setting isPlaying state
+    // This disables the button synchronously before any async operations
     isPlayingRef.current = true;
-    setIsStarting(true);
+    setIsPlaying(true); // This disables the button immediately
     
     // Now start the sequence
     startSequence();
@@ -576,19 +576,10 @@ export default function StartGunPage() {
 
   // Function to start the sequence - prevent multiple sequences
   const startSequence = async () => {
-    // The ref should already be set by handleStartClick
-    // This is just a safety check in case startSequence is called directly
-    if (!isPlayingRef.current) {
-      isPlayingRef.current = true;
-      setIsStarting(true);
-    }
-    
     // Ensure audio is unlocked on first button press
     await ensureAudioUnlocked();
     
-    // Set state for the sequence
-    setIsPlaying(true);
-    setIsStarting(false); // Clear starting flag
+    // Set status
     setStatus('on-your-marks');
     setSequenceCancelled(false);
     sequenceCancelledRef.current = false;
@@ -819,16 +810,16 @@ export default function StartGunPage() {
 
             {/* Control Buttons - Start and Stop Separate */}
             <div className="flex justify-center gap-4 mb-8">
-              {/* Start Button */}
+              {/* Start Button - Completely locked when playing */}
               <div className="relative">
-                {!isPlaying && !isStarting && (
+                {!isPlaying && (
                   <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-xl opacity-50 animate-pulse"></div>
                 )}
                 <button
                   onPointerDown={handleStartClick}
-                  disabled={isPlaying || isStarting}
+                  disabled={isPlaying}
                   data-testid="button-start-gun"
-                  className={`relative w-36 h-36 rounded-full font-bold text-white shadow-2xl transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none bg-gradient-to-br from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700`}
+                  className={`relative w-36 h-36 rounded-full font-bold text-white shadow-2xl transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none disabled:pointer-events-none bg-gradient-to-br from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700`}
                 >
                   <Play className="h-14 w-14" style={{ marginLeft: '4px' }} />
                 </button>
@@ -838,7 +829,7 @@ export default function StartGunPage() {
               <div className="relative">
                 <button
                   onClick={cancelSequence}
-                  disabled={!isPlaying && !isStarting}
+                  disabled={!isPlaying}
                   data-testid="button-stop-gun"
                   className={`relative w-36 h-36 rounded-full font-bold text-white shadow-2xl transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700`}
                 >
