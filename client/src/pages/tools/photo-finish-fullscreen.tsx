@@ -875,9 +875,9 @@ export default function PhotoFinishFullscreen({
               ref={timelineRef}
               className={`h-full relative ${isTimelineLocked ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}`}
               style={isTimelineLocked ? {
-                transform: `translateX(${-(timelineScrollPosition / duration) * 100}%)`,
+                transform: `translateX(calc(50% - ${(timelineScrollPosition / duration) * 100}%))`,
                 transition: isDragging ? 'none' : 'transform 0.1s ease-out',
-                width: '200%'
+                width: '100%'
               } : {}}
               onMouseDown={handleTimelineMouseDown}
               onMouseMove={(e) => {
@@ -894,11 +894,23 @@ export default function PhotoFinishFullscreen({
               {duration && Array.from({ length: Math.floor(duration * 2) }, (_, i) => {
                 const timePosition = (i * 0.5) / duration * 100;
                 const isSecondMark = i % 2 === 0;
+                
+                // Calculate distance from center (50%) to make center markers taller
+                const distanceFromCenter = Math.abs(timePosition - (isTimelineLocked ? (timelineScrollPosition / duration * 100) : 50));
+                const heightMultiplier = isTimelineLocked 
+                  ? Math.max(0.4, 1 - (distanceFromCenter / 50) * 0.6) // Taller in center when locked
+                  : 1;
+                const baseHeight = isSecondMark ? 100 : 75;
+                const markerHeight = baseHeight * heightMultiplier;
+                
                 return (
                   <div
                     key={i}
-                    className={`absolute top-0 z-10 ${isSecondMark ? 'h-full bg-gray-400' : 'h-3/4 bg-gray-500'} w-px`}
-                    style={{ left: `${timePosition}%` }}
+                    className={`absolute bottom-0 z-10 transition-all duration-150 ${isSecondMark ? 'bg-white/50 w-0.5' : 'bg-white/30 w-px'}`}
+                    style={{ 
+                      left: `${timePosition}%`,
+                      height: `${markerHeight}%`
+                    }}
                   />
                 );
               })}
@@ -908,13 +920,23 @@ export default function PhotoFinishFullscreen({
                 const timeValue = i * 0.5;
                 const timePosition = (timeValue / duration) * 100;
                 const timeLabel = formatTimelineTime(timeValue);
+                
+                // Calculate distance from center for opacity
+                const distanceFromCenter = Math.abs(timePosition - (isTimelineLocked ? (timelineScrollPosition / duration * 100) : 50));
+                const opacityMultiplier = isTimelineLocked 
+                  ? Math.max(0.3, 1 - (distanceFromCenter / 50) * 0.7)
+                  : 1;
+                
                 // Only show labels for whole seconds and half seconds
                 if (i % 2 === 0 || timeValue % 1 === 0.5) {
                   return (
                     <div
                       key={`label-${i}`}
-                      className="absolute bottom-1 text-xs text-gray-300 transform -translate-x-1/2 z-20"
-                      style={{ left: `${timePosition}%` }}
+                      className="absolute -bottom-5 text-xs text-gray-300 transform -translate-x-1/2 z-20 transition-opacity duration-150"
+                      style={{ 
+                        left: `${timePosition}%`,
+                        opacity: opacityMultiplier
+                      }}
                     >
                       {timeLabel}
                     </div>
