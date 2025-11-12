@@ -555,15 +555,28 @@ export default function StartGunPage() {
     }
   };
   
+  // Wrapper to handle start clicks with immediate blocking
+  const handleStartClick = (e: React.MouseEvent | React.PointerEvent) => {
+    // Check ref FIRST - this is synchronous and immediate
+    if (isPlayingRef.current) {
+      console.log("Button blocked: sequence already running");
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    // If we get here, it's safe to start
+    startSequence();
+  };
+
   // Function to start the sequence - prevent multiple sequences
   const startSequence = async () => {
-    // Prevent starting if already playing (use ref for immediate synchronous check)
-    if (isPlayingRef.current || isStarting) {
-      console.log("Sequence already running or starting, ignoring request");
+    // Double-check with ref (belt and suspenders approach)
+    if (isPlayingRef.current) {
+      console.log("Sequence already running, ignoring request");
       return;
     }
     
-    // Set both ref and state immediately to prevent rapid taps
+    // Set ref IMMEDIATELY - this is the critical line
     isPlayingRef.current = true;
     setIsStarting(true);
     
@@ -809,7 +822,7 @@ export default function StartGunPage() {
                   <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-xl opacity-50 animate-pulse"></div>
                 )}
                 <button
-                  onClick={startSequence}
+                  onPointerDown={handleStartClick}
                   disabled={isPlaying || isStarting}
                   data-testid="button-start-gun"
                   className={`relative w-36 h-36 rounded-full font-bold text-white shadow-2xl transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none bg-gradient-to-br from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700`}
