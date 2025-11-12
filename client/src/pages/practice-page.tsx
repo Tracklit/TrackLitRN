@@ -1368,9 +1368,7 @@ function PracticePage() {
                               Dist
                             </div>
                             {data.distances.map((distance, index) => (
-                              <div key={`frozen-${distance}`} className={`w-16 px-2 py-2.5 text-xs font-semibold text-center border-b border-purple-400/20 last:border-b-0 text-white ${
-                                index % 2 === 0 ? 'bg-purple-900/10' : 'bg-purple-900/20'
-                              }`}>
+                              <div key={`frozen-${distance}`} className="w-16 px-2 py-2.5 text-xs font-semibold text-center border-b border-purple-400/20 last:border-b-0 text-white bg-black">
                                 {distance}
                               </div>
                             ))}
@@ -1385,9 +1383,7 @@ function PracticePage() {
                                     {percentage}%
                                   </div>
                                   {data.distances.map((distance, index) => (
-                                    <div key={`${distance}-${percentage}`} className={`px-1 py-2.5 text-xs text-center font-mono border-b border-purple-400/20 last:border-b-0 text-white hover:bg-purple-500/20 transition-colors duration-200 ${
-                                      index % 2 === 0 ? 'bg-purple-900/10' : 'bg-purple-900/20'
-                                    }`}>
+                                    <div key={`${distance}-${percentage}`} className="px-1 py-2.5 text-xs text-center font-mono border-b border-purple-400/20 last:border-b-0 text-white bg-black hover:bg-purple-500/20 transition-colors duration-200">
                                       {data.getTime(distance, percentage)}
                                     </div>
                                   ))}
