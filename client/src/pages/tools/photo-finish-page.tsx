@@ -117,6 +117,7 @@ export default function PhotoFinishPage() {
       
       sessionStorage.setItem('photoFinishVideoData', JSON.stringify(videoData));
       sessionStorage.setItem('photoFinishVideoUrl', uri);
+      sessionStorage.setItem('photoFinishIsNewVideo', 'true'); // Mark as new, unsaved video
       
       // Store blob if available for saving later
       if (blob) {
@@ -230,6 +231,7 @@ export default function PhotoFinishPage() {
       
       sessionStorage.setItem('photoFinishVideoData', JSON.stringify(videoData));
       sessionStorage.setItem('photoFinishVideoUrl', url);
+      sessionStorage.setItem('photoFinishIsNewVideo', 'false'); // Mark as already saved video
       
       navigate('/tools/photo-finish/analysis');
     } catch (error) {

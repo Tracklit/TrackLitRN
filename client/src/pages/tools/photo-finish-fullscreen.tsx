@@ -664,7 +664,7 @@ export default function PhotoFinishFullscreen({
             data-testid="button-close-analysis"
             className="bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white p-2 rounded font-medium text-sm border border-gray-600 shadow-lg transition-all"
           >
-            <Trash2 className="h-4 w-4" />
+            <X className="h-4 w-4" />
           </button>
         </div>
       </div>
