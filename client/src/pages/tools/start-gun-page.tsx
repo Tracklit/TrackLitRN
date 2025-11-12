@@ -73,6 +73,7 @@ export default function StartGunPage() {
   const sequenceCancelledRef = useRef(false);
   const audioUnlockedRef = useRef(false);
   const isPlayingRef = useRef(false); // Immediate synchronous check to prevent rapid taps
+  const [isStarting, setIsStarting] = useState(false); // Track button press state
   
   // Initialize Audio Context and preload audio
   useEffect(() => {
@@ -557,19 +558,21 @@ export default function StartGunPage() {
   // Function to start the sequence - prevent multiple sequences
   const startSequence = async () => {
     // Prevent starting if already playing (use ref for immediate synchronous check)
-    if (isPlayingRef.current) {
-      console.log("Sequence already running, ignoring start request");
+    if (isPlayingRef.current || isStarting) {
+      console.log("Sequence already running or starting, ignoring request");
       return;
     }
     
-    // Set ref immediately to prevent rapid taps from starting multiple sequences
+    // Set both ref and state immediately to prevent rapid taps
     isPlayingRef.current = true;
+    setIsStarting(true);
     
     // Ensure audio is unlocked on first button press
     await ensureAudioUnlocked();
     
     // Set state for the sequence
     setIsPlaying(true);
+    setIsStarting(false); // Clear starting flag
     setStatus('on-your-marks');
     setSequenceCancelled(false);
     sequenceCancelledRef.current = false;
@@ -694,6 +697,7 @@ export default function StartGunPage() {
     // Reset state
     setIsPlaying(false);
     isPlayingRef.current = false;
+    setIsStarting(false); // Also clear starting flag in case it's stuck
     setStatus('idle');
   };
   
@@ -805,8 +809,9 @@ export default function StartGunPage() {
                 )}
                 <button
                   onClick={isPlaying ? cancelSequence : startSequence}
+                  disabled={isStarting}
                   data-testid={isPlaying ? "button-stop-gun" : "button-start-gun"}
-                  className={`relative w-40 h-40 rounded-full font-bold text-white shadow-2xl transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center ${
+                  className={`relative w-40 h-40 rounded-full font-bold text-white shadow-2xl transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none ${
                     isPlaying 
                       ? 'bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700' 
                       : 'bg-gradient-to-br from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
