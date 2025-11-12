@@ -1,20 +1,17 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { PageContainer } from "@/components/page-container";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Send, Play, Trash2, ExternalLink, MoreVertical, Grid3X3, List, Copy, Check, Users, Lock, Crown } from "lucide-react";
+import { Plus, Send, Play, Trash2, MoreVertical, Grid3X3, List, Copy, Check, Users, Lock, Crown, Dumbbell } from "lucide-react";
 import { Link } from "wouter";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Progress } from "@/components/ui/progress";
 
 interface ExerciseLibraryItem {
   id: number;
@@ -234,91 +231,111 @@ export default function ExerciseLibraryPage() {
   };
 
   return (
-    <PageContainer>
-
-      <div className="space-y-6">
-        {/* Header with Upload Button and View Toggle */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold">Exercise Library</h1>
-            <p className="text-muted-foreground">
-              Store and organize your training videos and exercises
-            </p>
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+      <div className="container max-w-7xl mx-auto px-4 pt-20 pb-16">
+        
+        {/* Header with Action Buttons */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          {/* View Toggle */}
+          <div className="flex items-center gap-2 bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-xl p-1">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`h-9 px-4 rounded-lg transition-all ${
+                viewMode === 'grid'
+                  ? 'bg-slate-700 text-white shadow-lg'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+              data-testid="button-view-grid"
+            >
+              <Grid3X3 className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`h-9 px-4 rounded-lg transition-all ${
+                viewMode === 'list'
+                  ? 'bg-slate-700 text-white shadow-lg'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+              data-testid="button-view-list"
+            >
+              <List className="h-4 w-4" />
+            </button>
           </div>
           
-          <div className="flex items-center gap-4">
-            {/* View Toggle */}
-            <div className="flex items-center border rounded-lg p-1">
-              <Button
-                variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('grid')}
-                className="h-8 px-3"
+          <div className="flex gap-3">
+            <Link href="/tools/exercise-library/add">
+              <button
+                className="flex items-center gap-2 px-5 py-3 rounded-xl text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                style={{
+                  background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)'
+                }}
+                data-testid="button-add-video"
               >
-                <Grid3X3 className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('list')}
-                className="h-8 px-3"
-              >
-                <List className="h-4 w-4" />
-              </Button>
-            </div>
-            
-            <div className="flex gap-2">
-              <Link href="/tools/exercise-library/add">
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Video
-                </Button>
-              </Link>
+                <Plus className="h-5 w-5" />
+                Add Video
+              </button>
+            </Link>
 
-              <Button 
-                variant="outline"
-                onClick={() => setLibraryShareDialogOpen(true)}
-                disabled={!canShareLibrary()}
-                className="relative"
-              >
-                {getSubscriptionTier() === 'star' ? (
-                  <Crown className="h-4 w-4 mr-2 text-yellow-500" />
-                ) : getSubscriptionTier() === 'pro' ? (
-                  <Users className="h-4 w-4 mr-2 text-blue-500" />
-                ) : (
-                  <Lock className="h-4 w-4 mr-2 text-gray-400" />
-                )}
-                Share Library
-                {getSubscriptionTier() === 'free' && (
-                  <Badge variant="secondary" className="ml-2 text-xs">
-                    100 Spikes
-                  </Badge>
-                )}
-              </Button>
-            </div>
+            <button
+              onClick={() => setLibraryShareDialogOpen(true)}
+              disabled={!canShareLibrary()}
+              className={`flex items-center gap-2 px-5 py-3 rounded-xl font-semibold transition-all ${
+                canShareLibrary()
+                  ? 'bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/50 backdrop-blur-xl text-white'
+                  : 'bg-slate-800/30 border border-slate-700/30 text-slate-500 cursor-not-allowed'
+              }`}
+              data-testid="button-share-library"
+            >
+              {getSubscriptionTier() === 'star' ? (
+                <Crown className="h-5 w-5 text-yellow-500" />
+              ) : getSubscriptionTier() === 'pro' ? (
+                <Users className="h-5 w-5 text-blue-500" />
+              ) : (
+                <Lock className="h-5 w-5 text-slate-500" />
+              )}
+              Share Library
+              {getSubscriptionTier() === 'free' && (
+                <Badge
+                  className="ml-2 text-xs px-2 py-0.5"
+                  style={{
+                    background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
+                    border: 'none'
+                  }}
+                >
+                  100 Spikes
+                </Badge>
+              )}
+            </button>
           </div>
         </div>
 
-        {/* Exercise Grid */}
+        {/* Exercise Grid/List */}
         {isLoading ? (
-          <div className={viewMode === 'grid' ? "grid grid-cols-2 gap-4" : "space-y-4"}>
+          <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-4"}>
             {Array.from({ length: 6 }).map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <div className="aspect-video bg-muted" />
-                <CardContent className="p-4">
-                  <div className="h-4 bg-muted rounded mb-2" />
-                  <div className="h-3 bg-muted rounded w-2/3" />
-                </CardContent>
-              </Card>
+              <div
+                key={i}
+                className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl rounded-3xl border border-slate-700/50 overflow-hidden animate-pulse"
+              >
+                <div className="aspect-video bg-slate-800/50" />
+                <div className="p-6">
+                  <div className="h-5 bg-slate-700/50 rounded mb-3 w-3/4" />
+                  <div className="h-4 bg-slate-700/50 rounded w-1/2" />
+                </div>
+              </div>
             ))}
           </div>
         ) : libraryData?.exercises?.length > 0 ? (
           <>
             {viewMode === 'grid' ? (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {libraryData.exercises.map((exercise: ExerciseLibraryItem) => (
-                  <Card key={exercise.id} className="group hover:shadow-lg transition-shadow">
-                    <div className="relative aspect-video overflow-hidden rounded-t-lg">
+                  <div
+                    key={exercise.id}
+                    className="group relative bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl rounded-3xl border border-slate-700/50 overflow-hidden hover:border-slate-600/50 transition-all duration-300 shadow-xl hover:shadow-2xl"
+                    data-testid={`card-exercise-${exercise.id}`}
+                  >
+                    <div className="relative aspect-video overflow-hidden">
                       <img
                         src={getThumbnail(exercise)}
                         alt={exercise.name}
@@ -328,45 +345,58 @@ export default function ExerciseLibraryPage() {
                         }}
                       />
                       
-                      <div className="absolute inset-0 bg-black/40 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Button
-                          size="sm"
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <button
                           onClick={() => openFullscreen(exercise)}
-                          className="bg-red-600 md:hover:bg-red-700 text-white border-red-600 h-8 w-8 p-0"
+                          className="w-14 h-14 rounded-full flex items-center justify-center transition-transform hover:scale-110"
+                          style={{
+                            background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)'
+                          }}
+                          data-testid={`button-play-${exercise.id}`}
                         >
-                          <Play className="h-3 w-3 fill-white" />
-                        </Button>
+                          <Play className="h-6 w-6 fill-white text-white ml-0.5" />
+                        </button>
                       </div>
                     </div>
                     
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start">
-                        <h3 className="font-semibold truncate flex-1">{exercise.name}</h3>
+                    <div className="p-6">
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold text-lg text-white truncate mb-2">
+                            {exercise.name}
+                          </h3>
+                          {exercise.fileSize && (
+                            <span className="text-sm text-slate-400">
+                              {formatFileSize(exercise.fileSize)}
+                            </span>
+                          )}
+                        </div>
                         
-                        {/* Action Dropdown */}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 ml-2"
+                            <button
+                              className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700/50 transition-colors"
+                              data-testid={`button-menu-${exercise.id}`}
                             >
                               <MoreVertical className="h-4 w-4" />
-                            </Button>
+                            </button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
+                          <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700 text-white">
                             <DropdownMenuItem
                               onClick={() => {
                                 setSelectedExercise(exercise);
                                 setShareDialogOpen(true);
                               }}
+                              className="cursor-pointer hover:bg-slate-700 focus:bg-slate-700 focus:text-white"
+                              data-testid={`menu-item-share-${exercise.id}`}
                             >
                               <Send className="h-4 w-4 mr-2" />
                               Share
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => deleteMutation.mutate(exercise.id)}
-                              className="text-destructive"
+                              className="cursor-pointer text-red-400 hover:bg-red-900/50 focus:bg-red-900/50 focus:text-red-300"
+                              data-testid={`menu-item-delete-${exercise.id}`}
                             >
                               <Trash2 className="h-4 w-4 mr-2" />
                               Delete
@@ -374,309 +404,286 @@ export default function ExerciseLibraryPage() {
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
-                      
-                      {exercise.fileSize && (
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className="text-xs text-muted-foreground">
-                            {formatFileSize(exercise.fileSize)}
-                          </span>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : (
               <div className="space-y-4">
                 {libraryData.exercises.map((exercise: ExerciseLibraryItem) => (
-                  <Card key={exercise.id} className="group hover:shadow-lg transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-4">
-                        <div className="relative w-32 h-20 overflow-hidden rounded-lg flex-shrink-0">
-                          <img
-                            src={getThumbnail(exercise)}
-                            alt={exercise.name}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.currentTarget.src = '/placeholder-video.jpg';
+                  <div
+                    key={exercise.id}
+                    className="group bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl rounded-3xl border border-slate-700/50 p-6 hover:border-slate-600/50 transition-all duration-300 shadow-xl hover:shadow-2xl"
+                    data-testid={`card-exercise-${exercise.id}`}
+                  >
+                    <div className="flex items-center gap-6">
+                      <div className="relative w-40 h-24 overflow-hidden rounded-2xl flex-shrink-0">
+                        <img
+                          src={getThumbnail(exercise)}
+                          alt={exercise.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = '/placeholder-video.jpg';
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <button
+                            onClick={() => openFullscreen(exercise)}
+                            className="w-10 h-10 rounded-full flex items-center justify-center transition-transform hover:scale-110"
+                            style={{
+                              background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)'
                             }}
-                          />
-                          <div className="absolute inset-0 bg-black/40 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <Button
-                              size="sm"
-                              onClick={() => openFullscreen(exercise)}
-                              className="bg-red-600 md:hover:bg-red-700 text-white border-red-600 h-6 w-6 p-0"
-                            >
-                              <Play className="h-2.5 w-2.5 fill-white" />
-                            </Button>
-                          </div>
+                            data-testid={`button-play-${exercise.id}`}
+                          >
+                            <Play className="h-4 w-4 fill-white text-white ml-0.5" />
+                          </button>
                         </div>
-                        
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold truncate">{exercise.name}</h3>
-                          {exercise.description && (
-                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                              {exercise.description}
-                            </p>
-                          )}
-                          {exercise.fileSize && (
-                            <div className="flex items-center gap-2 mt-2">
-                              <span className="text-xs text-muted-foreground">
-                                {formatFileSize(exercise.fileSize)}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                        
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                            >
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setSelectedExercise(exercise);
-                                setShareDialogOpen(true);
-                              }}
-                            >
-                              <Send className="h-4 w-4 mr-2" />
-                              Share
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => deleteMutation.mutate(exercise.id)}
-                              className="text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
                       </div>
-                    </CardContent>
-                  </Card>
+                      
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-lg text-white mb-2 truncate">
+                          {exercise.name}
+                        </h3>
+                        {exercise.description && (
+                          <p className="text-sm text-slate-400 mb-2 line-clamp-2">
+                            {exercise.description}
+                          </p>
+                        )}
+                        {exercise.fileSize && (
+                          <span className="text-xs text-slate-500">
+                            {formatFileSize(exercise.fileSize)}
+                          </span>
+                        )}
+                      </div>
+                      
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700/50 transition-colors"
+                            data-testid={`button-menu-${exercise.id}`}
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700 text-white">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setSelectedExercise(exercise);
+                              setShareDialogOpen(true);
+                            }}
+                            className="cursor-pointer hover:bg-slate-700 focus:bg-slate-700 focus:text-white"
+                            data-testid={`menu-item-share-${exercise.id}`}
+                          >
+                            <Send className="h-4 w-4 mr-2" />
+                            Share
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => deleteMutation.mutate(exercise.id)}
+                            className="cursor-pointer text-red-400 hover:bg-red-900/50 focus:bg-red-900/50 focus:text-red-300"
+                            data-testid={`menu-item-delete-${exercise.id}`}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
           </>
         ) : (
-          <div className="text-center py-12">
-            <div className="mx-auto w-12 h-12 bg-muted rounded-lg flex items-center justify-center mb-4">
-              <Play className="h-6 w-6 text-muted-foreground" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">No exercises yet</h3>
-            <p className="text-muted-foreground mb-4">
+          <div className="bg-slate-800/30 backdrop-blur-xl rounded-3xl border border-slate-700/50 p-16 text-center">
+            <Dumbbell className="h-20 w-20 mx-auto mb-6 text-slate-600" />
+            <h3 className="text-2xl font-bold text-white mb-3">No exercises yet</h3>
+            <p className="text-slate-400 mb-6 max-w-md mx-auto">
               Start building your exercise library by uploading videos or adding YouTube links
             </p>
             <Link href="/tools/exercise-library/add">
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
+              <button
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                style={{
+                  background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)'
+                }}
+                data-testid="button-add-first-video"
+              >
+                <Plus className="h-5 w-5" />
                 Add Your First Video
-              </Button>
+              </button>
             </Link>
           </div>
         )}
 
-        {/* Custom Share Modal */}
-        {shareDialogOpen && (
+        {/* Fullscreen Video Modal */}
+        {fullscreenVideo && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
+            <button
+              onClick={closeFullscreen}
+              className="absolute top-4 right-4 text-white hover:text-gray-300 text-4xl leading-none z-10"
+              data-testid="button-close-fullscreen"
+            >
+              ×
+            </button>
+            
+            <div className="relative w-full max-w-6xl aspect-video">
+              {fullscreenVideo.type === 'youtube' && fullscreenVideo.youtubeVideoId ? (
+                <iframe
+                  src={`https://www.youtube.com/embed/${fullscreenVideo.youtubeVideoId}?autoplay=1`}
+                  className="w-full h-full rounded-2xl"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : fullscreenVideo.fileUrl ? (
+                <video
+                  src={fullscreenVideo.fileUrl}
+                  controls
+                  autoPlay
+                  className="w-full h-full rounded-2xl"
+                />
+              ) : null}
+            </div>
+          </div>
+        )}
+
+        {/* Share Exercise Modal */}
+        {shareDialogOpen && selectedExercise && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Backdrop */}
             <div 
               className="absolute inset-0 bg-black/50 backdrop-blur-sm"
               onClick={() => setShareDialogOpen(false)}
             />
             
-            {/* Modal Content */}
-            <div className="relative bg-[#010a18] border border-gray-700 rounded-lg shadow-xl max-w-md w-full max-h-[85vh] overflow-y-auto">
-              <div className="p-6 space-y-4">
-                {/* Header */}
+            <div className="relative bg-slate-900 border border-slate-700 rounded-3xl shadow-2xl max-w-md w-full max-h-[85vh] overflow-y-auto">
+              <div className="p-6 space-y-6">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-white">Share Exercise</h2>
+                  <h2 className="text-2xl font-bold text-white">Share Exercise</h2>
                   <button
                     onClick={() => setShareDialogOpen(false)}
-                    className="text-gray-400 hover:text-white text-xl leading-none"
+                    className="text-slate-400 hover:text-white text-3xl leading-none"
+                    data-testid="button-close-share"
                   >
                     ×
                   </button>
                 </div>
                 
-                {selectedExercise && (
-                  <div className="space-y-4">
-                    <div className="text-sm text-gray-400">
-                      Sharing: {selectedExercise.name}
+                <div className="text-sm text-slate-400">
+                  Sharing: <span className="text-white font-semibold">{selectedExercise.name}</span>
+                </div>
+                
+                <Tabs defaultValue="link" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 bg-slate-800/50 p-1 rounded-xl">
+                    <TabsTrigger 
+                      value="link"
+                      className="text-slate-400 data-[state=active]:text-white rounded-lg data-[state=active]:bg-slate-700"
+                      data-testid="tab-copy-link"
+                    >
+                      Copy Link
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="internal"
+                      className="text-slate-400 data-[state=active]:text-white rounded-lg data-[state=active]:bg-slate-700"
+                      data-testid="tab-send-message"
+                    >
+                      Send Message
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="link" className="mt-6 space-y-4">
+                    <div className="flex gap-2">
+                      <Input
+                        value={`${window.location.origin}/exercise/${selectedExercise.id}`}
+                        readOnly
+                        className="bg-slate-800 border-slate-700 text-white"
+                        data-testid="input-share-link"
+                      />
+                      <Button
+                        onClick={() => copyExerciseLink(selectedExercise.id)}
+                        size="sm"
+                        className="bg-slate-700 hover:bg-slate-600 border-slate-600"
+                        data-testid="button-copy-link"
+                      >
+                        {linkCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="internal" className="mt-6 space-y-4">
+                    <div>
+                      <Label className="text-white mb-2 block">Search Users</Label>
+                      <div className="relative">
+                        <Input
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="Type username to search..."
+                          className="bg-slate-800 border-slate-700 text-white placeholder-slate-500"
+                          data-testid="input-search-users"
+                        />
+                        {isSearching && (
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                            <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                          </div>
+                        )}
+                      </div>
+                      
+                      {searchResults.length > 0 && (
+                        <div className="mt-3 max-h-40 overflow-y-auto space-y-2 bg-slate-800/50 rounded-xl p-3 border border-slate-700/50">
+                          {searchResults.map((user: any) => (
+                            <div
+                              key={user.id}
+                              className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                                selectedRecipients.includes(user.id)
+                                  ? 'bg-purple-500/20 border border-purple-500/50'
+                                  : 'bg-slate-700/50 hover:bg-slate-700 border border-transparent'
+                              }`}
+                              onClick={() => {
+                                setSelectedRecipients(prev =>
+                                  prev.includes(user.id)
+                                    ? prev.filter(id => id !== user.id)
+                                    : [...prev, user.id]
+                                );
+                              }}
+                              data-testid={`user-option-${user.id}`}
+                            >
+                              <div className="text-white font-medium">{user.name}</div>
+                              <div className="text-slate-400 text-sm">@{user.username}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     
-                    <Tabs defaultValue="link" className="w-full">
-                      <TabsList className="grid w-full grid-cols-2 bg-gray-800">
-                        <TabsTrigger 
-                          value="link" 
-                          className="text-gray-300 data-[state=active]:text-white data-[state=active]:bg-blue-600"
-                        >
-                          Copy Link
-                        </TabsTrigger>
-                        <TabsTrigger 
-                          value="internal" 
-                          className="text-gray-300 data-[state=active]:text-white data-[state=active]:bg-blue-600"
-                        >
-                          Send Message
-                        </TabsTrigger>
-                      </TabsList>
-                      
-                      <TabsContent value="link" className="mt-4 space-y-3">
-                        <div className="flex gap-2">
-                          <Input
-                            value={`${window.location.origin}/exercise/${selectedExercise.id}`}
-                            readOnly
-                            className="bg-gray-800 border-gray-600 text-white"
-                          />
-                          <Button
-                            onClick={() => copyExerciseLink(selectedExercise.id)}
-                            variant="outline"
-                            size="sm"
-                            className="border-gray-600 text-gray-300 hover:text-white hover:bg-gray-700"
-                          >
-                            {linkCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                          </Button>
-                        </div>
-                      </TabsContent>
-                      
-                      <TabsContent value="internal" className="mt-4 space-y-4">
-                        <div>
-                          <Label className="text-white">Search Users</Label>
-                          <div className="relative mt-2">
-                            <Input
-                              value={searchQuery}
-                              onChange={(e) => setSearchQuery(e.target.value)}
-                              placeholder="Type username to search..."
-                              className="bg-gray-800 border-gray-600 text-white placeholder-gray-400"
-                            />
-                            {isSearching && (
-                              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                                <div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full" />
-                              </div>
-                            )}
-                          </div>
-                          
-                          {searchResults.length > 0 && (
-                            <div className="mt-2 max-h-32 overflow-y-auto space-y-2 bg-gray-800 rounded-md p-2">
-                              {searchResults.map((user: any) => (
-                                <div key={user.id} className="flex items-center space-x-2">
-                                  <input
-                                    type="checkbox"
-                                    id={`share-user-${user.id}`}
-                                    checked={selectedRecipients.includes(user.id)}
-                                    onChange={(e) => {
-                                      if (e.target.checked) {
-                                        setSelectedRecipients(prev => [...prev, user.id]);
-                                      } else {
-                                        setSelectedRecipients(prev => prev.filter(id => id !== user.id));
-                                      }
-                                    }}
-                                    className="rounded"
-                                  />
-                                  <label htmlFor={`share-user-${user.id}`} className="text-sm text-gray-300">
-                                    {user.username}
-                                    {user.name && <span className="text-gray-400 ml-1">({user.name})</span>}
-                                  </label>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                          
-                          {searchQuery.length >= 2 && searchResults.length === 0 && !isSearching && (
-                            <div className="mt-2 text-sm text-gray-400 text-center py-2">
-                              No users found for "{searchQuery}"
-                            </div>
-                          )}
-                          
-                          {selectedRecipients.length > 0 && (
-                            <div className="mt-2">
-                              <div className="text-xs text-gray-400 mb-1">Selected ({selectedRecipients.length}):</div>
-                              <div className="flex flex-wrap gap-1">
-                                {selectedRecipients.map(recipientId => {
-                                  const recipient = searchResults.find((u: any) => u.id === recipientId);
-                                  return recipient ? (
-                                    <span key={recipientId} className="bg-blue-600 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
-                                      {recipient.name || recipient.username}
-                                      <button 
-                                        onClick={() => setSelectedRecipients(prev => prev.filter(id => id !== recipientId))}
-                                        className="text-blue-200 hover:text-white"
-                                      >
-                                        ×
-                                      </button>
-                                    </span>
-                                  ) : null;
-                                })}
-                              </div>
-                            </div>
-                          )}
-                        </div>
+                    {selectedRecipients.length > 0 && (
+                      <div>
+                        <Label className="text-white mb-2 block">Message (Optional)</Label>
+                        <textarea
+                          value={shareMessage}
+                          onChange={(e) => setShareMessage(e.target.value)}
+                          placeholder="Add a message..."
+                          className="w-full min-h-[100px] bg-slate-800 border border-slate-700 rounded-xl p-3 text-white placeholder-slate-500 resize-none"
+                          data-testid="textarea-share-message"
+                        />
                         
-                        <div>
-                          <Label htmlFor="shareMessage" className="text-white">Message (Optional)</Label>
-                          <Textarea
-                            id="shareMessage"
-                            value={shareMessage}
-                            onChange={(e) => setShareMessage(e.target.value)}
-                            placeholder="Add a message to share with this exercise..."
-                            className="mt-1 bg-gray-800 border-gray-600 text-white placeholder-gray-400"
-                          />
-                        </div>
-                        
-                        <Button 
+                        <button
                           onClick={handleShareInternal}
-                          disabled={selectedRecipients.length === 0 || shareMutation.isPending}
-                          className="w-full bg-blue-600 hover:bg-blue-700"
+                          disabled={shareMutation.isPending}
+                          className="w-full mt-4 px-6 py-3 rounded-xl text-white font-semibold transition-all disabled:opacity-50"
+                          style={{
+                            background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)'
+                          }}
+                          data-testid="button-send-share"
                         >
-                          <Send className="h-4 w-4 mr-2" />
-                          {shareMutation.isPending ? "Sending..." : "Send Exercise"}
-                        </Button>
-                      </TabsContent>
-                    </Tabs>
-                  </div>
-                )}
+                          {shareMutation.isPending ? 'Sending...' : `Share with ${selectedRecipients.length} ${selectedRecipients.length === 1 ? 'person' : 'people'}`}
+                        </button>
+                      </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
               </div>
             </div>
           </div>
         )}
-
-        {/* Fullscreen Video Player */}
-        {fullscreenVideo && (
-          <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
-            <div className="relative w-full h-full">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={closeFullscreen}
-                className="absolute top-4 left-4 z-10 text-white hover:bg-white/20"
-              >
-                ✕
-              </Button>
-              
-              {fullscreenVideo.type === 'youtube' ? (
-                <iframe
-                  src={`https://www.youtube.com/embed/${fullscreenVideo.youtubeVideoId}?autoplay=1`}
-                  className="w-full h-full"
-                  allowFullScreen
-                  allow="autoplay"
-                />
-              ) : (
-                <video
-                  src={fullscreenVideo.fileUrl || undefined}
-                  controls
-                  autoPlay
-                  className="w-full h-full object-contain"
-                />
-              )}
-            </div>
-          </div>
-        )}
       </div>
-    </PageContainer>
+    </div>
   );
 }
