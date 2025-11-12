@@ -1093,7 +1093,7 @@ function PracticePage() {
         />
         
         {/* Drawer Content */}
-        <div className={`relative ml-auto w-full max-w-md h-full bg-white/10 backdrop-blur-xl border-l border-white/20 shadow-2xl transform transition-all duration-500 ease-out ${
+        <div className={`relative ml-auto w-full max-w-md h-full bg-gradient-to-br from-blue-900/95 via-purple-900/95 to-blue-900/95 backdrop-blur-xl border-l border-purple-500/30 shadow-2xl transform transition-all duration-500 ease-out ${
           targetTimesModalOpen ? 'translate-x-0' : 'translate-x-full'
         } flex flex-col overflow-hidden`}>
             {/* Content */}
@@ -1101,7 +1101,7 @@ function PracticePage() {
               {/* Close Button */}
               <button
                 onClick={() => setTargetTimesModalOpen(false)}
-                className="absolute top-4 right-4 h-8 w-8 text-white hover:bg-white/10 rounded-lg transition-all duration-200 flex items-center justify-center z-10"
+                className="absolute top-4 right-4 h-8 w-8 text-white hover:bg-purple-500/20 rounded-lg transition-all duration-200 flex items-center justify-center z-10"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -1119,8 +1119,8 @@ function PracticePage() {
                     }}
                     className={`flex-1 h-11 px-4 rounded-xl font-medium text-sm transition-all duration-300 transform hover:scale-105 ${
                       currentTrackType === "outdoor" 
-                        ? "bg-white text-blue-900 shadow-lg" 
-                        : "bg-white/10 text-white border border-white/30 hover:bg-white/20 shadow-md"
+                        ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg shadow-purple-500/50" 
+                        : "bg-white/10 text-white border border-purple-400/30 hover:bg-purple-500/20 shadow-md"
                     }`}
                   >
                     Outdoor
@@ -1135,8 +1135,8 @@ function PracticePage() {
                     }}
                     className={`flex-1 h-11 px-4 rounded-xl font-medium text-sm transition-all duration-300 transform hover:scale-105 ${
                       currentTrackType === "indoor" 
-                        ? "bg-white text-blue-900 shadow-lg" 
-                        : "bg-white/10 text-white border border-white/30 hover:bg-white/20 shadow-md"
+                        ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg shadow-purple-500/50" 
+                        : "bg-white/10 text-white border border-purple-400/30 hover:bg-purple-500/20 shadow-md"
                     }`}
                   >
                     Indoor
@@ -1160,7 +1160,7 @@ function PracticePage() {
                         setSessionSettings(prev => ({ ...prev, adjustForTrackType: checked }));
                       }
                     }}
-                    className="data-[state=checked]:bg-white data-[state=unchecked]:bg-white/20"
+                    className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-purple-500 data-[state=checked]:to-blue-500 data-[state=unchecked]:bg-white/20"
                   />
                 </div>
               </div>
@@ -1179,8 +1179,8 @@ function PracticePage() {
                     }}
                     className={`flex-1 h-10 px-3 rounded-lg font-medium text-xs transition-all duration-300 transform hover:scale-105 ${
                       timingMethod === "reaction" 
-                        ? "bg-white text-blue-900 shadow-lg" 
-                        : "bg-white/10 text-white border border-white/30 hover:bg-white/20 shadow-md"
+                        ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg shadow-purple-500/50" 
+                        : "bg-white/10 text-white border border-purple-400/30 hover:bg-purple-500/20 shadow-md"
                     }`}
                   >
                     Reaction
@@ -1195,8 +1195,8 @@ function PracticePage() {
                     }}
                     className={`flex-1 h-10 px-3 rounded-lg font-medium text-xs transition-all duration-300 transform hover:scale-105 ${
                       timingMethod === "firstFoot" 
-                        ? "bg-white text-blue-900 shadow-lg" 
-                        : "bg-white/10 text-white border border-white/30 hover:bg-white/20 shadow-md"
+                        ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg shadow-purple-500/50" 
+                        : "bg-white/10 text-white border border-purple-400/30 hover:bg-purple-500/20 shadow-md"
                     }`}
                   >
                     First Foot
@@ -1211,8 +1211,8 @@ function PracticePage() {
                     }}
                     className={`flex-1 h-10 px-3 rounded-lg font-medium text-xs transition-all duration-300 transform hover:scale-105 ${
                       timingMethod === "onMovement" 
-                        ? "bg-white text-blue-900 shadow-lg" 
-                        : "bg-white/10 text-white border border-white/30 hover:bg-white/20 shadow-md"
+                        ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg shadow-purple-500/50" 
+                        : "bg-white/10 text-white border border-purple-400/30 hover:bg-purple-500/20 shadow-md"
                     }`}
                   >
                     On Movement
@@ -1223,7 +1223,7 @@ function PracticePage() {
               {/* Goal Times Input Section */}
               <div className="space-y-3">
                 <label className="text-sm font-semibold text-white">Goal Times</label>
-                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/20 space-y-3">
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-purple-400/30 space-y-3">
                   <div className="text-xs text-white/70 mb-3">
                     Set your personal best or goal times for accurate target calculations
                   </div>
@@ -1244,7 +1244,7 @@ function PracticePage() {
                         step="0.01"
                         min="8"
                         max="20"
-                        className="w-full h-8 px-3 bg-white/10 border border-white/30 rounded-lg text-white text-xs placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/50"
+                        className="w-full h-8 px-3 bg-white/10 border border-purple-400/30 rounded-lg text-white text-xs placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500"
                         data-testid="input-goal-100m"
                       />
                     </div>
@@ -1267,7 +1267,7 @@ function PracticePage() {
                         step="0.01"
                         min="18"
                         max="40"
-                        className="w-full h-8 px-3 bg-white/10 border border-white/30 rounded-lg text-white text-xs placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/50"
+                        className="w-full h-8 px-3 bg-white/10 border border-purple-400/30 rounded-lg text-white text-xs placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500"
                         data-testid="input-goal-200m"
                       />
                     </div>
@@ -1290,7 +1290,7 @@ function PracticePage() {
                         step="0.01"
                         min="40"
                         max="80"
-                        className="w-full h-8 px-3 bg-white/10 border border-white/30 rounded-lg text-white text-xs placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/50"
+                        className="w-full h-8 px-3 bg-white/10 border border-purple-400/30 rounded-lg text-white text-xs placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500"
                         data-testid="input-goal-400m"
                       />
                     </div>
@@ -1313,7 +1313,7 @@ function PracticePage() {
                         step="0.01"
                         min="10"
                         max="20"
-                        className="w-full h-8 px-3 bg-white/10 border border-white/30 rounded-lg text-white text-xs placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/50"
+                        className="w-full h-8 px-3 bg-white/10 border border-purple-400/30 rounded-lg text-white text-xs placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500"
                         data-testid="input-goal-hurdles100"
                       />
                     </div>
@@ -1336,7 +1336,7 @@ function PracticePage() {
                         step="0.01"
                         min="45"
                         max="70"
-                        className="w-full h-8 px-3 bg-white/10 border border-white/30 rounded-lg text-white text-xs placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/50"
+                        className="w-full h-8 px-3 bg-white/10 border border-purple-400/30 rounded-lg text-white text-xs placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500"
                         data-testid="input-goal-hurdles400"
                       />
                     </div>
@@ -1348,7 +1348,7 @@ function PracticePage() {
               {/* Target Times Table */}
               <div className="space-y-3">
                 <label className="text-sm font-semibold text-white">Target Times</label>
-                <div className="bg-white/5 backdrop-blur-sm rounded-2xl overflow-hidden border border-white/20 shadow-xl">
+                <div className="bg-white/5 backdrop-blur-sm rounded-2xl overflow-hidden border border-purple-400/30 shadow-xl">
                   <div className="relative">
                     {(() => {
                       const data = calculateTargetTimes();
@@ -1363,13 +1363,13 @@ function PracticePage() {
                       return (
                         <div className="flex">
                           {/* Frozen Distance Column */}
-                          <div className="flex-shrink-0 bg-white/10 border-r border-white/20">
-                            <div className="w-16 px-2 py-3 text-xs font-bold text-center bg-white/20 border-b border-white/20 text-white">
+                          <div className="flex-shrink-0 bg-purple-900/20 border-r border-purple-400/30">
+                            <div className="w-16 px-2 py-3 text-xs font-bold text-center bg-purple-500/30 border-b border-purple-400/30 text-white">
                               Dist
                             </div>
                             {data.distances.map((distance, index) => (
-                              <div key={`frozen-${distance}`} className={`w-16 px-2 py-2.5 text-xs font-semibold text-center border-b border-white/10 last:border-b-0 text-white ${
-                                index % 2 === 0 ? 'bg-white/5' : 'bg-white/10'
+                              <div key={`frozen-${distance}`} className={`w-16 px-2 py-2.5 text-xs font-semibold text-center border-b border-purple-400/20 last:border-b-0 text-white ${
+                                index % 2 === 0 ? 'bg-purple-900/10' : 'bg-purple-900/20'
                               }`}>
                                 {distance}
                               </div>
@@ -1381,12 +1381,12 @@ function PracticePage() {
                             <div className="flex min-w-fit">
                               {data.percentages.map((percentage) => (
                                 <div key={`col-${percentage}`} className="flex-shrink-0 w-14">
-                                  <div className="px-1 py-3 text-xs font-bold text-center bg-white/20 border-b border-white/20 text-white">
+                                  <div className="px-1 py-3 text-xs font-bold text-center bg-purple-500/30 border-b border-purple-400/30 text-white">
                                     {percentage}%
                                   </div>
                                   {data.distances.map((distance, index) => (
-                                    <div key={`${distance}-${percentage}`} className={`px-1 py-2.5 text-xs text-center font-mono border-b border-white/10 last:border-b-0 text-white hover:bg-white/15 transition-colors duration-200 ${
-                                      index % 2 === 0 ? 'bg-white/5' : 'bg-white/10'
+                                    <div key={`${distance}-${percentage}`} className={`px-1 py-2.5 text-xs text-center font-mono border-b border-purple-400/20 last:border-b-0 text-white hover:bg-purple-500/20 transition-colors duration-200 ${
+                                      index % 2 === 0 ? 'bg-purple-900/10' : 'bg-purple-900/20'
                                     }`}>
                                       {data.getTime(distance, percentage)}
                                     </div>
@@ -1403,10 +1403,10 @@ function PracticePage() {
               </div>
 
 
-              <div className="text-xs text-white/60 bg-white/5 rounded-lg p-3 border border-white/10">
+              <div className="text-xs text-white/60 bg-purple-900/10 rounded-lg p-3 border border-purple-400/20">
                 Times are estimates based on selected track type and timing method. Percentages represent speed intensity levels.
                 {!safeStorage.isAvailable && (
-                  <div className="mt-2 pt-2 border-t border-white/10">
+                  <div className="mt-2 pt-2 border-t border-purple-400/20">
                     ⚠️ Settings will persist during this session only due to browser privacy settings.
                   </div>
                 )}
