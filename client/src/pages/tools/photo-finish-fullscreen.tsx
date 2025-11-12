@@ -643,11 +643,7 @@ export default function PhotoFinishFullscreen({
       }}
     >
       {/* Top Bar with Controls */}
-      <div className="fixed top-16 left-0 right-0 z-[9998] flex items-center justify-between px-4 gap-3">
-        <div className="bg-black/60 backdrop-blur-sm px-3 py-1 rounded">
-          <h1 className="text-base font-semibold text-white">{videoName}</h1>
-        </div>
-        
+      <div className="fixed top-16 left-0 right-0 z-[9998] flex items-center justify-end px-4 gap-3">
         {/* Buttons */}
         <div className="flex items-center gap-3">
           {onSave && (
@@ -655,18 +651,18 @@ export default function PhotoFinishFullscreen({
               onClick={onSave}
               data-testid="button-save-video"
               disabled={isSaved}
-              className={`${isSaved ? 'bg-green-600' : 'bg-blue-600 hover:bg-blue-700'} text-white shadow-lg px-5`}
+              className={`${isSaved ? 'bg-green-600 hover:bg-green-700' : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'} text-white shadow-lg px-5`}
               size="sm"
             >
               <Save className="h-4 w-4 mr-2" />
-              {isSaved ? 'Saved to Library' : 'Save to Library'}
+              {isSaved ? 'Saved' : 'Save Video'}
             </Button>
           )}
           
           <button
             onClick={onClose}
             data-testid="button-close-analysis"
-            className="bg-red-600 hover:bg-red-700 text-white p-2 rounded font-medium text-sm border border-white shadow-lg"
+            className="bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white p-2 rounded font-medium text-sm border border-gray-600 shadow-lg transition-all"
           >
             <Trash2 className="h-4 w-4" />
           </button>
