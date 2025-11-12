@@ -33,6 +33,7 @@ export default function StartGunPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [status, setStatus] = useState<'idle' | 'on-your-marks' | 'set' | 'gun'>('idle');
   const [sequenceCancelled, setSequenceCancelled] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   
   // State for timing settings
   const [marksToSetDelay, setMarksToSetDelay] = useState(2);
@@ -721,95 +722,117 @@ export default function StartGunPage() {
   };
   
   return (
-    <div className="container mx-auto px-4 pb-16">
-
-      
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <Zap className="h-6 w-6" />
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 pb-20">
+      <div className="container mx-auto px-4 py-6 max-w-2xl">
+        
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-white mb-2 flex items-center justify-center gap-2">
+            <Zap className="h-7 w-7 text-purple-400" />
             Start Gun
           </h1>
-          <p className="text-muted-foreground mt-1">
-            Practice your starts with a realistic race start sequence.
+          <p className="text-gray-400 text-sm">
+            Practice your race starts with realistic timing
           </p>
         </div>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-        {/* Main card */}
-        <Card className="md:col-span-2">
-          {/* Removed header completely */}
+
+        {/* Main Control Card with Gradient Border */}
+        <div className="relative mb-6">
+          {/* Animated gradient border */}
+          <div className="absolute -inset-[2px] bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 rounded-2xl opacity-75 blur-sm animate-gradient-xy"></div>
           
-          <CardContent className="flex flex-col items-center justify-center pt-12 pb-12">
-            {/* Status display - hidden status info */}
-            <div className="hidden">
-              {status === 'set' && currentSetToGunDelay > 0 && (
-                <p className="text-sm text-muted-foreground">
-                  (Randomized delay: {currentSetToGunDelay.toFixed(2)}s)
-                </p>
-              )}
+          <div className="relative bg-gradient-to-br from-gray-800 to-gray-850 rounded-2xl p-8 shadow-2xl">
+            {/* Status Display */}
+            <div className="text-center mb-8">
+              <div className={`inline-block px-6 py-2 rounded-full text-sm font-semibold ${
+                status === 'on-your-marks' ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/50' :
+                status === 'set' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/50' :
+                status === 'gun' ? 'bg-red-500/20 text-red-300 border border-red-500/50' :
+                'bg-gray-700/50 text-gray-300 border border-gray-600/50'
+              }`}>
+                {getStatusText()}
+              </div>
             </div>
-            
-            {/* Controls with improved spacing and centering */}
-            <div className="w-full max-w-md flex flex-col items-center">
-              {/* Main start/stop button with increased size */}
-              <div className="mb-12">
-                <Button
-                  className={`w-36 h-36 rounded-full text-lg font-bold ${
-                    isPlaying 
-                      ? 'bg-red-500 hover:bg-red-600 animate-pulse' 
-                      : 'bg-yellow-500 hover:bg-yellow-600 pulse-animation shadow-lg'
-                  }`}
+
+            {/* Large Start Button with Gradient Glow */}
+            <div className="flex justify-center mb-8">
+              <div className="relative">
+                {!isPlaying && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-xl opacity-50 animate-pulse"></div>
+                )}
+                <button
                   onClick={isPlaying ? cancelSequence : startSequence}
-                  disabled={false}
+                  data-testid={isPlaying ? "button-stop-gun" : "button-start-gun"}
+                  className={`relative w-40 h-40 rounded-full font-bold text-white shadow-2xl transition-all transform hover:scale-105 active:scale-95 ${
+                    isPlaying 
+                      ? 'bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700' 
+                      : 'bg-gradient-to-br from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
+                  }`}
                 >
-                  {isPlaying ? <StopCircle size={36} /> : <Play size={36} />}
-                  <span className="sr-only">{isPlaying ? 'Cancel' : 'Start'}</span>
-                </Button>
-              </div>
-              
-              {/* Volume controls with better spacing */}
-              <div className="flex items-center gap-4 w-full px-2">
-                <Button variant="outline" size="icon" onClick={toggleMute} className="shrink-0">
-                  {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-                </Button>
-                <Slider
-                  disabled={isMuted}
-                  min={0}
-                  max={100}
-                  step={1}
-                  value={[volume]}
-                  onValueChange={([val]) => setVolume(val)}
-                  className="flex-1"
-                />
-                <span className="w-12 text-center">{volume}%</span>
+                  {isPlaying ? (
+                    <StopCircle className="h-16 w-16 mx-auto" />
+                  ) : (
+                    <Play className="h-16 w-16 mx-auto ml-2" />
+                  )}
+                </button>
               </div>
             </div>
-          </CardContent>
-        </Card>
-        
-        {/* Settings card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Timer className="h-5 w-5" />
-              Settings
-            </CardTitle>
-            <CardDescription>
-              Customize your race start experience
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent className="space-y-6">
-            {/* Timing settings */}
+
+            {/* Volume Controls */}
+            <div className="bg-gray-900/50 rounded-xl p-4 border border-gray-700/50">
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={toggleMute}
+                  data-testid="button-toggle-mute"
+                  className="shrink-0 p-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition-colors"
+                >
+                  {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+                </button>
+                <div className="flex-1">
+                  <Slider
+                    disabled={isMuted}
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={[volume]}
+                    onValueChange={([val]) => setVolume(val)}
+                    className="w-full"
+                  />
+                </div>
+                <span className="w-12 text-center text-sm font-medium text-gray-300">{volume}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Settings Toggle Button */}
+        <button
+          onClick={() => setShowSettings(!showSettings)}
+          data-testid="button-toggle-settings"
+          className="w-full mb-4 bg-gradient-to-r from-gray-800 to-gray-850 hover:from-gray-750 hover:to-gray-800 text-white rounded-xl p-4 border border-gray-700/50 transition-all flex items-center justify-between shadow-lg"
+        >
+          <span className="flex items-center gap-2 font-semibold">
+            <Timer className="h-5 w-5 text-purple-400" />
+            Settings & Options
+          </span>
+          <span className="text-gray-400">{showSettings ? '▼' : '▶'}</span>
+        </button>
+
+        {/* Collapsible Settings */}
+        {showSettings && (
+          <div className="bg-gradient-to-br from-gray-800 to-gray-850 rounded-xl p-6 border border-gray-700/50 shadow-lg space-y-6">
+            
+            {/* Timing Settings */}
             <div className="space-y-4">
-              <h3 className="text-sm font-medium">Timing</h3>
+              <h3 className="text-sm font-semibold text-purple-300 flex items-center gap-2">
+                <Timer className="h-4 w-4" />
+                Timing
+              </h3>
               
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="marks-to-set">Marks to Set (s)</Label>
-                  <span className="text-sm">{marksToSetDelay}s</span>
+              <div className="space-y-2 bg-gray-900/30 rounded-lg p-3 border border-gray-700/30">
+                <div className="flex items-center justify-between mb-2">
+                  <Label htmlFor="marks-to-set" className="text-gray-300 text-sm">Marks to Set</Label>
+                  <span className="text-sm font-semibold text-white">{marksToSetDelay}s</span>
                 </div>
                 <Slider
                   id="marks-to-set"
@@ -821,10 +844,10 @@ export default function StartGunPage() {
                 />
               </div>
               
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="set-to-gun">Set to Gun (s)</Label>
-                  <span className="text-sm">{setToGunDelay}s</span>
+              <div className="space-y-2 bg-gray-900/30 rounded-lg p-3 border border-gray-700/30">
+                <div className="flex items-center justify-between mb-2">
+                  <Label htmlFor="set-to-gun" className="text-gray-300 text-sm">Set to Gun</Label>
+                  <span className="text-sm font-semibold text-white">{setToGunDelay}s</span>
                 </div>
                 <Slider
                   id="set-to-gun"
@@ -836,24 +859,27 @@ export default function StartGunPage() {
                 />
               </div>
               
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-3 bg-gray-900/30 rounded-lg p-3 border border-gray-700/30">
                 <Switch
                   id="randomize"
                   checked={useRandomizer}
                   onCheckedChange={setUseRandomizer}
                 />
-                <Label htmlFor="randomize" className="flex items-center gap-2">
-                  <Dices className="h-4 w-4" />
+                <Label htmlFor="randomize" className="flex items-center gap-2 text-gray-300 text-sm cursor-pointer">
+                  <Dices className="h-4 w-4 text-purple-400" />
                   Randomize gun timing
                 </Label>
               </div>
             </div>
             
-            {/* Device settings */}
+            {/* Device Options */}
             <div className="space-y-4">
-              <h3 className="text-sm font-medium">Device Options</h3>
+              <h3 className="text-sm font-semibold text-pink-300 flex items-center gap-2">
+                <Camera className="h-4 w-4" />
+                Device Options
+              </h3>
               
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-3 bg-gray-900/30 rounded-lg p-3 border border-gray-700/30">
                 <Switch
                   id="use-flash"
                   checked={useFlash}
@@ -862,32 +888,32 @@ export default function StartGunPage() {
                 />
                 <Label 
                   htmlFor="use-flash" 
-                  className={`flex items-center gap-2 ${!hasFlash ? 'text-muted-foreground' : ''}`}
+                  className={`flex items-center gap-2 text-sm cursor-pointer ${!hasFlash ? 'text-gray-500' : 'text-gray-300'}`}
                 >
                   <Zap className="h-4 w-4" />
                   Use camera flash
-                  {!hasFlash && <span className="text-xs">(Not available)</span>}
+                  {!hasFlash && <span className="text-xs text-gray-500">(Not available)</span>}
                 </Label>
               </div>
               
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-3 bg-gray-900/30 rounded-lg p-3 border border-gray-700/30">
                 <Switch
                   id="use-camera"
                   checked={useCamera}
                   onCheckedChange={setUseCamera}
                 />
-                <Label htmlFor="use-camera" className="flex items-center gap-2">
+                <Label htmlFor="use-camera" className="flex items-center gap-2 text-gray-300 text-sm cursor-pointer">
                   <Camera className="h-4 w-4" />
                   Record video
                 </Label>
               </div>
               
               {useCamera && (
-                <div className="pl-6">
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="record-duration">Record for</Label>
+                <div className="pl-6 bg-gray-900/30 rounded-lg p-3 border border-gray-700/30">
+                  <div className="flex items-center gap-3">
+                    <Label htmlFor="record-duration" className="text-gray-300 text-sm">Record for</Label>
                     <Select value={recordDuration} onValueChange={setRecordDuration}>
-                      <SelectTrigger className="w-24">
+                      <SelectTrigger className="w-32 bg-gray-800 border-gray-600 text-white">
                         <SelectValue placeholder="Duration" />
                       </SelectTrigger>
                       <SelectContent>
@@ -902,24 +928,49 @@ export default function StartGunPage() {
                 </div>
               )}
             </div>
-          </CardContent>
-          
-          <CardFooter>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="outline" size="sm" className="w-full">
-                    How to use
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="w-80">
-                  {helpContent}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </CardFooter>
-        </Card>
+
+            {/* Help Section */}
+            <div className="pt-4 border-t border-gray-700/50">
+              <details className="group">
+                <summary className="cursor-pointer text-sm text-gray-400 hover:text-gray-300 transition-colors list-none flex items-center gap-2">
+                  <span className="group-open:rotate-90 transition-transform">▶</span>
+                  How to use
+                </summary>
+                <div className="mt-3 text-sm text-gray-400 space-y-3 pl-5">
+                  <div>
+                    <p className="font-semibold text-gray-300">Timing Settings</p>
+                    <p className="text-xs">Adjust delays between commands to match official standards or your preference.</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-300">Tips</p>
+                    <ul className="list-disc pl-5 space-y-1 text-xs">
+                      <li>Use headphones for the most realistic experience</li>
+                      <li>Practice with randomized timing to improve reaction</li>
+                      <li>Review recorded videos to analyze your technique</li>
+                    </ul>
+                  </div>
+                </div>
+              </details>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Add gradient animation styles */}
+      <style>{`
+        @keyframes gradient-xy {
+          0%, 100% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+        }
+        .animate-gradient-xy {
+          background-size: 200% 200%;
+          animation: gradient-xy 3s ease infinite;
+        }
+      `}</style>
     </div>
   );
 }
