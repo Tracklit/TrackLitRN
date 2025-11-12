@@ -643,29 +643,32 @@ export default function PhotoFinishFullscreen({
       }}
     >
       {/* Top Bar with Controls */}
-      <div className="fixed top-16 left-0 right-0 z-[9998] flex items-center justify-end px-4 gap-3">
-        {/* Buttons */}
-        <div className="flex items-center gap-3">
-          {onSave && (
-            <Button
-              onClick={onSave}
-              data-testid="button-save-video"
-              disabled={isSaved}
-              className={`${isSaved ? 'bg-green-600 hover:bg-green-700' : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'} text-white shadow-lg px-5`}
-              size="sm"
+      <div className="fixed top-16 left-0 right-0 z-[9998]">
+        {/* Background bar */}
+        <div className="bg-gradient-to-b from-black/80 to-black/60 backdrop-blur-md border-b border-white/10">
+          <div className="flex items-center justify-end px-4 py-3 gap-3">
+            {/* Buttons */}
+            {onSave && (
+              <Button
+                onClick={onSave}
+                data-testid="button-save-video"
+                disabled={isSaved}
+                className={`${isSaved ? 'bg-green-600 hover:bg-green-700' : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'} text-white shadow-lg px-5`}
+                size="sm"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                {isSaved ? 'Saved' : 'Save Video'}
+              </Button>
+            )}
+            
+            <button
+              onClick={onClose}
+              data-testid="button-close-analysis"
+              className="bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white p-2 rounded font-medium text-sm border border-gray-600 shadow-lg transition-all"
             >
-              <Save className="h-4 w-4 mr-2" />
-              {isSaved ? 'Saved' : 'Save Video'}
-            </Button>
-          )}
-          
-          <button
-            onClick={onClose}
-            data-testid="button-close-analysis"
-            className="bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white p-2 rounded font-medium text-sm border border-gray-600 shadow-lg transition-all"
-          >
-            <X className="h-4 w-4" />
-          </button>
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </div>
 
