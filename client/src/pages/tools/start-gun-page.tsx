@@ -841,18 +841,6 @@ export default function StartGunPage() {
           <div className="absolute -inset-[2px] bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 rounded-2xl opacity-75 blur-sm animate-gradient-xy"></div>
           
           <div className="relative bg-gradient-to-br from-gray-800 to-gray-850 rounded-2xl p-8 shadow-2xl">
-            {/* Status Display */}
-            <div className="text-center mb-8">
-              <div className={`inline-block px-6 py-2 rounded-full text-sm font-semibold ${
-                status === 'on-your-marks' ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/50' :
-                status === 'set' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/50' :
-                status === 'gun' ? 'bg-red-500/20 text-red-300 border border-red-500/50' :
-                'bg-gray-700/50 text-gray-300 border border-gray-600/50'
-              }`}>
-                {getStatusText()}
-              </div>
-            </div>
-
             {/* Control Buttons - Start and Reset Stacked */}
             <div className="flex flex-col items-center gap-4 mb-8">
               {/* Start Button - Completely locked when playing */}
