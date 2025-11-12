@@ -785,7 +785,7 @@ export default function StartGunPage() {
                 >
                   {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
                 </button>
-                <div className="flex-1 relative h-2">
+                <div className="flex-1 relative h-4">
                   <div className="absolute inset-0 bg-gray-700 rounded-full"></div>
                   <div 
                     className="absolute inset-y-0 left-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all"
@@ -802,8 +802,8 @@ export default function StartGunPage() {
                     className="absolute inset-0 w-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
                   />
                   <div 
-                    className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-lg transition-all pointer-events-none"
-                    style={{ left: `calc(${volume}% - 8px)` }}
+                    className="absolute top-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full shadow-lg transition-all pointer-events-none"
+                    style={{ left: `calc(${volume}% - 16px)` }}
                   ></div>
                 </div>
                 <span className="w-12 text-center text-sm font-medium text-gray-300">{volume}%</span>
@@ -841,7 +841,7 @@ export default function StartGunPage() {
                   <Label htmlFor="marks-to-set" className="text-gray-300 text-sm">Marks to Set</Label>
                   <span className="text-sm font-semibold text-white">{marksToSetDelay}s</span>
                 </div>
-                <div className="relative h-2">
+                <div className="relative h-4">
                   <div className="absolute inset-0 bg-gray-700 rounded-full"></div>
                   <div 
                     className="absolute inset-y-0 left-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all"
@@ -858,8 +858,8 @@ export default function StartGunPage() {
                     className="absolute inset-0 w-full opacity-0 cursor-pointer"
                   />
                   <div 
-                    className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-lg transition-all pointer-events-none"
-                    style={{ left: `calc(${((marksToSetDelay - 1) / (20 - 1)) * 100}% - 8px)` }}
+                    className="absolute top-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full shadow-lg transition-all pointer-events-none"
+                    style={{ left: `calc(${((marksToSetDelay - 1) / (20 - 1)) * 100}% - 16px)` }}
                   ></div>
                 </div>
               </div>
@@ -869,7 +869,7 @@ export default function StartGunPage() {
                   <Label htmlFor="set-to-gun" className="text-gray-300 text-sm">Set to Gun</Label>
                   <span className="text-sm font-semibold text-white">{setToGunDelay}s</span>
                 </div>
-                <div className="relative h-2">
+                <div className="relative h-4">
                   <div className="absolute inset-0 bg-gray-700 rounded-full"></div>
                   <div 
                     className="absolute inset-y-0 left-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all"
@@ -886,8 +886,8 @@ export default function StartGunPage() {
                     className="absolute inset-0 w-full opacity-0 cursor-pointer"
                   />
                   <div 
-                    className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-lg transition-all pointer-events-none"
-                    style={{ left: `calc(${((setToGunDelay - 0.5) / (10 - 0.5)) * 100}% - 8px)` }}
+                    className="absolute top-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full shadow-lg transition-all pointer-events-none"
+                    style={{ left: `calc(${((setToGunDelay - 0.5) / (10 - 0.5)) * 100}% - 16px)` }}
                   ></div>
                 </div>
               </div>
