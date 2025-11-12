@@ -58,7 +58,7 @@ export default function PhotoFinishFullscreen({
   const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 });
   const [isSlowMo, setIsSlowMo] = useState(false);
   const [isTimelineLocked, setIsTimelineLocked] = useState(false);
-  const [timelineOffset, setTimelineOffset] = useState(0);
+  const [timelineScrollPosition, setTimelineScrollPosition] = useState(0);
   
   // Touch handling for pinch zoom
   const [initialPinchDistance, setInitialPinchDistance] = useState<number | null>(null);
@@ -146,13 +146,20 @@ export default function PhotoFinishFullscreen({
   // Timeline handlers  
   const handleTimelineInteraction = (clientX: number, element: HTMLDivElement, deltaX?: number) => {
     if (isTimelineLocked && deltaX !== undefined) {
-      // When locked, scroll the timeline instead of moving the indicator
-      setTimelineOffset(prev => {
-        const newOffset = prev + deltaX;
-        // Limit offset to reasonable bounds
-        const maxOffset = Math.max(0, element.scrollWidth - element.clientWidth);
-        return Math.max(-maxOffset, Math.min(0, newOffset));
+      // When locked, adjust the scroll position
+      setTimelineScrollPosition(prev => {
+        const sensitivity = 0.01; // Adjust sensitivity of scrolling
+        const timeShift = -deltaX * sensitivity; // Negative because dragging right should move timeline left
+        const newPosition = prev + timeShift;
+        // Clamp between 0 and duration
+        return Math.max(0, Math.min(duration - 0.01, newPosition));
       });
+      
+      // Update video time based on scroll position
+      if (videoRef.current && timelineScrollPosition >= 0 && timelineScrollPosition <= duration) {
+        videoRef.current.currentTime = timelineScrollPosition;
+        setCurrentTime(timelineScrollPosition);
+      }
     } else {
       // Default behavior: move the time indicator
       const rect = element.getBoundingClientRect();
@@ -780,11 +787,21 @@ export default function PhotoFinishFullscreen({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setIsTimelineLocked(!isTimelineLocked)}
-            className={`text-white hover:bg-gray-700 ${isTimelineLocked ? 'bg-purple-600/50' : ''}`}
-            title={isTimelineLocked ? 'Timeline locked - drag to scroll' : 'Timeline unlocked - tap to seek'}
+            onClick={() => {
+              setIsTimelineLocked(!isTimelineLocked);
+              // Reset scroll position when toggling
+              if (isTimelineLocked) {
+                setTimelineScrollPosition(currentTime);
+              }
+            }}
+            className={`text-white hover:bg-gray-700 transition-colors ${isTimelineLocked ? 'bg-purple-600 ring-2 ring-purple-400' : 'bg-gray-800'}`}
+            title={isTimelineLocked ? 'Timeline locked - drag to scrub frame-by-frame' : 'Timeline unlocked - tap to seek'}
           >
-            {isTimelineLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+            {isTimelineLocked ? (
+              <Lock className="w-4 h-4 text-yellow-300" />
+            ) : (
+              <Unlock className="w-4 h-4 text-green-400" />
+            )}
           </Button>
         </div>
         
@@ -799,10 +816,6 @@ export default function PhotoFinishFullscreen({
             <div
               ref={timelineRef}
               className={`h-full relative ${isTimelineLocked ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}`}
-              style={{
-                transform: isTimelineLocked ? `translateX(${timelineOffset}px)` : 'none',
-                transition: isDragging ? 'none' : 'transform 0.1s ease-out'
-              }}
               onMouseDown={handleTimelineMouseDown}
               onMouseMove={(e) => {
                 handleTimelineMouseMove(e);
