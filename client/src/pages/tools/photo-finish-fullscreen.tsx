@@ -59,6 +59,10 @@ export default function PhotoFinishFullscreen({
   const [isSlowMo, setIsSlowMo] = useState(false);
   const [isTimelineLocked, setIsTimelineLocked] = useState(false);
   const [timelineScrollPosition, setTimelineScrollPosition] = useState(0);
+  const [scrollVelocity, setScrollVelocity] = useState(0);
+  const velocityRef = useRef(0);
+  const lastDragTimeRef = useRef(0);
+  const momentumAnimationRef = useRef<number | null>(null);
   
   // Touch handling for pinch zoom
   const [initialPinchDistance, setInitialPinchDistance] = useState<number | null>(null);
@@ -143,13 +147,59 @@ export default function PhotoFinishFullscreen({
     return seconds.toFixed(2);
   };
 
+  // Momentum scrolling animation
+  const applyMomentum = () => {
+    if (momentumAnimationRef.current) {
+      cancelAnimationFrame(momentumAnimationRef.current);
+    }
+
+    const animate = () => {
+      if (Math.abs(velocityRef.current) > 0.0001) {
+        setTimelineScrollPosition(prev => {
+          const newPosition = Math.max(0, Math.min(duration - 0.01, prev + velocityRef.current));
+          
+          // Update video
+          if (videoRef.current && newPosition >= 0 && newPosition <= duration) {
+            videoRef.current.currentTime = newPosition;
+            setCurrentTime(newPosition);
+          }
+          
+          return newPosition;
+        });
+        
+        // Apply deceleration
+        velocityRef.current *= 0.92; // Deceleration factor
+        momentumAnimationRef.current = requestAnimationFrame(animate);
+      } else {
+        velocityRef.current = 0;
+        momentumAnimationRef.current = null;
+      }
+    };
+    
+    momentumAnimationRef.current = requestAnimationFrame(animate);
+  };
+
   // Timeline handlers  
   const handleTimelineInteraction = (clientX: number, element: HTMLDivElement, deltaX?: number) => {
     if (isTimelineLocked && deltaX !== undefined) {
+      // Cancel any ongoing momentum
+      if (momentumAnimationRef.current) {
+        cancelAnimationFrame(momentumAnimationRef.current);
+        momentumAnimationRef.current = null;
+      }
+      
       // When locked, adjust the scroll position
       const sensitivity = 0.01; // Adjust sensitivity of scrolling
       const timeShift = -deltaX * sensitivity; // Negative because dragging right should move timeline left
       const newPosition = Math.max(0, Math.min(duration - 0.01, timelineScrollPosition + timeShift));
+      
+      // Track velocity for momentum
+      const now = Date.now();
+      const timeDelta = now - lastDragTimeRef.current;
+      if (timeDelta > 0) {
+        velocityRef.current = timeShift / Math.max(timeDelta, 16) * 16; // Normalize to 60fps
+      }
+      lastDragTimeRef.current = now;
       
       setTimelineScrollPosition(newPosition);
       
@@ -245,6 +295,8 @@ export default function PhotoFinishFullscreen({
     event.preventDefault();
     setIsDragging(true);
     setLastPanPoint({ x: event.clientX, y: event.clientY });
+    lastDragTimeRef.current = Date.now();
+    velocityRef.current = 0;
     if (!isTimelineLocked) {
       handleTimelineInteraction(event.clientX, event.currentTarget);
     }
@@ -264,6 +316,9 @@ export default function PhotoFinishFullscreen({
 
   const handleTimelineMouseUp = () => {
     setIsDragging(false);
+    if (isTimelineLocked && Math.abs(velocityRef.current) > 0.001) {
+      applyMomentum();
+    }
   };
 
   const handleTimelineTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
@@ -271,6 +326,8 @@ export default function PhotoFinishFullscreen({
     setIsDragging(true);
     const touch = event.touches[0];
     setLastPanPoint({ x: touch.clientX, y: touch.clientY });
+    lastDragTimeRef.current = Date.now();
+    velocityRef.current = 0;
     if (!isTimelineLocked) {
       handleTimelineInteraction(touch.clientX, event.currentTarget);
     }
@@ -292,6 +349,9 @@ export default function PhotoFinishFullscreen({
 
   const handleTimelineTouchEnd = () => {
     setIsDragging(false);
+    if (isTimelineLocked && Math.abs(velocityRef.current) > 0.001) {
+      applyMomentum();
+    }
   };
 
   // Video zoom and pan handlers
