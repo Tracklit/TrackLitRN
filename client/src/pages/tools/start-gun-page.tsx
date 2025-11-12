@@ -727,13 +727,10 @@ export default function StartGunPage() {
         
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2 flex items-center justify-center gap-2">
+          <h1 className="text-3xl font-bold text-white flex items-center justify-center gap-2">
             <Zap className="h-7 w-7 text-purple-400" />
             Start Gun
           </h1>
-          <p className="text-gray-400 text-sm">
-            Practice your race starts with realistic timing
-          </p>
         </div>
 
         {/* Main Control Card with Gradient Border */}
@@ -763,16 +760,16 @@ export default function StartGunPage() {
                 <button
                   onClick={isPlaying ? cancelSequence : startSequence}
                   data-testid={isPlaying ? "button-stop-gun" : "button-start-gun"}
-                  className={`relative w-40 h-40 rounded-full font-bold text-white shadow-2xl transition-all transform hover:scale-105 active:scale-95 ${
+                  className={`relative w-40 h-40 rounded-full font-bold text-white shadow-2xl transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center ${
                     isPlaying 
                       ? 'bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700' 
                       : 'bg-gradient-to-br from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
                   }`}
                 >
                   {isPlaying ? (
-                    <StopCircle className="h-16 w-16 mx-auto" />
+                    <StopCircle className="h-16 w-16" />
                   ) : (
-                    <Play className="h-16 w-16 mx-auto ml-2" />
+                    <Play className="h-16 w-16" style={{ marginLeft: '4px' }} />
                   )}
                 </button>
               </div>
@@ -788,16 +785,26 @@ export default function StartGunPage() {
                 >
                   {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
                 </button>
-                <div className="flex-1">
-                  <Slider
-                    disabled={isMuted}
+                <div className="flex-1 relative h-2">
+                  <div className="absolute inset-0 bg-gray-700 rounded-full"></div>
+                  <div 
+                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all"
+                    style={{ width: `${volume}%` }}
+                  ></div>
+                  <input
+                    type="range"
                     min={0}
                     max={100}
                     step={1}
-                    value={[volume]}
-                    onValueChange={([val]) => setVolume(val)}
-                    className="w-full"
+                    value={volume}
+                    onChange={(e) => setVolume(parseInt(e.target.value))}
+                    disabled={isMuted}
+                    className="absolute inset-0 w-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
                   />
+                  <div 
+                    className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-lg transition-all pointer-events-none"
+                    style={{ left: `calc(${volume}% - 8px)` }}
+                  ></div>
                 </div>
                 <span className="w-12 text-center text-sm font-medium text-gray-300">{volume}%</span>
               </div>
@@ -815,7 +822,7 @@ export default function StartGunPage() {
             <Timer className="h-5 w-5 text-purple-400" />
             Settings & Options
           </span>
-          <span className="text-gray-400">{showSettings ? '▼' : '▶'}</span>
+          <span className="text-gray-400 transition-transform" style={{ transform: showSettings ? 'rotate(180deg)' : 'rotate(0deg)' }}>⌄</span>
         </button>
 
         {/* Collapsible Settings */}
@@ -830,33 +837,59 @@ export default function StartGunPage() {
               </h3>
               
               <div className="space-y-2 bg-gray-900/30 rounded-lg p-3 border border-gray-700/30">
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between mb-3">
                   <Label htmlFor="marks-to-set" className="text-gray-300 text-sm">Marks to Set</Label>
                   <span className="text-sm font-semibold text-white">{marksToSetDelay}s</span>
                 </div>
-                <Slider
-                  id="marks-to-set"
-                  min={1}
-                  max={20}
-                  step={0.5}
-                  value={[marksToSetDelay]}
-                  onValueChange={([val]) => setMarksToSetDelay(val)}
-                />
+                <div className="relative h-2">
+                  <div className="absolute inset-0 bg-gray-700 rounded-full"></div>
+                  <div 
+                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all"
+                    style={{ width: `${((marksToSetDelay - 1) / (20 - 1)) * 100}%` }}
+                  ></div>
+                  <input
+                    id="marks-to-set"
+                    type="range"
+                    min={1}
+                    max={20}
+                    step={0.5}
+                    value={marksToSetDelay}
+                    onChange={(e) => setMarksToSetDelay(parseFloat(e.target.value))}
+                    className="absolute inset-0 w-full opacity-0 cursor-pointer"
+                  />
+                  <div 
+                    className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-lg transition-all pointer-events-none"
+                    style={{ left: `calc(${((marksToSetDelay - 1) / (20 - 1)) * 100}% - 8px)` }}
+                  ></div>
+                </div>
               </div>
               
               <div className="space-y-2 bg-gray-900/30 rounded-lg p-3 border border-gray-700/30">
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between mb-3">
                   <Label htmlFor="set-to-gun" className="text-gray-300 text-sm">Set to Gun</Label>
                   <span className="text-sm font-semibold text-white">{setToGunDelay}s</span>
                 </div>
-                <Slider
-                  id="set-to-gun"
-                  min={0.5}
-                  max={10}
-                  step={0.5}
-                  value={[setToGunDelay]}
-                  onValueChange={([val]) => setSetToGunDelay(val)}
-                />
+                <div className="relative h-2">
+                  <div className="absolute inset-0 bg-gray-700 rounded-full"></div>
+                  <div 
+                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all"
+                    style={{ width: `${((setToGunDelay - 0.5) / (10 - 0.5)) * 100}%` }}
+                  ></div>
+                  <input
+                    id="set-to-gun"
+                    type="range"
+                    min={0.5}
+                    max={10}
+                    step={0.5}
+                    value={setToGunDelay}
+                    onChange={(e) => setSetToGunDelay(parseFloat(e.target.value))}
+                    className="absolute inset-0 w-full opacity-0 cursor-pointer"
+                  />
+                  <div 
+                    className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-lg transition-all pointer-events-none"
+                    style={{ left: `calc(${((setToGunDelay - 0.5) / (10 - 0.5)) * 100}% - 8px)` }}
+                  ></div>
+                </div>
               </div>
               
               <div className="flex items-center space-x-3 bg-gray-900/30 rounded-lg p-3 border border-gray-700/30">
@@ -864,6 +897,7 @@ export default function StartGunPage() {
                   id="randomize"
                   checked={useRandomizer}
                   onCheckedChange={setUseRandomizer}
+                  className="data-[state=checked]:bg-blue-900"
                 />
                 <Label htmlFor="randomize" className="flex items-center gap-2 text-gray-300 text-sm cursor-pointer">
                   <Dices className="h-4 w-4 text-purple-400" />
