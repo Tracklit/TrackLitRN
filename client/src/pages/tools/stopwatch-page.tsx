@@ -235,7 +235,7 @@ export default function StopwatchPage() {
         <div className="relative mb-12">
           {/* Animated glow effect */}
           {isRunning && (
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-3xl blur-3xl animate-pulse" />
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-3xl blur-xl animate-pulse" />
           )}
           
           {/* Timer card */}
@@ -264,8 +264,8 @@ export default function StopwatchPage() {
               transform hover:scale-105 active:scale-95
               focus:outline-none focus:ring-4 focus:ring-offset-4 focus:ring-offset-slate-950
               ${isRunning 
-                ? 'bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-[0_0_80px_rgba(239,68,68,0.6)] focus:ring-red-500/50' 
-                : 'bg-gradient-to-br from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 shadow-[0_0_80px_rgba(59,130,246,0.6)] focus:ring-blue-500/50'
+                ? 'bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-[0_0_40px_rgba(239,68,68,0.3)] focus:ring-red-500/50' 
+                : 'bg-gradient-to-br from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 shadow-[0_0_40px_rgba(59,130,246,0.3)] focus:ring-blue-500/50'
               }
             `}
           >
