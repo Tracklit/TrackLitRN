@@ -888,7 +888,7 @@ export default function StartGunPage() {
                 disabled={!isPlaying}
                 data-testid="button-reset-gun"
                 style={{
-                  background: 'linear-gradient(to bottom right, rgb(239, 68, 68), rgb(220, 38, 38))'
+                  background: 'linear-gradient(to bottom right, rgb(55, 65, 81), rgb(31, 41, 55))'
                 }}
                 className="relative w-24 h-24 rounded-full font-bold text-white shadow-lg transition-all transform hover:scale-105 active:scale-95 flex flex-col items-center justify-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed disabled:transform-none"
               >
