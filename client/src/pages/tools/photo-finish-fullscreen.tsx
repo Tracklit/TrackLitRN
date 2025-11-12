@@ -867,17 +867,16 @@ export default function PhotoFinishFullscreen({
       </div>
 
       {/* Timeline Scrubber - No background bar */}
-      <div className="bg-gray-900 h-40 flex-shrink-0 mb-4">
-        <div className="px-6 pt-6 pb-10 h-full">
+      <div className="bg-gray-900 h-32 flex-shrink-0 mb-4">
+        <div className="px-6 pt-2 pb-8 h-full relative">
           {/* Timeline with vertical markers */}
-          <div className="h-full relative overflow-visible">
+          <div className="h-full relative overflow-hidden">
             <div
               ref={timelineRef}
-              className={`h-full relative ${isTimelineLocked ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}`}
+              className={`h-full w-full relative ${isTimelineLocked ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}`}
               style={isTimelineLocked ? {
                 transform: `translateX(calc(50% - ${(timelineScrollPosition / duration) * 100}%))`,
-                transition: isDragging ? 'none' : 'transform 0.1s ease-out',
-                width: '100%'
+                transition: isDragging ? 'none' : 'transform 0.1s ease-out'
               } : {}}
               onMouseDown={handleTimelineMouseDown}
               onMouseMove={(e) => {
@@ -891,49 +890,50 @@ export default function PhotoFinishFullscreen({
               onTouchEnd={handleTimelineTouchEnd}
             >
               {/* Vertical time markers (every 0.5 seconds) */}
-              {duration && Array.from({ length: Math.floor(duration * 2) }, (_, i) => {
+              {duration && Array.from({ length: Math.floor(duration * 2) + 1 }, (_, i) => {
                 const timePosition = (i * 0.5) / duration * 100;
                 const isSecondMark = i % 2 === 0;
                 
-                // Calculate distance from center (50%) to make center markers taller
-                const distanceFromCenter = Math.abs(timePosition - (isTimelineLocked ? (timelineScrollPosition / duration * 100) : 50));
+                // Calculate distance from center for height variation
+                const centerPosition = isTimelineLocked ? (timelineScrollPosition / duration * 100) : 50;
+                const distanceFromCenter = Math.abs(timePosition - centerPosition);
                 const heightMultiplier = isTimelineLocked 
-                  ? Math.max(0.4, 1 - (distanceFromCenter / 50) * 0.6) // Taller in center when locked
+                  ? Math.max(0.5, 1 - (distanceFromCenter / 40) * 0.5)
                   : 1;
-                const baseHeight = isSecondMark ? 100 : 75;
-                const markerHeight = baseHeight * heightMultiplier;
                 
                 return (
                   <div
                     key={i}
-                    className={`absolute bottom-0 z-10 transition-all duration-150 ${isSecondMark ? 'bg-white/60' : 'bg-white/40'}`}
+                    className="absolute bottom-0 transition-all duration-100"
                     style={{ 
                       left: `${timePosition}%`,
-                      height: `${markerHeight}%`,
-                      width: isSecondMark ? '2px' : '1px'
+                      height: `${(isSecondMark ? 80 : 60) * heightMultiplier}%`,
+                      width: isSecondMark ? '2px' : '1px',
+                      backgroundColor: isSecondMark ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.4)'
                     }}
                   />
                 );
               })}
               
-              {/* Time labels every 0.5 seconds using XX.XX format */}
+              {/* Time labels below the timeline */}
               {duration && Array.from({ length: Math.floor(duration * 2) + 1 }, (_, i) => {
                 const timeValue = i * 0.5;
                 const timePosition = (timeValue / duration) * 100;
                 const timeLabel = formatTimelineTime(timeValue);
                 
                 // Calculate distance from center for opacity
-                const distanceFromCenter = Math.abs(timePosition - (isTimelineLocked ? (timelineScrollPosition / duration * 100) : 50));
+                const centerPosition = isTimelineLocked ? (timelineScrollPosition / duration * 100) : 50;
+                const distanceFromCenter = Math.abs(timePosition - centerPosition);
                 const opacityMultiplier = isTimelineLocked 
-                  ? Math.max(0.3, 1 - (distanceFromCenter / 50) * 0.7)
+                  ? Math.max(0.3, 1 - (distanceFromCenter / 40) * 0.7)
                   : 1;
                 
-                // Only show labels for whole seconds and half seconds
-                if (i % 2 === 0 || timeValue % 1 === 0.5) {
+                // Only show labels for whole seconds
+                if (i % 2 === 0) {
                   return (
                     <div
                       key={`label-${i}`}
-                      className="absolute bottom-0 translate-y-full pt-1 text-xs text-gray-300 transform -translate-x-1/2 z-20 transition-opacity duration-150"
+                      className="absolute -bottom-6 text-xs text-gray-400 transform -translate-x-1/2 transition-opacity duration-100"
                       style={{ 
                         left: `${timePosition}%`,
                         opacity: opacityMultiplier
