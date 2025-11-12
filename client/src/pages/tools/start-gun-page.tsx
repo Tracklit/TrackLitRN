@@ -72,6 +72,7 @@ export default function StartGunPage() {
   const flashlightRef = useRef<any>(null);
   const activeAudioElements = useRef<HTMLAudioElement[]>([]);
   const sequenceCancelledRef = useRef(false);
+  const audioUnlockedRef = useRef(false);
   
   const { toast } = useToast();
   
@@ -105,33 +106,44 @@ export default function StartGunPage() {
         });
         
         // Enhanced user interaction handler for Samsung devices
-        const handleUserInteraction = () => {
-          console.log("User interaction detected, preparing audio for Samsung device");
+        const handleUserInteraction = async () => {
+          if (audioUnlockedRef.current) return; // Already unlocked
           
-          // Resume audio context
-          if (audioContext.current && audioContext.current.state === 'suspended') {
-            audioContext.current.resume().then(() => {
+          console.log("User interaction detected, unlocking audio for first use");
+          
+          try {
+            // Resume audio context
+            if (audioContext.current && audioContext.current.state === 'suspended') {
+              await audioContext.current.resume();
               console.log("AudioContext resumed on user interaction");
-            }).catch(e => {
-              console.error("Failed to resume AudioContext:", e);
-            });
-          }
-          
-          // Test play and pause each audio element to unlock them on Samsung devices
-          [marksAudioRef.current, setAudioRef.current, bangAudioRef.current].forEach((audio, index) => {
-            if (audio) {
-              const audioNames = ['marks', 'set', 'bang'];
-              audio.volume = 0.01; // Very quiet test
-              audio.play().then(() => {
-                console.log(`${audioNames[index]} audio unlocked for Samsung device`);
-                audio.pause();
-                audio.currentTime = 0;
-                audio.volume = volume / 100;
-              }).catch(e => {
-                console.log(`Could not unlock ${audioNames[index]} audio:`, e);
-              });
             }
-          });
+            
+            // Test play and pause each audio element to unlock them
+            const unlockPromises = [marksAudioRef.current, setAudioRef.current, bangAudioRef.current].map((audio, index) => {
+              if (audio) {
+                const audioNames = ['marks', 'set', 'bang'];
+                return new Promise<void>((resolve) => {
+                  audio.volume = 0.01; // Very quiet test
+                  audio.play().then(() => {
+                    console.log(`${audioNames[index]} audio unlocked`);
+                    audio.pause();
+                    audio.currentTime = 0;
+                    resolve();
+                  }).catch(e => {
+                    console.log(`Could not unlock ${audioNames[index]} audio:`, e);
+                    resolve(); // Continue even if one fails
+                  });
+                });
+              }
+              return Promise.resolve();
+            });
+            
+            await Promise.all(unlockPromises);
+            audioUnlockedRef.current = true;
+            console.log("All audio elements unlocked and ready");
+          } catch (e) {
+            console.error("Error during audio unlock:", e);
+          }
         };
         
         // Listen for various user interaction events
@@ -510,13 +522,54 @@ export default function StartGunPage() {
     }
   };
   
+  // Function to unlock audio on first button press if needed
+  const ensureAudioUnlocked = async () => {
+    if (audioUnlockedRef.current) return; // Already unlocked
+    
+    console.log("First button press - unlocking audio");
+    
+    try {
+      // Resume audio context
+      if (audioContext.current && audioContext.current.state === 'suspended') {
+        await audioContext.current.resume();
+        console.log("AudioContext resumed");
+      }
+      
+      // Unlock all audio elements synchronously before starting sequence
+      const unlockPromises = [marksAudioRef.current, setAudioRef.current, bangAudioRef.current].map((audio) => {
+        if (audio) {
+          return new Promise<void>((resolve) => {
+            const originalVolume = audio.volume;
+            audio.volume = 0.01;
+            audio.play().then(() => {
+              audio.pause();
+              audio.currentTime = 0;
+              audio.volume = originalVolume;
+              resolve();
+            }).catch(() => resolve()); // Continue even if unlock fails
+          });
+        }
+        return Promise.resolve();
+      });
+      
+      await Promise.all(unlockPromises);
+      audioUnlockedRef.current = true;
+      console.log("Audio unlocked successfully");
+    } catch (e) {
+      console.error("Error unlocking audio:", e);
+    }
+  };
+  
   // Function to start the sequence - prevent multiple sequences
-  const startSequence = () => {
+  const startSequence = async () => {
     // Prevent starting if already playing
     if (isPlaying) {
       console.log("Sequence already running, ignoring start request");
       return;
     }
+    
+    // Ensure audio is unlocked on first button press
+    await ensureAudioUnlocked();
     
     // Clear any existing timers first
     cancelSequence();
