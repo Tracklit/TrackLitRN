@@ -856,15 +856,27 @@ export default function StartGunPage() {
             {/* Control Buttons - Start and Reset Stacked */}
             <div className="flex flex-col items-center gap-4 mb-8">
               {/* Start Button - Completely locked when playing */}
-              <div className="relative">
+              <div className="relative w-36 h-36">
+                {/* Pulsing glow effect - only when not playing */}
                 {!isPlaying && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-xl opacity-50 animate-pulse"></div>
+                  <div 
+                    className="absolute -inset-4 rounded-full opacity-75 animate-pulse"
+                    style={{
+                      background: 'radial-gradient(circle, rgba(168, 85, 247, 0.6) 0%, rgba(236, 72, 153, 0.4) 50%, transparent 70%)',
+                      filter: 'blur(20px)'
+                    }}
+                  ></div>
                 )}
                 <button
                   onPointerDown={handleStartClick}
                   disabled={isPlaying}
                   data-testid="button-start-gun"
-                  className={`relative w-36 h-36 rounded-full font-bold text-white shadow-2xl transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none disabled:pointer-events-none bg-gradient-to-br from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700`}
+                  style={{
+                    background: isPlaying 
+                      ? 'linear-gradient(to bottom right, rgb(147, 51, 234), rgb(219, 39, 119))'
+                      : 'linear-gradient(to bottom right, rgb(168, 85, 247), rgb(236, 72, 153))'
+                  }}
+                  className="relative w-full h-full rounded-full font-bold text-white shadow-2xl transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none disabled:pointer-events-none"
                 >
                   <Play className="h-14 w-14" style={{ marginLeft: '4px' }} />
                 </button>
@@ -875,7 +887,10 @@ export default function StartGunPage() {
                 onClick={resetSequence}
                 disabled={!isPlaying}
                 data-testid="button-reset-gun"
-                className={`relative w-24 h-24 rounded-full font-bold text-white shadow-lg transition-all transform hover:scale-105 active:scale-95 flex flex-col items-center justify-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed disabled:transform-none bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700`}
+                style={{
+                  background: 'linear-gradient(to bottom right, rgb(239, 68, 68), rgb(220, 38, 38))'
+                }}
+                className="relative w-24 h-24 rounded-full font-bold text-white shadow-lg transition-all transform hover:scale-105 active:scale-95 flex flex-col items-center justify-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed disabled:transform-none"
               >
                 <RotateCcw className="h-8 w-8" />
                 <span className="text-[10px] font-semibold">RESET</span>
