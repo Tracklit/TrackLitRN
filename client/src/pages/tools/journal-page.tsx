@@ -26,6 +26,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 
 // Define the journal entry type
 interface JournalEntry {
@@ -45,7 +54,7 @@ export function Component() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [editingEntry, setEditingEntry] = useState<JournalEntry | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
   const [newEntryTitle, setNewEntryTitle] = useState("");
   const [newEntryNotes, setNewEntryNotes] = useState("");
   
@@ -167,7 +176,7 @@ export function Component() {
         description: "Your new entry has been saved successfully.",
         duration: 3000
       });
-      setIsCreateDialogOpen(false);
+      setIsCreateDrawerOpen(false);
       setNewEntryTitle("");
       setNewEntryNotes("");
     },
@@ -286,7 +295,7 @@ export function Component() {
           {/* Action Buttons */}
           <div className="flex justify-between items-center gap-3">
             <button
-              onClick={() => setIsCreateDialogOpen(true)}
+              onClick={() => setIsCreateDrawerOpen(true)}
               data-testid="button-new-entry"
               className="flex items-center gap-2 px-5 py-3 rounded-xl text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
               style={{
@@ -573,76 +582,81 @@ export function Component() {
         </DialogContent>
       </Dialog>
       
-      {/* Create New Journal Entry Dialog */}
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[600px] bg-slate-900 border-slate-700 text-white">
-          <DialogHeader>
-            <DialogTitle className="text-white text-xl">Create New Journal Entry</DialogTitle>
-            <DialogDescription className="text-slate-400">
-              Add a new entry to your journal. The date and time will be automatically recorded.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="grid gap-6 py-4">
-            <div className="space-y-2">
-              <label htmlFor="new-title" className="text-sm font-medium text-slate-300">
-                Title <span className="text-red-400">*</span>
-              </label>
-              <Input
-                id="new-title"
-                className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
-                placeholder="e.g., Morning Run Reflections"
-                value={newEntryTitle}
-                onChange={(e) => setNewEntryTitle(e.target.value)}
-                data-testid="input-new-title"
-              />
+      {/* Create New Journal Entry Drawer */}
+      <Drawer open={isCreateDrawerOpen} onOpenChange={setIsCreateDrawerOpen}>
+        <DrawerContent className="bg-slate-900 border-slate-700">
+          <div className="mx-auto w-full max-w-2xl">
+            <DrawerHeader>
+              <DrawerTitle className="text-white text-2xl">Create New Journal Entry</DrawerTitle>
+              <DrawerDescription className="text-slate-400">
+                Add a new entry to your journal. The date and time will be automatically recorded.
+              </DrawerDescription>
+            </DrawerHeader>
+            
+            <div className="p-4 pb-0">
+              <div className="grid gap-6">
+                <div className="space-y-2">
+                  <label htmlFor="new-title" className="text-sm font-medium text-slate-300">
+                    Title <span className="text-red-400">*</span>
+                  </label>
+                  <Input
+                    id="new-title"
+                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+                    placeholder="e.g., Morning Run Reflections"
+                    value={newEntryTitle}
+                    onChange={(e) => setNewEntryTitle(e.target.value)}
+                    data-testid="input-new-title"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label htmlFor="new-notes" className="text-sm font-medium text-slate-300">
+                    Notes
+                  </label>
+                  <Textarea
+                    id="new-notes"
+                    className="min-h-[300px] bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 resize-none"
+                    placeholder="Write your thoughts, feelings, and observations about your training..."
+                    value={newEntryNotes}
+                    onChange={(e) => setNewEntryNotes(e.target.value)}
+                    data-testid="textarea-new-notes"
+                  />
+                  <p className="text-xs text-slate-500">
+                    Share your training experiences, goals, and reflections
+                  </p>
+                </div>
+              </div>
             </div>
             
-            <div className="space-y-2">
-              <label htmlFor="new-notes" className="text-sm font-medium text-slate-300">
-                Notes
-              </label>
-              <Textarea
-                id="new-notes"
-                className="min-h-[250px] bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 resize-none"
-                placeholder="Write your thoughts, feelings, and observations about your training..."
-                value={newEntryNotes}
-                onChange={(e) => setNewEntryNotes(e.target.value)}
-                data-testid="textarea-new-notes"
-              />
-              <p className="text-xs text-slate-500">
-                Share your training experiences, goals, and reflections
-              </p>
-            </div>
+            <DrawerFooter>
+              <Button 
+                onClick={handleCreateEntry}
+                disabled={createMutation.isPending}
+                className="text-white border-none h-12 text-base"
+                style={{
+                  background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)'
+                }}
+                data-testid="button-save-create"
+              >
+                {createMutation.isPending ? "Saving..." : "Save Entry"}
+              </Button>
+              <DrawerClose asChild>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setNewEntryTitle("");
+                    setNewEntryNotes("");
+                  }}
+                  className="bg-slate-800 border-slate-700 text-white hover:bg-slate-700 h-12"
+                  data-testid="button-cancel-create"
+                >
+                  Cancel
+                </Button>
+              </DrawerClose>
+            </DrawerFooter>
           </div>
-          
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setIsCreateDialogOpen(false);
-                setNewEntryTitle("");
-                setNewEntryNotes("");
-              }}
-              className="bg-slate-800 border-slate-700 text-white hover:bg-slate-700"
-              data-testid="button-cancel-create"
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleCreateEntry}
-              disabled={createMutation.isPending}
-              className="text-white border-none"
-              style={{
-                background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)'
-              }}
-              data-testid="button-save-create"
-            >
-              {createMutation.isPending ? "Saving..." : "Save Entry"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }
