@@ -292,6 +292,13 @@ export default function StopwatchPage() {
           </div>
         </div>
 
+        {/* Volume Button Tip */}
+        <div className="text-center mb-8">
+          <p className="text-sm text-slate-400">
+            💡 Use your volume up button to start/stop the timer
+          </p>
+        </div>
+
         {/* Control Buttons */}
         <div className="flex justify-center gap-4 mb-6">
           <Button 
