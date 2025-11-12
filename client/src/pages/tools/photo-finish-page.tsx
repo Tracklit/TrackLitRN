@@ -282,29 +282,7 @@ export default function PhotoFinishPage() {
 
   return (
     <div className="min-h-screen pb-20">
-      {/* Hero Section with Gradient */}
-      <div className="relative bg-gradient-to-br from-purple-600 via-blue-600 to-purple-800 text-white overflow-hidden">
-        <div className="absolute inset-0 bg-black/20" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(120,119,198,0.3),transparent_50%)]" />
-        
-        <div className="container mx-auto px-4 py-12 relative">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-4xl md:text-5xl font-bold tracking-tight flex items-center gap-3 mb-3">
-                <div className="p-2 bg-white/10 backdrop-blur-sm rounded-xl">
-                  <Video className="h-8 w-8" />
-                </div>
-                Photo Finish
-              </h1>
-              <p className="text-white/90 text-lg max-w-2xl">
-                Analyze race videos with precision timing and finish line overlay tools
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="container mx-auto px-4 -mt-8">
+      <div className="container mx-auto px-4 pt-8">
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Video Upload/Analysis Area */}
@@ -358,14 +336,6 @@ export default function PhotoFinishPage() {
                       <p className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                         Upload Race Video
                       </p>
-                      <p className="text-muted-foreground text-base">
-                        Tap to select a video from your library
-                      </p>
-                    </div>
-                    
-                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 dark:bg-purple-900/30 rounded-full text-sm text-purple-700 dark:text-purple-300">
-                      <Video className="h-4 w-4" />
-                      Opens in fullscreen analysis mode
                     </div>
                   </div>
                   
