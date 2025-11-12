@@ -212,141 +212,98 @@ export function Component() {
   };
   
   return (
-    <div className="container mx-auto px-4 pb-16">
-
-      
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <BookOpen className="h-6 w-6" />
-            Workout Journal
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            View and search your workout notes
-          </p>
-        </div>
-      </div>
-      
-      <Card className="mb-6">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-xl flex items-center justify-between">
-            <span></span>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={toggleSortDirection}
-              className="flex items-center gap-1"
-            >
-              <Calendar className="h-4 w-4" />
-              Sort: {sortDirection === "desc" ? "Newest First" : "Oldest First"}
-              {sortDirection === "desc" ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
-            </Button>
-          </CardTitle>
-          
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+      <div className="container max-w-4xl mx-auto px-4 pt-20 pb-16">
+        
+        {/* Search and Sort Controls */}
+        <div className="mb-6 space-y-4">
+          {/* Search Bar */}
           <div className="relative">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
             <Input
               placeholder="Search journal entries..."
-              className="pl-8"
+              className="pl-12 h-14 bg-slate-800/50 border-slate-700/50 text-white placeholder:text-slate-400 backdrop-blur-xl rounded-2xl focus:ring-2 focus:ring-purple-500/50"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              data-testid="input-search-journal"
             />
           </div>
-        </CardHeader>
+          
+          {/* Sort Button */}
+          <div className="flex justify-end">
+            <button
+              onClick={toggleSortDirection}
+              data-testid="button-sort-entries"
+              className="flex items-center gap-2 px-4 py-2 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/50 backdrop-blur-xl text-slate-300 rounded-xl transition-colors text-sm"
+            >
+              <Calendar className="h-4 w-4" />
+              {sortDirection === "desc" ? "Newest First" : "Oldest First"}
+              {sortDirection === "desc" ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
         
-        <CardContent>
-          {isLoading ? (
-            <div className="text-center py-16">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              <p className="mt-2 text-muted-foreground">Loading your journal entries...</p>
+        {/* Journal Entries */}
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-32">
+            <div className="relative">
+              <div className="w-16 h-16 border-4 border-slate-700 border-t-purple-500 rounded-full animate-spin"></div>
+              <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-pink-500 rounded-full animate-spin" style={{ animationDuration: '1.5s' }}></div>
             </div>
-          ) : sortedEntries.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No journal entries found. Complete a workout to add entries to your journal.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-4">
-              {sortedEntries.map((entry) => (
-                <Card key={entry.id} className="overflow-hidden bg-[#010a18] text-white border-none shadow-md">
-                  <CardHeader className="pb-2">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-white">
-                          {entry.title.replace(/Day \d+ Training -\s?/, '').replace(/\d{4}-\d{2}-\d{2}/, '')}
-                        </CardTitle>
-                        <CardDescription className="flex items-center gap-1 text-gray-200">
-                          <Calendar className="h-3 w-3" />
-                          {formatDate(entry.createdAt)}
-                        </CardDescription>
-                      </div>
-                      <Badge variant="secondary" className="bg-blue-800 text-white hover:bg-blue-700">{entry.type}</Badge>
+            <p className="mt-6 text-slate-400">Loading your journal entries...</p>
+          </div>
+        ) : sortedEntries.length === 0 ? (
+          <div className="bg-slate-800/30 backdrop-blur-xl rounded-3xl border border-slate-700/50 p-12 text-center">
+            <BookOpen className="h-16 w-16 mx-auto mb-4 text-slate-600" />
+            <p className="text-slate-400 text-lg">
+              {searchTerm ? "No journal entries match your search." : "No journal entries found. Complete a workout to add entries to your journal."}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {sortedEntries.map((entry) => (
+              <div
+                key={entry.id}
+                className="relative bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl rounded-3xl p-6 border border-slate-700/50 shadow-xl hover:shadow-2xl transition-all duration-300 hover:border-slate-600/50"
+                data-testid={`card-journal-entry-${entry.id}`}
+              >
+                {/* Header */}
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-white mb-1">
+                      {entry.title.replace(/Day \d+ Training -\s?/, '').replace(/\d{4}-\d{2}-\d{2}/, '')}
+                    </h3>
+                    <div className="flex items-center gap-2 text-sm text-slate-400">
+                      <Calendar className="h-4 w-4" />
+                      {formatDate(entry.createdAt)}
                     </div>
-                  </CardHeader>
-                  
-                  <CardContent className="pt-2 text-gray-100">
-                    {/* Display mood rating if it exists */}
-                    {entry.content?.moodRating !== undefined && (
-                      <div className="flex items-center gap-2 mb-3 bg-blue-900/50 p-2 rounded-md">
-                        <span className="text-sm font-medium text-white">Mood:</span>
-                        <div className="flex items-center">
-                          <div 
-                            className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
-                            style={{ 
-                              background: entry.content.moodRating <= 3 ? '#ef4444' : 
-                                        entry.content.moodRating <= 5 ? '#f59e0b' : 
-                                        '#22c55e'
-                            }}
-                          >
-                            {entry.content.moodRating}
-                          </div>
-                          <span className="text-xs ml-1 text-white">/10</span>
-                        </div>
-                        <Activity className="h-4 w-4 text-blue-300 ml-auto" />
-                      </div>
-                    )}
-                    
-                    {/* Notes content */}
-                    <p className="text-sm whitespace-pre-wrap text-gray-100">{entry.notes || "No notes for this entry."}</p>
-                    
-                    {/* Workout details if available */}
-                    {entry.content?.shortDistanceWorkout && (
-                      <div className="mt-2 pt-2 border-t border-blue-700">
-                        <p className="text-xs font-medium text-blue-300">Workout Details:</p>
-                        <ul className="text-xs mt-1 space-y-1 text-gray-100">
-                          {entry.content.shortDistanceWorkout && (
-                            <li className="flex items-start gap-1">
-                              <span className="font-medium text-blue-200">Short:</span> 
-                              <span>{entry.content.shortDistanceWorkout}</span>
-                            </li>
-                          )}
-                          {entry.content.mediumDistanceWorkout && (
-                            <li className="flex items-start gap-1">
-                              <span className="font-medium text-blue-200">Medium:</span> 
-                              <span>{entry.content.mediumDistanceWorkout}</span>
-                            </li>
-                          )}
-                          {entry.content.longDistanceWorkout && (
-                            <li className="flex items-start gap-1">
-                              <span className="font-medium text-blue-200">Long:</span> 
-                              <span>{entry.content.longDistanceWorkout}</span>
-                            </li>
-                          )}
-                        </ul>
-                      </div>
-                    )}
-                  </CardContent>
-                  
-                  <CardFooter className="flex justify-end pt-0 pb-3">
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge 
+                      className="px-3 py-1 text-xs font-semibold rounded-full"
+                      style={{
+                        background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
+                        border: 'none'
+                      }}
+                    >
+                      {entry.type}
+                    </Badge>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-100 hover:bg-blue-800">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 w-8 p-0 text-slate-400 hover:text-white hover:bg-slate-700/50"
+                          data-testid={`button-menu-${entry.id}`}
+                        >
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="bg-blue-900 border-blue-700 text-white">
+                      <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700 text-white">
                         <DropdownMenuItem 
-                          className="flex items-center gap-2 cursor-pointer hover:bg-blue-800 focus:bg-blue-800 focus:text-white"
+                          className="flex items-center gap-2 cursor-pointer hover:bg-slate-700 focus:bg-slate-700 focus:text-white"
                           onClick={() => openEditDialog(entry)}
+                          data-testid={`menu-item-edit-${entry.id}`}
                         >
                           <Edit className="h-4 w-4" />
                           <span>Edit</span>
@@ -358,31 +315,83 @@ export function Component() {
                               handleDeleteEntry(entry.id);
                             }
                           }}
+                          data-testid={`menu-item-delete-${entry.id}`}
                         >
                           <Trash2 className="h-4 w-4" />
                           <span>Delete</span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-      
-      <div className="text-center text-sm text-muted-foreground flex items-center justify-center gap-1">
-        <BadgeInfo className="h-3.5 w-3.5" />
-        <p>Journal entries from your training sessions include mood ratings and workout details.</p>
+                  </div>
+                </div>
+                
+                {/* Mood Rating */}
+                {entry.content?.moodRating !== undefined && (
+                  <div className="flex items-center gap-3 mb-4 bg-slate-900/50 p-3 rounded-xl border border-slate-700/30">
+                    <Activity className="h-5 w-5 text-purple-400" />
+                    <span className="text-sm font-medium text-slate-300">Mood:</span>
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-lg"
+                        style={{ 
+                          background: entry.content.moodRating <= 3 ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' : 
+                                    entry.content.moodRating <= 5 ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' : 
+                                    'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'
+                        }}
+                      >
+                        {entry.content.moodRating}
+                      </div>
+                      <span className="text-xs text-slate-400">/10</span>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Notes */}
+                {entry.notes && (
+                  <div className="mb-4">
+                    <p className="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed">
+                      {entry.notes}
+                    </p>
+                  </div>
+                )}
+                
+                {/* Workout Details */}
+                {entry.content?.shortDistanceWorkout && (
+                  <div className="mt-4 pt-4 border-t border-slate-700/50">
+                    <div className="space-y-2">
+                      {entry.content.shortDistanceWorkout && (
+                        <div className="flex items-start gap-2 text-sm">
+                          <span className="font-semibold text-purple-400 min-w-[70px]">Short:</span>
+                          <span className="text-slate-300">{entry.content.shortDistanceWorkout}</span>
+                        </div>
+                      )}
+                      {entry.content.mediumDistanceWorkout && (
+                        <div className="flex items-start gap-2 text-sm">
+                          <span className="font-semibold text-purple-400 min-w-[70px]">Medium:</span>
+                          <span className="text-slate-300">{entry.content.mediumDistanceWorkout}</span>
+                        </div>
+                      )}
+                      {entry.content.longDistanceWorkout && (
+                        <div className="flex items-start gap-2 text-sm">
+                          <span className="font-semibold text-purple-400 min-w-[70px]">Long:</span>
+                          <span className="text-slate-300">{entry.content.longDistanceWorkout}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
       
       {/* Edit Journal Entry Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[525px]">
+        <DialogContent className="sm:max-w-[525px] bg-slate-900 border-slate-700 text-white">
           <DialogHeader>
-            <DialogTitle>Edit Journal Entry</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-white">Edit Journal Entry</DialogTitle>
+            <DialogDescription className="text-slate-400">
               Make changes to your journal entry here.
             </DialogDescription>
           </DialogHeader>
@@ -390,56 +399,59 @@ export function Component() {
           {editingEntry && (
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
-                <label htmlFor="title" className="text-right font-medium">
+                <label htmlFor="title" className="text-right font-medium text-slate-300">
                   Title
                 </label>
                 <Input
                   id="title"
-                  className="col-span-3"
+                  className="col-span-3 bg-slate-800 border-slate-700 text-white"
                   value={editingEntry.title}
                   onChange={(e) => setEditingEntry({...editingEntry, title: e.target.value})}
+                  data-testid="input-edit-title"
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <label htmlFor="type" className="text-right font-medium">
+                <label htmlFor="type" className="text-right font-medium text-slate-300">
                   Type
                 </label>
                 <Input
                   id="type"
-                  className="col-span-3"
+                  className="col-span-3 bg-slate-800 border-slate-700 text-white"
                   value={editingEntry.type}
                   onChange={(e) => setEditingEntry({...editingEntry, type: e.target.value})}
+                  data-testid="input-edit-type"
                 />
               </div>
               <div className="grid grid-cols-4 items-start gap-4">
-                <label htmlFor="notes" className="text-right font-medium">
+                <label htmlFor="notes" className="text-right font-medium text-slate-300">
                   Notes
                 </label>
                 <Textarea
                   id="notes"
-                  className="col-span-3 min-h-[150px]"
+                  className="col-span-3 min-h-[150px] bg-slate-800 border-slate-700 text-white"
                   value={editingEntry.notes || ""}
                   onChange={(e) => setEditingEntry({...editingEntry, notes: e.target.value})}
+                  data-testid="textarea-edit-notes"
                 />
               </div>
               {editingEntry.content?.moodRating !== undefined && (
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <label htmlFor="mood" className="text-right font-medium">
-                    Mood Rating
+                  <label htmlFor="mood" className="text-right font-medium text-slate-300">
+                    Mood
                   </label>
                   <div className="col-span-3">
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-3 mb-3">
                       <div 
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white"
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-lg"
                         style={{ 
-                          background: editingEntry.content.moodRating <= 3 ? '#ef4444' : 
-                                    editingEntry.content.moodRating <= 5 ? '#f59e0b' : 
-                                    '#22c55e'
+                          background: editingEntry.content.moodRating <= 3 ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' : 
+                                    editingEntry.content.moodRating <= 5 ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' : 
+                                    'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'
                         }}
                       >
                         {editingEntry.content.moodRating}
                       </div>
-                      <span className="text-sm">/10</span>
+                      <span className="text-sm text-slate-400">/10</span>
                     </div>
                     
                     <Slider 
@@ -458,9 +470,10 @@ export function Component() {
                           content: newContent
                         });
                       }}
+                      data-testid="slider-edit-mood"
                     />
                     
-                    <div className="flex justify-between mt-1 text-xs text-muted-foreground">
+                    <div className="flex justify-between mt-2 text-xs text-slate-500">
                       <span>Poor</span>
                       <span>Average</span>
                       <span>Excellent</span>
@@ -472,8 +485,24 @@ export function Component() {
           )}
           
           <DialogFooter>
-            <Button variant="outline" onClick={handleCancelEdit}>Cancel</Button>
-            <Button onClick={handleSaveEdit}>Save Changes</Button>
+            <Button 
+              variant="outline" 
+              onClick={handleCancelEdit}
+              className="bg-slate-800 border-slate-700 text-white hover:bg-slate-700"
+              data-testid="button-cancel-edit"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSaveEdit}
+              className="text-white border-none"
+              style={{
+                background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)'
+              }}
+              data-testid="button-save-edit"
+            >
+              Save Changes
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
