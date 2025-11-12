@@ -282,13 +282,13 @@ export default function PhotoFinishPage() {
 
   return (
     <div className="min-h-screen pb-20">
-      <div className="container mx-auto px-4 pt-8">
+      <div className="container mx-auto px-4 pt-20">
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Video Upload/Analysis Area */}
         <div className="lg:col-span-2">
-          <Card className="border-purple-200 dark:border-purple-900/50 shadow-lg">
-            <CardHeader className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950/30 dark:to-blue-950/30">
+          <Card className="border-purple-200 dark:border-purple-900/50 shadow-lg bg-white dark:bg-gray-900">
+            <CardHeader className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-800 dark:to-gray-850">
               <CardTitle className="flex items-center gap-2 text-xl">
                 <div className="p-1.5 bg-purple-600 text-white rounded-lg">
                   <Upload className="h-5 w-5" />
@@ -301,7 +301,7 @@ export default function PhotoFinishPage() {
             </CardHeader>
             <CardContent className="space-y-4 pt-6">
               {isUploading ? (
-                <div className="p-12 text-center space-y-6 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20 rounded-xl">
+                <div className="p-12 text-center space-y-6 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-800/50 dark:to-gray-850/50 rounded-xl">
                   <div className="flex items-center justify-center mb-4">
                     <div className="relative">
                       <div className="absolute inset-0 bg-purple-600/20 blur-xl rounded-full animate-pulse" />
@@ -321,11 +321,11 @@ export default function PhotoFinishPage() {
                 </div>
               ) : (
                 <div 
-                  className="relative border-2 border-dashed border-purple-300 dark:border-purple-700 rounded-xl p-12 text-center cursor-pointer hover:border-purple-500 dark:hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/20 transition-all duration-300 min-h-[300px] flex flex-col justify-center group overflow-hidden"
+                  className="relative border-2 border-dashed border-purple-300 dark:border-purple-700 rounded-xl p-12 text-center cursor-pointer hover:border-purple-500 dark:hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-gray-800/50 transition-all duration-300 min-h-[300px] flex flex-col justify-center group overflow-hidden"
                   onClick={() => fileInputRef.current?.click()}
                   data-testid="button-upload-video"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950/10 dark:to-blue-950/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-800/30 dark:to-gray-850/30 opacity-0 group-hover:opacity-100 transition-opacity" />
                   
                   <div className="relative space-y-4">
                     <div className="inline-flex p-4 bg-gradient-to-br from-purple-600 to-blue-600 rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
@@ -356,8 +356,8 @@ export default function PhotoFinishPage() {
 
         {/* Video Library Sidebar */}
         <div>
-          <Card className="border-blue-200 dark:border-blue-900/50 shadow-lg">
-            <CardHeader className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30">
+          <Card className="border-blue-200 dark:border-blue-900/50 shadow-lg bg-white dark:bg-gray-900">
+            <CardHeader className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-850">
               <CardTitle className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xl">
                   <div className="p-1.5 bg-blue-600 text-white rounded-lg">
@@ -375,7 +375,7 @@ export default function PhotoFinishPage() {
             </CardHeader>
             <CardContent className="pt-6">
               {/* Storage usage indicator */}
-              <div className="mb-6 p-4 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950/30 dark:to-blue-950/30 rounded-xl border border-purple-200 dark:border-purple-800">
+              <div className="mb-6 p-4 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-800/70 dark:to-gray-850/70 rounded-xl border border-purple-200 dark:border-purple-800">
                 <div className="flex justify-between text-sm mb-3">
                   <span className="text-muted-foreground font-medium">Storage Usage</span>
                   <span className="font-bold text-purple-700 dark:text-purple-300">
@@ -404,7 +404,7 @@ export default function PhotoFinishPage() {
                 </div>
               ) : savedVideos.length === 0 ? (
                 <div className="text-center py-12 px-4">
-                  <div className="inline-flex p-4 bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30 rounded-2xl mb-4">
+                  <div className="inline-flex p-4 bg-gradient-to-br from-purple-100 to-blue-100 dark:from-gray-800/50 dark:to-gray-850/50 rounded-2xl mb-4">
                     <Video className="h-12 w-12 text-purple-600 dark:text-purple-400" />
                   </div>
                   <p className="font-semibold text-base mb-2">No saved videos yet</p>
@@ -417,7 +417,7 @@ export default function PhotoFinishPage() {
                   {savedVideos.map((video) => (
                     <div
                       key={video.id}
-                      className="group p-3 rounded-xl border border-purple-200 dark:border-purple-800 hover:bg-gradient-to-br hover:from-purple-50 hover:to-blue-50 dark:hover:from-purple-950/20 dark:hover:to-blue-950/20 hover:border-purple-400 dark:hover:border-purple-600 transition-all duration-200 hover:shadow-md"
+                      className="group p-3 rounded-xl border border-purple-200 dark:border-purple-800 hover:bg-gradient-to-br hover:from-purple-50 hover:to-blue-50 dark:hover:from-gray-800/30 dark:hover:to-gray-850/30 hover:border-purple-400 dark:hover:border-purple-600 transition-all duration-200 hover:shadow-md"
                     >
                       <div className="flex items-start gap-3">
                         {video.thumbnail && (
