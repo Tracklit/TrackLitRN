@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Send, Play, Trash2, MoreVertical, Grid3X3, List, Copy, Check, Users, Lock, Crown, Dumbbell } from "lucide-react";
+import { Plus, Send, Play, Trash2, MoreVertical, Grid3X3, List, Copy, Check, Users, Lock, Crown } from "lucide-react";
 import { Link } from "wouter";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
@@ -495,7 +495,6 @@ export default function ExerciseLibraryPage() {
           </>
         ) : (
           <div className="bg-slate-800/30 backdrop-blur-xl rounded-3xl border border-slate-700/50 p-16 text-center">
-            <Dumbbell className="h-20 w-20 mx-auto mb-6 text-slate-600" />
             <h3 className="text-2xl font-bold text-white mb-3">No exercises yet</h3>
             <p className="text-slate-400 mb-6 max-w-md mx-auto">
               Start building your exercise library by uploading videos or adding YouTube links
