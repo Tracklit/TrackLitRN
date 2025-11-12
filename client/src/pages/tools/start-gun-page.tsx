@@ -853,8 +853,8 @@ export default function StartGunPage() {
               </div>
             </div>
 
-            {/* Control Buttons - Start and Stop Separate */}
-            <div className="flex justify-center gap-4 mb-8">
+            {/* Control Buttons - Start and Reset Stacked */}
+            <div className="flex flex-col items-center gap-4 mb-8">
               {/* Start Button - Completely locked when playing */}
               <div className="relative">
                 {!isPlaying && (
@@ -870,18 +870,16 @@ export default function StartGunPage() {
                 </button>
               </div>
               
-              {/* Reset Button - Stops sequence and prevents immediate restart */}
-              <div className="relative">
-                <button
-                  onClick={resetSequence}
-                  disabled={!isPlaying}
-                  data-testid="button-reset-gun"
-                  className={`relative w-36 h-36 rounded-full font-bold text-white shadow-2xl transition-all transform hover:scale-105 active:scale-95 flex flex-col items-center justify-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700`}
-                >
-                  <RotateCcw className="h-12 w-12" />
-                  <span className="text-xs font-semibold">RESET</span>
-                </button>
-              </div>
+              {/* Reset Button - Smaller, under start button */}
+              <button
+                onClick={resetSequence}
+                disabled={!isPlaying}
+                data-testid="button-reset-gun"
+                className={`relative w-24 h-24 rounded-full font-bold text-white shadow-lg transition-all transform hover:scale-105 active:scale-95 flex flex-col items-center justify-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed disabled:transform-none bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700`}
+              >
+                <RotateCcw className="h-8 w-8" />
+                <span className="text-[10px] font-semibold">RESET</span>
+              </button>
             </div>
 
             {/* Volume Controls */}
