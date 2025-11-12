@@ -221,16 +221,6 @@ export default function StopwatchPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white pb-20">
       <div className="container max-w-2xl mx-auto px-4 pt-20">
         
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent mb-2">
-            Stopwatch
-          </h1>
-          <p className="text-slate-400 text-sm">
-            Precision timing for athletes
-          </p>
-        </div>
-
         {/* Main Timer Display */}
         <div className="relative mb-12">
           {/* Animated glow effect */}
@@ -263,6 +253,7 @@ export default function StopwatchPage() {
               transition-all duration-500 ease-out
               transform hover:scale-105 active:scale-95
               focus:outline-none focus:ring-4 focus:ring-offset-4 focus:ring-offset-slate-950
+              drop-shadow-xl
               ${isRunning 
                 ? 'bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-[0_0_40px_rgba(239,68,68,0.3)] focus:ring-red-500/50' 
                 : 'bg-gradient-to-br from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 shadow-[0_0_40px_rgba(59,130,246,0.3)] focus:ring-blue-500/50'
