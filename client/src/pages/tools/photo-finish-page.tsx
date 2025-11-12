@@ -14,7 +14,8 @@ import {
   ArrowRight,
   Trash2,
   Crown,
-  Calendar
+  Calendar,
+  ArrowDownUp
 } from "lucide-react";
 import {
   AlertDialog,
@@ -417,25 +418,16 @@ export default function PhotoFinishPage() {
                 {/* Sort filter */}
                 {savedVideos.length > 0 && (
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-gray-400">Sort by Date</span>
-                    <div className="flex gap-2">
-                      <Button
-                        variant={sortOrder === 'newest' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setSortOrder('newest')}
-                        className={sortOrder === 'newest' ? 'bg-gradient-to-r from-purple-600 to-pink-600' : 'border-gray-700 text-gray-400'}
-                      >
-                        Newest
-                      </Button>
-                      <Button
-                        variant={sortOrder === 'oldest' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setSortOrder('oldest')}
-                        className={sortOrder === 'oldest' ? 'bg-gradient-to-r from-purple-600 to-pink-600' : 'border-gray-700 text-gray-400'}
-                      >
-                        Oldest
-                      </Button>
-                    </div>
+                    <span className="text-sm font-semibold text-gray-400">
+                      {sortOrder === 'newest' ? 'Newest First' : 'Oldest First'}
+                    </span>
+                    <button
+                      onClick={() => setSortOrder(sortOrder === 'newest' ? 'oldest' : 'newest')}
+                      className="p-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white transition-all hover:scale-105"
+                      title={sortOrder === 'newest' ? 'Switch to oldest first' : 'Switch to newest first'}
+                    >
+                      <ArrowDownUp className="h-4 w-4" />
+                    </button>
                   </div>
                 )}
 
