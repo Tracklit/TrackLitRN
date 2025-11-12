@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import { 
   Video, 
   Upload, 
@@ -12,7 +13,8 @@ import {
   FolderOpen,
   ArrowRight,
   Trash2,
-  Crown
+  Crown,
+  Calendar
 } from "lucide-react";
 import {
   AlertDialog,
@@ -279,54 +281,93 @@ export default function PhotoFinishPage() {
   const usagePercentage = (savedVideos.length / tierLimit) * 100;
 
   return (
-    <div className="container mx-auto px-4 pb-16">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <Video className="h-6 w-6" />
-            Photo Finish
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Analyze race videos with precision timing and finish line overlay tools.
-          </p>
+    <div className="min-h-screen pb-20">
+      {/* Hero Section with Gradient */}
+      <div className="relative bg-gradient-to-br from-purple-600 via-blue-600 to-purple-800 text-white overflow-hidden">
+        <div className="absolute inset-0 bg-black/20" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(120,119,198,0.3),transparent_50%)]" />
+        
+        <div className="container mx-auto px-4 py-12 relative">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-4xl md:text-5xl font-bold tracking-tight flex items-center gap-3 mb-3">
+                <div className="p-2 bg-white/10 backdrop-blur-sm rounded-xl">
+                  <Video className="h-8 w-8" />
+                </div>
+                Photo Finish
+              </h1>
+              <p className="text-white/90 text-lg max-w-2xl">
+                Analyze race videos with precision timing and finish line overlay tools
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="container mx-auto px-4 -mt-8">
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Video Upload/Analysis Area */}
         <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Upload className="h-5 w-5" />
-                Video Upload & Analysis
+          <Card className="border-purple-200 dark:border-purple-900/50 shadow-lg">
+            <CardHeader className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950/30 dark:to-blue-950/30">
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <div className="p-1.5 bg-purple-600 text-white rounded-lg">
+                  <Upload className="h-5 w-5" />
+                </div>
+                Upload & Analyze
               </CardTitle>
+              <CardDescription>
+                Upload a race video to analyze with precision timing tools
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 pt-6">
               {isUploading ? (
-                <div className="p-8 text-center space-y-4">
+                <div className="p-12 text-center space-y-6 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20 rounded-xl">
                   <div className="flex items-center justify-center mb-4">
-                    <Video className="h-12 w-12 text-primary animate-pulse" />
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-purple-600/20 blur-xl rounded-full animate-pulse" />
+                      <Video className="h-16 w-16 text-purple-600 dark:text-purple-400 animate-pulse relative" />
+                    </div>
                   </div>
-                  <h3 className="text-lg font-medium">Processing Video</h3>
-                  <p className="text-muted-foreground">{uploadStatus}</p>
-                  <div className="w-full max-w-md mx-auto space-y-2">
-                    <Progress value={uploadProgress} className="w-full" />
-                    <p className="text-sm text-muted-foreground">{uploadProgress}% complete</p>
+                  <h3 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                    Processing Video
+                  </h3>
+                  <p className="text-muted-foreground text-lg">{uploadStatus}</p>
+                  <div className="w-full max-w-md mx-auto space-y-3">
+                    <Progress value={uploadProgress} className="w-full h-3" />
+                    <p className="text-sm font-medium text-purple-600 dark:text-purple-400">
+                      {uploadProgress}% complete
+                    </p>
                   </div>
                 </div>
               ) : (
                 <div 
-                  className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center cursor-pointer hover:border-muted-foreground/50 transition-colors min-h-[200px] flex flex-col justify-center"
+                  className="relative border-2 border-dashed border-purple-300 dark:border-purple-700 rounded-xl p-12 text-center cursor-pointer hover:border-purple-500 dark:hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/20 transition-all duration-300 min-h-[300px] flex flex-col justify-center group overflow-hidden"
                   onClick={() => fileInputRef.current?.click()}
                   data-testid="button-upload-video"
                 >
-                  <Upload className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-xl font-medium mb-2">Upload Race Video</p>
-                  <p className="text-muted-foreground mb-4">Tap to select a video from your photo library</p>
-                  <p className="text-sm text-muted-foreground">
-                    Video will automatically open in fullscreen analysis mode
-                  </p>
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950/10 dark:to-blue-950/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  
+                  <div className="relative space-y-4">
+                    <div className="inline-flex p-4 bg-gradient-to-br from-purple-600 to-blue-600 rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+                      <Upload className="h-12 w-12 text-white" />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <p className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                        Upload Race Video
+                      </p>
+                      <p className="text-muted-foreground text-base">
+                        Tap to select a video from your library
+                      </p>
+                    </div>
+                    
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 dark:bg-purple-900/30 rounded-full text-sm text-purple-700 dark:text-purple-300">
+                      <Video className="h-4 w-4" />
+                      Opens in fullscreen analysis mode
+                    </div>
+                  </div>
                   
                   {/* Photo library input */}
                   <Input
@@ -345,88 +386,110 @@ export default function PhotoFinishPage() {
 
         {/* Video Library Sidebar */}
         <div>
-          <Card>
-            <CardHeader>
+          <Card className="border-blue-200 dark:border-blue-900/50 shadow-lg">
+            <CardHeader className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30">
               <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <FolderOpen className="h-5 w-5" />
+                <div className="flex items-center gap-2 text-xl">
+                  <div className="p-1.5 bg-blue-600 text-white rounded-lg">
+                    <FolderOpen className="h-5 w-5" />
+                  </div>
                   Video Library
                 </div>
                 {user?.subscriptionTier && (
-                  <div className="flex items-center gap-1 text-xs">
-                    <Crown className="h-3 w-3" />
+                  <Badge variant="secondary" className="bg-gradient-to-r from-purple-600 to-blue-600 text-white border-0">
+                    <Crown className="h-3 w-3 mr-1" />
                     {tierName}
-                  </div>
+                  </Badge>
                 )}
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               {/* Storage usage indicator */}
-              <div className="mb-4 p-3 bg-muted/50 rounded-lg">
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-muted-foreground">Storage</span>
-                  <span className="font-medium">
+              <div className="mb-6 p-4 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950/30 dark:to-blue-950/30 rounded-xl border border-purple-200 dark:border-purple-800">
+                <div className="flex justify-between text-sm mb-3">
+                  <span className="text-muted-foreground font-medium">Storage Usage</span>
+                  <span className="font-bold text-purple-700 dark:text-purple-300">
                     {savedVideos.length} / {tierLimit} videos
                   </span>
                 </div>
-                <Progress value={usagePercentage} className="h-2" />
-                <p className="text-xs text-muted-foreground mt-2">
-                  {tierName} tier • {tierLimit} video limit
-                </p>
+                <Progress value={usagePercentage} className="h-2.5" />
+                <div className="flex items-center justify-between mt-3">
+                  <Badge variant="outline" className="border-purple-300 dark:border-purple-700 text-xs">
+                    <Crown className="h-3 w-3 mr-1" />
+                    {tierName}
+                  </Badge>
+                  <p className="text-xs text-muted-foreground">
+                    {tierLimit - savedVideos.length} slots remaining
+                  </p>
+                </div>
               </div>
 
               {isLoadingVideos ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Video className="h-12 w-12 mx-auto mb-4 opacity-50 animate-pulse" />
-                  <p>Loading videos...</p>
+                <div className="text-center py-12 text-muted-foreground">
+                  <div className="relative inline-block mb-4">
+                    <div className="absolute inset-0 bg-purple-600/20 blur-xl rounded-full animate-pulse" />
+                    <Video className="h-14 w-14 mx-auto text-purple-600 dark:text-purple-400 opacity-50 animate-pulse relative" />
+                  </div>
+                  <p className="font-medium">Loading videos...</p>
                 </div>
               ) : savedVideos.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Video className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No saved videos yet</p>
-                  <p className="text-sm">Upload and save videos to build your library</p>
+                <div className="text-center py-12 px-4">
+                  <div className="inline-flex p-4 bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30 rounded-2xl mb-4">
+                    <Video className="h-12 w-12 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <p className="font-semibold text-base mb-2">No saved videos yet</p>
+                  <p className="text-sm text-muted-foreground">
+                    Upload and save videos to build your library
+                  </p>
                 </div>
               ) : (
-                <div className="space-y-3 max-h-[500px] overflow-y-auto">
+                <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
                   {savedVideos.map((video) => (
                     <div
                       key={video.id}
-                      className="group p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                      className="group p-3 rounded-xl border border-purple-200 dark:border-purple-800 hover:bg-gradient-to-br hover:from-purple-50 hover:to-blue-50 dark:hover:from-purple-950/20 dark:hover:to-blue-950/20 hover:border-purple-400 dark:hover:border-purple-600 transition-all duration-200 hover:shadow-md"
                     >
                       <div className="flex items-start gap-3">
                         {video.thumbnail && (
-                          <img
-                            src={video.thumbnail}
-                            alt="Video thumbnail"
-                            className="w-16 h-12 object-cover rounded cursor-pointer"
-                            onClick={() => loadSavedVideo(video)}
-                            data-testid={`thumbnail-video-${video.id}`}
-                          />
+                          <div className="relative overflow-hidden rounded-lg ring-2 ring-purple-200 dark:ring-purple-800 group-hover:ring-purple-400 dark:group-hover:ring-purple-600 transition-all">
+                            <img
+                              src={video.thumbnail}
+                              alt="Video thumbnail"
+                              className="w-20 h-14 object-cover cursor-pointer transform group-hover:scale-110 transition-transform duration-200"
+                              onClick={() => loadSavedVideo(video)}
+                              data-testid={`thumbnail-video-${video.id}`}
+                            />
+                          </div>
                         )}
                         <div className="flex-1 min-w-0">
                           <div 
-                            className="text-sm font-medium truncate cursor-pointer hover:text-primary"
+                            className="text-sm font-semibold truncate cursor-pointer text-foreground group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors"
                             onClick={() => loadSavedVideo(video)}
                             data-testid={`link-video-${video.id}`}
                           >
                             {video.name}
                           </div>
-                          <div className="text-xs text-muted-foreground space-y-0.5">
-                            <div>{new Date(video.createdAt).toLocaleDateString()}</div>
-                            <div>{formatFileSize(video.size)}</div>
+                          <div className="text-xs text-muted-foreground space-y-1 mt-1">
+                            <div className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {new Date(video.createdAt).toLocaleDateString()}
+                            </div>
+                            <div className="font-medium text-purple-600 dark:text-purple-400">
+                              {formatFileSize(video.size)}
+                            </div>
                           </div>
                         </div>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100 dark:hover:bg-red-950/30"
                           onClick={(e) => {
                             e.stopPropagation();
                             confirmDeleteVideo(video.id);
                           }}
                           data-testid={`button-delete-${video.id}`}
                         >
-                          <Trash2 className="h-4 w-4 text-destructive" />
+                          <Trash2 className="h-4 w-4 text-red-600 dark:text-red-400" />
                         </Button>
                       </div>
                     </div>
@@ -436,6 +499,7 @@ export default function PhotoFinishPage() {
             </CardContent>
           </Card>
         </div>
+      </div>
       </div>
 
       {/* Delete Confirmation Dialog */}
