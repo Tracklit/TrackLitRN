@@ -11,7 +11,9 @@ import {
   Zap,
   Clock,
   Trash2,
-  Save
+  Save,
+  Lock,
+  Unlock
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -55,6 +57,8 @@ export default function PhotoFinishFullscreen({
   const [isPanning, setIsPanning] = useState(false);
   const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 });
   const [isSlowMo, setIsSlowMo] = useState(false);
+  const [isTimelineLocked, setIsTimelineLocked] = useState(false);
+  const [timelineOffset, setTimelineOffset] = useState(0);
   
   // Touch handling for pinch zoom
   const [initialPinchDistance, setInitialPinchDistance] = useState<number | null>(null);
@@ -140,15 +144,26 @@ export default function PhotoFinishFullscreen({
   };
 
   // Timeline handlers  
-  const handleTimelineInteraction = (clientX: number, element: HTMLDivElement) => {
-    const rect = element.getBoundingClientRect();
-    const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
-    const percentage = x / rect.width;
-    const time = percentage * (duration || 0);
-    
-    if (videoRef.current && time >= 0 && time <= (duration || 0)) {
-      videoRef.current.currentTime = time;
-      setCurrentTime(time);
+  const handleTimelineInteraction = (clientX: number, element: HTMLDivElement, deltaX?: number) => {
+    if (isTimelineLocked && deltaX !== undefined) {
+      // When locked, scroll the timeline instead of moving the indicator
+      setTimelineOffset(prev => {
+        const newOffset = prev + deltaX;
+        // Limit offset to reasonable bounds
+        const maxOffset = Math.max(0, element.scrollWidth - element.clientWidth);
+        return Math.max(-maxOffset, Math.min(0, newOffset));
+      });
+    } else {
+      // Default behavior: move the time indicator
+      const rect = element.getBoundingClientRect();
+      const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
+      const percentage = x / rect.width;
+      const time = percentage * (duration || 0);
+      
+      if (videoRef.current && time >= 0 && time <= (duration || 0)) {
+        videoRef.current.currentTime = time;
+        setCurrentTime(time);
+      }
     }
   };
 
@@ -224,12 +239,21 @@ export default function PhotoFinishFullscreen({
   const handleTimelineMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
     event.preventDefault();
     setIsDragging(true);
-    handleTimelineInteraction(event.clientX, event.currentTarget);
+    setLastPanPoint({ x: event.clientX, y: event.clientY });
+    if (!isTimelineLocked) {
+      handleTimelineInteraction(event.clientX, event.currentTarget);
+    }
   };
 
   const handleTimelineMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
     if (isDragging) {
-      handleTimelineInteraction(event.clientX, event.currentTarget);
+      if (isTimelineLocked) {
+        const deltaX = event.clientX - lastPanPoint.x;
+        handleTimelineInteraction(event.clientX, event.currentTarget, deltaX);
+        setLastPanPoint({ x: event.clientX, y: event.clientY });
+      } else {
+        handleTimelineInteraction(event.clientX, event.currentTarget);
+      }
     }
   };
 
@@ -241,14 +265,23 @@ export default function PhotoFinishFullscreen({
     event.preventDefault();
     setIsDragging(true);
     const touch = event.touches[0];
-    handleTimelineInteraction(touch.clientX, event.currentTarget);
+    setLastPanPoint({ x: touch.clientX, y: touch.clientY });
+    if (!isTimelineLocked) {
+      handleTimelineInteraction(touch.clientX, event.currentTarget);
+    }
   };
 
   const handleTimelineTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
     if (isDragging && event.touches.length === 1) {
       event.preventDefault();
       const touch = event.touches[0];
-      handleTimelineInteraction(touch.clientX, event.currentTarget);
+      if (isTimelineLocked) {
+        const deltaX = touch.clientX - lastPanPoint.x;
+        handleTimelineInteraction(touch.clientX, event.currentTarget, deltaX);
+        setLastPanPoint({ x: touch.clientX, y: touch.clientY });
+      } else {
+        handleTimelineInteraction(touch.clientX, event.currentTarget);
+      }
     }
   };
 
@@ -743,23 +776,37 @@ export default function PhotoFinishFullscreen({
           >
             <Clock className="w-4 h-4" />
           </Button>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsTimelineLocked(!isTimelineLocked)}
+            className={`text-white hover:bg-gray-700 ${isTimelineLocked ? 'bg-purple-600/50' : ''}`}
+            title={isTimelineLocked ? 'Timeline locked - drag to scroll' : 'Timeline unlocked - tap to seek'}
+          >
+            {isTimelineLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+          </Button>
         </div>
         
 
       </div>
 
       {/* Timeline Scrubber - No background bar */}
-      <div className="bg-gray-900 h-32 flex-shrink-0">
+      <div className="bg-gray-900 h-32 flex-shrink-0 mb-4">
         <div className="p-6 h-full">
           {/* Timeline with vertical markers */}
-          <div className="h-full relative">
+          <div className="h-full relative overflow-hidden">
             <div
               ref={timelineRef}
-              className="h-full cursor-pointer relative"
+              className={`h-full relative ${isTimelineLocked ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}`}
+              style={{
+                transform: isTimelineLocked ? `translateX(${timelineOffset}px)` : 'none',
+                transition: isDragging ? 'none' : 'transform 0.1s ease-out'
+              }}
               onMouseDown={handleTimelineMouseDown}
               onMouseMove={(e) => {
                 handleTimelineMouseMove(e);
-                handleTimelineHover(e);
+                if (!isTimelineLocked) handleTimelineHover(e);
               }}
               onMouseUp={handleTimelineMouseUp}
               onMouseLeave={handleTimelineLeave}
