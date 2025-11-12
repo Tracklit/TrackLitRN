@@ -288,7 +288,7 @@ export default function PhotoFinishPage() {
           {/* Upload & Analyze Card */}
           <div className="relative group">
             {/* Neon gradient glow border */}
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 rounded-3xl opacity-75 group-hover:opacity-100 blur transition duration-500 group-hover:duration-200 animate-pulse" />
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 rounded-3xl opacity-75 group-hover:opacity-100 blur transition duration-500 group-hover:duration-200" />
             
             <Card className="relative bg-gradient-to-br from-gray-900 to-gray-950 border-0 shadow-2xl overflow-hidden">
               <CardContent className="p-8 md:p-12">
