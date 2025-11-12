@@ -1093,9 +1093,9 @@ function PracticePage() {
         />
         
         {/* Drawer Content */}
-        <div className={`relative ml-auto w-full max-w-md h-full bg-gradient-to-br from-blue-900/95 via-purple-900/95 to-blue-900/95 backdrop-blur-xl border-l border-purple-500/30 shadow-2xl transform transition-all duration-500 ease-out ${
+        <div className={`relative ml-auto w-full max-w-md h-full backdrop-blur-xl border-l border-purple-500/30 shadow-2xl transform transition-all duration-500 ease-out ${
           targetTimesModalOpen ? 'translate-x-0' : 'translate-x-full'
-        } flex flex-col overflow-hidden`}>
+        } flex flex-col overflow-hidden`} style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #581c87 50%, #1e3a8a 100%)' }}>
             {/* Content */}
             <div className="flex-1 overflow-y-auto px-6 pt-20 pb-24 space-y-6 relative">
               {/* Close Button */}
