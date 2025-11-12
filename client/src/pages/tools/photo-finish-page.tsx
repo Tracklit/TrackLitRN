@@ -330,7 +330,7 @@ export default function PhotoFinishPage() {
                       
                       {/* Typography */}
                       <div className="space-y-3">
-                        <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-white via-purple-200 to-white bg-clip-text text-transparent">
+                        <h2 className="text-3xl md:text-4xl font-bold text-white">
                           Upload & Analyze
                         </h2>
                         <p className="text-gray-400 text-base md:text-lg font-medium max-w-md mx-auto">
