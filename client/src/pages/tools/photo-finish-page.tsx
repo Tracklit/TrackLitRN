@@ -60,6 +60,7 @@ export default function PhotoFinishPage() {
   const [isLoadingVideos, setIsLoadingVideos] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [videoToDelete, setVideoToDelete] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
 
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -280,6 +281,13 @@ export default function PhotoFinishPage() {
                    user?.subscriptionTier === 'pro' ? 'Pro' : 'Free';
   const usagePercentage = (savedVideos.length / tierLimit) * 100;
 
+  // Sort videos based on selected order
+  const sortedVideos = [...savedVideos].sort((a, b) => {
+    const dateA = new Date(a.createdAt).getTime();
+    const dateB = new Date(b.createdAt).getTime();
+    return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+  });
+
   return (
     <div className="min-h-screen pb-20 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       <div className="container mx-auto px-4 pt-20 max-w-4xl">
@@ -406,39 +414,32 @@ export default function PhotoFinishPage() {
                   </div>
                 </div>
 
-                {/* Thumbnail slots */}
-                <div className="grid grid-cols-5 gap-3">
-                  {Array.from({ length: savedVideos.length === 0 ? 1 : tierLimit }).map((_, i) => {
-                    const video = savedVideos[i];
-                    return (
-                      <div
-                        key={i}
-                        className={`aspect-video rounded-xl border-2 transition-all duration-300 overflow-hidden ${
-                          video
-                            ? 'border-purple-600/50 bg-purple-950/30 cursor-pointer hover:border-purple-500 hover:scale-105'
-                            : 'border-dashed border-gray-700/50 bg-gray-900/30 hover:border-purple-500/30 hover:bg-purple-950/10'
-                        }`}
-                        onClick={() => video && loadSavedVideo(video)}
+                {/* Sort filter */}
+                {savedVideos.length > 0 && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-gray-400">Sort by Date</span>
+                    <div className="flex gap-2">
+                      <Button
+                        variant={sortOrder === 'newest' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setSortOrder('newest')}
+                        className={sortOrder === 'newest' ? 'bg-gradient-to-r from-purple-600 to-pink-600' : 'border-gray-700 text-gray-400'}
                       >
-                        {video ? (
-                          video.thumbnail ? (
-                            <img
-                              src={video.thumbnail}
-                              alt={video.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-900/30 to-pink-900/30">
-                              <Video className="h-4 w-4 text-purple-400" />
-                            </div>
-                          )
-                        ) : null}
-                      </div>
-                    );
-                  })}
-                </div>
+                        Newest
+                      </Button>
+                      <Button
+                        variant={sortOrder === 'oldest' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setSortOrder('oldest')}
+                        className={sortOrder === 'oldest' ? 'bg-gradient-to-r from-purple-600 to-pink-600' : 'border-gray-700 text-gray-400'}
+                      >
+                        Oldest
+                      </Button>
+                    </div>
+                  </div>
+                )}
 
-                {/* Video list */}
+                {/* Video grid */}
                 {isLoadingVideos ? (
                   <div className="text-center py-16">
                     <div className="relative inline-block mb-4">
@@ -458,55 +459,60 @@ export default function PhotoFinishPage() {
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
-                    {savedVideos.map((video) => (
+                  <div className="grid grid-cols-2 gap-4 max-h-[600px] overflow-y-auto pr-2">
+                    {sortedVideos.map((video) => (
                       <div
                         key={video.id}
-                        className="group/video relative p-4 rounded-xl bg-gray-900/50 border border-purple-500/20 hover:border-purple-500/40 hover:bg-gray-900/80 transition-all duration-200 hover:shadow-lg hover:shadow-purple-500/10"
+                        className="group/video relative rounded-xl overflow-hidden border-2 border-purple-500/20 hover:border-purple-500/50 transition-all duration-200 hover:shadow-lg hover:shadow-purple-500/20 bg-gray-900/50"
                       >
-                        <div className="flex items-start gap-4">
-                          {video.thumbnail && (
-                            <div className="relative overflow-hidden rounded-lg ring-2 ring-purple-600/30 group-hover/video:ring-purple-500/60 transition-all shadow-lg">
+                        {/* Thumbnail */}
+                        <div 
+                          className="aspect-video relative overflow-hidden cursor-pointer bg-gradient-to-br from-gray-800 to-gray-900"
+                          onClick={() => loadSavedVideo(video)}
+                        >
+                          {video.thumbnail ? (
+                            <>
                               <img
                                 src={video.thumbnail}
-                                alt="Video thumbnail"
-                                className="w-24 h-16 object-cover cursor-pointer transform group-hover/video:scale-110 transition-transform duration-200"
-                                onClick={() => loadSavedVideo(video)}
+                                alt={video.name}
+                                className="w-full h-full object-cover transform group-hover/video:scale-110 transition-transform duration-300"
                                 data-testid={`thumbnail-video-${video.id}`}
                               />
-                              <div className="absolute inset-0 bg-gradient-to-t from-purple-900/20 to-transparent opacity-0 group-hover/video:opacity-100 transition-opacity" />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover/video:opacity-100 transition-opacity" />
+                            </>
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Video className="h-8 w-8 text-purple-400" />
                             </div>
                           )}
-                          <div className="flex-1 min-w-0">
-                            <div 
-                              className="text-sm font-bold truncate cursor-pointer text-white group-hover/video:text-purple-300 transition-colors"
-                              onClick={() => loadSavedVideo(video)}
-                              data-testid={`link-video-${video.id}`}
-                            >
-                              {video.name}
-                            </div>
-                            <div className="text-xs text-gray-500 space-y-1 mt-2 font-medium">
-                              <div className="flex items-center gap-1.5">
-                                <Calendar className="h-3 w-3" />
-                                {new Date(video.createdAt).toLocaleDateString()}
-                              </div>
-                              <div className="text-purple-400 font-semibold">
-                                {formatFileSize(video.size)}
-                              </div>
-                            </div>
-                          </div>
+                          
+                          {/* Delete button overlay */}
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="opacity-0 group-hover/video:opacity-100 transition-opacity hover:bg-red-950/50"
+                            className="absolute top-2 right-2 opacity-0 group-hover/video:opacity-100 transition-opacity bg-red-600/90 hover:bg-red-700 p-2"
                             onClick={(e) => {
                               e.stopPropagation();
                               confirmDeleteVideo(video.id);
                             }}
                             data-testid={`button-delete-${video.id}`}
                           >
-                            <Trash2 className="h-4 w-4 text-red-400" />
+                            <Trash2 className="h-4 w-4 text-white" />
                           </Button>
+                        </div>
+                        
+                        {/* Upload date */}
+                        <div className="p-3 bg-gray-900/80 border-t border-purple-500/10">
+                          <div className="flex items-center gap-2 text-xs text-gray-400">
+                            <Calendar className="h-3.5 w-3.5" />
+                            <span className="font-medium">
+                              {new Date(video.createdAt).toLocaleDateString('en-US', { 
+                                month: 'short', 
+                                day: 'numeric', 
+                                year: 'numeric' 
+                              })}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     ))}
