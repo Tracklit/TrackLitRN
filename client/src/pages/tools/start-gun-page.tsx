@@ -16,7 +16,6 @@ import {
   StopCircle
 } from "lucide-react";
 
-import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Types for camera permissions
@@ -73,8 +72,7 @@ export default function StartGunPage() {
   const activeAudioElements = useRef<HTMLAudioElement[]>([]);
   const sequenceCancelledRef = useRef(false);
   const audioUnlockedRef = useRef(false);
-  
-  const { toast } = useToast();
+  const isPlayingRef = useRef(false); // Immediate synchronous check to prevent rapid taps
   
   // Initialize Audio Context and preload audio
   useEffect(() => {
@@ -514,11 +512,7 @@ export default function StartGunPage() {
       }, parseInt(recordDuration) * 1000);
     } catch (error) {
       console.error("Error starting recording:", error);
-      toast({
-        title: "Camera access denied",
-        description: "Please grant camera permissions to use this feature",
-        variant: "destructive"
-      });
+      // Camera access denied - user will see browser permission prompt
     }
   };
   
@@ -562,11 +556,14 @@ export default function StartGunPage() {
   
   // Function to start the sequence - prevent multiple sequences
   const startSequence = async () => {
-    // Prevent starting if already playing
-    if (isPlaying) {
+    // Prevent starting if already playing (use ref for immediate synchronous check)
+    if (isPlayingRef.current) {
       console.log("Sequence already running, ignoring start request");
       return;
     }
+    
+    // Set ref immediately to prevent rapid taps from starting multiple sequences
+    isPlayingRef.current = true;
     
     // Ensure audio is unlocked on first button press
     await ensureAudioUnlocked();
@@ -616,6 +613,7 @@ export default function StartGunPage() {
               setTimeout(() => {
                 if (sequenceCancelledRef.current) return;
                 setIsPlaying(false);
+                isPlayingRef.current = false;
                 setStatus('idle');
               }, 1000);
             });
@@ -697,16 +695,8 @@ export default function StartGunPage() {
     
     // Reset state
     setIsPlaying(false);
+    isPlayingRef.current = false;
     setStatus('idle');
-    
-    // Show feedback only if we were actually playing
-    if (isPlaying) {
-      toast({
-        title: "Stopped",
-        description: "Start sequence stopped",
-        duration: 2000
-      });
-    }
   };
   
   // Toggle mute/unmute
