@@ -10,6 +10,12 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **Start Gun Overlapping Audio Fix (November 12, 2025)**: Completely resolved overlapping sound sequences in Start Gun tool
+  - **Implemented sequence ID system**: Each sequence gets a unique incrementing ID that invalidates all previous sequences
+  - **Added 600ms cooldown**: Enforced minimum time between ANY button presses (Start or Reset) to prevent rapid spam
+  - **Sequence validation**: All audio callbacks check if their sequence ID matches the current active ID before executing
+  - **Timestamp-based protection**: Both Start and Reset buttons track last action timestamp to prevent overlapping sequences
+  - **Result**: Impossible to create overlapping audio even with rapid alternating button taps between Start and Reset
 - **Public Chat Channels Access Fix (November 11, 2025)**: Resolved 403 errors preventing users from accessing public chat channels
   - **Fixed permission checks** to allow public channels to be accessed by all users, not just members
   - **Updated GET messages endpoint** to allow reading messages from public channels

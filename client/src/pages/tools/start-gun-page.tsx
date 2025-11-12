@@ -75,6 +75,10 @@ export default function StartGunPage() {
   const isPlayingRef = useRef(false); // Immediate synchronous check to prevent rapid taps
   const [isStarting, setIsStarting] = useState(false); // Track button press state
   
+  // Sequence ID system to invalidate old callbacks
+  const currentSequenceId = useRef(0);
+  const lastActionTimestamp = useRef(0);
+  
   // Initialize Audio Context and preload audio
   useEffect(() => {
     // Initialize audio API early on page load to minimize autoplay restrictions
@@ -555,8 +559,19 @@ export default function StartGunPage() {
     }
   };
   
-  // Wrapper to handle start clicks with immediate blocking
+  // Wrapper to handle start clicks with immediate blocking and cooldown
   const handleStartClick = (e: React.MouseEvent | React.PointerEvent) => {
+    const now = Date.now();
+    const timeSinceLastAction = now - lastActionTimestamp.current;
+    
+    // Enforce 600ms cooldown between ANY button actions
+    if (timeSinceLastAction < 600) {
+      console.log(`Button blocked: cooldown active (${timeSinceLastAction}ms since last action)`);
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    
     // Check ref FIRST - this is synchronous and immediate
     if (isPlayingRef.current) {
       console.log("Button blocked: sequence already running");
@@ -565,17 +580,24 @@ export default function StartGunPage() {
       return;
     }
     
+    // Update timestamp
+    lastActionTimestamp.current = now;
+    
     // IMMEDIATELY lock the button by setting isPlaying state
-    // This disables the button synchronously before any async operations
     isPlayingRef.current = true;
-    setIsPlaying(true); // This disables the button immediately
+    setIsPlaying(true);
     
     // Now start the sequence
     startSequence();
   };
 
-  // Function to start the sequence - prevent multiple sequences
+  // Function to start the sequence - prevent multiple sequences with ID system
   const startSequence = async () => {
+    // Create a new sequence ID and increment the global counter
+    currentSequenceId.current++;
+    const mySequenceId = currentSequenceId.current;
+    console.log(`Starting sequence #${mySequenceId}`);
+    
     // Ensure audio is unlocked on first button press
     await ensureAudioUnlocked();
     
@@ -586,18 +608,25 @@ export default function StartGunPage() {
     
     // Play on your marks sound and wait for it to end before continuing
     playAudio('marks', () => {
+      // Check if this sequence is still valid
+      if (currentSequenceId.current !== mySequenceId) {
+        console.log(`Sequence #${mySequenceId} invalidated (current: ${currentSequenceId.current})`);
+        return;
+      }
       if (sequenceCancelledRef.current) return;
-      console.log("'On your marks' audio ended, waiting for delay");
+      console.log(`Sequence #${mySequenceId}: 'On your marks' audio ended, waiting for delay`);
       
       // After the marks audio completes, wait for the set delay
       timerRefs.current.setTimer = setTimeout(() => {
+        if (currentSequenceId.current !== mySequenceId) return;
         if (sequenceCancelledRef.current) return;
         setStatus('set');
         
         // Play the set command and wait for it to end
         playAudio('set', () => {
+          if (currentSequenceId.current !== mySequenceId) return;
           if (sequenceCancelledRef.current) return;
-          console.log("'Set' audio ended, waiting for gun delay");
+          console.log(`Sequence #${mySequenceId}: 'Set' audio ended, waiting for gun delay`);
           
           // Calculate gun delay with randomization if enabled
           let finalDelay = setToGunDelay;
@@ -609,16 +638,19 @@ export default function StartGunPage() {
           
           // After the set audio completes, wait for the gun delay
           timerRefs.current.gunTimer = setTimeout(() => {
+            if (currentSequenceId.current !== mySequenceId) return;
             if (sequenceCancelledRef.current) return;
             setStatus('gun');
             
             // Play the bang sound
             playAudio('bang', () => {
+              if (currentSequenceId.current !== mySequenceId) return;
               if (sequenceCancelledRef.current) return;
-              console.log("'Bang' audio ended");
+              console.log(`Sequence #${mySequenceId}: 'Bang' audio ended`);
               
               // Reset state after bang audio completes
               setTimeout(() => {
+                if (currentSequenceId.current !== mySequenceId) return;
                 if (sequenceCancelledRef.current) return;
                 setIsPlaying(false);
                 isPlayingRef.current = false;
@@ -637,9 +669,25 @@ export default function StartGunPage() {
     });
   };
   
-  // Function to reset sequence - stops audio and prevents immediate restart
+  // Function to reset sequence - invalidates all previous sequences and stops audio
   const resetSequence = () => {
-    console.log("Resetting sequence and stopping all audio");
+    const now = Date.now();
+    const timeSinceLastAction = now - lastActionTimestamp.current;
+    
+    // Enforce cooldown to prevent rapid reset spam
+    if (timeSinceLastAction < 600) {
+      console.log(`Reset blocked: cooldown active (${timeSinceLastAction}ms since last action)`);
+      return;
+    }
+    
+    // Update timestamp
+    lastActionTimestamp.current = now;
+    
+    console.log(`Resetting sequence (invalidating #${currentSequenceId.current})`);
+    
+    // IMMEDIATELY invalidate all previous sequences by incrementing the ID
+    currentSequenceId.current++;
+    console.log(`New sequence ID: ${currentSequenceId.current}`);
     
     // Set cancellation flag to prevent callbacks from executing
     setSequenceCancelled(true);
@@ -699,14 +747,10 @@ export default function StartGunPage() {
       }
     }
     
-    // Reset status immediately but keep button locked briefly
+    // Reset state immediately
     setStatus('idle');
-    
-    // Wait 500ms before unlocking the start button to prevent rapid restart
-    setTimeout(() => {
-      setIsPlaying(false);
-      isPlayingRef.current = false;
-    }, 500);
+    setIsPlaying(false);
+    isPlayingRef.current = false;
   };
   
   // Toggle mute/unmute
