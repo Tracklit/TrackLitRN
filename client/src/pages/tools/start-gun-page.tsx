@@ -568,9 +568,7 @@ export default function StartGunPage() {
     // Ensure audio is unlocked on first button press
     await ensureAudioUnlocked();
     
-    // Clear any existing timers first
-    cancelSequence();
-    
+    // Set state for the sequence
     setIsPlaying(true);
     setStatus('on-your-marks');
     setSequenceCancelled(false);
