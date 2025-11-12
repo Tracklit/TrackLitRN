@@ -10,6 +10,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **Journal Page Redesign & New Entry Creation (November 12, 2025)**: Complete visual overhaul and added manual entry creation
+  - **Restyled journal page** to match new design patterns: dark slate gradients, glassmorphism cards, purple-pink gradient accents
+  - **Added "New Entry" button** with purple-pink gradient for creating journal entries directly from journal page
+  - **Implemented create dialog** with title input (required) and large textarea for notes
+  - **Automatic timestamps** - entries are timestamped at creation time by the backend
+  - **Improved UI consistency** - removed page titles/descriptions, added hover effects, gradient badges
+  - **Enhanced loading/empty states** - dual-ring spinner and helpful empty state messages
+  - Users can now add personal journal entries alongside automated training session entries
 - **Start Gun Overlapping Audio Fix (November 12, 2025)**: Completely resolved overlapping sound sequences in Start Gun tool
   - **Implemented sequence ID system**: Each sequence gets a unique incrementing ID that invalidates all previous sequences
   - **Added 600ms cooldown**: Enforced minimum time between ANY button presses (Start or Reset) to prevent rapid spam

@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-import { Search, Calendar, ChevronDown, ChevronUp, BookOpen, Edit, Trash2, BadgeInfo, MoreVertical, Activity } from "lucide-react";
+import { Search, Calendar, ChevronDown, ChevronUp, BookOpen, Edit, Trash2, BadgeInfo, MoreVertical, Activity, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,6 +45,9 @@ export function Component() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [editingEntry, setEditingEntry] = useState<JournalEntry | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [newEntryTitle, setNewEntryTitle] = useState("");
+  const [newEntryNotes, setNewEntryNotes] = useState("");
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -145,6 +149,38 @@ export function Component() {
     }
   });
   
+  // Setup mutation for creating new entries
+  const createMutation = useMutation({
+    mutationFn: async (newEntry: { title: string; notes: string }) => {
+      return await apiRequest("POST", "/api/journal", {
+        title: newEntry.title,
+        notes: newEntry.notes,
+        type: "manual",
+        content: {},
+        isPublic: true
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/journal'] });
+      toast({
+        title: "Journal Entry Created",
+        description: "Your new entry has been saved successfully.",
+        duration: 3000
+      });
+      setIsCreateDialogOpen(false);
+      setNewEntryTitle("");
+      setNewEntryNotes("");
+    },
+    onError: (error) => {
+      toast({
+        title: "Create Failed",
+        description: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive",
+        duration: 5000
+      });
+    }
+  });
+  
   // Toggle sort direction
   const toggleSortDirection = () => {
     setSortDirection(sortDirection === "desc" ? "asc" : "desc");
@@ -211,6 +247,24 @@ export function Component() {
     deleteMutation.mutate(entryId);
   };
   
+  // Handler for creating new entry
+  const handleCreateEntry = () => {
+    if (!newEntryTitle.trim()) {
+      toast({
+        title: "Title Required",
+        description: "Please enter a title for your journal entry.",
+        variant: "destructive",
+        duration: 3000
+      });
+      return;
+    }
+    
+    createMutation.mutate({
+      title: newEntryTitle,
+      notes: newEntryNotes
+    });
+  };
+  
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
       <div className="container max-w-4xl mx-auto px-4 pt-20 pb-16">
@@ -229,8 +283,20 @@ export function Component() {
             />
           </div>
           
-          {/* Sort Button */}
-          <div className="flex justify-end">
+          {/* Action Buttons */}
+          <div className="flex justify-between items-center gap-3">
+            <button
+              onClick={() => setIsCreateDialogOpen(true)}
+              data-testid="button-new-entry"
+              className="flex items-center gap-2 px-5 py-3 rounded-xl text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+              style={{
+                background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)'
+              }}
+            >
+              <Plus className="h-5 w-5" />
+              New Entry
+            </button>
+            
             <button
               onClick={toggleSortDirection}
               data-testid="button-sort-entries"
@@ -502,6 +568,77 @@ export function Component() {
               data-testid="button-save-edit"
             >
               Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Create New Journal Entry Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="sm:max-w-[600px] bg-slate-900 border-slate-700 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-white text-xl">Create New Journal Entry</DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Add a new entry to your journal. The date and time will be automatically recorded.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-6 py-4">
+            <div className="space-y-2">
+              <label htmlFor="new-title" className="text-sm font-medium text-slate-300">
+                Title <span className="text-red-400">*</span>
+              </label>
+              <Input
+                id="new-title"
+                className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+                placeholder="e.g., Morning Run Reflections"
+                value={newEntryTitle}
+                onChange={(e) => setNewEntryTitle(e.target.value)}
+                data-testid="input-new-title"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label htmlFor="new-notes" className="text-sm font-medium text-slate-300">
+                Notes
+              </label>
+              <Textarea
+                id="new-notes"
+                className="min-h-[250px] bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 resize-none"
+                placeholder="Write your thoughts, feelings, and observations about your training..."
+                value={newEntryNotes}
+                onChange={(e) => setNewEntryNotes(e.target.value)}
+                data-testid="textarea-new-notes"
+              />
+              <p className="text-xs text-slate-500">
+                Share your training experiences, goals, and reflections
+              </p>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setIsCreateDialogOpen(false);
+                setNewEntryTitle("");
+                setNewEntryNotes("");
+              }}
+              className="bg-slate-800 border-slate-700 text-white hover:bg-slate-700"
+              data-testid="button-cancel-create"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleCreateEntry}
+              disabled={createMutation.isPending}
+              className="text-white border-none"
+              style={{
+                background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)'
+              }}
+              data-testid="button-save-create"
+            >
+              {createMutation.isPending ? "Saving..." : "Save Entry"}
             </Button>
           </DialogFooter>
         </DialogContent>
