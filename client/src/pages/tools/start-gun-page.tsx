@@ -564,21 +564,24 @@ export default function StartGunPage() {
       e.stopPropagation();
       return;
     }
-    // If we get here, it's safe to start
+    
+    // Set ref HERE - BEFORE calling async function
+    // This ensures it's set synchronously and immediately blocks subsequent clicks
+    isPlayingRef.current = true;
+    setIsStarting(true);
+    
+    // Now start the sequence
     startSequence();
   };
 
   // Function to start the sequence - prevent multiple sequences
   const startSequence = async () => {
-    // Double-check with ref (belt and suspenders approach)
-    if (isPlayingRef.current) {
-      console.log("Sequence already running, ignoring request");
-      return;
+    // The ref should already be set by handleStartClick
+    // This is just a safety check in case startSequence is called directly
+    if (!isPlayingRef.current) {
+      isPlayingRef.current = true;
+      setIsStarting(true);
     }
-    
-    // Set ref IMMEDIATELY - this is the critical line
-    isPlayingRef.current = true;
-    setIsStarting(true);
     
     // Ensure audio is unlocked on first button press
     await ensureAudioUnlocked();
