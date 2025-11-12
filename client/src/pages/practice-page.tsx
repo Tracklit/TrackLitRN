@@ -1369,7 +1369,7 @@ function PracticePage() {
                             </div>
                             {data.distances.map((distance, index) => (
                               <div key={`frozen-${distance}`} className={`w-16 px-2 py-2.5 text-xs font-semibold text-center border-b border-purple-400/20 last:border-b-0 text-white ${
-                                index % 2 === 0 ? 'bg-black' : 'bg-purple-900/40'
+                                index % 2 === 0 ? 'bg-gray-900' : 'bg-purple-900/40'
                               }`}>
                                 {distance}
                               </div>
@@ -1386,7 +1386,7 @@ function PracticePage() {
                                   </div>
                                   {data.distances.map((distance, index) => (
                                     <div key={`${distance}-${percentage}`} className={`px-1 py-2.5 text-xs text-center font-mono border-b border-purple-400/20 last:border-b-0 text-white hover:bg-purple-500/20 transition-colors duration-200 ${
-                                      index % 2 === 0 ? 'bg-black' : 'bg-purple-900/40'
+                                      index % 2 === 0 ? 'bg-gray-900' : 'bg-purple-900/40'
                                     }`}>
                                       {data.getTime(distance, percentage)}
                                     </div>
