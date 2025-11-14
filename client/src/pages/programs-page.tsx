@@ -85,11 +85,14 @@ export default function ProgramsPage() {
     staleTime: 0,
     refetchOnMount: "always",
     refetchOnWindowFocus: true,
-    keepPreviousData: true, // Prevent flicker
   });
 
   // Use fresh user data if available, fallback to auth user
   const activeUser = currentUser || user;
+  
+  // Debug logging
+  console.log("Programs Page - activeUser:", activeUser);
+  console.log("Programs Page - isCoach check:", activeUser?.isCoach);
   
   // Query for user's created programs
   const { 
@@ -131,7 +134,19 @@ export default function ProgramsPage() {
   });
 
   // Query for coach's subscription offering
-  const { data: mySubscription } = useQuery({
+  const { data: mySubscription } = useQuery<{
+    id: number;
+    coachId: number;
+    title: string;
+    description: string | null;
+    priceAmount: number;
+    priceCurrency: string;
+    priceInterval: string;
+    includedPrograms: string[];
+    isActive: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+  } | null>({
     queryKey: ["/api/my-subscription"],
     enabled: !!user,
   });
@@ -485,19 +500,21 @@ export default function ProgramsPage() {
               </Link>
             </Button>
           ) : (
-            <DropdownMenu>
+            <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
-                <Button 
-                  className="h-14 w-14 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
+                <button 
+                  className="h-14 w-14 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center"
                   data-testid="button-create-program-menu"
                 >
-                  <Plus className="h-6 w-6" />
-                </Button>
+                  <Plus className="h-6 w-6 text-white" />
+                </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent 
+                side="top"
                 align="end" 
-                className="w-56 bg-gray-800 border-gray-700 mb-4"
+                className="w-56 bg-gray-800 border-gray-700"
                 data-testid="menu-create-program-options"
+                sideOffset={16}
               >
                 <DropdownMenuItem asChild>
                   <Link href="/programs/create" className="flex items-center cursor-pointer" data-testid="link-create-program">
@@ -518,7 +535,7 @@ export default function ProgramsPage() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/profile/settings" className="flex items-center cursor-pointer" data-testid="link-switch-coach">
+                  <Link href="/profile" className="flex items-center cursor-pointer" data-testid="link-switch-coach">
                     <UserPlus className="h-4 w-4 mr-3" />
                     Switch to Coach account
                   </Link>

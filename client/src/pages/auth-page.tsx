@@ -16,9 +16,10 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Terminal } from 'lucide-react';
+import { Terminal, ChevronLeft } from 'lucide-react';
 import { signInWithGoogle } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
+import authVideoUrl from '@assets/THE ULTIMATE TOOLKIT FOR TRACK & FIELD (1)_1761862317351.mp4';
 
 // Extend the schemas with validation
 const loginFormSchema = z.object({
@@ -54,7 +55,31 @@ export default function AuthPage() {
   const [resetPasswordMessage, setResetPasswordMessage] = useState<string>('');
   const [isSubmittingResetPassword, setIsSubmittingResetPassword] = useState(false);
   const [isVerifyingToken, setIsVerifyingToken] = useState(false);
+  const [showVideo, setShowVideo] = useState(true);
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
   const { toast } = useToast();
+
+  // Handle swipe gestures
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStart - touchEnd > 75) {
+      // Swiped left
+      setShowVideo(false);
+    }
+  };
+
+  // Handle tap to dismiss
+  const handleVideoTap = () => {
+    setShowVideo(false);
+  };
 
   // Check for reset token in URL on component mount
   useEffect(() => {
@@ -275,9 +300,55 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen grid md:grid-cols-2">
-      {/* Auth Form Section */}
-      <div className="flex flex-col justify-center p-6 md:p-12">
+    <>
+      {/* Video Overlay on Left Side */}
+      {showVideo && (
+        <div 
+          className="fixed inset-0 z-50 bg-black flex items-center justify-center cursor-pointer"
+          onClick={handleVideoTap}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover"
+          >
+            <source src={authVideoUrl} type="video/mp4" />
+          </video>
+          
+          {/* Swipe Bar at Bottom */}
+          <div className="absolute bottom-0 left-0 right-0 flex justify-center gap-1.5 pb-8 pointer-events-none">
+            <button
+              className="transition-all duration-200"
+              style={{
+                width: '20px',
+                height: '6px',
+                borderRadius: '3px',
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              }}
+              aria-label="Current view"
+            />
+            <button
+              className="transition-all duration-200"
+              style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '3px',
+                backgroundColor: 'rgba(255, 255, 255, 0.3)',
+              }}
+              aria-label="Go to auth"
+            />
+          </div>
+        </div>
+      )}
+
+      <div className="min-h-screen grid md:grid-cols-2">
+        {/* Auth Form Section */}
+        <div className="flex flex-col justify-center p-6 md:p-12">
         <div className="mx-auto w-full max-w-md">
           <div className="flex items-center mb-8">
             <h1 className="text-3xl font-bold">TrackLit</h1>
@@ -666,35 +737,19 @@ export default function AuthPage() {
         </div>
       </div>
       
-      {/* Hero Image / Info Section */}
-      <div className="hidden md:flex items-center justify-center bg-gradient-to-r from-primary/90 to-secondary/90 text-white p-12">
-        <div className="max-w-md">
-          <h2 className="text-3xl font-bold mb-4">Join the Future of Athletics</h2>
-          <p className="opacity-90 mb-8 text-lg">Connect with coaches, explore training programs in the marketplace, and level up with Spikes — TrackLit is the ultimate performance toolkit for track and field.</p>
-          
-          <div className="space-y-6">
-            <div>
-              <h3 className="font-semibold text-xl mb-2">Own Your Progress</h3>
-              <p className="opacity-80">Track every rep, jump, and race with powerful analytics and PR tracking — see your improvements week by week, season by season.</p>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold text-xl mb-2">Stay Meet-Ready</h3>
-              <p className="opacity-80">Plan competitions with precision using integrated calendars, weather insights, and pre-race prep tools.</p>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold text-xl mb-2">Never Miss a Beat</h3>
-              <p className="opacity-80">Get smart reminders for workouts, recovery, and meet prep so you stay consistent when it matters most.</p>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold text-xl mb-2">Train Smarter, Compete Stronger</h3>
-              <p className="opacity-80">Let Sprinthia, your AI athletics coach, build personalized workouts and training blocks tailored to your event, season goals, and level.</p>
-            </div>
-          </div>
-        </div>
+      {/* Hero Video Section */}
+      <div className="hidden md:flex items-center justify-center bg-black overflow-hidden relative">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="w-full h-full object-cover"
+        >
+          <source src={authVideoUrl} type="video/mp4" />
+        </video>
       </div>
     </div>
+    </>
   );
 }

@@ -510,25 +510,25 @@ function MainApp() {
       {/* iOS Status Bar Spacer - Only show in PWA mode on iOS */}
       {isPWA && isIOS && <div className="ios-status-bar-height" />}
       
-      {/* Top Header Bar - Hide for chat routes, auth page, and affiliate page. Only show for authenticated users */}
-      {!location.startsWith('/chat') && location !== '/auth' && location !== '/affiliate' && user && <Header />}
+      {/* Top Header Bar - Hide for chat routes, auth page, affiliate page, and Sprinthia. Only show for authenticated users */}
+      {!location.startsWith('/chat') && location !== '/auth' && location !== '/affiliate' && location !== '/sprinthia' && user && <Header />}
       
-      {/* Hamburger Menu for all screens - Hide for chat routes, auth page, and affiliate page. Only show for authenticated users */}
-      {!location.startsWith('/chat') && location !== '/auth' && location !== '/affiliate' && user && (
+      {/* Hamburger Menu for all screens - Hide for chat routes, auth page, affiliate page, and Sprinthia. Only show for authenticated users */}
+      {!location.startsWith('/chat') && location !== '/auth' && location !== '/affiliate' && location !== '/sprinthia' && user && (
         <div className="fixed top-4 left-4 z-50">
           <HamburgerMenu />
         </div>
       )}
       
       {/* Main Content */}
-      <main className={location.startsWith('/chat') || location === '/auth' || location === '/affiliate' ? '' : 'pt-20 pb-16 md:pb-0'}>
-        <div className={location.startsWith('/chat') || location === '/auth' || location === '/affiliate' ? '' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'}>
+      <main className={location.startsWith('/chat') || location === '/auth' || location === '/affiliate' || location === '/sprinthia' ? '' : 'pt-20 pb-16 md:pb-0'}>
+        <div className={location.startsWith('/chat') || location === '/auth' || location === '/affiliate' || location === '/sprinthia' ? '' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'}>
           <Router />
         </div>
       </main>
       
-      {/* Bottom Navigation - Hide for chat routes, auth page, and affiliate page. Only show for authenticated users */}
-      {!location.startsWith('/chat') && location !== '/auth' && location !== '/affiliate' && user && <BottomNavigation />}
+      {/* Bottom Navigation - Hide for chat routes, auth page, affiliate page, and Sprinthia. Only show for authenticated users */}
+      {!location.startsWith('/chat') && location !== '/auth' && location !== '/affiliate' && location !== '/sprinthia' && user && <BottomNavigation />}
       
       {/* Onboarding flow moved to separate pages */}
       

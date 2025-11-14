@@ -156,7 +156,7 @@ export default function MySubscriptionsPage() {
                       <div className="flex items-center justify-between">
                         <CardTitle className="flex items-center text-lg">
                           <Avatar className="h-8 w-8 mr-2">
-                            <AvatarFallback>{subscription.coachName?.charAt(0)}</AvatarFallback>
+                            <AvatarFallback />
                           </Avatar>
                           {subscription.coachName}
                         </CardTitle>
@@ -254,7 +254,7 @@ export default function MySubscriptionsPage() {
                       <div className="flex items-center justify-between">
                         <CardTitle className="flex items-center text-lg">
                           <Avatar className="h-8 w-8 mr-2">
-                            <AvatarFallback>{subscriber.subscriberName?.charAt(0)}</AvatarFallback>
+                            <AvatarFallback />
                           </Avatar>
                           {subscriber.subscriberName}
                         </CardTitle>

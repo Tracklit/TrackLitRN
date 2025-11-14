@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { User } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface OptimizedAvatarProps {
@@ -82,7 +83,7 @@ export function OptimizedAvatar({
             height: '100%',
           }}
         />
-        <AvatarFallback className="bg-blue-500 text-white">
+        <AvatarFallback className="bg-slate-700 text-slate-300">
           {fallback}
         </AvatarFallback>
       </Avatar>
@@ -94,8 +95,8 @@ export function OptimizedAvatar({
       
       {/* Show fallback if image fails */}
       {imageError && (
-        <div className={`absolute inset-0 ${sizeClasses[size]} rounded-full bg-blue-500 text-white flex items-center justify-center font-medium`}>
-          {fallback}
+        <div className={`absolute inset-0 ${sizeClasses[size]} rounded-full bg-slate-700 text-slate-300 flex items-center justify-center font-medium`}>
+          <User className="h-1/2 w-1/2" />
         </div>
       )}
     </div>

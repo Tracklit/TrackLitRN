@@ -120,19 +120,6 @@ export function GoogleSheetImportDialog({
 
   return (
     <>
-      {!externalOpen && (
-        <Button 
-          variant={variant} 
-          size={size} 
-          className={className}
-          onClick={() => setOpen(true)}
-          data-testid="button-import-google-sheet"
-        >
-          <FileTextIcon className="mr-2 h-4 w-4" />
-          {buttonText}
-        </Button>
-      )}
-
       {/* Import Drawer */}
       <div className={`fixed inset-0 z-[100] flex transition-all duration-300 ease-out ${
         open ? 'pointer-events-auto' : 'pointer-events-none'

@@ -280,7 +280,7 @@ export default function ConnectionsPage() {
               <div className="flex items-center space-x-3 flex-1 min-w-0">
                 <Avatar className="h-9 w-9">
                   <AvatarImage src={user.profileImageUrl} />
-                  <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback />
                 </Avatar>
                 
                 <div className="min-w-0 flex-1">

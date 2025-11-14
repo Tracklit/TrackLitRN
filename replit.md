@@ -10,6 +10,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **Public Chat Channels Access Fix (November 11, 2025)**: Resolved 403 errors preventing users from accessing public chat channels
+  - **Fixed permission checks** to allow public channels to be accessed by all users, not just members
+  - **Updated GET messages endpoint** to allow reading messages from public channels
+  - **Updated POST messages endpoint** to allow posting to public channels
+  - **Updated group details endpoint** to allow viewing public channel information
+  - **Fixed unread counts endpoint** returning 400 by removing duplicate route handlers in routes.ts
+  - **Removed duplicate routes** that were overriding fixed handlers in chat-routes-simple.ts
+  - **Public channels now accessible** without requiring users to join first
 - **CRITICAL: Production URL Configuration Fix (October 27, 2025)**: Resolved app not loading in production by eliminating hardcoded localhost URLs
   - **Created URL helper utility** (`server/utils/url-helper.ts`) that automatically detects the correct base URL in both development and production
   - **Updated password reset emails** to use dynamic URLs instead of hardcoded localhost (fixed in `server/auth.ts`)

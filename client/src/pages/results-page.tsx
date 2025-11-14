@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Header } from '@/components/layout/header';
-import { SidebarNavigation } from '@/components/layout/sidebar-navigation';
 
 import { Meet, Result } from '@shared/schema';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -245,9 +244,6 @@ export default function ResultsPage() {
           </Tabs>
         </div>
       </main>
-      
-      <SidebarNavigation />
-
     </div>
   );
 }

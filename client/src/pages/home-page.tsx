@@ -40,7 +40,6 @@ import {
 import { useAuth } from '@/hooks/use-auth';
 import { CreateMeetModal } from '@/components/create-meet-modal';
 import { cn } from '@/lib/utils';
-import { useAssignedPrograms } from '@/hooks/use-assigned-programs';
 import { useProgramSessions } from '@/hooks/use-program-sessions';
 import { SimpleWorkoutLike } from '@/components/workout-reactions';
 // import { useTicker } from '@/contexts/ticker-context';
@@ -188,11 +187,14 @@ export default function HomePage() {
     backgroundImage5
   ];
 
-  // Get assigned programs data - replicate practice page logic
-  const { assignedPrograms, isLoading: isLoadingPrograms } = useAssignedPrograms();
+  // Get purchased programs data (includes assigned, purchased, and created programs)
+  const { data: purchasedPrograms = [], isLoading: isLoadingPrograms } = useQuery<any[]>({
+    queryKey: ['/api/purchased-programs'],
+    enabled: !!user,
+  });
   
-  // Use the same selectedProgram logic as practice page
-  const selectedProgram = assignedPrograms && assignedPrograms.length > 0 ? assignedPrograms[0] : null;
+  // Use the same selectedProgram logic as practice page - get the first available program
+  const selectedProgram = purchasedPrograms.length > 0 ? purchasedPrograms[0] : null;
   
   // Fetch program sessions exactly like practice page
   const { 
@@ -312,13 +314,6 @@ export default function HomePage() {
       disabled: false
     },
     {
-      title: "Race",
-      description: raceDescription,
-      icon: <Trophy className="h-6 w-6 text-primary" />,
-      href: "/meets",
-      disabled: false
-    },
-    {
       title: "Tools",
       description: "Training and performance tools",
       icon: <Clock className="h-6 w-6 text-primary" />,
@@ -326,11 +321,18 @@ export default function HomePage() {
       disabled: false
     },
     {
+      title: "Race",
+      description: "Coming Soon",
+      icon: <Trophy className="h-6 w-6 text-primary" />,
+      href: "/meets",
+      disabled: true
+    },
+    {
       title: "Sprinthia",
-      description: "World's First AI Track Coach & Companion",
+      description: "Coming Soon",
       icon: <MessageCircle className="h-6 w-6 text-primary" />,
       href: "/sprinthia",
-      disabled: false,
+      disabled: true,
       showStar: true
     }
   ];

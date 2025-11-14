@@ -291,8 +291,9 @@ function JournalEntryModal({ isOpen, onClose, date }: { isOpen: boolean; onClose
 }
 
 // Component to render workout content within each card
-function WorkoutCard({ card, onOpenJournal }: { card: any, onOpenJournal: (date: string) => void }) {
-  const { gymData } = useGymData(card.sessionData?.dayNumber);
+function WorkoutCard({ card, programId, onOpenJournal }: { card: any, programId: number | null, onOpenJournal: (date: string) => void }) {
+  const { data: gymDataResponse } = useGymData(programId, card.sessionData?.dayNumber);
+  const gymData = gymDataResponse?.gymData || [];
   
   return (
     <div className={`p-4 ${card.isToday ? 'ring-2 ring-yellow-400' : ''}`} style={{ background: 'linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%)', borderRadius: '6px', boxShadow: '0 0 8px rgba(168, 85, 247, 0.2)' }}>
@@ -309,6 +310,7 @@ function WorkoutCard({ card, onOpenJournal }: { card: any, onOpenJournal: (date:
               size="sm"
               onClick={() => onOpenJournal(card.dateString)}
               className="h-8 px-3 text-white hover:bg-white/10 text-xs"
+              data-testid="button-finish-session"
             >
               Finish
             </Button>
@@ -325,6 +327,33 @@ function WorkoutCard({ card, onOpenJournal }: { card: any, onOpenJournal: (date:
 
 function WorkoutCardContent({ sessionData, gymData }: { sessionData: any, gymData?: any }) {
   if (!sessionData) return null;
+
+  // Check if gym exercises are present
+  const hasGymExercises = gymData && gymData.length > 0;
+
+  // Extract gym number from session data
+  const extractGymNumber = () => {
+    const fields = [
+      sessionData.shortDistanceWorkout,
+      sessionData.mediumDistanceWorkout,
+      sessionData.longDistanceWorkout,
+      sessionData.preActivation1,
+      sessionData.preActivation2,
+      sessionData.extraSession
+    ];
+
+    for (const field of fields) {
+      if (field && typeof field === 'string') {
+        const match = field.match(/Gym\s*(\d+)/i);
+        if (match && match[1]) {
+          return match[1];
+        }
+      }
+    }
+    return null;
+  };
+
+  const gymNumber = extractGymNumber();
 
   if (sessionData.isRestDay || 
       !sessionData.date || 
@@ -361,69 +390,76 @@ function WorkoutCardContent({ sessionData, gymData }: { sessionData: any, gymDat
         </div>
       )}
 
-      {/* 60m/100m Sprint */}
-      {sessionData.shortDistanceWorkout && 
-       sessionData.shortDistanceWorkout.trim() !== "" && (
-        <div className="p-4 bg-white/10 rounded-lg">
-          <div className="flex items-start">
-            <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
-              <Circle className="h-4 w-4 text-white fill-current" />
-            </div>
-            <div className="flex-1">
-              <p className="font-medium text-sm text-white mb-1">60m/100m Sprint</p>
-              <div className="whitespace-pre-line text-sm text-white/80 leading-relaxed">
-                {sessionData.shortDistanceWorkout.replace(/^"|"$/g, '')}
+      {/* Hide distance workouts if gym exercises are present */}
+      {!hasGymExercises && (
+        <>
+          {/* 60m/100m Sprint */}
+          {sessionData.shortDistanceWorkout && 
+           sessionData.shortDistanceWorkout.trim() !== "" && (
+            <div className="p-4 bg-white/10 rounded-lg">
+              <div className="flex items-start">
+                <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
+                  <Circle className="h-4 w-4 text-white fill-current" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-sm text-white mb-1">60m/100m Sprint</p>
+                  <div className="whitespace-pre-line text-sm text-white/80 leading-relaxed">
+                    {sessionData.shortDistanceWorkout.replace(/^"|"$/g, '')}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
-      
-      {/* 200m Sprint */}
-      {sessionData.mediumDistanceWorkout && 
-       sessionData.mediumDistanceWorkout.trim() !== "" && (
-        <div className="p-4 bg-white/10 rounded-lg">
-          <div className="flex items-start">
-            <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
-              <Circle className="h-4 w-4 text-white fill-current" />
-            </div>
-            <div className="flex-1">
-              <p className="font-medium text-sm text-white mb-1">200m Sprint</p>
-              <div className="whitespace-pre-line text-sm text-white/80 leading-relaxed">
-                {sessionData.mediumDistanceWorkout.replace(/^"|"$/g, '')}
+          )}
+          
+          {/* 200m Sprint */}
+          {sessionData.mediumDistanceWorkout && 
+           sessionData.mediumDistanceWorkout.trim() !== "" && (
+            <div className="p-4 bg-white/10 rounded-lg">
+              <div className="flex items-start">
+                <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
+                  <Circle className="h-4 w-4 text-white fill-current" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-sm text-white mb-1">200m Sprint</p>
+                  <div className="whitespace-pre-line text-sm text-white/80 leading-relaxed">
+                    {sessionData.mediumDistanceWorkout.replace(/^"|"$/g, '')}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
-      
-      {/* 400m Sprint */}
-      {sessionData.longDistanceWorkout && 
-       sessionData.longDistanceWorkout.trim() !== "" && (
-        <div className="p-4 bg-white/10 rounded-lg">
-          <div className="flex items-start">
-            <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
-              <Circle className="h-4 w-4 text-white fill-current" />
-            </div>
-            <div className="flex-1">
-              <p className="font-medium text-sm text-white mb-1">400m Sprint</p>
-              <div className="whitespace-pre-line text-sm text-white/80 leading-relaxed">
-                {sessionData.longDistanceWorkout.replace(/^"|"$/g, '')}
+          )}
+          
+          {/* 400m Sprint */}
+          {sessionData.longDistanceWorkout && 
+           sessionData.longDistanceWorkout.trim() !== "" && (
+            <div className="p-4 bg-white/10 rounded-lg">
+              <div className="flex items-start">
+                <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
+                  <Circle className="h-4 w-4 text-white fill-current" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-sm text-white mb-1">400m Sprint</p>
+                  <div className="whitespace-pre-line text-sm text-white/80 leading-relaxed">
+                    {sessionData.longDistanceWorkout.replace(/^"|"$/g, '')}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+          )}
+        </>
       )}
 
       {/* Gym Exercises */}
-      {gymData && gymData.length > 0 && (
+      {hasGymExercises && (
         <div className="p-4 bg-white/10 rounded-lg">
           <div className="flex items-start">
             <div className="bg-white/10 p-1.5 rounded-full mr-3 mt-0.5">
               <Circle className="h-4 w-4 text-white fill-current" />
             </div>
             <div className="flex-1">
-              <p className="font-medium text-sm text-white mb-1">Gym Exercises</p>
+              <p className="font-medium text-sm text-white mb-1">
+                {gymNumber ? `Gym ${gymNumber}` : 'Gym Exercises'}
+              </p>
               <div className="space-y-2">
                 {gymData.map((exercise: string, index: number) => (
                   <div key={index} className="text-sm text-white/80 leading-relaxed">
@@ -970,7 +1006,8 @@ function PracticePage() {
                     {workoutCards.map((card) => (
                       <WorkoutCard 
                         key={card.id} 
-                        card={card} 
+                        card={card}
+                        programId={selectedProgram?.programId || null}
                         onOpenJournal={handleOpenJournal}
                       />
                     ))}
