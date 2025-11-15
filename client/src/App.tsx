@@ -290,7 +290,11 @@ function Router() {
             </div>
           }>
             <Switch location={isChatRoute ? baseRoute : location}>
-          {/* Root path - require authentication (must be first to match correctly) */}
+          {/* Feed routes - must come before "/" to avoid matching conflicts */}
+          <ProtectedRoute path="/feed/:id" component={FeedPostDetailPage} />
+          <ProtectedRoute path="/feed" component={FeedPage} />
+          
+          {/* Root path - require authentication */}
           <ProtectedRoute path="/" component={HomePage} />
           
           {/* Home route */}
@@ -346,9 +350,6 @@ function Router() {
         <ProtectedRoute path="/club-management/:id" component={ClubManagementPage} />
         <ProtectedRoute path="/create-group" component={CreateGroupPage} />
         <ProtectedRoute path="/chats/channels/:id/settings" component={ChannelSettingsPage} />
-        <ProtectedRoute path="/feed" component={FeedPage} />
-        <ProtectedRoute path="/feed/:id" component={FeedPostDetailPage} />
-
         
         {/* Rehab */}
         <ProtectedRoute path="/rehab" component={RehabPage} />
