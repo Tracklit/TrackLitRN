@@ -28,35 +28,8 @@ router.get("/", async (req: Request, res: Response) => {
       connectionIds.push(userId); // Include user's own posts
     }
 
-    // Get community activities
-    const activities = await db
-      .select({
-        id: communityActivities.id,
-        userId: communityActivities.userId,
-        type: sql<string>`'activity'`.as('type'),
-        activityType: communityActivities.activityType,
-        title: communityActivities.title,
-        description: communityActivities.description,
-        metadata: communityActivities.metadata,
-        content: sql<string | null>`NULL`.as('content'),
-        voiceRecordingUrl: sql<string | null>`NULL`.as('voice_recording_url'),
-        voiceRecordingDuration: sql<number | null>`NULL`.as('voice_recording_duration'),
-        isEdited: sql<boolean>`false`.as('is_edited'),
-        editedAt: sql<Date | null>`NULL`.as('edited_at'),
-        createdAt: communityActivities.createdAt,
-        username: users.username,
-        name: users.name,
-        profileImageUrl: users.profileImageUrl,
-      })
-      .from(communityActivities)
-      .leftJoin(users, eq(communityActivities.userId, users.id))
-      .where(
-        filter === 'connections' && connectionIds.length > 0
-          ? inArray(communityActivities.userId, connectionIds)
-          : undefined
-      )
-      .orderBy(desc(communityActivities.createdAt))
-      .limit(50);
+    // Get community activities (disabled for now - table doesn't exist)
+    const activities: any[] = [];
 
     // Get user feed posts with likes and comments count
     const posts = await db

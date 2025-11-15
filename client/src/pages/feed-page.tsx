@@ -19,6 +19,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerFooter,
+} from "@/components/ui/drawer";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 
@@ -371,12 +378,12 @@ export default function FeedPage() {
         <Plus className="h-6 w-6 text-white" />
       </button>
 
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="bg-gray-800 border-gray-700">
-          <DialogHeader>
-            <DialogTitle className="text-white">Create Post</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
+      <Drawer open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DrawerContent className="bg-gray-800 border-gray-700">
+          <DrawerHeader>
+            <DrawerTitle className="text-white">Create Post</DrawerTitle>
+          </DrawerHeader>
+          <div className="px-4 space-y-4">
             <Textarea
               placeholder="What's on your mind? (minimum 5 characters)"
               value={newPostContent}
@@ -384,29 +391,29 @@ export default function FeedPage() {
               className="min-h-32 bg-gray-900 border-gray-700 text-white resize-none"
               data-testid="input-post-content"
             />
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  setShowCreateDialog(false);
-                  setNewPostContent("");
-                }}
-                data-testid="button-cancel-post"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleCreatePost}
-                disabled={createPostMutation.isPending}
-                className="bg-gradient-to-r from-purple-600 to-pink-600"
-                data-testid="button-submit-post"
-              >
-                {createPostMutation.isPending ? "Posting..." : "Post"}
-              </Button>
-            </div>
           </div>
-        </DialogContent>
-      </Dialog>
+          <DrawerFooter>
+            <Button
+              onClick={handleCreatePost}
+              disabled={createPostMutation.isPending}
+              className="bg-gradient-to-r from-purple-600 to-pink-600"
+              data-testid="button-submit-post"
+            >
+              {createPostMutation.isPending ? "Posting..." : "Post"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowCreateDialog(false);
+                setNewPostContent("");
+              }}
+              data-testid="button-cancel-post"
+            >
+              Cancel
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
 
       <Dialog open={!!editingPost} onOpenChange={(open) => !open && setEditingPost(null)}>
         <DialogContent className="bg-gray-800 border-gray-700">
