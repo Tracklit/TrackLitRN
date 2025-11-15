@@ -1010,11 +1010,6 @@ const ChatPage = () => {
                             </div>
                           </div>
                         </button>
-                        
-                        {/* Subtle divider */}
-                        {index < filteredChannels.length - 1 && (
-                          <div className="ml-16 border-b border-gray-400" style={{ borderWidth: '0.5px', opacity: '0.2' }} />
-                        )}
                       </div>
                     );
                   })}
