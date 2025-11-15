@@ -282,12 +282,19 @@ export function CommunityCarousel({
           position = -1;
         }
         
+        // Calculate distance from current index
+        const distance = Math.abs(position - currentIndex);
+        
+        // Fade out items that are not adjacent to current position
+        const opacity = distance > 1 ? 0 : 1;
+        
         return (
           <div 
             key={`${activity.id}-${index}`} 
-            className="absolute inset-0 flex items-center transition-transform duration-500 ease-in-out"
+            className="absolute inset-0 flex items-center transition-all duration-500 ease-in-out"
             style={{
               transform: `translateX(${(position - currentIndex) * 100}%)`,
+              opacity: opacity,
             }}
           >
             {/* Container with padding to avoid control overlap */}
