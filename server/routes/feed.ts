@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from "express";
-import { db } from "@db";
+import { db } from "../db";
 import { feedPosts, feedComments, feedLikes, users, follows, communityActivities } from "@shared/schema";
 import { eq, desc, and, inArray, sql, or } from "drizzle-orm";
 import { z } from "zod";
