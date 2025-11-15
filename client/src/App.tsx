@@ -290,12 +290,9 @@ function Router() {
             </div>
           }>
             <Switch location={isChatRoute ? baseRoute : location}>
-          {/* Feed routes - must come before "/" to avoid matching conflicts */}
+          {/* Feed routes */}
           <ProtectedRoute path="/feed/:id" component={FeedPostDetailPage} />
           <ProtectedRoute path="/feed" component={FeedPage} />
-          
-          {/* Root path - require authentication */}
-          <ProtectedRoute path="/" component={HomePage} />
           
           {/* Home route */}
           <ProtectedRoute path="/home" component={HomePage} />
@@ -390,6 +387,10 @@ function Router() {
         <Route path="/test-minimal" component={MinimalTest} />
         <Route path="/debug" component={DebugSimple} />
         <Route path="/emergency" component={EmergencyDebug} />
+        
+        {/* Root path - must be last to avoid matching other routes */}
+        <ProtectedRoute path="/" component={HomePage} />
+        
         <Route component={NotFound} />
             </Switch>
           </Suspense>

@@ -57,7 +57,6 @@ interface FeedItem {
 }
 
 export default function FeedPage() {
-  console.log("FeedPage component rendering");
   const [, setLocation] = useLocation();
   const [filter, setFilter] = useState<FeedFilter>("all");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -66,11 +65,9 @@ export default function FeedPage() {
   const [editContent, setEditContent] = useState("");
   const { toast } = useToast();
 
-  const { data: feedItems = [], isLoading, error } = useQuery<FeedItem[]>({
+  const { data: feedItems = [], isLoading } = useQuery<FeedItem[]>({
     queryKey: ["/api/feed", filter],
   });
-
-  console.log("Feed query state:", { isLoading, hasData: feedItems.length, error });
 
   const createPostMutation = useMutation({
     mutationFn: async (content: string) => {

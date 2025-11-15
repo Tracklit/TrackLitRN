@@ -1,0 +1,25 @@
+
+photo-1494790108755-2616b612b002:1   GET https://images.unsplash.com/photo-1494790108755-2616b612b002?w=150&h=150&fit=crop&crop=face 404 (Not Found)
+Image
+setValueForProperty @ react-dom.development.js:855
+setInitialDOMProperties @ react-dom.development.js:9720
+setInitialProperties @ react-dom.development.js:9921
+finalizeInitialChildren @ react-dom.development.js:10950
+completeWork @ react-dom.development.js:22232
+completeUnitOfWork @ react-dom.development.js:26635
+performUnitOfWork @ react-dom.development.js:26607
+workLoopConcurrent @ react-dom.development.js:26582
+renderRootConcurrent @ react-dom.development.js:26544
+performConcurrentWorkOnRoot @ react-dom.development.js:25777
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+use-program-sessions.tsx:119 Raw program data: {id: 1, userId: 74, title: '2026i - Power Move', description: '', visibility: 'private', …}
+use-program-sessions.tsx:124 Parsed sessions: (202) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, …]
+home-page.tsx:241 Looking for session with date: Nov-15
+home-page.tsx:242 Available sessions: (5) [{…}, {…}, {…}, {…}, {…}]
+home-page.tsx:268 Found session for Nov-15 : {date: 'Nov-15', hasWorkout: false}
+home-page.tsx:289 Stopping practice pulse animation
+App.tsx:251 Router: Current location: /feed
+protected-route.tsx:16 ProtectedRoute /: user=true, isLoading=false, location=/feed
+App.tsx:432 MainApp: Auth check {user: true, isLoading: false, location: '/feed', initialLoading: false}
