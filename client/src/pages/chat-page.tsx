@@ -971,7 +971,7 @@ const ChatPage = () => {
                       
                       {/* Thin gray divider that stops before the channel image */}
                       {index < filteredChannels.length - 1 && (
-                        <div className="ml-16 border-b border-gray-400" style={{ borderWidth: '0.5px', opacity: '0.5' }} />
+                        <div className="ml-16 border-b border-gray-400" style={{ borderWidth: '0.5px', opacity: '0.2' }} />
                       )}
                     </div>
                   ))}
