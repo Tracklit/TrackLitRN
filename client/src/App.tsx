@@ -296,6 +296,7 @@ function Router() {
           
           {/* Home route */}
           <ProtectedRoute path="/home" component={HomePage} />
+          <ProtectedRoute path="/" component={HomePage} />
         
           {/* Training */}
           <ProtectedRoute path="/practice" component={PracticePage} />
@@ -387,9 +388,6 @@ function Router() {
         <Route path="/test-minimal" component={MinimalTest} />
         <Route path="/debug" component={DebugSimple} />
         <Route path="/emergency" component={EmergencyDebug} />
-        
-        {/* Root path - must be last to avoid matching other routes */}
-        <ProtectedRoute path="/" component={HomePage} />
         
         <Route component={NotFound} />
             </Switch>
