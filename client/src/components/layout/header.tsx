@@ -33,17 +33,6 @@ export function Header({ title = "TrackLit", className }: HeaderProps) {
         {user && (
           <div className="flex items-center justify-end flex-1">
             <div className="flex items-center ml-auto">
-              {/* Ticker Toggle */}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-9 w-9 p-0 text-gray-400 hover:text-white"
-                onClick={() => toggleTickerVisibility(!isTickerVisible)}
-                title={isTickerVisible ? "Hide ticker" : "Show ticker"}
-              >
-                <FontAwesomeIcon icon={faGlobe} className="h-5 w-5" />
-              </Button>
-              
               <NotificationBell />
               
               {/* Direct Messages Panel */}

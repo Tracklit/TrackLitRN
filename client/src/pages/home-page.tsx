@@ -392,7 +392,7 @@ export default function HomePage() {
               }}
               data-testid="updates-tab"
             >
-              <span className="text-sm font-medium text-gray-300">Updates</span>
+              <span className="text-sm font-medium text-gray-300">Feed</span>
               <ChevronDown className="h-3.5 w-3.5 text-gray-400" />
             </button>
           )}
