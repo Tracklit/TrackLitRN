@@ -10,8 +10,9 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-- **Navigation Redesign & Exercise Library Styling (November 15, 2025)**: Consolidated navigation and refined UI consistency
-  - **Chat page consolidation**: All channels (private and public) now on single page with My Chats/Public Chats toggle
+- **Navigation Redesign & Chat Filtering System (November 15, 2025)**: Consolidated navigation and enhanced chat filtering
+  - **Chat page filtering**: Replaced My Chats/Public Chats toggle with comprehensive filter dropdown supporting: All Chats, Unread, Unanswered, DMs, Public, Private
+  - **Advanced filtering**: Users can now filter chats by unread status, direct messages only, or visibility (public/private)
   - **Bottom navigation update**: Removed AI Sprinthia item and replaced with user Profile avatar
   - **Top header cleanup**: Removed user profile dropdown menu from top bar (now accessible via bottom nav)
   - **Exercise Library empty state**: Refined with minimal design - removed icon and text, centered "Add Your First Video" button with expanded padding (py-48, min-h-500px)

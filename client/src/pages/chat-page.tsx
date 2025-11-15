@@ -280,7 +280,7 @@ const ChatPage = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [isAtTop, setIsAtTop] = useState(true);
   // Removed animation state - no more slide animations
-  const [groupFilter, setGroupFilter] = useState<'my' | 'public'>('my'); // Filter for groups
+  const [chatFilter, setChatFilter] = useState<'all' | 'unread' | 'unanswered' | 'dms' | 'public' | 'private'>('all');
 
   
   const [location, setLocation] = useLocation();
@@ -454,19 +454,46 @@ const ChatPage = () => {
 
   const activeChannels = localChannels.length > 0 ? localChannels : chatChannels;
   
-  // Filter channels based on the toggle selection and search query
+  // Filter channels based on the selected filter and search query
   const filteredChannels = activeChannels?.filter((channel: any) => {
-    // First apply group filter (my vs public)
+    // Apply filter
     let matchesFilter = false;
-    if (groupFilter === 'my') {
-      // Show groups where user is a member, admin, or owner
-      const isMember = channel.is_member || false;
-      const isAdmin = channel.is_admin || false;
-      const isOwner = channel.is_owner || false;
-      matchesFilter = isMember || isAdmin || isOwner;
-    } else {
-      // Show all public groups (not private)
-      matchesFilter = !channel.is_private;
+    
+    switch (chatFilter) {
+      case 'all':
+        matchesFilter = true;
+        break;
+        
+      case 'unread':
+        // Show only chats with unread messages
+        const unreadCount = unreadCounts[channel.id] || 0;
+        matchesFilter = unreadCount > 0;
+        break;
+        
+      case 'unanswered':
+        // Show chats where the last message is not from the current user
+        // This would require checking last_message_sender_id - for now show all as a placeholder
+        // You may need to add last_message_sender_id to the channel data
+        matchesFilter = true; // TODO: Implement proper logic when backend provides last_message_sender_id
+        break;
+        
+      case 'dms':
+        // Show only direct messages (not group chats)
+        matchesFilter = channel.channel_type === 'direct';
+        break;
+        
+      case 'public':
+        // Show only public channels
+        matchesFilter = !channel.is_private;
+        break;
+        
+      case 'private':
+        // Show only private channels and DMs
+        matchesFilter = channel.is_private;
+        break;
+        
+      default:
+        matchesFilter = true;
     }
     
     // Then apply search filter
@@ -734,33 +761,75 @@ const ChatPage = () => {
                 </button>
               </div>
 
-              {/* Toggle Filter and Close Button - Right Aligned */}
+              {/* Filter Dropdown and Close Button - Right Aligned */}
               <div className="flex items-center space-x-3 ml-auto">
-                {/* Group Filter Toggle */}
-                <div className="flex bg-gray-800/50 rounded-md p-0.5 h-8">
-                  <button
-                    onClick={() => setGroupFilter('my')}
-                    className={cn(
-                      "px-2 py-1.5 text-xs font-medium rounded-sm transition-all h-7 flex items-center",
-                      groupFilter === 'my'
-                        ? "bg-purple-600 text-white shadow-sm"
-                        : "text-gray-400 hover:text-white hover:bg-gray-700/50"
-                    )}
-                  >
-                    My Chats
-                  </button>
-                  <button
-                    onClick={() => setGroupFilter('public')}
-                    className={cn(
-                      "px-2 py-1.5 text-xs font-medium rounded-sm transition-all h-7 flex items-center",
-                      groupFilter === 'public'
-                        ? "bg-purple-600 text-white shadow-sm"
-                        : "text-gray-400 hover:text-white hover:bg-gray-700/50"
-                    )}
-                  >
-                    Public Chats
-                  </button>
-                </div>
+                {/* Chat Filter Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-gray-800/50 hover:bg-gray-700/50 text-gray-300 rounded-md transition-all h-8"
+                    >
+                      <span className="capitalize">{chatFilter === 'dms' ? 'DMs' : chatFilter}</span>
+                      <ChevronDown className="h-3 w-3" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-40 bg-slate-800 border-slate-700">
+                    <DropdownMenuItem 
+                      onClick={() => setChatFilter('all')}
+                      className={cn(
+                        "cursor-pointer",
+                        chatFilter === 'all' ? "bg-purple-600/20 text-purple-300" : "text-gray-300"
+                      )}
+                    >
+                      All Chats
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => setChatFilter('unread')}
+                      className={cn(
+                        "cursor-pointer",
+                        chatFilter === 'unread' ? "bg-purple-600/20 text-purple-300" : "text-gray-300"
+                      )}
+                    >
+                      Unread
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => setChatFilter('unanswered')}
+                      className={cn(
+                        "cursor-pointer",
+                        chatFilter === 'unanswered' ? "bg-purple-600/20 text-purple-300" : "text-gray-300"
+                      )}
+                    >
+                      Unanswered
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => setChatFilter('dms')}
+                      className={cn(
+                        "cursor-pointer",
+                        chatFilter === 'dms' ? "bg-purple-600/20 text-purple-300" : "text-gray-300"
+                      )}
+                    >
+                      DMs
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => setChatFilter('public')}
+                      className={cn(
+                        "cursor-pointer",
+                        chatFilter === 'public' ? "bg-purple-600/20 text-purple-300" : "text-gray-300"
+                      )}
+                    >
+                      Public
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => setChatFilter('private')}
+                      className={cn(
+                        "cursor-pointer",
+                        chatFilter === 'private' ? "bg-purple-600/20 text-purple-300" : "text-gray-300"
+                      )}
+                    >
+                      Private
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
                 {/* Close Chat Drawer */}
                 <Link href="/" className="block">
