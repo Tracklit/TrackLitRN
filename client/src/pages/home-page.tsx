@@ -381,13 +381,14 @@ export default function HomePage() {
           {tickerCollapsed && (
             <button
               onClick={handleExpandTicker}
-              className={`w-full h-8 flex items-center justify-center gap-2 rounded-xl transition-all duration-200 ${
+              className={`w-full h-8 flex items-center justify-center gap-2 transition-all duration-200 ${
                 tickerAnimating ? 'opacity-0 -translate-y-1' : 'opacity-100 translate-y-1'
               }`}
               style={{
-                background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(51, 65, 85, 0.95) 100%)',
-                border: '0.5px solid rgba(148, 163, 184, 0.2)',
+                background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 58, 138, 0.95) 100%)',
+                border: '0.5px solid rgba(59, 130, 246, 0.3)',
                 boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+                borderRadius: '16px',
               }}
               data-testid="updates-tab"
             >
