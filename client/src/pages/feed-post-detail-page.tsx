@@ -64,11 +64,25 @@ export default function FeedPostDetailPage() {
 
   const { data: post, isLoading: postLoading } = useQuery<FeedPost>({
     queryKey: ["/api/feed/posts", postId],
+    queryFn: async () => {
+      const res = await fetch(`/api/feed/posts/${postId}`, {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to fetch post");
+      return res.json();
+    },
     enabled: !!postId,
   });
 
   const { data: comments = [], isLoading: commentsLoading } = useQuery<Comment[]>({
     queryKey: ["/api/feed/posts", postId, "comments"],
+    queryFn: async () => {
+      const res = await fetch(`/api/feed/posts/${postId}/comments`, {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to fetch comments");
+      return res.json();
+    },
     enabled: !!postId,
   });
 
