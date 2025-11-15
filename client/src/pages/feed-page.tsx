@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { OptimizedAvatar } from "@/components/ui/optimized-avatar";
-import { Heart, MessageCircle, Pencil, Trash2, Plus } from "lucide-react";
+import { Heart, MessageCircle, Pencil, Trash2, Plus, RefreshCw } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -63,11 +63,104 @@ export default function FeedPage() {
   const [newPostContent, setNewPostContent] = useState("");
   const [editingPost, setEditingPost] = useState<FeedItem | null>(null);
   const [editContent, setEditContent] = useState("");
+  const [showNewPostsBanner, setShowNewPostsBanner] = useState(false);
+  const [isPulling, setIsPulling] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
   const { toast } = useToast();
+  
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const touchStartY = useRef(0);
+  const lastSeenTimestamp = useRef<Date | null>(null);
 
-  const { data: feedItems = [], isLoading } = useQuery<FeedItem[]>({
+  const { data: feedItems = [], isLoading, refetch } = useQuery<FeedItem[]>({
     queryKey: ["/api/feed", filter],
   });
+
+  // Update last seen timestamp when feed loads
+  useEffect(() => {
+    if (feedItems.length > 0 && !lastSeenTimestamp.current) {
+      const mostRecent = feedItems.reduce((latest, item) => {
+        const itemDate = new Date(item.createdAt);
+        return itemDate > latest ? itemDate : latest;
+      }, new Date(0));
+      lastSeenTimestamp.current = mostRecent;
+    }
+  }, [feedItems]);
+
+  // Check for new posts every 30 minutes
+  useEffect(() => {
+    const checkForNewPosts = async () => {
+      if (!lastSeenTimestamp.current) return;
+      
+      try {
+        const response = await fetch(`/api/feed?filter=${filter}`, {
+          credentials: "include",
+        });
+        if (!response.ok) return;
+        
+        const newFeedItems: FeedItem[] = await response.json();
+        if (newFeedItems.length > 0) {
+          const mostRecent = newFeedItems.reduce((latest, item) => {
+            const itemDate = new Date(item.createdAt);
+            return itemDate > latest ? itemDate : latest;
+          }, new Date(0));
+          
+          if (mostRecent > lastSeenTimestamp.current) {
+            setShowNewPostsBanner(true);
+          }
+        }
+      } catch (error) {
+        console.error("Error checking for new posts:", error);
+      }
+    };
+
+    const interval = setInterval(checkForNewPosts, 30 * 60 * 1000); // 30 minutes
+    return () => clearInterval(interval);
+  }, [filter]);
+
+  // Pull-to-refresh handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (scrollContainerRef.current?.scrollTop === 0) {
+      touchStartY.current = e.touches[0].clientY;
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!scrollContainerRef.current || scrollContainerRef.current.scrollTop > 0) {
+      setPullDistance(0);
+      return;
+    }
+
+    const touchY = e.touches[0].clientY;
+    const distance = touchY - touchStartY.current;
+    
+    if (distance > 0) {
+      setPullDistance(Math.min(distance, 100));
+      setIsPulling(distance > 50);
+    }
+  };
+
+  const handleTouchEnd = async () => {
+    if (isPulling) {
+      await handleRefresh();
+    }
+    setPullDistance(0);
+    setIsPulling(false);
+    touchStartY.current = 0;
+  };
+
+  const handleRefresh = async () => {
+    setShowNewPostsBanner(false);
+    await refetch();
+    
+    if (feedItems.length > 0) {
+      const mostRecent = feedItems.reduce((latest, item) => {
+        const itemDate = new Date(item.createdAt);
+        return itemDate > latest ? itemDate : latest;
+      }, new Date(0));
+      lastSeenTimestamp.current = mostRecent;
+    }
+  };
 
   const createPostMutation = useMutation({
     mutationFn: async (content: string) => {
@@ -300,7 +393,39 @@ export default function FeedPage() {
         </Select>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      {/* New Posts Banner */}
+      {showNewPostsBanner && (
+        <button
+          onClick={handleRefresh}
+          className="w-full py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-medium hover:from-purple-700 hover:to-pink-700 transition-all"
+          data-testid="button-new-posts"
+        >
+          New Posts
+        </button>
+      )}
+
+      {/* Pull-to-refresh indicator */}
+      {pullDistance > 0 && (
+        <div 
+          className="flex items-center justify-center py-2 transition-all"
+          style={{ 
+            transform: `translateY(${pullDistance}px)`,
+            opacity: pullDistance / 100
+          }}
+        >
+          <RefreshCw 
+            className={`h-5 w-5 text-purple-400 ${isPulling ? 'animate-spin' : ''}`}
+          />
+        </div>
+      )}
+
+      <div 
+        ref={scrollContainerRef}
+        className="flex-1 overflow-y-auto p-4 space-y-3"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         {isLoading ? (
           Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="rounded-lg p-4 bg-gray-800/50 border border-gray-700/50">
