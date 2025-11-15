@@ -225,7 +225,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                 Connections
               </div>
             </Link>
-            <Link href="/feed">
+            <a href="/feed">
               <div
                 className={cn(
                   "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
@@ -236,7 +236,7 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
                 <FontAwesomeIcon icon={faNewspaper} className="h-4 w-4 mr-3" />
                 Feed
               </div>
-            </Link>
+            </a>
             <Link href="/chat">
               <div
                 className={cn(

@@ -122,6 +122,15 @@ function NavItem({ href, icon, title, isActive, onClick, showBadge, badgeCount, 
     return content;
   }
 
+  // Use direct anchor tag for Feed to bypass Wouter routing
+  if (href === "/feed") {
+    return (
+      <a href={href}>
+        {content}
+      </a>
+    );
+  }
+
   return (
     <Link href={href}>
       {content}
