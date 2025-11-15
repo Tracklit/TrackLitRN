@@ -20,6 +20,7 @@ import {
   Calendar,
   Coins,
   ChevronRight,
+  ChevronDown,
   Timer,
   LineChart,
   ArrowUpRight,
@@ -73,6 +74,8 @@ export default function HomePage() {
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [showPracticePulse, setShowPracticePulse] = useState(false);
   const [animationKey, setAnimationKey] = useState(0);
+  const [tickerCollapsed, setTickerCollapsed] = useState(false);
+  const [tickerAnimating, setTickerAnimating] = useState(false);
 
   // Critical dashboard images for preloading with 80% compression
   const dashboardImages = [
@@ -93,6 +96,25 @@ export default function HomePage() {
   // const { isTickerVisible, toggleTickerVisibility } = useTicker();
   const isTickerVisible = true;
   const toggleTickerVisibility = (visible: boolean) => {};
+  
+  // Ticker collapse/expand handlers
+  const handleCollapseTicker = () => {
+    setTickerAnimating(true);
+    // After slide-up animation completes, set collapsed state
+    setTimeout(() => {
+      setTickerCollapsed(true);
+      setTickerAnimating(false);
+    }, 150);
+  };
+  
+  const handleExpandTicker = () => {
+    setTickerAnimating(true);
+    setTickerCollapsed(false);
+    // Clear animating state after expansion completes
+    setTimeout(() => {
+      setTickerAnimating(false);
+    }, 250);
+  };
   
   // Fetch data for stats - only when authenticated
   const { data: meets } = useQuery<Meet[]>({
@@ -353,107 +375,141 @@ export default function HomePage() {
       <PreloadImages images={dashboardImages} quality={20} priority={true} />
       
       {/* Fixed Community Activity Ticker - Below Header */}
-      <div className={`fixed top-[65px] left-5 right-5 z-40 transition-transform duration-300 ease-in-out mb-6 ${isTickerVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+      <div className={`fixed top-[65px] left-5 right-5 z-40 transition-all duration-300 ease-in-out mb-6`}>
         <div className="mx-auto px-5" style={{ maxWidth: "480px" }}>
-          <div className="relative" style={{ background: 'linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%)', border: '0.5px solid rgba(148, 163, 184, 0.25)', boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.40), 0 15px 20px -5px rgba(0, 0, 0, 0.30)', borderRadius: '6px', paddingTop: '10px' }}>
-            {/* Control buttons with higher z-index */}
-            <div className="absolute left-2 top-1/2 transform -translate-y-1/2 z-[80]">
-              <button
-                type="button"
-                className="h-6 w-6 text-white/70 hover:text-white flex items-center justify-center rounded transition-colors bg-black/10 hover:bg-black/20"
-                onClick={() => setIsCarouselPaused(!isCarouselPaused)}
-                title={isCarouselPaused ? "Resume ticker" : "Pause ticker"}
-              >
-                {isCarouselPaused ? (
-                  <Play className="h-3 w-3" />
-                ) : (
-                  <Pause className="h-3 w-3" />
-                )}
-              </button>
-            </div>
-            
-            <div className="absolute right-2 top-1/2 transform -translate-y-1/2 z-[80]">
-              <button
-                type="button"
-                className="h-6 w-6 text-white/70 hover:text-white flex items-center justify-center rounded transition-colors bg-black/10 hover:bg-black/20"
-                onClick={() => {
-                  console.log('X button clicked, hiding ticker');
-                  toggleTickerVisibility(false);
-                }}
-                title="Hide ticker"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </div>
-            
-            {/* Carousel content */}
-            <div 
-              className="relative h-20 overflow-hidden"
-              onTouchStart={(e) => {
-                setTouchEnd(null);
-                setTouchStart(e.targetTouches[0].clientX);
+          {/* Collapsed "Updates" Tab */}
+          {tickerCollapsed && (
+            <button
+              onClick={handleExpandTicker}
+              className={`w-full h-8 flex items-center justify-center gap-2 rounded-xl transition-all duration-200 ${
+                tickerAnimating ? 'opacity-0 -translate-y-1' : 'opacity-100 translate-y-1'
+              }`}
+              style={{
+                background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(51, 65, 85, 0.95) 100%)',
+                border: '0.5px solid rgba(148, 163, 184, 0.2)',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
               }}
-              onTouchMove={(e) => setTouchEnd(e.targetTouches[0].clientX)}
-              onTouchEnd={() => {
-                if (!touchStart || !touchEnd) return;
-                const distance = touchStart - touchEnd;
-                const isLeftSwipe = distance > 50;
-                const isRightSwipe = distance < -50;
-                
-                if (isLeftSwipe && carouselTotal > 0) {
-                  setCarouselIndex((prev) => (prev + 1) % carouselTotal);
-                }
-                if (isRightSwipe && carouselTotal > 0) {
-                  setCarouselIndex((prev) => (prev - 1 + carouselTotal) % carouselTotal);
-                }
+              data-testid="updates-tab"
+            >
+              <span className="text-sm font-medium text-gray-300">Updates</span>
+              <ChevronDown className="h-3.5 w-3.5 text-gray-400" />
+            </button>
+          )}
+          
+          {/* Expanded Ticker Card */}
+          {!tickerCollapsed && (
+            <div 
+              className={`relative transition-all ${
+                tickerAnimating ? 'opacity-0 -translate-y-3' : 'opacity-100 translate-y-0'
+              }`}
+              style={{ 
+                background: 'linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%)', 
+                border: '0.5px solid rgba(148, 163, 184, 0.25)', 
+                boxShadow: '0 0 20px 8px rgba(102, 126, 234, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.40), 0 15px 20px -5px rgba(0, 0, 0, 0.30)', 
+                borderRadius: '6px', 
+                paddingTop: '10px',
+                transitionDuration: tickerAnimating ? '150ms' : '250ms',
+                transitionTimingFunction: 'ease-out'
               }}
             >
-              <CommunityCarousel 
-                isPaused={isCarouselPaused} 
-                onPauseToggle={setIsCarouselPaused}
-                currentIndex={carouselIndex}
-                onIndexChange={setCarouselIndex}
-                onTotalChange={setCarouselTotal}
-              />
-            </div>
-            
-            {/* Navigation dots */}
-            {carouselTotal > 1 && (
-              <div className="flex justify-center gap-1.5 pb-2">
-                {Array.from({ length: Math.min(3, carouselTotal) }).map((_, index) => {
-                  let dotIndex = index;
-                  if (carouselTotal > 3) {
-                    if (carouselIndex === 0) {
-                      dotIndex = index;
-                    } else if (carouselIndex === carouselTotal - 1) {
-                      dotIndex = carouselTotal - 3 + index;
-                    } else {
-                      dotIndex = carouselIndex - 1 + index;
-                    }
-                  }
-                  const isActive = dotIndex === carouselIndex;
-                  return (
-                    <button
-                      key={index}
-                      onClick={() => setCarouselIndex(dotIndex)}
-                      className="transition-all duration-200"
-                      style={{
-                        width: isActive ? '20px' : '6px',
-                        height: '6px',
-                        borderRadius: '3px',
-                        backgroundColor: isActive ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.3)',
-                      }}
-                      aria-label={`Go to slide ${dotIndex + 1}`}
-                    />
-                  );
-                })}
+              {/* Control buttons with higher z-index */}
+              <div className="absolute left-2 top-1/2 transform -translate-y-1/2 z-[80]">
+                <button
+                  type="button"
+                  className="h-6 w-6 text-white/70 hover:text-white flex items-center justify-center rounded transition-colors bg-black/10 hover:bg-black/20"
+                  onClick={() => setIsCarouselPaused(!isCarouselPaused)}
+                  title={isCarouselPaused ? "Resume ticker" : "Pause ticker"}
+                  data-testid="pause-ticker"
+                >
+                  {isCarouselPaused ? (
+                    <Play className="h-3 w-3" />
+                  ) : (
+                    <Pause className="h-3 w-3" />
+                  )}
+                </button>
               </div>
-            )}
-          </div>
+              
+              <div className="absolute right-2 top-1/2 transform -translate-y-1/2 z-[80]">
+                <button
+                  type="button"
+                  className="h-6 w-6 text-white/70 hover:text-white flex items-center justify-center rounded transition-colors bg-black/10 hover:bg-black/20"
+                  onClick={handleCollapseTicker}
+                  title="Hide ticker"
+                  data-testid="close-ticker"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+              
+              {/* Carousel content */}
+              <div 
+                className="relative h-20 overflow-hidden"
+                onTouchStart={(e) => {
+                  setTouchEnd(null);
+                  setTouchStart(e.targetTouches[0].clientX);
+                }}
+                onTouchMove={(e) => setTouchEnd(e.targetTouches[0].clientX)}
+                onTouchEnd={() => {
+                  if (!touchStart || !touchEnd) return;
+                  const distance = touchStart - touchEnd;
+                  const isLeftSwipe = distance > 50;
+                  const isRightSwipe = distance < -50;
+                  
+                  if (isLeftSwipe && carouselTotal > 0) {
+                    setCarouselIndex((prev) => (prev + 1) % carouselTotal);
+                  }
+                  if (isRightSwipe && carouselTotal > 0) {
+                    setCarouselIndex((prev) => (prev - 1 + carouselTotal) % carouselTotal);
+                  }
+                }}
+              >
+                <CommunityCarousel 
+                  isPaused={isCarouselPaused} 
+                  onPauseToggle={setIsCarouselPaused}
+                  currentIndex={carouselIndex}
+                  onIndexChange={setCarouselIndex}
+                  onTotalChange={setCarouselTotal}
+                />
+              </div>
+              
+              {/* Navigation dots */}
+              {carouselTotal > 1 && (
+                <div className="flex justify-center gap-1.5 pb-2">
+                  {Array.from({ length: Math.min(3, carouselTotal) }).map((_, index) => {
+                    let dotIndex = index;
+                    if (carouselTotal > 3) {
+                      if (carouselIndex === 0) {
+                        dotIndex = index;
+                      } else if (carouselIndex === carouselTotal - 1) {
+                        dotIndex = carouselTotal - 3 + index;
+                      } else {
+                        dotIndex = carouselIndex - 1 + index;
+                      }
+                    }
+                    const isActive = dotIndex === carouselIndex;
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => setCarouselIndex(dotIndex)}
+                        className="transition-all duration-200"
+                        style={{
+                          width: isActive ? '20px' : '6px',
+                          height: '6px',
+                          borderRadius: '3px',
+                          backgroundColor: isActive ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.3)',
+                        }}
+                        aria-label={`Go to slide ${dotIndex + 1}`}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      <main data-dashboard="true" className={`px-4 container mx-auto max-w-7xl ${isTickerVisible ? 'pt-40' : 'pt-20'}`} style={{ paddingTop: isTickerVisible ? 'calc(10rem + 20px)' : 'calc(5rem + 20px)' }}>
+      <main data-dashboard="true" className={`px-4 container mx-auto max-w-7xl`} style={{ paddingTop: tickerCollapsed ? 'calc(5rem + 40px)' : 'calc(10rem + 20px)' }}>
         {/* Logo will be placed here in the future */}
         <div className="h-1 mx-auto" style={{ maxWidth: "540px" }}>
           {/* Reserved space for logo */}

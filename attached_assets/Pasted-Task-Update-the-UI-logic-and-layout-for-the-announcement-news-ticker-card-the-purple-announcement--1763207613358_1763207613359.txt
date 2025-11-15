@@ -1,0 +1,71 @@
+Task:
+Update the UI logic and layout for the announcement/news ticker card (the purple announcement carousel under the top nav) to support a new hide/unhide experience. When dismissed, the ticker should collapse into a slim tab. Tapping the tab should restore the ticker with smooth animations. The final result must match the app’s dark, rounded, soft-glow visual style.
+
+🔧 Required Changes
+1. When user taps the X button on the announcement card:
+
+Implement the following behaviors:
+
+The purple announcement card slides upward 10–14px and fades out (120–180ms).
+
+The entire card container collapses height down to a 6–8px slim bar located exactly where the card was.
+
+This collapsed bar becomes a rounded “Updates” tab with:
+
+dark or slightly translucent background matching the app’s dark gradient
+
+soft border radius (8–12px)
+
+a small chevron icon (▼) indicating expand
+
+text label: “Updates”
+
+The tab should fade in and slide down slightly (3–4px) when appearing.
+
+2. When user taps the collapsed “Updates” tab:
+
+Restore the full announcement card using these animations:
+
+Tab slightly slides upward and fades out.
+
+The container expands downward to the original card height (200–260ms, ease-out).
+
+The purple announcement card slides in from below and fades in.
+
+The carousel indicators and content appear last with a subtle fade (optional).
+
+Chevron rotates from ▼ → ▲ during expansion.
+
+3. Visual and Interaction Requirements
+
+The collapsed tab must always remain visible after dismissing the ticker.
+
+The tab should not interfere with the top navigation icons.
+
+Use the app’s existing rounded-corner style and dark/blurry/glow visual treatment.
+
+Ensure gestures and taps work smoothly on mobile.
+
+Maintain original carousel functionality when expanded.
+
+🎨 Design Intent
+
+The goal is to provide:
+
+a non-intrusive but always-available way to reopen the ticker
+
+smooth, premium-feeling animations
+
+UI consistency with the dark gradient background and rounded cards
+
+clear, intuitive affordances for hide/unhide actions
+
+📦 Output Requirements
+
+Implement the expanded/collapsed states
+
+Write or update the component code, styles, animation logic, and state handling
+
+Maintain compatibility with the current UI theme and components
+
+Final result must be polished, visually consistent, and mobile-friendly

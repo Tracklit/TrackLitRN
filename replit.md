@@ -10,6 +10,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **Announcement Ticker Hide/Unhide Feature (November 15, 2025)**: Implemented collapsible announcement ticker with smooth animations
+  - **Collapsed "Updates" tab**: When X button is clicked, ticker slides up and fades out, collapsing to 8px slim tab with dark gradient background, rounded corners, and chevron icon
+  - **Smooth animations**: 150ms slide-up/fade-out on collapse, 250ms slide-down/fade-in on expand with ease-out timing
+  - **Premium feel**: Tab has dark translucent gradient (slate-700/800), subtle shadow, and "Updates" text label
+  - **Expand on tap**: Clicking collapsed tab restores full purple announcement carousel with smooth transitions
+  - **Maintains position**: Collapsed tab stays visible below header, doesn't interfere with navigation
+  - **Dynamic content padding**: Main content area adjusts padding automatically based on ticker state (collapsed vs expanded)
+  - **Mobile-optimized**: Touch-friendly tap targets and smooth gesture handling on all devices
 - **Chat Drawer UI Overhaul (November 15, 2025)**: Complete redesign of chat interface with modern dark-mode aesthetic and enhanced usability
   - **Visual hierarchy improvements**: Increased contrast between titles (bold white for unread, semibold gray-200 for read) and previews (gray-300 for unread, gray-500 for read)
   - **Enhanced drawer depth**: Added shadow effect and purple gradient accent on left edge for better visual separation
