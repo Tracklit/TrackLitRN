@@ -10,6 +10,15 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **Chat Drawer UI Overhaul (November 15, 2025)**: Complete redesign of chat interface with modern dark-mode aesthetic and enhanced usability
+  - **Visual hierarchy improvements**: Increased contrast between titles (bold white for unread, semibold gray-200 for read) and previews (gray-300 for unread, gray-500 for read)
+  - **Enhanced drawer depth**: Added shadow effect and purple gradient accent on left edge for better visual separation
+  - **Top actions redesigned**: New chat button now has purple-pink gradient with hover tooltip, filter dropdown has larger tap targets (h-10, min-w-120px)
+  - **Better presence indicators**: Replaced lock/globe icons with simple green dot for public channels
+  - **Unread message system**: Bold titles, purple-pink gradient badges, pulsing dot indicators, and subtle purple tinted backgrounds for unread chats
+  - **Improved date styling**: Smaller, muted timestamps with better spacing (text-xs, gray-500)
+  - **Stagger animations**: Chat items fade and slide in with 30ms delay between each for smooth appearance
+  - **Drawer animations**: Improved slide-in timing (500ms ease-out) for smoother transitions
 - **Navigation Redesign & Chat Filtering System (November 15, 2025)**: Consolidated navigation and enhanced chat filtering
   - **Chat page filtering**: Replaced My Chats/Public Chats toggle with comprehensive filter dropdown supporting: All Chats, Unread, Unanswered, DMs, Public, Private
   - **Advanced filtering**: Users can now filter chats by unread status, direct messages only, or visibility (public/private)
