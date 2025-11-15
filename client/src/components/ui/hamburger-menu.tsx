@@ -21,6 +21,7 @@ import {
   faShield,
   faHeart,
   faShoppingCart,
+  faNewspaper,
 } from '@fortawesome/free-solid-svg-icons';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -222,6 +223,18 @@ export function HamburgerMenu({ className }: HamburgerMenuProps) {
               >
                 <FontAwesomeIcon icon={faUserCheck} className="h-4 w-4 mr-3" />
                 Connections
+              </div>
+            </Link>
+            <Link href="/feed">
+              <div
+                className={cn(
+                  "flex items-center px-4 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer",
+                  location === "/feed" ? "bg-primary text-primary-foreground" : "text-gray-300"
+                )}
+                onClick={() => setIsOpen(false)}
+              >
+                <FontAwesomeIcon icon={faNewspaper} className="h-4 w-4 mr-3" />
+                Feed
               </div>
             </Link>
             <Link href="/chat">

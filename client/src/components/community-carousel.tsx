@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { SimpleWorkoutLike } from "@/components/workout-reactions";
+import { useLocation } from "wouter";
 
 function formatTimeAgo(dateString: string): string {
   const now = new Date();
@@ -57,6 +58,7 @@ export function CommunityCarousel({
   const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
   const [currentActivity, setCurrentActivity] = useState<CommunityActivity | null>(null);
   const [isSavingItem, setIsSavingItem] = useState(false);
+  const [, setLocation] = useLocation();
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -554,8 +556,7 @@ export function CommunityCarousel({
 
   // Function to handle ticker click
   function handleTickerClick(activity: CommunityActivity) {
-    setCurrentActivity(activity);
-    setIsActivityModalOpen(true);
+    setLocation("/feed");
   }
 
   // Function to save meet to calendar

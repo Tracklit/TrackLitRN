@@ -232,8 +232,8 @@ export default function FeedPage() {
           <OptimizedAvatar
             src={item.profileImageUrl || undefined}
             alt={item.name || item.username || "User"}
+            fallback={(item.name || item.username || "U").slice(0, 2).toUpperCase()}
             className="h-10 w-10"
-            fallbackId={item.userId || 0}
           />
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
@@ -458,8 +458,8 @@ export default function FeedPage() {
                   <OptimizedAvatar
                     src={comment.profileImageUrl || undefined}
                     alt={comment.name || comment.username || "User"}
+                    fallback={(comment.name || comment.username || "U").slice(0, 2).toUpperCase()}
                     className="h-8 w-8"
-                    fallbackId={comment.userId}
                   />
                   <div className="flex-1">
                     <div className="font-semibold text-sm text-white">

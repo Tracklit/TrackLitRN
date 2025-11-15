@@ -8,6 +8,7 @@ import {
   faImage,
   faStar,
   faShoppingCart,
+  faNewspaper,
 } from '@fortawesome/free-solid-svg-icons';
 
 import { cn } from "@/lib/utils";
@@ -41,11 +42,11 @@ const getNavItems = (user: any) => [
     disabled: false
   },
   { 
-    title: "Race", 
-    href: "/meets", 
-    icon: <FontAwesomeIcon icon={faTrophy} className="h-4 w-4" />,
-    key: "race",
-    disabled: true
+    title: "Feed", 
+    href: "/feed", 
+    icon: <FontAwesomeIcon icon={faNewspaper} className="h-4 w-4" />,
+    key: "feed",
+    disabled: false
   },
   { 
     title: "Tools", 
