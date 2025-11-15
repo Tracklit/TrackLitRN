@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { OptimizedAvatar } from "@/components/ui/optimized-avatar";
-import { Heart, MessageCircle, Pencil, Trash2, Send, Plus } from "lucide-react";
+import { Heart, MessageCircle, Pencil, Trash2, Plus } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -55,35 +56,17 @@ interface FeedItem {
   isOwnPost: boolean;
 }
 
-interface Comment {
-  id: number;
-  postId: number;
-  userId: number;
-  content: string;
-  createdAt: Date;
-  username: string | null;
-  name: string | null;
-  profileImageUrl: string | null;
-}
-
 export default function FeedPage() {
+  const [, setLocation] = useLocation();
   const [filter, setFilter] = useState<FeedFilter>("all");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newPostContent, setNewPostContent] = useState("");
-  const [selectedPost, setSelectedPost] = useState<FeedItem | null>(null);
-  const [showCommentsDialog, setShowCommentsDialog] = useState(false);
-  const [commentText, setCommentText] = useState("");
   const [editingPost, setEditingPost] = useState<FeedItem | null>(null);
   const [editContent, setEditContent] = useState("");
   const { toast } = useToast();
 
   const { data: feedItems = [], isLoading } = useQuery<FeedItem[]>({
     queryKey: ["/api/feed", filter],
-  });
-
-  const { data: comments = [] } = useQuery<Comment[]>({
-    queryKey: ["/api/feed/posts", selectedPost?.id, "comments"],
-    enabled: !!selectedPost && selectedPost.type === "post",
   });
 
   const createPostMutation = useMutation({
@@ -147,23 +130,6 @@ export default function FeedPage() {
     },
   });
 
-  const addCommentMutation = useMutation({
-    mutationFn: async ({ postId, content }: { postId: number; content: string }) => {
-      return apiRequest("POST", `/api/feed/posts/${postId}/comments`, { content });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/feed/posts", selectedPost?.id, "comments"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/feed"] });
-      setCommentText("");
-    },
-    onError: (error: any) => {
-      toast({
-        description: error.message || "Failed to add comment",
-        variant: "destructive",
-      });
-    },
-  });
-
   const handleCreatePost = () => {
     if (newPostContent.trim().length < 5) {
       toast({
@@ -204,16 +170,10 @@ export default function FeedPage() {
     }
   };
 
-  const handleShowComments = (post: FeedItem) => {
+  const handleShowPost = (post: FeedItem) => {
     if (post.type === "post") {
-      setSelectedPost(post);
-      setShowCommentsDialog(true);
+      setLocation(`/feed/${post.id}`);
     }
-  };
-
-  const handleAddComment = () => {
-    if (!selectedPost || commentText.trim().length === 0) return;
-    addCommentMutation.mutate({ postId: selectedPost.id, content: commentText });
   };
 
   const canEdit = (post: FeedItem) => {
@@ -277,7 +237,10 @@ export default function FeedPage() {
               )}
             </div>
 
-            <div className="mt-2">
+            <div 
+              className="mt-2 cursor-pointer"
+              onClick={() => item.type === "post" && handleShowPost(item)}
+            >
               {item.type === "activity" ? (
                 <div>
                   <div className="font-medium text-white">{item.title}</div>
@@ -305,7 +268,7 @@ export default function FeedPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => handleShowComments(item)}
+                  onClick={() => handleShowPost(item)}
                   className="flex items-center gap-2 text-gray-400"
                   data-testid={`button-comments-${item.id}`}
                 >
@@ -447,57 +410,6 @@ export default function FeedPage() {
                 {editPostMutation.isPending ? "Saving..." : "Save"}
               </Button>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={showCommentsDialog} onOpenChange={setShowCommentsDialog}>
-        <DialogContent className="bg-gray-800 border-gray-700 max-h-[80vh]">
-          <DialogHeader>
-            <DialogTitle className="text-white">Comments</DialogTitle>
-          </DialogHeader>
-          <div className="flex flex-col gap-4 max-h-96 overflow-y-auto">
-            {comments.length === 0 ? (
-              <p className="text-gray-400 text-center py-8">No comments yet</p>
-            ) : (
-              comments.map((comment) => (
-                <div key={comment.id} className="flex gap-3" data-testid={`comment-${comment.id}`}>
-                  <OptimizedAvatar
-                    src={comment.profileImageUrl || undefined}
-                    alt={comment.name || comment.username || "User"}
-                    fallback={(comment.name || comment.username || "U").slice(0, 2).toUpperCase()}
-                    className="h-8 w-8"
-                  />
-                  <div className="flex-1">
-                    <div className="font-semibold text-sm text-white">
-                      {comment.name || comment.username}
-                    </div>
-                    <div className="text-sm text-gray-300">{comment.content}</div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-          <div className="flex gap-2 pt-4 border-t border-gray-700">
-            <Textarea
-              placeholder="Add a comment..."
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              className="flex-1 bg-gray-900 border-gray-700 text-white resize-none"
-              rows={2}
-              data-testid="input-comment"
-            />
-            <Button
-              onClick={handleAddComment}
-              disabled={addCommentMutation.isPending || !commentText.trim()}
-              className="bg-gradient-to-r from-purple-600 to-pink-600"
-              data-testid="button-submit-comment"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
           </div>
         </DialogContent>
       </Dialog>

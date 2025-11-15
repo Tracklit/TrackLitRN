@@ -60,6 +60,7 @@ const ClubManagementPageLazy = lazy(() => import("@/pages/club-management-page")
 const CreateGroupPageLazy = lazy(() => import("@/pages/create-group-page"));
 const ChannelSettingsPageLazy = lazy(() => import("@/pages/channel-settings-page"));
 const FeedPageLazy = lazy(() => import("@/pages/feed-page"));
+const FeedPostDetailPageLazy = lazy(() => import("@/pages/feed-post-detail-page"));
 
 // Profiles
 const ProfilePageLazy = lazy(() => import("@/pages/profile-page-new"));
@@ -146,6 +147,7 @@ const ClubManagementPage = () => <ClubManagementPageLazy />;
 const CreateGroupPage = () => <CreateGroupPageLazy />;
 const ChannelSettingsPage = () => <ChannelSettingsPageLazy />;
 const FeedPage = () => <FeedPageLazy />;
+const FeedPostDetailPage = () => <FeedPostDetailPageLazy />;
 const ProfilePage = () => <ProfilePageLazy />;
 const PublicProfilePage = () => <PublicProfilePageLazy />;
 const MarketplacePage = () => <MarketplacePageLazy />;
@@ -344,6 +346,7 @@ function Router() {
         <ProtectedRoute path="/club-management/:id" component={ClubManagementPage} />
         <ProtectedRoute path="/create-group" component={CreateGroupPage} />
         <ProtectedRoute path="/chats/channels/:id/settings" component={ChannelSettingsPage} />
+        <ProtectedRoute path="/feed/:id" component={FeedPostDetailPage} />
         <ProtectedRoute path="/feed" component={FeedPage} />
 
         
