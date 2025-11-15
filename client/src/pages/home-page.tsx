@@ -526,7 +526,7 @@ export default function HomePage() {
           <div className="mx-auto px-5" style={{ maxWidth: "480px" }}>
             {categoryCards.map((card, index) => 
               card.disabled ? (
-                <Card key={index} className={`h-[90px] overflow-hidden opacity-30 cursor-not-allowed shadow-2xl ${index > 0 ? 'mt-6' : ''}`} style={{ background: 'linear-gradient(135deg, rgba(147, 51, 234, 0.08) 0%, rgba(236, 72, 153, 0.08) 100%)', border: '0.5px solid rgba(147, 51, 234, 0.3)', borderRadius: '6px' }}>
+                <Card key={index} className={`h-[90px] overflow-hidden opacity-30 cursor-not-allowed shadow-2xl ${index > 0 ? 'mt-6' : ''}`} style={{ background: 'linear-gradient(135deg, rgba(147, 51, 234, 0.08) 0%, rgba(236, 72, 153, 0.08) 100%)', border: '0.5px solid rgba(100, 116, 139, 0.5)', borderRadius: '6px' }}>
                   <CardContent className="p-4 relative h-full flex flex-col justify-center opacity-50">
                     <div className="flex items-center justify-between">
                       <div className="text-left">
@@ -542,7 +542,7 @@ export default function HomePage() {
                 </Card>
               ) : (
                 <Link href={card.href} key={index}>
-                  <Card key={card.isSpecial ? `practice-${animationKey}` : index} className={`cursor-pointer shadow-2xl h-[90px] overflow-hidden group relative ${index > 0 ? 'mt-6' : ''} ${card.isSpecial && showPracticePulse ? 'practice-pulse' : ''}`} style={{ background: 'linear-gradient(135deg, rgba(147, 51, 234, 0.08) 0%, rgba(236, 72, 153, 0.08) 100%)', border: '0.5px solid rgba(147, 51, 234, 0.3)', borderRadius: '6px' }}>
+                  <Card key={card.isSpecial ? `practice-${animationKey}` : index} className={`cursor-pointer shadow-2xl h-[90px] overflow-hidden group relative ${index > 0 ? 'mt-6' : ''} ${card.isSpecial && showPracticePulse ? 'practice-pulse' : ''}`} style={{ background: 'linear-gradient(135deg, rgba(147, 51, 234, 0.08) 0%, rgba(236, 72, 153, 0.08) 100%)', border: '0.5px solid rgba(100, 116, 139, 0.5)', borderRadius: '6px' }}>
                     
                     {/* Special Practice Session - Full Width */}
                     {card.isSpecial ? (
