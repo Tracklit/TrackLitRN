@@ -89,7 +89,7 @@ router.get("/", async (req: Request, res: Response) => {
 
     // Check if user follows each post author
     const allUserIds = [...activities.map(a => a.userId), ...posts.map(p => p.userId)].filter((id): id is number => id !== null);
-    const uniqueUserIds = [...new Set(allUserIds)];
+    const uniqueUserIds = Array.from(new Set(allUserIds));
     
     const followingData = await db
       .select({ followingId: follows.followingId })
@@ -131,6 +131,83 @@ router.get("/", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error fetching feed:", error);
     res.status(500).json({ error: "Failed to fetch feed" });
+  }
+});
+
+// Get a single post by ID
+router.get("/posts/:id", async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  try {
+    const userId = req.user.id;
+    const postId = parseInt(req.params.id);
+
+    // Get the post with user info
+    const [post] = await db
+      .select({
+        id: feedPosts.id,
+        userId: feedPosts.userId,
+        content: feedPosts.content,
+        voiceRecordingUrl: feedPosts.voiceRecordingUrl,
+        voiceRecordingDuration: feedPosts.voiceRecordingDuration,
+        isEdited: feedPosts.isEdited,
+        editedAt: feedPosts.editedAt,
+        createdAt: feedPosts.createdAt,
+        username: users.username,
+        name: users.name,
+        profileImageUrl: users.profileImageUrl,
+      })
+      .from(feedPosts)
+      .leftJoin(users, eq(feedPosts.userId, users.id))
+      .where(eq(feedPosts.id, postId));
+
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    // Get likes count and check if user liked
+    const likesData = await db
+      .select({
+        count: sql<number>`count(*)::int`.as('count'),
+        userLiked: sql<boolean>`bool_or(${feedLikes.userId} = ${userId})`.as('user_liked'),
+      })
+      .from(feedLikes)
+      .where(eq(feedLikes.postId, postId));
+
+    // Get comments count
+    const commentsData = await db
+      .select({
+        count: sql<number>`count(*)::int`.as('count'),
+      })
+      .from(feedComments)
+      .where(eq(feedComments.postId, postId));
+
+    // Check if user follows the post author
+    const following = await db
+      .select()
+      .from(follows)
+      .where(
+        and(
+          eq(follows.followerId, userId),
+          eq(follows.followingId, post.userId!)
+        )
+      );
+
+    const result = {
+      ...post,
+      likesCount: likesData[0]?.count || 0,
+      isLiked: likesData[0]?.userLiked || false,
+      commentsCount: commentsData[0]?.count || 0,
+      isFollowing: following.length > 0,
+      isOwnPost: post.userId === userId,
+    };
+
+    res.json(result);
+  } catch (error) {
+    console.error("Error fetching post:", error);
+    res.status(500).json({ error: "Failed to fetch post" });
   }
 });
 
