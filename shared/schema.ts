@@ -1247,7 +1247,7 @@ export const feedComments = pgTable("feed_comments", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const feedCommentsRelations = relations(feedComments, ({ one }) => ({
+export const feedCommentsRelations = relations(feedComments, ({ one, many }) => ({
   post: one(feedPosts, {
     fields: [feedComments.postId],
     references: [feedPosts.id],
@@ -1256,6 +1256,7 @@ export const feedCommentsRelations = relations(feedComments, ({ one }) => ({
     fields: [feedComments.userId],
     references: [users.id],
   }),
+  likes: many(feedCommentLikes),
 }));
 
 export const insertFeedCommentSchema = createInsertSchema(feedComments).omit({
@@ -1292,6 +1293,33 @@ export const insertFeedLikeSchema = createInsertSchema(feedLikes).omit({
 
 export type FeedLike = typeof feedLikes.$inferSelect;
 export type InsertFeedLike = z.infer<typeof insertFeedLikeSchema>;
+
+// Feed Comment Likes
+export const feedCommentLikes = pgTable("feed_comment_likes", {
+  id: serial("id").primaryKey(),
+  commentId: integer("comment_id").notNull().references(() => feedComments.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const feedCommentLikesRelations = relations(feedCommentLikes, ({ one }) => ({
+  comment: one(feedComments, {
+    fields: [feedCommentLikes.commentId],
+    references: [feedComments.id],
+  }),
+  user: one(users, {
+    fields: [feedCommentLikes.userId],
+    references: [users.id],
+  }),
+}));
+
+export const insertFeedCommentLikeSchema = createInsertSchema(feedCommentLikes).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type FeedCommentLike = typeof feedCommentLikes.$inferSelect;
+export type InsertFeedCommentLike = z.infer<typeof insertFeedCommentLikeSchema>;
 
 // Direct Messages
 

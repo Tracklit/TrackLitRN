@@ -51,6 +51,8 @@ interface Comment {
   username: string | null;
   name: string | null;
   profileImageUrl: string | null;
+  likesCount: number;
+  isLiked: boolean;
 }
 
 export default function FeedPostDetailPage() {
@@ -110,6 +112,15 @@ export default function FeedPostDetailPage() {
         title: "Comment added",
         description: "Your comment has been posted",
       });
+    },
+  });
+
+  const likeCommentMutation = useMutation({
+    mutationFn: async (commentId: number) => {
+      await apiRequest("POST", `/api/feed/comments/${commentId}/like`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/feed/posts", postId, "comments"] });
     },
   });
 
@@ -333,8 +344,22 @@ export default function FeedPostDetailPage() {
                         {comment.name || comment.username}
                       </div>
                       <div className="text-sm text-gray-300 mt-1">{comment.content}</div>
-                      <div className="text-xs text-gray-500 mt-2">
-                        {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
+                      <div className="flex items-center gap-4 mt-2">
+                        <div className="text-xs text-gray-500">
+                          {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
+                        </div>
+                        <button
+                          onClick={() => likeCommentMutation.mutate(comment.id)}
+                          className="flex items-center gap-1 text-gray-400 hover:text-pink-500 transition-colors"
+                          data-testid={`button-like-comment-${comment.id}`}
+                        >
+                          <Heart
+                            className={`h-4 w-4 ${comment.isLiked ? "fill-pink-500 text-pink-500" : ""}`}
+                          />
+                          {comment.likesCount > 0 && (
+                            <span className="text-xs">{comment.likesCount}</span>
+                          )}
+                        </button>
                       </div>
                     </div>
                   </div>

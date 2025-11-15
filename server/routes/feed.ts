@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import { db } from "../db";
-import { feedPosts, feedComments, feedLikes, users, follows, communityActivities } from "@shared/schema";
+import { feedPosts, feedComments, feedLikes, feedCommentLikes, users, follows, communityActivities } from "@shared/schema";
 import { eq, desc, and, inArray, sql, or } from "drizzle-orm";
 import { z } from "zod";
 
@@ -335,6 +335,7 @@ router.get("/posts/:id/comments", async (req: Request, res: Response) => {
 
   try {
     const postId = parseInt(req.params.id);
+    const userId = req.user.id;
 
     const comments = await db
       .select({
@@ -352,7 +353,33 @@ router.get("/posts/:id/comments", async (req: Request, res: Response) => {
       .where(eq(feedComments.postId, postId))
       .orderBy(feedComments.createdAt);
 
-    res.json(comments);
+    // Get likes for all comments
+    const commentIds = comments.map(c => c.id);
+    let likesData: any[] = [];
+
+    if (commentIds.length > 0) {
+      likesData = await db
+        .select({
+          commentId: feedCommentLikes.commentId,
+          count: sql<number>`count(*)::int`.as('count'),
+          userLiked: sql<boolean>`bool_or(${feedCommentLikes.userId} = ${userId})`.as('user_liked'),
+        })
+        .from(feedCommentLikes)
+        .where(inArray(feedCommentLikes.commentId, commentIds))
+        .groupBy(feedCommentLikes.commentId);
+    }
+
+    // Combine comments with like data
+    const commentsWithLikes = comments.map(comment => {
+      const likes = likesData.find(l => l.commentId === comment.id);
+      return {
+        ...comment,
+        likesCount: likes?.count || 0,
+        isLiked: likes?.userLiked || false,
+      };
+    });
+
+    res.json(commentsWithLikes);
   } catch (error) {
     console.error("Error fetching comments:", error);
     res.status(500).json({ error: "Failed to fetch comments" });
@@ -429,6 +456,45 @@ router.post("/posts/:id/like", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error toggling like:", error);
     res.status(500).json({ error: "Failed to toggle like" });
+  }
+});
+
+// Toggle like on a comment
+router.post("/comments/:id/like", async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  try {
+    const commentId = parseInt(req.params.id);
+
+    // Check if already liked
+    const [existingLike] = await db
+      .select()
+      .from(feedCommentLikes)
+      .where(and(eq(feedCommentLikes.commentId, commentId), eq(feedCommentLikes.userId, req.user.id)));
+
+    if (existingLike) {
+      // Unlike
+      await db
+        .delete(feedCommentLikes)
+        .where(and(eq(feedCommentLikes.commentId, commentId), eq(feedCommentLikes.userId, req.user.id)));
+
+      res.json({ liked: false });
+    } else {
+      // Like
+      await db
+        .insert(feedCommentLikes)
+        .values({
+          commentId,
+          userId: req.user.id,
+        });
+
+      res.json({ liked: true });
+    }
+  } catch (error) {
+    console.error("Error toggling comment like:", error);
+    res.status(500).json({ error: "Failed to toggle comment like" });
   }
 });
 
