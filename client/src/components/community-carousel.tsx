@@ -271,12 +271,15 @@ export function CommunityCarousel({
   return (
     <div className="relative overflow-hidden h-20 flex items-center">
       {activities.map((activity, index) => {
-        let position;
+        let position = index;
+        
+        // Create seamless loop: position items for continuous forward scrolling
         if (currentIndex === activities.length - 1 && index === 0) {
-          // When on last item, show first item to the right for seamless transition
+          // When on last item, show first item to the right for seamless forward transition
           position = activities.length;
-        } else {
-          position = index;
+        } else if (currentIndex === 0 && index === activities.length - 1) {
+          // When on first item, show last item to the left for seamless backward transition
+          position = -1;
         }
         
         return (
