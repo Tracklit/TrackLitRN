@@ -10,6 +10,12 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **Navigation Redesign & Exercise Library Styling (November 15, 2025)**: Consolidated navigation and refined UI consistency
+  - **Chat page consolidation**: All channels (private and public) now on single page with My Chats/Public Chats toggle
+  - **Bottom navigation update**: Removed AI Sprinthia item and replaced with user Profile avatar
+  - **Top header cleanup**: Removed user profile dropdown menu from top bar (now accessible via bottom nav)
+  - **Exercise Library empty state**: Refined with minimal design - removed icon and text, centered "Add Your First Video" button with expanded padding (py-48, min-h-500px)
+  - **Improved navigation flow**: User profile now accessible from bottom navigation bar for better mobile UX
 - **Journal Page Redesign & New Entry Creation (November 12, 2025)**: Complete visual overhaul and added manual entry creation
   - **Restyled journal page** to match new design patterns: dark slate gradients, glassmorphism cards, purple-pink gradient accents
   - **Added "New Entry" button** with purple-pink gradient for creating journal entries directly from journal page

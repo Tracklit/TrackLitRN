@@ -14,9 +14,11 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { useKeyboard } from "@/contexts/keyboard-context";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/use-auth";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 // Navigation items based on dashboard card order
-const navItems = [
+const getNavItems = (user: any) => [
   { 
     title: "Home", 
     href: "/", 
@@ -53,11 +55,16 @@ const navItems = [
     disabled: false
   },
   { 
-    title: "Sprinthia", 
-    href: "/sprinthia", 
-    icon: <span className="text-xs font-bold">AI</span>,
-    key: "sprinthia",
-    disabled: true
+    title: "Profile", 
+    href: "/profile", 
+    icon: (
+      <Avatar className="h-6 w-6">
+        <AvatarImage src="/default-avatar.png" />
+        <AvatarFallback name={user?.name} />
+      </Avatar>
+    ),
+    key: "profile",
+    disabled: false
   }
 ];
 
@@ -127,6 +134,9 @@ export function BottomNavigation() {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const { isKeyboardVisible } = useKeyboard();
+  const { user } = useAuth();
+  
+  const navItems = getNavItems(user);
 
   // Update current index based on location
   useEffect(() => {
@@ -137,7 +147,7 @@ export function BottomNavigation() {
       return location.startsWith(item.href);
     });
     setCurrentIndex(index >= 0 ? index : 0);
-  }, [location]);
+  }, [location, navItems]);
 
   // Handle scroll to show/hide navigation
   useEffect(() => {
