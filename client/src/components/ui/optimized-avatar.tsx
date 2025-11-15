@@ -68,9 +68,12 @@ export function OptimizedAvatar({
     setImageLoaded(false);
   };
 
+  const hasImage = src && imageSrc;
+  const showFallback = !src || imageError;
+  
   return (
     <div ref={containerRef} className={`relative ${sizeClasses[size]}`}>
-      <Avatar className={`${sizeClasses[size]} ${imageLoaded && !imageError ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200`}>
+      <Avatar className={`${sizeClasses[size]} ${imageLoaded && !imageError && hasImage ? 'opacity-100' : showFallback ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200`}>
         <AvatarImage 
           ref={imgRef}
           src={imageSrc} 
@@ -88,21 +91,9 @@ export function OptimizedAvatar({
         </AvatarFallback>
       </Avatar>
       
-      {/* Skeleton loader while image loads */}
-      {(!imageLoaded || imageError) && !src && (
-        <div className={`absolute inset-0 ${sizeClasses[size]} rounded-full ${className || 'bg-gray-600 animate-pulse'}`} />
-      )}
-      
-      {/* Show loading state for images */}
-      {(!imageLoaded || imageError) && src && (
-        <div className={`absolute inset-0 ${sizeClasses[size]} rounded-full bg-gray-600 animate-pulse`} />
-      )}
-      
-      {/* Show fallback if image fails */}
-      {imageError && src && (
-        <div className={`absolute inset-0 ${sizeClasses[size]} rounded-full ${className || 'bg-slate-700'} text-white flex items-center justify-center font-semibold text-lg`}>
-          {fallback}
-        </div>
+      {/* Show loading state only when we have a src but image hasn't loaded yet */}
+      {src && !imageLoaded && !imageError && (
+        <div className={`absolute inset-0 ${sizeClasses[size]} rounded-full bg-gray-600 animate-pulse z-10`} />
       )}
     </div>
   );
