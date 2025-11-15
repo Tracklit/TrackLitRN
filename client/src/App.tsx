@@ -346,8 +346,8 @@ function Router() {
         <ProtectedRoute path="/club-management/:id" component={ClubManagementPage} />
         <ProtectedRoute path="/create-group" component={CreateGroupPage} />
         <ProtectedRoute path="/chats/channels/:id/settings" component={ChannelSettingsPage} />
-        <ProtectedRoute path="/feed/:id" component={FeedPostDetailPage} />
         <ProtectedRoute path="/feed" component={FeedPage} />
+        <ProtectedRoute path="/feed/:id" component={FeedPostDetailPage} />
 
         
         {/* Rehab */}
