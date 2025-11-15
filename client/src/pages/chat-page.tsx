@@ -262,6 +262,21 @@ interface Conversation {
   createdAt: string;
 }
 
+// Generate consistent gradient color for channel based on ID
+const getChannelGradient = (channelId: number) => {
+  const gradients = [
+    'from-blue-600 to-purple-600',
+    'from-purple-600 to-pink-600',
+    'from-pink-600 to-rose-600',
+    'from-indigo-600 to-blue-600',
+    'from-violet-600 to-purple-600',
+    'from-fuchsia-600 to-pink-600',
+    'from-cyan-600 to-blue-600',
+    'from-blue-700 to-indigo-700',
+  ];
+  return gradients[channelId % gradients.length];
+};
+
 const ChatPage = () => {
   const [selectedChat, setSelectedChat] = useState<{ type: 'group' | 'direct'; id: number } | null>(null);
   const [messageText, setMessageText] = useState("");
@@ -952,24 +967,37 @@ const ChatPage = () => {
                                 fallback={channel.name.slice(0, 2).toUpperCase()}
                                 size="md"
                                 lazy={true}
+                                className={!channel.avatar_url ? `bg-gradient-to-br ${getChannelGradient(channel.id)}` : ''}
                               />
                               
                               {/* Presence Indicator - Simple colored dot */}
                               {!channel.is_private && (
-                                <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-green-500 rounded-full border-2 border-slate-900"></div>
+                                <div className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 rounded-full border-2 border-slate-900"></div>
                               )}
                             </div>
                             
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between gap-3 mb-1">
+                              <div className="flex items-start justify-between gap-3 mb-1">
                                 <h3 className={`truncate ${
                                   hasUnread ? 'font-bold text-white' : 'font-semibold text-gray-200'
                                 }`}>
                                   {channel.name}
                                 </h3>
-                                <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
-                                  {channel.last_message_at ? formatLastMessageTime(channel.last_message_at) : ''}
-                                </span>
+                                <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                                  <span className="text-xs text-gray-500">
+                                    {channel.last_message_at ? formatLastMessageTime(channel.last_message_at) : ''}
+                                  </span>
+                                  {/* Unread Message Count Badge - Telegram style */}
+                                  {hasUnread && (
+                                    <Badge 
+                                      variant="secondary" 
+                                      className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs px-2 py-0.5 font-bold shadow-lg"
+                                      data-testid={`unread-badge-${channel.id}`}
+                                    >
+                                      {unreadCount > 99 ? '99+' : unreadCount}
+                                    </Badge>
+                                  )}
+                                </div>
                               </div>
                               
                               <div className="flex items-center justify-between gap-2">
@@ -978,20 +1006,6 @@ const ChatPage = () => {
                                 }`}>
                                   {channel.last_message_text || channel.description || 'No messages yet'}
                                 </p>
-                                
-                                {/* Unread Message Count Badge */}
-                                {hasUnread && (
-                                  <div className="flex-shrink-0 flex items-center gap-1">
-                                    <div className="h-2 w-2 bg-purple-500 rounded-full animate-pulse"></div>
-                                    <Badge 
-                                      variant="secondary" 
-                                      className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs px-2 py-0.5 font-bold shadow-lg"
-                                      data-testid={`unread-badge-${channel.id}`}
-                                    >
-                                      {unreadCount > 99 ? '99+' : unreadCount}
-                                    </Badge>
-                                  </div>
-                                )}
                               </div>
                             </div>
                           </div>

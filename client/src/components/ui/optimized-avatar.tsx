@@ -69,7 +69,7 @@ export function OptimizedAvatar({
   };
 
   return (
-    <div ref={containerRef} className={`relative ${sizeClasses[size]} ${className}`}>
+    <div ref={containerRef} className={`relative ${sizeClasses[size]}`}>
       <Avatar className={`${sizeClasses[size]} ${imageLoaded && !imageError ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200`}>
         <AvatarImage 
           ref={imgRef}
@@ -83,20 +83,25 @@ export function OptimizedAvatar({
             height: '100%',
           }}
         />
-        <AvatarFallback className="bg-slate-700 text-slate-300">
+        <AvatarFallback className={`${className || 'bg-slate-700'} text-white font-semibold text-lg`}>
           {fallback}
         </AvatarFallback>
       </Avatar>
       
       {/* Skeleton loader while image loads */}
-      {(!imageLoaded || imageError) && (
+      {(!imageLoaded || imageError) && !src && (
+        <div className={`absolute inset-0 ${sizeClasses[size]} rounded-full ${className || 'bg-gray-600 animate-pulse'}`} />
+      )}
+      
+      {/* Show loading state for images */}
+      {(!imageLoaded || imageError) && src && (
         <div className={`absolute inset-0 ${sizeClasses[size]} rounded-full bg-gray-600 animate-pulse`} />
       )}
       
       {/* Show fallback if image fails */}
-      {imageError && (
-        <div className={`absolute inset-0 ${sizeClasses[size]} rounded-full bg-slate-700 text-slate-300 flex items-center justify-center font-medium`}>
-          <User className="h-1/2 w-1/2" />
+      {imageError && src && (
+        <div className={`absolute inset-0 ${sizeClasses[size]} rounded-full ${className || 'bg-slate-700'} text-white flex items-center justify-center font-semibold text-lg`}>
+          {fallback}
         </div>
       )}
     </div>
