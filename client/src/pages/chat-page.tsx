@@ -742,11 +742,16 @@ const ChatPage = () => {
     } ${isChatRoute ? 'pointer-events-auto' : 'pointer-events-none'}`}>
       {/* Channel List View - Always mounted but conditionally visible */}
       <div 
-        className={`absolute inset-0 w-full h-full bg-slate-900 transition-transform duration-300 ease-in-out z-10 ${
+        className={`absolute inset-0 w-full h-full bg-slate-900 transition-all duration-500 ease-out z-10 ${
           viewState === 'list' ? 'translate-x-0' : '-translate-x-full'
         }`}
+        style={{
+          boxShadow: viewState === 'list' ? '4px 0 24px rgba(0, 0, 0, 0.5)' : 'none'
+        }}
       >
-        <div className="flex flex-col w-full h-full bg-slate-900">
+        <div className="flex flex-col w-full h-full bg-slate-900 relative">
+          {/* Left edge gradient for depth */}
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-r from-purple-500/20 to-transparent pointer-events-none"></div>
           {/* Header */}
           <div className="p-4 border-b border-gray-600/30 flex-shrink-0 bg-black/20 backdrop-blur-sm">
             <div className="flex items-center gap-4">
@@ -754,10 +759,14 @@ const ChatPage = () => {
               <div className="flex-shrink-0">
                 <button
                   onClick={() => setShowCreateOptions(true)}
-                  className="w-12 h-12 text-white hover:text-gray-300 flex items-center justify-center transition-colors"
+                  className="relative w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center transition-all hover:scale-105 hover:shadow-lg group"
                   aria-label="Create new chat"
+                  data-testid="button-new-chat"
                 >
-                  <Plus className="h-6 w-6" />
+                  <Plus className="h-6 w-6 text-white" />
+                  <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                    New Chat
+                  </span>
                 </button>
               </div>
 
@@ -767,10 +776,11 @@ const ChatPage = () => {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
-                      className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-gray-800/50 hover:bg-gray-700/50 text-gray-300 rounded-md transition-all h-8"
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-gray-800/50 hover:bg-gray-700/50 text-gray-200 rounded-lg transition-all h-10 min-w-[120px]"
+                      data-testid="button-filter-chats"
                     >
                       <span className="capitalize">{chatFilter === 'dms' ? 'DMs' : chatFilter}</span>
-                      <ChevronDown className="h-3 w-3" />
+                      <ChevronDown className="h-4 w-4" />
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-40 bg-slate-800 border-slate-700">
@@ -918,63 +928,82 @@ const ChatPage = () => {
                 </div>
               ) : (
                 <>
-                  {filteredChannels.map((channel: ChatChannel, index: number) => (
-                    <div key={`channel-${channel.id}-${index}`} className="relative">
-                      <button
-                        onClick={() => handleSelectChat({ type: channel.channel_type, id: channel.id })}
-                        className="w-full p-4 text-left"
+                  {filteredChannels.map((channel: ChatChannel, index: number) => {
+                    const unreadCount = unreadCounts[channel.id] || 0;
+                    const hasUnread = unreadCount > 0;
+                    
+                    return (
+                      <div 
+                        key={`channel-${channel.id}-${index}`} 
+                        className="relative animate-in fade-in slide-in-from-left-4"
+                        style={{ animationDelay: `${index * 30}ms`, animationDuration: '400ms' }}
                       >
-                        <div className="flex items-center space-x-3">
-                          <div className="relative">
-                            <OptimizedAvatar
-                              src={channel.avatar_url}
-                              fallback={channel.name.slice(0, 2).toUpperCase()}
-                              size="md"
-                              lazy={true}
-                            />
-                            
-                            {/* Privacy Indicator */}
-                            {channel.is_private ? (
-                              <Lock className="absolute -bottom-1 -right-1 h-3 w-3 text-gray-500" />
-                            ) : (
-                              <Globe className="absolute -bottom-1 -right-1 h-3 w-3 text-green-500" />
-                            )}
-                          </div>
-                          
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between">
-                              <h3 className="font-medium text-white truncate">{channel.name}</h3>
-                              <span className="text-xs text-gray-400">
-                                {channel.last_message_at ? formatLastMessageTime(channel.last_message_at) : ''}
-                              </span>
-                            </div>
-                            
-                            <div className="flex items-center justify-between">
-                              <p className="text-sm text-gray-300 truncate">
-                                {channel.last_message_text || channel.description || 'No messages yet'}
-                              </p>
+                        <button
+                          onClick={() => handleSelectChat({ type: channel.channel_type, id: channel.id })}
+                          className={`w-full p-4 text-left transition-all hover:bg-slate-800/50 active:bg-slate-800/70 ${
+                            hasUnread ? 'bg-purple-900/10' : ''
+                          }`}
+                          data-testid={`chat-item-${channel.id}`}
+                        >
+                          <div className="flex items-center space-x-4">
+                            <div className="relative flex-shrink-0">
+                              <OptimizedAvatar
+                                src={channel.avatar_url}
+                                fallback={channel.name.slice(0, 2).toUpperCase()}
+                                size="md"
+                                lazy={true}
+                              />
                               
-                              {/* Unread Message Count Badge - only show for members with unread messages */}
-                              {(() => {
-                                const unreadCount = unreadCounts[channel.id] || 0;
-                                // Only show badge if user has unread messages in this group
-                                return unreadCount > 0 && (
-                                  <Badge variant="secondary" className="ml-2 bg-red-500 text-white text-xs px-2 py-1">
-                                    {unreadCount > 99 ? '99+' : unreadCount}
-                                  </Badge>
-                                );
-                              })()}
+                              {/* Presence Indicator - Simple colored dot */}
+                              {!channel.is_private && (
+                                <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-green-500 rounded-full border-2 border-slate-900"></div>
+                              )}
+                            </div>
+                            
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-3 mb-1">
+                                <h3 className={`truncate ${
+                                  hasUnread ? 'font-bold text-white' : 'font-semibold text-gray-200'
+                                }`}>
+                                  {channel.name}
+                                </h3>
+                                <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
+                                  {channel.last_message_at ? formatLastMessageTime(channel.last_message_at) : ''}
+                                </span>
+                              </div>
+                              
+                              <div className="flex items-center justify-between gap-2">
+                                <p className={`text-sm truncate ${
+                                  hasUnread ? 'text-gray-300' : 'text-gray-500'
+                                }`}>
+                                  {channel.last_message_text || channel.description || 'No messages yet'}
+                                </p>
+                                
+                                {/* Unread Message Count Badge */}
+                                {hasUnread && (
+                                  <div className="flex-shrink-0 flex items-center gap-1">
+                                    <div className="h-2 w-2 bg-purple-500 rounded-full animate-pulse"></div>
+                                    <Badge 
+                                      variant="secondary" 
+                                      className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs px-2 py-0.5 font-bold shadow-lg"
+                                      data-testid={`unread-badge-${channel.id}`}
+                                    >
+                                      {unreadCount > 99 ? '99+' : unreadCount}
+                                    </Badge>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </button>
-                      
-                      {/* Thin gray divider that stops before the channel image */}
-                      {index < filteredChannels.length - 1 && (
-                        <div className="ml-16 border-b border-gray-400" style={{ borderWidth: '0.5px', opacity: '0.2' }} />
-                      )}
-                    </div>
-                  ))}
+                        </button>
+                        
+                        {/* Subtle divider */}
+                        {index < filteredChannels.length - 1 && (
+                          <div className="ml-16 border-b border-gray-400" style={{ borderWidth: '0.5px', opacity: '0.2' }} />
+                        )}
+                      </div>
+                    );
+                  })}
                 </>
               )}
 
