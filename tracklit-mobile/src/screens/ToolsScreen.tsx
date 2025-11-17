@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 
 import { Text } from '../components/ui/Text';
 import { Card, CardContent } from '../components/ui/Card';
@@ -194,7 +194,7 @@ export const ToolsScreen: React.FC = () => {
                   
                   {/* Tool Info */}
                   <View style={styles.toolInfo}>
-                    <Text variant="body" weight="semibold" color="foreground">
+                    <Text variant="body" weight="semiBold" color="foreground">
                       {tool.title}
                     </Text>
                     <Text variant="small" color="muted" style={styles.toolDescription}>
@@ -216,7 +216,8 @@ export const ToolsScreen: React.FC = () => {
                     <FontAwesome5 
                       name="chevron-right" 
                       size={16} 
-                      color={theme.colors.textMuted} 
+                      color={theme.colors.textMuted}
+                      solid 
                     />
                   </View>
                 </CardContent>

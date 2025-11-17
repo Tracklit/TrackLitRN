@@ -16,7 +16,11 @@ interface LoginFormData {
   password: string;
 }
 
-export const LoginForm: React.FC = () => {
+interface LoginFormProps {
+  onSwitchToRegister?: () => void;
+}
+
+export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
   const { login, continueAsGuest } = useAuth();
   const [formData, setFormData] = useState<LoginFormData>({
     username: '',
@@ -147,7 +151,7 @@ export const LoginForm: React.FC = () => {
         <Text variant="small" color="muted">
           Don't have an account?{' '}
         </Text>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={onSwitchToRegister} data-testid="link-switch-to-register">
           <Text variant="small" color="primary" weight="medium">
             Sign up
           </Text>

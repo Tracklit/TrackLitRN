@@ -7,7 +7,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Icon from 'react-native-vector-icons/FontAwesome5';
+import Icon from '@expo/vector-icons/FontAwesome5';
 import theme from '@/utils/theme';
 
 interface NavItem {
@@ -97,7 +97,7 @@ const NavItemComponent: React.FC<NavItemComponentProps> = ({
             name={item.iconName}
             size={theme.iconSizes.md}
             color={isActive ? theme.colors.accent : theme.colors.textSecondary}
-            solid={isActive}
+            solid
           />
         )}
       </View>
