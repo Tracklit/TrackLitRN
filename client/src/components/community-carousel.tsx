@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { SimpleWorkoutLike } from "@/components/workout-reactions";
+import { useLocation } from "wouter";
 
 function formatTimeAgo(dateString: string): string {
   const now = new Date();
@@ -57,6 +58,7 @@ export function CommunityCarousel({
   const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
   const [currentActivity, setCurrentActivity] = useState<CommunityActivity | null>(null);
   const [isSavingItem, setIsSavingItem] = useState(false);
+  const [, setLocation] = useLocation();
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -271,20 +273,30 @@ export function CommunityCarousel({
   return (
     <div className="relative overflow-hidden h-20 flex items-center">
       {activities.map((activity, index) => {
-        let position;
+        let position = index;
+        
+        // Create seamless loop: position items for continuous forward scrolling
         if (currentIndex === activities.length - 1 && index === 0) {
-          // When on last item, show first item to the right for seamless transition
+          // When on last item, show first item to the right for seamless forward transition
           position = activities.length;
-        } else {
-          position = index;
+        } else if (currentIndex === 0 && index === activities.length - 1) {
+          // When on first item, show last item to the left for seamless backward transition
+          position = -1;
         }
+        
+        // Calculate distance from current index
+        const distance = Math.abs(position - currentIndex);
+        
+        // Fade out items that are not adjacent to current position
+        const opacity = distance > 1 ? 0 : 1;
         
         return (
           <div 
             key={`${activity.id}-${index}`} 
-            className="absolute inset-0 flex items-center transition-transform duration-500 ease-in-out"
+            className="absolute inset-0 flex items-center transition-all duration-500 ease-in-out"
             style={{
               transform: `translateX(${(position - currentIndex) * 100}%)`,
+              opacity: opacity,
             }}
           >
             {/* Container with padding to avoid control overlap */}
@@ -544,8 +556,7 @@ export function CommunityCarousel({
 
   // Function to handle ticker click
   function handleTickerClick(activity: CommunityActivity) {
-    setCurrentActivity(activity);
-    setIsActivityModalOpen(true);
+    setLocation("/feed");
   }
 
   // Function to save meet to calendar

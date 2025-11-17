@@ -59,6 +59,8 @@ const ClubDetailPageLazy = lazy(() => import("@/pages/club-detail-page").then(m 
 const ClubManagementPageLazy = lazy(() => import("@/pages/club-management-page").then(m => ({ default: m.Component })));
 const CreateGroupPageLazy = lazy(() => import("@/pages/create-group-page"));
 const ChannelSettingsPageLazy = lazy(() => import("@/pages/channel-settings-page"));
+const FeedPageLazy = lazy(() => import("@/pages/feed-page"));
+const FeedPostDetailPageLazy = lazy(() => import("@/pages/feed-post-detail-page"));
 
 // Profiles
 const ProfilePageLazy = lazy(() => import("@/pages/profile-page-new"));
@@ -144,6 +146,8 @@ const ClubDetailPage = () => <ClubDetailPageLazy />;
 const ClubManagementPage = () => <ClubManagementPageLazy />;
 const CreateGroupPage = () => <CreateGroupPageLazy />;
 const ChannelSettingsPage = () => <ChannelSettingsPageLazy />;
+const FeedPage = () => <FeedPageLazy />;
+const FeedPostDetailPage = () => <FeedPostDetailPageLazy />;
 const ProfilePage = () => <ProfilePageLazy />;
 const PublicProfilePage = () => <PublicProfilePageLazy />;
 const MarketplacePage = () => <MarketplacePageLazy />;
@@ -286,11 +290,13 @@ function Router() {
             </div>
           }>
             <Switch location={isChatRoute ? baseRoute : location}>
-          {/* Root path - require authentication (must be first to match correctly) */}
-          <ProtectedRoute path="/" component={HomePage} />
+          {/* Feed routes */}
+          <ProtectedRoute path="/feed/:id" component={FeedPostDetailPage} />
+          <ProtectedRoute path="/feed" component={FeedPage} />
           
           {/* Home route */}
           <ProtectedRoute path="/home" component={HomePage} />
+          <ProtectedRoute path="/" component={HomePage} />
         
           {/* Training */}
           <ProtectedRoute path="/practice" component={PracticePage} />
@@ -342,7 +348,6 @@ function Router() {
         <ProtectedRoute path="/club-management/:id" component={ClubManagementPage} />
         <ProtectedRoute path="/create-group" component={CreateGroupPage} />
         <ProtectedRoute path="/chats/channels/:id/settings" component={ChannelSettingsPage} />
-
         
         {/* Rehab */}
         <ProtectedRoute path="/rehab" component={RehabPage} />
@@ -383,6 +388,7 @@ function Router() {
         <Route path="/test-minimal" component={MinimalTest} />
         <Route path="/debug" component={DebugSimple} />
         <Route path="/emergency" component={EmergencyDebug} />
+        
         <Route component={NotFound} />
             </Switch>
           </Suspense>

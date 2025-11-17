@@ -161,8 +161,11 @@ export async function generateThumbnail(videoBlob: Blob): Promise<string> {
     video.playsInline = true;
 
     video.addEventListener('loadedmetadata', () => {
-      // Seek to 1 second or middle of video
-      video.currentTime = Math.min(1, video.duration / 2);
+      // Seek to a random frame in the middle portion of the video (30% to 70%)
+      const minTime = video.duration * 0.3;
+      const maxTime = video.duration * 0.7;
+      const randomTime = minTime + Math.random() * (maxTime - minTime);
+      video.currentTime = randomTime;
     });
 
     video.addEventListener('seeked', () => {

@@ -21,6 +21,7 @@ import { notificationSystem } from "./notification-system";
 import { worldAthleticsService } from "./world-athletics";
 import communityRoutes from "./routes/community";
 import chatRoutes from "./chat-routes-simple";
+import feedRoutes from "./routes/feed";
 import { getBaseUrl } from "./utils/url-helper";
 
 // Coach-athlete relationship API functions will be moved inside registerRoutes
@@ -10044,6 +10045,7 @@ Submission Details:
 
   // Use modular routes
   app.use("/api/community", communityRoutes);
+  app.use("/api/feed", feedRoutes);
   app.use(chatRoutes);
 
   return httpServer;

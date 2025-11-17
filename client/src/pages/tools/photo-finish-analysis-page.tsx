@@ -22,6 +22,7 @@ export default function PhotoFinishAnalysisPage() {
   const [location, navigate] = useLocation();
   const [videoData, setVideoData] = useState<VideoData | null>(null);
   const [isSaved, setIsSaved] = useState(false);
+  const [isAlreadySaved, setIsAlreadySaved] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -30,6 +31,7 @@ export default function PhotoFinishAnalysisPage() {
     const storedVideoData = sessionStorage.getItem('photoFinishVideoData');
     const storedVideoUrl = sessionStorage.getItem('photoFinishVideoUrl');
     const storedVideoBlob = sessionStorage.getItem('photoFinishVideoBlob');
+    const isNewVideo = sessionStorage.getItem('photoFinishIsNewVideo') === 'true';
     
     if (storedVideoData && storedVideoUrl) {
       try {
@@ -55,6 +57,9 @@ export default function PhotoFinishAnalysisPage() {
           name: parsedData.name,
           blob
         });
+        
+        // Set whether this video is already saved
+        setIsAlreadySaved(!isNewVideo);
       } catch (error) {
         console.error('Error parsing stored video data:', error);
         navigate('/tools/photo-finish');
@@ -144,6 +149,7 @@ export default function PhotoFinishAnalysisPage() {
     sessionStorage.removeItem('photoFinishVideoData');
     sessionStorage.removeItem('photoFinishVideoUrl');
     sessionStorage.removeItem('photoFinishVideoBlob');
+    sessionStorage.removeItem('photoFinishIsNewVideo');
     navigate('/tools/photo-finish');
   };
 
@@ -160,7 +166,7 @@ export default function PhotoFinishAnalysisPage() {
       videoUrl={videoData.url}
       videoName={videoData.name}
       onClose={handleClose}
-      onSave={handleSave}
+      onSave={isAlreadySaved ? undefined : handleSave}
       isSaved={isSaved}
     />
   );

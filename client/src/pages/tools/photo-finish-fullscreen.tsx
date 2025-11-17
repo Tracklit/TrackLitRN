@@ -11,7 +11,9 @@ import {
   Zap,
   Clock,
   Trash2,
-  Save
+  Save,
+  Lock,
+  Unlock
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -55,6 +57,12 @@ export default function PhotoFinishFullscreen({
   const [isPanning, setIsPanning] = useState(false);
   const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 });
   const [isSlowMo, setIsSlowMo] = useState(false);
+  const [isTimelineLocked, setIsTimelineLocked] = useState(false);
+  const [timelineScrollPosition, setTimelineScrollPosition] = useState(0);
+  const [scrollVelocity, setScrollVelocity] = useState(0);
+  const velocityRef = useRef(0);
+  const lastDragTimeRef = useRef(0);
+  const momentumAnimationRef = useRef<number | null>(null);
   
   // Touch handling for pinch zoom
   const [initialPinchDistance, setInitialPinchDistance] = useState<number | null>(null);
@@ -139,16 +147,78 @@ export default function PhotoFinishFullscreen({
     return seconds.toFixed(2);
   };
 
-  // Timeline handlers  
-  const handleTimelineInteraction = (clientX: number, element: HTMLDivElement) => {
-    const rect = element.getBoundingClientRect();
-    const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
-    const percentage = x / rect.width;
-    const time = percentage * (duration || 0);
+  // Momentum scrolling animation
+  const applyMomentum = () => {
+    if (momentumAnimationRef.current) {
+      cancelAnimationFrame(momentumAnimationRef.current);
+    }
+
+    const animate = () => {
+      if (Math.abs(velocityRef.current) > 0.0001) {
+        setTimelineScrollPosition(prev => {
+          const newPosition = Math.max(0, Math.min(duration - 0.01, prev + velocityRef.current));
+          
+          // Update video
+          if (videoRef.current && newPosition >= 0 && newPosition <= duration) {
+            videoRef.current.currentTime = newPosition;
+            setCurrentTime(newPosition);
+          }
+          
+          return newPosition;
+        });
+        
+        // Apply deceleration
+        velocityRef.current *= 0.92; // Deceleration factor
+        momentumAnimationRef.current = requestAnimationFrame(animate);
+      } else {
+        velocityRef.current = 0;
+        momentumAnimationRef.current = null;
+      }
+    };
     
-    if (videoRef.current && time >= 0 && time <= (duration || 0)) {
-      videoRef.current.currentTime = time;
-      setCurrentTime(time);
+    momentumAnimationRef.current = requestAnimationFrame(animate);
+  };
+
+  // Timeline handlers  
+  const handleTimelineInteraction = (clientX: number, element: HTMLDivElement, deltaX?: number) => {
+    if (isTimelineLocked && deltaX !== undefined) {
+      // Cancel any ongoing momentum
+      if (momentumAnimationRef.current) {
+        cancelAnimationFrame(momentumAnimationRef.current);
+        momentumAnimationRef.current = null;
+      }
+      
+      // When locked, adjust the scroll position
+      const sensitivity = 0.01; // Adjust sensitivity of scrolling
+      const timeShift = -deltaX * sensitivity; // Negative because dragging right should move timeline left
+      const newPosition = Math.max(0, Math.min(duration - 0.01, timelineScrollPosition + timeShift));
+      
+      // Track velocity for momentum
+      const now = Date.now();
+      const timeDelta = now - lastDragTimeRef.current;
+      if (timeDelta > 0) {
+        velocityRef.current = timeShift / Math.max(timeDelta, 16) * 16; // Normalize to 60fps
+      }
+      lastDragTimeRef.current = now;
+      
+      setTimelineScrollPosition(newPosition);
+      
+      // Update video time based on scroll position
+      if (videoRef.current && newPosition >= 0 && newPosition <= duration) {
+        videoRef.current.currentTime = newPosition;
+        setCurrentTime(newPosition);
+      }
+    } else {
+      // Default behavior: move the time indicator
+      const rect = element.getBoundingClientRect();
+      const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
+      const percentage = x / rect.width;
+      const time = percentage * (duration || 0);
+      
+      if (videoRef.current && time >= 0 && time <= (duration || 0)) {
+        videoRef.current.currentTime = time;
+        setCurrentTime(time);
+      }
     }
   };
 
@@ -224,36 +294,64 @@ export default function PhotoFinishFullscreen({
   const handleTimelineMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
     event.preventDefault();
     setIsDragging(true);
-    handleTimelineInteraction(event.clientX, event.currentTarget);
+    setLastPanPoint({ x: event.clientX, y: event.clientY });
+    lastDragTimeRef.current = Date.now();
+    velocityRef.current = 0;
+    if (!isTimelineLocked) {
+      handleTimelineInteraction(event.clientX, event.currentTarget);
+    }
   };
 
   const handleTimelineMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
     if (isDragging) {
-      handleTimelineInteraction(event.clientX, event.currentTarget);
+      if (isTimelineLocked) {
+        const deltaX = event.clientX - lastPanPoint.x;
+        handleTimelineInteraction(event.clientX, event.currentTarget, deltaX);
+        setLastPanPoint({ x: event.clientX, y: event.clientY });
+      } else {
+        handleTimelineInteraction(event.clientX, event.currentTarget);
+      }
     }
   };
 
   const handleTimelineMouseUp = () => {
     setIsDragging(false);
+    if (isTimelineLocked && Math.abs(velocityRef.current) > 0.001) {
+      applyMomentum();
+    }
   };
 
   const handleTimelineTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
     event.preventDefault();
     setIsDragging(true);
     const touch = event.touches[0];
-    handleTimelineInteraction(touch.clientX, event.currentTarget);
+    setLastPanPoint({ x: touch.clientX, y: touch.clientY });
+    lastDragTimeRef.current = Date.now();
+    velocityRef.current = 0;
+    if (!isTimelineLocked) {
+      handleTimelineInteraction(touch.clientX, event.currentTarget);
+    }
   };
 
   const handleTimelineTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
     if (isDragging && event.touches.length === 1) {
       event.preventDefault();
       const touch = event.touches[0];
-      handleTimelineInteraction(touch.clientX, event.currentTarget);
+      if (isTimelineLocked) {
+        const deltaX = touch.clientX - lastPanPoint.x;
+        handleTimelineInteraction(touch.clientX, event.currentTarget, deltaX);
+        setLastPanPoint({ x: touch.clientX, y: touch.clientY });
+      } else {
+        handleTimelineInteraction(touch.clientX, event.currentTarget);
+      }
     }
   };
 
   const handleTimelineTouchEnd = () => {
     setIsDragging(false);
+    if (isTimelineLocked && Math.abs(velocityRef.current) > 0.001) {
+      applyMomentum();
+    }
   };
 
   // Video zoom and pan handlers
@@ -545,34 +643,30 @@ export default function PhotoFinishFullscreen({
       }}
     >
       {/* Top Bar with Controls */}
-      <div className="fixed top-16 left-0 right-0 z-[9998] flex items-center justify-between px-4 gap-3">
+      <div className="fixed top-16 left-0 right-0 z-[9998] flex items-center justify-end px-4 gap-3">
+        {/* Buttons */}
         <div className="flex items-center gap-3">
+          {onSave && (
+            <Button
+              onClick={onSave}
+              data-testid="button-save-video"
+              disabled={isSaved}
+              className={`${isSaved ? 'bg-green-600 hover:bg-green-700' : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'} text-white shadow-lg px-5`}
+              size="sm"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              {isSaved ? 'Saved' : 'Save Video'}
+            </Button>
+          )}
+          
           <button
             onClick={onClose}
             data-testid="button-close-analysis"
-            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded font-medium text-sm border border-white shadow-lg"
+            className="bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white p-2 rounded font-medium text-sm border border-gray-600 shadow-lg transition-all"
           >
-            ✕ Close
+            <X className="h-4 w-4" />
           </button>
-          
-          <div className="bg-black/60 backdrop-blur-sm px-3 py-1 rounded">
-            <h1 className="text-base font-semibold text-white">{videoName}</h1>
-          </div>
         </div>
-        
-        {/* Save Button */}
-        {onSave && (
-          <Button
-            onClick={onSave}
-            data-testid="button-save-video"
-            disabled={isSaved}
-            className={`${isSaved ? 'bg-green-600' : 'bg-blue-600 hover:bg-blue-700'} text-white shadow-lg`}
-            size="sm"
-          >
-            <Save className="h-4 w-4 mr-2" />
-            {isSaved ? 'Saved to Library' : 'Save to Library'}
-          </Button>
-        )}
       </div>
 
       {/* Video Container - takes remaining space */}
@@ -743,23 +837,47 @@ export default function PhotoFinishFullscreen({
           >
             <Clock className="w-4 h-4" />
           </Button>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setIsTimelineLocked(!isTimelineLocked);
+              // Reset scroll position when toggling
+              if (isTimelineLocked) {
+                setTimelineScrollPosition(currentTime);
+              }
+            }}
+            className={`text-white hover:bg-gray-700 transition-colors ${isTimelineLocked ? 'bg-purple-600 ring-2 ring-purple-400' : 'bg-gray-800'}`}
+            title={isTimelineLocked ? 'Timeline locked - drag to scrub frame-by-frame' : 'Timeline unlocked - tap to seek'}
+          >
+            {isTimelineLocked ? (
+              <Lock className="w-4 h-4 text-yellow-300" />
+            ) : (
+              <Unlock className="w-4 h-4 text-green-400" />
+            )}
+          </Button>
         </div>
         
 
       </div>
 
       {/* Timeline Scrubber - No background bar */}
-      <div className="bg-gray-900 h-32 flex-shrink-0">
-        <div className="p-6 h-full">
+      <div className="bg-gray-900 h-32 flex-shrink-0 mb-4">
+        <div className="px-6 pt-2 pb-8 h-full relative">
           {/* Timeline with vertical markers */}
-          <div className="h-full relative">
+          <div className="h-full relative overflow-hidden">
             <div
               ref={timelineRef}
-              className="h-full cursor-pointer relative"
+              className={`h-full w-full relative ${isTimelineLocked ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}`}
+              style={isTimelineLocked ? {
+                transform: `translateX(calc(50% - ${(timelineScrollPosition / duration) * 100}%))`,
+                transition: isDragging ? 'none' : 'transform 0.1s ease-out'
+              } : {}}
               onMouseDown={handleTimelineMouseDown}
               onMouseMove={(e) => {
                 handleTimelineMouseMove(e);
-                handleTimelineHover(e);
+                if (!isTimelineLocked) handleTimelineHover(e);
               }}
               onMouseUp={handleTimelineMouseUp}
               onMouseLeave={handleTimelineLeave}
@@ -768,30 +886,54 @@ export default function PhotoFinishFullscreen({
               onTouchEnd={handleTimelineTouchEnd}
             >
               {/* Vertical time markers (every 0.5 seconds) */}
-              {duration && Array.from({ length: Math.floor(duration * 2) }, (_, i) => {
+              {duration && Array.from({ length: Math.floor(duration * 2) + 1 }, (_, i) => {
                 const timePosition = (i * 0.5) / duration * 100;
                 const isSecondMark = i % 2 === 0;
+                
+                // Calculate distance from center for height variation
+                const centerPosition = isTimelineLocked ? (timelineScrollPosition / duration * 100) : 50;
+                const distanceFromCenter = Math.abs(timePosition - centerPosition);
+                const heightMultiplier = isTimelineLocked 
+                  ? Math.max(0.5, 1 - (distanceFromCenter / 40) * 0.5)
+                  : 1;
+                
                 return (
                   <div
                     key={i}
-                    className={`absolute top-0 z-10 ${isSecondMark ? 'h-full bg-gray-400' : 'h-3/4 bg-gray-500'} w-px`}
-                    style={{ left: `${timePosition}%` }}
+                    className="absolute bottom-0 transition-all duration-100"
+                    style={{ 
+                      left: `${timePosition}%`,
+                      height: `${(isSecondMark ? 80 : 60) * heightMultiplier}%`,
+                      width: isSecondMark ? '2px' : '1px',
+                      backgroundColor: isSecondMark ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.4)'
+                    }}
                   />
                 );
               })}
               
-              {/* Time labels every 0.5 seconds using XX.XX format */}
+              {/* Time labels below the timeline */}
               {duration && Array.from({ length: Math.floor(duration * 2) + 1 }, (_, i) => {
                 const timeValue = i * 0.5;
                 const timePosition = (timeValue / duration) * 100;
                 const timeLabel = formatTimelineTime(timeValue);
-                // Only show labels for whole seconds and half seconds
-                if (i % 2 === 0 || timeValue % 1 === 0.5) {
+                
+                // Calculate distance from center for opacity
+                const centerPosition = isTimelineLocked ? (timelineScrollPosition / duration * 100) : 50;
+                const distanceFromCenter = Math.abs(timePosition - centerPosition);
+                const opacityMultiplier = isTimelineLocked 
+                  ? Math.max(0.3, 1 - (distanceFromCenter / 40) * 0.7)
+                  : 1;
+                
+                // Only show labels for whole seconds
+                if (i % 2 === 0) {
                   return (
                     <div
                       key={`label-${i}`}
-                      className="absolute bottom-1 text-xs text-gray-300 transform -translate-x-1/2 z-20"
-                      style={{ left: `${timePosition}%` }}
+                      className="absolute -bottom-6 text-xs text-gray-400 transform -translate-x-1/2 transition-opacity duration-100"
+                      style={{ 
+                        left: `${timePosition}%`,
+                        opacity: opacityMultiplier
+                      }}
                     >
                       {timeLabel}
                     </div>

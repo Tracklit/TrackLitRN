@@ -1,0 +1,85 @@
+Task:
+Improve the chat-group drawer UI design based on the following required changes. The drawer slides in from the right side, and the updated design should reflect a modern, clean, high-contrast dark-mode aesthetic with improved usability.
+
+Make the following changes:
+1. Improve Visual Hierarchy
+
+Increase contrast between chat titles and message previews.
+
+Make titles brighter and previews dimmer.
+
+Add subtle separators or card-like containers to distinguish each chat row.
+
+Ensure consistent vertical spacing across all chat items.
+
+2. Enhance Drawer "Slide-Out" Effect
+
+Add a soft shadow or gradient on the left edge to reinforce depth.
+
+Ensure the drawer visually overlaps the main screen slightly.
+
+Optionally add a slim left-side drag handle for intuitive “close” behavior.
+
+3. Make Top Actions More Discoverable
+
+Increase the tap target size of the "+" (new chat) button and the filter dropdown.
+
+Add a label or tooltip for the "+" button (e.g., “New Chat”).
+
+Improve alignment and spacing of filter controls.
+
+4. Improve Profile Image Handling
+
+Replace blank circles with a default avatar graphic.
+
+Improve clarity of presence indicators — use a simple colored dot instead of the small green globe.
+
+5. Improve Legibility in Dark Mode
+
+Increase overall text contrast (lighter text on dark background).
+
+Slightly increase the font size of the message preview for readability.
+
+6. Add Clear Unread Message Indicators
+
+Bold the chat title for unread chats.
+
+Add a notification dot or numeric badge on the right.
+
+Optionally give unread chats a slightly tinted background.
+
+7. Clean Up Date Alignment
+
+Add more padding between chat text and the date on the right.
+
+Reduce the visual weight of the date (smaller, muted text).
+
+8. Support Swipe Actions
+
+Add swipe gestures:
+
+Swipe left → delete or archive
+
+Swipe right → pin or mark as unread
+
+9. Improve Search Behavior
+
+Replace “Pull down to search” with a persistent search bar at the top, or
+
+Enhance the pull-down indicator to be more visible and animated.
+
+10. Add Subtle Animations
+
+Add a soft, eased slide-in animation for the drawer.
+
+Animate chat rows with a slight stagger fade+slide.
+
+Add fade animation for the search bar.
+
+Output Requirements
+
+Update the UI code to apply all changes.
+
+Ensure components remain mobile-friendly and responsive.
+
+Maintain compatibility with the existing design system and theme.

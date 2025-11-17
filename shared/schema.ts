@@ -1207,6 +1207,120 @@ export const insertCommunityActivitySchema = createInsertSchema(communityActivit
 export type CommunityActivity = typeof communityActivities.$inferSelect;
 export type InsertCommunityActivity = z.infer<typeof insertCommunityActivitySchema>;
 
+// Feed Posts (user-created posts for Feed page)
+export const feedPosts = pgTable("feed_posts", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  content: text("content"), // Text content
+  voiceRecordingUrl: text("voice_recording_url"), // URL to voice recording
+  voiceRecordingDuration: integer("voice_recording_duration"), // Duration in seconds
+  isEdited: boolean("is_edited").default(false),
+  editedAt: timestamp("edited_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const feedPostsRelations = relations(feedPosts, ({ one, many }) => ({
+  user: one(users, {
+    fields: [feedPosts.userId],
+    references: [users.id],
+  }),
+  comments: many(feedComments),
+  likes: many(feedLikes),
+}));
+
+export const insertFeedPostSchema = createInsertSchema(feedPosts).omit({
+  id: true,
+  createdAt: true,
+  isEdited: true,
+  editedAt: true,
+});
+
+export type FeedPost = typeof feedPosts.$inferSelect;
+export type InsertFeedPost = z.infer<typeof insertFeedPostSchema>;
+
+// Feed Comments
+export const feedComments = pgTable("feed_comments", {
+  id: serial("id").primaryKey(),
+  postId: integer("post_id").notNull().references(() => feedPosts.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const feedCommentsRelations = relations(feedComments, ({ one, many }) => ({
+  post: one(feedPosts, {
+    fields: [feedComments.postId],
+    references: [feedPosts.id],
+  }),
+  user: one(users, {
+    fields: [feedComments.userId],
+    references: [users.id],
+  }),
+  likes: many(feedCommentLikes),
+}));
+
+export const insertFeedCommentSchema = createInsertSchema(feedComments).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type FeedComment = typeof feedComments.$inferSelect;
+export type InsertFeedComment = z.infer<typeof insertFeedCommentSchema>;
+
+// Feed Likes
+export const feedLikes = pgTable("feed_likes", {
+  id: serial("id").primaryKey(),
+  postId: integer("post_id").notNull().references(() => feedPosts.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const feedLikesRelations = relations(feedLikes, ({ one }) => ({
+  post: one(feedPosts, {
+    fields: [feedLikes.postId],
+    references: [feedPosts.id],
+  }),
+  user: one(users, {
+    fields: [feedLikes.userId],
+    references: [users.id],
+  }),
+}));
+
+export const insertFeedLikeSchema = createInsertSchema(feedLikes).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type FeedLike = typeof feedLikes.$inferSelect;
+export type InsertFeedLike = z.infer<typeof insertFeedLikeSchema>;
+
+// Feed Comment Likes
+export const feedCommentLikes = pgTable("feed_comment_likes", {
+  id: serial("id").primaryKey(),
+  commentId: integer("comment_id").notNull().references(() => feedComments.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const feedCommentLikesRelations = relations(feedCommentLikes, ({ one }) => ({
+  comment: one(feedComments, {
+    fields: [feedCommentLikes.commentId],
+    references: [feedComments.id],
+  }),
+  user: one(users, {
+    fields: [feedCommentLikes.userId],
+    references: [users.id],
+  }),
+}));
+
+export const insertFeedCommentLikeSchema = createInsertSchema(feedCommentLikes).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type FeedCommentLike = typeof feedCommentLikes.$inferSelect;
+export type InsertFeedCommentLike = z.infer<typeof insertFeedCommentLikeSchema>;
+
 // Direct Messages
 
 // Direct Messages
