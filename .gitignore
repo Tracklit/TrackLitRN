@@ -18,9 +18,12 @@ Thumbs.db
 *.swo
 *~
 
-# Environment files
+# Environment files (NEVER commit these!)
 .env
+.env.*
 .env.local
+.env.production
+.env.development
 .env.*.local
 
 # Logs
@@ -45,6 +48,11 @@ tracklit-mobile/android/local.properties
 # Debug/temp files
 cookies.txt
 debug.html
+
+# Replit files (if migrating from Replit)
+.replit
+.repl
+replit.nix
 
 # Generated files
 generated-icon.png
