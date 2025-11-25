@@ -4,25 +4,25 @@ import {
   TouchableOpacity,
   StyleSheet,
   Text,
-  Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from '@expo/vector-icons/FontAwesome5';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+
+import { Avatar } from '@/components/ui/Avatar';
+import { useAuth } from '@/contexts/AuthContext';
 import theme from '@/utils/theme';
+
+type TabRoute = 'Home' | 'Practice' | 'Programs' | 'Feed' | 'Tools' | 'Profile';
 
 interface NavItem {
   title: string;
-  routeName: string;
-  iconName: string;
+  routeName: TabRoute;
+  iconName?: string;
   key: string;
+  isProfile?: boolean;
 }
 
-interface BottomNavigationProps {
-  currentRoute: string;
-  onNavigate: (routeName: string) => void;
-}
-
-// Navigation items - exact replica from web app
 const navItems: NavItem[] = [
   {
     title: 'Home',
@@ -43,10 +43,10 @@ const navItems: NavItem[] = [
     key: 'programs'
   },
   {
-    title: 'Race',
-    routeName: 'Race',
-    iconName: 'trophy',
-    key: 'race'
+    title: 'Feed',
+    routeName: 'Feed',
+    iconName: 'newspaper',
+    key: 'feed'
   },
   {
     title: 'Tools',
@@ -55,10 +55,10 @@ const navItems: NavItem[] = [
     key: 'tools'
   },
   {
-    title: 'Sprinthia',
-    routeName: 'Sprinthia',
-    iconName: 'robot',
-    key: 'sprinthia'
+    title: 'Profile',
+    routeName: 'Profile',
+    key: 'profile',
+    isProfile: true
   }
 ];
 
@@ -66,44 +66,49 @@ interface NavItemComponentProps {
   item: NavItem;
   isActive: boolean;
   onPress: () => void;
+  onLongPress: () => void;
+  userName?: string;
 }
 
 const NavItemComponent: React.FC<NavItemComponentProps> = ({
   item,
   isActive,
   onPress,
+  onLongPress,
+  userName,
 }) => {
+  const contentColor = isActive ? theme.colors.accent : theme.colors.textSecondary;
+  const initials = userName ? userName.slice(0, 2).toUpperCase() : undefined;
+
   return (
     <TouchableOpacity
       style={styles.navItem}
       onPress={onPress}
+      onLongPress={onLongPress}
       activeOpacity={0.7}
     >
       <View style={styles.iconContainer}>
-        {item.key === 'sprinthia' ? (
-          <View style={[
-            styles.aiIcon,
-            { backgroundColor: isActive ? theme.colors.accent : 'transparent' }
-          ]}>
-            <Text style={[
-              styles.aiText,
-              { color: isActive ? theme.colors.accentForeground : theme.colors.textSecondary }
-            ]}>
-              AI
-            </Text>
-          </View>
+        {item.isProfile ? (
+          <Avatar
+            size="sm"
+            fallback={initials}
+            style={[
+              styles.profileAvatar,
+              isActive ? styles.profileAvatarActive : undefined,
+            ]}
+          />
         ) : (
           <Icon
-            name={item.iconName}
+            name={item.iconName as string}
             size={theme.iconSizes.md}
-            color={isActive ? theme.colors.accent : theme.colors.textSecondary}
+            color={contentColor}
             solid
           />
         )}
       </View>
       <Text style={[
         styles.navLabel,
-        { color: isActive ? theme.colors.accent : theme.colors.textSecondary }
+        { color: contentColor }
       ]}>
         {item.title}
       </Text>
@@ -111,26 +116,55 @@ const NavItemComponent: React.FC<NavItemComponentProps> = ({
   );
 };
 
-export const BottomNavigation: React.FC<BottomNavigationProps> = ({
-  currentRoute,
-  onNavigate,
+export const BottomNavigation: React.FC<BottomTabBarProps> = ({
+  state,
+  navigation,
 }) => {
   const insets = useSafeAreaInsets();
-  
+  const { user } = useAuth();
+
   return (
     <View style={[
       styles.container,
       { paddingBottom: Math.max(insets.bottom, theme.spacing.md) }
     ]}>
       <View style={styles.navBar}>
-        {navItems.map((item) => (
-          <NavItemComponent
-            key={item.key}
-            item={item}
-            isActive={currentRoute === item.routeName}
-            onPress={() => onNavigate(item.routeName)}
-          />
-        ))}
+        {navItems.map((item) => {
+          const route = state.routes.find((r) => r.name === item.routeName);
+          const isActive = state.routeNames[state.index] === item.routeName;
+
+          const handlePress = () => {
+            if (!route) return;
+            const event = navigation.emit({
+              type: 'tabPress',
+              target: route.key,
+              canPreventDefault: true,
+            });
+
+            if (!isActive && !event.defaultPrevented) {
+              navigation.navigate(item.routeName);
+            }
+          };
+
+          const handleLongPress = () => {
+            if (!route) return;
+            navigation.emit({
+              type: 'tabLongPress',
+              target: route.key,
+            });
+          };
+
+          return (
+            <NavItemComponent
+              key={item.key}
+              item={item}
+              isActive={isActive}
+              onPress={handlePress}
+              onLongPress={handleLongPress}
+              userName={user?.name ?? undefined}
+            />
+          );
+        })}
       </View>
     </View>
   );
@@ -142,7 +176,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(15, 20, 25, 0.95)', // Dark navy with opacity
+    backgroundColor: 'rgba(15, 20, 25, 0.95)',
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
   },
@@ -164,23 +198,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: theme.spacing.xs,
   },
-  aiIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'currentColor',
-  },
-  aiText: {
-    fontSize: 10,
-    fontWeight: theme.typography.weights.bold,
-  },
   navLabel: {
-    fontSize: 8, // Very small like web app
+    fontSize: 8,
     fontWeight: theme.typography.weights.medium,
     textAlign: 'center',
     lineHeight: 10,
+  },
+  profileAvatar: {
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  profileAvatarActive: {
+    borderColor: theme.colors.accent,
   },
 });

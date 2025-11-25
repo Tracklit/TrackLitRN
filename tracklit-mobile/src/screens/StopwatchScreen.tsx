@@ -7,15 +7,19 @@ import {
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 
 import { Text } from '../components/ui/Text';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import theme from '../utils/theme';
+import type { RootStackParamList } from '@/navigation/types';
 
 export const StopwatchScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [time, setTime] = useState(0); // Time in milliseconds
   const [isRunning, setIsRunning] = useState(false);
   const [laps, setLaps] = useState<number[]>([]);
@@ -71,10 +75,20 @@ export const StopwatchScreen: React.FC = () => {
       locations={theme.gradient.locations}
       style={[styles.container, { paddingTop: insets.top }]}
     >
-      <View style={styles.content}>
+      <View
+        style={[
+          styles.content,
+          { paddingBottom: theme.layout.bottomNavHeight + insets.bottom + theme.spacing.xl },
+        ]}
+      >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+          >
             <FontAwesome5 name="arrow-left" size={20} color={theme.colors.foreground} solid />
           </TouchableOpacity>
           <Text variant="h2" weight="bold" color="foreground">

@@ -27,6 +27,8 @@ export const Input: React.FC<InputProps> = ({
   style,
   ...props
 }) => {
+  const variantStyle = variant === 'filled' ? styles.filled : styles.default;
+
   return (
     <View style={[styles.container, containerStyle]}>
       {label && (
@@ -37,8 +39,8 @@ export const Input: React.FC<InputProps> = ({
       <TextInput
         style={[
           styles.base,
-          styles[variant],
-          error && styles.error,
+          variantStyle,
+          error ? styles.error : undefined,
           inputStyle,
           style,
         ]}

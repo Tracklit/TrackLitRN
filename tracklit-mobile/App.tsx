@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import {
-  SafeAreaProvider,
-  SafeAreaView,
-} from 'react-native-safe-area-context';
-import { StatusBar, View, StyleSheet, Text } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
+import React from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { StatusBar, View, ActivityIndicator, StyleSheet } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createBottomTabNavigator, type BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { QueryClientProvider } from '@tanstack/react-query';
 
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 
@@ -12,90 +12,99 @@ import { HomeScreen } from './src/screens/HomeScreen';
 import { AuthScreen } from './src/screens/AuthScreen';
 import { PracticeScreen } from './src/screens/PracticeScreen';
 import { ProgramsScreen } from './src/screens/ProgramsScreen';
-import { RaceScreen } from './src/screens/RaceScreen';
 import { ToolsScreen } from './src/screens/ToolsScreen';
-import { SprinthiaScreen } from './src/screens/SprinthiaScreen';
 import { BottomNavigation } from './src/navigation/BottomNavigation';
-import theme from './src/utils/theme';
+import { FeedScreen } from './src/screens/FeedScreen';
+import { ProfileScreen } from './src/screens/ProfileScreen';
+import { FeedDetailScreen } from './src/screens/FeedDetailScreen';
+import { StopwatchScreen } from './src/screens/StopwatchScreen';
+import { StartGunScreen } from './src/screens/StartGunScreen';
+import type { TabParamList, RootStackParamList, AuthStackParamList } from './src/navigation/types';
+import { queryClient } from './src/lib/queryClient';
 
-type ScreenName = 'Home' | 'Practice' | 'Programs' | 'Race' | 'Tools' | 'Sprinthia';
+const Tab = createBottomTabNavigator<TabParamList>();
+const RootStack = createNativeStackNavigator<RootStackParamList>();
+const AuthStack = createNativeStackNavigator<AuthStackParamList>();
+
+type HomeTabProps = BottomTabScreenProps<TabParamList, 'Home'>;
+
+const HomeTabScreen: React.FC<HomeTabProps> = ({ navigation }) => (
+  <HomeScreen
+    onNavigate={(routeName) => navigation.navigate(routeName as keyof TabParamList)}
+  />
+);
+
+const MainTabs: React.FC = () => (
+  <Tab.Navigator
+    screenOptions={{ headerShown: false }}
+    tabBar={(props) => <BottomNavigation {...props} />}
+  >
+    <Tab.Screen name="Home" component={HomeTabScreen} />
+    <Tab.Screen name="Practice" component={PracticeScreen} />
+    <Tab.Screen name="Programs" component={ProgramsScreen} />
+    <Tab.Screen name="Feed" component={FeedScreen} />
+    <Tab.Screen name="Tools" component={ToolsScreen} />
+    <Tab.Screen name="Profile" component={ProfileScreen} />
+  </Tab.Navigator>
+);
+
+const RootNavigator: React.FC = () => (
+  <RootStack.Navigator screenOptions={{ headerShown: false }}>
+    <RootStack.Screen name="MainTabs" component={MainTabs} />
+    <RootStack.Screen name="FeedPost" component={FeedDetailScreen} />
+    <RootStack.Screen name="Stopwatch" component={StopwatchScreen} />
+    <RootStack.Screen name="StartGun" component={StartGunScreen} />
+  </RootStack.Navigator>
+);
+
+const AuthNavigator: React.FC = () => (
+  <AuthStack.Navigator screenOptions={{ headerShown: false }}>
+    <AuthStack.Screen name="Auth" component={AuthScreen} />
+  </AuthStack.Navigator>
+);
 
 const AppContent: React.FC = () => {
-  const [currentScreen, setCurrentScreen] = useState<ScreenName>('Home');
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
 
-  const renderScreen = () => {
-    // Show auth screen if not authenticated
-    if (!isAuthenticated) {
-      return <AuthScreen />;
-    }
-
-    switch (currentScreen) {
-      case 'Home':
-        return <HomeScreen onNavigate={handleNavigation} />;
-      case 'Practice':
-        return <PracticeScreen />;
-      case 'Programs':
-        return <ProgramsScreen />;
-      case 'Race':
-        return <RaceScreen />;
-      case 'Tools':
-        return <ToolsScreen />;
-      case 'Sprinthia':
-        return <SprinthiaScreen />;
-      default:
-        return <HomeScreen />;
-    }
-  };
-
-  const handleNavigation = (screenName: string) => {
-    setCurrentScreen(screenName as ScreenName);
-  };
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#fff" />
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      {renderScreen()}
-      {isAuthenticated && (
-        <BottomNavigation
-          currentRoute={currentScreen}
-          onNavigate={handleNavigation}
-        />
-      )}
-    </View>
+    <NavigationContainer>
+      {isAuthenticated ? <RootNavigator /> : <AuthNavigator />}
+    </NavigationContainer>
   );
 };
 
 const App: React.FC = () => {
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <StatusBar
-          barStyle="light-content"
-          backgroundColor="transparent"
-          translucent
-        />
-        <AppContent />
-      </AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <StatusBar
+            barStyle="light-content"
+            backgroundColor="transparent"
+            translucent
+          />
+          <AppContent />
+        </AuthProvider>
+      </QueryClientProvider>
     </SafeAreaProvider>
   );
 };
 
+export default App;
+
 const styles = StyleSheet.create({
-  container: {
+  loadingContainer: {
     flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  placeholder: {
-    flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'transparent',
-  },
-  placeholderText: {
-    fontSize: theme.typography.sizes.lg,
-    color: theme.colors.textPrimary,
-    fontWeight: theme.typography.weights.medium,
+    justifyContent: 'center',
+    backgroundColor: '#010a18',
   },
 });
-
-export default App;
