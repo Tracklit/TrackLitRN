@@ -5,7 +5,10 @@ import {
   StyleSheet,
   ViewStyle,
   ImageStyle,
+  StyleProp,
 } from 'react-native';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+
 import { Text } from './Text';
 import theme from '@/utils/theme';
 
@@ -14,8 +17,8 @@ interface AvatarProps {
   alt?: string;
   fallback?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl';
-  style?: ViewStyle;
-  imageStyle?: ImageStyle;
+  style?: StyleProp<ViewStyle>;
+  imageStyle?: StyleProp<ImageStyle>;
 }
 
 const sizes = {
@@ -35,13 +38,20 @@ export const Avatar: React.FC<AvatarProps> = ({
 }) => {
   const avatarSize = sizes[size];
   
-  const avatarStyle = [
+  const avatarStyle: StyleProp<ViewStyle> = [
     styles.avatar,
     { width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2 },
     style,
   ];
 
-  const textSize = size === 'sm' ? 'small' : size === 'lg' ? 'body' : size === 'xl' ? 'h4' : 'caption';
+  const textSize =
+    size === 'sm'
+      ? 'small'
+      : size === 'lg'
+      ? 'body'
+      : size === 'xl'
+      ? 'h4'
+      : 'caption';
 
   if (src) {
     return (
@@ -56,13 +66,21 @@ export const Avatar: React.FC<AvatarProps> = ({
   }
 
   // Fallback with initials
-  const initials = fallback || alt?.substring(0, 2)?.toUpperCase() || '??';
+  const initials = fallback || alt?.substring(0, 2)?.toUpperCase() || null;
   
   return (
     <View style={[avatarStyle, styles.fallback]}>
-      <Text variant={textSize} weight="medium" color="primary">
-        {initials}
-      </Text>
+      {initials ? (
+        <Text variant={textSize} weight="medium" color="primary">
+          {initials}
+        </Text>
+      ) : (
+        <FontAwesome5
+          name="user"
+          size={avatarSize * 0.45}
+          color={theme.colors.primary}
+        />
+      )}
     </View>
   );
 };

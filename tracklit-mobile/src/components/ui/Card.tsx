@@ -67,29 +67,47 @@ export const Card: React.FC<CardProps> = ({
   );
 
   if (gradient) {
-    const CardWrapper = onPress ? TouchableOpacity : View;
+    const gradientContent = (
+      <LinearGradient
+        colors={[
+          `rgba(37, 42, 52, ${opacity})`,
+          `rgba(26, 32, 44, ${opacity - 0.1})`
+        ]}
+        start={{x: 0, y: 0}}
+        end={{x: 1, y: 1}}
+        style={styles.gradientBackground}
+      >
+        {content}
+      </LinearGradient>
+    );
+
+    if (onPress) {
+      return (
+        <TouchableOpacity style={cardStyle} onPress={onPress} {...props}>
+          {gradientContent}
+        </TouchableOpacity>
+      );
+    }
+
     return (
-      <CardWrapper style={cardStyle} onPress={onPress} {...(onPress ? props : {})}>
-        <LinearGradient
-          colors={[
-            `rgba(37, 42, 52, ${opacity})`,
-            `rgba(26, 32, 44, ${opacity - 0.1})`
-          ]}
-          start={{x: 0, y: 0}}
-          end={{x: 1, y: 1}}
-          style={styles.gradientBackground}
-        >
-          {content}
-        </LinearGradient>
-      </CardWrapper>
+      <View style={cardStyle}>
+        {gradientContent}
+      </View>
     );
   }
 
-  const CardWrapper = onPress ? TouchableOpacity : View;
+  if (onPress) {
+    return (
+      <TouchableOpacity style={cardStyle} onPress={onPress} {...props}>
+        {content}
+      </TouchableOpacity>
+    );
+  }
+
   return (
-    <CardWrapper style={cardStyle} onPress={onPress} {...(onPress ? props : {})}>
+    <View style={cardStyle}>
       {content}
-    </CardWrapper>
+    </View>
   );
 };
 

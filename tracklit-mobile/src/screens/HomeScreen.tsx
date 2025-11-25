@@ -7,7 +7,6 @@ import {
   Dimensions,
   StatusBar,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -45,10 +44,10 @@ const dashboardCards: DashboardCard[] = [
     gradient: ['rgba(26, 26, 46, 0.8)', 'rgba(22, 33, 62, 0.6)'],
   },
   {
-    title: 'Race',
-    subtitle: 'Upcoming meets & competitions',
-    iconName: 'trophy',
-    route: 'Race',
+    title: 'Feed',
+    subtitle: 'See what your community is doing',
+    iconName: 'newspaper',
+    route: 'Feed',
     gradient: ['rgba(74, 20, 140, 0.8)', 'rgba(123, 31, 162, 0.6)'],
   },
   {
@@ -59,10 +58,10 @@ const dashboardCards: DashboardCard[] = [
     gradient: ['rgba(26, 26, 46, 0.8)', 'rgba(22, 33, 62, 0.6)'],
   },
   {
-    title: 'Sprinthia',
-    subtitle: 'AI-powered coaching assistant',
-    iconName: 'robot',
-    route: 'Sprinthia',
+    title: 'Profile',
+    subtitle: 'Manage your TrackLit identity',
+    iconName: 'user',
+    route: 'Profile',
     gradient: ['rgba(74, 20, 140, 0.8)', 'rgba(123, 31, 162, 0.6)'],
   },
 ];
@@ -170,9 +169,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
           </View>
           <TouchableOpacity
             style={styles.profileButton}
-            onPress={() => {
-              Alert.alert('Coming Soon', 'Profile screen is under development.');
-            }}
+            onPress={() => onNavigate?.('Profile')}
             data-testid="button-profile"
           >
             <Icon

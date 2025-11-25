@@ -9,10 +9,15 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { Text } from '../components/ui/Text';
 import { Card, CardContent } from '../components/ui/Card';
 import theme from '../utils/theme';
+import type { RootStackParamList } from '@/navigation/types';
+
+type ToolScreen = Extract<keyof RootStackParamList, 'Stopwatch' | 'StartGun'>;
 
 interface Tool {
   id: string;
@@ -21,10 +26,13 @@ interface Tool {
   icon: string;
   gradient: string[];
   comingSoon?: boolean;
+  screen?: ToolScreen;
 }
 
 export const ToolsScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const contentBottomPadding = theme.layout.bottomNavHeight + insets.bottom + theme.spacing.xl;
 
   const tools: Tool[] = [
     {
@@ -33,6 +41,7 @@ export const ToolsScreen: React.FC = () => {
       description: 'Precision timing for workouts and races',
       icon: 'stopwatch',
       gradient: [theme.colors.primary, theme.colors.deepGold],
+      screen: 'Stopwatch',
     },
     {
       id: '2',
@@ -40,7 +49,7 @@ export const ToolsScreen: React.FC = () => {
       description: 'Practice race starts with audio cues',
       icon: 'flag-checkered',
       gradient: ['#FF6B6B', '#FF8E8E'],
-      comingSoon: true,
+      screen: 'StartGun',
     },
     {
       id: '3',
@@ -107,6 +116,11 @@ export const ToolsScreen: React.FC = () => {
       return;
     }
 
+    if (tool.screen) {
+      navigation.navigate(tool.screen);
+      return;
+    }
+
     // Handle specific tools
     switch (tool.id) {
       case '1': // Stopwatch
@@ -153,7 +167,10 @@ export const ToolsScreen: React.FC = () => {
       style={[styles.container, { paddingTop: insets.top }]}
     >
       <ScrollView 
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: contentBottomPadding },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
