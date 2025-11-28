@@ -16,15 +16,14 @@ COPY shared ./shared
 COPY attached_assets ./attached_assets
 COPY vite.config.ts ./
 COPY tsconfig.json ./
-COPY tsconfig.server.json ./
 COPY tailwind.config.ts ./
 COPY postcss.config.js ./
 
-# Build the client
+# Build both client (Vite) and server (esbuild)
+# This creates:
+# - dist/public/ (Vite client build)
+# - dist/index.js (esbuild server bundle - already compiled JS)
 RUN npm run build
-
-# Compile TypeScript server to JavaScript (server code only)
-RUN npx tsc --project tsconfig.server.json
 
 # Production stage
 FROM node:20-alpine
@@ -40,11 +39,8 @@ COPY package*.json ./
 # Install production dependencies only
 RUN npm ci --omit=dev && npm cache clean --force
 
-# Copy built assets from builder
+# Copy built assets from builder (includes both client and server)
 COPY --from=builder /app/dist ./dist
-
-# Copy compiled server from builder
-COPY --from=builder /app/dist/server-compiled ./dist/server-compiled
 
 # Copy shared code
 COPY shared ./shared
@@ -62,5 +58,5 @@ EXPOSE 8080
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 
-# Start the application - use compiled JavaScript
-CMD ["node", "dist/server-compiled/server/index.js"]
+# Start the application - use esbuild bundle
+CMD ["node", "dist/index.js"]
