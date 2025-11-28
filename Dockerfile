@@ -19,11 +19,22 @@ COPY tsconfig.json ./
 COPY tailwind.config.ts ./
 COPY postcss.config.js ./
 
-# Build both client (Vite) and server (esbuild)
-# This creates:
-# - dist/public/ (Vite client build)
-# - dist/index.js (esbuild server bundle - already compiled JS)
+# Build client with Vite
+# This creates: dist/public/ (Vite client build)
 RUN npm run build
+
+# Build server with esbuild
+# This creates: dist/index.js (esbuild server bundle)
+RUN npx esbuild server/index.ts \
+  --bundle \
+  --platform=node \
+  --target=node20 \
+  --format=esm \
+  --outfile=dist/index.js \
+  --external:@node-rs/argon2 \
+  --external:@node-rs/bcrypt \
+  --external:pg-native \
+  --packages=external
 
 # Production stage
 FROM node:20-alpine
