@@ -16,14 +16,15 @@ COPY shared ./shared
 COPY attached_assets ./attached_assets
 COPY vite.config.ts ./
 COPY tsconfig.json ./
+COPY tsconfig.server.json ./
 COPY tailwind.config.ts ./
 COPY postcss.config.js ./
 
 # Build the client
 RUN npm run build
 
-# Compile TypeScript server to JavaScript
-RUN npx tsc --project tsconfig.json --outDir dist/server-compiled --module es2022 --target es2022 --moduleResolution bundler
+# Compile TypeScript server to JavaScript (server code only)
+RUN npx tsc --project tsconfig.server.json
 
 # Production stage
 FROM node:20-alpine
