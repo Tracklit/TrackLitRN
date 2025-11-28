@@ -22,6 +22,9 @@ COPY postcss.config.js ./
 # Build the client
 RUN npm run build
 
+# Compile TypeScript server to JavaScript
+RUN npx tsc --project tsconfig.json --outDir dist/server-compiled --module es2022 --target es2022 --moduleResolution bundler
+
 # Production stage
 FROM node:20-alpine
 
@@ -39,22 +42,14 @@ RUN npm ci --omit=dev && npm cache clean --force
 # Copy built assets from builder
 COPY --from=builder /app/dist ./dist
 
-# Copy server code
-COPY server ./server
+# Copy compiled server from builder
+COPY --from=builder /app/dist/server-compiled ./dist/server-compiled
+
+# Copy shared code
 COPY shared ./shared
 
-# Create startup script
-RUN echo 'import { register } from "node:module";' > server.mjs && \
-    echo 'import { pathToFileURL } from "node:url";' >> server.mjs && \
-    echo '' >> server.mjs && \
-    echo 'register("tsx", pathToFileURL("./"));' >> server.mjs && \
-    echo '' >> server.mjs && \
-    echo 'process.env.NODE_ENV = process.env.NODE_ENV || "production";' >> server.mjs && \
-    echo '' >> server.mjs && \
-    echo 'import("./server/index.ts").catch(err => {' >> server.mjs && \
-    echo '  console.error("Failed to start server:", err);' >> server.mjs && \
-    echo '  process.exit(1);' >> server.mjs && \
-    echo '});' >> server.mjs
+# Copy attached_assets if needed at runtime  
+COPY attached_assets ./attached_assets
 
 # Set environment
 ENV NODE_ENV=production
@@ -66,5 +61,5 @@ EXPOSE 8080
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 
-# Start the application
-CMD ["node", "server.mjs"]
+# Start the application - use compiled JavaScript
+CMD ["node", "dist/server-compiled/server/index.js"]
