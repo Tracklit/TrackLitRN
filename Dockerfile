@@ -13,6 +13,7 @@ RUN npm ci
 COPY client ./client
 COPY server ./server
 COPY shared ./shared
+COPY attached_assets ./attached_assets
 COPY vite.config.ts ./
 COPY tsconfig.json ./
 COPY tailwind.config.ts ./
