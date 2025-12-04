@@ -59,6 +59,10 @@ COPY shared ./shared
 # Copy attached_assets if needed at runtime  
 COPY attached_assets ./attached_assets
 
+# Copy startup script
+COPY docker-entrypoint.sh ./
+RUN chmod +x docker-entrypoint.sh
+
 # Set environment
 ENV NODE_ENV=production
 ENV PORT=8080
@@ -69,5 +73,5 @@ EXPOSE 8080
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 
-# Start the application - use esbuild bundle
-CMD ["node", "dist/index.js"]
+# Start the application with startup script
+CMD ["./docker-entrypoint.sh"]
