@@ -160,9 +160,49 @@ import {
 import { db, pool } from "./db";
 import { eq, and, lt, gte, desc, asc, inArray, or, isNotNull, isNull, ne, sql, exists } from "drizzle-orm";
 import session from "express-session";
-import createMemoryStore from "memorystore";
+import { RedisStore } from "connect-redis";
+import { createClient } from "redis";
 
-const MemoryStore = createMemoryStore(session);
+// Create Redis client for Azure Redis
+const redisClient = createClient({
+  url: process.env.REDIS_URL || 'redis://localhost:6379',
+  socket: {
+    // Reconnection strategy
+    reconnectStrategy: (retries) => {
+      if (retries > 10) {
+        console.error('Redis: Too many reconnection attempts, giving up');
+        return new Error('Redis: Maximum reconnection attempts exceeded');
+      }
+      // Exponential backoff: 100ms, 200ms, 400ms, etc.
+      const delay = Math.min(retries * 100, 3000);
+      console.log(`Redis: Reconnecting in ${delay}ms (attempt ${retries})`);
+      return delay;
+    }
+  }
+});
+
+// Handle Redis client events
+redisClient.on('error', (err) => {
+  console.error('Redis Client Error:', err);
+});
+
+redisClient.on('connect', () => {
+  console.log('Redis Client: Connected to Redis server');
+});
+
+redisClient.on('ready', () => {
+  console.log('Redis Client: Ready to accept commands');
+});
+
+redisClient.on('reconnecting', () => {
+  console.log('Redis Client: Reconnecting...');
+});
+
+// Connect to Redis
+redisClient.connect().catch((err) => {
+  console.error('Failed to connect to Redis:', err);
+  console.error('Redis URL:', process.env.REDIS_URL || 'not set (using localhost:6379)');
+});
 
 export interface IStorage {
   // User operations
@@ -430,8 +470,11 @@ export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
-    this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000,
+    // Use Redis for session storage in Azure
+    this.sessionStore = new RedisStore({
+      client: redisClient,
+      prefix: 'tracklit:sess:',
+      ttl: 30 * 24 * 60 * 60, // 30 days in seconds
     });
   }
   
