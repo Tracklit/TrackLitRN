@@ -42,7 +42,7 @@ FROM node:20-alpine
 WORKDIR /app
 
 # Install dumb-init for proper signal handling
-RUN apk add --no-cache dumb-init
+RUN apk add --no-cache dumb-init bash
 
 # Copy package files
 COPY package*.json ./
@@ -73,5 +73,5 @@ EXPOSE 8080
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 
-# Start the application with startup script
-CMD ["./docker-entrypoint.sh"]
+# Start the application - test with sh first
+CMD ["sh", "-c", "echo '=== Container Starting ==='; echo 'Node version:'; node --version; echo 'Files in /app:'; ls -la; echo 'Files in /app/dist:'; ls -la dist/; echo 'Starting app...'; node dist/index.js"]
