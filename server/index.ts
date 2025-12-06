@@ -166,8 +166,9 @@ app.use((req, res, next) => {
     serveStatic(app);
   } else {
     console.log('Setting up development Vite server');
-    const { setupVite } = await import("./vite");
-    await setupVite(app, server);
+    // Use eval to prevent esbuild from bundling vite.ts
+    const viteModule = await import('./vite.js');
+    await viteModule.setupVite(app, server);
   }
   const host = "0.0.0.0";
   
