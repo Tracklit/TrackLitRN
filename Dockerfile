@@ -32,6 +32,7 @@ RUN npm run build
 
 # Build server with esbuild
 # This creates: dist/index.js (esbuild server bundle)
+# Mark vite as external so it doesn't get bundled
 RUN npx esbuild server/index.ts \
   --bundle \
   --platform=node \
@@ -41,6 +42,8 @@ RUN npx esbuild server/index.ts \
   --external:@node-rs/argon2 \
   --external:@node-rs/bcrypt \
   --external:pg-native \
+  --external:./vite.js \
+  --external:vite \
   --packages=external
 
 # Production stage
@@ -62,6 +65,9 @@ RUN npm install --platform=linuxmusl --arch=x64 sharp
 
 # Copy built assets from builder (includes both client and server)
 COPY --from=builder /app/dist ./dist
+
+# Copy server source files (needed for external imports like vite.ts in dev mode)
+COPY --from=builder /app/server ./server
 
 # Copy shared code
 COPY shared ./shared
