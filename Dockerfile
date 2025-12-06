@@ -3,11 +3,18 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Install build dependencies for native modules
+RUN apk add --no-cache python3 make g++
+
 # Copy package files
 COPY package*.json ./
 
 # Install all dependencies (including dev dependencies for build)
-RUN npm ci
+RUN npm ci --include=optional
+
+# Install platform-specific native binaries for Alpine Linux  
+RUN npm install --force @rollup/rollup-linux-x64-musl
+RUN npm install --force --platform=linuxmusl --arch=x64 sharp
 
 # Copy source code
 COPY client ./client
@@ -49,6 +56,9 @@ COPY package*.json ./
 
 # Install production dependencies only
 RUN npm ci --omit=dev && npm cache clean --force
+
+# Install sharp with correct platform binary
+RUN npm install --platform=linuxmusl --arch=x64 sharp
 
 # Copy built assets from builder (includes both client and server)
 COPY --from=builder /app/dist ./dist

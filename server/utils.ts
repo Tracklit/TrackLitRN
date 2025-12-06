@@ -1,0 +1,100 @@
+import express, { type Express } from "express";
+import fs from "fs";
+import path from "path";
+
+export function log(message: string, source = "express") {
+  const formattedTime = new Date().toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  });
+
+  console.log(`${formattedTime} [${source}] ${message}`);
+}
+
+export function serveStatic(app: Express) {
+  // When running from dist/index.js in production, public folder is in dist/public
+  const distPath = path.resolve(process.cwd(), "dist", "public");
+
+  console.log(`Production static file setup:`);
+  console.log(`  - Working directory: ${process.cwd()}`);
+  console.log(`  - Module directory: ${import.meta.dirname}`);
+  console.log(`  - Calculated dist path: ${distPath}`);
+  console.log(`  - Dist path exists: ${fs.existsSync(distPath)}`);
+
+  if (!fs.existsSync(distPath)) {
+    console.error(`CRITICAL ERROR: Build directory not found: ${distPath}`);
+    console.error(`Available files in cwd:`, fs.readdirSync(process.cwd()));
+    throw new Error(
+      `Could not find the build directory: ${distPath}, make sure to build the client first`,
+    );
+  }
+
+  console.log(`Setting up static file serving from: ${distPath}`);
+
+  // Direct asset serving - bypass express.static
+  app.get('/assets/*', (req, res) => {
+    const assetPath = req.path.substring('/assets/'.length);
+    const fullPath = path.join(distPath, 'assets', assetPath);
+
+    if (!fs.existsSync(fullPath)) {
+      console.error(`[PROD] Asset not found: ${fullPath}`);
+      console.error(`[PROD] Requested path: ${req.path}`);
+      console.error(`[PROD] Asset path: ${assetPath}`);
+      return res.status(404).send('Asset not found');
+    }
+
+    // Set proper content type
+    if (assetPath.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript; charset=UTF-8');
+    } else if (assetPath.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css; charset=UTF-8');
+    } else if (assetPath.endsWith('.png')) {
+      res.setHeader('Content-Type', 'image/png');
+    } else if (assetPath.endsWith('.jpg') || assetPath.endsWith('.jpeg')) {
+      res.setHeader('Content-Type', 'image/jpeg');
+    }
+
+    // Cache static assets
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+
+    // Send the file with error handling
+    res.sendFile(fullPath, (err) => {
+      if (err) {
+        console.error(`[PROD] Error sending file: ${fullPath}`);
+        console.error(`[PROD] Error details:`, err);
+        if (!res.headersSent) {
+          res.status(500).send('Error loading asset');
+        }
+      }
+    });
+  });
+
+  // Serve other static files using express.static
+  app.use(express.static(distPath, {
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+      }
+    }
+  }));
+
+  // fall through to index.html if the file doesn't exist (but skip /assets/ requests)
+  app.use("*", (req, res, next) => {
+    // Don't serve index.html for asset requests - let them 404 instead
+    if (req.originalUrl.startsWith('/assets/')) {
+      console.log(`Skipping index.html fallback for asset request: ${req.originalUrl}`);
+      return res.status(404).send('Asset not found');
+    }
+
+    console.log(`Serving index.html fallback for: ${req.originalUrl}`);
+    // CRITICAL: Ensure HTML is never cached to prevent stale app issues
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.sendFile(path.resolve(distPath, "index.html"));
+  });
+}

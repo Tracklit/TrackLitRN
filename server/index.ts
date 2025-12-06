@@ -1,6 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+import { serveStatic, log } from "./utils";
 import { VideoCleanupService } from "./video-cleanup";
 import path from "path";
 import fs from "fs";
@@ -166,6 +166,7 @@ app.use((req, res, next) => {
     serveStatic(app);
   } else {
     console.log('Setting up development Vite server');
+    const { setupVite } = await import("./vite");
     await setupVite(app, server);
   }
   const host = "0.0.0.0";
