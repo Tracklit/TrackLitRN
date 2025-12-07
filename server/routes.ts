@@ -10016,8 +10016,7 @@ Submission Details:
       objectStorageService.downloadObject(objectFile, res);
     } catch (error) {
       console.error("Error accessing object:", error);
-      const { ObjectNotFoundError } = await import("./objectStorage");
-      if (error instanceof ObjectNotFoundError) {
+      if (error && typeof error === 'object' && 'constructor' in error && error.constructor.name === 'ObjectNotFoundError') {
         return res.sendStatus(404);
       }
       return res.sendStatus(500);
@@ -10026,22 +10025,22 @@ Submission Details:
 
   // Serve public objects
   app.get("/public-objects/:filePath(*)", async (req: Request, res: Response) => {
+    try {
       const { ObjectStorageService } = await import("./objectStorage");
       const objectStorageService = new ObjectStorageService();
-      
+      const filePath = req.params.filePath;
+
       const file = await objectStorageService.searchPublicObject(filePath);
       if (!file) {
         return res.status(404).json({ error: "File not found" });
       }
-      
+
       objectStorageService.downloadObject(file, res);
     } catch (error) {
       console.error("Error serving public object:", error);
       return res.status(500).json({ error: "Internal server error" });
     }
-  });
-
-  // Use modular routes
+  });  // Use modular routes
   app.use("/api/community", communityRoutes);
   app.use("/api/feed", feedRoutes);
   app.use(chatRoutes);
