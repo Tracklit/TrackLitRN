@@ -34,7 +34,7 @@ export function serveStatic(app: Express) {
   console.log(`Setting up static file serving from: ${distPath}`);
 
   // Direct asset serving - bypass express.static
-  app.get('/assets/*', (req, res) => {
+  app.get(/^\/assets\/.*$/, (req, res) => {
     const assetPath = req.path.substring('/assets/'.length);
     const fullPath = path.join(distPath, 'assets', assetPath);
 
