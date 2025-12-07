@@ -89,5 +89,5 @@ EXPOSE 8080
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 
-# Use the entrypoint script
-CMD ["./docker-entrypoint.sh"]
+# Use the entrypoint script with sh explicitly
+CMD ["sh", "./docker-entrypoint.sh"]
