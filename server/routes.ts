@@ -10024,11 +10024,11 @@ Submission Details:
   });
 
   // Serve public objects
-  app.get("/public-objects/:filePath(*)", async (req: Request, res: Response) => {
+  app.get(/^\/public-objects\/.*$/, async (req: Request, res: Response) => {
     try {
       const { ObjectStorageService } = await import("./objectStorage");
       const objectStorageService = new ObjectStorageService();
-      const filePath = req.params.filePath;
+      const filePath = req.path.replace('/public-objects/', '');
 
       const file = await objectStorageService.searchPublicObject(filePath);
       if (!file) {
