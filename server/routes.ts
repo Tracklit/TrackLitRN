@@ -9994,24 +9994,22 @@ Submission Details:
   });
 
   // Serve private objects with ACL check
-  app.use("/objects/*", async (req: Request, res: Response, next) => {
-    if (req.method !== "GET") return next();
+  app.get(/^\/objects\/.*$/, async (req: Request, res: Response) => {
     try {
+      const { ObjectStorageService, ObjectNotFoundError } = await import("./objectStorage");
       const { ObjectPermission } = await import("./objectAcl");
-      
+
       const objectStorageService = new ObjectStorageService();
       const userId = req.isAuthenticated() ? req.user!.id.toString() : undefined;
-      
+
       const objectFile = await objectStorageService.getObjectEntityFile(req.path);
       const canAccess = await objectStorageService.canAccessObjectEntity({
         objectFile,
         userId: userId,
         requestedPermission: ObjectPermission.READ,
       });
-      
+
       if (!canAccess) {
-        return res.sendStatus(401);
-      }
       
       objectStorageService.downloadObject(objectFile, res);
     } catch (error) {
@@ -10050,3 +10048,4 @@ Submission Details:
 
   return httpServer;
 }
+
