@@ -9994,7 +9994,7 @@ Submission Details:
   });
 
   // Serve private objects with ACL check
-  app.get("/objects/*", async (req: Request, res: Response) => {
+  app.get("/objects/:path*", async (req: Request, res: Response) => {
     try {
       const { ObjectStorageService, ObjectNotFoundError } = await import("./objectStorage");
       const { ObjectPermission } = await import("./objectAcl");
