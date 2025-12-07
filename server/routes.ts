@@ -10010,7 +10010,9 @@ Submission Details:
       });
 
       if (!canAccess) {
-      
+        return res.sendStatus(401);
+      }
+
       objectStorageService.downloadObject(objectFile, res);
     } catch (error) {
       console.error("Error accessing object:", error);
@@ -10024,8 +10026,6 @@ Submission Details:
 
   // Serve public objects
   app.get("/public-objects/:filePath(*)", async (req: Request, res: Response) => {
-    try {
-      const filePath = req.params.filePath;
       const { ObjectStorageService } = await import("./objectStorage");
       const objectStorageService = new ObjectStorageService();
       
