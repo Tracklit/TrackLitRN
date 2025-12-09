@@ -1,3 +1,4 @@
+console.log('=== SERVER FILE LOADING ===');
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic, log } from "./utils";
