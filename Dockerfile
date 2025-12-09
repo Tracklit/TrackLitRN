@@ -86,6 +86,6 @@ ENV PORT=8080
 # Expose port
 EXPOSE 8080
 
-# Use dumb-init to handle signals properly and run entrypoint
-# Azure App Service works better with single CMD instead of ENTRYPOINT + CMD
-CMD ["dumb-init", "sh", "./docker-entrypoint.sh"]
+# Execute entrypoint directly
+# Use sh explicitly to avoid potential path issues
+CMD ["sh", "-c", "exec node dist/index.js"]
