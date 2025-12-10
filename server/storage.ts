@@ -163,7 +163,7 @@ import session from "express-session";
 import { RedisStore } from "connect-redis";
 import { createClient } from "redis";
 
-// Create Redis client for Azure Redis with proper password extraction
+// Create Redis client for Azure Redis Cache
 const getRedisConfig = () => {
   const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
   
@@ -172,14 +172,12 @@ const getRedisConfig = () => {
     const url = new URL(redisUrl);
     const password = url.searchParams.get('password');
     
-    // Remove password from URL query params
-    url.searchParams.delete('password');
-    const cleanUrl = url.toString();
-    
-    return {
-      url: cleanUrl,
-      password: password || undefined,
+    // Build configuration for Azure Redis Cache
+    const config: any = {
       socket: {
+        host: url.hostname,
+        port: parseInt(url.port) || 6380,
+        tls: url.protocol === 'rediss:',
         reconnectStrategy: (retries: number) => {
           if (retries > 10) {
             console.error('Redis: Too many reconnection attempts, giving up');
@@ -191,8 +189,17 @@ const getRedisConfig = () => {
         }
       }
     };
+    
+    // Add password if present (Azure Redis requires authentication)
+    if (password) {
+      config.password = password;
+      console.log('Redis: Using password authentication for Azure Redis Cache');
+    }
+    
+    return config;
   } catch (error) {
     console.error('Error parsing REDIS_URL:', error);
+    // Fallback to direct URL if parsing fails
     return {
       url: redisUrl,
       socket: {
