@@ -163,23 +163,54 @@ import session from "express-session";
 import { RedisStore } from "connect-redis";
 import { createClient } from "redis";
 
-// Create Redis client for Azure Redis
-const redisClient = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379',
-  socket: {
-    // Reconnection strategy
-    reconnectStrategy: (retries) => {
-      if (retries > 10) {
-        console.error('Redis: Too many reconnection attempts, giving up');
-        return new Error('Redis: Maximum reconnection attempts exceeded');
+// Create Redis client for Azure Redis with proper password extraction
+const getRedisConfig = () => {
+  const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+  
+  try {
+    // Parse the Redis URL to extract password from query parameter
+    const url = new URL(redisUrl);
+    const password = url.searchParams.get('password');
+    
+    // Remove password from URL query params
+    url.searchParams.delete('password');
+    const cleanUrl = url.toString();
+    
+    return {
+      url: cleanUrl,
+      password: password || undefined,
+      socket: {
+        reconnectStrategy: (retries: number) => {
+          if (retries > 10) {
+            console.error('Redis: Too many reconnection attempts, giving up');
+            return new Error('Redis: Maximum reconnection attempts exceeded');
+          }
+          const delay = Math.min(retries * 100, 3000);
+          console.log(`Redis: Reconnecting in ${delay}ms (attempt ${retries})`);
+          return delay;
+        }
       }
-      // Exponential backoff: 100ms, 200ms, 400ms, etc.
-      const delay = Math.min(retries * 100, 3000);
-      console.log(`Redis: Reconnecting in ${delay}ms (attempt ${retries})`);
-      return delay;
-    }
+    };
+  } catch (error) {
+    console.error('Error parsing REDIS_URL:', error);
+    return {
+      url: redisUrl,
+      socket: {
+        reconnectStrategy: (retries: number) => {
+          if (retries > 10) {
+            console.error('Redis: Too many reconnection attempts, giving up');
+            return new Error('Redis: Maximum reconnection attempts exceeded');
+          }
+          const delay = Math.min(retries * 100, 3000);
+          console.log(`Redis: Reconnecting in ${delay}ms (attempt ${retries})`);
+          return delay;
+        }
+      }
+    };
   }
-});
+};
+
+const redisClient = createClient(getRedisConfig());
 
 // Handle Redis client events
 redisClient.on('error', (err) => {
