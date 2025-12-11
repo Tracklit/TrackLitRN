@@ -14,7 +14,20 @@ export function ProtectedRoute({
   const [location, setLocation] = useLocation();
 
   console.log(`ProtectedRoute ${path}: user=${!!user}, isLoading=${isLoading}, location=${location}`);
-
+  
+  // Add timeout fallback for loading state
+  useEffect(() => {
+    if (isLoading) {
+      const timeout = setTimeout(() => {
+        console.log(`ProtectedRoute ${path}: Loading timeout, forcing redirect to /auth`);
+        if (!user) {
+          setLocation('/auth');
+        }
+      }, 5000); // 5 second timeout
+      return () => clearTimeout(timeout);
+    }
+  }, [isLoading, user, path, setLocation]);
+  
   // Immediate redirect if not authenticated and not loading
   if (!isLoading && !user) {
     console.log(`ProtectedRoute: Redirecting unauthenticated user from ${path} to /auth`);
