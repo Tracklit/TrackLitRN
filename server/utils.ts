@@ -33,13 +33,52 @@ export function serveStatic(app: Express) {
 
   console.log(`Setting up static file serving from: ${distPath}`);
 
-  // Direct asset serving - bypass express.static
+  // Direct asset serving - check both dist/public/assets and attached_assets
   app.get(/^\/assets\/.*$/, (req, res) => {
     const assetPath = req.path.substring('/assets/'.length);
     const fullPath = path.join(distPath, 'assets', assetPath);
+    
+    // Try attached_assets folder if not found in dist
+    const attachedAssetsPath = path.resolve(process.cwd(), 'attached_assets', assetPath);
 
     if (!fs.existsSync(fullPath)) {
+      // Check if it exists in attached_assets folder
+      if (fs.existsSync(attachedAssetsPath)) {
+        console.log(`[PROD] Serving from attached_assets: ${assetPath}`);
+        
+        // Set proper content type
+        if (assetPath.endsWith('.js')) {
+          res.setHeader('Content-Type', 'application/javascript; charset=UTF-8');
+        } else if (assetPath.endsWith('.css')) {
+          res.setHeader('Content-Type', 'text/css; charset=UTF-8');
+        } else if (assetPath.endsWith('.png')) {
+          res.setHeader('Content-Type', 'image/png');
+        } else if (assetPath.endsWith('.jpg') || assetPath.endsWith('.jpeg')) {
+          res.setHeader('Content-Type', 'image/jpeg');
+        } else if (assetPath.endsWith('.mp4')) {
+          res.setHeader('Content-Type', 'video/mp4');
+        } else if (assetPath.endsWith('.webp')) {
+          res.setHeader('Content-Type', 'image/webp');
+        } else if (assetPath.endsWith('.mov')) {
+          res.setHeader('Content-Type', 'video/quicktime');
+        }
+        
+        // Cache static assets
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        
+        return res.sendFile(attachedAssetsPath, (err) => {
+          if (err) {
+            console.error(`[PROD] Error sending file from attached_assets: ${attachedAssetsPath}`);
+            console.error(`[PROD] Error details:`, err);
+            if (!res.headersSent) {
+              res.status(500).send('Error loading asset');
+            }
+          }
+        });
+      }
+      
       console.error(`[PROD] Asset not found: ${fullPath}`);
+      console.error(`[PROD] Also checked: ${attachedAssetsPath}`);
       console.error(`[PROD] Requested path: ${req.path}`);
       console.error(`[PROD] Asset path: ${assetPath}`);
       return res.status(404).send('Asset not found');
