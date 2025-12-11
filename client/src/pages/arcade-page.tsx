@@ -8,7 +8,7 @@ import { OptimizedBackgroundImage } from '@/components/optimized-background-imag
 import { PreloadImages } from '@/components/preload-images';
 
 // Import background images - using practice background for consistency
-import practiceBackground from '@assets/Screenshot 2025-06-15 205621_1750013855167.png?url';
+const practiceBackground = '/assets/Screenshot 2025-06-15 205621_1750013855167.png';
 
 export default function ArcadePage() {
   // Background image for all game cards (consistent with dashboard)

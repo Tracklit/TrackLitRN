@@ -19,7 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Terminal, ChevronLeft } from 'lucide-react';
 import { signInWithGoogle } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
-import authVideoUrl from '@assets/THE ULTIMATE TOOLKIT FOR TRACK & FIELD (1)_1761862317351.mp4?url';
+const authVideoUrl = '/assets/THE ULTIMATE TOOLKIT FOR TRACK & FIELD (1)_1761862317351.mp4';
 
 // Extend the schemas with validation
 const loginFormSchema = z.object({

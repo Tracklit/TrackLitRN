@@ -57,7 +57,7 @@ import backgroundImage3 from '@assets/istockphoto-1224403019-612x612_17500085039
 import backgroundImage4 from '@assets/istockphoto-1253944192-612x612_1750008503979.jpg';
 import backgroundImage5 from '@assets/istockphoto-1279168476-612x612_1750008503979.jpg';
 import programsBackground from '@assets/image_1750012192490.png';
-import practiceBackground from '@assets/Screenshot 2025-06-15 205621_1750013855167.png?url';
+const practiceBackground = '/assets/Screenshot 2025-06-15 205621_1750013855167.png';
 import raceBackground from '@assets/Screenshot 2025-06-15 205651_1750013855167.png';
 import toolsBackground from '@assets/Screenshot 2025-06-15 205721_1750013855168.png';
 import sprinthiaBackground from '@assets/image_1750019864190.png';
