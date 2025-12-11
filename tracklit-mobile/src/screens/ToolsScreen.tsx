@@ -17,7 +17,7 @@ import { Card, CardContent } from '../components/ui/Card';
 import theme from '../utils/theme';
 import type { RootStackParamList } from '@/navigation/types';
 
-type ToolScreen = Extract<keyof RootStackParamList, 'Stopwatch' | 'StartGun'>;
+type ToolScreen = Extract<keyof RootStackParamList, 'Stopwatch' | 'StartGun' | 'PhotoFinish' | 'Journal' | 'IntervalTimer'>;
 
 interface Tool {
   id: string;
@@ -57,51 +57,54 @@ export const ToolsScreen: React.FC = () => {
       description: 'Analyze race finishes frame by frame',
       icon: 'camera',
       gradient: ['#4ECDC4', '#6ED0CA'],
-      comingSoon: true,
+      screen: 'PhotoFinish',
     },
     {
       id: '4',
+      title: 'Training Journal',
+      description: 'Record your training thoughts and insights',
+      icon: 'book',
+      gradient: ['#9B59B6', '#BB7BD1'],
+      screen: 'Journal',
+    },
+    {
+      id: '5',
+      title: 'Interval Timer',
+      description: 'Customizable work/rest interval training',
+      icon: 'clock',
+      gradient: ['#E74C3C', '#F1948A'],
+      screen: 'IntervalTimer',
+    },
+    {
+      id: '6',
       title: 'Wind Meter',
       description: 'Check wind conditions for sprints and jumps',
       icon: 'wind',
       gradient: ['#95E1D3', '#A8E6CF'],
-    },
-    {
-      id: '5',
-      title: 'Split Calculator',
-      description: 'Calculate splits for middle distance races',
-      icon: 'calculator',
-      gradient: ['#FFA07A', '#FFB347'],
-    },
-    {
-      id: '6',
-      title: 'Video Analysis',
-      description: 'AI-powered biomechanical analysis',
-      icon: 'video',
-      gradient: ['#9B59B6', '#BB7BD1'],
       comingSoon: true,
     },
     {
       id: '7',
-      title: 'Heat Generator',
-      description: 'Generate heats and lane assignments',
-      icon: 'users',
-      gradient: ['#3498DB', '#5DADE2'],
+      title: 'Split Calculator',
+      description: 'Calculate splits for middle distance races',
+      icon: 'calculator',
+      gradient: ['#FFA07A', '#FFB347'],
       comingSoon: true,
     },
     {
       id: '8',
-      title: 'Conversion Tables',
-      description: 'Convert times, distances, and measurements',
-      icon: 'exchange-alt',
-      gradient: ['#F39C12', '#F7DC6F'],
+      title: 'Video Analysis',
+      description: 'AI-powered biomechanical analysis',
+      icon: 'video',
+      gradient: ['#3498DB', '#5DADE2'],
+      comingSoon: true,
     },
     {
       id: '9',
-      title: 'Meet Planner',
-      description: 'Plan and organize track meets',
-      icon: 'calendar-check',
-      gradient: ['#E74C3C', '#F1948A'],
+      title: 'Heat Generator',
+      description: 'Generate heats and lane assignments',
+      icon: 'users',
+      gradient: ['#F39C12', '#F7DC6F'],
       comingSoon: true,
     },
   ];

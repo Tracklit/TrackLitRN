@@ -1,10 +1,11 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { Express } from "express";
+import { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import { storage } from "./storage";
 import { User, User as SelectUser, insertUserSchema } from "@shared/schema";
 import { z } from "zod";
@@ -14,6 +15,33 @@ import { getBaseUrl } from "./utils/url-helper";
 declare global {
   namespace Express {
     interface User extends SelectUser {}
+  }
+}
+
+// JWT Configuration
+const JWT_SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET || "track-meet-jwt-secret-key";
+const JWT_EXPIRES_IN = "30d"; // 30 days to match session expiry
+
+// Generate JWT token for a user
+function generateToken(user: SelectUser): string {
+  return jwt.sign(
+    { 
+      id: user.id, 
+      username: user.username,
+      email: user.email 
+    },
+    JWT_SECRET,
+    { expiresIn: JWT_EXPIRES_IN }
+  );
+}
+
+// Verify JWT token and return user id
+function verifyToken(token: string): { id: number } | null {
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as { id: number };
+    return decoded;
+  } catch (error) {
+    return null;
   }
 }
 
@@ -97,6 +125,39 @@ export function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
+  // JWT Authentication Middleware - checks for Bearer token in Authorization header
+  // Works alongside session auth - if session auth fails, tries JWT
+  app.use(async (req: Request, res: Response, next: NextFunction) => {
+    // Skip if already authenticated via session
+    if (req.isAuthenticated()) {
+      return next();
+    }
+
+    // Check for Authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return next();
+    }
+
+    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+    const decoded = verifyToken(token);
+    
+    if (decoded && decoded.id) {
+      try {
+        const user = await storage.getUser(decoded.id);
+        if (user) {
+          // Set user on request for downstream handlers
+          req.user = user;
+          console.log(`JWT auth successful for user ${user.id}`);
+        }
+      } catch (error) {
+        console.error('JWT auth error:', error);
+      }
+    }
+    
+    next();
+  });
+
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
@@ -154,8 +215,12 @@ export function setupAuth(app: Express) {
         // Check if user needs onboarding
         const needsOnboarding = await requiresOnboarding(user);
         
+        // Generate JWT token for mobile clients
+        const token = generateToken(user);
+        
         res.status(201).json({
-          user,
+          user: { ...user, token },
+          token,
           requiresOnboarding: needsOnboarding
         });
       });
@@ -174,9 +239,55 @@ export function setupAuth(app: Express) {
       
       req.login(user, (err) => {
         if (err) return next(err);
-        res.status(200).json(user);
+        // Generate JWT token for mobile clients
+        try {
+          const token = generateToken(user as SelectUser);
+          console.log(`[AUTH] Login successful for user ${(user as any).id}, token generated: ${token ? 'yes' : 'no'}`);
+          // Return user data with token, excluding password hash
+          const { password, ...userWithoutPassword } = user as any;
+          res.status(200).json({ ...userWithoutPassword, token });
+        } catch (tokenError) {
+          console.error('[AUTH] Error generating token:', tokenError);
+          // Still return user data even if token generation fails
+          const { password, ...userWithoutPassword } = user as any;
+          res.status(200).json(userWithoutPassword);
+        }
       });
     })(req, res, next);
+  });
+
+  // Dedicated mobile login endpoint with explicit token generation
+  app.post("/api/mobile/login", async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ error: "Username and password are required" });
+      }
+
+      // Find user by username
+      const user = await storage.getUserByUsername(username);
+      if (!user) {
+        return res.status(401).json({ error: "Invalid username or password" });
+      }
+
+      // Verify password
+      const isValid = await comparePasswords(password, user.password);
+      if (!isValid) {
+        return res.status(401).json({ error: "Invalid username or password" });
+      }
+
+      // Generate JWT token
+      const token = generateToken(user);
+      console.log(`[AUTH] Mobile login successful for user ${user.id}, token: ${token.substring(0, 20)}...`);
+
+      // Return user data with token, excluding password
+      const { password: _, ...userWithoutPassword } = user;
+      res.status(200).json({ ...userWithoutPassword, token });
+    } catch (error) {
+      console.error('[AUTH] Mobile login error:', error);
+      res.status(500).json({ error: "Login failed" });
+    }
   });
 
   app.post("/api/logout", (req, res, next) => {
@@ -283,18 +394,19 @@ export function setupAuth(app: Express) {
   });
 
   app.get("/api/user", async (req, res) => {
-    // Enhanced authentication check with detailed logging
-    const isAuth = req.isAuthenticated();
+    // Check for both session auth and JWT auth (req.user may be set by JWT middleware)
+    const isSessionAuth = req.isAuthenticated();
     const hasUser = !!req.user;
     const sessionId = req.sessionID;
     
-    console.log(`/api/user request: authenticated=${isAuth}, hasUser=${hasUser}, sessionId=${sessionId}`);
+    console.log(`/api/user request: sessionAuth=${isSessionAuth}, hasUser=${hasUser}, sessionId=${sessionId}`);
     
-    if (!isAuth || !req.user) {
-      console.log('User not authenticated, returning 401');
+    // User could be authenticated via session OR JWT (middleware sets req.user)
+    if (!hasUser) {
+      console.log('User not authenticated via session or JWT, returning 401');
       return res.status(401).json({ 
         error: 'Not authenticated',
-        debug: { isAuth, hasUser, sessionId }
+        debug: { isSessionAuth, hasUser, sessionId }
       });
     }
     

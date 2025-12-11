@@ -1,0 +1,380 @@
+import React from 'react';
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  RefreshControl,
+  ActivityIndicator,
+} from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useQuery } from '@tanstack/react-query';
+import { formatDistanceToNow } from 'date-fns';
+
+import { Text } from '../components/ui/Text';
+import { Card, CardContent } from '../components/ui/Card';
+import { Avatar } from '../components/ui/Avatar';
+import { Badge } from '../components/ui/Badge';
+import { apiRequest } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
+import type { RootStackParamList } from '@/navigation/types';
+import theme from '../utils/theme';
+
+type Navigation = NativeStackNavigationProp<RootStackParamList>;
+
+interface ChatGroup {
+  id: number;
+  name: string;
+  description?: string;
+  imageUrl?: string;
+  memberCount?: number;
+  lastMessage?: string;
+  lastMessageAt?: string;
+  unreadCount?: number;
+}
+
+interface Conversation {
+  id: number;
+  otherUserId: number;
+  otherUserName?: string;
+  otherUserUsername?: string;
+  otherUserProfileImage?: string;
+  lastMessage?: string;
+  lastMessageAt?: string;
+  unreadCount?: number;
+}
+
+export const ChatScreen: React.FC = () => {
+  const insets = useSafeAreaInsets();
+  const navigation = useNavigation<Navigation>();
+  const { user, isAuthenticated } = useAuth();
+  const isGuest = user?.id === 'guest';
+  const contentBottomPadding = theme.layout.bottomNavHeight + insets.bottom + theme.spacing.xl;
+
+  // Fetch chat groups
+  const groupsQuery = useQuery({
+    queryKey: ['chat-groups'],
+    queryFn: () => apiRequest<ChatGroup[]>('/api/chat/groups'),
+    enabled: isAuthenticated && !isGuest,
+  });
+
+  // Fetch direct conversations
+  const conversationsQuery = useQuery({
+    queryKey: ['conversations'],
+    queryFn: () => apiRequest<Conversation[]>('/api/conversations'),
+    enabled: isAuthenticated && !isGuest,
+  });
+
+  const groups = groupsQuery.data ?? [];
+  const conversations = conversationsQuery.data ?? [];
+
+  const handleRefresh = () => {
+    groupsQuery.refetch();
+    conversationsQuery.refetch();
+  };
+
+  const handleGroupPress = (group: ChatGroup) => {
+    navigation.navigate('ChatConversation', { 
+      conversationId: group.id, 
+      type: 'group' 
+    });
+  };
+
+  const handleConversationPress = (conversation: Conversation) => {
+    navigation.navigate('ChatConversation', { 
+      conversationId: conversation.id, 
+      type: 'direct' 
+    });
+  };
+
+  const isLoading = groupsQuery.isLoading || conversationsQuery.isLoading;
+  const isRefreshing = groupsQuery.isFetching || conversationsQuery.isFetching;
+  const hasError = groupsQuery.isError || conversationsQuery.isError;
+
+  return (
+    <LinearGradient
+      colors={theme.gradient.background}
+      locations={theme.gradient.locations}
+      style={[styles.container, { paddingTop: insets.top }]}
+    >
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <FontAwesome5 name="arrow-left" size={20} color={theme.colors.foreground} />
+        </TouchableOpacity>
+        <Text variant="h3" weight="bold" color="foreground">
+          Messages
+        </Text>
+        <View style={styles.headerSpacer} />
+      </View>
+
+      <ScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: contentBottomPadding }]}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            tintColor="#fff"
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+          />
+        }
+      >
+        {isGuest ? (
+          <View style={styles.emptyState}>
+            <FontAwesome5 name="user-lock" size={48} color={theme.colors.textMuted} solid />
+            <Text variant="h4" weight="semiBold" color="foreground" style={styles.emptyTitle}>
+              Sign In Required
+            </Text>
+            <Text variant="body" color="muted" style={styles.emptyText}>
+              Sign in to view your messages and group chats.
+            </Text>
+          </View>
+        ) : isLoading ? (
+          <View style={styles.emptyState}>
+            <ActivityIndicator size="large" color={theme.colors.primary} />
+            <Text variant="body" color="muted" style={styles.emptyText}>
+              Loading messages...
+            </Text>
+          </View>
+        ) : hasError ? (
+          <View style={styles.emptyState}>
+            <FontAwesome5 name="exclamation-circle" size={48} color={theme.colors.textMuted} solid />
+            <Text variant="body" color="muted" style={styles.emptyText}>
+              Unable to load messages. Pull to refresh.
+            </Text>
+          </View>
+        ) : groups.length === 0 && conversations.length === 0 ? (
+          <View style={styles.emptyState}>
+            <FontAwesome5 name="comments" size={48} color={theme.colors.textMuted} solid />
+            <Text variant="h4" weight="semiBold" color="foreground" style={styles.emptyTitle}>
+              No Messages Yet
+            </Text>
+            <Text variant="body" color="muted" style={styles.emptyText}>
+              Join a group or start a conversation with other athletes!
+            </Text>
+          </View>
+        ) : (
+          <>
+            {/* Group Chats Section */}
+            {groups.length > 0 && (
+              <View style={styles.section}>
+                <Text variant="h4" weight="semiBold" color="foreground" style={styles.sectionTitle}>
+                  Group Chats
+                </Text>
+                {groups.map((group) => (
+                  <TouchableOpacity 
+                    key={group.id} 
+                    onPress={() => handleGroupPress(group)}
+                  >
+                    <Card style={styles.chatCard}>
+                      <CardContent style={styles.chatContent}>
+                        <View style={styles.avatarContainer}>
+                          {group.imageUrl ? (
+                            <Avatar size="md" src={group.imageUrl} fallback={group.name[0]} />
+                          ) : (
+                            <View style={styles.groupAvatar}>
+                              <FontAwesome5 name="users" size={20} color={theme.colors.primary} solid />
+                            </View>
+                          )}
+                          {group.unreadCount && group.unreadCount > 0 && (
+                            <View style={styles.unreadBadge}>
+                              <Text variant="small" color="primary-foreground" weight="bold">
+                                {group.unreadCount > 99 ? '99+' : group.unreadCount}
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+                        
+                        <View style={styles.chatInfo}>
+                          <View style={styles.chatHeader}>
+                            <Text variant="body" weight="semiBold" color="foreground" numberOfLines={1}>
+                              {group.name}
+                            </Text>
+                            {group.lastMessageAt && (
+                              <Text variant="small" color="muted">
+                                {formatDistanceToNow(new Date(group.lastMessageAt), { addSuffix: false })}
+                              </Text>
+                            )}
+                          </View>
+                          
+                          {group.lastMessage && (
+                            <Text variant="small" color="muted" numberOfLines={1} style={styles.lastMessage}>
+                              {group.lastMessage}
+                            </Text>
+                          )}
+                          
+                          {group.memberCount && (
+                            <Text variant="small" color="muted">
+                              {group.memberCount} members
+                            </Text>
+                          )}
+                        </View>
+                        
+                        <FontAwesome5 name="chevron-right" size={14} color={theme.colors.textMuted} />
+                      </CardContent>
+                    </Card>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+
+            {/* Direct Messages Section */}
+            {conversations.length > 0 && (
+              <View style={styles.section}>
+                <Text variant="h4" weight="semiBold" color="foreground" style={styles.sectionTitle}>
+                  Direct Messages
+                </Text>
+                {conversations.map((conversation) => (
+                  <TouchableOpacity 
+                    key={conversation.id} 
+                    onPress={() => handleConversationPress(conversation)}
+                  >
+                    <Card style={styles.chatCard}>
+                      <CardContent style={styles.chatContent}>
+                        <View style={styles.avatarContainer}>
+                          <Avatar 
+                            size="md" 
+                            src={conversation.otherUserProfileImage} 
+                            fallback={conversation.otherUserName?.[0] || 'U'} 
+                          />
+                          {conversation.unreadCount && conversation.unreadCount > 0 && (
+                            <View style={styles.unreadBadge}>
+                              <Text variant="small" color="primary-foreground" weight="bold">
+                                {conversation.unreadCount > 99 ? '99+' : conversation.unreadCount}
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+                        
+                        <View style={styles.chatInfo}>
+                          <View style={styles.chatHeader}>
+                            <Text variant="body" weight="semiBold" color="foreground" numberOfLines={1}>
+                              {conversation.otherUserName || conversation.otherUserUsername || 'Unknown'}
+                            </Text>
+                            {conversation.lastMessageAt && (
+                              <Text variant="small" color="muted">
+                                {formatDistanceToNow(new Date(conversation.lastMessageAt), { addSuffix: false })}
+                              </Text>
+                            )}
+                          </View>
+                          
+                          {conversation.lastMessage && (
+                            <Text variant="small" color="muted" numberOfLines={1} style={styles.lastMessage}>
+                              {conversation.lastMessage}
+                            </Text>
+                          )}
+                        </View>
+                        
+                        <FontAwesome5 name="chevron-right" size={14} color={theme.colors.textMuted} />
+                      </CardContent>
+                    </Card>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </>
+        )}
+      </ScrollView>
+    </LinearGradient>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: theme.colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: theme.spacing.md,
+  },
+  headerSpacer: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.md,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: theme.spacing.xl * 2,
+  },
+  emptyTitle: {
+    marginTop: theme.spacing.lg,
+    marginBottom: theme.spacing.sm,
+  },
+  emptyText: {
+    textAlign: 'center',
+    paddingHorizontal: theme.spacing.lg,
+  },
+  section: {
+    marginBottom: theme.spacing.xl,
+  },
+  sectionTitle: {
+    marginBottom: theme.spacing.md,
+  },
+  chatCard: {
+    marginBottom: theme.spacing.sm,
+  },
+  chatContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: theme.spacing.sm,
+  },
+  avatarContainer: {
+    position: 'relative',
+    marginRight: theme.spacing.md,
+  },
+  groupAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: theme.colors.muted,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  unreadBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: theme.colors.primary,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+    borderWidth: 2,
+    borderColor: theme.colors.background,
+  },
+  chatInfo: {
+    flex: 1,
+    marginRight: theme.spacing.md,
+  },
+  chatHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.xs,
+  },
+  lastMessage: {
+    marginBottom: theme.spacing.xs,
+  },
+});
+

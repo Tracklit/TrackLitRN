@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   ScrollView,
@@ -6,14 +6,20 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { Text } from '../components/ui/Text';
 import { Card, CardContent } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
+import { apiRequest } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
+import { queryClient } from '@/lib/queryClient';
 import theme from '../utils/theme';
 
 interface Message {
@@ -21,6 +27,17 @@ interface Message {
   text: string;
   isUser: boolean;
   timestamp: Date;
+}
+
+interface SprinthiaConversation {
+  id: number;
+  title: string;
+  createdAt: string;
+}
+
+interface ChatResponse {
+  response: string;
+  conversationId: number;
 }
 
 const quickPrompts = [
@@ -32,77 +49,122 @@ const quickPrompts = [
   "Mental preparation strategies"
 ];
 
-const sampleMessages: Message[] = [
-  {
-    id: '1',
-    text: "Hi! I'm Sprinthia, your AI athletics coach. I'm here to help you train smarter, compete better, and reach your full potential. What can I help you with today?",
-    isUser: false,
-    timestamp: new Date(),
-  }
-];
+const welcomeMessage: Message = {
+  id: 'welcome',
+  text: "Hi! I'm Sprinthia, your AI athletics coach. I'm here to help you train smarter, compete better, and reach your full potential. What can I help you with today?",
+  isUser: false,
+  timestamp: new Date(),
+};
 
 export const SprinthiaScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
-  const [messages, setMessages] = useState<Message[]>(sampleMessages);
+  const { user, isAuthenticated } = useAuth();
+  const isGuest = user?.id === 'guest';
+  const scrollViewRef = useRef<ScrollView>(null);
+  
+  const [messages, setMessages] = useState<Message[]>([welcomeMessage]);
   const [inputText, setInputText] = useState('');
+  const [conversationId, setConversationId] = useState<number | null>(null);
+  const [isTyping, setIsTyping] = useState(false);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  }, [messages, isTyping]);
+
+  // Fetch conversation history (optional - for future conversation list feature)
+  const conversationsQuery = useQuery({
+    queryKey: ['sprinthia-conversations'],
+    queryFn: () => apiRequest<SprinthiaConversation[]>('/api/sprinthia/conversations'),
+    enabled: isAuthenticated && !isGuest,
+  });
+
+  // Send message mutation - connects to real backend
+  const sendMessageMutation = useMutation({
+    mutationFn: async (message: string) => {
+      const payload: { message: string; conversationId?: number } = { message };
+      if (conversationId) {
+        payload.conversationId = conversationId;
+      }
+      
+      return apiRequest<ChatResponse>('/api/sprinthia/chat', {
+        method: 'POST',
+        data: payload,
+      });
+    },
+    onSuccess: (data) => {
+      // Add AI response to messages
+      const aiMessage: Message = {
+        id: Date.now().toString() + '_ai',
+        text: data.response,
+        isUser: false,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, aiMessage]);
+      setConversationId(data.conversationId);
+      setIsTyping(false);
+      
+      // Invalidate conversations cache to update history
+      queryClient.invalidateQueries({ queryKey: ['sprinthia-conversations'] });
+    },
+    onError: (error: Error) => {
+      console.error('Sprinthia API error:', error);
+      setIsTyping(false);
+      
+      // Add error message
+      const errorMessage: Message = {
+        id: Date.now().toString() + '_error',
+        text: "I'm sorry, I couldn't process your request right now. Please check your connection and try again.",
+        isUser: false,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      
+      Alert.alert(
+        'Connection Error',
+        error.message || 'Failed to send message to Sprinthia. Please try again.',
+        [{ text: 'OK' }]
+      );
+    },
+  });
 
   const handleSendMessage = () => {
     if (!inputText.trim()) return;
+    
+    // Check if user is authenticated
+    if (!isAuthenticated || isGuest) {
+      Alert.alert(
+        'Sign In Required',
+        'Please sign in to chat with Sprinthia AI.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
 
     const userMessage: Message = {
       id: Date.now().toString() + '_user',
-      text: inputText,
+      text: inputText.trim(),
       isUser: true,
       timestamp: new Date(),
     };
 
     setMessages(prev => [...prev, userMessage]);
+    setIsTyping(true);
+    
+    // Send to real backend API
+    sendMessageMutation.mutate(inputText.trim());
     setInputText('');
-
-    // Simulate AI response
-    setTimeout(() => {
-      const aiResponse: Message = {
-        id: Date.now().toString() + '_ai',
-        text: getAIResponse(inputText),
-        isUser: false,
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, aiResponse]);
-    }, 1500);
   };
 
   const handleQuickPrompt = (prompt: string) => {
     setInputText(prompt);
   };
 
-  const getAIResponse = (userInput: string): string => {
-    const input = userInput.toLowerCase();
-    
-    if (input.includes('400m') || input.includes('workout')) {
-      return "Here's a great 400m workout plan:\n\n1. Warm-up: 800m easy jog + dynamic stretches\n2. Main set: 3x300m at race pace (90s rest)\n3. Speed work: 4x100m accelerations\n4. Cool-down: 400m easy + static stretches\n\nFocus on maintaining form throughout. What's your current 400m PR?";
-    }
-    
-    if (input.includes('technique') || input.includes('sprint')) {
-      return "Great question! Here are key sprint technique points:\n\n• Drive phase: Low body angle, powerful arm drive\n• Acceleration: Gradual rise to upright position\n• Max speed: Tall posture, quick turnover\n• Relaxation: Stay loose, especially in shoulders\n\nWould you like me to analyze a specific part of your technique?";
-    }
-    
-    if (input.includes('competition') || input.includes('schedule')) {
-      return "Planning your competition schedule is crucial! Here's my approach:\n\n• Start with local meets for experience\n• Build toward your main season goal\n• Allow 7-10 days between important meets\n• Include tune-up races before championships\n\nWhat's your main competitive goal this season?";
-    }
-    
-    if (input.includes('recovery') || input.includes('rest')) {
-      return "Recovery is where you get faster! Here's what I recommend:\n\n• Active recovery: Light jogging or walking\n• Hydration: 2-3L water daily, more if training hard\n• Sleep: 7-9 hours for optimal adaptation\n• Nutrition: Protein + carbs within 30min post-workout\n• Listen to your body - rest when needed\n\nHow are you feeling after your recent training?";
-    }
-    
-    if (input.includes('nutrition') || input.includes('food')) {
-      return "Sprinter nutrition basics:\n\n• Pre-training: Light carbs 1-2 hours before\n• During long sessions: Sports drink if 90+ minutes\n• Post-workout: 3:1 carb to protein ratio\n• Daily: Lean proteins, complex carbs, healthy fats\n• Hydration: Clear/light yellow urine is the goal\n\nAny specific nutrition questions about race day or training?";
-    }
-    
-    if (input.includes('mental') || input.includes('mindset')) {
-      return "Mental game is huge in sprinting! Try these strategies:\n\n• Visualization: Run perfect races in your mind\n• Process goals: Focus on technique, not just times\n• Positive self-talk: Replace doubts with affirmations\n• Race routine: Same warm-up builds confidence\n• Breathing: Deep breaths to manage pre-race nerves\n\nWhat mental challenges are you facing in training or competition?";
-    }
-    
-    return "That's a great question! I'm here to help with all aspects of track and field training - workouts, technique, nutrition, mental preparation, race strategy, and more. Can you tell me more about your specific goals or what you'd like to work on?";
+  const handleNewConversation = () => {
+    setMessages([welcomeMessage]);
+    setConversationId(null);
   };
 
   return (
@@ -111,96 +173,134 @@ export const SprinthiaScreen: React.FC = () => {
       locations={theme.gradient.locations}
       style={[styles.container, { paddingTop: insets.top }]}
     >
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <View style={styles.aiAvatarContainer}>
-            <LinearGradient
-              colors={[theme.colors.primary, theme.colors.deepGold]}
-              style={styles.aiAvatar}
-            >
-              <FontAwesome5 name="robot" size={24} color="white" solid />
-            </LinearGradient>
-          </View>
-          <View style={styles.headerText}>
-            <Text variant="h3" weight="bold" color="foreground">
-              Sprinthia AI
-            </Text>
-            <Text variant="small" color="success" weight="medium">
-              ● Online
-            </Text>
+      <KeyboardAvoidingView 
+        style={styles.keyboardAvoid}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={0}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerContent}>
+            <View style={styles.aiAvatarContainer}>
+              <LinearGradient
+                colors={[theme.colors.primary, theme.colors.deepGold]}
+                style={styles.aiAvatar}
+              >
+                <FontAwesome5 name="robot" size={24} color="white" solid />
+              </LinearGradient>
+            </View>
+            <View style={styles.headerText}>
+              <Text variant="h3" weight="bold" color="foreground">
+                Sprinthia AI
+              </Text>
+              <Text variant="small" color="success" weight="medium">
+                ● Online
+              </Text>
+            </View>
+            {/* New Conversation Button */}
+            {messages.length > 1 && (
+              <TouchableOpacity 
+                style={styles.newChatButton}
+                onPress={handleNewConversation}
+              >
+                <FontAwesome5 name="plus" size={16} color={theme.colors.primary} solid />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
-      </View>
 
-      {/* Messages */}
-      <ScrollView 
-        style={styles.messagesContainer}
-        contentContainerStyle={styles.messagesContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        {messages.map((message) => (
-          <MessageBubble key={message.id} message={message} />
-        ))}
-        
-        {messages.length === 1 && (
-          <View style={styles.quickPromptsContainer}>
-            <Text variant="small" color="muted" weight="medium" style={styles.quickPromptsTitle}>
-              Try asking about:
-            </Text>
-            <View style={styles.quickPrompts}>
-              {quickPrompts.map((prompt, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.quickPrompt}
-                  onPress={() => handleQuickPrompt(prompt)}
-                  data-testid={`quick-prompt-${index}`}
-                >
-                  <Text variant="small" color="primary" weight="medium">
-                    {prompt}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+        {/* Messages */}
+        <ScrollView 
+          ref={scrollViewRef}
+          style={styles.messagesContainer}
+          contentContainerStyle={styles.messagesContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {messages.map((message) => (
+            <MessageBubble key={message.id} message={message} />
+          ))}
+          
+          {/* Typing Indicator */}
+          {isTyping && (
+            <View style={styles.aiMessageContainer}>
+              <View style={styles.aiAvatarSmall}>
+                <FontAwesome5 name="robot" size={16} color={theme.colors.primary} solid />
+              </View>
+              <View style={styles.typingBubble}>
+                <ActivityIndicator size="small" color={theme.colors.primary} />
+                <Text variant="small" color="muted" style={styles.typingText}>
+                  Sprinthia is thinking...
+                </Text>
+              </View>
             </View>
-          </View>
-        )}
-      </ScrollView>
+          )}
+          
+          {/* Quick Prompts - show only on welcome screen */}
+          {messages.length === 1 && !isTyping && (
+            <View style={styles.quickPromptsContainer}>
+              <Text variant="small" color="muted" weight="medium" style={styles.quickPromptsTitle}>
+                Try asking about:
+              </Text>
+              <View style={styles.quickPrompts}>
+                {quickPrompts.map((prompt, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.quickPrompt}
+                    onPress={() => handleQuickPrompt(prompt)}
+                    data-testid={`quick-prompt-${index}`}
+                  >
+                    <Text variant="small" color="primary" weight="medium">
+                      {prompt}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+        </ScrollView>
 
-      {/* Input Area */}
-      <View style={[styles.inputContainer, { paddingBottom: insets.bottom || theme.spacing.md }]}>
-        <Card style={styles.inputCard}>
-          <CardContent style={styles.inputContent}>
-            <TextInput
-              style={styles.textInput}
-              value={inputText}
-              onChangeText={setInputText}
-              placeholder="Ask Sprinthia anything about athletics..."
-              placeholderTextColor={theme.colors.textMuted}
-              multiline
-              maxLength={500}
-              autoFocus
-              data-testid="input-message"
-            />
-            <TouchableOpacity
-              style={[
-                styles.sendButton,
-                inputText.trim() ? styles.sendButtonActive : styles.sendButtonInactive
-              ]}
-              onPress={handleSendMessage}
-              disabled={!inputText.trim()}
-              data-testid="button-send-message"
-            >
-              <FontAwesome5 
-                name="paper-plane" 
-                size={16} 
-                color={inputText.trim() ? 'white' : theme.colors.textMuted}
-                solid
+        {/* Input Area */}
+        <View style={[styles.inputContainer, { paddingBottom: insets.bottom || theme.spacing.md }]}>
+          <Card style={styles.inputCard}>
+            <CardContent style={styles.inputContent}>
+              <TextInput
+                style={styles.textInput}
+                value={inputText}
+                onChangeText={setInputText}
+                placeholder={isGuest ? "Sign in to chat with Sprinthia..." : "Ask Sprinthia anything about athletics..."}
+                placeholderTextColor={theme.colors.textMuted}
+                multiline
+                maxLength={500}
+                editable={!isGuest}
+                data-testid="input-message"
+                onSubmitEditing={handleSendMessage}
+                returnKeyType="send"
               />
-            </TouchableOpacity>
-          </CardContent>
-        </Card>
-      </View>
+              <TouchableOpacity
+                style={[
+                  styles.sendButton,
+                  inputText.trim() && !isTyping ? styles.sendButtonActive : styles.sendButtonInactive
+                ]}
+                onPress={handleSendMessage}
+                disabled={!inputText.trim() || isTyping || isGuest}
+                data-testid="button-send-message"
+              >
+                {isTyping ? (
+                  <ActivityIndicator size="small" color={theme.colors.textMuted} />
+                ) : (
+                  <FontAwesome5 
+                    name="paper-plane" 
+                    size={16} 
+                    color={inputText.trim() ? 'white' : theme.colors.textMuted}
+                    solid
+                  />
+                )}
+              </TouchableOpacity>
+            </CardContent>
+          </Card>
+        </View>
+      </KeyboardAvoidingView>
     </LinearGradient>
   );
 };
@@ -240,6 +340,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  keyboardAvoid: {
+    flex: 1,
+  },
   header: {
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.md,
@@ -263,6 +366,16 @@ const styles = StyleSheet.create({
   },
   headerText: {
     flex: 1,
+  },
+  newChatButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: theme.colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   messagesContainer: {
     flex: 1,
@@ -306,6 +419,20 @@ const styles = StyleSheet.create({
     flex: 1,
     maxWidth: '85%',
     ...theme.shadows.sm,
+  },
+  typingBubble: {
+    backgroundColor: theme.colors.card,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.lg,
+    borderBottomLeftRadius: theme.borderRadius.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    ...theme.shadows.sm,
+  },
+  typingText: {
+    marginLeft: theme.spacing.sm,
   },
   quickPromptsContainer: {
     marginTop: theme.spacing.xl,

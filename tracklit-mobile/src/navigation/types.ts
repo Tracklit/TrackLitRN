@@ -7,6 +7,7 @@ export type TabParamList = {
   Feed: undefined;
   Tools: undefined;
   Profile: undefined;
+  Sprinthia: undefined;
 };
 
 export type RootStackParamList = {
@@ -14,9 +15,15 @@ export type RootStackParamList = {
   FeedPost: { id?: number | string } | undefined;
   Stopwatch: undefined;
   StartGun: undefined;
+  PhotoFinish: undefined;
+  Journal: undefined;
+  IntervalTimer: undefined;
+  ProgramDetail: { id: number | string };
+  Meets: undefined;
+  Chat: undefined;
+  ChatConversation: { conversationId: number; type: 'direct' | 'group' };
 };
 
 export type AuthStackParamList = {
   Auth: undefined;
 };
-

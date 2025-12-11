@@ -1,53 +1,103 @@
 import { env } from '@/config/env';
+import { getToken } from './tokenStorage';
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-type CredentialsMode = 'omit' | 'same-origin' | 'include';
 
 interface RequestOptions {
   method?: HttpMethod;
   data?: unknown;
   headers?: Record<string, string>;
   rawResponse?: boolean;
+  skipAuth?: boolean; // Skip adding auth header (for login/register)
 }
 
 const defaultHeaders = {
   Accept: 'application/json',
 };
 
+// Debug mode - set to true to see API calls in console
+const DEBUG_API = __DEV__;
+
+/**
+ * Make an API request with automatic JWT authentication
+ */
 export async function apiRequest<T = any>(
   path: string,
   options: RequestOptions = {},
 ): Promise<T> {
-  const { method = 'GET', data, headers, rawResponse } = options;
+  const { method = 'GET', data, headers, rawResponse, skipAuth } = options;
   const url = path.startsWith('http') ? path : `${env.API_BASE_URL}${path}`;
 
-  const response = await fetch(url, {
-    method,
-    headers: {
-      ...defaultHeaders,
-      ...(data ? { 'Content-Type': 'application/json' } : {}),
-      ...headers,
-    },
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: 'include' as CredentialsMode,
-  });
+  // Build headers with optional auth token
+  const requestHeaders: Record<string, string> = {
+    ...defaultHeaders,
+    ...(data ? { 'Content-Type': 'application/json' } : {}),
+    ...headers,
+  };
 
-  if (rawResponse) {
-    return response as unknown as T;
+  // Add Authorization header if we have a token (and not skipping auth)
+  let hasToken = false;
+  if (!skipAuth) {
+    const token = await getToken();
+    if (token) {
+      requestHeaders['Authorization'] = `Bearer ${token}`;
+      hasToken = true;
+    }
   }
 
-  const text = await response.text();
-  const payload = text ? JSON.parse(text) : null;
-
-  if (!response.ok) {
-    const errorMessage =
-      payload?.error ||
-      payload?.message ||
-      response.statusText ||
-      'Request failed';
-    throw new Error(errorMessage);
+  if (DEBUG_API) {
+    console.log(`[API] ${method} ${path}`, {
+      hasToken,
+      skipAuth,
+      baseUrl: env.API_BASE_URL,
+    });
   }
 
-  return payload as T;
+  try {
+    const response = await fetch(url, {
+      method,
+      headers: requestHeaders,
+      body: data ? JSON.stringify(data) : undefined,
+    });
+
+    if (DEBUG_API) {
+      console.log(`[API] ${method} ${path} -> ${response.status}`);
+    }
+
+    if (rawResponse) {
+      return response as unknown as T;
+    }
+
+    const text = await response.text();
+    let payload = null;
+    
+    try {
+      payload = text ? JSON.parse(text) : null;
+    } catch (parseError) {
+      if (DEBUG_API) {
+        console.log(`[API] Failed to parse response:`, text.substring(0, 200));
+      }
+    }
+
+    if (!response.ok) {
+      const errorMessage =
+        payload?.error ||
+        payload?.message ||
+        response.statusText ||
+        'Request failed';
+      
+      if (DEBUG_API) {
+        console.log(`[API] Error ${response.status}:`, errorMessage);
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    return payload as T;
+  } catch (error) {
+    if (DEBUG_API) {
+      console.log(`[API] Network error for ${method} ${path}:`, error);
+    }
+    throw error;
+  }
 }
-

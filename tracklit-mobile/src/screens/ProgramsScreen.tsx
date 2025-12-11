@@ -4,82 +4,98 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  Alert,
+  RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useQuery } from '@tanstack/react-query';
 
 import { Text } from '../components/ui/Text';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
+import { apiRequest } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
+import type { RootStackParamList } from '@/navigation/types';
 import theme from '../utils/theme';
 
+type Navigation = NativeStackNavigationProp<RootStackParamList>;
+
 interface Program {
-  id: string;
+  id: number | string;
   title: string;
-  coach: string;
-  duration: string;
-  level: 'Beginner' | 'Intermediate' | 'Advanced';
-  events: string[];
+  description?: string;
+  coachName?: string;
+  coachId?: number;
+  duration?: string;
+  durationWeeks?: number;
+  level?: 'Beginner' | 'Intermediate' | 'Advanced';
+  difficulty?: string;
+  events?: string[];
   price?: number;
-  enrolled?: boolean;
+  isPublic?: boolean;
+  isPurchased?: boolean;
 }
 
 export const ProgramsScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<Navigation>();
   const [activeTab, setActiveTab] = useState<'my-programs' | 'marketplace'>('my-programs');
+  const { user, isAuthenticated } = useAuth();
+  const userId = user?.id;
+  const isGuest = userId === 'guest';
+  const contentBottomPadding = theme.layout.bottomNavHeight + insets.bottom + theme.spacing.xl;
 
-  const myPrograms: Program[] = [
-    {
-      id: '1',
-      title: 'Sprint Development Phase 1',
-      coach: 'Coach Martinez',
-      duration: '8 weeks',
-      level: 'Intermediate',
-      events: ['100m', '200m'],
-      enrolled: true,
-    },
-    {
-      id: '2',
-      title: 'Base Building Program',
-      coach: 'Coach Johnson',
-      duration: '12 weeks',
-      level: 'Beginner',
-      events: ['800m', '1500m'],
-      enrolled: true,
-    },
-  ];
+  // Fetch user's programs
+  const myProgramsQuery = useQuery({
+    queryKey: ['user-programs'],
+    queryFn: () => apiRequest<Program[]>('/api/programs'),
+    enabled: isAuthenticated && !isGuest,
+  });
 
-  const marketplacePrograms: Program[] = [
-    {
-      id: '3',
-      title: 'Elite Sprint Training',
-      coach: 'Coach Williams',
-      duration: '10 weeks',
-      level: 'Advanced',
-      events: ['100m', '200m'],
-      price: 99,
-    },
-    {
-      id: '4',
-      title: 'Jumping Fundamentals',
-      coach: 'Coach Davis',
-      duration: '6 weeks',
-      level: 'Beginner',
-      events: ['Long Jump', 'Triple Jump'],
-      price: 59,
-    },
-    {
-      id: '5',
-      title: 'Distance Running Mastery',
-      coach: 'Coach Thompson',
-      duration: '16 weeks',
-      level: 'Advanced',
-      events: ['5000m', '10000m'],
-      price: 129,
-    },
-  ];
+  // Fetch marketplace/public programs
+  const marketplaceQuery = useQuery({
+    queryKey: ['marketplace-programs'],
+    queryFn: () => apiRequest<Program[]>('/api/marketplace/programs/mine'),
+    enabled: isAuthenticated && !isGuest,
+  });
+
+  const handleRefresh = () => {
+    if (activeTab === 'my-programs') {
+      myProgramsQuery.refetch();
+    } else {
+      marketplaceQuery.refetch();
+    }
+  };
+
+  const handleContinueProgram = (program: Program) => {
+    navigation.navigate('ProgramDetail', { id: program.id });
+  };
+
+  const handleViewDetails = (program: Program) => {
+    navigation.navigate('ProgramDetail', { id: program.id });
+  };
+
+  const handlePurchase = (program: Program) => {
+    Alert.alert(
+      'Purchase Program',
+      `Purchasing "${program.title}" for $${program.price || 0}. This feature will be available soon.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'View Details', 
+          onPress: () => navigation.navigate('ProgramDetail', { id: program.id })
+        }
+      ]
+    );
+  };
+
+  const isRefreshing = myProgramsQuery.isFetching || marketplaceQuery.isFetching;
 
   return (
     <LinearGradient
@@ -88,8 +104,15 @@ export const ProgramsScreen: React.FC = () => {
       style={[styles.container, { paddingTop: insets.top }]}
     >
       <ScrollView 
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: contentBottomPadding }]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            tintColor="#fff"
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+          />
+        }
       >
         {/* Header */}
         <View style={styles.header}>
@@ -141,11 +164,23 @@ export const ProgramsScreen: React.FC = () => {
         {/* Content */}
         {activeTab === 'my-programs' ? (
           <MyProgramsTab
-            programs={myPrograms}
+            programs={myProgramsQuery.data ?? []}
+            isLoading={myProgramsQuery.isLoading}
+            isError={myProgramsQuery.isError}
+            isGuest={isGuest}
             onBrowseMarketplace={() => setActiveTab('marketplace')}
+            onContinue={handleContinueProgram}
+            onViewDetails={handleViewDetails}
           />
         ) : (
-          <MarketplaceTab programs={marketplacePrograms} />
+          <MarketplaceTab 
+            programs={marketplaceQuery.data ?? []}
+            isLoading={marketplaceQuery.isLoading}
+            isError={marketplaceQuery.isError}
+            isGuest={isGuest}
+            onPurchase={handlePurchase}
+            onViewDetails={handleViewDetails}
+          />
         )}
       </ScrollView>
     </LinearGradient>
@@ -154,11 +189,24 @@ export const ProgramsScreen: React.FC = () => {
 
 interface MyProgramsTabProps {
   programs: Program[];
+  isLoading: boolean;
+  isError: boolean;
+  isGuest: boolean;
   onBrowseMarketplace?: () => void;
+  onContinue: (program: Program) => void;
+  onViewDetails: (program: Program) => void;
 }
 
-const MyProgramsTab: React.FC<MyProgramsTabProps> = ({ programs, onBrowseMarketplace }) => {
-  const getLevelColor = (level: Program['level']) => {
+const MyProgramsTab: React.FC<MyProgramsTabProps> = ({ 
+  programs, 
+  isLoading, 
+  isError, 
+  isGuest,
+  onBrowseMarketplace,
+  onContinue,
+  onViewDetails,
+}) => {
+  const getLevelColor = (level?: string) => {
     switch (level) {
       case 'Beginner': return 'success';
       case 'Intermediate': return 'warning';
@@ -166,6 +214,42 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({ programs, onBrowseMarketp
       default: return 'default';
     }
   };
+
+  if (isGuest) {
+    return (
+      <View style={styles.emptyState}>
+        <FontAwesome5 name="user-lock" size={48} color={theme.colors.textMuted} solid />
+        <Text variant="h4" weight="semiBold" color="foreground" style={styles.emptyTitle}>
+          Sign In Required
+        </Text>
+        <Text variant="body" color="muted" style={styles.emptyDescription}>
+          Sign in to view your enrolled training programs.
+        </Text>
+      </View>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <View style={styles.emptyState}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text variant="body" color="muted" style={styles.emptyDescription}>
+          Loading your programs...
+        </Text>
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View style={styles.emptyState}>
+        <FontAwesome5 name="exclamation-circle" size={48} color={theme.colors.textMuted} solid />
+        <Text variant="body" color="muted" style={styles.emptyDescription}>
+          Unable to load programs. Pull to refresh.
+        </Text>
+      </View>
+    );
+  }
 
   if (programs.length === 0) {
     return (
@@ -196,29 +280,33 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({ programs, onBrowseMarketp
           <CardHeader style={styles.programHeader}>
             <View style={styles.programTitleRow}>
               <CardTitle style={styles.programTitle}>{program.title}</CardTitle>
-              <Badge variant={getLevelColor(program.level)} size="sm">
-                {program.level}
+              <Badge variant={getLevelColor(program.level || program.difficulty)} size="sm">
+                {program.level || program.difficulty || 'All Levels'}
               </Badge>
             </View>
             <Text variant="small" color="muted">
-              by {program.coach} • {program.duration}
+              {program.coachName ? `by ${program.coachName}` : 'TrackLit Program'}
+              {program.durationWeeks ? ` • ${program.durationWeeks} weeks` : program.duration ? ` • ${program.duration}` : ''}
             </Text>
           </CardHeader>
           
           <CardContent>
-            <View style={styles.eventsContainer}>
-              {program.events.map((event, index) => (
-                <Badge key={index} variant="outline" size="sm">
-                  {event}
-                </Badge>
-              ))}
-            </View>
+            {program.events && program.events.length > 0 && (
+              <View style={styles.eventsContainer}>
+                {program.events.map((event, index) => (
+                  <Badge key={index} variant="outline" size="sm">
+                    {event}
+                  </Badge>
+                ))}
+              </View>
+            )}
             
             <View style={styles.programActions}>
               <Button 
                 variant="default" 
                 size="sm" 
                 style={styles.actionButton}
+                onPress={() => onContinue(program)}
                 data-testid={`button-continue-program-${program.id}`}
               >
                 Continue Program
@@ -226,6 +314,7 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({ programs, onBrowseMarketp
               <Button 
                 variant="outline" 
                 size="sm"
+                onPress={() => onViewDetails(program)}
                 data-testid={`button-view-program-${program.id}`}
               >
                 View Details
@@ -240,10 +329,22 @@ const MyProgramsTab: React.FC<MyProgramsTabProps> = ({ programs, onBrowseMarketp
 
 interface MarketplaceTabProps {
   programs: Program[];
+  isLoading: boolean;
+  isError: boolean;
+  isGuest: boolean;
+  onPurchase: (program: Program) => void;
+  onViewDetails: (program: Program) => void;
 }
 
-const MarketplaceTab: React.FC<MarketplaceTabProps> = ({ programs }) => {
-  const getLevelColor = (level: Program['level']) => {
+const MarketplaceTab: React.FC<MarketplaceTabProps> = ({ 
+  programs, 
+  isLoading, 
+  isError,
+  isGuest,
+  onPurchase,
+  onViewDetails,
+}) => {
+  const getLevelColor = (level?: string) => {
     switch (level) {
       case 'Beginner': return 'success';
       case 'Intermediate': return 'warning';
@@ -252,6 +353,56 @@ const MarketplaceTab: React.FC<MarketplaceTabProps> = ({ programs }) => {
     }
   };
 
+  if (isGuest) {
+    return (
+      <View style={styles.emptyState}>
+        <FontAwesome5 name="user-lock" size={48} color={theme.colors.textMuted} solid />
+        <Text variant="h4" weight="semiBold" color="foreground" style={styles.emptyTitle}>
+          Sign In Required
+        </Text>
+        <Text variant="body" color="muted" style={styles.emptyDescription}>
+          Sign in to browse and purchase training programs.
+        </Text>
+      </View>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <View style={styles.emptyState}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text variant="body" color="muted" style={styles.emptyDescription}>
+          Loading marketplace...
+        </Text>
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View style={styles.emptyState}>
+        <FontAwesome5 name="exclamation-circle" size={48} color={theme.colors.textMuted} solid />
+        <Text variant="body" color="muted" style={styles.emptyDescription}>
+          Unable to load marketplace. Pull to refresh.
+        </Text>
+      </View>
+    );
+  }
+
+  if (programs.length === 0) {
+    return (
+      <View style={styles.emptyState}>
+        <FontAwesome5 name="store" size={48} color={theme.colors.textMuted} solid />
+        <Text variant="h4" weight="semiBold" color="foreground" style={styles.emptyTitle}>
+          No Programs Available
+        </Text>
+        <Text variant="body" color="muted" style={styles.emptyDescription}>
+          Check back soon for new training programs!
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.programsContainer}>
       {programs.map((program) => (
@@ -259,45 +410,52 @@ const MarketplaceTab: React.FC<MarketplaceTabProps> = ({ programs }) => {
           <CardHeader style={styles.programHeader}>
             <View style={styles.programTitleRow}>
               <CardTitle style={styles.programTitle}>{program.title}</CardTitle>
-              <Badge variant={getLevelColor(program.level)} size="sm">
-                {program.level}
+              <Badge variant={getLevelColor(program.level || program.difficulty)} size="sm">
+                {program.level || program.difficulty || 'All Levels'}
               </Badge>
             </View>
             <Text variant="small" color="muted">
-              by {program.coach} • {program.duration}
+              {program.coachName ? `by ${program.coachName}` : 'TrackLit Program'}
+              {program.durationWeeks ? ` • ${program.durationWeeks} weeks` : program.duration ? ` • ${program.duration}` : ''}
             </Text>
           </CardHeader>
           
           <CardContent>
-            <View style={styles.eventsContainer}>
-              {program.events.map((event, index) => (
-                <Badge key={index} variant="outline" size="sm">
-                  {event}
-                </Badge>
-              ))}
-            </View>
+            {program.events && program.events.length > 0 && (
+              <View style={styles.eventsContainer}>
+                {program.events.map((event, index) => (
+                  <Badge key={index} variant="outline" size="sm">
+                    {event}
+                  </Badge>
+                ))}
+              </View>
+            )}
             
-            <View style={styles.priceRow}>
-              <Text variant="h3" weight="bold" color="primary">
-                ${program.price}
-              </Text>
-              <Text variant="small" color="muted">
-                one-time payment
-              </Text>
-            </View>
+            {program.price !== undefined && program.price > 0 && (
+              <View style={styles.priceRow}>
+                <Text variant="h3" weight="bold" color="primary">
+                  ${program.price}
+                </Text>
+                <Text variant="small" color="muted">
+                  one-time payment
+                </Text>
+              </View>
+            )}
             
             <View style={styles.programActions}>
               <Button 
                 variant="default" 
                 size="sm" 
                 style={styles.actionButton}
+                onPress={() => onPurchase(program)}
                 data-testid={`button-purchase-program-${program.id}`}
               >
-                Purchase Program
+                {program.price ? 'Purchase Program' : 'Enroll Free'}
               </Button>
               <Button 
                 variant="outline" 
                 size="sm"
+                onPress={() => onViewDetails(program)}
                 data-testid={`button-preview-program-${program.id}`}
               >
                 Preview
@@ -316,7 +474,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl * 2,
   },
   header: {
     alignItems: 'center',

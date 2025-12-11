@@ -12,6 +12,7 @@ import { HomeScreen } from './src/screens/HomeScreen';
 import { AuthScreen } from './src/screens/AuthScreen';
 import { PracticeScreen } from './src/screens/PracticeScreen';
 import { ProgramsScreen } from './src/screens/ProgramsScreen';
+import { ProgramDetailScreen } from './src/screens/ProgramDetailScreen';
 import { ToolsScreen } from './src/screens/ToolsScreen';
 import { BottomNavigation } from './src/navigation/BottomNavigation';
 import { FeedScreen } from './src/screens/FeedScreen';
@@ -19,6 +20,13 @@ import { ProfileScreen } from './src/screens/ProfileScreen';
 import { FeedDetailScreen } from './src/screens/FeedDetailScreen';
 import { StopwatchScreen } from './src/screens/StopwatchScreen';
 import { StartGunScreen } from './src/screens/StartGunScreen';
+import { PhotoFinishScreen } from './src/screens/PhotoFinishScreen';
+import { JournalScreen } from './src/screens/JournalScreen';
+import { IntervalTimerScreen } from './src/screens/IntervalTimerScreen';
+import { SprinthiaScreen } from './src/screens/SprinthiaScreen';
+import { MeetsScreen } from './src/screens/MeetsScreen';
+import { ChatScreen } from './src/screens/ChatScreen';
+import { ChatConversationScreen } from './src/screens/ChatConversationScreen';
 import type { TabParamList, RootStackParamList, AuthStackParamList } from './src/navigation/types';
 import { queryClient } from './src/lib/queryClient';
 
@@ -45,6 +53,7 @@ const MainTabs: React.FC = () => (
     <Tab.Screen name="Feed" component={FeedScreen} />
     <Tab.Screen name="Tools" component={ToolsScreen} />
     <Tab.Screen name="Profile" component={ProfileScreen} />
+    <Tab.Screen name="Sprinthia" component={SprinthiaScreen} />
   </Tab.Navigator>
 );
 
@@ -54,6 +63,13 @@ const RootNavigator: React.FC = () => (
     <RootStack.Screen name="FeedPost" component={FeedDetailScreen} />
     <RootStack.Screen name="Stopwatch" component={StopwatchScreen} />
     <RootStack.Screen name="StartGun" component={StartGunScreen} />
+    <RootStack.Screen name="PhotoFinish" component={PhotoFinishScreen} />
+    <RootStack.Screen name="Journal" component={JournalScreen} />
+    <RootStack.Screen name="IntervalTimer" component={IntervalTimerScreen} />
+    <RootStack.Screen name="ProgramDetail" component={ProgramDetailScreen} />
+    <RootStack.Screen name="Meets" component={MeetsScreen} />
+    <RootStack.Screen name="Chat" component={ChatScreen} />
+    <RootStack.Screen name="ChatConversation" component={ChatConversationScreen} />
   </RootStack.Navigator>
 );
 

@@ -3,20 +3,19 @@ import {
   View,
   ScrollView,
   StyleSheet,
-  ImageBackground,
-  Dimensions,
   StatusBar,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useQuery } from '@tanstack/react-query';
 import { Card } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
 import { Text } from '../components/ui/Text';
 import Icon from '@expo/vector-icons/FontAwesome5';
+import { apiRequest } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import theme from '../utils/theme';
-
-const { width: screenWidth } = Dimensions.get('window');
 
 interface DashboardCard {
   title: string;
@@ -42,6 +41,13 @@ const dashboardCards: DashboardCard[] = [
     iconName: 'book',
     route: 'Programs', 
     gradient: ['rgba(26, 26, 46, 0.8)', 'rgba(22, 33, 62, 0.6)'],
+  },
+  {
+    title: 'Sprinthia AI',
+    subtitle: 'Your AI athletics coach',
+    iconName: 'robot',
+    route: 'Sprinthia',
+    gradient: ['rgba(245, 196, 66, 0.8)', 'rgba(204, 153, 51, 0.6)'],
   },
   {
     title: 'Feed',
@@ -73,6 +79,16 @@ interface DashboardCardProps {
 
 interface HomeScreenProps {
   onNavigate?: (route: string) => void;
+}
+
+interface UserProgram {
+  id: number;
+  title: string;
+}
+
+interface Meet {
+  id: number;
+  name: string;
 }
 
 const DashboardCardComponent: React.FC<DashboardCardProps> = ({ card, onPress }) => (
@@ -121,6 +137,33 @@ const DashboardCardComponent: React.FC<DashboardCardProps> = ({ card, onPress })
 export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const insets = useSafeAreaInsets();
   const [greeting, setGreeting] = useState('');
+  const { user, isAuthenticated } = useAuth();
+  const userId = user?.id;
+  const isGuest = userId === 'guest';
+
+  // Fetch user programs count
+  const programsQuery = useQuery({
+    queryKey: ['user-programs'],
+    queryFn: () => apiRequest<UserProgram[]>('/api/programs'),
+    enabled: isAuthenticated && !isGuest,
+  });
+
+  // Fetch meets count
+  const meetsQuery = useQuery({
+    queryKey: ['meets'],
+    queryFn: () => apiRequest<Meet[]>('/api/meets'),
+    enabled: isAuthenticated && !isGuest,
+  });
+
+  // Fetch saved workouts count
+  const practiceQuery = useQuery({
+    queryKey: ['workout-library'],
+    queryFn: async () => {
+      const response = await apiRequest<{ workouts: any[]; totalSaved: number }>('/api/workout-library');
+      return response.workouts ?? [];
+    },
+    enabled: isAuthenticated && !isGuest,
+  });
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -134,6 +177,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       onNavigate(route);
     }
   };
+
+  // Calculate stats
+  const workoutsCount = practiceQuery.data?.length ?? 0;
+  const programsCount = programsQuery.data?.length ?? 0;
+  const meetsCount = meetsQuery.data?.length ?? 0;
+  const isLoadingStats = programsQuery.isLoading || meetsQuery.isLoading || practiceQuery.isLoading;
 
   return (
     <LinearGradient
@@ -161,7 +210,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <Text variant="h2" weight="bold" color="primary">
-              {greeting}
+              {greeting}{user?.name ? `, ${user.name.split(' ')[0]}` : ''}
             </Text>
             <Text variant="body" color="secondary">
               Ready to train today?
@@ -185,9 +234,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         <View style={styles.statsRow}>
           <Card style={styles.statCard} gradient={true}>
             <View style={styles.statContent}>
-              <Text variant="h3" weight="bold" color="accent">
-                24
-              </Text>
+              {isLoadingStats ? (
+                <ActivityIndicator size="small" color={theme.colors.primary} />
+              ) : (
+                <Text variant="h3" weight="bold" color="accent">
+                  {workoutsCount}
+                </Text>
+              )}
               <Text variant="caption" color="secondary">
                 Workouts
               </Text>
@@ -196,9 +249,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
           
           <Card style={styles.statCard} gradient={true}>
             <View style={styles.statContent}>
-              <Text variant="h3" weight="bold" color="accent">
-                8
-              </Text>
+              {isLoadingStats ? (
+                <ActivityIndicator size="small" color={theme.colors.primary} />
+              ) : (
+                <Text variant="h3" weight="bold" color="accent">
+                  {programsCount}
+                </Text>
+              )}
               <Text variant="caption" color="secondary">
                 Programs
               </Text>
@@ -207,9 +264,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
           
           <Card style={styles.statCard} gradient={true}>
             <View style={styles.statContent}>
-              <Text variant="h3" weight="bold" color="accent">
-                3
-              </Text>
+              {isLoadingStats ? (
+                <ActivityIndicator size="small" color={theme.colors.primary} />
+              ) : (
+                <Text variant="h3" weight="bold" color="accent">
+                  {meetsCount}
+                </Text>
+              )}
               <Text variant="caption" color="secondary">
                 Meets
               </Text>
@@ -219,7 +280,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
 
         {/* Dashboard Cards */}
         <View style={styles.cardsContainer}>
-          {dashboardCards.map((card, index) => (
+          {dashboardCards.map((card) => (
             <DashboardCardComponent
               key={card.route}
               card={card}
