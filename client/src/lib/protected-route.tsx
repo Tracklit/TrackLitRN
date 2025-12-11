@@ -29,11 +29,19 @@ export function ProtectedRoute({
   }, [isLoading, user, path, setLocation]);
   
   // Immediate redirect if not authenticated and not loading
+  useEffect(() => {
+    if (!isLoading && !user && location === path) {
+      console.log(`ProtectedRoute: Redirecting unauthenticated user from ${path} to /auth`);
+      setLocation('/auth');
+    }
+  }, [isLoading, user, location, path, setLocation]);
+
   if (!isLoading && !user) {
-    console.log(`ProtectedRoute: Redirecting unauthenticated user from ${path} to /auth`);
     return (
       <Route path={path}>
-        <Redirect to="/auth" />
+        <div className="flex items-center justify-center min-h-screen">
+          <Loader2 className="h-8 w-8 animate-spin text-border" />
+        </div>
       </Route>
     );
   }
