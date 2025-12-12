@@ -32,6 +32,11 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Downloaded/temporary log directories
+*-logs/
+*-logs-*/
+*.zip
+
 # Vite
 vite.config.ts.*
 
@@ -57,4 +62,14 @@ replit.nix
 # Generated files
 generated-icon.png
 
-# Note: old/ folder is kept in repo for reference - contains archived/unused files
+# Old/archived directories
+old/
+verify-package/
+attached_assets/
+
+# Redundant config files (using Docker instead)
+.deployment
+build.sh
+startup.js
+web.config
+package.production.json
