@@ -14,7 +14,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Camera, ArrowLeft, Upload, UserPlus, X, Users } from "lucide-react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import flameLogoPath from "@assets/IMG_4720_1751015409604.png";
 
 const createGroupSchema = z.object({
   name: z.string().min(1, "Group name is required").max(100, "Name too long"),
@@ -197,7 +196,7 @@ export default function CreateGroupPage() {
           
           <div className="flex-shrink-0">
             <img 
-              src={flameLogoPath} 
+              src="/logo.svg" 
               alt="TrackLit Logo" 
               className="h-10 w-10"
             />

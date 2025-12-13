@@ -1,6 +1,5 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
@@ -178,53 +177,6 @@ export function setupAuth(app: Express) {
       }
     }),
   );
-  // Google OAuth Strategy
-  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-    passport.use(
-      new GoogleStrategy(
-        {
-          clientID: process.env.GOOGLE_CLIENT_ID,
-          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-          callbackURL: `/api/auth/google/callback`,
-          scope: ['profile', 'email']
-        },
-        async (accessToken, refreshToken, profile, done) => {
-          try {
-            // Check if user exists by email
-            const email = profile.emails?.[0]?.value;
-            if (!email) {
-              return done(new Error('No email found in Google profile'), undefined);
-            }
-
-            let user = await storage.getUserByEmail(email);
-
-            if (!user) {
-              // Create new user from Google profile
-              const username = profile.emails[0].value.split('@')[0] + '_' + Math.random().toString(36).substr(2, 5);
-              user = await storage.createUser({
-                username,
-                email,
-                name: profile.displayName || profile.emails[0].value,
-                password: await hashPassword(randomBytes(32).toString('hex')), // Random password for OAuth users
-              });
-              console.log(`[GOOGLE-AUTH] Created new user from Google: `);
-            } else {
-              console.log(`[GOOGLE-AUTH] Existing user logged in: `);
-            }
-
-            return done(null, user);
-          } catch (error) {
-            console.error('[GOOGLE-AUTH] Error:', error);
-            return done(error as Error, undefined);
-          }
-        }
-      )
-    );
-    console.log('[GOOGLE-AUTH] Google OAuth strategy configured');
-  } else {
-    console.warn('[GOOGLE-AUTH] Google OAuth not configured - missing credentials');
-  }
-
 
   passport.serializeUser((user, done) => done(null, user.id));
   passport.deserializeUser(async (id: number, done) => {
@@ -508,5 +460,3 @@ export function setupAuth(app: Express) {
     });
   });
 }
-
-

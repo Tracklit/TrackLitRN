@@ -28,7 +28,7 @@ import {
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
-import flameLogoPath from "@assets/IMG_4720_1751015409604.png";
+
 
 // Full-screen image viewer component
 const FullScreenImageViewer = ({ 
@@ -391,7 +391,7 @@ const ChatPage = () => {
           <div className="flex-shrink-0">
             <Link href="/" className="block">
               <img 
-                src={flameLogoPath} 
+                src={"/logo.svg"} 
                 alt="TrackLit Logo" 
                 className="h-12 w-12 hover:opacity-80 transition-opacity"
               />

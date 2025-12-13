@@ -51,16 +51,16 @@ import { ImageOptimizer, useImageOptimization } from '@/lib/image-optimizer';
 import { PreloadImages } from '@/components/preload-images';
 import '../styles/image-optimization.css';
 
-import backgroundImage1 from '@assets/istockphoto-691785042-612x612_1750008503978.jpg';
-import backgroundImage2 from '@assets/istockphoto-1088544230-612x612_1750008503978.jpg';
-import backgroundImage3 from '@assets/istockphoto-1224403019-612x612_1750008503978.jpg';
-import backgroundImage4 from '@assets/istockphoto-1253944192-612x612_1750008503979.jpg';
-import backgroundImage5 from '@assets/istockphoto-1279168476-612x612_1750008503979.jpg';
-import programsBackground from '@assets/image_1750012192490.png';
+
+
+
+
+
+
 const practiceBackground = '/assets/Screenshot 2025-06-15 205621_1750013855167.png';
-import raceBackground from '@assets/Screenshot 2025-06-15 205651_1750013855167.png';
-import toolsBackground from '@assets/Screenshot 2025-06-15 205721_1750013855168.png';
-import sprinthiaBackground from '@assets/image_1750019864190.png';
+
+
+
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -867,3 +867,4 @@ export default function HomePage() {
     </div>
   );
 }
+

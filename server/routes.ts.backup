@@ -424,38 +424,6 @@ if (process.env.STRIPE_SECRET_KEY) {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
   setupAuth(app);
-  // Google OAuth Routes
-  app.get('/api/auth/google',
-    passport.authenticate('google', { scope: ['profile', 'email'] })
-  );
-
-  app.get('/api/auth/google/callback',
-    passport.authenticate('google', { 
-      failureRedirect: '/auth?error=google_auth_failed',
-      session: true 
-    }),
-    async (req, res) => {
-      try {
-        const user = req.user as User;
-        if (!user) {
-          return res.redirect('/auth?error=no_user');
-        }
-
-        // Check if user needs onboarding
-        const needsOnboarding = !user.username || !user.name;
-
-        // Redirect to dashboard or onboarding
-        if (needsOnboarding) {
-          res.redirect('/onboarding');
-        } else {
-          res.redirect('/dashboard');
-        }
-      } catch (error) {
-        console.error('[GOOGLE-AUTH] Callback error:', error);
-        res.redirect('/auth?error=callback_failed');
-      }
-    }
-  );
   
   // Initialize default achievements
   await initializeDefaultAchievements();
@@ -10079,5 +10047,4 @@ Submission Details:
 
   return httpServer;
 }
-
 

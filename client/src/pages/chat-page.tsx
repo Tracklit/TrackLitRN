@@ -42,7 +42,7 @@ import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 
 import { useAuth } from "@/hooks/use-auth";
-import flameLogoPath from "@assets/IMG_4720_1751015409604.png";
+
 import { OptimizedAvatar } from "@/components/ui/optimized-avatar";
 import { OptimizedMessageImage } from "@/components/ui/optimized-message-image";
 
