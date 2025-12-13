@@ -1,5 +1,6 @@
 console.log('=== SERVER FILE LOADING ===');
 import express, { type Request, Response, NextFunction } from "express";
+import cors from "cors";
 import { registerRoutes } from "./routes";
 import { serveStatic, log } from "./utils";
 import { VideoCleanupService } from "./video-cleanup";
@@ -7,6 +8,15 @@ import path from "path";
 import fs from "fs";
 
 const app = express();
+
+// Enable CORS for mobile app and cross-origin requests
+app.use(cors({
+  origin: true, // Allow all origins (mobile apps, different domains)
+  credentials: true, // Allow cookies/auth headers
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
