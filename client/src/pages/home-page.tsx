@@ -57,7 +57,19 @@ import '../styles/image-optimization.css';
 
 
 
+// Background images for dashboard cards
 const practiceBackground = '/assets/Screenshot 2025-06-15 205621_1750013855167.png';
+const programsBackground = ''; // Placeholder - using gradient instead
+const raceBackground = ''; // Placeholder - using gradient instead
+const toolsBackground = ''; // Placeholder - using gradient instead
+const sprinthiaBackground = ''; // Placeholder - using gradient instead
+
+// Background images for community carousel
+const backgroundImage1 = '';
+const backgroundImage2 = '';
+const backgroundImage3 = '';
+const backgroundImage4 = '';
+const backgroundImage5 = '';
 
 
 
