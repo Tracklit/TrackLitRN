@@ -20,7 +20,6 @@ RUN npm install --force --platform=linuxmusl --arch=x64 sharp
 COPY client ./client
 COPY server ./server
 COPY shared ./shared
-COPY attached_assets ./attached_assets
 COPY vite.config.ts ./
 COPY tsconfig.json ./
 COPY tailwind.config.ts ./
@@ -73,7 +72,6 @@ COPY --from=builder /app/server ./server
 COPY shared ./shared
 
 # Copy attached_assets if needed at runtime  
-COPY attached_assets ./attached_assets
 
 # Copy startup script
 COPY docker-entrypoint.sh ./
@@ -89,3 +87,4 @@ EXPOSE 8080
 # Execute entrypoint directly
 # Use sh explicitly to avoid potential path issues
 CMD ["sh", "-c", "exec node dist/index.js"]
+
