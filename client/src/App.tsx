@@ -290,15 +290,14 @@ function Router() {
             </div>
           }>
             <Switch location={isChatRoute ? baseRoute : location}>
-          {/* Feed routes */}
+              {/* Feed routes */}
           <ProtectedRoute path="/feed/:id" component={FeedPostDetailPage} />
           <ProtectedRoute path="/feed" component={FeedPage} />
-          
+
           {/* Home route */}
+          <ProtectedRoute path="/dashboard" component={HomePage} />
           <ProtectedRoute path="/home" component={HomePage} />
-          <ProtectedRoute path="/" component={HomePage} />
-        
-          {/* Training */}
+          <ProtectedRoute path="/" component={HomePage} />          {/* Training */}
           <ProtectedRoute path="/practice" component={PracticePage} />
           <ProtectedRoute path="/journal-entry" component={JournalEntryPage} />
           <ProtectedRoute path="/tools" component={WorkoutToolsPage} />
@@ -376,6 +375,7 @@ function Router() {
         <ProtectedRoute path="/admin-affiliate-submissions" component={AdminAffiliateSubmissions} />
         
         {/* Onboarding */}
+        <Route path="/onboarding" component={OnboardingContainer} />
         <Route path="/onboarding/welcome" component={OnboardingContainer} />
         <Route path="/onboarding/alpha-info" component={OnboardingContainer} />
         <Route path="/onboarding/spikes" component={OnboardingContainer} />
