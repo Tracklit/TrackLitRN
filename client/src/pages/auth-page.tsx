@@ -17,7 +17,6 @@ import {
 } from '@/components/ui/form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Terminal, ChevronLeft } from 'lucide-react';
-import { signInWithGoogle } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 const authVideoUrl = '/assets/THE ULTIMATE TOOLKIT FOR TRACK & FIELD (1)_1761862317351.mp4';
 
@@ -254,47 +253,10 @@ export default function AuthPage() {
     }
   };
 
-  // Handle Google sign-in
-  const handleGoogleSignIn = async () => {
-    try {
-      const result = await signInWithGoogle();
-      if (result.idToken) {
-        // Send the ID token to our backend for verification
-        const response = await fetch('/api/auth/google', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ idToken: result.idToken }),
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          // Check if user needs onboarding
-          if (data.requiresOnboarding) {
-            window.location.href = '/onboarding';
-          } else {
-            window.location.href = '/';
-          }
-        } else {
-          const errorData = await response.json();
-          toast({
-            title: "Sign-in failed",
-            description: errorData.error || "Could not sign in with Google.",
-            variant: "destructive",
-          });
-        }
-      }
-    } catch (error) {
-      toast({
-        title: "Sign-in failed",
-        description: "Could not sign in with Google. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Redirect if user is already logged in
+  // Handle Google sign-in - redirect to Passport.js OAuth flow
+  const handleGoogleSignIn = () => {
+    window.location.href = '/api/auth/google';
+  };  // Redirect if user is already logged in
   if (user) {
     return <Redirect to="/" />;
   }
