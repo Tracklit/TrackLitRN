@@ -319,7 +319,7 @@ export default function ChannelSettingsPage() {
 
   if (channelLoading) {
     return (
-      <div className="min-h-screen bg-slate-900 text-white">
+      <div className="min-h-screen pt-20 bg-slate-900 text-white">
         {/* Header Skeleton */}
         <div className="p-4 border-b border-gray-600/30 flex-shrink-0 bg-black/20 backdrop-blur-sm">
           <div className="flex items-center gap-3">
@@ -387,14 +387,14 @@ export default function ChannelSettingsPage() {
 
   if (!channel) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-900 text-white">
+      <div className="flex items-center justify-center min-h-screen pt-20 bg-slate-900 text-white">
         <div>Channel not found</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white">
+    <div className="min-h-screen pt-20 bg-slate-900 text-white">
       {/* Header */}
       <div className="p-4 border-b border-gray-600/30 flex-shrink-0 bg-black/20 backdrop-blur-sm">
         <div className="flex items-center gap-3">

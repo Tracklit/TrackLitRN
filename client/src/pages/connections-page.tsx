@@ -174,7 +174,7 @@ export default function ConnectionsPage() {
   );
 
   return (
-    <div className="max-w-md mx-auto bg-background min-h-screen">
+    <div className="max-w-md mx-auto bg-background min-h-screen pt-20">
       {/* Header */}
       <div className="sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b px-4 py-3 z-10">
         <div className="flex items-center justify-between">
