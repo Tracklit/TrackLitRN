@@ -275,7 +275,7 @@ export default function AthletesPage() {
 
   if (isLoading && page === 1) {
     return (
-      <div className="min-h-screen bg-[#010a18] text-white">
+      <div className="min-h-screen pt-20 bg-[#010a18] text-white">
         <div className="container mx-auto px-4 py-6">
           <div className="mb-6">
             <h1 className="text-2xl font-bold mb-4">Athletes</h1>
@@ -299,7 +299,7 @@ export default function AthletesPage() {
     allAthletes;
 
   return (
-    <div className="min-h-screen bg-[#010a18] text-white">
+    <div className="min-h-screen pt-20 bg-[#010a18] text-white">
       <div className="container mx-auto px-4 py-6">
         <div className="mb-6">
           <h1 className="text-2xl font-bold mb-4">Athletes</h1>

@@ -155,7 +155,7 @@ export default function PhotoFinishAnalysisPage() {
 
   if (!videoData) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen pt-20 bg-black flex items-center justify-center">
         <div className="text-white">Loading video analysis...</div>
       </div>
     );

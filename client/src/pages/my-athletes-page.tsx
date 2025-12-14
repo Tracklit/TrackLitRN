@@ -102,7 +102,7 @@ export default function MyAthletesPage() {
   // Show message if user is not a coach
   if (!currentUser?.isCoach) {
     return (
-      <div className="min-h-screen bg-[#010a18] text-white">
+      <div className="min-h-screen pt-20 bg-[#010a18] text-white">
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-3xl font-bold text-white mb-8">My Athletes</h1>
@@ -122,7 +122,7 @@ export default function MyAthletesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#010a18] text-white">
+    <div className="min-h-screen pt-20 bg-[#010a18] text-white">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="flex justify-between items-center mb-8">

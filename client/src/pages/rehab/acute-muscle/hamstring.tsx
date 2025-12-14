@@ -250,7 +250,7 @@ export default function HamstringRehabPage() {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#010a18' }}>
+    <div className="min-h-screen pt-20 pt-20" style={{ backgroundColor: '#010a18' }}>
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">

@@ -261,7 +261,7 @@ export function VideoPlayerPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen pt-20 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
         <div className="text-white text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
           <p>Loading video...</p>
@@ -272,7 +272,7 @@ export function VideoPlayerPage() {
 
   if (!videoId) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen pt-20 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
         <div className="text-white text-center">
           <h1 className="text-2xl font-bold mb-4">Invalid Video ID</h1>
           <Button 
@@ -289,7 +289,7 @@ export function VideoPlayerPage() {
   // Only show "Video Not Found" if we've exhausted retries and video definitely doesn't exist
   if (!currentVideo && !isLoading && !isVideoNotFoundButStillLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen pt-20 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
         <div className="text-white text-center">
           <h1 className="text-2xl font-bold mb-4">Video Not Found</h1>
           <Button 
@@ -318,7 +318,7 @@ export function VideoPlayerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen pt-20 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       {/* Header */}
       <div className="border-b border-white/10 bg-black/20 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">

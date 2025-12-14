@@ -109,7 +109,7 @@ export default function AdminAffiliateSubmissions() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 p-4">
+      <div className="min-h-screen pt-20 bg-slate-950 p-4">
         <div className="max-w-6xl mx-auto">
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
@@ -121,7 +121,7 @@ export default function AdminAffiliateSubmissions() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 p-4">
+    <div className="min-h-screen pt-20 bg-slate-950 p-4">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">

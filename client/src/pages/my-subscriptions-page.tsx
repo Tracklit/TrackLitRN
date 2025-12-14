@@ -61,7 +61,7 @@ export default function MySubscriptionsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen pt-20 bg-gradient-to-br from-slate-50 to-slate-100">
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">My Subscriptions</h1>

@@ -824,7 +824,7 @@ export default function StartGunPage() {
   };
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 pb-20">
+    <div className="min-h-screen pt-20 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 pb-20">
       <div className="container mx-auto px-4 py-6 max-w-2xl">
         
         {/* Header */}

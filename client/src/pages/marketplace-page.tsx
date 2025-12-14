@@ -87,7 +87,7 @@ export default function MarketplacePage() {
   const isActiveTab = (path: string) => location === path;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900 text-white flex flex-col">
+    <div className="min-h-screen pt-20 bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900 text-white flex flex-col">
       {/* Header */}
       <header className="sticky top-0 z-50 p-4 flex items-center justify-between border-b border-slate-700 bg-slate-900/80 backdrop-blur-sm">
         <h1 className="text-xl font-bold tracking-wide">TrackLit</h1>

@@ -251,7 +251,7 @@ export default function ProgramsPage() {
     : [];
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
+    <div className="min-h-screen pt-20 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
       {/* Header */}
       <div className="sticky top-0 z-50 backdrop-blur-sm border-b border-white/10" style={{ background: 'linear-gradient(135deg, rgba(91, 33, 182, 0.95) 0%, rgba(124, 58, 237, 0.95) 100%)' }}>
         <div className="container max-w-screen-xl mx-auto px-4 py-4">

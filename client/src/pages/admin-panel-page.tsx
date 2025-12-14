@@ -38,7 +38,7 @@ export default function AdminPanelPage() {
 
   if (user?.role !== 'admin') {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
+      <div className="min-h-screen pt-20 bg-black text-white flex items-center justify-center p-4">
         <Card className="bg-gray-900 border-gray-700 max-w-md w-full">
           <CardContent className="text-center py-8">
             <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
