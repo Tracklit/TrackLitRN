@@ -6,6 +6,15 @@ import { z } from "zod";
 
 const router = Router();
 
+function isMissingRelationError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const anyErr = error as any;
+  // Postgres undefined_table
+  if (anyErr.code === "42P01") return true;
+  const msg = typeof anyErr.message === "string" ? anyErr.message : "";
+  return /relation .* does not exist/i.test(msg) || /undefined_table/i.test(msg);
+}
+
 // Get all feed items (community activities + user posts) with filter support
 router.get("/", async (req: Request, res: Response) => {
   if (!req.user) {
@@ -129,6 +138,12 @@ router.get("/", async (req: Request, res: Response) => {
 
     res.json(feedItems);
   } catch (error) {
+    if (isMissingRelationError(error)) {
+      // DB schema is missing feed tables (common when migrations haven't been applied yet).
+      // Returning an empty feed keeps the mobile/web UI usable instead of hard-failing.
+      console.warn("Feed tables missing; returning empty feed. Apply DB migrations to enable feed.", error);
+      return res.json([]);
+    }
     console.error("Error fetching feed:", error);
     res.status(500).json({ error: "Failed to fetch feed" });
   }

@@ -129,6 +129,15 @@ export function setupAuth(app: Express) {
   // JWT Authentication Middleware - checks for Bearer token in Authorization header
   // Works alongside session auth - if session auth fails, tries JWT
   app.use(async (req: Request, res: Response, next: NextFunction) => {
+    // Some routes still rely on passport's req.isAuthenticated() checks.
+    // For mobile clients using JWT, we set req.user but passport does not mark the
+    // request as authenticated. We patch req.isAuthenticated() to also treat a
+    // JWT-populated req.user as authenticated.
+    const originalIsAuthenticated = req.isAuthenticated?.bind(req);
+    if (originalIsAuthenticated) {
+      (req as any).isAuthenticated = () => originalIsAuthenticated() || !!req.user;
+    }
+
     // Skip if already authenticated via session
     if (req.isAuthenticated()) {
       return next();
@@ -465,7 +474,9 @@ export function setupAuth(app: Express) {
         console.log(`User ${req.user.id} not found in database`);
         return res.status(401).json({ error: 'User not found' });
       }
-      res.json(freshUser);
+      // Never expose password hashes to clients (web or mobile)
+      const { password: _password, ...safeUser } = freshUser as any;
+      res.json(safeUser);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ error: 'Internal server error' });
