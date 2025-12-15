@@ -248,37 +248,38 @@ redisClient.on('end', () => {
   setTimeout(() => connectRedis(), 1000);
 });
 
-// Connect to Redis with retry logic
-let isConnecting = false;
+// Connect to Redis with retry logic - BLOCKING for server startup
 let isConnected = false;
 
-const connectRedis = async (retryCount = 0) => {
-  if (isConnected || isConnecting) return;
-  
-  isConnecting = true;
+const connectRedis = async (retryCount = 0): Promise<boolean> => {
+  if (isConnected) return true;
+
   try {
+    console.log(`Attempting Redis connection (attempt ${retryCount + 1})...`);
     await redisClient.connect();
     isConnected = true;
-    isConnecting = false;
     console.log('✅ Redis connected successfully');
+    return true;
   } catch (err) {
-    isConnecting = false;
     console.error(`Failed to connect to Redis (attempt ${retryCount + 1}):`, err);
     
-    if (retryCount < 5) {
-      const delay = Math.min((retryCount + 1) * 2000, 10000);
+    if (retryCount < 3) {
+      const delay = Math.min((retryCount + 1) * 2000, 5000);
       console.log(`Retrying Redis connection in ${delay}ms...`);
-      setTimeout(() => connectRedis(retryCount + 1), delay);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return connectRedis(retryCount + 1);
     } else {
-      console.error('❌ Redis connection failed after 5 attempts. Sessions will not persist.');
+      console.error('❌ Redis connection failed after 3 attempts. Using memory sessions (not recommended for production).');
+      return false;
     }
   }
 };
 
-// Start initial connection attempt (non-blocking)
-connectRedis().catch(console.error);
-
-export interface IStorage {
+// Connect immediately and export the promise
+export const redisReady = connectRedis().catch((err) => {
+  console.error('Redis connection initialization failed:', err);
+  return false;
+});export interface IStorage {
   // User operations
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
@@ -544,11 +545,26 @@ export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
-    // Use Redis for session storage in Azure
-    this.sessionStore = new RedisStore({
-      client: redisClient,
-      prefix: 'tracklit:sess:',
-      ttl: 30 * 24 * 60 * 60, // 30 days in seconds
+    // Initialize sessionStore - will be set once Redis is ready
+    // Start with a temporary memory store
+    const MemoryStore = session.MemoryStore;
+    this.sessionStore = new MemoryStore();
+    
+    // Switch to Redis once connection is established
+    redisReady.then((connected) => {
+      if (connected && isConnected) {
+        console.log('✅ Switching to Redis session store');
+        this.sessionStore = new RedisStore({
+          client: redisClient,
+          prefix: 'tracklit:sess:',
+          ttl: 30 * 24 * 60 * 60, // 30 days in seconds
+        });
+      } else {
+        console.warn('⚠️  Using memory session store (not recommended for production)');
+      }
+    }).catch((err) => {
+      console.error('Failed to initialize Redis store:', err);
+      console.warn('⚠️  Falling back to memory session store');
     });
   }
   
