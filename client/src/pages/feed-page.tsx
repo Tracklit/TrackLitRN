@@ -377,7 +377,7 @@ export default function FeedPage() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-900">
+    <div className="flex flex-col h-full bg-gray-900 pt-16">
       <div className="flex items-center justify-between p-4 border-b border-gray-800">
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold text-white">Feed</h1>
@@ -541,3 +541,4 @@ export default function FeedPage() {
     </div>
   );
 }
+
