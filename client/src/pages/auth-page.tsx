@@ -267,7 +267,7 @@ export default function AuthPage() {
     <>
       {/* Video Overlay on Left Side */}
       {showVideo && (
-        <div 
+        <div
           className="fixed inset-0 z-50 bg-black flex items-center justify-center cursor-pointer"
           onClick={handleVideoTap}
           onTouchStart={handleTouchStart}
@@ -275,16 +275,21 @@ export default function AuthPage() {
           onTouchEnd={handleTouchEnd}
         >
           <video
+            src={authVideoUrl}
             autoPlay
             loop
             muted
             playsInline
+            preload="auto"
             className="w-full h-full object-cover"
-          >
-            <source src={authVideoUrl} type="video/mp4" />
-          </video>
-          
-          {/* Swipe Bar at Bottom */}
+            onError={(e) => {
+              console.error('Video failed to load:', e);
+              console.error('Video URL:', authVideoUrl);
+            }}
+            onLoadedData={() => {
+              console.log('Video loaded successfully');
+            }}
+          />          {/* Swipe Bar at Bottom */}
           <div className="absolute bottom-0 left-0 right-0 flex justify-center gap-1.5 pb-8 pointer-events-none">
             <button
               className="transition-all duration-200"
@@ -742,14 +747,17 @@ export default function AuthPage() {
       {/* Hero Video Section */}
       <div className="hidden md:flex items-center justify-center bg-black overflow-hidden relative">
         <video
+          src={authVideoUrl}
           autoPlay
           loop
           muted
           playsInline
+          preload="auto"
           className="w-full h-full object-cover"
-        >
-          <source src={authVideoUrl} type="video/mp4" />
-        </video>
+          onError={(e) => {
+            console.error('Hero video failed to load:', e);
+          }}
+        />
       </div>
     </div>
     </>
