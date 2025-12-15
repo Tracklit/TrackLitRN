@@ -20,6 +20,8 @@ export const users = pgTable("users", {
   sprinthiaProgramsCreated: integer("sprinthia_programs_created").default(0), // Track AI program generations
   sprinthiaRegenerationsUsed: integer("sprinthia_regenerations_used").default(0), // Track regenerations
   defaultClubId: integer("default_club_id"), // Will be connected through relations
+  country: text("country"), // User's country
+  dateOfBirth: timestamp("date_of_birth"), // User's date of birth
   isBlocked: boolean("is_blocked").default(false), // For admin blocking
   isPrivate: boolean("is_private").default(false), // Privacy setting for profile visibility
   createdAt: timestamp("created_at").defaultNow(),

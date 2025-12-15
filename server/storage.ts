@@ -178,6 +178,9 @@ const getRedisConfig = () => {
         host: url.hostname,
         port: parseInt(url.port) || 6380,
         tls: url.protocol === 'rediss:',
+        connectTimeout: 30000, // 30 seconds for Azure Redis
+        commandTimeout: 10000, // 10 seconds per command
+        keepAlive: 30000, // Keep connection alive
         reconnectStrategy: (retries: number) => {
           if (retries > 10) {
             console.error('Redis: Too many reconnection attempts, giving up');
@@ -203,6 +206,9 @@ const getRedisConfig = () => {
     return {
       url: redisUrl,
       socket: {
+        connectTimeout: 30000,
+        commandTimeout: 10000,
+        keepAlive: 30000,
         reconnectStrategy: (retries: number) => {
           if (retries > 10) {
             console.error('Redis: Too many reconnection attempts, giving up');
@@ -236,11 +242,41 @@ redisClient.on('reconnecting', () => {
   console.log('Redis Client: Reconnecting...');
 });
 
-// Connect to Redis
-redisClient.connect().catch((err) => {
-  console.error('Failed to connect to Redis:', err);
-  console.error('Redis URL:', process.env.REDIS_URL || 'not set (using localhost:6379)');
+redisClient.on('end', () => {
+  console.log('Redis Client: Connection ended, attempting to reconnect...');
+  isConnected = false;
+  setTimeout(() => connectRedis(), 1000);
 });
+
+// Connect to Redis with retry logic
+let isConnecting = false;
+let isConnected = false;
+
+const connectRedis = async (retryCount = 0) => {
+  if (isConnected || isConnecting) return;
+  
+  isConnecting = true;
+  try {
+    await redisClient.connect();
+    isConnected = true;
+    isConnecting = false;
+    console.log('✅ Redis connected successfully');
+  } catch (err) {
+    isConnecting = false;
+    console.error(`Failed to connect to Redis (attempt ${retryCount + 1}):`, err);
+    
+    if (retryCount < 5) {
+      const delay = Math.min((retryCount + 1) * 2000, 10000);
+      console.log(`Retrying Redis connection in ${delay}ms...`);
+      setTimeout(() => connectRedis(retryCount + 1), delay);
+    } else {
+      console.error('❌ Redis connection failed after 5 attempts. Sessions will not persist.');
+    }
+  }
+};
+
+// Start initial connection attempt (non-blocking)
+connectRedis().catch(console.error);
 
 export interface IStorage {
   // User operations
@@ -4149,3 +4185,6 @@ export class DatabaseStorage implements IStorage {
 }
 
 export const storage = new DatabaseStorage();
+
+
+

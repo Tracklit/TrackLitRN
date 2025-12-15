@@ -18,6 +18,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Terminal, ChevronLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { countries } from '@/lib/countries';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 const authVideoUrl = '/assets/THE ULTIMATE TOOLKIT FOR TRACK & FIELD (1)_1761862317351.mp4';
 
 // Extend the schemas with validation
@@ -477,8 +479,48 @@ export default function AuthPage() {
                     )}
                   />
                   
-                  <FormField
+                <FormField
+                  control={registerForm.control as any}
+                  name="country"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Country (Optional)</FormLabel>
+                      <Select
+                        value={field.value || ""}
+                        onValueChange={field.onChange}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select your country" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="max-h-[300px]">
+                          {countries.map((country) => (
+                            <SelectItem key={country} value={country}>
+                              {country}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />                  <FormField
                     control={registerForm.control as any}
+                    name="dateOfBirth"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Date of Birth (Optional)</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={registerForm.control as any}       
                     name="password"
                     render={({ field }) => (
                       <FormItem>
@@ -489,9 +531,7 @@ export default function AuthPage() {
                         <FormMessage />
                       </FormItem>
                     )}
-                  />
-                  
-                  <FormField
+                  />                  <FormField
                     control={registerForm.control as any}
                     name="confirmPassword"
                     render={({ field }) => (

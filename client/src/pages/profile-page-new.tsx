@@ -29,11 +29,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Label } from '@/components/ui/label';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Link } from 'wouter';
+import { countries } from '@/lib/countries';
 
 // Profile form schema
 const profileFormSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
   email: z.string().email({ message: "Invalid email address" }),
+  country: z.string().optional(),
+  dateOfBirth: z.string().optional(),
   defaultClubId: z.number().nullable().optional(),
 });
 
@@ -267,6 +270,8 @@ export default function ProfilePage() {
     defaultValues: {
       name: user?.name || '',
       email: user?.email || '',
+      country: user?.country || '',
+      dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
       defaultClubId: user?.defaultClubId || null,
     },
   });
@@ -758,6 +763,48 @@ export default function ProfilePage() {
 
                 <FormField
                   control={form.control}
+                  name="country"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Country (Optional)</FormLabel>
+                      <Select
+                        value={field.value || ""}
+                        onValueChange={field.onChange}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select your country" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="max-h-[300px]">
+                          {countries.map((country) => (
+                            <SelectItem key={country} value={country}>
+                              {country}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="dateOfBirth"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Date of Birth</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="date" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
                   name="defaultClubId"
                   render={({ field }) => (
                     <FormItem>
@@ -780,6 +827,12 @@ export default function ProfilePage() {
                           ))}
                         </SelectContent>
                       </Select>
+                      <Link href="/clubs">
+                        <Button type="button" variant="outline" size="sm" className="mt-2 w-full">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create or Join a Club
+                        </Button>
+                      </Link>
                       <FormMessage />
                     </FormItem>
                   )}
