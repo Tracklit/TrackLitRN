@@ -81,7 +81,7 @@ async function processGymDataInBackground(programId: number, googleSheetId: stri
                     }
                   }
                 }
-              } catch (error) {
+              } catch (error: any) {
                 console.error(`Background: Error fetching gym ${gymCheck.gymNumber}:`, error);
               }
             }
@@ -95,7 +95,7 @@ async function processGymDataInBackground(programId: number, googleSheetId: stri
           await dbStorage.updateProgramSession(session.id, { gymData });
           processedCount++;
           console.log(`Background: Updated session ${session.dayNumber} with ${gymData.length} gym exercises`);
-        } catch (error) {
+        } catch (error: any) {
           console.error(`Background: Error updating session ${session.id}:`, error);
         }
       }
@@ -451,7 +451,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } else {
           res.redirect('/dashboard');
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('[GOOGLE-AUTH] Callback error:', error);
         res.redirect('/auth?error=callback_failed');
       }
@@ -558,7 +558,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }).returning();
 
       res.json(notification[0]);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating notification:", error);
       res.status(500).json({ error: "Failed to create notification" });
     }
@@ -578,7 +578,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .limit(50);
 
       res.json(userNotifications);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching notifications:", error);
       res.status(500).json({ error: "Failed to fetch notifications" });
     }
@@ -613,7 +613,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       `);
 
       res.json(athletes.rows);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching coach athletes:", error);
       res.status(500).json({ error: "Failed to fetch athletes" });
     }
@@ -649,7 +649,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       `);
 
       res.json(connectedUsers.rows);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching connected users:", error);
       res.status(500).json({ error: "Failed to fetch connected users" });
     }
@@ -800,7 +800,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const users = await dbStorage.searchUsers(query);
       res.json(users);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error searching users:", error);
       res.status(500).json({ error: "Failed to search users" });
     }
@@ -812,7 +812,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const profile = await dbStorage.getAthleteProfile(user.id);
       // User needs onboarding if they don't have a profile or missing essential data
       return !profile || !user.username || !user.name;
-    } catch (error) {
+    } catch (error: any) {
       // If error fetching profile, assume onboarding is needed
       return true;
     }
@@ -916,7 +916,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       });
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Google auth error:', error);
       res.status(500).json({ error: "Authentication failed" });
     }
@@ -948,7 +948,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       res.json(achievementsWithStatus);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching achievements:", error);
       res.status(500).json({ error: "Failed to fetch achievements" });
     }
@@ -1039,7 +1039,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.json(streak);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching login streak:", error);
       res.status(500).json({ error: "Failed to fetch login streak" });
     }
@@ -1053,7 +1053,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const transactions = await dbStorage.getSpikeTransactions(req.user!.id);
       res.json(transactions);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching spike transactions:", error);
       res.status(500).json({ error: "Failed to fetch spike transactions" });
     }
@@ -1097,7 +1097,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         spikes: result.user.spikes,
         bonus: welcomeBonus
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error claiming welcome spikes:", error);
       res.status(500).json({ error: "Failed to claim welcome spikes" });
     }
@@ -1113,7 +1113,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // We'll implement proper daily login tracking in a future update
       const streak = await dbStorage.getLoginStreakByUserId(req.user!.id);
       res.json(streak || { currentStreak: 0, longestStreak: 0 });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error checking daily login:", error);
       res.status(500).json({ error: "Failed to check daily login" });
     }
@@ -1140,7 +1140,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.json(achievement);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error claiming achievement:", error);
       res.status(500).json({ error: "Failed to claim achievement" });
     }
@@ -1164,7 +1164,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Remove sensitive information for public profiles
       const { password, ...publicProfile } = user;
       res.json(publicProfile);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching user profile:", error);
       res.status(500).json({ message: "Failed to fetch user profile" });
     }
@@ -1180,7 +1180,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const userMeets = await dbStorage.getMeetsByUserId(userId);
       res.json(userMeets);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching user meets:", error);
       res.status(500).json({ message: "Failed to fetch user meets" });
     }
@@ -1193,7 +1193,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // For now, return null since we don't have workout data structure
       res.json(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching latest workout:", error);
       res.status(500).json({ message: "Failed to fetch latest workout" });
     }
@@ -1210,7 +1210,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const programs = await dbStorage.getAllPrograms();
       const userPrograms = programs.filter(program => program.userId === userId && program.visibility === 'public');
       res.json(userPrograms);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching user programs:", error);
       res.status(500).json({ message: "Failed to fetch user programs" });
     }
@@ -1221,7 +1221,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = parseInt(req.params.userId);
       const friends = await dbStorage.getFriends(userId);
       res.json(friends);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching user connections:", error);
       res.status(500).json({ message: "Failed to fetch user connections" });
     }
@@ -1247,7 +1247,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Remove sensitive information
       const { password, ...publicProfile } = updatedUser;
       res.json(publicProfile);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating user profile:", error);
       res.status(500).json({ message: "Failed to update user profile" });
     }
@@ -1277,7 +1277,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const data = await response.json();
       res.json(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error in proxy request:", error);
       res.status(500).json({ error: "Failed to fetch data from external API" });
     }
@@ -1428,7 +1428,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Return the created meet
       return res.status(201).json(meet);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in POST /api/meets:', error);
       
       if (error instanceof z.ZodError) {
@@ -1468,7 +1468,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const updatedMeet = await dbStorage.updateMeet(meetId, updates);
       res.json(updatedMeet);
-    } catch (error) {
+    } catch (error: any) {
       res.status(500).send("Error updating meet");
     }
   });
@@ -1537,7 +1537,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.status(201).json(result);
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.errors });
       }
@@ -1571,7 +1571,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const updatedResult = await dbStorage.updateResult(resultId, updates);
       res.json(updatedResult);
-    } catch (error) {
+    } catch (error: any) {
       res.status(500).send("Error updating result");
     }
   });
@@ -1636,7 +1636,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const reminder = await dbStorage.createReminder(reminderData);
       res.status(201).json(reminder);
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.errors });
       }
@@ -1670,7 +1670,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const updatedReminder = await dbStorage.updateReminder(reminderId, updates);
       res.json(updatedReminder);
-    } catch (error) {
+    } catch (error: any) {
       res.status(500).send("Error updating reminder");
     }
   });
@@ -1749,7 +1749,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               isFollowing: followStatus.isFollowing || false,
               isFollower: followStatus.isFollower || false
             };
-          } catch (error) {
+          } catch (error: any) {
             return {
               ...user,
               isFollowing: false,
@@ -1770,7 +1770,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           hasMore
         }
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching athletes:", error);
       res.status(500).send("Error fetching athletes");
     }
@@ -1789,7 +1789,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create the coach relationship (pending by default)
       const coach = await dbStorage.createCoach(coachData);
       res.status(201).json(coach);
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.errors });
       }
@@ -1825,7 +1825,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const updatedCoach = await dbStorage.updateCoach(coachId, { status: req.body.status });
       res.json(updatedCoach);
-    } catch (error) {
+    } catch (error: any) {
       res.status(500).send("Error updating coach relationship");
     }
   });
@@ -1870,7 +1870,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const group = await dbStorage.createAthleteGroup(groupData);
       res.status(201).json(group);
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.errors });
       }
@@ -1936,7 +1936,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const updatedGroup = await dbStorage.updateAthleteGroup(groupId, updates);
       res.json(updatedGroup);
-    } catch (error) {
+    } catch (error: any) {
       res.status(500).send("Error updating athlete group");
     }
   });
@@ -2039,7 +2039,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       res.status(201).json(result);
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.errors });
       }
@@ -2135,7 +2135,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const note = await dbStorage.createCoachNote(noteData);
       res.status(201).json(note);
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.errors });
       }
@@ -2172,7 +2172,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const updatedNote = await dbStorage.updateCoachNote(noteId, updates);
       res.json(updatedNote);
-    } catch (error) {
+    } catch (error: any) {
       res.status(500).send("Error updating coach note");
     }
   });
@@ -2209,7 +2209,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.json(weather);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Weather API error:", error);
       res.status(500).json({ error: "Failed to fetch weather data" });
     }
@@ -2233,6 +2233,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+
+      // Convert dateOfBirth string to Date object if present
+      if (updates.dateOfBirth && typeof updates.dateOfBirth === 'string') {
+        updates.dateOfBirth = new Date(updates.dateOfBirth);
+      }
       // If a default club ID is provided, verify the user is a member of that club
       if (updates.defaultClubId !== undefined) {
         const clubMember = await dbStorage.getClubMemberByUserAndClub(userId, updates.defaultClubId);
@@ -2252,8 +2257,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         res.status(404).send("User not found");
       }
-    } catch (error) {
-      res.status(500).send("Error updating user");
+    } catch (error: any) {
+      console.error("Error updating user:", error);
+      res.status(500).send("Error updating user: " + (error?.message || "Unknown error"));
     }
   });
   
@@ -2324,7 +2330,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const updatedUser = await dbStorage.updateUser(req.user!.id, updateData);
       res.json(updatedUser);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating public profile:", error);
       res.status(500).json({ error: "Failed to update public profile" });
     }
@@ -2387,7 +2393,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const imageUrl = `/uploads/messages/${fileName}`;
         res.json({ url: imageUrl });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error uploading message image:", error);
       res.status(500).json({ error: "Failed to upload image" });
     }
@@ -2447,7 +2453,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const clubs = await dbStorage.getClubs();
       res.json(clubs);
-    } catch (error) {
+    } catch (error: any) {
       res.status(500).send("Error fetching clubs");
     }
   });
@@ -2458,7 +2464,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // For now, return empty array until club functionality is fully implemented
       res.json([]);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching user clubs:", error);
       res.status(500).send("Error fetching user clubs");
     }
@@ -2895,7 +2901,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const membership = await dbStorage.createClubMember(memberData);
       res.status(201).json(membership);
-    } catch (error) {
+    } catch (error: any) {
       res.status(500).send("Error joining club");
     }
   });
@@ -2916,7 +2922,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const messages = await dbStorage.getClubMessages(clubId);
       res.json(messages);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching club messages:", error);
       res.status(500).send("Error fetching messages");
     }
@@ -2955,7 +2961,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       res.json(message);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error posting club message:", error);
       res.status(500).send("Error posting message");
     }
@@ -2989,7 +2995,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const member = await dbStorage.joinChatGroup(groupId, userId);
       res.status(201).json(member);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error joining chat group:", error);
       res.status(500).json({ error: "Failed to join group" });
     }
@@ -3009,7 +3015,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const member = await dbStorage.joinChatGroup(group.id, userId);
       res.status(201).json({ group, member });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error joining chat group by invite:", error);
       res.status(500).json({ error: "Failed to join group" });
     }
@@ -3028,7 +3034,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await dbStorage.leaveChatGroup(groupId, userId);
       res.status(200).json({ message: "Successfully left group" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error leaving chat group:", error);
       res.status(500).json({ error: "Failed to leave group" });
     }
@@ -3068,7 +3074,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const totalUnreadCount = groupUnreadCount + directUnreadCount;
       
       res.json(totalUnreadCount);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching unread chat count:", error);
       res.status(500).json({ error: "Failed to fetch unread count" });
     }
@@ -3104,7 +3110,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       `);
       
       res.json({ message: "Group messages marked as read" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error marking group messages as read:", error);
       res.status(500).json({ error: "Failed to mark messages as read" });
     }
@@ -3132,7 +3138,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       `);
 
       res.json({ message: "Direct messages marked as read" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error marking direct messages as read:", error);
       res.status(500).json({ error: "Failed to mark messages as read" });
     }
@@ -3167,7 +3173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json(message);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error editing message:", error);
       res.status(500).json({ error: "Failed to edit message" });
     }
@@ -3186,7 +3192,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await dbStorage.deleteChatGroupMessage(messageId, userId);
       res.status(200).json({ message: "Message deleted successfully" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting message:", error);
       res.status(500).json({ error: "Failed to delete message" });
     }
@@ -3284,7 +3290,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const message = await dbStorage.sendTelegramDirectMessage(messageData);
       res.status(201).json(message);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sending direct message:", error);
       res.status(500).json({ error: "Failed to send message" });
     }
@@ -3310,7 +3316,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const messages = await dbStorage.getTelegramDirectMessages(conversationId, limit, offset);
       res.json(messages);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching direct messages:", error);
       res.status(500).json({ error: "Failed to fetch messages" });
     }
@@ -3338,7 +3344,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json(message);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error editing direct message:", error);
       res.status(500).json({ error: "Failed to edit message" });
     }
@@ -3357,7 +3363,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await dbStorage.deleteTelegramDirectMessage(messageId, userId);
       res.status(200).json({ message: "Message deleted successfully" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting direct message:", error);
       res.status(500).json({ error: "Failed to delete message" });
     }
@@ -3376,7 +3382,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await dbStorage.markTelegramMessagesAsRead(conversationId, userId);
       res.status(200).json({ message: "Messages marked as read" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error marking messages as read:", error);
       res.status(500).json({ error: "Failed to mark messages as read" });
     }
@@ -3399,7 +3405,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await dbStorage.updateTypingStatus(statusData);
       res.status(200).json({ message: "Typing status updated" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating typing status:", error);
       res.status(500).json({ error: "Failed to update typing status" });
     }
@@ -3414,7 +3420,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const typingUsers = await dbStorage.getTypingUsers(groupId, conversationId);
       res.json(typingUsers);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching typing users:", error);
       res.status(500).json({ error: "Failed to fetch typing users" });
     }
@@ -3430,7 +3436,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await dbStorage.updateUserOnlineStatus(userId, !!isOnline);
       res.status(200).json({ message: "Online status updated" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating online status:", error);
       res.status(500).json({ error: "Failed to update online status" });
     }
@@ -3485,7 +3491,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`[GROUP REACTION] Added new reaction:`, newReactionResult.rows[0]);
         return res.json({ action: "added", reaction: newReactionResult.rows[0] });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error toggling group message reaction:", error);
       res.status(500).json({ error: "Failed to toggle reaction" });
     }
@@ -3539,7 +3545,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         return res.json({ action: "added", reaction: newReaction });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error toggling message reaction:", error);
       res.status(500).json({ error: "Failed to toggle reaction" });
     }
@@ -3584,7 +3590,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }, {});
 
       res.json(Object.values(groupedReactions));
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error getting message reactions:", error);
       res.status(500).json({ error: "Failed to get reactions" });
     }
@@ -3607,7 +3613,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         res.status(404).send("User not found");
       }
-    } catch (error) {
+    } catch (error: any) {
       res.status(500).send("Error upgrading to premium");
     }
   });
@@ -3624,7 +3630,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user!.id;
       const streak = await dbStorage.createOrUpdateLoginStreak(userId);
       res.json(streak);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating login streak:", error);
       res.status(500).send("Error updating login streak");
     }
@@ -3637,7 +3643,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const achievements = await dbStorage.getAchievements();
       res.json(achievements);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching achievements:", error);
       res.status(500).send("Error fetching achievements");
     }
@@ -3651,7 +3657,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user!.id;
       const userAchievements = await dbStorage.getUserAchievementsByUserId(userId);
       res.json(userAchievements);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching user achievements:", error);
       res.status(500).send("Error fetching user achievements");
     }
@@ -3671,7 +3677,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const userAchievement = await dbStorage.completeUserAchievement(userId, achievementId);
       res.json(userAchievement);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error awarding achievement:", error);
       res.status(500).send("Error awarding achievement");
     }
@@ -3685,7 +3691,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user!.id;
       const streak = await dbStorage.getLoginStreakByUserId(userId);
       res.json(streak || { currentStreak: 0, longestStreak: 0 });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching login streak:", error);
       res.status(500).send("Error fetching login streak");
     }
@@ -3699,7 +3705,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user!.id;
       const transactions = await dbStorage.getSpikeTransactions(userId);
       res.json(transactions);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching spike transactions:", error);
       res.status(500).send("Error fetching spike transactions");
     }
@@ -3730,7 +3736,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (err) return res.status(500).send("Error updating session");
         res.json(result);
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding spikes:", error);
       res.status(500).send("Error adding spikes");
     }
@@ -3769,7 +3775,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (err) return res.status(500).send("Error updating session");
         res.json(result);
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error spending spikes:", error);
       res.status(500).send("Error spending spikes");
     }
@@ -3793,7 +3799,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       res.json(newReferral);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error generating referral code:", error);
       res.status(500).send("Error generating referral code");
     }
@@ -3807,7 +3813,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user!.id;
       const referrals = await dbStorage.getUserReferrals(userId);
       res.json(referrals);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching referrals:", error);
       res.status(500).send("Error fetching referrals");
     }
@@ -3848,7 +3854,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (err) return res.status(500).send("Error updating session");
         res.json({ referral: updatedReferral, bonus: newUserBonus });
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error using referral code:", error);
       res.status(500).send("Error using referral code");
     }
@@ -3900,7 +3906,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (err) return res.status(500).send("Error updating session");
         res.json(result);
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error awarding workout completion spikes:", error);
       res.status(500).send("Error awarding workout completion spikes");
     }
@@ -3952,7 +3958,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (err) return res.status(500).send("Error updating session");
         res.json(result);
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error awarding meet creation spikes:", error);
       res.status(500).send("Error awarding meet creation spikes");
     }
@@ -4011,7 +4017,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalPages: Math.ceil(totalCount[0].count / limit),
         currentPage: page
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching exercise library:", error);
       res.status(500).send("Error fetching exercise library");
     }
@@ -4063,7 +4069,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           canAdd: tierLimits.youtube === -1 || youtubeCount[0].count < tierLimits.youtube
         }
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error checking exercise library limits:", error);
       res.status(500).send("Error checking exercise library limits");
     }
@@ -4157,7 +4163,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .returning();
       
       res.status(201).json(newExercise);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error uploading exercise file:", error);
       if (req.file) {
         // Clean up uploaded file on error
@@ -4248,7 +4254,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       return res.status(400).json({ error: "Unsupported type for this endpoint" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating exercise library entry:", error);
       res.status(500).json({ error: "Failed to create exercise library entry" });
     }
@@ -4289,7 +4295,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         return res.status(404).json({ message: "Video not found in library" });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error checking video in library:", error);
       res.status(500).json({ error: "Failed to check video status" });
     }
@@ -4360,7 +4366,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .returning();
       
       res.status(201).json(newExercise);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding YouTube video:", error);
       res.status(500).send("Error adding YouTube video");
     }
@@ -4405,7 +4411,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.status(201).json(shares);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sharing exercise:", error);
       res.status(500).send("Error sharing exercise");
     }
@@ -4441,7 +4447,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .offset(offset);
       
       res.json(sharedExercises);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching shared exercises:", error);
       res.status(500).send("Error fetching shared exercises");
     }
@@ -4482,7 +4488,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(eq(exerciseLibrary.id, exerciseId));
       
       res.status(204).send();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting exercise:", error);
       res.status(500).send("Error deleting exercise");
     }
@@ -4498,7 +4504,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const programs = await dbStorage.getUserPrograms(req.user!.id);
       res.json(programs);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching programs:", error);
       res.status(500).json({ error: "Failed to fetch programs" });
     }
@@ -4554,7 +4560,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   gymData.push(exercise);
                 }
               }
-            } catch (error) {
+            } catch (error: any) {
               console.error(`Error fetching gym ${gymCheck.gymNumber}:`, error);
             }
           }
@@ -4568,7 +4574,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json({ gymData });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching gym data:", error);
       res.status(500).json({ error: "Failed to fetch gym data" });
     }
@@ -4679,7 +4685,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...program,
         sessions
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching program:", error);
       res.status(500).json({ error: "Failed to fetch program" });
     }
@@ -4701,7 +4707,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const program = await dbStorage.createProgram(programData);
       res.status(201).json(program);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating program:", error);
       res.status(500).json({ error: "Failed to create program" });
     }
@@ -4740,7 +4746,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const program = await dbStorage.createProgram(programData);
       res.status(201).json(program);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating program with file upload:", error);
       res.status(500).json({ error: "Failed to create program with file upload" });
     }
@@ -4785,7 +4791,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       res.status(200).json(updatedProgram);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating program document:", error);
       res.status(500).json({ error: "Failed to update program document" });
     }
@@ -4956,7 +4962,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const updatedProgram = await dbStorage.updateProgram(programId, req.body);
       res.json(updatedProgram);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating program:", error);
       res.status(500).json({ error: "Failed to update program" });
     }
@@ -4993,7 +4999,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const newSession = await dbStorage.createProgramSession(sessionData);
       res.json(newSession);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating program session:", error);
       res.status(500).json({ error: "Failed to create program session" });
     }
@@ -5038,7 +5044,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Updating session with data:", sessionData);
       const updatedSession = await dbStorage.updateProgramSession(sessionId, sessionData);
       res.json(updatedSession);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating program session:", error);
       res.status(500).json({ error: "Failed to update program session" });
     }
@@ -5072,7 +5078,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Delete the session
       await dbStorage.deleteProgramSession(sessionId);
       res.json({ success: true });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting program session:", error);
       res.status(500).json({ error: "Failed to delete program session" });
     }
@@ -5132,7 +5138,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 }
               }
               console.log(`Found ${exercises.length} exercises for Gym ${gymCheck.gymNumber} in day ${dayNumber}`);
-            } catch (error) {
+            } catch (error: any) {
               console.error(`Error fetching gym ${gymCheck.gymNumber}:`, error);
             }
           }
@@ -5140,7 +5146,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json({ gymData });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching gym data:", error);
       res.status(500).json({ error: "Failed to fetch gym data" });
     }
@@ -5167,7 +5173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       await dbStorage.deleteProgram(programId);
       res.json({ success: true });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting program:", error);
       res.status(500).json({ error: "Failed to delete program" });
     }
@@ -5233,7 +5239,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 isAssigned: true, // Flag to indicate this is an assigned program
                 assignerName: assigner?.username || 'Unknown Coach'
               };
-            } catch (error) {
+            } catch (error: any) {
               console.error(`Error processing assignment ${assignment.id}:`, error);
               return null;
             }
@@ -5266,7 +5272,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Final combined programs:', allPrograms);
       
       res.json(allPrograms);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching purchased programs:", error);
       res.status(500).json({ error: "Failed to fetch purchased programs" });
     }
@@ -6007,7 +6013,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       res.status(201).json(purchase);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error purchasing program:", error);
       res.status(500).json({ error: "Failed to purchase program" });
     }
@@ -6056,7 +6062,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
       res.json(eligibleAssignees);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching potential assignees:", error);
       res.status(500).json({ error: "Failed to fetch potential assignees" });
     }
@@ -6114,7 +6120,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       res.status(201).json(assignment);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error assigning program:", error);
       res.status(500).json({ error: "Failed to assign program" });
     }
@@ -6153,7 +6159,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       res.status(201).json(assignment);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error self-assigning program:", error);
       res.status(500).json({ error: "Failed to start program" });
     }
@@ -6187,7 +6193,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
       res.json(enrichedAssignments);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching assigned programs:", error);
       res.status(500).json({ error: "Failed to fetch assigned programs" });
     }
@@ -6224,7 +6230,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedAssignment = await dbStorage.updateProgramAssignment(assignmentId, updates);
       
       res.json(updatedAssignment);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating program assignment:", error);
       res.status(500).json({ error: "Failed to update program assignment" });
     }
@@ -6270,7 +6276,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       res.status(201).json(progress);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error completing program session:", error);
       res.status(500).json({ error: "Failed to complete program session" });
     }
@@ -6294,7 +6300,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalSaved: savedWorkouts.length,
         maxFreeAllowed: 10
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching workout library:", error);
       res.status(500).json({ error: "Failed to fetch workout library" });
     }
@@ -6326,7 +6332,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const savedWorkout = await dbStorage.saveWorkoutToLibrary(workoutData);
       
       res.status(201).json(savedWorkout);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving workout to library:", error);
       res.status(500).json({ error: "Failed to save workout to library" });
     }
@@ -6377,7 +6383,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .orderBy(desc(meetInvitations.createdAt));
 
       res.json(invitations);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching meet invitations:", error);
       res.status(500).json({ error: "Failed to fetch meet invitations" });
     }
@@ -6429,7 +6435,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .returning();
 
       res.status(201).json(invitation);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating meet invitation:", error);
       res.status(500).json({ error: "Failed to create meet invitation" });
     }
@@ -6500,7 +6506,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json(updatedInvitation);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating meet invitation:", error);
       res.status(500).json({ error: "Failed to update meet invitation" });
     }
@@ -6541,7 +6547,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Successfully saved journal entry:', newEntry);
       
       return res.status(201).json(newEntry);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating journal entry:", error);
       return res.status(500).json({ message: "Failed to create journal entry", error: String(error) });
     }
@@ -6563,7 +6569,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const users = await dbStorage.searchUsersForAdmin(search);
       res.json(users);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error searching users:", error);
       res.status(500).json({ message: "Error searching users" });
     }
@@ -6587,7 +6593,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Toggle block status
       await dbStorage.updateUser(userId, { isBlocked: !user.isBlocked });
       res.json({ message: `User ${user.isBlocked ? 'unblocked' : 'blocked'} successfully` });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating user block status:", error);
       res.status(500).json({ message: "Error updating user status" });
     }
@@ -6605,7 +6611,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = parseInt(req.params.id);
       await dbStorage.deleteUser(userId);
       res.json({ message: "User deleted successfully" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting user:", error);
       res.status(500).json({ message: "Error deleting user" });
     }
@@ -6644,7 +6650,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Password reset link for ${user.email}: /reset-password/${resetToken}`);
       
       res.json({ message: "Password reset initiated. Reset link has been generated." });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error resetting password:", error);
       res.status(500).json({ message: "Error resetting password" });
     }
@@ -6659,7 +6665,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = parseInt(req.params.id);
       const newPassword = await dbStorage.resetUserPassword(userId);
       res.json({ message: "Password reset successfully", newPassword });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error resetting password:", error);
       res.status(500).json({ message: "Error resetting password" });
     }
@@ -6678,7 +6684,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       await dbStorage.addSpikes(userId, amount, 'Admin grant');
       res.json({ message: `${amount} spikes added successfully` });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding spikes:", error);
       res.status(500).json({ message: "Error adding spikes" });
     }
@@ -6697,7 +6703,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       await dbStorage.updateUserSubscription(userId, tier);
       res.json({ message: `Subscription updated to ${tier} successfully` });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating subscription:", error);
       res.status(500).json({ message: "Error updating subscription" });
     }
@@ -6710,7 +6716,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const conversations = await dbStorage.getSprinthiaConversations(req.user!.id);
       res.json(conversations);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching conversations:", error);
       res.status(500).json({ error: "Failed to fetch conversations" });
     }
@@ -6726,7 +6732,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         title: title || "New Conversation"
       });
       res.status(201).json(conversation);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating conversation:", error);
       res.status(500).json({ error: "Failed to create conversation" });
     }
@@ -6739,7 +6745,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const conversationId = parseInt(req.params.id);
       const messages = await dbStorage.getSprinthiaMessages(conversationId);
       res.json(messages);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching messages:", error);
       res.status(500).json({ error: "Failed to fetch messages" });
     }
@@ -6790,7 +6796,7 @@ User message: ${content}`;
 
       // Return both messages
       res.json({ userMessage, assistantMessage });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating message:", error);
       res.status(500).json({ error: "Failed to create message" });
     }
@@ -6803,7 +6809,7 @@ User message: ${content}`;
       const conversationId = parseInt(req.params.id);
       await dbStorage.deleteSprinthiaConversation(conversationId, req.user!.id);
       res.json({ message: "Conversation deleted successfully" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting conversation:", error);
       res.status(500).json({ error: "Failed to delete conversation" });
     }
@@ -6816,7 +6822,7 @@ User message: ${content}`;
     try {
       const conversations = await dbStorage.getSprinthiaConversations(req.user!.id);
       res.json(conversations);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching conversations:", error);
       res.status(500).json({ error: "Failed to fetch conversations" });
     }
@@ -6830,7 +6836,7 @@ User message: ${content}`;
       const conversationId = parseInt(req.params.id);
       const messages = await dbStorage.getSprinthiaMessages(conversationId);
       res.json(messages);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching messages:", error);
       res.status(500).json({ error: "Failed to fetch messages" });
     }
@@ -6910,7 +6916,7 @@ User message: ${content}`;
             }
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching program context:", error);
       }
 
@@ -6936,7 +6942,7 @@ User message: ${content}`;
         conversationId: currentConversationId,
         response: aiResponse 
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error in Sprinthia chat:", error);
       res.status(500).json({ error: "Failed to process chat message" });
     }
@@ -6979,7 +6985,7 @@ User message: ${content}`;
       await dbStorage.updateUserPrompts(user.id, user.sprinthiaPrompts + prompts);
       
       res.json({ message: `Successfully purchased ${prompts} prompts for ${cost} spikes` });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error purchasing prompts:", error);
       res.status(500).json({ error: "Failed to purchase prompts" });
     }
@@ -7002,7 +7008,7 @@ User message: ${content}`;
         ...reactions,
         userReaction: userReaction?.reactionType || null
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching session reactions:", error);
       res.status(500).send("Error fetching session reactions");
     }
@@ -7030,7 +7036,7 @@ User message: ${content}`;
       });
       
       res.json(reaction);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating reaction:", error);
       res.status(500).send("Error creating reaction");
     }
@@ -7053,7 +7059,7 @@ User message: ${content}`;
       } else {
         res.status(404).send("Reaction not found");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting reaction:", error);
       res.status(500).send("Error deleting reaction");
     }
@@ -7069,7 +7075,7 @@ User message: ${content}`;
       
       const notifications = await dbStorage.getNotifications(req.user!.id, limit, offset);
       res.json(notifications);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching notifications:", error);
       res.status(500).send("Error fetching notifications");
     }
@@ -7081,7 +7087,7 @@ User message: ${content}`;
     try {
       const notification = await dbStorage.createNotification(req.body);
       res.json(notification);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating notification:", error);
       res.status(500).send("Error creating notification");
     }
@@ -7104,7 +7110,7 @@ User message: ${content}`;
       console.log(`Updated notification ${notificationId} for user ${req.user.id}:`, result.rows);
       
       res.json({ success: true });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error marking notification as read:", error);
       res.status(500).send("Error marking notification as read");
     }
@@ -7116,7 +7122,7 @@ User message: ${content}`;
     try {
       const success = await dbStorage.markAllNotificationsAsRead(req.user!.id);
       res.json({ success });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error marking all notifications as read:", error);
       res.status(500).send("Error marking all notifications as read");
     }
@@ -7138,7 +7144,7 @@ User message: ${content}`;
       } else {
         res.status(404).send("Notification not found");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting notification:", error);
       res.status(500).send("Error deleting notification");
     }
@@ -7197,7 +7203,7 @@ User message: ${content}`;
         message: "Program assigned successfully",
         assignment
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error assigning program:", error);
       res.status(500).json({ error: "Failed to assign program" });
     }
@@ -7229,7 +7235,7 @@ User message: ${content}`;
         programType,
         title: programData.title
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error assigning rehab program:", error);
       res.status(500).send("Error assigning rehab program");
     }
@@ -7305,7 +7311,7 @@ Keep the response professional, evidence-based, and specific to track and field 
         consultation: aiResponse,
         spikesUsed: !isStarUser ? 50 : 0
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error processing AI consultation:", error);
       res.status(500).send("Error processing consultation");
     }
@@ -7345,7 +7351,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       });
       
       res.json(coachingRequest);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating coaching request:", error);
       res.status(500).send("Error creating coaching request");
     }
@@ -7361,7 +7367,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       const sent = await dbStorage.getSentCoachingRequests(req.user.id);
       
       res.json({ received, sent });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching coaching requests:", error);
       res.status(500).send("Error fetching coaching requests");
     }
@@ -7382,7 +7388,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       
       const updatedRequest = await dbStorage.respondToCoachingRequest(requestId, status);
       res.json(updatedRequest);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error responding to coaching request:", error);
       res.status(500).send("Error responding to coaching request");
     }
@@ -7397,7 +7403,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       const requestId = parseInt(req.params.id);
       await dbStorage.deleteCoachingRequest(requestId);
       res.json({ success: true });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting coaching request:", error);
       res.status(500).send("Error deleting coaching request");
     }
@@ -7418,7 +7424,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       // Remove sensitive data
       const { password, ...safeUser } = user;
       res.json(safeUser);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching user:", error);
       res.status(500).send("Error fetching user");
     }
@@ -7433,7 +7439,7 @@ Keep the response professional, evidence-based, and specific to track and field 
     try {
       const conversations = await dbStorage.getUserConversations(req.user.id);
       res.json(conversations);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching conversations:", error);
       res.status(500).send("Error fetching conversations");
     }
@@ -7470,7 +7476,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       });
 
       res.status(201).json(conversation);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating conversation:", error);
       res.status(500).json({ error: "Failed to create conversation" });
     }
@@ -7485,7 +7491,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       const conversationId = parseInt(req.params.conversationId);
       const messages = await dbStorage.getConversationMessages(conversationId, req.user.id);
       res.json(messages);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching messages:", error);
       res.status(500).send("Error fetching messages");
     }
@@ -7501,7 +7507,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       const otherUserId = parseInt(req.params.userId);
       const messages = await dbStorage.getDirectMessagesBetweenUsers(req.user.id, otherUserId);
       res.json(messages);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching direct messages:", error);
       res.status(500).send("Error fetching direct messages");
     }
@@ -7521,7 +7527,7 @@ Keep the response professional, evidence-based, and specific to track and field 
         content
       });
       res.json(message);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sending direct message:", error);
       res.status(500).send("Error sending direct message");
     }
@@ -7537,7 +7543,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       const otherUserId = parseInt(req.params.userId);
       await dbStorage.markMessagesAsRead(req.user.id, otherUserId);
       res.json({ success: true });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error marking messages as read:", error);
       res.status(500).send("Error marking messages as read");
     }
@@ -7574,7 +7580,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       
       const conversation = await dbStorage.createOrGetConversation(req.user.id, targetUserId);
       res.json(conversation);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating conversation:", error);
       res.status(500).json({ error: "Failed to create conversation" });
     }
@@ -7593,7 +7599,7 @@ Keep the response professional, evidence-based, and specific to track and field 
         content
       });
       res.json(message);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sending message:", error);
       res.status(500).send("Error sending message");
     }
@@ -7626,7 +7632,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       );
 
       res.status(201).json({ message: "Friend request sent" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sending friend request:", error);
       res.status(500).send("Error sending friend request");
     }
@@ -7660,7 +7666,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       });
 
       res.json({ message: "Friend request accepted" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error accepting friend request:", error);
       res.status(500).send("Error accepting friend request");
     }
@@ -7680,7 +7686,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       await dbStorage.markNotificationAsRead(req.user.id, "friend_request", fromUserId);
 
       res.json({ message: "Friend request declined" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error declining friend request:", error);
       res.status(500).send("Error declining friend request");
     }
@@ -7695,7 +7701,7 @@ Keep the response professional, evidence-based, and specific to track and field 
     try {
       const pendingRequests = await dbStorage.getPendingFriendRequests(req.user.id);
       res.json(pendingRequests);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching pending friend requests:", error);
       res.status(500).send("Error fetching pending friend requests");
     }
@@ -7710,7 +7716,7 @@ Keep the response professional, evidence-based, and specific to track and field 
     try {
       const friends = await dbStorage.getFriends(req.user.id);
       res.json(friends);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching friends:", error);
       res.status(500).send("Error fetching friends");
     }
@@ -7725,7 +7731,7 @@ Keep the response professional, evidence-based, and specific to track and field 
     try {
       const following = await dbStorage.getFollowing(req.user.id);
       res.json(following);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching following:", error);
       res.status(500).send("Error fetching following");
     }
@@ -7743,7 +7749,7 @@ Keep the response professional, evidence-based, and specific to track and field 
 
       await dbStorage.acceptFriendRequest(requestId, req.user.id);
       res.json({ message: "Friend request accepted" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error accepting friend request:", error);
       res.status(500).send("Error accepting friend request");
     }
@@ -7761,7 +7767,7 @@ Keep the response professional, evidence-based, and specific to track and field 
 
       await dbStorage.declineFriendRequest(requestId);
       res.json({ message: "Friend request declined" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error declining friend request:", error);
       res.status(500).send("Error declining friend request");
     }
@@ -7779,7 +7785,7 @@ Keep the response professional, evidence-based, and specific to track and field 
 
       await dbStorage.removeFriend(req.user.id, friendId);
       res.json({ message: "Friend removed successfully" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error removing friend:", error);
       res.status(500).send("Error removing friend");
     }
@@ -7791,7 +7797,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       console.log("Calling sendAutomaticFriendRequests...");
       await dbStorage.sendAutomaticFriendRequests();
       res.json({ message: "Automatic friend requests sent successfully" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sending automatic friend requests:", error);
       res.status(500).send("Error sending automatic friend requests");
     }
@@ -7806,7 +7812,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       const targetUserId = parseInt(req.params.userId);
       await dbStorage.unfollowUser(req.user.id, targetUserId);
       res.json({ success: true });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error unfollowing user:", error);
       res.status(500).send("Error unfollowing user");
     }
@@ -7821,7 +7827,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       const targetUserId = parseInt(req.params.userId);
       const status = await dbStorage.getFollowStatus(req.user.id, targetUserId);
       res.json(status);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching follow status:", error);
       res.status(500).send("Error fetching follow status");
     }
@@ -7838,7 +7844,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       const users = await dbStorage.getRecentUsers(req.user.id, search as string);
       console.log("Found users:", users.length);
       res.json(users);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching recent users:", error);
       res.status(400).json({ error: error.message });
     }
@@ -7868,7 +7874,7 @@ Keep the response professional, evidence-based, and specific to track and field 
         success: true, 
         message: `Broadcast sent to ${targetUserIds?.length || 'all'} users` 
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sending admin broadcast:", error);
       res.status(500).json({ error: "Failed to send broadcast notification" });
     }
@@ -7885,7 +7891,7 @@ Keep the response professional, evidence-based, and specific to track and field 
     try {
       await notificationSystem.processAutomatedNotifications();
       res.json({ success: true, message: "Automated notifications processed" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error processing automated notifications:", error);
       res.status(500).json({ error: "Failed to process automated notifications" });
     }
@@ -7898,7 +7904,7 @@ Keep the response professional, evidence-based, and specific to track and field 
     try {
       await notificationSystem.generateWeeklyReport(req.user.id);
       res.json({ success: true, message: "Weekly report generated" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error generating weekly report:", error);
       res.status(500).json({ error: "Failed to generate weekly report" });
     }
@@ -7914,7 +7920,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       const { isCoach } = req.body;
       const updatedUser = await dbStorage.updateUser(req.user.id, { isCoach });
       res.json(updatedUser);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating coach status:", error);
       res.status(500).json({ error: "Failed to update coach status" });
     }
@@ -7928,7 +7934,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       const { isPrivate } = req.body;
       const updatedUser = await dbStorage.updateUser(req.user.id, { isPrivate });
       res.json(updatedUser);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating privacy status:", error);
       res.status(500).json({ error: "Failed to update privacy status" });
     }
@@ -7941,7 +7947,7 @@ Keep the response professional, evidence-based, and specific to track and field 
     try {
       const athletes = await dbStorage.getCoachAthletes(req.user.id);
       res.json(athletes);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error getting coach athletes:", error);
       res.status(500).json({ error: "Failed to get athletes" });
     }
@@ -7954,7 +7960,7 @@ Keep the response professional, evidence-based, and specific to track and field 
     try {
       // For now, return empty array until coach-athlete relationships are fully implemented
       res.json([]);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error getting athlete coaches:", error);
       res.status(500).json({ error: "Failed to get coaches" });
     }
@@ -7993,7 +7999,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       const relationship = await dbStorage.addCoachAthlete(req.user.id, athleteId);
 
       res.json(relationship);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding athlete:", error);
       res.status(500).json({ error: "Failed to add athlete" });
     }
@@ -8012,7 +8018,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       } else {
         res.status(404).json({ error: "Coach-athlete relationship not found" });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error removing athlete:", error);
       res.status(500).json({ error: "Failed to remove athlete" });
     }
@@ -8034,7 +8040,7 @@ Keep the response professional, evidence-based, and specific to track and field 
         tier: userTier,
         canAddMore: currentCount < maxAthletes
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error getting coach limits:", error);
       res.status(500).json({ error: "Failed to get coach limits" });
     }
@@ -8047,7 +8053,7 @@ Keep the response professional, evidence-based, and specific to track and field 
     try {
       console.log('🔄 Running scheduled notification processing...');
       await notificationSystem.processAutomatedNotifications();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in scheduled notification processing:', error);
     }
   }, 6 * 60 * 60 * 1000); // 6 hours
@@ -8072,7 +8078,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       )];
       
       res.json(connections);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching connections:", error);
       res.status(500).send("Error fetching connections");
     }
@@ -8132,7 +8138,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       }
 
       res.json({ success: true, message: "Exercise shared successfully" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sharing exercise:", error);
       res.status(500).json({ error: "Failed to share exercise" });
     }
@@ -8153,7 +8159,7 @@ Keep the response professional, evidence-based, and specific to track and field 
         sharedWith: libraryShares.map(share => share.recipientId),
         shares: libraryShares
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching library sharing status:", error);
       res.status(500).json({ error: "Failed to fetch sharing status" });
     }
@@ -8241,7 +8247,7 @@ Keep the response professional, evidence-based, and specific to track and field 
         message: "Library access shared successfully",
         spikesUsed: isFreeUser && useSpikes ? 100 : 0
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sharing library:", error);
       res.status(500).json({ error: "Failed to share library access" });
     }
@@ -8261,7 +8267,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       const videos = await dbStorage.getVideoAnalysisByUserId(req.user.id);
       
       res.json(videos);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching videos:", error);
       res.status(500).json({ error: "Failed to fetch videos" });
     }
@@ -8360,7 +8366,7 @@ Keep the response professional, evidence-based, and specific to track and field 
           analysis,
           promptsUsed: subscriptionTier !== "star" ? currentPrompts + 1 : "unlimited"
         });
-      } catch (error) {
+      } catch (error: any) {
         // Return OpenAI's specific error message about video issues
         const errorMessage = error instanceof Error ? error.message : "Video analysis failed";
         console.error("Video analysis error:", errorMessage);
@@ -8370,7 +8376,7 @@ Keep the response professional, evidence-based, and specific to track and field 
         });
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error analyzing video:", error);
       res.status(500).json({ error: "Failed to analyze video" });
     }
@@ -8436,7 +8442,7 @@ Keep the response professional, evidence-based, and specific to track and field 
         processingDetails: processingResult
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Skeleton generation error:', error);
       res.status(500).json({ error: 'Failed to generate skeleton overlay' });
     }
@@ -8550,7 +8556,7 @@ Keep the response professional, evidence-based, and specific to track and field 
           promptsUsed: subscriptionTier !== "star" ? currentPrompts + 1 : "unlimited",
           analysis_type: "enhanced_biomechanical"
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error("Enhanced biomechanical analysis failed:", error);
         const errorMessage = error instanceof Error ? error.message : "Enhanced analysis failed";
         
@@ -8560,7 +8566,7 @@ Keep the response professional, evidence-based, and specific to track and field 
         });
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error in enhanced video analysis:", error);
       res.status(500).json({ error: "Failed to perform enhanced analysis" });
     }
@@ -8602,7 +8608,7 @@ Keep the response professional, evidence-based, and specific to track and field 
         promptsAvailable: user.subscriptionTier === "pro" ? 5 : 1
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error buying prompts:", error);
       res.status(500).json({ error: "Failed to purchase prompts" });
     }
@@ -8748,7 +8754,7 @@ Keep the response professional, evidence-based, and specific to track and field 
         page: pageNum,
         totalPages: Math.ceil(total / effectiveLimit)
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching competitions:", error);
       res.status(500).send("Error fetching competitions");
     }
@@ -8815,7 +8821,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       }
       
       res.json(results);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching competition results:", error);
       res.status(500).send("Error fetching competition results");
     }
@@ -8829,7 +8835,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       const competitionId = parseInt(req.params.id);
       const info = await worldAthleticsService.getCompetitionInfo(competitionId);
       res.json(info);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching competition info:", error);
       res.status(500).send("Error fetching competition info");
     }
@@ -8870,7 +8876,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       }).returning();
       
       res.json(favorite[0]);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding competition to favorites:", error);
       res.status(500).send("Error adding to favorites");
     }
@@ -8901,7 +8907,7 @@ Keep the response professional, evidence-based, and specific to track and field 
         ));
       
       res.sendStatus(200);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error removing competition from favorites:", error);
       res.status(500).send("Error removing from favorites");
     }
@@ -8934,7 +8940,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       .orderBy(competitionsTable.startDate);
       
       res.json(favorites);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching favorite competitions:", error);
       res.status(500).send("Error fetching favorites");
     }
@@ -9031,7 +9037,7 @@ Keep the response professional, evidence-based, and specific to track and field 
 
         biomechanicalData = pythonResult;
         
-      } catch (error) {
+      } catch (error: any) {
         console.error(`MediaPipe biomechanical extraction failed: ${error.message}`);
         biomechanicalData = null;
       }
@@ -9075,7 +9081,7 @@ Keep the response professional, evidence-based, and specific to track and field 
             
             console.log(`❌ Video ${newVideo.id} analysis failed - no MediaPipe data`);
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error(`❌ Failed to update video ${newVideo.id} with analysis data:`, error);
         }
       });
@@ -9088,7 +9094,7 @@ Keep the response professional, evidence-based, and specific to track and field 
         status: newVideo.status,
         createdAt: newVideo.createdAt
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error uploading video for analysis:", error);
       
       // Clean up file if it exists
@@ -9107,7 +9113,7 @@ Keep the response professional, evidence-based, and specific to track and field 
     try {
       const videos = await dbStorage.getVideoAnalysisByUserId(req.user!.id);
       res.json(videos);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching video analysis:", error);
       res.status(500).json({ error: "Failed to fetch video analysis" });
     }
@@ -9131,7 +9137,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       }
       
       res.json(video);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching video analysis:", error);
       res.status(500).json({ error: "Failed to fetch video analysis" });
     }
@@ -9193,7 +9199,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       });
       
       res.json({ content: programContent });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error generating Sprinthia program:", error);
       res.status(500).json({ error: "Failed to generate program" });
     }
@@ -9247,7 +9253,7 @@ Keep the response professional, evidence-based, and specific to track and field 
       });
       
       res.json({ content: programContent });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error regenerating Sprinthia program:", error);
       res.status(500).json({ error: "Failed to regenerate program" });
     }
@@ -9325,7 +9331,7 @@ Submission Details:
         submissionId: submissionRecord.id
       });
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error processing affiliate submission:", error);
       res.status(500).json({ error: "Failed to process affiliate submission" });
     }
@@ -9344,7 +9350,7 @@ Submission Details:
       const submissions = await dbStorage.getAffiliateSubmissions();
       res.json(submissions);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching affiliate submissions:", error);
       res.status(500).json({ error: "Failed to fetch affiliate submissions" });
     }
@@ -9380,7 +9386,7 @@ Submission Details:
 
       res.json(updatedSubmission);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating submission status:", error);
       res.status(500).json({ error: "Failed to update submission status" });
     }
@@ -9406,7 +9412,7 @@ Submission Details:
 
       const result = await dbStorage.getMarketplaceListings(params);
       res.json(result);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching marketplace listings:", error);
       res.status(500).json({ error: "Failed to fetch marketplace listings" });
     }
@@ -9426,7 +9432,7 @@ Submission Details:
       }
 
       res.json(listing);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching marketplace listing:", error);
       res.status(500).json({ error: "Failed to fetch marketplace listing" });
     }
@@ -9560,7 +9566,7 @@ Submission Details:
         message: `Created ${createdListings.length} dummy listings`,
         listings: createdListings
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating dummy marketplace listings:", error);
       res.status(500).json({ error: "Failed to create dummy listings" });
     }
@@ -9590,7 +9596,7 @@ Submission Details:
 
       const newListing = await dbStorage.createMarketplaceListing(listing, typeSpecific);
       res.status(201).json(newListing);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating marketplace listing:", error);
       res.status(500).json({ error: "Failed to create marketplace listing" });
     }
@@ -9620,7 +9626,7 @@ Submission Details:
 
       const updatedListing = await dbStorage.updateMarketplaceListing(id, req.body);
       res.json(updatedListing);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating marketplace listing:", error);
       res.status(500).json({ error: "Failed to update marketplace listing" });
     }
@@ -9654,7 +9660,7 @@ Submission Details:
       } else {
         res.status(500).json({ error: "Failed to delete listing" });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting marketplace listing:", error);
       res.status(500).json({ error: "Failed to delete marketplace listing" });
     }
@@ -9673,7 +9679,7 @@ Submission Details:
 
       const programs = await dbStorage.getCoachPrograms(req.user.id);
       res.json({ items: programs });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching coach programs:", error);
       res.status(500).json({ error: "Failed to fetch programs" });
     }
@@ -9692,7 +9698,7 @@ Submission Details:
 
       const cartItems = await dbStorage.getCartItems(req.user.id);
       res.json(cartItems);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching cart items:", error);
       res.status(500).json({ error: "Failed to fetch cart items" });
     }
@@ -9720,7 +9726,7 @@ Submission Details:
       });
 
       res.status(201).json(cartItem);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding to cart:", error);
       res.status(500).json({ error: "Failed to add to cart" });
     }
@@ -9746,7 +9752,7 @@ Submission Details:
       }
 
       res.json(updatedItem);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating cart item:", error);
       res.status(500).json({ error: "Failed to update cart item" });
     }
@@ -9770,7 +9776,7 @@ Submission Details:
       } else {
         res.status(404).json({ error: "Cart item not found" });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error removing from cart:", error);
       res.status(500).json({ error: "Failed to remove from cart" });
     }
@@ -9792,7 +9798,7 @@ Submission Details:
       const pricing = await dbStorage.calculateCartPrice(items, buyerTier);
       
       res.json(pricing);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error calculating cart price:", error);
       res.status(500).json({ error: "Failed to calculate cart price" });
     }
@@ -9811,7 +9817,7 @@ Submission Details:
 
       const orders = await dbStorage.getUserOrders(req.user.id);
       res.json(orders);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching orders:", error);
       res.status(500).json({ error: "Failed to fetch orders" });
     }
@@ -9840,7 +9846,7 @@ Submission Details:
       }
 
       res.json(order);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching order:", error);
       res.status(500).json({ error: "Failed to fetch order" });
     }
@@ -9865,7 +9871,7 @@ Submission Details:
 
       const slots = await dbStorage.getConsultingSlots(listingId, fromDate, toDate);
       res.json(slots);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching consulting slots:", error);
       res.status(500).json({ error: "Failed to fetch consulting slots" });
     }
@@ -9893,7 +9899,7 @@ Submission Details:
 
       const createdSlots = await dbStorage.createConsultingSlots(slots);
       res.status(201).json(createdSlots);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating consulting slots:", error);
       res.status(500).json({ error: "Failed to create consulting slots" });
     }
@@ -9913,7 +9919,7 @@ Submission Details:
 
       const reviews = await dbStorage.getListingReviews(id);
       res.json(reviews);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching reviews:", error);
       res.status(500).json({ error: "Failed to fetch reviews" });
     }
@@ -9944,7 +9950,7 @@ Submission Details:
       });
 
       res.status(201).json(review);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating review:", error);
       res.status(500).json({ error: "Failed to create review" });
     }
@@ -9981,7 +9987,7 @@ Submission Details:
         uploadURL,
         publicURL
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error generating upload URL:", error);
       res.status(500).json({ error: "Failed to generate upload URL" });
     }
@@ -10020,7 +10026,7 @@ Submission Details:
         message: "Image set as public successfully",
         publicURL: imageURL
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error setting image ACL:", error);
       res.status(500).json({ error: "Failed to process image" });
     }
@@ -10047,7 +10053,7 @@ Submission Details:
       }
 
       objectStorageService.downloadObject(objectFile, res);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error accessing object:", error);
       if (error && typeof error === 'object' && 'constructor' in error && error.constructor.name === 'ObjectNotFoundError') {
         return res.sendStatus(404);
@@ -10069,7 +10075,7 @@ Submission Details:
       }
 
       objectStorageService.downloadObject(file, res);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error serving public object:", error);
       return res.status(500).json({ error: "Internal server error" });
     }
@@ -10080,6 +10086,7 @@ Submission Details:
 
   return httpServer;
 }
+
 
 
 
