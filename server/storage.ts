@@ -543,22 +543,26 @@ export const redisReady = connectRedis().catch((err) => {
 
 export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
+  private memoryStore: session.Store;
+  private redisStore: session.Store | null = null;
 
   constructor() {
-    // Initialize sessionStore - will be set once Redis is ready
-    // Start with a temporary memory store
+    // Initialize with memory store as permanent fallback
     const MemoryStore = session.MemoryStore;
-    this.sessionStore = new MemoryStore();
-    
+    this.memoryStore = new MemoryStore();
+    this.sessionStore = this.memoryStore;
+
     // Switch to Redis once connection is established
     redisReady.then((connected) => {
       if (connected && isConnected) {
         console.log('✅ Switching to Redis session store');
-        this.sessionStore = new RedisStore({
+        this.redisStore = new RedisStore({
           client: redisClient,
           prefix: 'tracklit:sess:',
           ttl: 30 * 24 * 60 * 60, // 30 days in seconds
+          disableTouch: false,
         });
+        this.sessionStore = this.redisStore;
       } else {
         console.warn('⚠️  Using memory session store (not recommended for production)');
       }
@@ -566,9 +570,23 @@ export class DatabaseStorage implements IStorage {
       console.error('Failed to initialize Redis store:', err);
       console.warn('⚠️  Falling back to memory session store');
     });
-  }
-  
 
+    // Handle Redis errors by falling back to memory store
+    redisClient.on('error', (err) => {
+      if (this.redisStore && this.sessionStore === this.redisStore) {
+        console.error('❌ Redis error detected, falling back to MemoryStore for sessions');
+        this.sessionStore = this.memoryStore;
+      }
+    });
+
+    // Switch back to Redis when it's ready again
+    redisClient.on('ready', () => {
+      if (this.redisStore && isConnected && this.sessionStore !== this.redisStore) {
+        console.log('✅ Redis ready again, switching back to RedisStore for sessions');
+        this.sessionStore = this.redisStore;
+      }
+    });
+  }
   // User operations
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
