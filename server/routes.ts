@@ -2223,7 +2223,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user!.id;
       
       // Only allow specific fields to be updated
-      const allowedUpdates = ["name", "email", "defaultClubId"];
+      const allowedUpdates = ["name", "email", "country", "dateOfBirth", "defaultClubId"];
       
       const updates: Record<string, any> = {};
       
@@ -10080,6 +10080,7 @@ Submission Details:
 
   return httpServer;
 }
+
 
 
 
